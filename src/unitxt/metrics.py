@@ -24,6 +24,7 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
+from .dict_utils import dict_get
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -31,7 +32,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy, FilterByCondition, SplitByValue
+from .operators import Copy, FilterByCondition
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -39,9 +40,6 @@ from .type_utils import isoftype, parse_type_string
 
 logger = get_logger()
 settings = get_settings()
-
-warnings.filterwarnings("ignore", category=DegenerateDataWarning)
-
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
@@ -111,6 +109,35 @@ class Metric(Artifact):
                 score if score_name not in ["score_name"] else self.score_prefix + score
             )
         return new_scores
+
+    # for instance scores that only include the raw score names
+    # of scores "recent_score_names" just added to them.
+    def add_score_score_name_and_score_prefix_to_instance_score(
+        self, instances: List[Dict[str, Any]]
+    ):
+        if len(self.score_prefix) == 0:
+            for instance in instances:
+                instance["score"]["instance"]["score_name"] = self.main_score
+                instance["score"]["instance"]["score"] = instance["score"]["instance"][
+                    self.main_score
+                ]
+
+        else:
+            for instance in instances:
+                new_instance_score = {}
+                new_instance_score["score_name"] = self.score_prefix + self.main_score
+                new_instance_score["score"] = instance["score"]["instance"][
+                    self.main_score
+                ]
+
+                for score_name, score in instance["score"]["instance"].items():
+                    if score_name.startswith(self.score_prefix):
+                        new_instance_score[score_name] = score
+                    elif score_name in ["score", "score_name"]:
+                        continue
+                    else:
+                        new_instance_score[self.score_prefix + score_name] = score
+                instance["score"]["instance"] = new_instance_score
 
     def _validate_references_and_prediction(self, references, predictions):
         if not isoftype(predictions, List[Any]):
@@ -227,85 +254,97 @@ class Metric(Artifact):
 
 
 class Aggregator(Artifact):
+    """Aggregates over a list of instances, updating the score/global field of each of them by a dictionary of scores."""
+
+    score_names: List[str] = None
+
+    # non trivial only for grouper_aggregator
+    aggregator_based_score_prefix = ""
+
+    # computes global score, and accordingly updates instance["score"]["global"] of each instance
     @abstractmethod
-    def aggregate_one_group_score_named(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
         pass
 
+    def update_global_score(self, instances: List[Dict[str, Any]], gs: Dict[str, Any]):
+        for instance in instances:
+            if "global" not in instance["score"]:
+                instance["score"]["global"] = {}
+            instance["score"]["global"].update(gs)
 
-class SimpleAggregator(Aggregator):
-    aggregating_func: Callable[[List[Dict[str, Any]], str], float]
+    # prefix and add "score" and "score_name"
+    def prefix_global_scores(
+        self, gs: Dict[str, Any], metric: Metric
+    ) -> Dict[str, Any]:
+        full_prefix = self.aggregator_based_score_prefix + metric.score_prefix
+        new_gs = {}
+        new_gs["score_name"] = full_prefix + metric.main_score
+        new_gs["score"] = gs[metric.main_score]
+        if metric.main_score + "_ci_low" in gs:
+            new_gs["score_ci_low"] = gs[metric.main_score + "_ci_low"]
+        if metric.main_score + "_ci_high" in gs:
+            new_gs["score_ci_high"] = gs[metric.main_score + "_ci_high"]
 
-    def aggregate_one_group_score_named(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
+        for score_name, score in gs.items():
+            new_gs[full_prefix + score_name] = score
+
+        return new_gs
+
+    # trivial for all but grouperaggregator
+    def instances_to_sample_from_and_sample_aggregator(
+        self, instances: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], Any]:
+        return (instances, self)
+
+
+class MeanAggregator(Aggregator):
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
         result = {}
-        for score_name in score_names:
-            result[score_name] = self.aggregating_func(instances, score_name)
+        for score_name in self.score_names:
+            result[score_name] = nan_mean(
+                [instance["score"]["instance"][score_name] for instance in instances]
+            )
+
         return result
 
 
-def average_item_scores(instances: List[dict], score_name: str) -> float:
-    """Calculate mean of a set of instance scores (given by score_name), omitting NaN values.
+class MaxAggregator(Aggregator):
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
+        result = {}
+        for score_name in self.score_names:
+            result[score_name] = nan_max(
+                [instance["score"]["instance"][score_name] for instance in instances]
+            )
 
-    Args:
-        instances: list of dicts of each instance's instance scores.
-        score_name: score field names to compute the mean for.
-    """
-    return nan_mean(
-        [instance["score"]["instance"][score_name] for instance in instances]
-    )
-
-
-def max_item_scores(instances: List[dict], score_name: str) -> float:
-    """Calculate max of a set of instance scores (given by score_name), omitting NaN values.
-
-    Args:
-        instances: list of dicts of each instance's instance scores.
-        score_name: score field names to compute the mean for.
-    """
-    return nan_max(
-        [instance["score"]["instance"][score_name] for instance in instances]
-    )
+        return result
 
 
-class AverageItemsAggregator(SimpleAggregator):
-    aggregating_func = Field(default_factory=lambda: average_item_scores)
+class FilterAggregator(Aggregator):
+    aggregator: Aggregator
+    filter_by_condition: FilterByCondition
 
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
+        filtered_instances = [
+            instance
+            for instance in instances
+            if self.filter_by_condition._is_required(instance)
+        ]
 
-# to be used by GlobalMetric that is not yet defined
-class GlobalMetricAggregator(Aggregator):
-    metric: Metric
-
-    def aggregate_one_group_score_named(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        predictions, references, task_data, _ = self.metric.consume_stream(
-            stream=instances, task_data_field_name="task_data"
-        )
-        self.metric._validate_references_and_prediction(references, predictions)
-        return self.metric.compute(references, predictions, task_data)
+        self.aggregator.score_names = self.score_names
+        return self.aggregator.aggregate(instances=filtered_instances)
 
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
-    # Use None to disable confidence interval computation.
+    # Use None to disable, from all over unitxt, confidence interval computation.
     n_resamples: int = None
     confidence_level: float = 0.95
     ci_scores: List[str] = None
 
-    # Whether to filter the instances before employing the aggregation for the global score.
-    # useful when the user is interested in only a subset of the instances, defined
-    # by a condition evaluated on each instance.
-    filter_by_condition: FilterByCondition = None
+    # the basic aggregation along the instances: no split to groups, no filtering
+    aggregator: Aggregator = None
 
-    # whether to split the instances to groups, aggregate over each
-    # and use the (non-weighted) averaged global scores of the groups-
-    # as the whole stream global score.
-    split_to_groups_by: SplitByValue = None
-
-    # in case of grouping by, the following boolean flag specifies whether resampling for CI
+    # in case of aggregator being GrouperAggregator, the following boolean flag specifies whether resampling for CI
     # should be done from the individual groups' scores (True), as if each group is represented by
     # one instance whose instance["score"]["instance"][score_name] is the group's global score for score_name,
     # Or from the whole stream (False), where each resample is then split to
@@ -313,10 +352,104 @@ class MetricWithConfidenceInterval(Metric):
     # here for the original whole stream.
     ci_samples_from_groups_scores: bool = False
 
-    # the basic aggregation along the instances: no split to groups, no filtering
-    aggregator: Aggregator = Field(default_factory=lambda: AverageItemsAggregator())
     # the name to associate with the aggregator, to participate in prefixes for score_names
-    aggregating_function_name: str = "mean"
+    aggregating_function_name: str = ""
+
+    def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
+
+class GrouperAggregator(Aggregator):
+    """Splits the input instances into groups by the value found in them in field "split_to_groups_by_query".
+
+    Then, aggregates over each group yielding a dictionary of global scores.
+    These dictionaries are then sorted by the values associated with each
+    group, by which it was split from the other groups, and "dressed" like instance scores, and these are
+    averaged, to return the result.
+    """
+
+    split_to_groups_by_query: str
+    one_group_aggregator: Aggregator
+    # the following boolean flag specifies whether resampling for CI
+    # should be done from the individual groups' scores (True), as if each group is represented by
+    # one instance whose instance["score"]["instance"][score_name] is the group's global score for score_name,
+    # Or from the whole stream (False), where each resample is then split to
+    # groups, the score of which is then computed, and finally averaged with the other groups' scores, as done
+    # here for the original whole stream.
+    ci_samples_from_groups_scores: bool = False
+
+    def split_to_group_by(
+        self, instances: List[Dict[str, Any]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        res = defaultdict(list)
+        for instance in instances:
+            val = dict_get(instance, self.split_to_groups_by_query)
+            res[val].append(instance)
+        return res
+
+    def gen_instances_from_group_scores(
+        self, instances: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        ms_dict = self.split_to_group_by(instances)
+        self.one_group_aggregator.score_names = self.score_names
+        groups_scores = []
+        for group_name in sorted(ms_dict.keys()):
+            group_gs = self.one_group_aggregator.aggregate(
+                instances=ms_dict[group_name]
+            )
+            groups_scores.append({"score": {"instance": group_gs}})
+        return groups_scores
+
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
+        groups_scores = self.gen_instances_from_group_scores(instances)
+        over_groups_aggregator = MeanAggregator(score_names=self.score_names)
+        return over_groups_aggregator.aggregate(groups_scores)
+
+    def prefix_global_scores(
+        self, gs: Dict[str, Any], metric: MetricWithConfidenceInterval
+    ) -> Dict[str, Any]:
+        # for backward compatibility, only for this aggregator we have this informative prefix, perhaps now
+        # is time to allow for other aggregators too
+        self.aggregator_based_score_prefix = (
+            "fixed_group_" if self.ci_samples_from_groups_scores else "group_"
+        )
+        if len(metric.aggregating_function_name) > 0:
+            self.aggregator_based_score_prefix += metric.aggregating_function_name + "_"
+        return super().prefix_global_scores(gs=gs, metric=metric)
+
+    def instances_to_sample_from_and_sample_aggregator(
+        self, instances: List[Dict[str, Any]]
+    ) -> Tuple[List[Dict[str, Any]], Aggregator]:
+        if self.ci_samples_from_groups_scores:
+            return (
+                self.gen_instances_from_group_scores(instances),
+                MeanAggregator(score_names=self.score_names),
+            )
+        return (instances, self)
+
+
+# to be used only by GlobalMetric that is not yet defined
+class GlobalMetricAggregator(Aggregator):
+    metric: MetricWithConfidenceInterval
+
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
+        predictions, references, task_data, _ = self.metric.consume_stream(
+            stream=instances, task_data_field_name="task_data"
+        )
+        self.metric._validate_references_and_prediction(references, predictions)
+        return self.metric.compute(references, predictions, task_data)
+
+
+class ConfidenceIntervalComputer(Artifact):
+    """Generates samples from the input instances, then aggregates each sample, and returns the percentiles."""
+
+    # to carry all properties that now are set, from all over unitxt, through metrics,
+    # e.g. n_samples, and ci_scores
+    metric: MetricWithConfidenceInterval
+
+    confidence_level: float = 0.95
+    instances_to_sample_from: List[Dict[str, Any]]
+    aggregator: Aggregator  # to aggregate over each resample
 
     @staticmethod
     def new_random_generator():
@@ -325,96 +458,14 @@ class MetricWithConfidenceInterval(Metric):
         _max_32bit = 2**32 - 1
         return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
-    def disable_confidence_interval_calculation(self):
-        self.n_resamples = None
-
-    def _can_compute_confidence_intervals(self, num_predictions):
+    def _can_compute_confidence_intervals(
+        self, instances: List[Dict[str, Any]]
+    ) -> bool:
         return (
-            self.n_resamples is not None
-            and self.n_resamples > 1
-            and num_predictions > 1
+            self.metric.n_resamples is not None
+            and self.metric.n_resamples > 1
+            and len(instances) > 1
         )
-
-    @staticmethod
-    def _all_instance_scores_equal(instances, score_name):
-        instance_scores = [
-            instance["score"]["instance"][score_name] for instance in instances
-        ]
-        non_nan_instance_scores = [
-            score for score in instance_scores if score is not np.nan
-        ]
-        num_unique_scores = len(set(non_nan_instance_scores))
-        return num_unique_scores == 1
-
-    def score_based_confidence_interval(
-        self,
-        instances: List[dict],
-        score_names: List[str],
-        aggregation_func=None,
-        ci_score_prefix="",
-    ):
-        """Compute confidence intervals based on existing scores, already computed on the input instances.
-
-        Unlike GlobalMetric, this is simply a function of the instance scores (possibly taking into account task_data field),
-         so they don't need to be recomputed after every bootstrap draw.
-
-        Args:
-            instances: The instances for which the confidence intervals are computed; should already have the relevant instance scores calculated.
-            score_names: List of instance score field names to compute a confidence interval for.
-            aggregation_func: A function with arguments instances, field_name; is applied on list of instances (which may include task_data
-                field, as well as the prediction and references), and the field_name; default is simply to take the mean field_name from
-                instances after resampling, if argument is None.
-            ci_score_prefix: An optional string prefix to the score_name in the CI.  Useful in cases where the
-                aggregation_func is something other than the mean
-
-        Returns:
-            Dict of confidence interval values
-        """
-        result = {}
-
-        if not self._can_compute_confidence_intervals(num_predictions=len(instances)):
-            return result
-
-        ci_score_prefix = str(ci_score_prefix)
-        if aggregation_func is None:
-            # if aggregation_func is None, we simply take the mean of the resampled instance scores
-            # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
-            #   that is, re-form the groups, calculate the function, and take the mean of the group scores
-            aggregation_func = AverageItemsAggregator().aggregate_one_group_score_named
-        for score_name in score_names:
-            # If all computed instance level scores are the same, there is no point in computing
-            # confidence intervals. So skip to the next score.
-            if self._all_instance_scores_equal(instances, score_name):
-                continue
-
-            # need to redefine the statistic function within the loop because score_name is a loop variable
-            def statistic(arr, axis, score_name=score_name):
-                # arr is a 2d array where each row is a resampling, so we
-                # iterate over the rows and compute the metric on each resampling
-                scores = numpy.apply_along_axis(
-                    lambda resampled_instances: aggregation_func(
-                        instances=resampled_instances, score_names=score_names
-                    )[score_name],
-                    axis=axis,
-                    arr=arr,
-                )
-                return self.resample_from_non_nan(scores)
-
-            # apply bootstrap only on the relevant field
-            ci = bootstrap(
-                (instances,),
-                statistic=statistic,
-                n_resamples=self.n_resamples,
-                confidence_level=self.confidence_level,
-                random_state=self.new_random_generator(),
-            ).confidence_interval
-            full_score_name = ci_score_prefix + score_name
-            result[f"{full_score_name}_ci_low"] = ci.low
-            result[f"{full_score_name}_ci_high"] = ci.high
-            if score_name == self.main_score:
-                result["score_ci_low"] = ci.low
-                result["score_ci_high"] = ci.high
-        return result
 
     def resample_from_non_nan(self, values):
         """Given an array values, will replace any NaN values with elements resampled with replacement from the non-NaN ones.
@@ -448,208 +499,63 @@ class MetricWithConfidenceInterval(Metric):
                 )
         return values
 
-    def compute_global_confidence_intervals(
-        self, instances: List[Dict[str, Any]], score_name: str
-    ):
-        """Computed confidence intervals for a set of references and predictions."""
-        random_gen = self.new_random_generator()
+    @staticmethod
+    def _all_instance_scores_equal(instances, score_name):
+        instance_scores = [
+            instance["score"]["instance"][score_name] for instance in instances
+        ]
+        non_nan_instance_scores = [
+            score for score in instance_scores if score is not np.nan
+        ]
+        num_unique_scores = len(set(non_nan_instance_scores))
+        return num_unique_scores == 1
 
-        def statistic(arr, axis):
-            # arr is a 2d array where each row is a resampling, so we
-            # iterate over the rows and compute the metric on each resampling
-            def metric(sample: List[Dict[str, Any]]):
-                try:
-                    return self.compute_stream_score(
-                        instances=sample, score_names=[score_name]
-                    )[score_name]
-                except Exception as e:
-                    # this happens in edge cases, for example, when the sampling creates a
-                    # sample where all strings are empty and this fails bleu.
-                    logger.info(f"Warning in {self.__class__.__name__}", e)
-                    return np.nan
-
-            # resample the instance scores, and then return the global score each time
-            scores = numpy.apply_along_axis(
-                lambda x: metric(sample=[instances[i] for i in x]),
-                axis=axis,
-                arr=arr,
-            )
-
-            # in some resamplings of instances, the global score may be NaN since it cannot be computed;
-            # in these cases, the bca confidence interval will be NaN because it does not ignore these values,
-            # so we replace any NaN values with those resampled from the non-NaN ones.
-            return self.resample_from_non_nan(scores)
+    def compute_ci(self) -> Dict[str, Any]:
+        """Compute confidence intervals based on existing scores, if exist, or compute via arg metric."""
+        if not self._can_compute_confidence_intervals(self.instances_to_sample_from):
+            return {}
 
         result = {}
-        num_predictions = len(instances)
-        if self._can_compute_confidence_intervals(num_predictions=num_predictions):
-            identifiers = list(range(num_predictions))
+
+        for score_name in self.metric.ci_scores:
+            if not isinstance(
+                self.aggregator, GlobalMetricAggregator
+            ) and self._all_instance_scores_equal(
+                self.instances_to_sample_from, score_name
+            ):
+                continue
+
+            # generate resamples from instances_to_sample_from, then aggregate over each.
+            # and extract the percentiles thereof
+
+            # need to redefine the statistic function within the loop because score_name is a loop variable
+            def statistic(arr, axis, score_name=score_name):
+                # arr is a 2d array where each row is a resampling, so we
+                # iterate over the rows and compute the metric on each resampling
+                scores = numpy.apply_along_axis(
+                    lambda resampled_instances: self.aggregator.aggregate(
+                        instances=resampled_instances
+                    )[score_name],
+                    axis=axis,
+                    arr=arr,
+                )
+                return self.resample_from_non_nan(scores)
 
             with warnings.catch_warnings():
                 # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
                 # the value of the computed global metric is the same on all resamplings.
                 warnings.simplefilter("ignore", category=RuntimeWarning)
                 ci = bootstrap(
-                    (identifiers,),
+                    (self.instances_to_sample_from,),
                     statistic=statistic,
-                    n_resamples=self.n_resamples,
+                    n_resamples=self.metric.n_resamples,
                     confidence_level=self.confidence_level,
-                    random_state=random_gen,
+                    random_state=self.new_random_generator(),
                 ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            result[score_name + "_ci_low"] = ci.low
+            result[score_name + "_ci_high"] = ci.high
+
         return result
-
-    # The following aggregates over one group, which can be the whole stream when self.split_to_groups_by is None, for metric evaluation.
-    # It takes filtering into account, but does not assume further
-    # splitting of the input instances into groups by split_to_groups_by.
-    # Returns a dictionary of named scores
-    def aggregate_one_group(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        if self.filter_by_condition is not None:
-            filtered_instances = [
-                instance
-                for instance in instances
-                if self.filter_by_condition._is_required(instance)
-            ]
-            instances = filtered_instances
-
-        return self.aggregator.aggregate_one_group_score_named(
-            instances=instances, score_names=score_names
-        )
-
-    # The following does deal with split_to_groups_by, when is not None. Returned is a dict whose keys
-    # are the groups' names', and the values are dicts themselves. Each being the respective group's
-    # global score: what the group's instances carry in their instance["score"]["global"], when evaluated
-    # taking into account all settings except for split_to_groups_by.
-    # That is, splitting to groups by is done just once, if at all. The groups yielded from the top splitting are not further
-    # split by by split_to_groups_by.
-    # To generalize the process, when split_to_groups_by is None, this method returns a dict, whose single key
-    # is "whole_stream".
-    def aggregate_stream_to_groups_scores(
-        self,
-        instances: List[Dict[str, Any]],
-        score_names: List[str],
-    ) -> dict:
-        if score_names is None:
-            score_names = [self.main_score]
-        # to generalize the process, we say this global score is calculated by groups,
-        # since also when self.split_to_groups_by is None, we say we deal with groups,
-        # a single group in this case, being the whole input stream.
-        if self.split_to_groups_by is None:
-            return {
-                "whole_stream": self.aggregate_one_group(
-                    instances=instances, score_names=score_names
-                )
-            }
-        ms = MultiStream.from_iterables({"orig": instances})
-        ms = self.split_to_groups_by(ms)
-        ms_dict = ms.to_dict_of_lists()
-        groups_global_scores = {}
-        for group_name in sorted(ms_dict.keys()):
-            groups_global_scores[group_name] = self.aggregate_one_group(
-                instances=ms_dict[group_name], score_names=score_names
-            )
-        return groups_global_scores
-
-    # Average over the groups' score generated above. Each group's global score is a dict, being the global/aggregated_score
-    # computed for the group (be it a  sub-stream or the whole stream), or nan (if the group nullified or something).
-    # nan-s are excluded, because the averaging is via nan_mean
-    # so hereunder we average over the different fields of the dicts, each field separately.
-    # We prepare for a score being a string (and expected to be the same for all groups, like
-    # "score_name"), a float (which we average) or a list (which we may want to concatenate;
-    # e.g. the lists that rouge returns for use_aggregator=False, we need, in such a case, to reorder the
-    # instances, so that the instances correspond one to one with the concatenated lists of floats.
-    # but the instances that underwent the metric might be filtered, not the whole stream.  So we will not concatenate,
-    # but average, and then average over the groups, like for simple floats).
-    def average_groups_global_scores(self, groups_global_scores: dict) -> dict:
-        assert len(groups_global_scores) > 0, "Where have all the groups gone?"
-        if len(groups_global_scores) == 1:
-            return next(iter(groups_global_scores.values()))
-
-        result = defaultdict(list)
-
-        fields_to_average = set()
-        for group_name in sorted(groups_global_scores.keys()):
-            group_global_score = groups_global_scores[group_name]
-            # the score of the current group is a dict
-            for k, v in group_global_score.items():
-                if isinstance(v, str):
-                    result[k] = v
-                elif isinstance(v, float):
-                    fields_to_average.add(k)
-                    result[k].append(v)
-                else:
-                    assert isoftype(
-                        v, List[float]
-                    ), f"unexpected type of score {v} in group's score field {k}"
-                    result[k].append(np.nanmean(v))
-                    fields_to_average.add(k)
-
-        for k, v in result.items():
-            if k in fields_to_average:
-                result[k] = np.nanmean(v)
-        return result
-
-    # computes the global score taking all settings: splitting to groups, filtering, control-comparison,
-    # and which accumulation of scores (max, mean, global evaluation)
-    def compute_stream_score(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
-        assert score_names is not None
-        groups_global_scores = self.aggregate_stream_to_groups_scores(
-            instances=instances, score_names=score_names
-        )
-        return self.average_groups_global_scores(
-            groups_global_scores=groups_global_scores
-        )
-
-    def ci_from_groups_global_scores(
-        self, groups_global_scores: dict, score_prefix: str = ""
-    ) -> dict:
-        # dress the individual groups's score like instance scores: for each group generate
-        # a dict having just the "score" field, and in it -- just the "instance" section,
-        # and in that section: all the score_names whose values is the aggregation over that group.
-        # then sample from them, aggregating by simple average:
-        to_sample_from = [
-            {"score": {"instance": groups_global_scores[group_name]}}
-            for group_name in sorted(groups_global_scores.keys())
-        ]
-        return self.score_based_confidence_interval(
-            instances=to_sample_from,
-            score_names=list(set(self.ci_scores)),
-            ci_score_prefix=score_prefix,
-            aggregation_func=AverageItemsAggregator().aggregate_one_group_score_named,
-        )
-
-    def add_score_prefix_reflecting_grouping_to_global_score_dict(
-        self, gs: Dict[str, Any]
-    ) -> Dict[str, Any]:
-        # for backward compatibility, the following is different from "" only when
-        # self.split_to_groups_by is not None
-        field_name_full_prefix = ""
-        if self.split_to_groups_by is not None:
-            field_name_full_prefix = (
-                "group_" + self.aggregating_function_name + "_"
-            ).replace("__", "_")
-            if self.ci_samples_from_groups_scores:
-                field_name_full_prefix = "fixed_" + field_name_full_prefix
-
-        if len(field_name_full_prefix) > 0:
-            gs = {field_name_full_prefix + key: value for key, value in gs.items()}
-
-        if field_name_full_prefix + self.score_prefix + self.main_score in list(
-            gs.keys()
-        ):
-            gs["score_name"] = (
-                field_name_full_prefix + self.score_prefix + self.main_score
-            )
-            gs["score"] = gs[gs["score_name"]]
-
-        return gs, field_name_full_prefix
 
 
 class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
@@ -675,7 +581,6 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         references = []
         predictions = []
         task_data = []
-        global_score = {}
 
         instances = []
 
@@ -724,45 +629,35 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 self._add_score_prefixes_to_score_dict(instance_score)
             )
 
-        self.aggregator = GlobalMetricAggregator(metric=self)
+        if self.aggregator is None:
+            self.aggregator = GlobalMetricAggregator(metric=self)
+        self.aggregator.score_names = [self.main_score]
+        gs = self.aggregator.aggregate(instances=instances)
 
-        result = self.compute_stream_score(
-            instances=instances, score_names=[self.main_score]
-        )
-        result = self._add_score_prefixes_to_score_dict(result)
-        (
-            result,
-            field_name_full_prefix,
-        ) = self.add_score_prefix_reflecting_grouping_to_global_score_dict(result)
+        if (
+            self.n_resamples is not None
+            and self.n_resamples > 0
+            and self.ci_scores is not None
+            and len(self.ci_scores) > 0
+        ):
+            (
+                instances_to_sample_from,
+                sample_aggregator,
+            ) = self.aggregator.instances_to_sample_from_and_sample_aggregator(
+                instances
+            )
+            confidence_interval_computer = ConfidenceIntervalComputer(
+                metric=self,
+                instances_to_sample_from=instances_to_sample_from,
+                aggregator=sample_aggregator,
+            )
+            gs.update(confidence_interval_computer.compute_ci())
 
-        global_score.update(result)
+        gs = self.aggregator.prefix_global_scores(gs, self)
 
-        if self.n_resamples is not None and self.n_resamples > 0:
-            if (
-                self.split_to_groups_by is None
-                or not self.ci_samples_from_groups_scores
-            ):
-                confidence_interval = self.compute_global_confidence_intervals(
-                    instances=instances, score_name=self.main_score
-                )
-            else:
-                groups_global_scores = self.aggregate_stream_to_groups_scores(
-                    instances=instances, score_names=[self.main_score]
-                )
-                confidence_interval = self.ci_from_groups_global_scores(
-                    groups_global_scores=groups_global_scores
-                )
+        # and finally update global score in all instances:
+        self.aggregator.update_global_score(instances, gs)
 
-            new_ci = {}
-            for key, value in confidence_interval.items():
-                if key.startswith("score_"):
-                    new_ci[key] = value
-                else:
-                    new_ci[field_name_full_prefix + key] = value
-            global_score.update(new_ci)
-
-        for instance in instances:
-            instance["score"]["global"].update(global_score)
         yield from instances
 
     def _compute(
@@ -806,9 +701,7 @@ class ControlComparisonAggregator(Aggregator):
     control_comparison_floats_comparator: Callable[[List[float], List[float]], float]
     return_abs_value: bool = False
 
-    def aggregate_one_group_score_named(
-        self, instances: List[Dict[str, Any]], score_names: List[str]
-    ) -> dict:
+    def aggregate(self, instances: List[Dict[str, Any]]) -> Dict[str, Any]:
         subsets_dict = {
             side: [
                 instance
@@ -818,7 +711,7 @@ class ControlComparisonAggregator(Aggregator):
             for side in ["control", "comparison"]
         }
         dict_to_return = {}
-        for score_name in score_names:
+        for score_name in self.score_names:
             control_floats = [
                 instance["score"]["instance"][score_name]
                 for instance in subsets_dict["control"]
@@ -835,21 +728,6 @@ class ControlComparisonAggregator(Aggregator):
         return dict_to_return
 
 
-# for ease of use of these repeating args, we define them here
-
-split_by_group_id = Field(
-    default_factory=lambda: SplitByValue(fields=["task_data/group_id"])
-)
-original_paraphrase_control_comparison = {
-    "control": FilterByCondition(
-        values={"task_data/variant_type": ["original"]}, condition="in"
-    ),
-    "comparison": FilterByCondition(
-        values={"task_data/variant_type": ["paraphrase"]}, condition="in"
-    ),
-}
-
-
 class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
@@ -857,15 +735,18 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     main_score: str
     score_names: List[str] = None
 
-    # the only aggregator allowed for BulkInstanceMetric
-    # aggregator: Aggregator  defined in MetricWithConfidenceInterval
-    split_to_groups_by = None
+    aggregator = Field(default_factory=lambda: MeanAggregator(score_names=None))
+    aggregating_function_name = "mean"
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         if self.main_score is None:
             self.main_score = "f1"
         if self.score_names is None:
             self.score_names = [self.main_score]
+        if self.aggregator.score_names is None:
+            self.aggregator.score_names = self.score_names
+        if self.ci_scores is None:
+            self.ci_scores = [self.main_score]
 
         # consume the stream
         predictions, references, task_data, instances = self.consume_stream(
@@ -879,51 +760,48 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             task_data=task_data,
         )
 
-        # add the score and score_name fields
-        for isc in range(len(instance_scores)):
-            instance_scores[isc] = self._add_score_prefixes_to_score_dict(
-                instance_scores[isc]
-            )
-
-            instance_scores[isc]["score"] = instance_scores[isc][
-                self._add_score_prefix(self.main_score)
-            ]
-            instance_scores[isc]["score_name"] = self._add_score_prefix(self.main_score)
-
         for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
+            if "instance" not in instance["score"]:
+                instance["score"]["instance"] = {}
 
             instance["score"]["instance"].update(score)
+        # "score_name", and "score"  and prefixes are not yet updated in instance scores
 
-        gs = self.compute_stream_score(
-            instances=instances,
-            score_names=[
-                self._add_score_prefix(field_name) for field_name in self.score_names
-            ],
-        )
-        if self.main_score in self.score_names:
-            gs["score"] = gs[self.score_prefix + self.main_score]
-            gs["score_name"] = self.score_prefix + self.main_score
+        gs = self.aggregator.aggregate(instances=instances)
+        # nor in gs
 
-        ci_fields = (
+        self.ci_scores = (
             list(set(self.ci_scores))
             if self.ci_scores is not None
             else [self.main_score]
         )
-        ci_fields_with_prefix = [
-            self._add_score_prefix(ci_field) for ci_field in ci_fields
-        ]
-        confidence_interval = self.score_based_confidence_interval(
-            instances=instances,
-            score_names=ci_fields_with_prefix,
-            ci_score_prefix="",
-            aggregation_func=self.compute_stream_score,
-        )
-        gs.update(confidence_interval)
 
-        for instance in instances:
-            instance["score"]["global"].update(gs)
+        # and to confidenceinterval
+        if self.n_resamples is not None and self.n_resamples > 0:
+            (
+                instances_to_sample_from,
+                sample_aggregator,
+            ) = self.aggregator.instances_to_sample_from_and_sample_aggregator(
+                instances
+            )
+            confidence_interval_computer = ConfidenceIntervalComputer(
+                metric=self,
+                instances_to_sample_from=instances_to_sample_from,
+                aggregator=sample_aggregator,
+            )
+            gs.update(confidence_interval_computer.compute_ci())
+
+        # now prefix the global scores
+        gs = self.aggregator.prefix_global_scores(gs, self)
+
+        # and prefix the instance scores:
+        self.add_score_score_name_and_score_prefix_to_instance_score(instances)
+
+        # and finally update global score in all instances:
+        self.aggregator.update_global_score(instances, gs)
+
         yield from instances
 
     @abstractmethod
@@ -951,15 +829,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
 
-    # list of names of scores to be aggregated over. each sitting in instance["score"]["instance"].
-    # if None, [self.main_score] is used to aggregate over
-    score_names: List[str] = None
+    aggregator = Field(default_factory=lambda: MeanAggregator(score_names=None))
+    aggregating_function_name = "mean"
 
-    # How to yield one score, float, for each score_name in score_names, from a list of instances: either the whole stream or one group.
-    # For InstanceMetric, this aggregation is over the instance scores, already sitting in each instance, in subfield
-    # instance["score"]["instance"], which is a dict mapping score_name to (instance) score value.
-    # Tyically, aggregating is to be overridden by the subclasses.
-    # aggregator: Aggregator   # defined in MetricWithConfidenceInterval
+    # the list of score names of scores to be aggregated over. each sitting in instance["score"]["instance"].
+    # if None, [self.main_score] is used to aggregate over
+    # these now show as constructing arg of aggregator
 
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
@@ -967,78 +842,53 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     def verify(self):
         assert self.aggregator is not None
         assert issubclass(type(self.aggregator), Aggregator)
-        assert self.split_to_groups_by is None or (
-            issubclass(type(self.split_to_groups_by), SplitByValue)
-        )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        if self.score_names is None:
+        if not hasattr(self, "score_names") or self.score_names is None:
             self.score_names = [self.main_score]
+        if self.aggregator.score_names is None:
+            self.aggregator.score_names = self.score_names
+        if self.ci_scores is None:
+            self.ci_scores = [self.main_score]
+
         instances = self.compute_instance_scores(stream)
         # each instance now has, in its "score/instance" field, a dict mapping each
         # score name from self.score_names (at least these) to the instance's score for
         # that score name. the name of the score that shows in score/instance
-        # is a member of self.score_names, prefixed by self.score_prefix that is
+        # is a member of self.score_names, not yet prefixed by self.score_prefix that is
         # an optional string arg, per user's choice
-        # We now proceed to calculate (update) global score in each "score/global"
 
-        gs = self.compute_stream_score(
-            instances=instances,
-            score_names=[
-                self._add_score_prefix(field_name) for field_name in self.score_names
-            ],
-        )
+        # We now proceed to calculate global score, still no prefixes and no "score" and "score_name"
+        gs = self.aggregator.aggregate(instances=instances)
 
-        (
-            gs,
-            field_name_full_prefix,
-        ) = self.add_score_prefix_reflecting_grouping_to_global_score_dict(gs)
-
-        # CI:
-        # if arg split_to_groups_by is None, or ci_samples_from_groups_scores is False:
-        # ci as usual, over the whole input stream, with aggregation function that
-        # was used above for the whole stream or the individual groups.
-        # Need to specify which fields should have CIs calculated for them through ci_scores
-        # (will not automatically calculate CIs for fields in reduction map)
+        # and to confidenceinterval
         if (
             self.ci_scores is not None
+            and len(self.ci_scores) > 0
             and self.n_resamples is not None
             and self.n_resamples > 0
         ):
-            if (
-                self.split_to_groups_by is None
-                or not self.ci_samples_from_groups_scores
-            ):
-                confidence_interval = self.score_based_confidence_interval(
-                    instances=instances,
-                    score_names=[
-                        self.score_prefix + ci_score for ci_score in set(self.ci_scores)
-                    ],
-                    ci_score_prefix=field_name_full_prefix,
-                    aggregation_func=self.compute_stream_score,
-                )
-            else:
-                # dress the individual groups' scores like instance scores: for each group, generate
-                # a dict having just the "score" field, and in it -- just the "instance" section,
-                # and in that section: all the score_names whose values is the aggregation over that group.
-                # then sample from them, aggregating by simple average:
-                groups_global_scores = self.aggregate_stream_to_groups_scores(
-                    instances=instances,
-                    score_names=[
-                        self._add_score_prefix(field_name)
-                        for field_name in self.score_names
-                    ],
-                )
-                confidence_interval = self.ci_from_groups_global_scores(
-                    groups_global_scores=groups_global_scores,
-                    score_prefix=field_name_full_prefix,
-                )
+            (
+                instances_to_sample_from,
+                sample_aggregator,
+            ) = self.aggregator.instances_to_sample_from_and_sample_aggregator(
+                instances
+            )
+            confidence_interval_computer = ConfidenceIntervalComputer(
+                metric=self,
+                instances_to_sample_from=instances_to_sample_from,
+                aggregator=sample_aggregator,
+            )
+            gs.update(confidence_interval_computer.compute_ci())
 
-            gs.update(confidence_interval)
+        gs = self.aggregator.prefix_global_scores(gs, self)
 
-        # update global score in each instance
-        for instance in instances:
-            instance["score"]["global"].update(gs)
+        # now fix the prefixes in the instance scores:
+        self.add_score_score_name_and_score_prefix_to_instance_score(instances)
+
+        # and finally update global score in all instances:
+        self.aggregator.update_global_score(instances, gs)
+
         yield from instances
 
     def compute_instance_scores(
@@ -1069,14 +919,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 references=refs, prediction=pred, task_data=task_data
             )
 
-            instance_score["score"] = instance_score[self.main_score]
-            instance_score["score_name"] = self.main_score
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
+            if "instance" not in instance["score"]:
+                instance["score"]["instance"] = {}
 
-            instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
-            )
+            instance["score"]["instance"].update(instance_score)
 
             instances.append(instance)
 
@@ -1096,14 +944,11 @@ class Accuracy(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        result = {
+        return {
             self.main_score: float(
                 str(prediction) in [str(reference) for reference in references]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class JaccardIndex(InstanceMetric):
@@ -1119,7 +964,7 @@ class JaccardIndex(InstanceMetric):
             prediction = set(prediction)
         references = [set(reference) for reference in references]
 
-        result = {
+        return {
             self.main_score: max(
                 [
                     float(
@@ -1134,18 +979,13 @@ class JaccardIndex(InstanceMetric):
                 ]
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class MaxAccuracy(Accuracy):
     """Calculate the maximal accuracy over all instances as the global score."""
 
     aggregating_function_name = "max"
-    aggregator = Field(
-        default_factory=lambda: SimpleAggregator(aggregating_func=max_item_scores)
-    )
+    aggregator = Field(default_factory=lambda: MaxAggregator(score_names=None))
 
 
 class UnsortedListExactMatch(InstanceMetric):
@@ -1155,10 +995,7 @@ class UnsortedListExactMatch(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        result = {self.main_score: float(sorted(prediction) == sorted(references[0]))}
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
+        return {self.main_score: float(sorted(prediction) == sorted(references[0]))}
 
 
 class StringContainment(InstanceMetric):
@@ -1171,14 +1008,11 @@ class StringContainment(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        result = {
+        return {
             self.main_score: float(
                 any(str(reference) in str(prediction) for reference in references)
             )
         }
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
@@ -3185,222 +3019,305 @@ def normalized_hedges_g(
     return norm_g, interpret_effect_size(g)
 
 
+# used much in the sequel, so we define here
+split_by_group_id = "task_data/group_id"
+
+original_paraphrase_control_comparison = {
+    "control": FilterByCondition(
+        values={"task_data/variant_type": ["original"]}, condition="in"
+    ),
+    "comparison": FilterByCondition(
+        values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+    ),
+}
+
+
 # metrics using mean reduction
 class GroupMeanAccuracy(Accuracy):
-    split_to_groups_by = split_by_group_id
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=MeanAggregator(),
+        )
+    )
 
 
 class FixedGroupMeanAccuracy(Accuracy):
     # the same as GroupMeanAccuracy, except the groups are fixed and are resampled together
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=MeanAggregator(),
+            ci_samples_from_groups_scores=True,
+        )
+    )
 
 
 # same as above, now using StringContainment
 class GroupMeanStringContainment(StringContainment):
-    split_to_groups_by = split_by_group_id
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=MeanAggregator(),
+        )
+    )
 
 
 class FixedGroupMeanStringContainment(StringContainment):
     # the same as GroupMeanStringContainment, except the groups are fixed and are resampled together
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=MeanAggregator(),
+            ci_samples_from_groups_scores=True,
+        )
+    )
 
 
 # take only the (fixed) group mean of baseline or other (paraphrases) scores
 class FixedGroupMeanBaselineAccuracy(Accuracy):
-    filter_by_condition = Field(
-        default_factory=lambda: FilterByCondition(
-            values={"task_data/variant_type": ["original"]}, condition="in"
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=FilterAggregator(
+                filter_by_condition=FilterByCondition(
+                    values={"task_data/variant_type": ["original"]}, condition="in"
+                ),
+                aggregator=MeanAggregator(),
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
+
     aggregating_function_name = "mean_baseline"
 
 
 class FixedGroupMeanParaphraseAccuracy(Accuracy):
-    filter_by_condition = Field(
-        default_factory=lambda: FilterByCondition(
-            values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=FilterAggregator(
+                filter_by_condition=FilterByCondition(
+                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+                ),
+                aggregator=MeanAggregator(),
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
     aggregating_function_name = "mean_paraphrase"
 
 
 # same as above but using StringContainment
 class FixedGroupMeanBaselineStringContainment(StringContainment):
-    filter_by_condition = Field(
-        default_factory=lambda: FilterByCondition(
-            values={"task_data/variant_type": ["original"]}, condition="in"
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=FilterAggregator(
+                filter_by_condition=FilterByCondition(
+                    values={"task_data/variant_type": ["original"]}, condition="in"
+                ),
+                aggregator=MeanAggregator(),
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
+
     aggregating_function_name = "mean_baseline"
 
 
 class FixedGroupMeanParaphraseStringContainment(StringContainment):
-    filter_by_condition = Field(
-        default_factory=lambda: FilterByCondition(
-            values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=FilterAggregator(
+                filter_by_condition=FilterByCondition(
+                    values={"task_data/variant_type": ["paraphrase"]}, condition="in"
+                ),
+                aggregator=MeanAggregator(),
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
+
     aggregating_function_name = "mean_paraphrase"
 
 
 # using PDR
 class FixedGroupPDRParaphraseAccuracy(Accuracy):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=performance_drop_rate,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=performance_drop_rate,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "pdr_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupPDRParaphraseStringContainment(StringContainment):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=performance_drop_rate,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=performance_drop_rate,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "pdr_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class GroupMeanTokenOverlap(TokenOverlap):
+    aggregator = Field(
+        default_factory=lambda: GrouperAggregator(
+            score_names=["f1", "precision", "recall"],
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=MeanAggregator(),
+        )
+    )
+
     score_names = ["f1", "precision", "recall"]
-    split_to_groups_by = split_by_group_id
 
 
 # using Cohens's h for proportions
 class FixedGroupNormCohensHParaphraseAccuracy(Accuracy):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_cohens_h,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_cohens_h,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "norm_cohens_h_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupNormCohensHParaphraseStringContainment(StringContainment):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_cohens_h,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_cohens_h,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "norm_cohens_h_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 # using Hedges' g (takes into account internal variation in group scores)
 class FixedGroupNormHedgesGParaphraseAccuracy(Accuracy):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_hedges_g,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_hedges_g,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "norm_hedges_g_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupNormHedgesGParaphraseStringContainment(StringContainment):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_hedges_g,
-            return_abs_value=False,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_hedges_g,
+                return_abs_value=False,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "norm_hedges_g_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 # for above metrics, take absolute value of group score first; this measures variation in either direction
 class FixedGroupAbsvalNormCohensHParaphraseAccuracy(Accuracy):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_cohens_h,
-            return_abs_value=True,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_cohens_h,
+                return_abs_value=True,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "absval_norm_cohens_h_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormCohensHParaphraseStringContainment(StringContainment):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_cohens_h,
-            return_abs_value=True,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_cohens_h,
+                return_abs_value=True,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "absval_norm_cohens_h_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseAccuracy(Accuracy):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_hedges_g,
-            return_abs_value=True,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_hedges_g,
+                return_abs_value=True,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "absval_norm_hedges_g_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class FixedGroupAbsvalNormHedgesGParaphraseStringContainment(StringContainment):
     aggregator = Field(
-        default_factory=lambda: ControlComparisonAggregator(
-            control_comparison_subsets=original_paraphrase_control_comparison,
-            control_comparison_floats_comparator=normalized_hedges_g,
-            return_abs_value=True,
+        default_factory=lambda: GrouperAggregator(
+            split_to_groups_by_query=split_by_group_id,
+            one_group_aggregator=ControlComparisonAggregator(
+                control_comparison_subsets=original_paraphrase_control_comparison,
+                control_comparison_floats_comparator=normalized_hedges_g,
+                return_abs_value=True,
+            ),
+            ci_samples_from_groups_scores=True,
         )
     )
 
     aggregating_function_name = "absval_norm_hedges_g_paraphrase"
-    split_to_groups_by = split_by_group_id
-    ci_samples_from_groups_scores = True
 
 
 class BinaryMaxF1(F1Binary):

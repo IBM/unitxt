@@ -1647,7 +1647,7 @@ class Unique(SingleStreamReducer):
     def to_tuple(instance: dict, fields: List[str]) -> tuple:
         result = []
         for field_name in fields:
-            value = dict_get(dic=instance, query=field_name)
+            value = instance[field_name]
             if isinstance(value, list):
                 value = tuple(value)
             result.append(value)

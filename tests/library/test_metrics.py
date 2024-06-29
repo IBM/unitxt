@@ -35,6 +35,8 @@ from unitxt.metrics import (
     FixedGroupPDRParaphraseAccuracy,
     FixedGroupPDRParaphraseStringContainment,
     FuzzyNer,
+    GlobalMetricAggregator,
+    GrouperAggregator,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -50,7 +52,6 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.operators import SplitByValue
 from unitxt.test_utils.metrics import apply_metric
 
 from tests.utils import UnitxtTestCase
@@ -1045,7 +1046,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoBooleanGrouping(Accuracy):
-            split_to_groups_by = 9
+            aggregator = None
 
         with self.assertRaises(AssertionError):
             # should raise error because third field in agg_func is not boolean
@@ -1396,10 +1397,14 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
 
         global_metric_to_test_on_groups = Rouge()
-        global_metric_to_test_on_groups.split_to_groups_by = SplitByValue(
-            fields=["task_data/group_id"]
+        aggregator_one_group = GlobalMetricAggregator(metric=Rouge())
+        grouper_aggregator = GrouperAggregator(
+            split_to_groups_by_query="task_data/group_id",
+            one_group_aggregator=aggregator_one_group,
+            ci_samples_from_groups_scores=True,
         )
-        global_metric_to_test_on_groups.ci_samples_from_groups_scores = True
+        global_metric_to_test_on_groups.aggregator = grouper_aggregator
+
         global_metric_to_test_on_groups.ci_scores = [
             global_metric_to_test_on_groups.main_score
         ]
@@ -1424,8 +1429,12 @@ class TestConfidenceIntervals(UnitxtTestCase):
             references=GROUPED_INSTANCE_REFERENCES,
             task_data=GROUPED_INSTANCE_ADDL_INPUTS,
         )
-        # get first element of reduction_map values
-        prefix = "fixed_group" if metric.ci_samples_from_groups_scores else "group"
+        # all metrics here are grouped. compute the prefix:
+        prefix = (
+            "fixed_group"
+            if metric.aggregator.ci_samples_from_groups_scores
+            else "group"
+        )
         group_score_name = "_".join(
             [
                 prefix,
