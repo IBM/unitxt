@@ -3,6 +3,8 @@ import os
 from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from tqdm import tqdm
+
 from .artifact import Artifact
 from .operator import PackageRequirementsMixin
 
@@ -15,10 +17,29 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
-    def infer(self, dataset):
+    def infer(self, dataset) -> str:
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
         return self._infer(dataset)
+
+
+class LogProbInferenceEngine(abc.ABC, Artifact):
+    """Abstract base class for inference with log probs."""
+
+    @abc.abstractmethod
+    def _infer_log_probs(self, dataset):
+        """Perform inference on the input dataset that returns log probs."""
+        pass
+
+    def infer_log_probs(self, dataset) -> List[Dict]:
+        """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
+
+        For each instance , returns a list of top tokens per position.
+        [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
+
+        """
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer_log_probs(dataset)
 
 
 class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
@@ -158,9 +179,12 @@ class OpenAiInferenceEngineParams(Artifact):
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
+    top_logprobs: Optional[int] = 20
 
 
-class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class OpenAiInferenceEngine(
+    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+):
     label: str = "openai"
     model_name: str
     parameters: OpenAiInferenceEngineParams = field(
@@ -169,6 +193,7 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     _requirement = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
+    data_classification_policy = ["public"]
 
     def prepare(self):
         from openai import OpenAI
@@ -183,8 +208,9 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         self.client = OpenAI(api_key=api_key)
 
     def _infer(self, dataset):
-        return [
-            self.client.chat.completions.create(
+        outputs = []
+        for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            response = self.client.chat.completions.create(
                 messages=[
                     # {
                     #     "role": "system",
@@ -204,8 +230,49 @@ class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 temperature=self.parameters.temperature,
                 top_p=self.parameters.top_p,
             )
-            for instance in dataset
-        ]
+            output = response.choices[0].message.content
+
+            outputs.append(output)
+
+        return outputs
+
+    def _infer_log_probs(self, dataset):
+        outputs = []
+        for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            response = self.client.chat.completions.create(
+                messages=[
+                    # {
+                    #     "role": "system",
+                    #     "content": self.system_prompt,
+                    # },
+                    {
+                        "role": "user",
+                        "content": instance["source"],
+                    }
+                ],
+                model=self.model_name,
+                frequency_penalty=self.parameters.frequency_penalty,
+                presence_penalty=self.parameters.presence_penalty,
+                max_tokens=self.parameters.max_tokens,
+                seed=self.parameters.seed,
+                stop=self.parameters.stop,
+                temperature=self.parameters.temperature,
+                top_p=self.parameters.top_p,
+                logprobs=True,
+                top_logprobs=self.parameters.top_logprobs,
+            )
+            top_logprobs_response = response.choices[0].logprobs.content
+            output = [
+                {
+                    "top_tokens": [
+                        {"text": obj.token, "logprob": obj.logprob}
+                        for obj in generated_token.top_logprobs
+                    ]
+                }
+                for generated_token in top_logprobs_response
+            ]
+            outputs.append(output)
+        return outputs
 
 
 class WMLInferenceEngineParams(Artifact):
