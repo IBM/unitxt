@@ -37,4 +37,9 @@ Each example is a self contained python file that you can run and later modify.
      - Demonstrates how to evaluate a user QA answering dataset in a standalone file using a user defined task and template. In addition, it shows how to define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge>`_
      - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+   * - Evaluate your summarization dataset  - using LLM as a judge
+     - Demonstrates how to evaluate a document summarization dataset by define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluation_summarization_dataset_llm_as_judge>`_
+     - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
 
