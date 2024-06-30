@@ -7,6 +7,7 @@ from .artifact import verbosed_fetch_artifact
 from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
+from .test_utils.metrics import check_scores
 
 
 @singledispatch
@@ -26,7 +27,6 @@ def _(
     global_scores = {}
     remote_metrics = get_remote_metrics_names()
     for metric_name in metric_names:
-        multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         if metric_name in remote_metrics:
             metric = verbosed_fetch_artifact(metric_name)
             metric_step = as_remote_metric(metric)
@@ -39,6 +39,7 @@ def _(
             first_step = metrics_operator.steps[0]
             first_step.disable_confidence_interval_calculation()
 
+        multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
             entry[metric_name] = instance["score"]["instance"]["score"]
@@ -82,3 +83,26 @@ def as_remote_metric(metric):
             f"Remotely executed metrics should be MetricPipeline objects."
         )
     return metric
+
+
+def test_evaluate(
+    global_target: dict,
+    instance_targets: List[dict],
+    task_data: Optional[List[dict]],
+    metric_name: str,
+    score_name: str,
+):
+    evaluation_result, global_outputs = evaluate(
+        task_data, metric_names=[metric_name], compute_conf_intervals=True
+    )
+    instance_outputs = [
+        {
+            score_name: result[metric_name],
+            "score": result[metric_name],
+            "score_name": score_name,
+        }
+        for result in evaluation_result
+    ]
+    check_scores(
+        global_target, instance_targets, global_outputs[metric_name], instance_outputs
+    )
