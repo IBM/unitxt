@@ -17,22 +17,25 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
-    def _infer_log_probs(self, dataset):
-        """Perform inference on the input dataset."""
-        raise NotImplementedError(
-            f"{self.__name__} does not support inference returning log probabilities"
-        )
-
-    def infer(self, dataset):
+    def infer(self, dataset) -> str:
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
         return self._infer(dataset)
 
-    def infer_log_probs(self, dataset):
+
+class LogProbInferenceEngine(abc.ABC, Artifact):
+    """Abstract base class for inference with log probs."""
+
+    @abc.abstractmethod
+    def _infer_log_probs(self, dataset):
+        """Perform inference on the input dataset that returns log probs."""
+        pass
+
+    def infer_log_probs(self, dataset) -> List[Dict]:
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
 
         For each instance , returns a list of top tokens per position.
-        [ "top_tokens": [ "text": ..., "logprob": ...} , ... ]
+        [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
 
         """
         [self.verify_instance(instance) for instance in dataset]
@@ -179,7 +182,9 @@ class OpenAiInferenceEngineParams(Artifact):
     top_logprobs: Optional[int] = 20
 
 
-class OpenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class OpenAiInferenceEngine(
+    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+):
     label: str = "openai"
     model_name: str
     parameters: OpenAiInferenceEngineParams = field(
