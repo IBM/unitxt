@@ -2254,7 +2254,6 @@ class LlamaIndexFaithfulness(LlamaIndexLLMMetric):
     """LlamaIndex based metric class for evaluating faithfulness."""
 
     score_prefix = "faithfulness_"
-    reference_field = "contexts"  # metric doesn't require reference answers
 
     def prepare(self):
         """Initialization method for the metric. Initializes the FaithfulnessEvaluator with the OpenAI model."""
