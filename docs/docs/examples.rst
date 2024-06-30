@@ -33,11 +33,28 @@ Each example is a self contained python file that you can run and later modify.
      - | :ref:`Add new dataset tutorial <adding_dataset>`.  
        | :ref:`Open QA task in catalog <catalog.tasks.qa.open>`.
        | :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`.
+   * - Evaluate the impact of different formats and system prompts on the same task
+     - Demonstrates how different formats and system prompts effect the input provided to a llama3 chat model and evaluate their impact on the obtain scores.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_formats.py>`_
+     - | :ref:`Formatting tutorial <adding_format>`.
+
+
+
+.. list-table:: 
+   :widths: 50 50 50 50
+   :header-rows: 1
+
+   * - What do you want to do?
+     - Description
+     - Link to code
+     - Related documentation
    * - Evaluate your question-answering dataset  - using LLM as a judge
      - Demonstrates how to evaluate a user QA answering dataset in a standalone file using a user defined task and template. In addition, it shows how to define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`_
      - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
-   * - Evaluate the impact of different formats and system prompts on the same task
-     - Demonstrates how different formats and system prompts effect the input provided to a llama3 chat model and evaluate their impact on the obtain score
-     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_formats.py>`_
-     - | :ref:`Formatting tutorial <adding_format>`.
+   * - Evaluate your summarization dataset  - using LLM as a judge
+     - Demonstrates how to evaluate a document summarization dataset by define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
+     - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluation_summarization_dataset_llm_as_judge>`_
+     - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
+
