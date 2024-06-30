@@ -19,10 +19,10 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-        
+
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system ".[tests]"
-    - run: uv pip install --system coverage[toml]
+    - run: uv pip install --system -e ".[tests]"
+    - run: pip install coverage[toml]
 
     - name: Run Tests
       run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"
