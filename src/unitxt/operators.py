@@ -303,6 +303,10 @@ class SelectFields(InstanceOperator):
 
     fields: List[str]
 
+    def prepare(self):
+        super().prepare()
+        self.fields.extend(["data_classification_policy", "recipe_metadata"])
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
