@@ -2200,7 +2200,7 @@ class LlamaIndexCorrectness(InstanceMetric):
             llm = MockLLM(system_prompt="5")  # perfect score
         else:
             raise NotImplementedError(
-                f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+                f"LlamaIndexCorrectness metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
             )
 
         self.evaluator = CorrectnessEvaluator(
@@ -2226,9 +2226,6 @@ class LlamaIndexCorrectness(InstanceMetric):
         Raises:
             AssertionError: If the input does not meet the expected format.
         """
-        # treat the references as the questions and the predictions as answers
-        # assume a single reference
-
         query = task_data["question"]
 
         contexts = None
@@ -2252,6 +2249,53 @@ class LlamaIndexCorrectness(InstanceMetric):
             # "score_name": self.main_score,
             # "feedback": result.feedback, # removed since this cannot be tested
         }
+
+
+class LlamaIndexFaithfulness(LlamaIndexCorrectness):
+    """LlamaIndex based metric class for evaluating faithfulness."""
+
+    reference_field = "contexts"  # metric doesn't require reference answers
+
+    def prepare(self):
+        """Initialization method for the metric. Initializes the FaithfulnessEvaluator with the OpenAI model."""
+        from llama_index.core.evaluation import FaithfulnessEvaluator
+
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = (
+            f"faithfulness_llama_index_by_{self.model_name_normalized}_judge"
+        )
+
+        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
+
+        if self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            llm = OpenAI("gpt-3.5-turbo")
+        elif self.model_name in self.mock_models:
+            from llama_index.core.llms.mock import MockLLM
+
+            llm = MockLLM(system_prompt="5")  # perfect score
+        else:
+            raise NotImplementedError(
+                f"LlamaIndexFaithfulness metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+            )
+
+        self.evaluator = FaithfulnessEvaluator(llm=llm)
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: Dict,
+    ) -> Dict[str, Any]:
+        result = self.evaluator.evaluate(
+            query=task_data["question"],
+            response=prediction,
+            contexts=task_data["contexts"],
+        )
+        score = result.score
+
+        return {self.main_score: score}
 
 
 class Perplexity(BulkInstanceMetric):
