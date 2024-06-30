@@ -38,5 +38,5 @@ if __name__ == "__main__":
     # Performing inference:
     predictions = wml_inference.infer(test_data)
     for inp, prediction in zip(test_data, predictions):
-        result = {**inp, "output": prediction}
-        print_dict(result, keys_to_print=["source", "output"])
+        result = {**inp, "prediction": prediction}
+        print_dict(result, keys_to_print=["source", "prediction"])
