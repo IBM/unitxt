@@ -11,6 +11,27 @@ LLM as a Judge Metrics Guide 📊
 This section will walk you through harnessing the power of LLM as judge (LLMaJ) metrics using the Unitxt package. LLM as a judge
 provides a method to assess the performance of a model based on the judgments of another model.
 
+When to use LLM as Judge
+------------------------
+
+LLMs as judges are most useful when
+    1. You don't have ground truth (references) to compare with
+    2. When you have ground truth, but comparing the ground truth to the model response is non-trivial (e.g. requires semantic understanding)
+    3. When you want to assess specific properties of the model's output that can easily expressed via an LLM prompt (e.g. does the model response contain profanity).
+
+Disadvantages of LLM as Judge
+-----------------------------
+
+While LLMs as Judges are powerful and effective in many cases, they have some drawbacks:
+    1. Good LLM as Judges are often large models with relatively high inference latency.
+    2. Deploying large LLMs is difficult and may require API access to external services.
+    3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgements and can also be biased.
+       This means that unless you have a prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgements and see they
+       match your expections. 
+
+
+Using LLMs
+-----------
 In this guide, we'll explore three key aspects of LLMaJ:
     1. Utilizing LLM as judge as a metric in Unitxt.
     2. Incorporating a new LLM as a judge metric into Unitxt.
