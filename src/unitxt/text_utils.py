@@ -114,10 +114,12 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     return res
 
 
-def print_dict(d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None):
+def print_dict(
+    d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None, log_level="info"
+):
     dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
-    logger.info(dict_str)
+    getattr(logger, log_level)(dict_str)
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
