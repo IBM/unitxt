@@ -14,17 +14,21 @@ provides a method to assess the performance of a model based on the judgments of
 When to use LLM as Judge
 ------------------------
 
-LLMs can be used as judges to assess the output of other models. There are most useful when
-    1. You don't have ground truth to compare with 
-    2. When you have ground truth, but comparing the ground truth to the answer is non-trivial (e.g. requires semantic understanding)
+LLMs as judges are most useful when
+    1. You don't have ground truth (references) to compare with
+    2. When you have ground truth, but comparing the ground truth to the model response is non-trivial (e.g. requires semantic understanding)
     3. When you want to assess specific properties of the model's output that can easily expressed via an LLM prompt (e.g. does the model response contain profanity).
 
 Disadvantages of LLM as Judge
 -----------------------------
 
-While LLMs as Judges are powerful and effective in many cases, they have some disadvantages.
+While LLMs as Judges are powerful and effective in many cases, they have some drawbacks:
     1. Good LLM as Judges are often large models with relatively high inference latency.
-    2. Deploying large LLMs is difficult and may require API access to external services
+    2. Deploying large LLMs is difficult and may require API access to external services.
+    3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgement and can also be biased.
+       This means that unless you have prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgement and see they
+       match your expections . 
+
 
 Using LLMs
 -----------
