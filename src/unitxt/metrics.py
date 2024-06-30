@@ -336,21 +336,12 @@ class FilterAggregator(Aggregator):
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
-    # Use None to disable, from all over unitxt, confidence interval computation.
+    # From all over unitxt, use None to disable confidence interval computation.
     n_resamples: int = None
-    confidence_level: float = 0.95
     ci_scores: List[str] = None
 
-    # the basic aggregation along the instances: no split to groups, no filtering
+    # aggregates along the instances, according to all settings
     aggregator: Aggregator = None
-
-    # in case of aggregator being GrouperAggregator, the following boolean flag specifies whether resampling for CI
-    # should be done from the individual groups' scores (True), as if each group is represented by
-    # one instance whose instance["score"]["instance"][score_name] is the group's global score for score_name,
-    # Or from the whole stream (False), where each resample is then split to
-    # groups, the score of which is then computed, and finally averaged with the other groups' scores, as done
-    # here for the original whole stream.
-    ci_samples_from_groups_scores: bool = False
 
     # the name to associate with the aggregator, to participate in prefixes for score_names
     aggregating_function_name: str = ""
@@ -634,9 +625,9 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         self.aggregator.score_names = [self.main_score]
         gs = self.aggregator.aggregate(instances=instances)
 
-        if self.n_resamples is not None and self.n_resamples > 0:
-            if self.ci_scores is None:
-                self.ci_scores = [self.main_score]
+        if self.ci_scores is None:
+            self.ci_scores = [self.main_score]
+        if self.n_resamples and self.n_resamples > 0 and len(self.ci_scores) > 0:
             (
                 instances_to_sample_from,
                 sample_aggregator,
@@ -744,6 +735,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             self.aggregator.score_names = self.score_names
         if self.ci_scores is None:
             self.ci_scores = [self.main_score]
+        self.ci_scores = list(set(self.ci_scores))
 
         # consume the stream
         predictions, references, task_data, instances = self.consume_stream(
@@ -769,14 +761,8 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         gs = self.aggregator.aggregate(instances=instances)
         # nor in gs
 
-        self.ci_scores = (
-            list(set(self.ci_scores))
-            if self.ci_scores is not None
-            else [self.main_score]
-        )
-
         # and to confidenceinterval
-        if self.n_resamples is not None and self.n_resamples > 0:
+        if self.n_resamples and self.n_resamples > 0 and len(self.ci_scores) > 0:
             (
                 instances_to_sample_from,
                 sample_aggregator,
@@ -860,10 +846,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         # and to confidenceinterval
         if (
-            self.ci_scores is not None
-            and len(self.ci_scores) > 0
-            and self.n_resamples is not None
+            self.n_resamples is not None
             and self.n_resamples > 0
+            and len(self.ci_scores) > 0
         ):
             (
                 instances_to_sample_from,
