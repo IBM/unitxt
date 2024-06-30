@@ -6,6 +6,16 @@ from unitxt.deprecation_utils import DeprecationError, compare_versions, depreca
 from tests.utils import UnitxtTestCase
 
 
+class EnsureWarnings:
+    def __enter__(self):
+        self.original_filters = warnings.filters[:]
+        warnings.resetwarnings()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        warnings.filters = self.original_filters
+
+
 class PatchConstants:
     def __init__(self, version) -> None:
         self.version = version
@@ -32,11 +42,12 @@ class TestDeprecationUtils(UnitxtTestCase):
         def some_deprecated_function():
             return "I'm deprecated but not yet obsolete."
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            result = some_deprecated_function()
-            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
-            self.assertEqual(result, "I'm deprecated but not yet obsolete.")
+        with EnsureWarnings():
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                result = some_deprecated_function()
+                self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+                self.assertEqual(result, "I'm deprecated but not yet obsolete.")
 
     @patch("unitxt.deprecation_utils.constants", PatchConstants(version="2.0.0"))
     def test_deprecation_error(self):
@@ -57,12 +68,13 @@ class TestDeprecationUtils(UnitxtTestCase):
             def some_method(self):
                 return "method running"
 
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            obj = DeprecatedClass()
-            result = obj.some_method()
-            self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
-            self.assertEqual(result, "method running")
+        with EnsureWarnings():
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                obj = DeprecatedClass()
+                result = obj.some_method()
+                self.assertTrue(issubclass(w[-1].category, DeprecationWarning))
+                self.assertEqual(result, "method running")
 
     @patch("unitxt.deprecation_utils.constants", PatchConstants(version="3.0.0"))
     def test_class_deprecation_error(self):
