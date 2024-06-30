@@ -10,6 +10,11 @@
         "templates.summarization.abstractive.one_sentence",
         "templates.summarization.abstractive.passive",
         "templates.summarization.abstractive.write_succinct",
-        "templates.summarization.abstractive.title"
+        "templates.summarization.abstractive.title",
+        "templates.summarization.abstractive.instruct_full",
+        "templates.summarization.abstractive.instruct_one_sentence",
+        "templates.summarization.abstractive.instruct_passive",
+        "templates.summarization.abstractive.instruct_write_succinct",
+        "templates.summarization.abstractive.instruct_tldr"
     ]
 }

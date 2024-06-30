@@ -66,12 +66,11 @@
                     "wind power",
                     "year round schooling"
                 ],
-                "text_type": "argument",
-                "type_of_class": "topic"
+                "text_type": "argument"
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "language": "en",

@@ -6,7 +6,7 @@ from datasets import DatasetDict
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
-from .metric_utils import _compute
+from .metric_utils import _compute, _post_process
 from .operator import SourceOperator
 from .standard import StandardRecipe
 
@@ -91,6 +91,10 @@ def evaluate(predictions, data) -> List[Dict[str, Any]]:
     return _compute(predictions=predictions, references=data)
 
 
+def post_process(predictions, data) -> List[Dict[str, Any]]:
+    return _post_process(predictions=predictions, references=data)
+
+
 @lru_cache
 def _get_produce_with_cache(recipe_query):
     return get_dataset_artifact(recipe_query).produce
@@ -104,3 +108,10 @@ def produce(instance_or_instances, recipe_query):
     if not is_list:
         result = result[0]
     return result
+
+
+def infer(instance_or_instances, recipe, engine):
+    dataset = produce(instance_or_instances, recipe)
+    engine, _ = fetch_artifact(engine)
+    predictions = engine.infer(dataset)
+    return post_process(predictions, dataset)

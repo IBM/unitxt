@@ -8,8 +8,8 @@ from unitxt.formats import SystemFormat
 
 format = SystemFormat(
     demo_format="{source}\n\n{target_prefix}{target}\n\n",
-    model_input_format="<|begin_of_text|><|eot_id|><|start_header_id|>user<|end_header_id|>\n"
-    "{instruction}{demos}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n"
+    model_input_format="<|begin_of_text|><|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+    "{instruction}\\N{demos}{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
     "{target_prefix}",
 )
 

@@ -7,6 +7,10 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
             "__type__": "format_text",
             "text": "Official title of bill: {bill_title}\nOfficial summary of bill: {bill_summary}\nCompany name: {company_name}\nCompany business description: {company_description}",
             "to_field": "text"

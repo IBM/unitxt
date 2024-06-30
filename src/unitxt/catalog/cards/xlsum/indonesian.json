@@ -12,12 +12,6 @@
                 "text": "document",
                 "target": "summary"
             }
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "document_type": "document"
-            }
         }
     ],
     "task": "tasks.summarization.abstractive",

@@ -1,0 +1,5 @@
+{
+    "__type__": "hf_pipeline_based_inference_engine",
+    "model_name": "google/flan-t5-small",
+    "max_new_tokens": 32
+}

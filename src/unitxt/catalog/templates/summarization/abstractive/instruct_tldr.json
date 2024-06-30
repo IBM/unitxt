@@ -1,0 +1,6 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "TL;DR:",
+    "input_format": "{document}\nSummary:",
+    "output_format": "{summary}"
+}

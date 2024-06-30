@@ -1,0 +1,6 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "Summarize the following {document_type}.",
+    "input_format": "{document_type}:\n{document}\nSummary:\n",
+    "output_format": "{summary}"
+}

@@ -6,6 +6,7 @@ from unitxt.inference import (
 )
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
+from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -68,18 +69,17 @@ inference_model = HFPipelineBasedInferenceEngine(
 # loader=LoadFromDictionary(data=data,data_classification_policy=["public"]),
 
 predictions = inference_model.infer(test_dataset)
-dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 # Print results
-for sample, prediction in zip(dataset_with_scores, predictions):
-    logger.info("*" * 80)
-    logger.info(f"Model input:\n{sample['source']}")
-    logger.info(f"Model prediction (as returned by the model):\n{prediction}")
-    logger.info(f"Model prediction (after post processing):\n{sample['prediction']}")
-    logger.info(f"References:\n{sample['references']}")
-    score_name = sample["score"]["instance"]["score_name"]
-    score = sample["score"]["instance"]["score"]
-    logger.info(f"Sample score ({score_name}) : {score}")
-global_score = dataset_with_scores[0]["score"]["global"]["score"]
-logger.info("*" * 80)
-logger.info(f"Aggregated score ({score_name}) : {global_score}")
+for instance in evaluated_dataset:
+    print_dict(
+        instance,
+        keys_to_print=[
+            "source",
+            "prediction",
+            "processed_prediction",
+            "references",
+            "score",
+        ],
+    )
