@@ -14,7 +14,8 @@ jobs:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error
       DATASETS_VERBOSITY: error
-      HF_DATASETS_DISABLE_PROGRESS_BARS:
+      HF_HUB_VERBOSITY: error
+      HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
       TQDM_DISABLE: "True"
 
     steps:
