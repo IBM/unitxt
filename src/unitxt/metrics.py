@@ -634,12 +634,9 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         self.aggregator.score_names = [self.main_score]
         gs = self.aggregator.aggregate(instances=instances)
 
-        if (
-            self.n_resamples is not None
-            and self.n_resamples > 0
-            and self.ci_scores is not None
-            and len(self.ci_scores) > 0
-        ):
+        if self.n_resamples is not None and self.n_resamples > 0:
+            if self.ci_scores is None:
+                self.ci_scores = [self.main_score]
             (
                 instances_to_sample_from,
                 sample_aggregator,
