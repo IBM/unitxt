@@ -14,8 +14,8 @@ for to_shuffle in [True, False]:
             " and a score rubric representing a evaluation criteria are given.\n"
             "1. Write a detailed feedback that assess the quality of two responses strictly based on the given score rubric, not evaluating in general.\n"
             "2. After writing a feedback, choose a better response between Response A and Response B. You should refer to the score rubric.\n"
-            "3. The output format should look as follows: \"Feedback: (write a feedback for criteria) [RESULT] (A or B)\"\n"
-            "4. Please do not generate any other opening, closing, and explanations.\n\n" 
+            '3. The output format should look as follows: "Feedback: (write a feedback for criteria) [RESULT] (A or B)"\n'
+            "4. Please do not generate any other opening, closing, and explanations.\n\n"
             "###Instruction:\n"
             "Please act as an impartial judge and evaluate the quality of the responses provided by two AI\n"
             " assistants to the user prompt displayed below. You will be given assistant A's answer and"
@@ -32,8 +32,8 @@ for to_shuffle in [True, False]:
             " clear and not verbose or excessive.\n\nThen consider the creativity and novelty of the"
             " assistant's answers when needed. Finally, identify any missing important information in"
             " the assistants' answers that would be beneficial to include when responding to the user"
-            " prompt."
-            "\n{question}\n\n"
+            " prompt.",
+            input_format="\n{question}\n\n"
             "###Response A:\n"
             "{answer_a}\n\n"
             "###Response B:\n"
