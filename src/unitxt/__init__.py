@@ -22,6 +22,3 @@ local_catalog_path = constants.local_catalog_path
 
 dataset_url = constants.dataset_url
 metric_url = constants.metric_url
-
-if settings.default_verbosity in ["error", "critical"]:
-    warnings.filterwarnings("ignore")
