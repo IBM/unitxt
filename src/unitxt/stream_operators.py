@@ -90,9 +90,6 @@ class JoinStreams(MultiStreamOperator):
         left_on = self.left_on if self.left_on is not None else []
         right_on = self.right_on if self.right_on is not None else []
         on_cols = set(on + left_on + right_on)
-        col_to_remove = list(common_cols - on_cols)
-        left_stream_df = left_stream_df.drop(columns=col_to_remove, errors="ignore")
-        right_stream_df = right_stream_df.drop(columns=col_to_remove, errors="ignore")
 
         merged_df = pd.merge(
             left_stream_df,
@@ -102,6 +99,24 @@ class JoinStreams(MultiStreamOperator):
             left_on=self.left_on,
             right_on=self.right_on,
         )
+
+        def assert_col_values_are_identical(
+            df: pd.DataFrame, col_name_1: str, col_name_2
+        ):
+            assert df.apply(
+                lambda row: str(row[col_name_1]) == str(row[col_name_2]),
+                axis=1,
+            ).all()
+
+        common_cols_to_verify = list(common_cols - on_cols)
+        for common_col in common_cols_to_verify:
+            assert_col_values_are_identical(
+                merged_df, f"{common_col}_x", f"{common_col}_y"
+            )
+            merged_df[common_col] = merged_df[f"{common_col}_x"]
+            merged_df = merged_df.drop(
+                columns=[f"{common_col}_x", f"{common_col}_y"], errors="ignore"
+            )
 
         assert len(merged_df) > 0, "JoinStreams resulted in an empty stream."
         return merged_df.to_dict(orient="records")
