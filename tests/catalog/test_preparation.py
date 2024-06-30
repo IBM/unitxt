@@ -36,32 +36,37 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                 f"  Testing preparation file:\n  {file}."
                 "\n_____________________________________________\n"
             )
-            logger.critical(f"Testing file: {file}")
-
-            start_time = time.time()
-            with self.subTest(file=file):
-                try:
-                    import_module_from_file(file)
-                except (MissingKaggleCredentialsError, GatedRepoError) as e:
-                    logger.info(f"Skipping file {file} due to ignored error {e}")
-                    continue
-                except OSError as e:
-                    if "You are trying to access a gated repo" in str(e):
+            try:
+                start_time = time.time()
+                with self.subTest(file=file):
+                    try:
+                        import_module_from_file(file)
+                    except (MissingKaggleCredentialsError, GatedRepoError) as e:
                         logger.info(f"Skipping file {file} due to ignored error {e}")
                         continue
-                    raise
-                logger.info(f"Testing preparation file: {file} passed")
-                self.assertTrue(True)
+                    except OSError as e:
+                        if "You are trying to access a gated repo" in str(e):
+                            logger.info(
+                                f"Skipping file {file} due to ignored error {e}"
+                            )
+                            continue
+                        raise
+                    logger.info(f"Testing preparation file: {file} passed")
+                    self.assertTrue(True)
 
-            elapsed_time = time.time() - start_time
-            formatted_time = str(timedelta(seconds=elapsed_time))
-            logger.info(
-                "\n_____________________________________________\n"
-                f"  Finished testing preparation file:\n  {file}."
-                f"  Preparation Time: {formatted_time}"
-                "\n_____________________________________________\n"
-            )
+                elapsed_time = time.time() - start_time
+                formatted_time = str(timedelta(seconds=elapsed_time))
+                logger.info(
+                    "\n_____________________________________________\n"
+                    f"  Finished testing preparation file:\n  {file}."
+                    f"  Preparation Time: {formatted_time}"
+                    "\n_____________________________________________\n"
+                )
 
-            times[file] = formatted_time
+                times[file] = formatted_time
+            except Exception as e:
+                logger.critical(f"Testing preparation file '{file}' failed:")
+                raise e
+
         logger.critical("Preparation times table:")
         print_dict(times, log_level="critical")
