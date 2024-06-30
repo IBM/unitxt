@@ -31,7 +31,11 @@ class TestExamples(UnitxtTestCase):
         times = {}
         all_example_files.sort()
 
-        excluded_files = ["use_llm_as_judje_metric.py"]
+        excluded_files = [
+            "use_llm_as_judge_metric.py",
+            "standalone_evaluation_llm_as_judge.py",
+            "evaluate_different_formats.py",
+        ]
         for file in all_example_files:
             logger.info(
                 "\n_____________________________________________\n"
@@ -55,5 +59,5 @@ class TestExamples(UnitxtTestCase):
             )
 
             times[file] = formatted_time
-        logger.info("Examplexamples table:")
+        logger.info("Example table:")
         print_dict(times)
