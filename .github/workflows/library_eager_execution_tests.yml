@@ -13,6 +13,8 @@ jobs:
     env:
       OS: ubuntu-latest
       UNITXT_USE_EAGER_EXECUTION: True
+      UNITXT_DEFAULT_VERBOSITY: error
+
 
     steps:
     - uses: actions/checkout@v4
