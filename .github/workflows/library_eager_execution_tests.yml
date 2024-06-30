@@ -14,6 +14,7 @@ jobs:
       OS: ubuntu-latest
       UNITXT_USE_EAGER_EXECUTION: True
       UNITXT_DEFAULT_VERBOSITY: error
+      DATASETS_VERBOSITY: error
 
 
     steps:
