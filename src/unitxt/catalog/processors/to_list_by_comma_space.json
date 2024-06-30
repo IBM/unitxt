@@ -1,0 +1,15 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "to_list_by_comma_space",
+            "field": "prediction",
+            "process_every_value": false
+        },
+        {
+            "__type__": "to_list_by_comma_space",
+            "field": "references",
+            "process_every_value": true
+        }
+    ]
+}
