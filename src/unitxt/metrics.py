@@ -2137,7 +2137,6 @@ class Detector(BulkInstanceMetric):
 class LlamaIndexLLMMetric(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
-    metric_name_prefix: str = ""
     prediction_type: str = "str"
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
@@ -2152,7 +2151,7 @@ class LlamaIndexLLMMetric(InstanceMetric):
 
     def prepare(self):
         self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
-        self.main_score: str = f"{self.metric_name_prefix}_llama_index_by_{self.model_name_normalized}_judge"
+        self.main_score: str = f"llama_index_by_{self.model_name_normalized}_judge"
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
@@ -2176,7 +2175,7 @@ class LlamaIndexLLMMetric(InstanceMetric):
 class LlamaIndexCorrectness(LlamaIndexLLMMetric):
     """LlamaIndex based metric class for evaluating correctness."""
 
-    metric_name_prefix = "correctness"
+    score_prefix = "correctness_"
 
     @staticmethod
     def _custom_parser(eval_response: str):
@@ -2254,7 +2253,7 @@ class LlamaIndexCorrectness(LlamaIndexLLMMetric):
 class LlamaIndexFaithfulness(LlamaIndexLLMMetric):
     """LlamaIndex based metric class for evaluating faithfulness."""
 
-    metric_name_prefix = "faithfulness"
+    score_prefix = "faithfulness_"
     reference_field = "contexts"  # metric doesn't require reference answers
 
     def prepare(self):
