@@ -25,9 +25,9 @@ Disadvantages of LLM as Judge
 While LLMs as Judges are powerful and effective in many cases, they have some drawbacks:
     1. Good LLM as Judges are often large models with relatively high inference latency.
     2. Deploying large LLMs is difficult and may require API access to external services.
-    3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgement and can also be biased.
-       This means that unless you have prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgement and see they
-       match your expections . 
+    3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgements and can also be biased.
+       This means that unless you have a prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgements and see they
+       match your expections. 
 
 
 Using LLMs
