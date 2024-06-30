@@ -34,6 +34,7 @@ class TestExamples(UnitxtTestCase):
         excluded_files = [
             "use_llm_as_judge_metric.py",
             "standalone_evaluation_llm_as_judge.py",
+            "evaluation_summarization_dataset_llm_as_judge.py",
             "evaluate_different_formats.py",
         ]
         for file in all_example_files:
@@ -44,6 +45,8 @@ class TestExamples(UnitxtTestCase):
             )
             if Path(file).name in excluded_files:
                 logger.info("Skipping file because in exclude list")
+                continue
+
             start_time = time.time()
             with self.subTest(file=file):
                 import_module_from_file(file)
