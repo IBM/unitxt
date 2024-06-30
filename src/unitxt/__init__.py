@@ -24,4 +24,4 @@ dataset_url = constants.dataset_url
 metric_url = constants.metric_url
 
 if settings.default_verbosity in ["error", "critical"]:
-    warnings.simplefilter("ignore", DeprecationWarning)
+    warnings.filterwarnings("ignore")
