@@ -149,13 +149,7 @@ for subset in get_dataset_config_names(
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
             ),
             RenameFields(field_to_field={"topics": "labels"}),
-            Set(
-                fields={
-                    "classes": classlabels[subset],
-                    "text_type": "text",
-                    "type_of_classes": "topics",
-                }
-            ),
+            Set(fields={"classes": classlabels[subset], "type_of_classes": "topics"}),
         ],
         task="tasks.classification.multi_label",
         templates="templates.classification.multi_label.all",

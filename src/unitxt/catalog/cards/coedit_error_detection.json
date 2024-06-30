@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "grammarly/coedit",
         "streaming": true,
         "filtering_lambda": "lambda x: x['task'] == 'gec'"
@@ -9,22 +9,22 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "split",
+            "__type__": "split",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "slice",
+            "__type__": "slice",
             "field": "src",
             "start": 1
         },
         {
-            "type": "join",
+            "__type__": "join",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "tgt",
                 "src"
@@ -32,25 +32,24 @@
             "to_field": "correct_and_incorrect"
         },
         {
-            "type": "duplicate_by_list",
+            "__type__": "duplicate_by_list",
             "field": "correct_and_incorrect",
             "to_field": "text"
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "index_of": "text",
             "search_in": "correct_and_incorrect",
             "to_field": "label"
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
-                "class": "Grammatically incorrect",
-                "text_type": "text"
+                "class": "Grammatically incorrect"
             }
         },
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         }
     ],

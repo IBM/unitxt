@@ -35,3 +35,22 @@ add_to_catalog(
     "tasks.regression.two_texts",
     overwrite=True,
 )
+
+add_to_catalog(
+    Task(
+        inputs={
+            "text1": "str",
+            "text2": "str",
+            "attribute_name": "str",
+            "min_value": "Optional[float]",
+            "max_value": "Optional[float]",
+        },
+        outputs={"attribute_value": "float"},
+        prediction_type="Any",
+        metrics=["metrics.spearman"],
+        augmentable_inputs=["text1", "text2"],
+        defaults={"attribute_name": "similarity"},
+    ),
+    "tasks.regression.two_texts.similarity",
+    overwrite=True,
+)

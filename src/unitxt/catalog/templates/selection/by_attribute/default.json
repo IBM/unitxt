@@ -1,5 +1,5 @@
 {
-    "type": "multiple_choice_template",
+    "__type__": "multiple_choice_template",
     "instruction": "Which of the {choices_text_type} is the most {required_attribute}, please respond with: {numerals}.",
     "input_format": "{choices_text_type}:\n{choices_texts}",
     "target_prefix": "Most {required_attribute}:\n",

@@ -1452,7 +1452,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
-        format = "formats.llama3_chat"
+        format = "formats.llama3_instruct"
         task = "rating.single_turn"
         template = "templates.response_assessment.rating.mt_bench_single_turn"
 

@@ -1,15 +1,15 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "regex_parser",
+            "__type__": "regex_parser",
             "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
             "termination_regex": "^\\s*None\\s*$",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "regex_parser",
+            "__type__": "regex_parser",
             "regex": "\\s*((?:\\\\.|[^,])+?)\\s*(?:,|$)()",
             "termination_regex": "^\\s*None\\s*$",
             "field": "references",

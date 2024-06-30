@@ -1,8 +1,8 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "yes_to_one_else_zero",
+            "__type__": "yes_to_one_else_zero",
             "field": "prediction",
             "process_every_value": false
         }

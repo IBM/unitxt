@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "lower_case",
+            "__type__": "lower_case",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "lower_case",
+            "__type__": "lower_case",
             "field": "references",
             "process_every_value": true
         }

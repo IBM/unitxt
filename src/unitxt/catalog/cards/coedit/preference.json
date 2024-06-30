@@ -1,38 +1,38 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "grammarly/coedit",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         "splitters.small_no_test",
         {
-            "type": "split",
+            "__type__": "split",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "slice",
+            "__type__": "slice",
             "field": "src",
             "start": 1
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "src/0",
             "to_field": "instruction"
         },
         {
-            "type": "join",
+            "__type__": "join",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "tgt",
                 "src"
@@ -40,18 +40,18 @@
             "to_field": "choices"
         },
         {
-            "type": "shuffle_field_values",
+            "__type__": "shuffle_field_values",
             "field": "choices"
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "output_type": "sentence",
                 "input_type": "sentence"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "src": "input",
                 "tgt": "output_choice"

@@ -1,15 +1,15 @@
 {
-    "type": "llm_as_judge",
+    "__type__": "llm_as_judge",
     "inference_model": {
-        "type": "ibm_gen_ai_inference_engine",
+        "__type__": "ibm_gen_ai_inference_engine",
         "model_name": "meta-llama/llama-3-70b-instruct",
         "parameters": {
-            "type": "ibm_gen_ai_inference_engine_params",
+            "__type__": "ibm_gen_ai_inference_engine_params",
             "max_new_tokens": 252
         }
     },
     "template": "templates.safety.unsafe_content",
     "task": "rating.single_turn",
-    "format": "formats.llama3_chat",
+    "format": "formats.llama3_instruct",
     "main_score": "llama_3_70b_instruct_ibm_genai_template_unsafe_content"
 }

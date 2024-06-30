@@ -1,26 +1,26 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "openbookqa"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "choices/text": "choices_text",
                 "choices/label": "labels"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "choices_text": "choices",
                 "question_stem": "question"
             }
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "search_in": "labels",
             "index_of": "answerKey",
             "to_field": "answer"

@@ -1,0 +1,10 @@
+{
+    "__type__": "multiple_choice_template",
+    "input_format": "Question: {question}\n{choices}\n",
+    "target_prefix": "Answer: ",
+    "target_field": "answer",
+    "choices_separator": "\n",
+    "postprocessors": [
+        "processors.first_character"
+    ]
+}

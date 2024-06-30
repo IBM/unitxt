@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "piqa"
     },
     "preprocess_steps": [
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "sol1",
                 "sol2"
@@ -14,7 +14,7 @@
             "to_field": "choices"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "goal": "question",
                 "label": "answer"

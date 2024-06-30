@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "hellaswag"
     },
     "preprocess_steps": [
         "splitters.large_no_test",
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "ctx": "context",
                 "activity_label": "topic",
@@ -15,19 +15,19 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "label": "answer"
             }
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "sentence"
             }

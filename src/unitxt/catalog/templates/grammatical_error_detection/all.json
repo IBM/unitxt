@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.grammatical_error_detection.yes_no"
     ]

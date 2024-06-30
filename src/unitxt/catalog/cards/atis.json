@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "tuetschek/atis"
     },
     "preprocess_steps": [
         {
-            "type": "split_strip",
+            "__type__": "split_strip",
             "delimiter": " ",
             "field_to_field": {
                 "slots": "labels",
@@ -14,7 +14,7 @@
             }
         },
         {
-            "type": "iob_extractor",
+            "__type__": "iob_extractor",
             "labels": [
                 "aircraft_code",
                 "airline_code",
@@ -261,7 +261,7 @@
             "outside_label": "O"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",
@@ -271,10 +271,8 @@
             "not_exist_ok": true
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
-                "text_type": "text",
-                "class_type": "entity type",
                 "classes": [
                     "aircraft_code",
                     "airline_code",

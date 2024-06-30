@@ -1,5 +1,5 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
         "templates.qa.multiple_choice.with_context.with_topic.es.mmlu",
         "templates.qa.multiple_choice.with_context.with_topic.es.helm",

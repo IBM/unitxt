@@ -1,5 +1,5 @@
 {
-    "type": "system_format",
+    "__type__": "system_format",
     "demo_format": "Human: {source}\nAssistant: {target_prefix}{target}\n\n",
     "model_input_format": "{system_prompt}{instruction}\n{demos}Human: {source}\nAssistant: {target_prefix}"
 }

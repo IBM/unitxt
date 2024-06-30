@@ -23,7 +23,6 @@ card = TaskCard(
         Set(
             fields={
                 "classes": classes,
-                "text_type": "text",
                 "type_of_classes": "emotions",
             }
         ),

@@ -1,5 +1,5 @@
 {
-    "type": "task",
+    "__type__": "task",
     "inputs": {
         "text_a": "str",
         "text_a_type": "str",
@@ -20,5 +20,9 @@
     "augmentable_inputs": [
         "text_a",
         "text_b"
-    ]
+    ],
+    "defaults": {
+        "text_a_type": "first text",
+        "text_b_type": "second text"
+    }
 }

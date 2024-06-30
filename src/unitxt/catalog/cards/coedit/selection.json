@@ -1,34 +1,34 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "grammarly/coedit",
         "streaming": true,
         "filtering_lambda": "lambda x: x['task'] in ['gec', 'simplification', 'coherence', 'neutralize']"
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         "splitters.small_no_test",
         {
-            "type": "split",
+            "__type__": "split",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "slice",
+            "__type__": "slice",
             "field": "src",
             "start": 1
         },
         {
-            "type": "join",
+            "__type__": "join",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "tgt",
                 "src"
@@ -36,16 +36,16 @@
             "to_field": "choices_texts"
         },
         {
-            "type": "shuffle_field_values",
+            "__type__": "shuffle_field_values",
             "field": "choices_texts"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "task",
             "to_field": "required_attribute"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "required_attribute": {
                     "gec": "grammatically correct",
@@ -56,12 +56,12 @@
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "task",
             "to_field": "attribute_type"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "attribute_type": {
                     "gec": "gramaticity",
@@ -72,13 +72,13 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "choices_text_type": "sentences"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "tgt": "choice"
             }

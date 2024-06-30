@@ -1,15 +1,15 @@
 {
-    "type": "dialog_template",
+    "__type__": "dialog_template",
     "dialog_fields": [
         {
-            "type": "dialog_fields_data",
+            "__type__": "dialog_fields_data",
             "dialog_field": "reference_dialog",
             "assistant_role_label": "### Reference answer:",
             "user_role_label": "### User:",
             "system_role_label": "### System:"
         },
         {
-            "type": "dialog_fields_data",
+            "__type__": "dialog_fields_data",
             "dialog_field": "dialog",
             "assistant_role_label": "### Assistant A:",
             "user_role_label": "### User:",
