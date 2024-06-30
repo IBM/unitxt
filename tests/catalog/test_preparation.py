@@ -25,7 +25,7 @@ all_preparation_files = glob.glob(glob_query, recursive=True)
 class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
-        logger.info(f"Testing preparation files: {all_preparation_files}")
+        logger.critical(f"Testing preparation files: {all_preparation_files}")
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         times = {}
@@ -36,6 +36,8 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                 f"  Testing preparation file:\n  {file}."
                 "\n_____________________________________________\n"
             )
+            logger.critical(f"Testing file: {file}")
+
             start_time = time.time()
             with self.subTest(file=file):
                 try:
@@ -61,5 +63,5 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
             )
 
             times[file] = formatted_time
-        logger.info("Preparation times table:")
-        print_dict(times)
+        logger.critical("Preparation times table:")
+        print_dict(times, log_level="critical")
