@@ -15,7 +15,8 @@ jobs:
       UNITXT_USE_EAGER_EXECUTION: True
       UNITXT_DEFAULT_VERBOSITY: error
       DATASETS_VERBOSITY: error
-
+      HF_DATASETS_DISABLE_PROGRESS_BARS:
+      TQDM_DISABLE: "True"
 
     steps:
     - uses: actions/checkout@v4
