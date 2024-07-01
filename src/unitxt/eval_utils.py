@@ -7,7 +7,6 @@ from .artifact import verbosed_fetch_artifact
 from .metric_utils import get_remote_metrics_endpoint, get_remote_metrics_names
 from .operator import SequentialOperator
 from .stream import MultiStream
-from .test_utils.metrics import check_scores
 
 
 @singledispatch
@@ -83,26 +82,3 @@ def as_remote_metric(metric):
             f"Remotely executed metrics should be MetricPipeline objects."
         )
     return metric
-
-
-def test_evaluate(
-    global_target: dict,
-    instance_targets: List[dict],
-    task_data: Optional[List[dict]],
-    metric_name: str,
-    score_name: str,
-):
-    evaluation_result, global_outputs = evaluate(
-        task_data, metric_names=[metric_name], compute_conf_intervals=True
-    )
-    instance_outputs = [
-        {
-            score_name: result[metric_name],
-            "score": result[metric_name],
-            "score_name": score_name,
-        }
-        for result in evaluation_result
-    ]
-    check_scores(
-        global_target, instance_targets, global_outputs[metric_name], instance_outputs
-    )

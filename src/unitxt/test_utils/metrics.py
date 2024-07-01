@@ -1,6 +1,7 @@
 import json
 from typing import Any, List, Optional
 
+from ..eval_utils import evaluate
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..settings_utils import get_settings
@@ -138,3 +139,26 @@ def check_scores(
         )
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))
+
+
+def test_evaluate(
+    global_target: dict,
+    instance_targets: List[dict],
+    task_data: Optional[List[dict]],
+    metric_name: str,
+    score_name: str,
+):
+    evaluation_result, global_outputs = evaluate(
+        task_data, metric_names=[metric_name], compute_conf_intervals=True
+    )
+    instance_outputs = [
+        {
+            score_name: result[metric_name],
+            "score": result[metric_name],
+            "score_name": score_name,
+        }
+        for result in evaluation_result
+    ]
+    check_scores(
+        global_target, instance_targets, global_outputs[metric_name], instance_outputs
+    )

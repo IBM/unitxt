@@ -1,9 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.collections_operators import Wrap
-from unitxt.eval_utils import test_evaluate
 from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy, RenameFields
-from unitxt.test_utils.metrics import test_metric
+from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 for metric_name, catalog_name in [
     ("map", "metrics.rag.map"),
