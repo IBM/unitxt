@@ -1,3 +1,5 @@
+import sys
+
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
@@ -5,9 +7,23 @@ from unitxt.operators import (
     GetItemByIndex,
     RenameFields,
     Set,
+    Shuffle,
 )
 from unitxt.span_lableing_operators import IobExtractor
 from unitxt.test_utils.card import test_card
+
+debug = True
+if debug:
+    from unitxt import load_dataset
+
+    ds = load_dataset(
+        "card=cards.universal_ner.en.ewt,metrics=[metrics.ner[zero_division=1.0]],demos_pool_size=10000,num_demos=5,format=formats.llama3_chat,template=templates.span_labeling.extraction.title,system_prompt=system_prompts.empty,"
+        "train_refiner=operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]"
+        ",demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True,max_test_instances=50"
+    )
+
+    ds["test"]["source"][0]
+
 
 sub_tasks = [
     "ceb_gja",
@@ -48,6 +64,7 @@ for sub_task in sub_tasks:
             requirements_list=["conllu"],
         ),
         preprocess_steps=[
+            Shuffle(page_size=sys.maxsize),
             RenameFields(
                 field_to_field={"ner_tags": "labels"},
             ),

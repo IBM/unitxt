@@ -1,0 +1,9 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "extract_arena_hard_numerical_judgment",
+            "field": "prediction"
+        }
+    ]
+}
