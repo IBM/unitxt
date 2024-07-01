@@ -9,7 +9,10 @@ from unitxt.templates import MultiReferenceTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="wikitablequestions", data_classification_policy=["public"]),
+    # Adjust the num_proc value according to the number of CPU cores available for faster loading
+    loader=LoadHF(
+        path="wikitablequestions", data_classification_policy=["public"], num_proc=10
+    ),
     preprocess_steps=[
         Set({"context_type": "table"}),
         ## truncate only if needed as it can impact evaluation results.

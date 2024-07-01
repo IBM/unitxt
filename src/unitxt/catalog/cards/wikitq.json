@@ -5,7 +5,8 @@
         "path": "wikitablequestions",
         "data_classification_policy": [
             "public"
-        ]
+        ],
+        "num_proc": 10
     },
     "preprocess_steps": [
         {
