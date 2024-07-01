@@ -1,7 +1,9 @@
 from unitxt import add_to_catalog
+from unitxt.logging_utils import get_logger
 from unitxt.metrics import IsCodeMixed
 from unitxt.test_utils.metrics import test_metric
 
+logger = get_logger()
 examples = [
     "You say goodbye, and I say hello",
     "Hello how are you won't you tell me your name?",
@@ -29,13 +31,19 @@ global_target = {
     "score_ci_low": 0.22,
     "score_name": "is_code_mixed",
 }
+
 metric = IsCodeMixed()
-outputs = test_metric(
-    metric=metric,
-    predictions=examples,
-    references=[[""] for _ in examples],
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+
+device = metric.inference_model.model.device.type
+if device not in ["cuda", "mps"]:
+    logger.info("no gpu available, cannot test metric")
+else:
+    outputs = test_metric(
+        metric=metric,
+        predictions=examples,
+        references=[[""] for _ in examples],
+        instance_targets=instance_targets,
+        global_target=global_target,
+    )
 
 add_to_catalog(metric, "metrics.is_code_mixed", overwrite=True)
