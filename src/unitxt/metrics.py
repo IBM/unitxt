@@ -434,9 +434,8 @@ class GlobalMetricAggregator(Aggregator):
 class ConfidenceIntervalComputer(Artifact):
     """Generates samples from the input instances, then aggregates each sample, and returns the percentiles."""
 
-    # to carry all properties that now are set, from all over unitxt, through metrics,
-    # e.g. n_samples, and ci_scores
-    metric: MetricWithConfidenceInterval
+    n_resamples: int = None
+    ci_scores: List[str] = None
 
     confidence_level: float = 0.95
     instances_to_sample_from: List[Dict[str, Any]]
@@ -453,9 +452,7 @@ class ConfidenceIntervalComputer(Artifact):
         self, instances: List[Dict[str, Any]]
     ) -> bool:
         return (
-            self.metric.n_resamples is not None
-            and self.metric.n_resamples > 1
-            and len(instances) > 1
+            self.n_resamples is not None and self.n_resamples > 1 and len(instances) > 1
         )
 
     def resample_from_non_nan(self, values):
@@ -508,7 +505,7 @@ class ConfidenceIntervalComputer(Artifact):
 
         result = {}
 
-        for score_name in self.metric.ci_scores:
+        for score_name in self.ci_scores:
             if not isinstance(
                 self.aggregator, GlobalMetricAggregator
             ) and self._all_instance_scores_equal(
@@ -539,7 +536,7 @@ class ConfidenceIntervalComputer(Artifact):
                 ci = bootstrap(
                     (self.instances_to_sample_from,),
                     statistic=statistic,
-                    n_resamples=self.metric.n_resamples,
+                    n_resamples=self.n_resamples,
                     confidence_level=self.confidence_level,
                     random_state=self.new_random_generator(),
                 ).confidence_interval
@@ -635,7 +632,8 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 instances
             )
             confidence_interval_computer = ConfidenceIntervalComputer(
-                metric=self,
+                n_resamples=self.n_resamples,
+                ci_scores=self.ci_scores,
                 instances_to_sample_from=instances_to_sample_from,
                 aggregator=sample_aggregator,
             )
@@ -770,7 +768,8 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instances
             )
             confidence_interval_computer = ConfidenceIntervalComputer(
-                metric=self,
+                n_resamples=self.n_resamples,
+                ci_scores=self.ci_scores,
                 instances_to_sample_from=instances_to_sample_from,
                 aggregator=sample_aggregator,
             )
@@ -857,7 +856,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instances
             )
             confidence_interval_computer = ConfidenceIntervalComputer(
-                metric=self,
+                n_resamples=self.n_resamples,
+                ci_scores=self.ci_scores,
                 instances_to_sample_from=instances_to_sample_from,
                 aggregator=sample_aggregator,
             )
