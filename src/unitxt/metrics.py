@@ -690,6 +690,8 @@ class WeightedWinRateCorrelation(GlobalMetric):
     main_score = "spearman_corr"
     average = None  # Report per class then aggregate by mean
     metric = "weighted_win_rate_correlation"
+    # prediction_type = "int"
+    # single_reference_per_prediction = True
 
     # prediction_type = "int"
 
