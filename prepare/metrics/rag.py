@@ -316,20 +316,6 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.correctness
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
-for metric_name, catalog_name in [
-    ("map", "metrics.rag.map"),
-    ("mrr", "metrics.rag.mrr"),
-    ("mrr", "metrics.rag.context_correctness"),
-]:
-    metric = MetricPipeline(
-        main_score="score",
-        preprocess_steps=[
-            Copy(field="context_ids", to_field="prediction"),
-            Copy(field="ground_truths_context_ids", to_field="references"),
-        ],
-        metric=f"metrics.{metric_name}",
-    )
-    add_to_catalog(metric, catalog_name, overwrite=True)
 context_relevance = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
