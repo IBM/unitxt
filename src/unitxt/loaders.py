@@ -74,7 +74,7 @@ class Loader(SourceOperator):
     Args:
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
-        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
+        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading. Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
     """
 
     loader_limit: int = None
