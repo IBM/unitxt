@@ -146,16 +146,13 @@ def test_evaluate(
     instance_targets: List[dict],
     task_data: Optional[List[dict]],
     metric_name: str,
-    score_name: str,
 ):
     evaluation_result, global_outputs = evaluate(
         task_data, metric_names=[metric_name], compute_conf_intervals=True
     )
     instance_outputs = [
         {
-            score_name: result[metric_name],
             "score": result[metric_name],
-            "score_name": score_name,
         }
         for result in evaluation_result
     ]

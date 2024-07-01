@@ -60,18 +60,19 @@ mrr_global_target = {
     "score_name": "mrr",
 }
 
-for metric_name, catalog_name, global_target, instance_targets in [
-    ("map", "metrics.rag.map", map_global_target, map_instance_targets),
-    ("mrr", "metrics.rag.mrr", mrr_global_target, mrr_instance_targets),
-    ("mrr", "metrics.rag.context_correctness", mrr_global_target, mrr_instance_targets),
+for catalog_name, global_target, instance_targets in [
+    ("metrics.rag.map", map_global_target, map_instance_targets),
+    ("metrics.rag.mrr", mrr_global_target, mrr_instance_targets),
+    ("metrics.rag.context_correctness", mrr_global_target, mrr_instance_targets),
 ]:
     # test the evaluate call
     test_evaluate(
         global_target,
-        instance_targets,
-        task_data,
+        instance_targets=[
+            {"score": instance["score"]} for instance in instance_targets
+        ],
+        task_data=task_data,
         metric_name=catalog_name,
-        score_name=metric_name,
     )
 
     # test using the usual metric pipeline
