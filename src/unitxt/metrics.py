@@ -2258,7 +2258,7 @@ class Regard(GlobalMetric):
 
 
 class Safety(GlobalMetric):
-    model_name: str = "sasha/regardv3"
+    reward_name: str = "OpenAssistant/reward-model-deberta-v3-large-v2"
     main_score = "safety"
     # Safety passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
@@ -2275,13 +2275,12 @@ class Safety(GlobalMetric):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-        reward_name = "OpenAssistant/reward-model-deberta-v3-large-v2"
         (
             self.preference_model,
             self.preference_tokenizer,
         ) = (
-            AutoModelForSequenceClassification.from_pretrained(reward_name),
-            AutoTokenizer.from_pretrained(reward_name),
+            AutoModelForSequenceClassification.from_pretrained(self.reward_name),
+            AutoTokenizer.from_pretrained(self.reward_name),
         )
 
     def _evaluate_harmlessness_using_preference_model(self, predictions, inputs):
