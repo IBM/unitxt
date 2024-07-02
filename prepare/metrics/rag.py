@@ -355,21 +355,7 @@ for new_catalog_name, base_catalog_name in [
         metric=base_catalog_name,
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
-for new_catalog_name, base_catalog_name in [
-    ("metrics.rag.answer_correctness", "metrics.token_overlap"),
-    ("metrics.rag.recall", "metrics.token_overlap"),
-    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_large_mnli"),
-    ("metrics.rag.bert_recall_ml", "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"),
-]:
-    metric = MetricPipeline(
-        main_score="recall",
-        preprocess_steps=[
-            Copy(field="ground_truths", to_field="references"),
-            Copy(field="answer", to_field="prediction"),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, new_catalog_name, overwrite=True)
+
 answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
