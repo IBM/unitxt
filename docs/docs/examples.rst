@@ -51,6 +51,7 @@ Each example is a self contained python file that you can run and later modify.
    * - Evaluate an existing question-answering dataset from the Unitxt catalog, and evaluate it
      - Demonstrates how to evaluate an existing QA dataset (squad) using Huggingface
        datasets and evaluate APIs, with no installation required. By using predefined LLM as a judge metric.
+       The example shows using a judge which doesn't use the dataset reference, and a judge that do use the dataset references.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_dataset_by_llm_as_judge_no_install.py>`_
      - | :ref:`Evaluating datasets <evaluating_datasets>`.
        | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
@@ -60,6 +61,7 @@ Each example is a self contained python file that you can run and later modify.
      - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
    * - Evaluate an existing summarization dataset from the catalog with LLM as judge
      - Demonstrates how to evaluate a document summarization dataset by define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
+       The example shows using a judge which doesn't use the dataset reference, and a judge that do use the dataset references.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluation_summarization_dataset_llm_as_judge.py>`_
      - | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
