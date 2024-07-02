@@ -71,7 +71,7 @@ class LLMAsJudge(BulkInstanceMetric):
                 {
                     "question": input_instance,
                     "answer": prediction,
-                    "reference_answer": reference,
+                    "reference_answer": reference[0],
                     "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
