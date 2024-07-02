@@ -11,6 +11,7 @@ dialog = [
     {"user": "kkk", "system": ""},
 ]
 """
+
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat

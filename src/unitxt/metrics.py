@@ -682,6 +682,8 @@ class WeightedWinRateCorrelation(GlobalMetric):
     main_score = "spearman_corr"
     average = None  # Report per class then aggregate by mean
     metric = "weighted_win_rate_correlation"
+    # prediction_type = "int"
+    # single_reference_per_prediction = True
 
     # prediction_type = "int"
 
@@ -2330,9 +2332,7 @@ class Detector(BulkInstanceMetric):
         return self.pipe(predictions, batch_size=self.batch_size)
 
 
-class LlamaIndexCorrectness(InstanceMetric):
-    """LlamaIndex based metric class for evaluating correctness."""
-
+class LlamaIndexLLMMetric(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
     prediction_type: str = "str"
@@ -2346,6 +2346,34 @@ class LlamaIndexCorrectness(InstanceMetric):
     data_classification_policy = ["public"]
 
     _requirements_list: List[str] = ["llama_index"]
+
+    def prepare(self):
+        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
+        self.main_score: str = f"llama_index_by_{self.model_name_normalized}_judge"
+
+        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
+
+        if self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            self.llm = OpenAI("gpt-3.5-turbo")
+        elif self.model_name in self.mock_models:
+            from llama_index.core.llms.mock import MockLLM
+
+            self.llm = MockLLM(system_prompt="5")  # perfect score
+        else:
+            raise NotImplementedError(
+                f"LlamaIndexLLM metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
+            )
+
+    def _model_using_extrnal_api(self):
+        return self.model_name in self.external_api_models
+
+
+class LlamaIndexCorrectness(LlamaIndexLLMMetric):
+    """LlamaIndex based metric class for evaluating correctness."""
+
+    score_prefix = "correctness_"
 
     @staticmethod
     def _custom_parser(eval_response: str):
@@ -2370,37 +2398,14 @@ class LlamaIndexCorrectness(InstanceMetric):
         reasoning = reasoning_str.lstrip("\n")
         return score, reasoning
 
-    def _model_using_extrnal_api(self):
-        return self.model_name in self.external_api_models
-
     def prepare(self):
         """Initialization method for the metric. Initializes the CorrectnessEvaluator with the OpenAI model."""
         super().prepare()
 
-        self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
-        self.main_score: str = (
-            f"correctness_llama_index_by_{self.model_name_normalized}_judge"
-        )
-
-        self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
-
         from llama_index.core.evaluation import CorrectnessEvaluator
 
-        if self.model_name in self.openai_models:
-            from llama_index.llms.openai import OpenAI
-
-            llm = OpenAI("gpt-3.5-turbo")
-        elif self.model_name in self.mock_models:
-            from llama_index.core.llms.mock import MockLLM
-
-            llm = MockLLM(system_prompt="5")  # perfect score
-        else:
-            raise NotImplementedError(
-                f"LlamaIndexCorrectnessMetric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
-            )
-
         self.evaluator = CorrectnessEvaluator(
-            llm=llm, parser_function=self._custom_parser
+            llm=self.llm, parser_function=self._custom_parser
         )
 
     def compute(
@@ -2422,9 +2427,6 @@ class LlamaIndexCorrectness(InstanceMetric):
         Raises:
             AssertionError: If the input does not meet the expected format.
         """
-        # treat the references as the questions and the predictions as answers
-        # assume a single reference
-
         query = task_data["question"]
 
         contexts = None
@@ -2443,11 +2445,36 @@ class LlamaIndexCorrectness(InstanceMetric):
             )
         result = max([results.score for results in per_reference_results])
 
-        return {
-            self.main_score: result / 5,
-            # "score_name": self.main_score,
-            # "feedback": result.feedback, # removed since this cannot be tested
-        }
+        return {self.main_score: result / 5}
+
+
+class LlamaIndexFaithfulness(LlamaIndexLLMMetric):
+    """LlamaIndex based metric class for evaluating faithfulness."""
+
+    score_prefix = "faithfulness_"
+
+    def prepare(self):
+        """Initialization method for the metric. Initializes the FaithfulnessEvaluator with the OpenAI model."""
+        super().prepare()
+
+        from llama_index.core.evaluation import FaithfulnessEvaluator
+
+        self.evaluator = FaithfulnessEvaluator(llm=self.llm)
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: Dict,
+    ) -> Dict[str, Any]:
+        result = self.evaluator.evaluate(
+            query=task_data["question"],
+            response=prediction,
+            contexts=task_data["contexts"],
+        )
+        score = result.score
+
+        return {self.main_score: score}
 
 
 class Perplexity(BulkInstanceMetric):

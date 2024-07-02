@@ -6,7 +6,7 @@ import pkgutil
 import re
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union, final
+from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
     AbstractField,
@@ -433,7 +433,7 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-def fetch_artifact(artifact_rep):
+def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     if isinstance(artifact_rep, Artifact):
         return artifact_rep, None
     if Artifact.is_artifact_file(artifact_rep):

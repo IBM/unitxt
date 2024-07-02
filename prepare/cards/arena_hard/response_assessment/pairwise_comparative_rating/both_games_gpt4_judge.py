@@ -23,7 +23,6 @@ card = TaskCard(
             "judgment": "data/arena-hard-v0.1/model_judgment/gpt-4-1106-preview/*.jsonl",
         },
     ),
-    data_classification_policy=["public"],
     preprocess_steps=[
         "operators.arena_hard_hf_space_processing_steps",
         DuplicateSplit(split="test", to_split="game_2"),

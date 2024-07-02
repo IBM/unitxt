@@ -9,9 +9,6 @@
             "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
         }
     },
-    "data_classification_policy": [
-        "public"
-    ],
     "preprocess_steps": [
         {
             "__type__": "rename_fields",

@@ -13,19 +13,21 @@ jobs:
      env:
        OS: ubuntu-latest
        GENAI_KEY: "dummy"
+       UNITXT_DEFAULT_VERBOSITY: error
+       DATASETS_VERBOSITY: error
+       HF_HUB_VERBOSITY: error
+       HF_DATASETS_DISABLE_PROGRESS_BARS: True
+       TQDM_DISABLE: True
 
      steps:
      - uses: actions/checkout@v4
 
      - uses: actions/setup-python@v5
        with:
-         python-version: '3.10'
-         cache: 'pip' # caching pip dependencies
-     - run: pip install -r requirements/base.rqr
-     - run: pip install -r requirements/tests.rqr
-
-     - name: Install Unitxt From Source
-       run: pip install -e .
+         python-version: '3.9'
+         
+     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+     - run: uv pip install --system -e ".[tests]"
 
      - name: Run Tests
        run: python utils/prepare_all_artifacts.py

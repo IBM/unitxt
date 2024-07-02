@@ -94,7 +94,7 @@ class LLMAsJudge(BulkInstanceMetric):
                     "answer_b": reference[0],
                     "model_a": "input_model",
                     "model_b": "baseline_model",
-                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice
+                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice,
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -105,6 +105,15 @@ class LLMAsJudge(BulkInstanceMetric):
                 f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             )
         return instances
+
+    @staticmethod
+    def _add_metadata_to_judge_instances(
+        instances: List[List[Any]], task_data: List[Dict]
+    ):
+        for instance, data in zip(instances, task_data):
+            instance["data_classification_policy"] = data["metadata"][
+                "data_classification_policy"
+            ]
 
     def prepare(self):
         super().prepare()
@@ -148,6 +157,7 @@ class LLMAsJudge(BulkInstanceMetric):
         instances = self._get_instance_for_judge_model(
             input_instances, predictions, references
         )
+        self._add_metadata_to_judge_instances(instances, task_data)
 
         card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
         recipe_args = {

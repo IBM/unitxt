@@ -14,6 +14,7 @@ For key-value pairs, expected input format is:
 {"key1": "value1", "key2": value2, "key3": "value3"}
 ------------------------
 """
+
 import json
 import random
 from abc import ABC, abstractmethod

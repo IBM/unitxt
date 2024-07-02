@@ -9,7 +9,7 @@ model_list = [
     "meta-llama/llama-3-8b-instruct",
     "meta-llama/llama-3-70b-instruct",
 ]  # will point to llamaguard2
-format = "formats.llama3_chat"
+format = "formats.llama3_instruct"
 template = "templates.safety.unsafe_content"
 task = "rating.single_turn"
 
