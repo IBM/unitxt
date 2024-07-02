@@ -38,6 +38,7 @@ metric = LLMAsJudge(
     template=template,
     task="rating.single_turn_with_reference",
     format=format,
+    single_reference_per_prediction=True,
     main_score=metric_label,
 )
 

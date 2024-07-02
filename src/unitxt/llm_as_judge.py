@@ -71,11 +71,7 @@ class LLMAsJudge(BulkInstanceMetric):
                 {
                     "question": input_instance,
                     "answer": prediction,
-                    "reference_answer": str(
-                        reference
-                    ),  # since reference is a list[Str], we need to stringify it.
-                    # we can either stringify the list (as we do now), or take the
-                    # first element.
+                    "reference_answer": reference[0],
                     "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(

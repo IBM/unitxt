@@ -109,6 +109,7 @@ llm_judge_with_summary_metric = LLMAsJudge(
     template=judge_summary_rating_with_reference_template,
     task="rating.single_turn_with_reference",
     main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
+    single_reference_per_prediction=True,
     strip_system_prompt_and_format_from_inputs=False,
 )
 
