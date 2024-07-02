@@ -3798,10 +3798,6 @@ class IsCodeMixed(BulkInstanceMetric):
     _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
-        model_id = "Nexusflow/Starling-LM-7B-beta"
-        self.inference_model = HFPipelineBasedInferenceEngine(
-            model_name=model_id, max_new_tokens=1
-        )
         # the processing steps for preparing the prompt (instruction, answer prefix etc.)
         # that we send to the generative model
         self.processor = SequentialOperator(
@@ -3810,6 +3806,12 @@ class IsCodeMixed(BulkInstanceMetric):
                 "templates.language_identification.simple",
                 "formats.models.starling",
             ]
+        )
+
+    def before_process_multi_stream(self):
+        model_id = "Nexusflow/Starling-LM-7B-beta"
+        self.inference_model = HFPipelineBasedInferenceEngine(
+            model_name=model_id, max_new_tokens=1
         )
 
     def compute(

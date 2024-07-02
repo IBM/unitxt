@@ -1,3 +1,4 @@
+import torch
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import IsCodeMixed
@@ -34,8 +35,7 @@ global_target = {
 
 metric = IsCodeMixed()
 
-device = metric.inference_model.model.device.type
-if device not in ["cuda", "mps"]:
+if not torch.cuda.is_available() and not torch.backends.mps.is_available():
     logger.info("no gpu available, cannot test metric")
 else:
     outputs = test_metric(
