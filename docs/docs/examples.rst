@@ -50,7 +50,7 @@ Each example is a self contained python file that you can run and later modify.
      - Related documentation
    * - Evaluate an existing question-answering dataset from the Unitxt catalog, and evaluate it
      - Demonstrates how to evaluate an existing QA dataset (squad) using the Huggingface
-       datasets and evaluate APIs using predefined LLM as a judge metrics.
+       datasets and evaluate APIs and leveraging a predefine LLM as a judge metric.
      - `code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_dataset_by_llm_as_judge_no_install.py>`_
      - | :ref:`Evaluating datasets <evaluating_datasets>`.
        | :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
