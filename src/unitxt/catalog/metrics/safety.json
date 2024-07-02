@@ -1,9 +1,5 @@
 {
-    "__type__": "huggingface_metric",
-    "hf_metric_name": "src/metrics/safety",
-    "main_score": "safety",
-    "hf_main_score": "score",
-    "scale": 1.0,
+    "__type__": "safety",
     "n_resamples": null,
     "prediction_type": "Any"
 }
