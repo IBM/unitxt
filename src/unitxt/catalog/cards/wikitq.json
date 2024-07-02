@@ -1,0 +1,59 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "wikitablequestions",
+        "data_classification_policy": [
+            "public"
+        ],
+        "num_proc": 10
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "table"
+            }
+        },
+        {
+            "__type__": "serialize_table_as_indexed_row_major",
+            "field_to_field": [
+                [
+                    "table",
+                    "context"
+                ]
+            ]
+        }
+    ],
+    "task": "tasks.qa.with_context.extractive[metrics=[metrics.unsorted_list_exact_match]]",
+    "templates": {
+        "__type__": "templates_list",
+        "items": [
+            {
+                "__type__": "multi_reference_template",
+                "input_format": "Based on this {context_type}: {context}\nAnswer the question: {question}",
+                "references_field": "answers",
+                "postprocessors": [
+                    "processors.to_list_by_comma_space",
+                    "processors.str_to_float_format"
+                ]
+            }
+        ]
+    },
+    "__description__": "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables… See the full description on the dataset page: https://huggingface.co/datasets/wikitablequestions",
+    "__tags__": {
+        "annotations_creators": "crowdsourced",
+        "arxiv": "1508.00305",
+        "flags": [
+            "table-question-answering"
+        ],
+        "language": "en",
+        "language_creators": "found",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering"
+    }
+}
