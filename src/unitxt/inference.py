@@ -48,7 +48,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     use_fp16: bool = True
     lazy_load: bool = False
 
-    _requirements_lists_list = {
+    _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
 
