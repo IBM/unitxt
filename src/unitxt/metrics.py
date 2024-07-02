@@ -18,8 +18,14 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
-from .dataclass import AbstractField, InternalField, NonPositionalField, OptionalField
-from .inference import HFPipelineBasedInferenceEngine
+from .dataclass import (
+    AbstractField,
+    Field,
+    InternalField,
+    NonPositionalField,
+    OptionalField,
+)
+from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -3795,6 +3801,12 @@ class IsCodeMixed(BulkInstanceMetric):
     reduction_map = {"mean": [main_score]}
     prediction_type = "str"
 
+    inference_model: InferenceEngine = Field(
+        default_factory=lambda: HFPipelineBasedInferenceEngine(
+            model_name="Nexusflow/Starling-LM-7B-beta", max_new_tokens=1, lazy_load=True
+        )
+    )
+
     _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
@@ -3806,12 +3818,6 @@ class IsCodeMixed(BulkInstanceMetric):
                 "templates.language_identification.simple",
                 "formats.models.starling",
             ]
-        )
-
-    def before_process_multi_stream(self):
-        model_id = "Nexusflow/Starling-LM-7B-beta"
-        self.inference_model = HFPipelineBasedInferenceEngine(
-            model_name=model_id, max_new_tokens=1
         )
 
     def compute(
