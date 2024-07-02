@@ -156,11 +156,7 @@ class Artifact(Dataclass):
                 f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
             )
         if "__type__" not in d:
-            if "type" in d:
-                d["__type__"] = d["type"]
-                del d["type"]
-            else:
-                raise MissingArtifactTypeError(d)
+            raise MissingArtifactTypeError(d)
         if not cls.is_registered_type(d["__type__"]):
             raise UnrecognizedArtifactTypeError(d["__type__"])
 
