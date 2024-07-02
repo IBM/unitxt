@@ -46,11 +46,13 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
-    _requirement = {
+    lazy_load: bool = False
+
+    _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
 
-    def prepare(self):
+    def _prepare_pipeline(self):
         import torch
         from transformers import AutoConfig, pipeline
 
@@ -90,7 +92,17 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
+    def prepare(self):
+        if not self.lazy_load:
+            self._prepare_pipeline()
+
+    def is_pipeline_initialized(self):
+        return hasattr(self, "model") and self.model is not None
+
     def _infer(self, dataset):
+        if not self.is_pipeline_initialized():
+            self._prepare_pipeline()
+
         outputs = []
         for output in self.model([instance["source"] for instance in dataset]):
             if isinstance(output, list):
@@ -128,7 +140,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     parameters: IbmGenAiInferenceEngineParams = field(
         default_factory=IbmGenAiInferenceEngineParams
     )
-    _requirement = {
+    _requirements_list = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
     data_classification_policy = ["public", "proprietary"]
@@ -190,7 +202,7 @@ class OpenAiInferenceEngine(
     parameters: OpenAiInferenceEngineParams = field(
         default_factory=OpenAiInferenceEngineParams
     )
-    _requirement = {
+    _requirements_list = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
     data_classification_policy = ["public"]
@@ -350,7 +362,7 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     _parameters: Dict[str, Any] = field(default_factory=dict)
 
     label: str = "wml"
-    _requirement = {
+    _requirements_list = {
         "ibm-watsonx-ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
