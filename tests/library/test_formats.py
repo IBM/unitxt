@@ -1,4 +1,4 @@
-from unitxt.formats import SystemFormat
+from unitxt.formats import HFSystemFormat, SystemFormat
 from unitxt.test_utils.operators import (
     check_operator,
 )
@@ -7,6 +7,58 @@ from tests.utils import UnitxtTestCase
 
 
 class TestFormats(UnitxtTestCase):
+    def test_hf_system_format(self):
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {"source": "1+2", "target": "3", "instruction": instruction, "inputs": {}},
+            {"source": "4-2", "target": "2", "instruction": instruction, "inputs": {}},
+        ]
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "inputs": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+        ]
+
+        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
+        system_format = HFSystemFormat(model_name="HuggingFaceH4/zephyr-7b-beta")
+
+        targets = [
+            {
+                "target": "2",
+                "inputs": {},
+                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s> \n<|user|>\n1+2</s> \n<|assistant|>\nThe answer is 3</s> \n<|user|>\n4-2</s> \n<|assistant|>\nThe answer is 2</s> \n<|user|>\n1+1</s> \n<|assistant|>\nThe answer is ",
+            },
+            {
+                "target": "5",
+                "inputs": {},
+                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s> \n<|user|>\n1+2</s> \n<|assistant|>\nThe answer is 3</s> \n<|user|>\n4-2</s> \n<|assistant|>\nThe answer is 2</s> \n<|user|>\n3+2</s> \n<|assistant|>\nThe answer is ",
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_system_format(self):
         instruction = "solve the math exercises"
 
