@@ -1,0 +1,13 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "text": "str"
+    },
+    "outputs": {
+        "label": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}
