@@ -1,4 +1,4 @@
 {
-    "type": "llama_index_correctness",
+    "__type__": "llama_index_correctness",
     "model_name": "mock"
 }

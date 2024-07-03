@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-import unittest
 from unittest.mock import patch
 
 import ibm_boto3
@@ -207,7 +206,6 @@ class TestLoaders(UnitxtTestCase):
         )  # that HF dataset only has the 'test' split
         self.assertEqual(dataset["test"][0]["language"], "arb")
 
-    @unittest.skip("Currently this fails from datasets 2.20")
     def test_load_from_HF_multiple_innvocation_with_filter(self):
         loader = LoadHF(
             path="CohereForAI/aya_evaluation_suite",

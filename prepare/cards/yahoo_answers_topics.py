@@ -43,15 +43,9 @@ card = TaskCard(
             to_field="text",
         ),
         JoinStr(separator=" ", field="text", to_field="text"),
-        Set(
-            fields={
-                "classes": classes,
-                "text_type": "text",
-                "type_of_class": "topic",
-            }
-        ),
+        Set(fields={"classes": classes}),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "found",

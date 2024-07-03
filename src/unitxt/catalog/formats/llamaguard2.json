@@ -1,5 +1,5 @@
 {
-    "type": "system_format",
+    "__type__": "system_format",
     "demo_format": "",
     "model_input_format": "[INST] {source} [/INST]"
 }

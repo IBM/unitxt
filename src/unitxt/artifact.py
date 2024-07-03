@@ -3,9 +3,10 @@ import inspect
 import json
 import os
 import pkgutil
+import re
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Union, final
+from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
     AbstractField,
@@ -19,13 +20,24 @@ from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import artifacts_json_cache, save_json
+from .utils import artifacts_json_cache, json_dump, save_to_file
 
 logger = get_logger()
 settings = get_settings()
+constants = get_constants()
+
+
+def is_name_legal_for_catalog(name):
+    return re.match(r"^[\w" + constants.catalog_hierarchy_sep + "]+$", name)
+
+
+def verify_legal_catalog_name(name):
+    assert is_name_legal_for_catalog(
+        name
+    ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
 class Artifactories:
@@ -120,7 +132,7 @@ class MissingArtifactTypeError(ValueError):
 class Artifact(Dataclass):
     _class_register = {}
 
-    type: str = Field(default=None, final=True, init=False)
+    __type__: str = Field(default=None, final=True, init=False)
     __description__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -135,7 +147,7 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "type" in d
+        return isinstance(d, dict) and "__type__" in d
 
     @classmethod
     def verify_artifact_dict(cls, d):
@@ -143,10 +155,10 @@ class Artifact(Dataclass):
             raise ValueError(
                 f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
             )
-        if "type" not in d:
+        if "__type__" not in d:
             raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["type"]):
-            raise UnrecognizedArtifactTypeError(d["type"])
+        if not cls.is_registered_type(d["__type__"]):
+            raise UnrecognizedArtifactTypeError(d["__type__"])
 
     @classmethod
     def get_artifact_type(cls):
@@ -212,7 +224,7 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            return cls._class_register[obj.pop("type")](**obj)
+            return cls._class_register[obj.pop("__type__")](**obj)
 
         return obj
 
@@ -261,7 +273,7 @@ class Artifact(Dataclass):
 
     @final
     def __post_init__(self):
-        self.type = self.register_class(self.__class__)
+        self.__type__ = self.register_class(self.__class__)
 
         for field in fields(self):
             if issubtype(
@@ -277,11 +289,24 @@ class Artifact(Dataclass):
             self.verify()
 
     def _to_raw_dict(self):
-        return {"type": self.type, **self._init_dict}
+        return {"__type__": self.__type__, **self._init_dict}
+
+    def to_json(self):
+        data = self.to_dict()
+        return json_dump(data)
+
+    def serialize(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return self.to_json()
 
     def save(self, path):
-        data = self.to_dict()
-        save_json(path, data)
+        save_to_file(path, self.to_json())
+
+    @classmethod
+    def deserialize(cls, artifact_rep):
+        data = json.loads(artifact_rep)
+        return Artifact.from_dict(data)
 
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
@@ -404,13 +429,22 @@ class UnitxtArtifactNotFoundError(Exception):
         return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
 
 
-def fetch_artifact(name):
-    if Artifact.is_artifact_file(name):
-        return Artifact.load(name), None
+def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
+    if isinstance(artifact_rep, Artifact):
+        return artifact_rep, None
+    if Artifact.is_artifact_file(artifact_rep):
+        return Artifact.load(artifact_rep), None
 
-    artifactory, name, args = get_artifactory_name_and_args(name=name)
+    name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
+    if is_name_legal_for_catalog(name):
+        artifactory, artifact_rep, args = get_artifactory_name_and_args(
+            name=artifact_rep
+        )
+        return artifactory.get_with_overwrite(
+            artifact_rep, overwrite_args=args
+        ), artifactory
 
-    return artifactory.get_with_overwrite(name, overwrite_args=args), artifactory
+    return Artifact.deserialize(artifact_rep), None
 
 
 def get_artifactory_name_and_args(

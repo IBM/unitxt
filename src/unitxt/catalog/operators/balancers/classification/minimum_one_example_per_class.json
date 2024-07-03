@@ -1,5 +1,5 @@
 {
-    "type": "minimum_one_example_per_label_refiner",
+    "__type__": "minimum_one_example_per_label_refiner",
     "fields": [
         "outputs/label"
     ]

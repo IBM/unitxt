@@ -1,9 +1,10 @@
 import functools
 import warnings
 
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 
 constants = get_constants()
+settings = get_settings()
 
 
 class DeprecationError(Exception):
@@ -60,11 +61,12 @@ def depraction_wrapper(obj, version, alt_text):
     @functools.wraps(obj)
     def wrapper(*args, **kwargs):
         if constants.version < version:
-            warnings.warn(
-                f"{obj.__name__} is deprecated.{alt_text}",
-                DeprecationWarning,
-                stacklevel=2,
-            )
+            if settings.default_verbosity in ["debug", "info", "warning"]:
+                warnings.warn(
+                    f"{obj.__name__} is deprecated.{alt_text}",
+                    DeprecationWarning,
+                    stacklevel=2,
+                )
         elif constants.version >= version:
             raise DeprecationError(f"{obj.__name__} is no longer supported.{alt_text}")
         return obj(*args, **kwargs)

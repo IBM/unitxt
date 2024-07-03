@@ -74,11 +74,10 @@ card = TaskCard(
             fields={
                 "classes": classlabels,
                 "text_type": "sentence",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
 )
 test_card(card, debug=False)

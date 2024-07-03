@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "wiki_bio"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train",
                 "validation": "val",
@@ -14,7 +14,7 @@
             }
         },
         {
-            "type": "list_to_key_val_pairs",
+            "__type__": "list_to_key_val_pairs",
             "fields": [
                 "input_text/table/column_header",
                 "input_text/table/content"
@@ -22,7 +22,7 @@
             "to_field": "kvpairs"
         },
         {
-            "type": "serialize_key_val_pairs",
+            "__type__": "serialize_key_val_pairs",
             "field_to_field": [
                 [
                     "kvpairs",
@@ -31,16 +31,15 @@
             ]
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "target_text": "output"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
-                "type_of_input": "Key-Value pairs",
-                "type_of_output": "Text"
+                "type_of_input": "Key-Value pairs"
             }
         }
     ],

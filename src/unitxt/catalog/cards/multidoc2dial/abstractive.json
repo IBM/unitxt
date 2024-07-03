@@ -1,30 +1,30 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "multidoc2dial"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "answers/text/0": "relevant_context"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "utterance"
             ],
             "to_field": "answers"
         },
         {
-            "type": "execute_expression",
+            "__type__": "execute_expression",
             "expression": "question.split('[SEP]')[0]",
             "to_field": "question"
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "document"
             }

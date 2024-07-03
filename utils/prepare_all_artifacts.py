@@ -147,18 +147,18 @@ def main():
     except:
         pass
     shutil.move(catalog_dir, catalog_back_dir)
-    logger.info("Starting reprepare catalog...")
+    logger.critical("Starting reprepare catalog...")
     prepare_all_catalog_artifacts(catalog_dir)
-    logger.info("Comparing generated and old catalog...")
+    logger.critical("Comparing generated and old catalog...")
     diffs = compare_dirs(new=catalog_dir, old=catalog_back_dir)
     diffs = filter_known_diffs(diffs)
     if diffs:
-        logger.info("***** Directories has differences ******")
+        logger.critical("***** Directories has differences ******")
         diffs.sort(key=lambda d: d["file"])
         for diff in diffs:
-            logger.info(diff)
+            logger.critical(diff)
         raise RuntimeError("Directories has differences")
-    logger.info("Done. Catalog is consistent with prepare files")
+    logger.critical("Done. Catalog is consistent with prepare files")
 
 
 if __name__ == "__main__":

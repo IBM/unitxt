@@ -1,0 +1,25 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "text": "str",
+        "text_type": "str",
+        "classes": "List[str]",
+        "type_of_class": "str"
+    },
+    "outputs": {
+        "label": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.f1_micro",
+        "metrics.accuracy",
+        "metrics.f1_macro"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ],
+    "defaults": {
+        "text_type": "text",
+        "type_of_class": "topic"
+    }
+}

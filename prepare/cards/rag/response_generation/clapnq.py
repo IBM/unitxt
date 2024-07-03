@@ -50,7 +50,13 @@ card = TaskCard(
         ),
     ],
     task="tasks.rag.response_generation",
-    templates=TemplatesDict({"default": "templates.rag.response_generation.simple"}),
+    templates=TemplatesDict(
+        {
+            "please_respond": "templates.rag.response_generation.please_respond",
+            "answer_based_on_context": "templates.rag.response_generation.answer_based_on_context",
+            "answer_based_on_context_inverted": "templates.rag.response_generation.answer_based_on_context_inverted",
+        }
+    ),
 )
 
 # testing the card is too slow with the bert-score metric, so dropping it

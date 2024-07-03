@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "race",
         "name": "all"
     },
     "preprocess_steps": [
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "numbering": [
                     "A",
@@ -40,20 +40,20 @@
             }
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "search_in": "numbering",
             "index_of": "answer",
             "to_field": "answer"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "options": "choices",
                 "article": "context"
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "article"
             }

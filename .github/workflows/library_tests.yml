@@ -12,6 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       OS: ubuntu-latest
+      UNITXT_DEFAULT_VERBOSITY: error
+      DATASETS_VERBOSITY: error
+      HF_HUB_VERBOSITY: error
+      HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+      TQDM_DISABLE: "True"
 
     steps:
     - uses: actions/checkout@v4
@@ -19,10 +24,9 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.9'
-        cache: 'pip' # caching pip dependencies
-    - run: pip install -r requirements/base.rqr
-    - run: pip install -r requirements/tests.rqr
-    - run: pip install -e .
+
+    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - run: uv pip install --system -e ".[tests]"
     - run: pip install coverage[toml]
 
     - name: Run Tests

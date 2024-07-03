@@ -12,9 +12,10 @@ from unitxt.test_utils.card import test_card
 # Set unitxt.settings.allow_unverified_code=True or environment variable: UNITXT_ALLOW_UNVERIFIED_CODE to True
 
 card = TaskCard(
-    loader=LoadHF(path="ibm/tab_fact", streaming=False),
+    loader=LoadHF(
+        path="ibm/tab_fact", streaming=False, data_classification_policy=["public"]
+    ),
     preprocess_steps=[
-        "splitters.small_no_test",
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "table_serialized"]]),
         RenameFields(
             field_to_field={"table_serialized": "text_a", "statement": "text_b"}
