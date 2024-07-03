@@ -109,7 +109,7 @@ card = TaskCard(
 
 test_card(
     card,
-    format="formats.llama3_multi_turn_chat_with_system_prompt",
+    format="formats.llama3_instruct",
     system_prompt="system_prompts.models.llama2",
 )
 add_to_catalog(card, "cards.coqa.completion", overwrite=True)

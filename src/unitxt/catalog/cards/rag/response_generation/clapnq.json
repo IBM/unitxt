@@ -1,11 +1,9 @@
 {
     "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "PrimeQA/clapnq",
         "revision": "399fcfd"
-        "__type__": "load_hf",
-        "path": "PrimeQA/clapnq"
     },
     "preprocess_steps": [
         {
@@ -33,7 +31,7 @@
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "reference_answers": {
                     "['']": [
