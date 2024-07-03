@@ -43,12 +43,12 @@ class TestFormats(UnitxtTestCase):
             {
                 "target": "2",
                 "inputs": {},
-                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s> \n<|user|>\n1+2</s> \n<|assistant|>\nThe answer is 3</s> \n<|user|>\n4-2</s> \n<|assistant|>\nThe answer is 2</s> \n<|user|>\n1+1</s> \n<|assistant|>\nThe answer is ",
+                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s>\n<|user|>\n1+2</s>\n<|assistant|>\nThe answer is 3</s>\n<|user|>\n4-2</s>\n<|assistant|>\nThe answer is 2</s>\n<|user|>\n1+1</s>\n<|assistant|>\nThe answer is ",
             },
             {
                 "target": "5",
                 "inputs": {},
-                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s> \n<|user|>\n1+2</s> \n<|assistant|>\nThe answer is 3</s> \n<|user|>\n4-2</s> \n<|assistant|>\nThe answer is 2</s> \n<|user|>\n3+2</s> \n<|assistant|>\nThe answer is ",
+                "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s>\n<|user|>\n1+2</s>\n<|assistant|>\nThe answer is 3</s>\n<|user|>\n4-2</s>\n<|assistant|>\nThe answer is 2</s>\n<|user|>\n3+2</s>\n<|assistant|>\nThe answer is ",
             },
         ]
 

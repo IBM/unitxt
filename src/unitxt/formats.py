@@ -268,7 +268,8 @@ class HFSystemFormat(BaseFormat):
             )
         messages.extend([{"role": "user", "content": source}])
         tokenized_chat = tokenizer.apply_chat_template(
-            messages, tokenize=True, add_generation_prompt=True, return_tensors="pt"
+            messages, tokenize=False, add_generation_prompt=True
         )
-        instance["source"] = tokenizer.decode(tokenized_chat[0]) + target_prefix
+
+        instance["source"] = tokenized_chat + target_prefix
         return instance
