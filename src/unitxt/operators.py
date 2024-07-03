@@ -39,7 +39,6 @@ General Operators List:
 ------------------------
 """
 
-import copy
 import operator
 import uuid
 import zipfile
@@ -1064,10 +1063,8 @@ class Copy(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        if self.use_deep_copy:
-            return copy.deepcopy(value)
+        # deep copy is already dealt with in process(instance) that invokes this method
         return value
-        #
 
 
 @deprecation(version="2.0.0", alternative=Copy)
