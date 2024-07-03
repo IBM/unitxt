@@ -2248,6 +2248,27 @@ label (str):
             tester=self,
         )
 
+    def test_copy_with_deep_copy(self):
+        instance = {"predictions": {"a": 3, "b": 4}}
+        ms = MultiStream.from_iterables({"tmp": [instance]})
+        copyoperator = Copy(field="predictions", to_field="predictions_orig")
+        ms = copyoperator(ms)
+        instance2 = next(iter(ms["tmp"]))
+        self.assertDictEqual(instance2["predictions_orig"], instance2["predictions"])
+        instance2["predictions"]["a"] = 10
+        self.assertEqual(10, instance2["predictions_orig"]["a"])
+        # and with use_deep_copy = true:
+        instance = {"predictions": {"a": 3, "b": 4}}
+        ms = MultiStream.from_iterables({"tmp": [instance]})
+        copyoperator = Copy(
+            field="predictions", to_field="predictions_orig", use_deep_copy=True
+        )
+        ms = copyoperator(ms)
+        instance2 = next(iter(ms["tmp"]))
+        self.assertDictEqual(instance2["predictions_orig"], instance2["predictions"])
+        instance2["predictions"]["a"] = 10
+        self.assertEqual(3, instance2["predictions_orig"]["a"])
+
     def test_label_encoder(self):
         inputs = [
             {"prediction": "red", "references": ["red", "blue"]},
