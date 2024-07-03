@@ -77,6 +77,21 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_get(dic, "a/g/0")
 
+    def test_nested_get_with_deep_copy(self):
+        instance = {"predictions": {"a": 3, "b": 4}}
+        val = dict_get(instance, "predictions")
+        dict_set(instance, "predictions_orig", val)
+        instance["predictions"]["a"] = 10
+        # without deep copy, predictions_orig simply points at predictions
+        self.assertEqual(10, instance["predictions_orig"]["a"])
+
+        instance = {"predictions": {"a": 3, "b": 4}}
+        val = dict_get(instance, "predictions", use_deep_copy=True)
+        dict_set(instance, "predictions_orig", val)
+        instance["predictions"]["a"] = 10
+        # with deep copy, predictions_orig is a different object from predictions
+        self.assertEqual(3, instance["predictions_orig"]["a"])
+
     def test_query_get(self):
         dic = {"a": [{"b": 1}, {"b": 2}]}
         self.assertEqual(dict_get(dic, "a/*/b"), [1, 2])

@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from typing import Any, List, Tuple
 
 from .text_utils import construct_dict_str
@@ -225,11 +226,11 @@ def dict_delete(
 # if query includes * then return a list of values reached by all paths that match the query
 # flake8: noqa: C901
 def get_values(
-    current_element: Any, query: List[str], index_into_query: int
+    current_element: Any, query: List[str], index_into_query: int, deep_copy: bool
 ) -> Tuple[bool, Any]:
     # going down from current_element through query[index_into_query].
     if index_into_query == 0:
-        return (True, current_element)
+        return (True, current_element if not deep_copy else deepcopy(current_element))
 
     # index_into_query < 0
     component = query[index_into_query]
@@ -244,7 +245,9 @@ def get_values(
             sub_elements = current_element
         for sub_element in sub_elements:
             try:
-                success, val = get_values(sub_element, query, index_into_query + 1)
+                success, val = get_values(
+                    sub_element, query, index_into_query + 1, deep_copy
+                )
                 if success:
                     to_ret.append(val)
             except:
@@ -257,7 +260,7 @@ def get_values(
         component = int(component)
     try:
         success, new_val = get_values(
-            current_element[component], query, index_into_query + 1
+            current_element[component], query, index_into_query + 1, deep_copy
         )
         if success:
             return (True, new_val)
@@ -378,25 +381,29 @@ def set_values(
 
 
 # the returned values are ordered by the lexicographic order of the paths leading to them
+# when use_deep_copy is True, the value returned is a deep copy of the value found in dic
 def dict_get(
     dic: dict,
     query: str,
     not_exist_ok: bool = False,
     default: Any = None,
+    use_deep_copy: bool = False,
 ):
     if len(query.strip()) == 0:
-        return dic
+        return dic if not use_deep_copy else deepcopy(dic)
 
     if dic is None:
         raise ValueError("Can not get any value from a dic that is None")
 
     if isinstance(dic, dict) and query.strip() in dic:
-        return dic[query.strip()]
+        return dic[query.strip()] if not use_deep_copy else deepcopy(dic[query.strip()])
 
     components = validate_query_and_break_to_components(query)
     if len(components) > 1:
         try:
-            success, values = get_values(dic, components, -1 * len(components))
+            success, values = get_values(
+                dic, components, -1 * len(components), use_deep_copy
+            )
             if success:
                 return values
         except Exception as e:
@@ -413,7 +420,7 @@ def dict_get(
 
     # len(components) == 1
     if components[0] in dic:
-        return dic[components[0]]
+        return dic[components[0]] if not use_deep_copy else deepcopy(dic[components[0]])
 
     if not_exist_ok:
         return default

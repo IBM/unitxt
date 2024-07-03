@@ -351,6 +351,7 @@ class InstanceFieldOperator(InstanceOperator):
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
+    use_deep_copy: bool = False
 
     def verify(self):
         super().verify()
@@ -432,7 +433,7 @@ class InstanceFieldOperator(InstanceOperator):
         # dict_set() the target field dictionary fields.
         # This means that if this target field was assigned to another field before,
         # the field is updated as well.
-        instance = deepcopy(instance)
+        # instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
@@ -440,6 +441,7 @@ class InstanceFieldOperator(InstanceOperator):
                     from_field,
                     default=self.get_default,
                     not_exist_ok=self.not_exist_ok,
+                    use_deep_copy=self.use_deep_copy,
                 )
             except Exception as e:
                 raise ValueError(
@@ -1062,7 +1064,10 @@ class Copy(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        if self.use_deep_copy:
+            return copy.deepcopy(value)
+        return value
+        #
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1811,7 +1816,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         keys_to_restore = set(first_instance.keys()).difference({"score"})
         multi_stream = MultiStream({"tmp": stream})
         multi_stream = CopyFields(
-            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
+            field_to_field={k: f"{k}_orig" for k in keys_to_restore}, use_deep_copy=True
         )(multi_stream)
 
         for metric_name in metric_names:
