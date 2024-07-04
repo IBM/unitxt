@@ -9,9 +9,23 @@ from unitxt.blocks import (
 )
 from unitxt.operators import (
     Copy,
+    MapInstanceValues,
     Set,
 )
 from unitxt.test_utils.card import test_card
+
+unanswerable_responses = [
+    "I'm sorry, I cannot answer this question based on the context.",
+    "The answer is not in the text provided.",
+    "Unanswerable.",
+    "The provided context does not contain the information needed to answer this question.",
+    "There is not enough information in the text to answer this question.",
+    "The text does not provide an answer to this question.",
+    "Based on the context, an answer cannot be determined.",
+    "The answer to this question is not available in the provided context.",
+    "This question cannot be answered with the given information.",
+    "Insufficient context to provide an answer.",
+]
 
 card = TaskCard(
     loader=LoadHF(
@@ -30,6 +44,10 @@ card = TaskCard(
             fields={
                 "contexts_ids": [],
             }
+        ),
+        MapInstanceValues(
+            mappers={"reference_answers": {"['']": unanswerable_responses}},
+            strict=False,
         ),
     ],
     task="tasks.rag.response_generation",
@@ -59,3 +77,15 @@ add_to_catalog(
     "cards.rag.response_generation.clapnq",
     overwrite=True,
 )
+
+debug = False
+if debug:
+    from unitxt import evaluate, load_dataset
+
+    ds = load_dataset(
+        "card=cards.rag.response_generation.clapnq,template=templates.rag.response_generation.answer_based_on_context_inverted,demos_pool_size=100,num_demos=2,format=formats.llama3_chat,system_prompt=system_prompts.empty,demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True",
+    )
+
+    predictions = ds["test"]["target"]
+    # 3. create a metric and evaluate the results.
+    scores = evaluate(predictions=predictions, data=ds["test"])

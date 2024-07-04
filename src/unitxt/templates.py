@@ -202,13 +202,15 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
         return outputs
 
     def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+        if not self.shuffle:
+            return inputs, outputs
         outcome = random()  # A float between 0 and 1
         if outcome <= 0.5:
             choice_a_value = inputs[self.choice_a_field]
             choice_b_value = inputs[self.choice_b_field]
 
-            inputs[self.choice_a_field] = choice_a_value
-            inputs[self.choice_b_field] = choice_b_value
+            inputs[self.choice_a_field] = choice_b_value
+            inputs[self.choice_b_field] = choice_a_value
 
             answer = outputs[self.answer_field]
             assert answer in [
@@ -227,6 +229,56 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
         self, inputs: Dict[str, Any], outputs: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         outputs = self.verbalize_answer_field(outputs)
+        inputs, outputs = self.shuffle_values(inputs, outputs)
+        return inputs, outputs
+
+
+class PairwiseComparativeRatingTemplate(InputOutputTemplate):
+    """PairwiseChoiceTemplate.
+
+    Args:
+         choice_a_field (str): The field which contains choice_a value
+         choice_b_field (str): The field which contains choice_b value
+         answer_field (str): The field which contains the answer value. The value should be an int.
+          Positive for preferring choice_a, and negative for preferring choice_b
+         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+
+    shuffle: 50% of the time:
+     1) The values of choice_a_field and choice_b_field will be swapped.
+     2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
+
+    """
+
+    choice_a_field: str
+    choice_b_field: str
+    choice_a_id_field: str
+    choice_b_id_field: str
+    answer_field: str
+    shuffle: bool
+
+    def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+        if not self.shuffle:
+            return inputs, outputs
+        outcome = random()  # A float between 0 and 1
+        if outcome <= 0.5:
+            choice_a_value = inputs[self.choice_a_field]
+            choice_b_value = inputs[self.choice_b_field]
+            inputs[self.choice_a_field] = choice_b_value
+            inputs[self.choice_b_field] = choice_a_value
+
+            choice_a_id_value = inputs[self.choice_a_id_field]
+            choice_b_id_value = inputs[self.choice_b_id_field]
+            inputs[self.choice_a_id_field] = choice_b_id_value
+            inputs[self.choice_b_id_field] = choice_a_id_value
+
+            assert isinstance(outputs[self.answer_field], int)
+            outputs[self.answer_field] = int(outputs[self.answer_field]) * -1
+
+        return inputs, outputs
+
+    def preprocess_inputs_and_outputs(
+        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         inputs, outputs = self.shuffle_values(inputs, outputs)
         return inputs, outputs
 
