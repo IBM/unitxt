@@ -6,8 +6,8 @@ from tests.utils import UnitxtTestCase
 class TestTasks(UnitxtTestCase):
     def test_task_metrics_type_checking(self):
         operator = Task(
-            inputs={"input": "str"},
-            outputs={"label": "str"},
+            input_fields={"input": "str"},
+            reference_fields={"label": "str"},
             prediction_type="str",
             metrics=["metrics.wer", "metrics.rouge"],
         )
@@ -30,8 +30,8 @@ class TestTasks(UnitxtTestCase):
         ]
 
         operator = Task(
-            inputs={"input": "str", "input_type": "str"},
-            outputs={"label": "int", "labels": "List[int]"},
+            input_fields={"input": "str", "input_type": "str"},
+            reference_fields={"label": "int", "labels": "List[int]"},
             prediction_type="Any",
             metrics=["metrics.accuracy"],
             defaults={"input_type": "text", "labels": [0, 1, 2]},
@@ -60,8 +60,8 @@ class TestTasks(UnitxtTestCase):
 
     def test_verify_defaults(self):
         operator = Task(
-            inputs={"input": "str"},
-            outputs={"label": "int"},
+            input_fields={"input": "str"},
+            reference_fields={"label": "int"},
             prediction_type="Any",
             metrics=["metrics.accuracy"],
         )

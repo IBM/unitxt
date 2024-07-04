@@ -1,12 +1,12 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "question": "str",
         "answer_a": "str",
         "answer_b": "str",
         "reference_answer": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "winner": "str"
     },
     "metrics": [

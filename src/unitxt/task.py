@@ -38,16 +38,20 @@ class Task(InstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    inputs: Union[Dict[str, str], List[str]]
-    outputs: Union[Dict[str, str], List[str]]
+    input_fields: Union[Dict[str, str], List[str]]
+    reference_fields: Union[Dict[str, str], List[str]]
     metrics: List[str]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
 
     def verify(self):
-        for io_type in ["inputs", "outputs"]:
-            data = self.inputs if io_type == "inputs" else self.outputs
+        for io_type in ["input_fields", "reference_fields"]:
+            data = (
+                self.input_fields
+                if io_type == "input_fields"
+                else self.reference_fields
+            )
             if not isoftype(data, Dict[str, str]):
                 get_logger().warning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
@@ -56,10 +60,10 @@ class Task(InstanceOperator):
                     f"will raise an exception."
                 )
                 data = {key: "Any" for key in data}
-                if io_type == "inputs":
-                    self.inputs = data
+                if io_type == "input_fields":
+                    self.input_fields = data
                 else:
-                    self.outputs = data
+                    self.reference_fields = data
 
         if not self.prediction_type:
             get_logger().warning(
@@ -74,8 +78,8 @@ class Task(InstanceOperator):
 
         for augmentable_input in self.augmentable_inputs:
             assert (
-                augmentable_input in self.inputs
-            ), f"augmentable_input {augmentable_input} is not part of {self.inputs}"
+                augmentable_input in self.input_fields
+            ), f"augmentable_input {augmentable_input} is not part of {self.input_fields}"
 
         self.verify_defaults()
 
@@ -121,9 +125,9 @@ class Task(InstanceOperator):
                     f"however, the key '{default_name}' is of type '{type(default_name)}'."
                 )
 
-                val_type = self.inputs.get(default_name) or self.outputs.get(
+                val_type = self.input_fields.get(
                     default_name
-                )
+                ) or self.reference_fields.get(default_name)
 
                 assert val_type, (
                     f"If specified, all keys of the 'defaults' must refer to a chosen "
@@ -146,11 +150,11 @@ class Task(InstanceOperator):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        verify_required_schema(self.inputs, instance)
-        verify_required_schema(self.outputs, instance)
+        verify_required_schema(self.input_fields, instance)
+        verify_required_schema(self.reference_fields, instance)
 
-        inputs = {key: instance[key] for key in self.inputs.keys()}
-        outputs = {key: instance[key] for key in self.outputs.keys()}
+        inputs = {key: instance[key] for key in self.input_fields.keys()}
+        outputs = {key: instance[key] for key in self.reference_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
         return {

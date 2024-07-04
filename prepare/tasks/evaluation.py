@@ -3,8 +3,8 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs=["input", "input_type", "output_type", "choices", "instruction"],
-        outputs=["choices", "output_choice"],
+        input_fields=["input", "input_type", "output_type", "choices", "instruction"],
+        reference_fields=["choices", "output_choice"],
         metrics=[
             "metrics.accuracy",
         ],
