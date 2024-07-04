@@ -153,6 +153,7 @@ class LoadHF(Loader):
         data_files: Optional specification of particular data files to load.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
+        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
 
     Example:
@@ -172,6 +173,7 @@ class LoadHF(Loader):
     ] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
+    revision: Optional[str] = None
     num_proc: Optional[int] = None
     _cache: dict = InternalField(default=None)
     requirements_list: List[str] = OptionalField(default_factory=list)
@@ -203,8 +205,8 @@ class LoadHF(Loader):
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
-                        num_proc=self.num_proc,
                         revision=self.revision,
+                        num_proc=self.num_proc,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -212,9 +214,6 @@ class LoadHF(Loader):
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
                     raise e
-
-            if self.filtering_lambda is not None:
-                dataset = self.filtered_load(dataset)
 
             if self.split is not None:
                 dataset = {self.split: dataset}
