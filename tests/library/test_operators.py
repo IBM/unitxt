@@ -2261,7 +2261,7 @@ label (str):
         instance = {"predictions": {"a": 3, "b": 4}}
         ms = MultiStream.from_iterables({"tmp": [instance]})
         copyoperator = Copy(
-            field="predictions", to_field="predictions_orig", use_deep_copy=True
+            field="predictions", to_field="predictions_orig", use_deepcopy=True
         )
         ms = copyoperator(ms)
         instance2 = next(iter(ms["tmp"]))
