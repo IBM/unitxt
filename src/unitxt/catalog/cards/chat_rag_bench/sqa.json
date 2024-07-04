@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "nvidia/ChatRAG-Bench",
         "name": "sqa",
         "split": "test"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "test[0.6]",
                 "validation": "test[0.2]",
@@ -16,7 +16,7 @@
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field_to_field": {
                 "ctxs/*/text": "contexts",
                 "messages": "dialog",
@@ -24,7 +24,7 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "contexts_ids": []
             }
