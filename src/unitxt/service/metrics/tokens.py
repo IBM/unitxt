@@ -4,6 +4,7 @@ To generate a master token key, run "openssl rand -hex 32".
 Then, save the value in the environment variable UNITXT_METRICS_MASTER_KEY_TOKEN.
 To create tokens that have access for the master key, use create_token(..), as shown in main().
 """
+
 from datetime import datetime, timedelta
 
 from fastapi import Depends, HTTPException

@@ -25,7 +25,6 @@ card = TaskCard(
         Set(
             fields={
                 "classes": classlabels.feature.names,
-                "text_type": "text",
                 "type_of_classes": "contractual clauses",
             }
         ),

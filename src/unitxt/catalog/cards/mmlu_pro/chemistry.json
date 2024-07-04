@@ -1,0 +1,49 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "TIGER-Lab/MMLU-Pro"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_expression",
+            "expression": "category == 'chemistry'"
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "train"
+            }
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "options": "choices",
+                "answer_index": "answer"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "topic": "chemistry"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.with_topic.all",
+    "__tags__": {
+        "annotations_creators": "no-annotation",
+        "arxiv": [
+            "2406.01574"
+        ],
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "multiple-choice-qa"
+    },
+    "__description__": "MMLU-Pro dataset is a more robust and challenging massive multi-task understanding dataset tailored to more rigorously benchmark large language models' capabilities. This dataset contains 12K complex questions across various disciplines."
+}

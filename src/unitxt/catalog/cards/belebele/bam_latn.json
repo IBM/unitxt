@@ -1,20 +1,20 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "facebook/belebele",
         "name": "default",
         "split": "bam_Latn"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "bam_Latn": "test"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "mc_answer1",
                 "mc_answer2",
@@ -24,25 +24,25 @@
             "to_field": "choices"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "correct_answer_num": "answer",
                 "flores_passage": "context"
             }
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "type": "add_constant",
+            "__type__": "add_constant",
             "field": "answer",
             "add": -1
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "passage"
             }

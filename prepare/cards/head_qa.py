@@ -32,11 +32,10 @@ for subset in get_dataset_config_names(
                 fields={
                     "classes": categories,
                     "text_type": "question",
-                    "type_of_class": "topic",
                 }
             ),
         ],
-        task="tasks.classification.multi_class",
+        task="tasks.classification.multi_class.topic_classification",
         templates="templates.classification.multi_class.all",
         __description__=(
             "HEAD-QA is a multi-choice HEAlthcare Dataset. The questions come from exams to access a specialized position in the Spanish healthcare system, and are challenging even for highly specialized humans. They are designed by the Ministerio de Sanidad, Consumo y Bienestar Social. The dataset contains questions about the following topics: medicine, nursing, psychology, chemistry, pharmacology and biology… See the full description on the dataset page: https://huggingface.co/datasets/head_qa"

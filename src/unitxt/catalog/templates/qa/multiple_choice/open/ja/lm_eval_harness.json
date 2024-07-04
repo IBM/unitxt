@@ -1,5 +1,5 @@
 {
-    "type": "multiple_choice_template",
+    "__type__": "multiple_choice_template",
     "input_format": "{question}\n{choices}\n答え:",
     "target_field": "answer",
     "choices_separator": "\n",

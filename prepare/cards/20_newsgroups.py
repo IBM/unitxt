@@ -44,15 +44,9 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"label_text": "label"}),
         MapInstanceValues(mappers={"label": map_labels}),
-        Set(
-            fields={
-                "classes": list(map_labels.values()),
-                "text_type": "text",
-                "type_of_class": "topic",
-            }
-        ),
+        Set(fields={"classes": list(map_labels.values())}),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={"region": "us"},
     __description__=(

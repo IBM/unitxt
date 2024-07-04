@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_from_kaggle",
+        "__type__": "load_from_kaggle",
         "url": "https://www.kaggle.com/datasets/fedesoriano/heart-failure-prediction"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[70%]",
                 "validation": "train[10%]",
@@ -14,13 +14,13 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "HeartDisease": "label"
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "Normal",
@@ -29,20 +29,20 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "text_type": "Person medical record",
                 "type_of_class": "Heart Disease Possibility"
             }
         },
         {
-            "type": "extract_field_values",
+            "__type__": "extract_field_values",
             "field": "label",
             "to_field": "classes",
             "stream_name": "train"
         },
         {
-            "type": "serialize_table_row_as_text",
+            "__type__": "serialize_table_row_as_text",
             "fields": [
                 "Age",
                 "Sex",

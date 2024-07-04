@@ -1,0 +1,55 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "billsum"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[87.5%]",
+                "validation": "train[12.5%]",
+                "test": "test"
+            }
+        },
+        {
+            "__type__": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "text": "document"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "document_type": "document"
+            }
+        },
+        {
+            "__type__": "filter_by_expression",
+            "expression": "len(document) <= 10000"
+        }
+    ],
+    "task": "tasks.summarization.abstractive",
+    "templates": "templates.summarization.abstractive.all",
+    "__tags__": {
+        "annotations_creators": "found",
+        "arxiv": "1910.00523",
+        "flags": [
+            "bills-summarization"
+        ],
+        "language": "en",
+        "language_creators": "found",
+        "license": "cc0-1.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "summarization"
+    },
+    "__description__": "BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum."
+}

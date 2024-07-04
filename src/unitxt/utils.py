@@ -1,4 +1,6 @@
+import importlib.util
 import json
+import os
 from functools import lru_cache
 from typing import Any, Dict
 
@@ -47,11 +49,14 @@ def load_json(path):
             ) from e
 
 
-def save_json(path, data):
+def save_to_file(path, data):
     with open(path, "w") as f:
-        dumped = json.dumps(data, indent=4, ensure_ascii=False)
-        f.write(dumped)
+        f.write(data)
         f.write("\n")
+
+
+def json_dump(data):
+    return json.dumps(data, indent=4, ensure_ascii=False)
 
 
 def is_package_installed(package_name):
@@ -113,3 +118,15 @@ def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
     raise ValueError(
         f"The expression '{expression}' can not be evaluated because it contains tokens outside the allowed list of {allowed_sub_strings}."
     )
+
+
+def import_module_from_file(file_path):
+    # Get the module name (file name without extension)
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    # Create a module specification
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    # Create a new module based on the specification
+    module = importlib.util.module_from_spec(spec)
+    # Load the module
+    spec.loader.exec_module(module)
+    return module

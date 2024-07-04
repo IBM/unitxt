@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "heegyu/bbq",
         "name": "Physical_appearance",
         "data_classification_policy": [
@@ -10,19 +10,19 @@
     },
     "preprocess_steps": [
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "context_type": "description"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "label": "answer"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "ans0",
                 "ans1",
@@ -32,9 +32,7 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.with_context",
-    "templates": [
-        "templates.qa.multiple_choice.with_context.match"
-    ],
+    "templates": "templates.qa.multiple_choice.with_context.all",
     "__description__": "Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
     "__tags__": {
         "languages": [

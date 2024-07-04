@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_from_hf_space",
+        "__type__": "load_from_hf_space",
         "space_name": "lmsys/mt-bench",
         "revision": "a4b674c",
         "data_files": {
@@ -13,21 +13,21 @@
     "preprocess_steps": [
         "operators.mt_bench.rating_hf_space_processing_steps",
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "turn": 1
             },
             "condition": "eq"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "reference": null
             },
             "condition": "ne"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "score": "rating",
@@ -37,17 +37,17 @@
             }
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "question/0",
             "to_field": "question"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "answer/0",
             "to_field": "answer"
         },
         {
-            "type": "copy",
+            "__type__": "copy",
             "field": "reference_answer/0",
             "to_field": "reference_answer"
         }

@@ -1,0 +1,55 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "truthfulqa/truthful_qa",
+        "name": "multiple_choice",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "test"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "_label": 1
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "mc1_targets/choices": "choices",
+                "mc1_targets/labels": "labels"
+            }
+        },
+        {
+            "__type__": "index_of",
+            "search_in": "labels",
+            "index_of": "_label",
+            "to_field": "answer"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.open",
+    "templates": {
+        "__type__": "templates_list",
+        "items": [
+            "templates.qa.multiple_choice.helm",
+            "templates.qa.multiple_choice.match"
+        ]
+    },
+    "__description__": "TruthfulQA is a benchmark to measure whether a language model is truthful in generating answers to questions. The benchmark comprises 817 questions that span 38 categories, including health, law, finance and politics. Questions are crafted so that some humans would answer falsely due to a false belief or misconception. To perform well, models must avoid generating false answers learned from imitating human texts.",
+    "__tags__": {
+        "languages": [
+            "english"
+        ],
+        "urls": {
+            "arxiv": "https://arxiv.org/abs/2109.07958"
+        }
+    }
+}

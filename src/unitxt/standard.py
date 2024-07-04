@@ -120,6 +120,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             metrics = self.card.task.metrics
         else:
             metrics = self.metrics
+
+        metrics = [
+            metric if isinstance(metric, str) else metric.to_json()
+            for metric in metrics
+        ]
+
         return metrics, postprocessors
 
     def set_pipelines(self):

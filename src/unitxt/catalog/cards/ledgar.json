@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "lex_glue",
         "name": "ledgar"
     },
     "preprocess_steps": [
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "Adjustments",
@@ -114,7 +114,7 @@
             }
         },
         {
-            "type": "set",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "Adjustments",
@@ -218,7 +218,6 @@
                     "Warranties",
                     "Withholdings"
                 ],
-                "text_type": "text",
                 "type_of_class": "contractual clauses"
             }
         }
