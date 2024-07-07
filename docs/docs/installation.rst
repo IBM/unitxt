@@ -61,13 +61,14 @@ You can then use the API:
 
 .. warning::
 
-  It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
-  the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
+   It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
+   the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
 
 If you get an error message like:
 
-``datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError: ``
-``Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0. ``
+.. code-block::
+   datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError: ``
+   Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0. ``
 
 It means that you are loading datasets using the Huggingface API, but you also have a local version of Unitxt
 installed, and the versions are not compatible.  You should either update the local installed Unitxt
