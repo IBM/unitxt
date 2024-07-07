@@ -578,17 +578,6 @@ class MapHTMLTableToJSON(FieldOperator):
         "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
     }
     """
-    
-
-class MapHTMLTableToJSON(FieldOperator):
-    """Converts HTML table format to the basic one (JSON).
-
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
-    """
 
     _requirements_list = ["bs4"]
 
