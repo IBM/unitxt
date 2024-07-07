@@ -1,33 +1,33 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "ai2_arc",
         "name": "ARC-Challenge"
     },
     "preprocess_steps": [
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "topic": "science"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "answerKey": "label",
                 "choices": "_choices"
             }
         },
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "_choices/text": "choices",
                 "_choices/label": "labels"
             }
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "search_in": "labels",
             "index_of": "label",
             "to_field": "answer"
@@ -38,7 +38,6 @@
     "__tags__": {
         "annotations_creators": "found",
         "arxiv": "1803.05457",
-        "croissant": true,
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-sa-4.0",
@@ -52,5 +51,5 @@
             "multiple-choice-qa"
         ]
     },
-    "__description__": "Dataset Card for \"ai2_arc\"\nDataset Summary\nA new dataset of 7,787 genuine grade-school level, multiple-choice science questions, assembled to encourage research in\nadvanced question-answering. The dataset is partitioned into a Challenge Set and an Easy Set, where the former contains\nonly questions answered incorrectly by both a retrieval-based algorithm and a word co-occurrence algorithm. We are also\nincluding a corpus of over 14 million science sentences… See the full description on the dataset page: https://huggingface.co/datasets/allenai/ai2_arc."
+    "__description__": "A new dataset of 7,787 genuine grade-school level, multiple-choice science questions, assembled to encourage research in advanced question-answering. The dataset is partitioned into a Challenge Set and an Easy Set, where the former contains only questions answered incorrectly by both a retrieval-based algorithm and a word co-occurrence algorithm. We are also including a corpus of over 14 million science sentences… See the full description on the dataset page: https://huggingface.co/datasets/allenai/ai2_arc."
 }

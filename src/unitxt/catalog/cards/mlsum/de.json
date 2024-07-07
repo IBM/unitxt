@@ -1,21 +1,15 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "mlsum",
         "name": "de"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "text": "document"
-            }
-        },
-        {
-            "type": "add_fields",
-            "fields": {
-                "document_type": "document"
             }
         }
     ],
@@ -23,7 +17,6 @@
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
         "annotations_creators": "found",
-        "croissant": true,
         "language": [
             "de",
             "es",

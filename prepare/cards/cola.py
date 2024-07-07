@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -14,10 +14,9 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
         RenameFields(field_to_field={"sentence": "text"}),
-        AddFields(
+        Set(
             fields={
                 "classes": ["unacceptable", "acceptable"],
-                "text_type": "text",
                 "type_of_class": "grammatical acceptability",
             }
         ),
@@ -27,14 +26,11 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": True,
-        "croissant": True,
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": True,
-        "qa-nli": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -48,13 +44,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE\n"
-        "Dataset Summary\n"
-        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
-        "Supported Tasks and Leaderboards\n"
-        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
-        "ax\n"
-        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Corpus of Linguistic Acceptability consists of English acceptability judgments drawn from books and journal articles on linguistic theory. Each example is a sequence of words annotated with whether it is a grammatical English sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

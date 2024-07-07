@@ -1,5 +1,5 @@
 {
-    "type": "multiple_choice_template",
+    "__type__": "multiple_choice_template",
     "input_format": "Das folgende sind mehrfache auswahlfragen (mit antworten) bezueglich {topic}.\n{context}\n{question}.\nAatworten: {choices}.\nAatwort:",
     "target_field": "answer",
     "choices_separator": "\n",

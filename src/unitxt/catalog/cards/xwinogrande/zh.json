@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "Muennighoff/xwinograd",
         "name": "zh"
     },
     "preprocess_steps": [
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "option1",
                 "option2"
@@ -15,18 +15,18 @@
             "to_field": "choices"
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "type": "add_constant",
+            "__type__": "add_constant",
             "field": "answer",
             "add": -1
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "sentence": "question"
             }
@@ -39,7 +39,6 @@
             "2211.01786",
             "2106.12066"
         ],
-        "croissant": true,
         "language": [
             "en",
             "fr",
@@ -51,5 +50,5 @@
         "license": "cc-by-4.0",
         "region": "us"
     },
-    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities."
+    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities… See the full description on the dataset page: https://huggingface.co/datasets/Muennighoff/xwinograd"
 }

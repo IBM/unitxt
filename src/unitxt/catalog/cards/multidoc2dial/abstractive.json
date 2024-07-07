@@ -1,30 +1,30 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "multidoc2dial"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "answers/text/0": "relevant_context"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "utterance"
             ],
             "to_field": "answers"
         },
         {
-            "type": "execute_expression",
+            "__type__": "execute_expression",
             "expression": "question.split('[SEP]')[0]",
             "to_field": "question"
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "context_type": "document"
             }
@@ -35,7 +35,6 @@
     "__tags__": {
         "annotations_creators": "crowdsourced",
         "arxiv": "2109.12595",
-        "croissant": true,
         "language": "en",
         "language_creators": [
             "crowdsourced",
@@ -53,5 +52,5 @@
         "task_categories": "question-answering",
         "task_ids": "open-domain-qa"
     },
-    "__description__": "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents."
+    "__description__": "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents… See the full description on the dataset page: https://huggingface.co/datasets/multidoc2dial"
 }

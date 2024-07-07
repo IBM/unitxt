@@ -1,36 +1,24 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "contexts",
-                    "references"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "contexts",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "question",
-                    "prediction"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "question",
+            "to_field": "prediction"
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "score/instance/reference_scores",
-                    "score/instance/score"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "score/instance/reference_scores",
+            "to_field": "score/instance/score"
         }
     ]
 }

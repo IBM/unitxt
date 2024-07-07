@@ -13,6 +13,7 @@ add_to_catalog(
         metrics=[
             "metrics.rouge",
         ],
+        defaults={"input_text_type": "text", "output_text_type": "text"},
     ),
     "tasks.rewriting.by_attribute",
     overwrite=True,
@@ -25,6 +26,7 @@ add_to_catalog(
         metrics=[
             "metrics.rouge",
         ],
+        defaults={"text_type": "text"},
     ),
     "tasks.rewriting.paraphrase",
     overwrite=True,

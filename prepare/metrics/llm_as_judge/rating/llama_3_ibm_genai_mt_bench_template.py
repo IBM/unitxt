@@ -6,7 +6,7 @@ from unitxt.inference import (
 from unitxt.llm_as_judge import LLMAsJudge
 
 model_list = ["meta-llama/llama-3-8b-instruct", "meta-llama/llama-3-70b-instruct"]
-format = "formats.llama3_chat"
+format = "formats.llama3_instruct"
 template = "templates.response_assessment.rating.mt_bench_single_turn"
 task = "rating.single_turn"
 

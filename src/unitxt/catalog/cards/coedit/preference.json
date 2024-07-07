@@ -1,39 +1,38 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "grammarly/coedit",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         "splitters.small_no_test",
         {
-            "type": "split",
+            "__type__": "split",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "slice",
+            "__type__": "slice",
             "field": "src",
             "start": 1
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "src/0": "instruction"
-            }
+            "__type__": "copy",
+            "field": "src/0",
+            "to_field": "instruction"
         },
         {
-            "type": "join",
+            "__type__": "join",
             "field": "src",
             "by": ": "
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "tgt",
                 "src"
@@ -41,18 +40,18 @@
             "to_field": "choices"
         },
         {
-            "type": "shuffle_field_values",
+            "__type__": "shuffle_field_values",
             "field": "choices"
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "output_type": "sentence",
                 "input_type": "sentence"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "src": "input",
                 "tgt": "output_choice"
@@ -63,12 +62,11 @@
     "templates": "templates.evaluation.preference.all",
     "__tags__": {
         "arxiv": "2305.09857",
-        "croissant": true,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
         "size_categories": "10K<n<100K",
         "task_categories": "text-generation"
     },
-    "__description__": "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\nPaper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\nAuthors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\nProject Repo: https://github.com/vipulraheja/coedit\nDataset Summary\nThis is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\nDataset Structure\nThe… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+    "__description__": "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
 }

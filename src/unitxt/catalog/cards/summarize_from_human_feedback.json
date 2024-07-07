@@ -1,27 +1,27 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "openai/summarize_from_feedback",
         "name": "comparisons"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "info/post": "input",
                 "summaries/*/text": "choices"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "choice": "output_choice"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "input_type": "post",
                 "output_type": "summary",
@@ -33,8 +33,7 @@
     "templates": "templates.evaluation.preference.all",
     "__tags__": {
         "arxiv": "2009.01325",
-        "croissant": true,
         "region": "us"
     },
-    "__description__": "Summarize from Feedback contains the human feedback data released by the \"Learning to summarize from human feedback\" paper."
+    "__description__": "Summarize from Feedback contains the human feedback data released by the \"Learning to summarize from human feedback\" paper… See the full description on the dataset page: https://huggingface.co/datasets/openai/summarize_from_feedback"
 }

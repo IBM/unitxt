@@ -1,33 +1,33 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
-        "path": "OfirArviv/mt_bench_pairwise_comparison_gpt4_judgments",
-        "split": "train"
+        "__type__": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl"
+        }
     },
     "preprocess_steps": [
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
         {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
-        {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "turn": 1
             },
             "condition": "eq"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
-                "reference": "[]"
+                "reference": null
             },
             "condition": "ne"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "winner": [
                     "model_1",
@@ -38,7 +38,7 @@
             "condition": "in"
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "winner": {
                     "model_1": "choice_a",
@@ -48,7 +48,7 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -58,48 +58,24 @@
             }
         },
         {
-            "type": "literal_eval",
-            "to_field": "question",
-            "field": "question"
+            "__type__": "copy",
+            "field": "question/0",
+            "to_field": "question"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
+            "__type__": "copy",
+            "field": "answer_a/0",
+            "to_field": "answer_a"
         },
         {
-            "type": "literal_eval",
-            "to_field": "answer_a",
-            "field": "answer_a"
+            "__type__": "copy",
+            "field": "answer_b/0",
+            "to_field": "answer_b"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer_a/0": "answer_a"
-            }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "answer_b",
-            "field": "answer_b"
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer_b/0": "answer_b"
-            }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "reference_answer",
-            "field": "reference_answer"
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "reference_answer/0": "reference_answer"
-            }
+            "__type__": "copy",
+            "field": "reference_answer/0",
+            "to_field": "reference_answer"
         }
     ],
     "task": "tasks.response_assessment.pairwise_comparison.single_turn_with_reference",

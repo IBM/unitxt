@@ -1,19 +1,19 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "cais/mmlu",
         "name": "formal_logic"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "dev": "train"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "topic": "formal logic"
             }
@@ -29,7 +29,6 @@
             "2005.14165",
             "2008.02275"
         ],
-        "croissant": true,
         "language": "en",
         "language_creators": "expert-generated",
         "license": "mit",
@@ -40,5 +39,5 @@
         "task_categories": "question-answering",
         "task_ids": "multiple-choice-qa"
     },
-    "__description__": "Dataset Card for MMLU\nDataset Summary\nMeasuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021).\nThis is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
+    "__description__": "Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021). \nThis is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
 }

@@ -1,10 +1,10 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "recall",
     "preprocess_steps": [],
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "score/instance/f1": "score/instance/correctness_f1_bert_score.deberta_large_mnli",
                 "score/instance/recall": "score/instance/correctness_recall_bert_score.deberta_large_mnli",

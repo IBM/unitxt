@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "winogrande",
         "name": "winogrande_debiased"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "option1",
                 "option2"
@@ -16,18 +16,18 @@
             "to_field": "choices"
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "type": "add_constant",
+            "__type__": "add_constant",
             "field": "answer",
             "add": -1
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "sentence": "question"
             }
@@ -36,9 +36,8 @@
     "task": "tasks.qa.multiple_choice.open",
     "templates": "templates.qa.multiple_choice.open.all",
     "__tags__": {
-        "croissant": true,
         "language": "en",
         "region": "us"
     },
-    "__description__": "WinoGrande is a new collection of 44k problems, inspired by Winograd Schema Challenge (Levesque, Davis, and Morgenstern\n2011), but adjusted to improve the scale and robustness against the dataset-specific bias. Formulated as a\nfill-in-a-blank task with binary options, the goal is to choose the right option for a given sentence which requires\ncommonsense reasoning."
+    "__description__": "WinoGrande is a new collection of 44k problems, inspired by Winograd Schema Challenge (Levesque, Davis, and Morgenstern 2011), but adjusted to improve the scale and robustness against the dataset-specific bias. Formulated as a fill-in-a-blank task with binary options, the goal is to choose the right option for a given sentence which requires commonsense reasoning… See the full description on the dataset page: https://huggingface.co/datasets/winogrande"
 }

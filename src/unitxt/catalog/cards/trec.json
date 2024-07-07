@@ -1,16 +1,16 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "trec"
     },
     "preprocess_steps": [
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 9223372036854775807
         },
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[85%]",
                 "validation": "train[15%]",
@@ -18,13 +18,13 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "fine_label": "label"
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "Abbreviation: Abbreviation.",
@@ -81,7 +81,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "Abbreviation: Abbreviation.",
@@ -144,7 +144,6 @@
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "annotations_creators": "expert-generated",
-        "croissant": true,
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",
@@ -155,5 +154,5 @@
         "task_categories": "text-classification",
         "task_ids": "multi-class-classification"
     },
-    "__description__": "The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set.\nThe dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700.\nData are collected from four sources: 4,500 English questions published by USC (Hovy et al., 2001), about 500 manually constructed questions for a few rare classes, 894 TREC 8 and TREC 9 questions, and also 500 questions from TREC 10 which serves as the test set. These questions were manually labeled."
+    "__description__": "The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set. \nThe dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700… See the full description on the dataset page: https://huggingface.co/datasets/trec"
 }

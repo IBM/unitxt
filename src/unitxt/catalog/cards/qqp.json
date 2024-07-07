@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "glue",
         "name": "qqp"
     },
     "preprocess_steps": [
         "splitters.large_no_test",
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "not duplicated",
@@ -17,7 +17,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "choices": [
                     "not duplicated",
@@ -27,7 +27,7 @@
         }
     ],
     "task": {
-        "type": "task",
+        "__type__": "task",
         "inputs": [
             "choices",
             "question1",
@@ -41,10 +41,10 @@
         ]
     },
     "templates": {
-        "type": "templates_list",
+        "__type__": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "__type__": "input_output_template",
                 "input_format": "Given this question: {question1}, classify if this question: {question2} is {choices}.",
                 "output_format": "{label}"
             }
@@ -53,14 +53,15 @@
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": true,
-        "croissant": true,
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": true,
-        "qa-nli": true,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -73,5 +74,5 @@
             "text-scoring"
         ]
     },
-    "__description__": "Dataset Card for GLUE\nDataset Summary\nGLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\nSupported Tasks and Leaderboards\nThe leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\nax\nA manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+    "__description__": "The Quora Question Pairs2 dataset is a collection of question pairs from the community question-answering website Quora. The task is to determine whether a pair of questions are semantically equivalent… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
 }

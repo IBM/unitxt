@@ -7,6 +7,7 @@ add_to_catalog(
         outputs={"summary": "str"},
         prediction_type="str",
         metrics=["metrics.rouge"],
+        defaults={"document_type": "document"},
     ),
     "tasks.summarization.abstractive",
     overwrite=True,

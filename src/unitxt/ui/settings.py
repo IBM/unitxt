@@ -47,8 +47,8 @@ CODE_INTRO_TXT = """
 """
 
 MAIN_INTRO_TXT = """
-# Select Task, Dataset Card and a Template,
-# then click the Generate Prompts button
+# Select _Task_, _Dataset_ and a _Template_,
+# Then click the __Generate__ __Prompts__ button!
 """
 JSON_BUTTON_TXT = "View"
 

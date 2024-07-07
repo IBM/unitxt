@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "glue",
         "name": "rte"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "entailment",
@@ -17,7 +17,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "entailment",
@@ -29,7 +29,7 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "sentence1": "text_a",
                 "sentence2": "text_b"
@@ -41,14 +41,15 @@
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": true,
-        "croissant": true,
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": true,
-        "qa-nli": true,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -61,5 +62,5 @@
             "text-scoring"
         ]
     },
-    "__description__": "Dataset Card for GLUE\nDataset Summary\nGLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\nSupported Tasks and Leaderboards\nThe leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\nax\nA manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+    "__description__": "The Recognizing Textual Entailment (RTE) datasets come from a series of annual textual entailment challenges. The authors of the benchmark combined the data from RTE1 (Dagan et al., 2006), RTE2 (Bar Haim et al., 2006), RTE3 (Giampiccolo et al., 2007), and RTE5 (Bentivogli et al., 2009)… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
 }

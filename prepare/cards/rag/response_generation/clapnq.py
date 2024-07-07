@@ -8,8 +8,8 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -19,21 +19,27 @@ card = TaskCard(
     ),
     preprocess_steps=[
         SplitRandomMix({"train": "train", "test": "validation"}),
-        CopyFields(
+        Copy(
             field_to_field={
                 "passages/*/text": "contexts",
                 "input": "question",
                 "output/*/answer": "reference_answers",
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "contexts_ids": [],
             }
         ),
     ],
     task="tasks.rag.response_generation",
-    templates=TemplatesDict({"default": "templates.rag.response_generation.simple"}),
+    templates=TemplatesDict(
+        {
+            "please_respond": "templates.rag.response_generation.please_respond",
+            "answer_based_on_context": "templates.rag.response_generation.answer_based_on_context",
+            "answer_based_on_context_inverted": "templates.rag.response_generation.answer_based_on_context_inverted",
+        }
+    ),
 )
 
 # testing the card is too slow with the bert-score metric, so dropping it

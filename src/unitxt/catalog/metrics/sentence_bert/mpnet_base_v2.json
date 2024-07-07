@@ -1,4 +1,4 @@
 {
-    "type": "sentence_bert",
+    "__type__": "sentence_bert",
     "model_name": "sentence-transformers/all-mpnet-base-v2"
 }

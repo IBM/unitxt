@@ -27,6 +27,10 @@ class Task(InstanceOperator):
         prediction_type (Optional[str]):
             Need to be consistent with all used metrics. Defaults to None, which means that it will
             be set to Any.
+        defaults (Optional[Dict[str, Any]]):
+            An optional dictionary with default values for chosen input/output keys. Needs to be
+            consistent with names and types provided in 'inputs' and/or 'outputs' arguments.
+            Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
         "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
@@ -39,6 +43,7 @@ class Task(InstanceOperator):
     metrics: List[str]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
+    defaults: Optional[Dict[str, Any]] = None
 
     def verify(self):
         for io_type in ["inputs", "outputs"]:
@@ -72,6 +77,8 @@ class Task(InstanceOperator):
                 augmentable_input in self.inputs
             ), f"augmentable_input {augmentable_input} is not part of {self.inputs}"
 
+        self.verify_defaults()
+
     @staticmethod
     @lru_cache(maxsize=None)
     def get_metric_prediction_type(metric_id: str):
@@ -99,19 +106,58 @@ class Task(InstanceOperator):
                 f"metric's prediction type ({metric_prediction_type}) are different."
             )
 
+    def verify_defaults(self):
+        if self.defaults:
+            if not isinstance(self.defaults, dict):
+                raise ValueError(
+                    f"If specified, the 'defaults' must be a dictionary, "
+                    f"however, '{self.defaults}' was provided instead, "
+                    f"which is of type '{type(self.defaults)}'."
+                )
+
+            for default_name, default_value in self.defaults.items():
+                assert isinstance(default_name, str), (
+                    f"If specified, all keys of the 'defaults' must be strings, "
+                    f"however, the key '{default_name}' is of type '{type(default_name)}'."
+                )
+
+                val_type = self.inputs.get(default_name) or self.outputs.get(
+                    default_name
+                )
+
+                assert val_type, (
+                    f"If specified, all keys of the 'defaults' must refer to a chosen "
+                    f"key in either 'inputs' or 'outputs'. However, the name '{default_name}' "
+                    f"was provided which does not match any of the keys."
+                )
+
+                assert isoftype(default_value, parse_type_string(val_type)), (
+                    f"The value of '{default_name}' from the 'defaults' must be of "
+                    f"type '{val_type}', however, it is of type '{type(default_value)}'."
+                )
+
+    def set_default_values(self, instance: Dict[str, Any]) -> Dict[str, Any]:
+        if self.defaults:
+            instance = {**self.defaults, **instance}
+        return instance
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        instance = self.set_default_values(instance)
+
         verify_required_schema(self.inputs, instance)
         verify_required_schema(self.outputs, instance)
 
         inputs = {key: instance[key] for key in self.inputs.keys()}
         outputs = {key: instance[key] for key in self.outputs.keys()}
+        data_classification_policy = instance.get("data_classification_policy", [])
 
         return {
             "inputs": inputs,
             "outputs": outputs,
             "metrics": self.metrics,
+            "data_classification_policy": data_classification_policy,
         }
 
 

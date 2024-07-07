@@ -1,26 +1,26 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "webis/tldr-17",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[50%]",
                 "test": "train[50%]"
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "content": "document"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "document_type": "document"
             }
@@ -30,12 +30,13 @@
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
         "annotations_creators": "no-annotation",
-        "croissant": true,
+        "flags": [
+            "reddit-posts-summarization"
+        ],
         "language": "en",
         "language_creators": "crowdsourced",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
-        "reddit-posts-summarization": true,
         "region": "us",
         "size_categories": "1M<n<10M",
         "source_datasets": "original",

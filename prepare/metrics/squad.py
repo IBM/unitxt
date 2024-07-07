@@ -1,4 +1,4 @@
-from unitxt.blocks import AddFields, AddID, CopyFields
+from unitxt.blocks import AddID, Copy, Set
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import MetricPipeline, Squad
 from unitxt.test_utils.metrics import test_metric
@@ -7,7 +7,7 @@ metric = MetricPipeline(
     main_score="f1",
     preprocess_steps=[
         AddID(),
-        AddFields(
+        Set(
             {
                 "prediction_template": {"prediction_text": "PRED", "id": "ID"},
                 "reference_template": {
@@ -17,7 +17,7 @@ metric = MetricPipeline(
             },
             use_deepcopy=True,
         ),
-        CopyFields(
+        Copy(
             field_to_field=[
                 ["references", "reference_template/answers/text"],
                 ["prediction", "prediction_template/prediction_text"],
@@ -25,7 +25,7 @@ metric = MetricPipeline(
                 ["id", "reference_template/id"],
             ],
         ),
-        CopyFields(
+        Copy(
             field_to_field=[
                 ["reference_template", "references"],
                 ["prediction_template", "prediction"],

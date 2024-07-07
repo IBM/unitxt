@@ -1,27 +1,19 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "question",
-                    "references"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "question",
+            "to_field": "references"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "answer",
-                    "prediction"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "answer",
+            "to_field": "prediction"
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "references"
             ],

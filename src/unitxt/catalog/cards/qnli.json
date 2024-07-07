@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "glue",
         "name": "qnli"
     },
     "preprocess_steps": [
         "splitters.large_no_test",
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "entailment",
@@ -17,7 +17,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "entailment",
@@ -29,7 +29,7 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "question": "text_a",
                 "sentence": "text_b"
@@ -41,14 +41,15 @@
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": true,
-        "croissant": true,
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": true,
-        "qa-nli": true,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -61,5 +62,5 @@
             "text-scoring"
         ]
     },
-    "__description__": "Dataset Card for GLUE\nDataset Summary\nGLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\nSupported Tasks and Leaderboards\nThe leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\nax\nA manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+    "__description__": "The Stanford Question Answering Dataset is a question-answering dataset consisting of question-paragraph pairs, where one of the sentences in the paragraph (drawn from Wikipedia) contains the answer to the corresponding question (written by an annotator). The authors of the benchmark convert the task into sentence pair classification by forming a pair between each question and each sentence in the corresponding context, and filtering out pairs with low lexical overlap between the question and the context sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
 }

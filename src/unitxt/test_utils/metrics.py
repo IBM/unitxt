@@ -1,6 +1,7 @@
 import json
 from typing import Any, List, Optional
 
+from ..eval_utils import evaluate
 from ..logging_utils import get_logger
 from ..metrics import GlobalMetric, Metric
 from ..settings_utils import get_settings
@@ -96,19 +97,35 @@ def test_metric(
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
     outputs = apply_metric(metric, predictions, references, task_data)
 
+    check_scores(
+        global_target,
+        instance_targets,
+        global_outputs=outputs[0]["score"]["global"],
+        instance_outputs=[output["score"]["instance"] for output in outputs],
+    )
+
+    logger.info("Metric tested successfully!")
+    return True
+
+
+def check_scores(
+    global_target: dict,
+    instance_targets: List[dict],
+    global_outputs: dict,
+    instance_outputs: List[dict],
+):
     errors = []
-    global_score = round_floats(outputs[0]["score"]["global"])
+    global_score = round_floats(global_outputs)
     if not dict_equal(global_score, global_target):
         errors.append(
             f"global score must be equal, got {json.dumps(global_score, sort_keys=True, ensure_ascii=False)} =/= "
             f"{json.dumps(global_target, sort_keys=True, ensure_ascii=False)}"
         )
-
-    if len(outputs) == len(instance_targets):
-        for i, output, instance_target in zip(
-            range(0, len(outputs)), outputs, instance_targets
+    if len(instance_outputs) == len(instance_targets):
+        for i, instance_output, instance_target in zip(
+            range(0, len(instance_outputs)), instance_outputs, instance_targets
         ):
-            instance_score = round_floats(output["score"]["instance"])
+            instance_score = round_floats(instance_output)
             if not dict_equal(instance_score, instance_target):
                 errors.append(
                     f"instance {i} score must be equal, "
@@ -117,12 +134,28 @@ def test_metric(
                 )
     else:
         errors.append(
-            f"Metric outputs count does not match instance targets count, got {len(outputs)} =/= "
+            f"Metric outputs count does not match instance targets count, got {len(instance_outputs)} =/= "
             f"{len(instance_targets)}"
         )
-
     if len(errors) > 0:
         raise AssertionError("\n".join(errors))
 
-    logger.info("Metric tested successfully!")
-    return True
+
+def test_evaluate(
+    global_target: dict,
+    instance_targets: List[dict],
+    task_data: Optional[List[dict]],
+    metric_name: str,
+):
+    evaluation_result, global_outputs = evaluate(
+        task_data, metric_names=[metric_name], compute_conf_intervals=True
+    )
+    instance_outputs = [
+        {
+            "score": result[metric_name],
+        }
+        for result in evaluation_result
+    ]
+    check_scores(
+        global_target, instance_targets, global_outputs[metric_name], instance_outputs
+    )

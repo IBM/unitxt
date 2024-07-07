@@ -1,20 +1,20 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "SetFit/20_newsgroups",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "text": ""
             },
             "condition": "ne"
         },
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[90%]",
                 "validation": "train[10%]",
@@ -22,13 +22,13 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "label_text": "label"
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "alt.atheism": "atheism",
@@ -55,7 +55,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "atheism",
@@ -78,17 +78,14 @@
                     "middle east",
                     "politics",
                     "religion"
-                ],
-                "text_type": "text",
-                "type_of_class": "topic"
+                ]
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
-        "croissant": true,
         "region": "us"
     },
-    "__description__": "This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs:\nThe 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a messages posted before and after a specific date.\nWe followed the recommended practice to remove headers, signature blocks, and… See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups."
+    "__description__": "This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: \n\"The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date.\"\nSee the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups."
 }

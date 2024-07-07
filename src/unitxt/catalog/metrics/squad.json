@@ -1,12 +1,12 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "f1",
     "preprocess_steps": [
         {
-            "type": "add_id"
+            "__type__": "add_id"
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "use_deepcopy": true,
             "fields": {
                 "prediction_template": {
@@ -25,7 +25,7 @@
             }
         },
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": [
                 [
                     "references",
@@ -46,7 +46,7 @@
             ]
         },
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": [
                 [
                     "reference_template",
@@ -60,6 +60,6 @@
         }
     ],
     "metric": {
-        "type": "squad"
+        "__type__": "squad"
     }
 }
