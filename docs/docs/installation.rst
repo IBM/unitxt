@@ -58,6 +58,12 @@ You can then use the API:
   dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
   [print(item) for item in dataset_with_scores[0]['score']['global'].items()] 
 
+
+  .. note:: 
+
+     It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
+     the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
+
 If you get an error message like:
 
 ```
@@ -69,3 +75,4 @@ It means that you are loading datasets using the Huggingface API, but you also h
 installed, and the versions are not compatible.  You should either update the local installed Unitxt
 to the Unitxt Huggingface dataset version, or uninstall the local Unitxt package (in case you don't require the access to Unitxt
 direct APIs), or change the code to load the datasets using the direct Unitxt APIs and not use the Huggingface API.
+
