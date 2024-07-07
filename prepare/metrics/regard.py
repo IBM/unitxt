@@ -1,8 +1,12 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import Regard
+from unitxt.metrics import HuggingfaceMetric
 from unitxt.test_utils.metrics import test_metric
 
-metric = Regard(
+metric = HuggingfaceMetric(
+    hf_metric_name="src/metrics/regard",
+    main_score="regard",
+    hf_main_score="score",
+    scale=1.0,
     n_resamples=None,
     # Regard passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
