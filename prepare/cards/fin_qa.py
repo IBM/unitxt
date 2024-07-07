@@ -1,11 +1,11 @@
 from unitxt.blocks import (
-    CopyFields,
     LoadHF,
     SerializeTableAsIndexedRowMajor,
     TaskCard,
     TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import CopyFields
 from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
