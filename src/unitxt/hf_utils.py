@@ -24,9 +24,10 @@ class UnitxtVersionsConflictError(ValueError):
     def __init__(self, error_in: str, hf_unitxt_version, installed_unitxt_version):
         assert hf_unitxt_version != installed_unitxt_version
         if compare_versions(hf_unitxt_version, installed_unitxt_version) == 1:
-            msg = f"Located installed unitxt version {installed_unitxt_version} that is older than unitxt {error_in} version {hf_unitxt_version}. Please update unitxt package or uninstall it to avoid conflicts."
+            msg = f"Located locally installed Unitxt version {installed_unitxt_version} that is older than the Unitxt {error_in} version {hf_unitxt_version}. Please either (1) update the local Unitxt package or (2) uninstall the local unitxt package (3) remove the calls to the Unitxt {error_in} API and use only the direct Unitxt APIs."
         if compare_versions(hf_unitxt_version, installed_unitxt_version) == -1:
-            msg = f"Located installed unitxt version {installed_unitxt_version} that is newer than unitxt {error_in} version {hf_unitxt_version}. Please force-reload the {error_in} or downgrade unitxt to {error_in} version or uninstall unitxt to avoid conflicts."
+            msg = f"Located locally installed Unitxt version {installed_unitxt_version} that is newer than Unitxt {error_in} version {hf_unitxt_version}. Please either (1) force-reload the {error_in} version or (2) downgrade the locally installed Unitxt version to {error_in} version or (3) uninstall the locally installed Unitxt, if you are not using the direct Unitxt APIs"
+        msg = "For more details see: https://unitxt.readthedocs.io/en/latest/docs/installation.html"
         super().__init__(msg)
 
 

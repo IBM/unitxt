@@ -63,10 +63,9 @@ If you get an error message like:
 ```
 datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError: 
 Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0. 
-Please update unitxt package or uninstall it to avoid conflicts.
 ```
 
 It means that you are loading datasets using the Huggingface API, but you also have a local version of Unitxt
 installed, and the versions are not compatible.  You should either update the local installed Unitxt
 to the Unitxt Huggingface dataset version, or uninstall the local Unitxt package (in case you don't require the access to Unitxt
-direct APIs)
+direct APIs), or change the code to load the datasets using the direct Unitxt APIs and not use the Huggingface API.
