@@ -1061,11 +1061,6 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
-@deprecation(version="1.11.0", alternative=Copy)
-class CopyFields(Copy):
-    pass
-
-
 class GetItemByIndex(FieldOperator):
     """Get from the item list by the index in the field."""
 
@@ -1806,9 +1801,9 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
         multi_stream = MultiStream({"tmp": stream})
-        multi_stream = CopyFields(
-            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
-        )(multi_stream)
+        multi_stream = Copy(field_to_field={k: f"{k}_orig" for k in keys_to_restore})(
+            multi_stream
+        )
 
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
@@ -1820,7 +1815,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                 metric.disable_confidence_interval_calculation()
 
             multi_stream = metric(multi_stream)
-            multi_stream = CopyFields(
+            multi_stream = Copy(
                 field_to_field={f"{k}_orig": k for k in keys_to_restore}
             )(multi_stream)
 
