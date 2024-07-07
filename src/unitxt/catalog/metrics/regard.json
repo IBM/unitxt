@@ -1,5 +1,9 @@
 {
-    "__type__": "regard",
+    "__type__": "huggingface_metric",
+    "hf_metric_name": "src/metrics/regard",
+    "main_score": "regard",
+    "hf_main_score": "score",
+    "scale": 1.0,
     "n_resamples": null,
     "prediction_type": "Any"
 }
