@@ -1061,6 +1061,11 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
+@deprecation(version="1.11.0", alternative=Copy)
+class CopyFields(Copy):
+    pass
+
+
 class GetItemByIndex(FieldOperator):
     """Get from the item list by the index in the field."""
 
