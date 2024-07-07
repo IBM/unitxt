@@ -67,6 +67,7 @@ You can then use the API:
 If you get an error message like:
 
 .. code-block::
+  
    datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError: ``
    Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0. ``
 
