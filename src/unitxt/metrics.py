@@ -20,7 +20,6 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact
 from .dataclass import (
     AbstractField,
-    Field,
     InternalField,
     NonPositionalField,
     OptionalField,
@@ -3801,15 +3800,17 @@ class IsCodeMixed(BulkInstanceMetric):
     reduction_map = {"mean": [main_score]}
     prediction_type = "str"
 
-    inference_model: InferenceEngine = Field(
-        default_factory=lambda: HFPipelineBasedInferenceEngine(
-            model_name="Nexusflow/Starling-LM-7B-beta", max_new_tokens=1, lazy_load=True
-        )
-    )
+    inference_model: InferenceEngine = None
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
     def prepare(self):
+        if IsCodeMixed.inference_model is None:
+            IsCodeMixed.inference_model = HFPipelineBasedInferenceEngine(
+                model_name="Nexusflow/Starling-LM-7B-beta",
+                max_new_tokens=1,
+                lazy_load=True,
+            )
         # the processing steps for preparing the prompt (instruction, answer prefix etc.)
         # that we send to the generative model
         self.processor = SequentialOperator(
@@ -3827,7 +3828,7 @@ class IsCodeMixed(BulkInstanceMetric):
         task_data: List[Dict],
     ) -> dict:
         processed_data = self._prepare_instances_for_model(predictions)
-        preds = self.inference_model.infer(processed_data)
+        preds = IsCodeMixed.inference_model.infer(processed_data)
 
         # where the generated outputs begin with a number, the text gets a score of 1 (i.e., code-mixed)
         scores = [int(pred.isnumeric()) for pred in preds]
