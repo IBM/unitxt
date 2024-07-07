@@ -63,10 +63,6 @@ You can then use the API:
    It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
    the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
 
-.. note::
-   It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
-   the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
-
 If you get an error message like:
 
 .. code-block::
