@@ -16,11 +16,17 @@ The primary task in any operator development is to implement the `process` funct
 
 General or Specelized Operators
 --------------------------------
-Some operators are specielized in specific task such as:
+Some operators are specielized in specific data or specific operations such as:
 
-- :class:`loaders<unitxt.loaders>` for loading data.
+- :class:`loaders<unitxt.loaders>` for accessing data from various sources.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
+- :class:`stream_operators<unitxt.stream_operators>` for changing joining and mixing streams.
 - :class:`struct_data_operators<unitxt.struct_data_operators>` for structured data operators.
+- :class:`collections_operators<unitxt.collections_operators>` for handling collections such as lists and dictionaries.
+- :class:`dialog_operators<unitxt.dialog_operators>` for handling dialogs.
+- :class:`string_operators<unitxt.string_operators>` for handling strings.
+- :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
+- :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
 Other specelized operators are used by unitxt internally:
 
@@ -29,9 +35,10 @@ Other specelized operators are used by unitxt internally:
 
 The rest of this section is dedicated for general operators.
 
-General Operaotrs List:
+General Operators List:
 ------------------------
 """
+
 import copy
 import operator
 import uuid
@@ -58,6 +65,7 @@ import requests
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
     InstanceOperator,
@@ -75,7 +83,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import GeneratorStream, Stream
+from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import flatten_dict
@@ -221,7 +229,7 @@ class FlattenInstances(InstanceOperator):
         return flatten_dict(instance, parent_key=self.parent_key, sep=self.sep)
 
 
-class AddFields(InstanceOperator):
+class Set(InstanceOperator):
     """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
@@ -231,17 +239,17 @@ class AddFields(InstanceOperator):
 
     Examples:
         # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
-        AddFields(fields={"classes": ["positive","negatives"]})
+        Set(fields={"classes": ["positive","negatives"]})
 
         # Add a 'start' field under the 'span' field with a value of 0 to all streams
-        AddFields(fields={"span/start": 0}
+        Set(fields={"span/start": 0}
 
         # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
-        AddFields(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+        Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
 
         # Add a 'classes' field on a given list, prevent modification of original list
         # from changing the instance.
-        AddFields(fields={"classes": alist}), use_deepcopy=True)
+        Set(fields={"classes": alist}), use_deepcopy=True)
         # if now alist is modified, still the instances remain intact.
     """
 
@@ -264,6 +272,11 @@ class AddFields(InstanceOperator):
         return instance
 
 
+@deprecation(version="1.11.0", alternative=Set)
+class AddFields(Set):
+    pass
+
+
 class RemoveFields(InstanceOperator):
     """Remove specified fields from each instance in a stream.
 
@@ -279,6 +292,24 @@ class RemoveFields(InstanceOperator):
         for field_name in self.fields:
             del instance[field_name]
         return instance
+
+
+class SelectFields(InstanceOperator):
+    """Keep only specified fields from each instance in a stream.
+
+    Args:
+        fields (List[str]): The fields to keep from each instance.
+    """
+
+    fields: List[str]
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        new_instance = {}
+        for selected_field in self.fields:
+            new_instance[selected_field] = instance[selected_field]
+        return new_instance
 
 
 class InstanceFieldOperator(InstanceOperator):
@@ -393,6 +424,11 @@ class InstanceFieldOperator(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        # Need to deep copy instance, because when assigning two dictionary fields,
+        # dict_set() the target field dictionary fields.
+        # This means that if this target field was assigned to another field before,
+        # the field is updated as well.
+        instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
@@ -1001,7 +1037,7 @@ class Perturb(FieldOperator):
         return value
 
 
-class CopyFields(FieldOperator):
+class Copy(FieldOperator):
     """Copies values from specified fields to specified fields.
 
     Args (of parent class):
@@ -1009,13 +1045,13 @@ class CopyFields(FieldOperator):
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
-        CopyField(field_to_field={"a": "b"}
+        Copy(field_to_field={"a": "b"}
         would yield {"a": 2, "b": 2}, and when processed by
-        CopyField(field_to_field={"a": "c"} would yield
+        Copy(field_to_field={"a": "c"} would yield
         {"a": 2, "b": 3, "c": 2}
 
         with field names containing / , we can also copy inside the field:
-        CopyFields(field_to_field={"a/0": "a"})
+        Copy(field="a/0",to_field="a")
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
@@ -1023,6 +1059,11 @@ class CopyFields(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return copy.deepcopy(value)
+
+
+@deprecation(version="1.11.0", alternative=Copy)
+class CopyFields(Copy):
+    pass
 
 
 class GetItemByIndex(FieldOperator):
@@ -1293,6 +1334,52 @@ class FilterByCondition(StreamOperator):
         return True
 
 
+class FilterByConditionBasedOnFields(FilterByCondition):
+    """Filters a stream based on a condition between 2 fields values.
+
+    Raises an error if either of the required fields names is missing from the input instance.
+
+    Args:
+       values (Dict[str, str]): The fields names that the filter operation is based on.
+       condition: the name of the desired condition operator between the specified field's values.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+
+    Examples:
+       FilterByCondition(values = {"a":"b}, condition = "gt") will yield only instances where field "a" contains a value greater then the value in field "b".
+       FilterByCondition(values = {"a":"b}, condition = "le") will yield only instances where "a"<="b"
+    """
+
+    def _is_required(self, instance: dict) -> bool:
+        for key, value in self.values.items():
+            try:
+                instance_key = dict_get(instance, key)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            try:
+                instance_value = dict_get(instance, value)
+            except ValueError as ve:
+                raise ValueError(
+                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                ) from ve
+            if self.condition == "in":
+                if instance_key not in instance_value:
+                    return False
+            elif self.condition == "not in":
+                if instance_key in instance_value:
+                    return False
+            else:
+                func = self.condition_to_func[self.condition]
+                if func is None:
+                    raise ValueError(
+                        f"Function not defined for condition '{self.condition}'"
+                    )
+                if not func(instance_key, instance_value):
+                    return False
+        return True
+
+
 class ComputeExpressionMixin(Artifact):
     """Computes an expression expressed over fields of an instance.
 
@@ -1318,7 +1405,8 @@ class ComputeExpressionMixin(Artifact):
             return eval(self.expression, self.globals, instance)
 
         raise ValueError(
-            f"Cannot run expression by {self} when unitxt.settings.allow_unverified_code=False either set it to True or set {settings.allow_unverified_code_key} environment variable."
+            f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
+            "\nNote: If using test_card() with the default setting, increase loader_limit to avoid missing conditions due to limited data sampling."
         )
 
 
@@ -1482,7 +1570,7 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             for ele in values_and_counts
         ]
 
-        addmostcommons = AddFields(fields={self.to_field: values_to_keep})
+        addmostcommons = Set(fields={self.to_field: values_to_keep})
         return addmostcommons(multi_stream)
 
 
@@ -1768,7 +1856,7 @@ class MergeStreams(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         return MultiStream(
             {
-                self.new_stream_name: GeneratorStream(
+                self.new_stream_name: DynamicStream(
                     self.merge, gen_kwargs={"multi_stream": multi_stream}
                 )
             }
@@ -1983,6 +2071,80 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class MinimumOneExamplePerLabelRefiner(StreamRefiner):
+    """A class used to return a specified number instances ensuring at least one example  per label.
+
+    For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
+    MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
+    MinimumOneExamplePerLabelRefiner then shuffles the results to avoid having one instance
+    from each class first and then the rest . If max instance is not set, the original stream will be used
+
+    Attributes:
+        fields (List[str]): A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`)
+
+    Usage:
+        balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
+        balanced_stream = balancer.process(stream)
+
+    Example:
+        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}] is fed into
+        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)
+        the resulting stream will be:
+        [{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}] (order may be different)
+    """
+
+    fields: List[str]
+
+    def signature(self, instance):
+        return str(tuple(dict_get(instance, field) for field in self.fields))
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        if self.max_instances is None:
+            for instance in stream:
+                yield instance
+
+        counter = Counter()
+        for instance in stream:
+            counter[self.signature(instance)] += 1
+        all_keys = counter.keys()
+        if len(counter) == 0:
+            return
+
+        if self.max_instances is not None and len(all_keys) > self.max_instances:
+            raise Exception(
+                f"Can not generate a stream with at least one example per label, because the max instances requested  {self.max_instances} is smaller than the number of different labels {len(all_keys)}"
+                f" ({len(all_keys)}"
+            )
+
+        counter = Counter()
+        used_indices = set()
+        selected_elements = []
+        # select at least one per class
+        for idx, instance in enumerate(stream):
+            sign = self.signature(instance)
+            if counter[sign] == 0:
+                counter[sign] += 1
+                used_indices.add(idx)
+                selected_elements.append(
+                    instance
+                )  # collect all elements first to allow shuffling of both groups
+
+        # select more to reach self.max_instances examples
+        for idx, instance in enumerate(stream):
+            if idx not in used_indices:
+                if self.max_instances is None or len(used_indices) < self.max_instances:
+                    used_indices.add(idx)
+                    selected_elements.append(
+                        instance
+                    )  # collect all elements first to allow shuffling of both groups
+
+        # shuffle elements to avoid having one element from each class appear first
+        random_generator = new_random_generator(sub_seed=selected_elements)
+        random_generator.shuffle(selected_elements)
+        yield from selected_elements
 
 
 class LengthBalancer(DeterministicBalancer):

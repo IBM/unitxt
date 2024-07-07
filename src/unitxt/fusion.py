@@ -4,7 +4,7 @@ from typing import Dict, Generator, List, Optional, Union
 from .dataclass import NonPositionalField
 from .operator import SourceOperator
 from .random_utils import new_random_generator
-from .stream import GeneratorStream, MultiStream
+from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
 
 
@@ -49,7 +49,7 @@ class BaseFusion(SourceOperator):
     ) -> MultiStream:
         result = {}
         for split in self.splits():
-            result[split] = GeneratorStream(
+            result[split] = DynamicStream(
                 self.fusion_generator, gen_kwargs={"split": split}
             )
         return MultiStream(result)
@@ -103,9 +103,10 @@ class WeightedFusion(BaseFusion):
             If None, all instances are returned
     """
 
-    origins: Union[Dict[str, MultiStream], List[MultiStream]] = None
+    origins: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
     weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
     max_total_examples: int = None
+    ignore_origin_groups: List[str] = ["unitxt"]
 
     def verify(self):
         super().verify()
@@ -149,7 +150,10 @@ class WeightedFusion(BaseFusion):
             try:
                 instance = next(iterator)
                 if isinstance(origin_name, str):
-                    if "group" in instance:
+                    if (
+                        "group" in instance
+                        and instance["group"] not in self.ignore_origin_groups
+                    ):
                         instance["group"] = origin_name + "/" + instance["group"]
                     else:
                         instance["group"] = origin_name

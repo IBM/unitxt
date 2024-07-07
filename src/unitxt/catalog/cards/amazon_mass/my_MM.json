@@ -1,13 +1,13 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "AmazonScience/massive",
         "name": "my-MM"
     },
     "preprocess_steps": [
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "intent": {
                     "0": "datetime_query",
@@ -74,14 +74,14 @@
             }
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "utt": "text",
                 "intent": "label"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "datetime_query",
@@ -155,7 +155,9 @@
     "__tags__": {
         "annotations_creators": "expert-generated",
         "arxiv": "2204.08582",
-        "croissant": true,
+        "flags": [
+            "natural-language-understanding"
+        ],
         "language_creators": "found",
         "license": "cc-by-4.0",
         "multilinguality": [
@@ -212,7 +214,6 @@
             "zh-CN",
             "zh-TW"
         ],
-        "natural-language-understanding": true,
         "region": "us",
         "size_categories": "100K<n<1M",
         "source_datasets": "original",
@@ -222,5 +223,5 @@
             "multi-class-classification"
         ]
     },
-    "__description__": "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations\nfor the Natural Language Understanding tasks of intent prediction and slot annotation.\nUtterances span 60 intents and include 55 slot types. MASSIVE was created by localizing\nthe SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions."
+    "__description__": "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations for the Natural Language Understanding tasks of intent prediction and slot annotation. Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions. See the full description on the dataset page: https://huggingface.co/datasets/AmazonScience/massive."
 }

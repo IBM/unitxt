@@ -1,32 +1,31 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "shi3z/MTbenchJapanese",
         "split": "train"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "turns/0": "turns"
-            }
+            "__type__": "copy",
+            "field": "turns/0",
+            "to_field": "turns"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "turns": "input",
                 "category": "group"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "output": "None",
                 "type_of_input": "question",

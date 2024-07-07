@@ -15,17 +15,9 @@ UNITXT_DATASET_SCHEMA = Features(
         "group": Value("string"),
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
+        "data_classification_policy": Sequence(Value("string")),
     }
 )
-
-# UNITXT_METRIC_SCHEMA = Features({
-#     "predictions": Value("string", id="sequence"),
-#     "target": Value("string", id="sequence"),
-#     "references": Value("string", id="sequence"),
-#     "metrics": Value("string", id="sequence"),
-#     'group': Value('string'),
-#     'postprocessors': Value("string", id="sequence"),
-# })
 
 
 class ToUnitxtGroup(InstanceOperatorValidator):

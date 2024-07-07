@@ -5,7 +5,7 @@ from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import AddFields, Augmentor, NullAugmentor, StreamRefiner
+from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
 from .recipe import Recipe
 from .schema import ToUnitxtGroup
 from .splitters import Sampler, SeparateSplit, SpreadSplit
@@ -120,6 +120,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             metrics = self.card.task.metrics
         else:
             metrics = self.metrics
+
+        metrics = [
+            metric if isinstance(metric, str) else metric.to_json()
+            for metric in metrics
+        ]
+
         return metrics, postprocessors
 
     def set_pipelines(self):
@@ -131,11 +137,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         )
         self.standardization = SequentialOperator()
         self.standardization.__description__ = (
-            "Standardizing the dataset fields to task definition."
+            "Standardizing the raw dataset fields to task field definition."
         )
         self.processing = SequentialOperator()
         self.processing.__description__ = (
-            "Processing the task fields (e.g. selecting demos per sample if needed)."
+            "Setting task fields (and selecting demos per sample if needed)."
         )
         self.verblization = SequentialOperator()
         self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
@@ -220,10 +226,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
 
         self.metadata.steps.append(
-            AddFields(
+            Set(
                 fields={
                     "recipe_metadata": {
-                        "card": self.card,
                         "template": self.template,
                         "system_prompt": self.system_prompt,
                         "format": self.format,

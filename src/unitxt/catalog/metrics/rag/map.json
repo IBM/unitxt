@@ -1,24 +1,17 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "score",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "context_ids",
-                    "prediction"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "context_ids",
+            "to_field": "prediction"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "ground_truths_context_ids",
-                    "references"
-                ]
-            ]
+            "__type__": "wrap",
+            "field": "ground_truths_context_ids",
+            "inside": "list",
+            "to_field": "references"
         }
     ],
     "metric": "metrics.map"

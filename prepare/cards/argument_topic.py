@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.test_utils.card import test_card
 
 dataset_name = "argument_topic"
@@ -81,19 +81,17 @@ class_names = [
 card = TaskCard(
     loader=LoadHF(path="ibm/argument_quality_ranking_30k", name=f"{dataset_name}"),
     preprocess_steps=[
-        AddFields(
+        Set(
             fields={
                 "classes": class_names,
                 "text_type": "argument",  # TODO maybe text?
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "arxiv": "1911.11408",
-        "croissant": True,
         "language": "en",
         "license": "cc-by-3.0",
         "region": "us",
@@ -101,11 +99,8 @@ card = TaskCard(
         "task_categories": "text-classification",
     },
     __description__=(
-        "Dataset Card for Argument-Quality-Ranking-30k Dataset\n"
-        "Dataset Summary\n"
         "Argument Quality Ranking\n"
-        "The dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets.\n"
-        "The dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.\n"
+        "The dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets. The dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.\n"
         "Argument Topic\n"
         "This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k."
     ),

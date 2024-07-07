@@ -128,7 +128,7 @@ class InputOutputTemplate(Template):
     Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
     """
 
-    input_format: str = None
+    input_format: str
     output_format: str = None
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:

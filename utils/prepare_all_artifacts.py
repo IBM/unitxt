@@ -6,10 +6,11 @@ import shutil
 from pathlib import Path
 
 from unitxt import get_logger
-from unitxt.settings_utils import get_constants
+from unitxt.settings_utils import get_constants, get_settings
 
 logger = get_logger()
 constants = get_constants()
+settings = get_settings()
 
 
 def import_module_from_file(file_path):
@@ -20,6 +21,9 @@ def import_module_from_file(file_path):
     # Create a new module based on the specification
     module = importlib.util.module_from_spec(spec)
     # Load the module
+    logger.info(
+        f"allow unverified code in {file_path} : {settings.allow_unverified_code}"
+    )
     spec.loader.exec_module(module)
     return module
 
@@ -143,18 +147,18 @@ def main():
     except:
         pass
     shutil.move(catalog_dir, catalog_back_dir)
-    logger.info("Starting reprepare catalog...")
+    logger.critical("Starting reprepare catalog...")
     prepare_all_catalog_artifacts(catalog_dir)
-    logger.info("Comparing generated and old catalog...")
+    logger.critical("Comparing generated and old catalog...")
     diffs = compare_dirs(new=catalog_dir, old=catalog_back_dir)
     diffs = filter_known_diffs(diffs)
     if diffs:
-        logger.info("***** Directories has differences ******")
+        logger.critical("***** Directories has differences ******")
         diffs.sort(key=lambda d: d["file"])
         for diff in diffs:
-            logger.info(diff)
+            logger.critical(diff)
         raise RuntimeError("Directories has differences")
-    logger.info("Done. Catalog is consistent with prepare files")
+    logger.critical("Done. Catalog is consistent with prepare files")
 
 
 if __name__ == "__main__":

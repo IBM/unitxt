@@ -1,14 +1,18 @@
 from datasets import get_dataset_config_names
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
-langs = get_dataset_config_names("mlsum")  # the languages
+settings = get_settings()
+
+langs = get_dataset_config_names(
+    "mlsum", trust_remote_code=settings.allow_unverified_code
+)  # the languages
 
 
 for lang in langs:
@@ -16,13 +20,11 @@ for lang in langs:
         loader=LoadHF(path="mlsum", name=lang),
         preprocess_steps=[
             RenameFields(field_to_field={"text": "document"}),
-            AddFields(fields={"document_type": "document"}),
         ],
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",
         __tags__={
             "annotations_creators": "found",
-            "croissant": True,
             "language": ["de", "es", "fr", "ru", "tr"],
             "language_creators": "found",
             "license": "other",

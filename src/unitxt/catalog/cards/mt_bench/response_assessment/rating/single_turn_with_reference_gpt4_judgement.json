@@ -1,33 +1,33 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
-        "path": "OfirArviv/mt_bench_single_score_gpt4_judgement",
-        "split": "train"
+        "__type__": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl"
+        }
     },
     "preprocess_steps": [
+        "operators.mt_bench.rating_hf_space_processing_steps",
         {
-            "type": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
-        {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "turn": 1
             },
             "condition": "eq"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
-                "reference": "[]"
+                "reference": null
             },
             "condition": "ne"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "model_input": "question",
                 "score": "rating",
@@ -37,37 +37,19 @@
             }
         },
         {
-            "type": "literal_eval",
-            "to_field": "question",
-            "field": "question"
+            "__type__": "copy",
+            "field": "question/0",
+            "to_field": "question"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": {
-                "question/0": "question"
-            }
+            "__type__": "copy",
+            "field": "answer/0",
+            "to_field": "answer"
         },
         {
-            "type": "literal_eval",
-            "to_field": "answer",
-            "field": "answer"
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "answer/0": "answer"
-            }
-        },
-        {
-            "type": "literal_eval",
-            "to_field": "reference_answer",
-            "field": "reference_answer"
-        },
-        {
-            "type": "copy_fields",
-            "field_to_field": {
-                "reference_answer/0": "reference_answer"
-            }
+            "__type__": "copy",
+            "field": "reference_answer/0",
+            "to_field": "reference_answer"
         }
     ],
     "task": "tasks.response_assessment.rating.single_turn_with_reference",

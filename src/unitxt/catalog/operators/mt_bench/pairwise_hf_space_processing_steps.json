@@ -1,0 +1,233 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "turns": "model_input"
+            },
+            "apply_to_streams": [
+                "questions"
+            ]
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "judge": "judge_model_id",
+                "g1_user_prompt": "judge_input_model_1_ordered_first",
+                "g2_user_prompt": "judge_input_model_2_ordered_first",
+                "g1_judgment": "judge_output_model_1_ordered_first",
+                "g2_judgment": "judge_output_model_2_ordered_first",
+                "g1_winner": "winner_model_1_ordered_first",
+                "g2_winner": "winner_model_2_ordered_first"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_1",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "model_1"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "model_1": {
+                    "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
+                    "vicuna-30b-gpt4": "vicuna-33b-v1.3"
+                }
+            },
+            "strict": false,
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_2",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "model_2"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "model_2": {
+                    "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
+                    "vicuna-30b-gpt4": "vicuna-33b-v1.3"
+                }
+            },
+            "strict": false,
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field": "judge_model_id/0",
+            "to_field": "judge_model_id",
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "filter_by_condition_based_on_fields",
+            "values": {
+                "winner_model_1_ordered_first": "winner_model_2_ordered_first"
+            },
+            "condition": "eq",
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "winner_model_1_ordered_first": "winner"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "choices": "model_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_id",
+            "apply_to_streams": [
+                "model_answer"
+            ],
+            "_argv": [
+                "model_id"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "model_id": {
+                    "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
+                    "vicuna-30b-gpt4": "vicuna-33b-v1.3"
+                }
+            },
+            "strict": false,
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field": "model_output/0/turns",
+            "to_field": "model_output",
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "questions",
+            "right_stream": "judgment",
+            "how": "inner",
+            "on": [
+                "question_id"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "model_id": "model_1",
+                "model_output": "model_1_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "merged_stream",
+            "right_stream": "model_answer",
+            "how": "inner",
+            "on": [
+                "question_id",
+                "model_1"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "model_1": "model_2",
+                "model_1_output": "model_2_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "merged_stream",
+            "right_stream": "model_answer",
+            "how": "inner",
+            "on": [
+                "question_id",
+                "model_2"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "model_answer",
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "merged_stream": "test"
+            }
+        },
+        {
+            "__type__": "select_fields",
+            "fields": [
+                "question_id",
+                "category",
+                "model_input",
+                "reference",
+                "model_1",
+                "model_2",
+                "turn",
+                "judge_model_id",
+                "model_1_output",
+                "model_2_output",
+                "winner_model_1_ordered_first",
+                "winner_model_2_ordered_first",
+                "winner",
+                "judge_input_model_1_ordered_first",
+                "judge_input_model_2_ordered_first",
+                "judge_output_model_1_ordered_first",
+                "judge_output_model_2_ordered_first"
+            ]
+        }
+    ]
+}

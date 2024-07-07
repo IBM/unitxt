@@ -15,22 +15,16 @@ jobs:
         PYTHONPATH: ./docs
 
       steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.8'
-          cache: 'pip' # caching pip dependencies
-      - run: pip install -r requirements/base.rqr
-      - run: pip install -r requirements/docs.rqr
+        - uses: actions/checkout@v4
 
-      - name: Install package
-        run: |
-          pip install -e .
+        - uses: actions/setup-python@v5
+          with:
+            python-version: '3.9'
+            
+        - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        - run: uv pip install --system ".[tests,docs]"
 
-      - name: Print Python Path
-        run: python -c "import sys; print(sys.path)"
-
-      - name: Compile Docs
-        run: make docs
+        - name: Compile Docs
+          run: make docs
 
 

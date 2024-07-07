@@ -6,6 +6,7 @@ import tempfile
 from huggingface_hub import HfApi
 
 files = glob.glob("./src/unitxt/*.py")
+files.append("README.md")
 
 api = HfApi(token=os.environ["HUGGINGFACE_HUB_TOKEN"])
 
@@ -31,3 +32,8 @@ with tempfile.TemporaryDirectory() as temp_dir:
         repo_id="unitxt/data",
         repo_type="dataset",
     )
+
+with open("./version.py") as f:
+    version = f.read().strip().replace("version = ", "").replace('"', "")
+
+api.create_tag(repo_id="unitxt/data", repo_type="dataset", tag=version)

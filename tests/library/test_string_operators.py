@@ -1,4 +1,4 @@
-from unitxt.string_operators import Join, RegexSplit, Split, TokensSplit
+from unitxt.string_operators import Join, RegexSplit, Split, TokensSlice, TokensSplit
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -58,4 +58,10 @@ class TestStringOperators(UnitxtTestCase):
         operator = Join(field="text", by=",")
         inputs = [{"text": ["kk", "ll"]}]
         targets = [{"text": "kk,ll"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_tokens_slice(self):
+        operator = TokensSlice(field="text", model="gpt2", stop=1)
+        inputs = [{"text": "hello world"}]
+        targets = [{"text": "hello"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)

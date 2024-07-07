@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, MapInstanceValues, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddFields, ExtractFieldValues, RenameFields
+from unitxt.operators import ExtractFieldValues, RenameFields, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -9,7 +9,7 @@ card = TaskCard(
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),
         RenameFields(field="sentence", to_field="text"),
-        AddFields(
+        Set(
             fields={
                 "text_type": "sentence",
                 "type_of_class": "sentiment",
@@ -22,14 +22,11 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": True,
-        "croissant": True,
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": True,
-        "qa-nli": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -43,13 +40,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE\n"
-        "Dataset Summary\n"
-        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
-        "Supported Tasks and Leaderboards\n"
-        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
-        "ax\n"
-        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Stanford Sentiment Treebank consists of sentences from movie reviews and human annotations of their sentiment. The task is to predict the sentiment of a given sentence. It uses the two-way (positive/negative) class split, with only sentence-level labels… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

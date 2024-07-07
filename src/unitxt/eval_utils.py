@@ -26,7 +26,6 @@ def _(
     global_scores = {}
     remote_metrics = get_remote_metrics_names()
     for metric_name in metric_names:
-        multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         if metric_name in remote_metrics:
             metric = verbosed_fetch_artifact(metric_name)
             metric_step = as_remote_metric(metric)
@@ -39,6 +38,7 @@ def _(
             first_step = metrics_operator.steps[0]
             first_step.disable_confidence_interval_calculation()
 
+        multi_stream = MultiStream.from_iterables({"test": dataset}, copying=True)
         instances = list(metrics_operator(multi_stream)["test"])
         for entry, instance in zip(dataset, instances):
             entry[metric_name] = instance["score"]["instance"]["score"]

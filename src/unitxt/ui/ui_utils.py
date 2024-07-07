@@ -147,7 +147,7 @@ def build_command(prompt_data, with_prediction):
         if key != config.LOADER_LIMIT_STR
     ]
     parameters_str = ",".join(parameters_str).replace("'", "")
-    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str},max_train_instances=5', split='train')"
+    load_dataset_code = f"dataset = load_dataset('unitxt/data', '{parameters_str},max_train_instances=5', split='train', trust_remote_code=True)"
 
     code = f"""
 {config.DATASET_IMPORT_STR}

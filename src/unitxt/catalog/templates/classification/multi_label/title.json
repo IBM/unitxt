@@ -1,5 +1,5 @@
 {
-    "type": "multi_label_template",
+    "__type__": "multi_label_template",
     "input_format": "{text_type}: {text}",
     "output_format": "{labels}",
     "target_prefix": "{type_of_classes}:\n",

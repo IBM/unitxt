@@ -1,15 +1,15 @@
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
 from unitxt.dialog_operators import SerializeDialog
-from unitxt.operators import CopyFields, ZipFieldValues
+from unitxt.operators import Copy, ZipFieldValues
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(fields={"context_type": "story"}),
+        Set(fields={"context_type": "story"}),
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",
@@ -17,7 +17,7 @@ card = TaskCard(
         Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
         DuplicateBySubLists(field="dialog"),
         Get(field="dialog", item=-1, to_field="last_turn"),
-        CopyFields(
+        Copy(
             field_to_field={"last_turn/user": "question", "last_turn/system": "answer"},
         ),
         Wrap(
@@ -36,8 +36,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "conversational-qa": True,
-        "croissant": True,
+        "flags": ["conversational-qa"],
         "language": "en",
         "language_creators": "found",
         "license": "other",
@@ -54,12 +53,8 @@ card = TaskCard(
         "task_ids": "extractive-qa",
     },
     __description__=(
-        'Dataset Card for "coqa"\n'
-        "Dataset Summary\n"
-        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
-        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
-        "Supported Tasks and Leaderboards\n"
-        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems. \n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage. Supported Tasks and Leaderboards More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
     ),
 )
 
@@ -70,7 +65,7 @@ card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
-        AddFields(fields={"context_type": "dialog", "completion_type": "response"}),
+        Set(fields={"context_type": "dialog", "completion_type": "response"}),
         ZipFieldValues(
             fields=["questions", "answers/input_text"],
             to_field="dialog",
@@ -89,8 +84,7 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": ["1808.07042", "1704.04683", "1506.03340"],
-        "conversational-qa": True,
-        "croissant": True,
+        "flags": ["conversational-qa"],
         "language": "en",
         "language_creators": "found",
         "license": "other",
@@ -107,12 +101,8 @@ card = TaskCard(
         "task_ids": "extractive-qa",
     },
     __description__=(
-        'Dataset Card for "coqa"\n'
-        "Dataset Summary\n"
-        "CoQA is a large-scale dataset for building Conversational Question Answering systems.\n"
-        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\n"
-        "Supported Tasks and Leaderboards\n"
-        "More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+        "CoQA is a large-scale dataset for building Conversational Question Answering systems. \n"
+        "Our dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage. Supported Tasks and Leaderboards More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
     ),
 )
 

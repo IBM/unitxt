@@ -3,10 +3,10 @@ from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     AddConstant,
-    AddFields,
     CastFields,
     ListFieldValues,
     RenameFields,
+    Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -153,13 +153,12 @@ for lang in language_codes:
             ),
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
-            AddFields({"context_type": "passage"}),
+            Set({"context_type": "passage"}),
         ],
         task="tasks.qa.multiple_choice.with_context",
         templates="templates.qa.multiple_choice.with_context.no_intro.all",
         __tags__={
             "arxiv": "2308.16884",
-            "croissant": True,
             "language": [
                 "af",
                 "am",
@@ -269,7 +268,6 @@ for lang in language_codes:
             ],
         },
         __description__=(
-            "The Belebele Benchmark for Massively Multilingual NLU Evaluation\n"
             "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
         ),
     )

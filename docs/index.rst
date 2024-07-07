@@ -172,7 +172,9 @@ Welcome!
    docs/evaluating_datasets
    docs/installation
    docs/tutorials
+   docs/examples
    docs/data_classification_policy
+   docs/rag_support
    docs/operators
    docs/saving_and_loading_from_catalog
    docs/production

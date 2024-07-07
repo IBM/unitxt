@@ -1,8 +1,8 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
+    Set,
     TaskCard,
 )
 from unitxt.operators import MapInstanceValues
@@ -20,10 +20,9 @@ card = TaskCard(
     loader=LoadHF(path=dataset_name, name=subset),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
-                "text_type": "text",
                 "type_of_classes": "emotions",
             }
         ),
@@ -33,7 +32,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2005.00547",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "apache-2.0",
@@ -45,11 +43,7 @@ card = TaskCard(
         "task_ids": ["multi-class-classification", "multi-label-classification"],
     },
     __description__=(
-        "Dataset Card for Go Emotions\n"
-        "Dataset Summary\n"
-        "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral.\n"
-        "This card contains the simplified version of the dataset with predefined train/val/test splits.\n"
-        "See full description on the dataset page: https://huggingface.co/datasets/go_emotions."
+        "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
     ),
 )
 test_card(card, debug=False)

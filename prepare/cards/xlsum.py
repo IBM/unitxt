@@ -1,6 +1,5 @@
 from datasets import get_dataset_config_names
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     RenameFields,
     TaskCard,
@@ -19,14 +18,12 @@ for lang in langs:
         loader=LoadHF(path="GEM/xlsum", name=lang),
         preprocess_steps=[
             RenameFields(field_to_field={"text": "document", "target": "summary"}),
-            AddFields(fields={"document_type": "document"}),
         ],
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",
         __tags__={
             "annotations_creators": "none",
             "arxiv": "1607.01759",
-            "croissant": True,
             "language": "und",
             "language_creators": "unknown",
             "license": "cc-by-nc-sa-4.0",
@@ -37,11 +34,7 @@ for lang in langs:
             "task_categories": "summarization",
         },
         __description__=(
-            "We present XLSum, a comprehensive and diverse dataset comprising 1.35 million professionally\n"
-            "annotated article-summary pairs from BBC, extracted using a set of carefully designed heuristics.\n"
-            "The dataset covers 45 languages ranging from low to high-resource, for many of which no\n"
-            "public dataset is currently available. XL-Sum is highly abstractive, concise,\n"
-            "and of high quality, as indicated by human and intrinsic evaluation."
+            "We present XLSum, a comprehensive and diverse dataset comprising 1.35 million professionally annotated article-summary pairs from BBC, extracted using a set of carefully designed heuristics. The dataset covers 45 languages ranging from low to high-resource, for many of which no public dataset is currently available. XL-Sum is highly abstractive, concise, and of high quality, as indicated by human and intrinsic evaluation… See the full description on the dataset page: https://huggingface.co/datasets/GEM/xlsum"
         ),
     )
     if lang == langs[0]:

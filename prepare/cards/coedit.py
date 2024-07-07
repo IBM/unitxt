@@ -5,12 +5,12 @@ from unitxt.card import TaskCard
 from unitxt.collections_operators import DuplicateByList, Slice
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     IndexOf,
     ListFieldValues,
     MapInstanceValues,
     RenameFields,
+    Set,
     Shuffle,
     ShuffleFieldValues,
 )
@@ -35,7 +35,6 @@ gec_card = TaskCard(
     templates="templates.grammatical_error_correction.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -43,14 +42,7 @@ gec_card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -78,10 +70,9 @@ error_detection_card = TaskCard(
         ),
         DuplicateByList(field="correct_and_incorrect", to_field="text"),
         IndexOf(index_of="text", search_in="correct_and_incorrect", to_field="label"),
-        AddFields(
+        Set(
             fields={
                 "class": "Grammatically incorrect",
-                "text_type": "text",
             }
         ),
         Shuffle(page_size=sys.maxsize),
@@ -90,7 +81,6 @@ error_detection_card = TaskCard(
     templates="templates.grammatical_error_detection.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -98,14 +88,7 @@ error_detection_card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -124,14 +107,14 @@ card = TaskCard(
         "splitters.small_no_test",
         Split(field="src", by=": "),
         Slice(field="src", start=1),
-        CopyFields(field_to_field={"src/0": "instruction"}),
+        Copy(field="src/0", to_field="instruction"),
         Join(field="src", by=": "),
         ListFieldValues(
             fields=["tgt", "src"],
             to_field="choices",
         ),
         ShuffleFieldValues(field="choices"),
-        AddFields(
+        Set(
             fields={
                 "output_type": "sentence",
                 "input_type": "sentence",
@@ -143,7 +126,6 @@ card = TaskCard(
     templates="templates.evaluation.preference.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -151,14 +133,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -182,7 +157,7 @@ card = TaskCard(
             to_field="choices_texts",
         ),
         ShuffleFieldValues(field="choices_texts"),
-        CopyFields(field_to_field={"task": "required_attribute"}),
+        Copy(field="task", to_field="required_attribute"),
         MapInstanceValues(
             mappers={
                 "required_attribute": {
@@ -193,7 +168,7 @@ card = TaskCard(
                 }
             }
         ),
-        CopyFields(field_to_field={"task": "attribute_type"}),
+        Copy(field="task", to_field="attribute_type"),
         MapInstanceValues(
             mappers={
                 "attribute_type": {
@@ -204,7 +179,7 @@ card = TaskCard(
                 }
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "choices_text_type": "sentences",
             }
@@ -215,7 +190,6 @@ card = TaskCard(
     templates="templates.selection.by_attribute.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -223,14 +197,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -250,7 +217,7 @@ card = TaskCard(
         Split(field="src", by=": "),
         Slice(field="src", start=1),
         Join(field="src", by=": "),
-        CopyFields(field_to_field={"task": "required_attribute"}),
+        Copy(field="task", to_field="required_attribute"),
         MapInstanceValues(
             mappers={
                 "required_attribute": {
@@ -261,7 +228,7 @@ card = TaskCard(
                 }
             }
         ),
-        CopyFields(field_to_field={"task": "attribute_type"}),
+        Copy(field="task", to_field="attribute_type"),
         MapInstanceValues(
             mappers={
                 "attribute_type": {
@@ -272,7 +239,7 @@ card = TaskCard(
                 }
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "input_text_type": "sentence",
                 "output_text_type": "sentence",
@@ -284,7 +251,6 @@ card = TaskCard(
     templates="templates.rewriting.by_attribute.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -292,14 +258,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 
@@ -318,7 +277,7 @@ card = TaskCard(
         Split(field="src", by=": "),
         Slice(field="src", start=1),
         Join(field="src", by=": "),
-        AddFields(
+        Set(
             fields={
                 "text_type": "sentence",
             }
@@ -329,7 +288,6 @@ card = TaskCard(
     templates="templates.rewriting.paraphrase.all",
     __tags__={
         "arxiv": "2305.09857",
-        "croissant": True,
         "language": "en",
         "license": "apache-2.0",
         "region": "us",
@@ -337,14 +295,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for CoEdIT: Text Editing via Instruction Tuning\n"
-        "Paper: CoEdIT: Text Editing by Task-Specific Instruction Tuning\n"
-        "Authors: Vipul Raheja, Dhruv Kumar, Ryan Koo, Dongyeop Kang\n"
-        "Project Repo: https://github.com/vipulraheja/coedit\n"
-        "Dataset Summary\n"
-        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper.\n"
-        "Dataset Structure\n"
-        "The… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
+        "This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit."
     ),
 )
 

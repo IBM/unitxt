@@ -4,9 +4,9 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     RenameFields,
+    Set,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -15,14 +15,14 @@ card = TaskCard(
     loader=LoadHF(path="shi3z/MTbenchJapanese", split="train"),
     preprocess_steps=[
         RenameSplits({"train": "test"}),
-        CopyFields(field_to_field={"turns/0": "turns"}),
+        Copy(field="turns/0", to_field="turns"),
         RenameFields(
             field_to_field={
                 "turns": "input",
                 "category": "group",
             }
         ),
-        AddFields(
+        Set(
             fields={
                 "output": "None",
                 "type_of_input": "question",

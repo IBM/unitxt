@@ -186,6 +186,46 @@ class TestLoaders(UnitxtTestCase):
             "test",
         }, f"Unexpected fold {dataset.keys()}"
 
+    def test_load_from_HF_multiple_innvocation(self):
+        loader = LoadHF(
+            path="CohereForAI/aya_evaluation_suite",
+            name="aya_human_annotated",
+            # filtering_lambda='lambda instance: instance["language"]=="eng"',
+        )
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "arb")
+
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "arb")
+
+    def test_load_from_HF_multiple_innvocation_with_filter(self):
+        loader = LoadHF(
+            path="CohereForAI/aya_evaluation_suite",
+            name="aya_human_annotated",
+            filtering_lambda='lambda instance: instance["language"]=="eng"',
+        )
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")
+
+        ms = loader.process()
+        dataset = ms.to_dataset()
+        self.assertEqual(
+            list(dataset.keys()), ["test"]
+        )  # that HF dataset only has the 'test' split
+        self.assertEqual(dataset["test"][0]["language"], "eng")
+
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
         ms = loader.process()
@@ -202,13 +242,7 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.stream_dataset()
-        dataset = ms.to_dataset()
-        self.assertEqual(
-            list(dataset.keys()), ["test"]
-        )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
-        ms = loader.load_dataset()
+        ms = loader.process()
         dataset = ms.to_dataset()
         self.assertEqual(
             list(dataset.keys()), ["test"]
@@ -285,6 +319,34 @@ class TestLoaders(UnitxtTestCase):
             for original_instance, stream_instance in zip(instances, streams[split]):
                 original_instance["data_classification_policy"] = ["proprietary"]
                 self.assertEqual(original_instance, stream_instance)
+
+    def test_load_from_dictionary_errors(self):
+        data = [
+            {"input": "Input3", "output": "Result3"},
+        ]
+
+        with self.assertRaises(ValueError) as cm:
+            LoadFromDictionary(data=data)
+        self.assertEqual(
+            str(cm.exception),
+            f"Passed data to LoadFromDictionary is not of type Dict[str, List[Dict[str, Any]]].\n"
+            f"Expected data should map between split name and list of instances.\n"
+            f"Received value: {data}\n",
+        )
+
+        data = {
+            "train": [
+                {"input": "Input1", "output": "Result1"},
+                {"input2": "Input2", "output": "Result2"},
+            ],
+        }
+        with self.assertRaises(ValueError) as cm:
+            LoadFromDictionary(data=data)
+        self.assertEqual(
+            str(cm.exception),
+            f"Not all instances in split 'train' have the same fields.\n"
+            f"instance {data['train'][1]} has different fields different from {data['train'][0]}",
+        )
 
     def test_load_from_hf_space(self):
         params = {

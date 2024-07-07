@@ -1,7 +1,12 @@
-from unitxt.blocks import InputOutputTemplate, LoadHF, TemplatesList
+from unitxt.blocks import (
+    InputOutputTemplate,
+    LoadHF,
+    MapInstanceValues,
+    Set,
+    TemplatesList,
+)
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.prepare_utils.card_types import add_classification_choices
 from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
@@ -9,7 +14,12 @@ card = TaskCard(
     loader=LoadHF(path="super_glue", name="wsc"),
     preprocess_steps=[
         "splitters.small_no_test",
-        *add_classification_choices("label", {"0": "False", "1": "True"}),
+        MapInstanceValues(mappers={"label": {"0": "False", "1": "True"}}),
+        Set(
+            fields={
+                "choices": ["False", "True"],
+            }
+        ),
     ],
     task=Task(
         inputs=["choices", "text", "span1_text", "span2_text"],
@@ -27,19 +37,16 @@ card = TaskCard(
         ]
     ),
     __tags__={
-        "NLU": True,
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",
-        "croissant": True,
+        "flags": ["NLU", "natural language understanding", "superglue"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "natural language understanding": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "extended|other",
-        "superglue": True,
         "task_categories": [
             "text-classification",
             "token-classification",
@@ -53,9 +60,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after\n"
-        "GLUE with a new set of more difficult language understanding tasks, improved\n"
-        "resources, and a new public leaderboard."
+        "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after GLUE with a new set of more difficult language understanding tasks, improved resources, and a new public leaderboard… See the full description on the dataset page: https://huggingface.co/datasets/super_glue"
     ),
 )
 

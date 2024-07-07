@@ -13,10 +13,25 @@ Unitxt support a large collection of built in metrics, from classifical ones suc
 rouge, bleu, f1 to embedding based score like SentenceBert and Bert score, as well as
 llm as judges using local or API based models.
 
-.. note::
+You specify the metrics metrics in the Task.
 
-    You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
-    In this section we will understand Unitxt metrics and learn how to add new metrics.
+For example:
+
+   .. code-block:: python
+   task = Task(
+        inputs={ "question" : "str" },
+        outputs={ "answer" : str },
+        prediction_type="str",
+        metrics=[
+            "metrics.rouge",
+            "metrics.normalized_sacrebleu",
+            "metrics.bert_score.deberta_xlarge_mnli",
+            "metrics.bert_score.deberta_large_mnli"
+         ],
+   )
+
+You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
+In this section we will understand Unitxt metrics and learn how to add new metrics.
 
 
 Metric Inputs
@@ -34,8 +49,9 @@ string class names as predictions.   The post processor may convert the string o
 (e.g. by splitting using a separator).
 
 2. **References** (`references` - optional):  This is a list of gold references, from the same type of the prediction.
-For example, in multi-label f1, it is the correct list of string class labels.
-The references are created by the template and converted to the the right type by the template's post processors.
+For example, if the prediction is a string, the references field are a list of strings.  If the prediction is 
+a list of strings (e.g in multi-label classification), then the references field is a *list* of lists of strings.  
+The metric should return a perfect score, if the prediction is equal to one of the references.
 
 3. **Task data** (`task_data` - optional) - all the input and output fields of a task as a dictionary.
 The input fields can be used to create reference-less metrics.
@@ -91,7 +107,27 @@ intervals overlap. If so, the difference may not be statistically significant.
             "score_ci_high": 0.83,
         }
 
+Metric Outputs with Multiple Metrics
+-------------------------------------
 
+When multiple metrics are specified, their scores are appended to the score list.
+If multiple metrics have the same score names, the score of the metric that appears first in the metrics list has precedence. 
+
+If you want to avoid the scores being overwritten by other metrics, you can add a prefix to each metric score.
+
+   .. code-block:: python
+   task = Task(
+        ...
+        metrics=[
+            "metrics.rouge",
+            "metrics.normalized_sacrebleu",
+            "metrics.bert_score.deberta_xlarge_mnli[score_prefix=sbert_deberta_xlarge_mnli_]",
+            "metrics.bert_score.deberta_large_mnli[score_prefix=sbert_deberta_large_mnli_]"
+         ],
+   )
+
+Note that the ``score`` and ``score_names`` are always taken from the first metric in the metric list.
+ 
 Metric Base Classes
 -------------------
 
@@ -101,16 +137,16 @@ and a set of scores over all instances (called `global` scores).
 Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics, depending on how the
 scores are calculated.
 
-`InstanceMetric` - Class for metrics in which the global scores are be calculated by aggregating the instance scores.
+``InstanceMetric` - Class for metrics in which the global scores are be calculated by aggregating the instance scores.
 Typically, the global score is the average of all instance scores.  `InstanceMetric` first evaluates each instance separately,
 and then aggregate the instances score.  Some examples of instance metrics are `Accuracy`, `TokenOverlap`, `CharEditDistance`.  
 
-`BulkInstanceMetric` - Similar to `InstanceMetric` , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
+``BulkInstanceMetric`` - Similar to ``InstanceMetric`` , it is for metrics in which the globals score can be calculated by aggregating the instance scores.  However,
 due to implementation efficiently reasons, it's better to run them in bulk (for example, when using LLMs during score calculations).
-`BulkInstanceMetric` runs on a batch of instances each time, but then aggregate the instance scores as before.
+``BulkInstanceMetric`` runs on a batch of instances each time, but then aggregate the instance scores as before.
 Some examples of bulk instance metrics are `SentenceBert`, `Reward`.
 
-`GlobalMetric` - Class for metrics for which the global scores must be calculated over all the instances together.
+``GlobalMetric`` - Class for metrics for which the global scores must be calculated over all the instances together.
 Some examples of global metrics are `f1`, `Spearman`, `Kendall Tau`.  Note that by default global metrics are executed once per instance 
 to generate per instance scores, and then once again over all instances together.   So if there are 100 instances, 
 it will first be called 100 times , each on a single instance, and then one time on all 100 instances.  
@@ -120,7 +156,7 @@ It can be calculated only on all instances together. Yet it is useful to report 
 so you can see that good instances get f1 score of 1 and bad ones get 0.
 
 
-.. note::
+   .. note::
     By default global metrics are also executed once per instance as list (of size one),
     to generate per instance scores that are useful for debugging and sanity checks.
 
@@ -274,7 +310,7 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
         metric = MetricPipeline(
             main_score="score",
             preprocess_steps=[
-                CopyFields(field_to_field=[("task_data/context", "references")]),
+                Copy(field="task_data/context", to_field="references")]),
                 ListFieldValues(fields=["references"], to_field="references"),
             ],
             metric=metrics["metrics.token_overlap"],

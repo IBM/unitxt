@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "mbpp",
         "name": "full",
         "split": "test"
     },
     "preprocess_steps": [
         {
-            "type": "join_str",
+            "__type__": "join_str",
             "field_to_field": {
                 "test_list": "test_list_str"
             },
@@ -16,7 +16,7 @@
         }
     ],
     "task": {
-        "type": "task",
+        "__type__": "task",
         "inputs": [
             "text",
             "test_list_str"
@@ -30,10 +30,10 @@
         ]
     },
     "templates": {
-        "type": "templates_list",
+        "__type__": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "__type__": "input_output_template",
                 "input_format": "\"\"\"{text}\n\n{test_list_str}\"\"\"",
                 "output_format": "{code}"
             }
@@ -45,8 +45,9 @@
             "expert-generated"
         ],
         "arxiv": "2108.07732",
-        "code-generation": true,
-        "croissant": true,
+        "flags": [
+            "code-generation"
+        ],
         "language": "en",
         "language_creators": [
             "crowdsourced",
@@ -59,5 +60,5 @@
         "source_datasets": "original",
         "task_categories": "text2text-generation"
     },
-    "__description__": "Dataset Card for Mostly Basic Python Problems (mbpp)\nDataset Summary\nThe benchmark consists of around 1,000 crowd-sourced Python programming problems, designed to be solvable by entry level programmers, covering programming fundamentals, standard library functionality, and so on. Each problem consists of a task description, code solution and 3 automated test cases. As described in the paper, a subset of the data has been hand-verified by us.\nReleased here as part… See the full description on the dataset page: https://huggingface.co/datasets/mbpp."
+    "__description__": "The benchmark consists of around 1,000 crowd-sourced Python programming problems, designed to be solvable by entry level programmers, covering programming fundamentals, standard library functionality, and so on. Each problem consists of a task description, code solution and 3 automated test cases. As described in the paper, a subset of the data has been hand-verified by us. Released here as part… See the full description on the dataset page: https://huggingface.co/datasets/mbpp."
 }

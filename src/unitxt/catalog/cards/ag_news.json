@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "ag_news"
     },
     "preprocess_steps": [
         {
-            "type": "split_random_mix",
+            "__type__": "split_random_mix",
             "mix": {
                 "train": "train[87.5%]",
                 "validation": "train[12.5%]",
@@ -14,7 +14,7 @@
             }
         },
         {
-            "type": "map_instance_values",
+            "__type__": "map_instance_values",
             "mappers": {
                 "label": {
                     "0": "World",
@@ -25,7 +25,7 @@
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "classes": [
                     "World",
@@ -33,16 +33,14 @@
                     "Business",
                     "Sci/Tech"
                 ],
-                "text_type": "sentence",
-                "type_of_class": "topic"
+                "text_type": "sentence"
             }
         }
     ],
-    "task": "tasks.classification.multi_class",
+    "task": "tasks.classification.multi_class.topic_classification",
     "templates": "templates.classification.multi_class.all",
     "__tags__": {
         "annotations_creators": "found",
-        "croissant": true,
         "language": "en",
         "language_creators": "found",
         "license": "unknown",
@@ -53,5 +51,5 @@
         "task_categories": "text-classification",
         "task_ids": "topic-classification"
     },
-    "__description__": "Dataset Card for \"ag_news\"\nDataset Summary\nAG is a collection of more than 1 million news articles. News articles have been\ngathered from more than 2000 news sources by ComeToMyHead in more than 1 year of\nactivity. ComeToMyHead is an academic news search engine which has been running\nsince July, 2004. The dataset is provided by the academic community for research\npurposes in data mining (clustering, classification, etc), information retrieval\n(ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/ag_news."
+    "__description__": "AG is a collection of more than 1 million news articles. News articles have been gathered from more than 2000 news sources by ComeToMyHead in more than 1 year of activity. ComeToMyHead is an academic news search engine which has been running since July 2004. The dataset is provided by the academic community for research purposes in data mining (clustering, classification, etc), information retrieval (ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/ag_news."
 }

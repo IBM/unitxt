@@ -1,12 +1,12 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "sciq"
     },
     "preprocess_steps": [
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "distractor1",
                 "distractor2",
@@ -16,23 +16,23 @@
             "to_field": "choices"
         },
         {
-            "type": "shuffle_field_values",
+            "__type__": "shuffle_field_values",
             "field": "choices"
         },
         {
-            "type": "index_of",
+            "__type__": "index_of",
             "search_in": "choices",
             "index_of": "correct_answer",
             "to_field": "answer"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "support": "context"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "context_type": "paragraph"
             }
@@ -42,7 +42,6 @@
     "templates": "templates.qa.multiple_choice.with_context.all",
     "__tags__": {
         "annotations_creators": "no-annotation",
-        "croissant": true,
         "language": "en",
         "language_creators": "crowdsourced",
         "license": "cc-by-nc-3.0",
@@ -53,5 +52,5 @@
         "task_categories": "question-answering",
         "task_ids": "closed-domain-qa"
     },
-    "__description__": "Dataset Card for \"sciq\"\nDataset Summary\nThe SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided.\nSupported Tasks and Leaderboards\nMore Information Needed\nLanguages\nMore Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq."
+    "__description__": "The SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided. Supported Tasks and Leaderboards More Information Needed Languages More Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq."
 }

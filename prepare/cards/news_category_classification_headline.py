@@ -2,8 +2,8 @@ import sys
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -70,15 +70,14 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"headline": "text"}),
         RenameFields(field_to_field={"category": "label"}),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels,
                 "text_type": "sentence",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
 )
 test_card(card, debug=False)

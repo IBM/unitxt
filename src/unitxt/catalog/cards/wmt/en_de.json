@@ -1,14 +1,14 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "wmt16",
         "name": "de-en",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": [
                 [
                     "translation/en",
@@ -21,7 +21,7 @@
             ]
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "source_language": "english",
                 "target_language": "deutch"
