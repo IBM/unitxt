@@ -303,11 +303,6 @@ class Artifact(Dataclass):
     def save(self, path):
         save_to_file(path, self.to_json())
 
-    @classmethod
-    def deserialize(cls, artifact_rep):
-        data = json.loads(artifact_rep)
-        return Artifact.from_dict(data)
-
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -430,21 +425,38 @@ class UnitxtArtifactNotFoundError(Exception):
 
 
 def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
+    """Loads an artifict from one of possible representations.
+
+    (1) If artifact representation is already an Artifact object, return it.
+    (2) If artifact representation is a string location of a local file, load the Artifact from local file.
+    (3) If artifact representation is a string name iin the catalog, load the Artifact from the catalog.
+    (4) If artifact representation is a json string, create dictionary representation from the string and build an Artifact object from it.
+    (5) Otherwise, check the artifact representation is a dictionary and build an Artifact object from it.
+    """
     if isinstance(artifact_rep, Artifact):
         return artifact_rep, None
-    if Artifact.is_artifact_file(artifact_rep):
+
+    # If local file
+    if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
         return Artifact.load(artifact_rep), None
 
-    name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
-    if is_name_legal_for_catalog(name):
-        artifactory, artifact_rep, args = get_artifactory_name_and_args(
-            name=artifact_rep
-        )
-        return artifactory.get_with_overwrite(
-            artifact_rep, overwrite_args=args
-        ), artifactory
+    # If artifact name in catalog
+    if isinstance(artifact_rep, str):
+        name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
+        if is_name_legal_for_catalog(name):
+            artifactory, artifact_rep, args = get_artifactory_name_and_args(
+                name=artifact_rep
+            )
+            return artifactory.get_with_overwrite(
+                artifact_rep, overwrite_args=args
+            ), artifactory
 
-    return Artifact.deserialize(artifact_rep), None
+    # If Json string, first load into dictionary
+    if isinstance(artifact_rep, str):
+        artifact_rep = json.loads(artifact_rep)
+
+    # Load from dictionary (fails if not valid dictionary)
+    return Artifact.from_dict(artifact_rep), None
 
 
 def get_artifactory_name_and_args(
