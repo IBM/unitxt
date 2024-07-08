@@ -272,7 +272,7 @@ class Set(InstanceOperator):
         return instance
 
 
-@deprecation(version="1.11.0", alternative=Set)
+@deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
     pass
 
@@ -1061,7 +1061,7 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
-@deprecation(version="1.11.0", alternative=Copy)
+@deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
 
