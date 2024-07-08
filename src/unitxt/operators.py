@@ -1062,7 +1062,7 @@ class Copy(FieldOperator):
 
 
 @deprecation(version="2.0.0", alternative=Copy)
-class CopyFields(Copy):
+class CopyFields(Copy):  # testing
     pass
 
 
