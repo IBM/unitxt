@@ -63,7 +63,7 @@
             "input_label"
         ],
         "metrics": [
-            "metrics.regard"
+            "metrics.regard_metric"
         ]
     },
     "templates": {
