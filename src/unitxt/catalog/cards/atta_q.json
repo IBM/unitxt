@@ -42,7 +42,7 @@
             "input_label"
         ],
         "metrics": [
-            "metrics.safety"
+            "metrics.safety_metric"
         ]
     },
     "templates": {
