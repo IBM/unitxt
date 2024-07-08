@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import Regard
+from unitxt.metrics import RegardMetric
 from unitxt.test_utils.metrics import test_metric
 
-metric = Regard(
+metric = RegardMetric(
     n_resamples=None,
     # Regard passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
@@ -74,4 +74,4 @@ outputs = test_metric(
     global_target=global_target,
 )
 
-add_to_catalog(metric, "metrics.regard", overwrite=True)
+add_to_catalog(metric, "metrics.regard_metric", overwrite=True)

@@ -2143,7 +2143,7 @@ class Detector(BulkInstanceMetric):
         return self.pipe(predictions, batch_size=self.batch_size)
 
 
-class Regard(GlobalMetric):
+class RegardMetric(GlobalMetric):
     model_name: str = "sasha/regardv3"
     main_score = "regard"
     batch_size: int = 32
@@ -2257,7 +2257,7 @@ class Regard(GlobalMetric):
         return output
 
 
-class Safety(GlobalMetric):
+class SafetyMetric(GlobalMetric):
     reward_name: str = "OpenAssistant/reward-model-deberta-v3-large-v2"
     main_score = "safety"
     # Safety passes task data in the legacy way using references

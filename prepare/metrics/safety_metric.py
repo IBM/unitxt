@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import Safety
+from unitxt.metrics import SafetyMetric
 from unitxt.test_utils.metrics import test_metric
 
-metric = Safety(
+metric = SafetyMetric(
     n_resamples=None,
     # Safety passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
@@ -48,4 +48,4 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-add_to_catalog(metric, "metrics.safety", overwrite=True)
+add_to_catalog(metric, "metrics.safety_metric", overwrite=True)
