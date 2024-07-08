@@ -1,12 +1,12 @@
 {
     "__type__": "task",
-    "inputs": [
+    "input_fields": [
         "input_text",
         "input_text_type",
         "required_attribute",
         "output_text_type"
     ],
-    "outputs": [
+    "reference_fields": [
         "output_text"
     ],
     "metrics": [

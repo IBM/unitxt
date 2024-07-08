@@ -19,8 +19,8 @@ For example:
 
    .. code-block:: python
    task = Task(
-        inputs={ "question" : "str" },
-        outputs={ "answer" : str },
+        input_fields={ "question" : "str" },
+        reference_fields={ "answer" : str },
         prediction_type="str",
         metrics=[
             "metrics.rouge",

@@ -42,7 +42,7 @@ add_to_catalog(
             "classes": "List[str]",
             "type_of_classes": "str",
         },
-        reference_field={"labels": "List[str]"},
+        reference_fields={"labels": "List[str]"},
         prediction_type="List[str]",
         metrics=[
             "metrics.f1_micro_multi_label",

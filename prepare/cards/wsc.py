@@ -23,7 +23,7 @@ card = TaskCard(
     ],
     task=Task(
         input_fields=["choices", "text", "span1_text", "span2_text"],
-        reference_field=["label"],
+        reference_fields=["label"],
         metrics=["metrics.accuracy"],
     ),
     templates=TemplatesList(

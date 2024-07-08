@@ -17,10 +17,10 @@ class Task(InstanceOperator):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
-        inputs (Union[Dict[str, str], List[str]]):
+        input_fields (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance input fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
-        outputs (Union[Dict[str, str], List[str]]):
+        reference_fields (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance output fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
         metrics (List[str]): List of names of metrics to be used in the task.
@@ -29,11 +29,11 @@ class Task(InstanceOperator):
             be set to Any.
         defaults (Optional[Dict[str, Any]]):
             An optional dictionary with default values for chosen input/output keys. Needs to be
-            consistent with names and types provided in 'inputs' and/or 'outputs' arguments.
+            consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
             Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
-        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
+        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
         "outputs" -- for the fields listed in Arg "outputs".
         "metrics" -- to contain the value of Arg 'metrics'
     """
@@ -131,7 +131,7 @@ class Task(InstanceOperator):
 
                 assert val_type, (
                     f"If specified, all keys of the 'defaults' must refer to a chosen "
-                    f"key in either 'inputs' or 'outputs'. However, the name '{default_name}' "
+                    f"key in either 'input_fields' or 'reference_fields'. However, the name '{default_name}' "
                     f"was provided which does not match any of the keys."
                 )
 
@@ -153,13 +153,13 @@ class Task(InstanceOperator):
         verify_required_schema(self.input_fields, instance)
         verify_required_schema(self.reference_fields, instance)
 
-        inputs = {key: instance[key] for key in self.input_fields.keys()}
-        outputs = {key: instance[key] for key in self.reference_fields.keys()}
+        input_fields = {key: instance[key] for key in self.input_fields.keys()}
+        reference_fields = {key: instance[key] for key in self.reference_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
         return {
-            "inputs": inputs,
-            "outputs": outputs,
+            "input_fields": input_fields,
+            "reference_fields": reference_fields,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
         }

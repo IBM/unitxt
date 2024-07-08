@@ -73,7 +73,7 @@ class TestTasks(UnitxtTestCase):
         self.assertEqual(
             str(e.exception),
             f"If specified, all keys of the 'defaults' must refer to a chosen "
-            f"key in either 'inputs' or 'outputs'. However, the name '{default_name}' "
+            f"key in either 'input_fields' or 'reference_fields'. However, the name '{default_name}' "
             f"was provided which does not match any of the keys.",
         )
 
