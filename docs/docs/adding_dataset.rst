@@ -8,7 +8,7 @@
 Datasets ✨
 =================
 
-This guide will assist you in adding or using your new dataset in unitxt.
+This guide will assist you all in adding or using your new dataset in unitxt.
 
 The information needed for loading your data will be defined in  :class:`TaskCard <unitxt.card.TaskCard>` class:
 
