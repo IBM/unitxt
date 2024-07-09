@@ -1,4 +1,4 @@
-from numpy import NaN
+import numpy as np
 from unitxt import add_to_catalog
 from unitxt.metrics import (
     PrecisionMacroMultiLabel,
@@ -21,7 +21,7 @@ references = [[["yes"]], [[]], [["yes"]], [["yes"]]]
 
 instance_targets_precision_micro = [
     {"precision_micro": 1.0, "score": 1.0, "score_name": "precision_micro"},
-    {"precision_micro": NaN, "score": NaN, "score_name": "precision_micro"},
+    {"precision_micro": np.nan, "score": np.nan, "score_name": "precision_micro"},
     {"precision_micro": 0.0, "score": 0.0, "score_name": "precision_micro"},
     {"precision_micro": 0.0, "score": 0.0, "score_name": "precision_micro"},
 ]
@@ -38,7 +38,7 @@ global_target_precision_micro = {
 
 instance_targets_precision_macro = [
     {"precision_macro": 1.0, "score": 1.0, "score_name": "precision_macro"},
-    {"precision_macro": NaN, "score": NaN, "score_name": "precision_macro"},
+    {"precision_macro": np.nan, "score": np.nan, "score_name": "precision_macro"},
     {"precision_macro": 0.0, "score": 0.0, "score_name": "precision_macro"},
     {"precision_macro": 0.0, "score": 0.0, "score_name": "precision_macro"},
 ]
@@ -80,7 +80,7 @@ global_target_recall_micro = {
 
 instance_targets_recall_micro = [
     {"recall_micro": 1.0, "score": 1.0, "score_name": "recall_micro"},
-    {"recall_micro": NaN, "score": NaN, "score_name": "recall_micro"},
+    {"recall_micro": np.nan, "score": np.nan, "score_name": "recall_micro"},
     {"recall_micro": 0.0, "score": 0.0, "score_name": "recall_micro"},
     {"recall_micro": 0.0, "score": 0.0, "score_name": "recall_micro"},
 ]
@@ -97,7 +97,7 @@ global_target_recall_macro = {
 
 instance_targets_recall_macro = [
     {"recall_macro": 1.0, "score": 1.0, "score_name": "recall_macro"},
-    {"recall_macro": NaN, "score": NaN, "score_name": "recall_macro"},
+    {"recall_macro": np.nan, "score": np.nan, "score_name": "recall_macro"},
     {"recall_macro": 0.0, "score": 0.0, "score_name": "recall_macro"},
     {"recall_macro": 0.0, "score": 0.0, "score_name": "recall_macro"},
 ]
@@ -133,20 +133,20 @@ references = [
 
 instance_targets_precision_micro = [
     {"precision_micro": 1.0, "score": 1.0, "score_name": "precision_micro"},
-    {"precision_micro": NaN, "score": NaN, "score_name": "precision_micro"},
+    {"precision_micro": np.nan, "score": np.nan, "score_name": "precision_micro"},
     {"precision_micro": 0.0, "score": 0.0, "score_name": "precision_micro"},
     {"precision_micro": 0.0, "score": 0.0, "score_name": "precision_micro"},
-    {"precision_micro": NaN, "score": NaN, "score_name": "precision_micro"},
+    {"precision_micro": np.nan, "score": np.nan, "score_name": "precision_micro"},
     {"precision_micro": 1.0, "score": 1.0, "score_name": "precision_micro"},
     {"precision_micro": 0.0, "score": 0.0, "score_name": "precision_micro"},
 ]
 
 instance_targets_precision_macro = [
     {"precision_macro": 1.0, "score": 1.0, "score_name": "precision_macro"},
-    {"precision_macro": NaN, "score": NaN, "score_name": "precision_macro"},
+    {"precision_macro": np.nan, "score": np.nan, "score_name": "precision_macro"},
     {"precision_macro": 0.0, "score": 0.0, "score_name": "precision_macro"},
     {"precision_macro": 0.0, "score": 0.0, "score_name": "precision_macro"},
-    {"precision_macro": NaN, "score": NaN, "score_name": "precision_macro"},
+    {"precision_macro": np.nan, "score": np.nan, "score_name": "precision_macro"},
     {"precision_macro": 1.0, "score": 1.0, "score_name": "precision_macro"},
     {"precision_macro": 0.0, "score": 0.0, "score_name": "precision_macro"},
 ]
@@ -155,20 +155,20 @@ global_target_precision_micro = {
     "precision_micro": 0.4,
     "score": 0.4,
     "score_name": "precision_micro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "precision_micro_ci_low": NaN,
-    "precision_micro_ci_high": NaN,
+    "score_ci_low": np.nan,
+    "score_ci_high": np.nan,
+    "precision_micro_ci_low": np.nan,
+    "precision_micro_ci_high": np.nan,
 }
 
 global_target_precision_macro = {
     "precision_macro": 0.42,
     "score": 0.42,
     "score_name": "precision_macro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "precision_macro_ci_low": NaN,
-    "precision_macro_ci_high": NaN,
+    "score_ci_low": np.nan,
+    "score_ci_high": np.nan,
+    "precision_macro_ci_low": np.nan,
+    "precision_macro_ci_high": np.nan,
 }
 
 outputs = test_metric(
@@ -192,10 +192,10 @@ global_target_recall_micro = {
     "recall_micro": 0.4,
     "score": 0.4,
     "score_name": "recall_micro",
-    "score_ci_low": NaN,
-    "score_ci_high": NaN,
-    "recall_micro_ci_low": NaN,
-    "recall_micro_ci_high": NaN,
+    "score_ci_low": np.nan,
+    "score_ci_high": np.nan,
+    "recall_micro_ci_low": np.nan,
+    "recall_micro_ci_high": np.nan,
 }
 
 global_target_recall_macro = {
@@ -215,8 +215,8 @@ instance_targets_recall_micro = [
         "score_name": "recall_micro",
     },
     {
-        "recall_micro": NaN,
-        "score": NaN,
+        "recall_micro": np.nan,
+        "score": np.nan,
         "score_name": "recall_micro",
     },
     {
@@ -230,8 +230,8 @@ instance_targets_recall_micro = [
         "score_name": "recall_micro",
     },
     {
-        "recall_micro": NaN,
-        "score": NaN,
+        "recall_micro": np.nan,
+        "score": np.nan,
         "score_name": "recall_micro",
     },
     {
@@ -253,8 +253,8 @@ instance_targets_recall_macro = [
         "score_name": "recall_macro",
     },
     {
-        "recall_macro": NaN,
-        "score": NaN,
+        "recall_macro": np.nan,
+        "score": np.nan,
         "score_name": "recall_macro",
     },
     {
@@ -268,8 +268,8 @@ instance_targets_recall_macro = [
         "score_name": "recall_macro",
     },
     {
-        "recall_macro": NaN,
-        "score": NaN,
+        "recall_macro": np.nan,
+        "score": np.nan,
         "score_name": "recall_macro",
     },
     {

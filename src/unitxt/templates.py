@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 from .random_utils import new_random_generator
 from .type_utils import isoftype
 
@@ -20,7 +20,7 @@ class TemplateFormatKeyError(KeyError):
         )
 
 
-class Template(StreamInstanceOperator):
+class Template(InstanceOperator):
     """The role of template is to take the fields of every instance and verbalize it.
 
     Meaning the template is taking the instance and generating source, target and references.
@@ -128,7 +128,7 @@ class InputOutputTemplate(Template):
     Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
     """
 
-    input_format: str = None
+    input_format: str
     output_format: str = None
 
     def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:

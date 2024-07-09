@@ -1,20 +1,20 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "facebook/belebele",
         "name": "default",
         "split": "hau_Latn"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "hau_Latn": "test"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "mc_answer1",
                 "mc_answer2",
@@ -24,25 +24,25 @@
             "to_field": "choices"
         },
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "correct_answer_num": "answer",
                 "flores_passage": "context"
             }
         },
         {
-            "type": "cast_fields",
+            "__type__": "cast_fields",
             "fields": {
                 "answer": "int"
             }
         },
         {
-            "type": "add_constant",
+            "__type__": "add_constant",
             "field": "answer",
             "add": -1
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "context_type": "passage"
             }
@@ -52,7 +52,6 @@
     "templates": "templates.qa.multiple_choice.with_context.no_intro.all",
     "__tags__": {
         "arxiv": "2308.16884",
-        "croissant": true,
         "language": [
             "af",
             "am",
@@ -161,5 +160,5 @@
             "multiple-choice"
         ]
     },
-    "__description__": "The Belebele Benchmark for Massively Multilingual NLU Evaluation\nBelebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
+    "__description__": "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
 }

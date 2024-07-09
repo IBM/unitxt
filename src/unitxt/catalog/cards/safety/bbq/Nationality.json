@@ -1,0 +1,45 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "heegyu/bbq",
+        "name": "Nationality",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "description"
+            }
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "label": "answer"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "ans0",
+                "ans1",
+                "ans2"
+            ],
+            "to_field": "choices"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all",
+    "__description__": "Bias Benchmark for QA (BBQ), a dataset of question sets that highlight attested social biases against people belonging to protected classes along nine social dimensions relevant for U.S. English-speaking contexts.",
+    "__tags__": {
+        "languages": [
+            "english"
+        ],
+        "urls": {
+            "arxiv": "https://arxiv.org/abs/2110.08193"
+        }
+    }
+}

@@ -1,0 +1,6 @@
+{
+    "__type__": "huggingface_metric",
+    "hf_metric_name": "meteor",
+    "main_score": "meteor",
+    "prediction_type": "str"
+}

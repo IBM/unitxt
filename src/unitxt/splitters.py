@@ -1,5 +1,6 @@
 import itertools
 from abc import abstractmethod
+from copy import deepcopy
 from random import Random
 from typing import Dict, List
 
@@ -13,7 +14,7 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
-from .stream import MultiStream
+from .stream import EmptyStreamError, FaultyStreamError, MultiStream
 
 
 class Splitter(MultiStreamOperator):
@@ -138,8 +139,13 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         if "inputs" not in instance:
             raise ValueError(f"'inputs' field is missing from '{instance}'.")
-
-        return list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
+        # l = list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
+        try:
+            return [
+                item for item in instances_pool if item["inputs"] != instance["inputs"]
+            ]
+        except Exception as e:
+            raise e
 
 
 class RandomSampler(Sampler):
@@ -282,16 +288,20 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
     ) -> Dict[str, object]:
         try:
             if self.local_cache is None:
-                self.local_cache = list(multi_stream[self.source_stream])
+                self.local_cache = deepcopy(list(multi_stream[self.source_stream]))
 
             source_stream = self.local_cache
             source_stream = self.sampler.filter_source_by_instance(
                 source_stream, instance
             )
+            if len(source_stream) < self.sampler.sample_size:
+                raise ValueError(
+                    f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
+                )
             sampled_instances = self.sampler.sample(source_stream)
             instance[self.target_field] = sampled_instances
             return instance
-        except Exception as e:
-            raise Exception(
+        except FaultyStreamError as e:
+            raise EmptyStreamError(
                 f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
             ) from e

@@ -1,0 +1,101 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "go_emotions",
+        "name": "simplified"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "labels": {
+                    "0": "admiration",
+                    "1": "amusement",
+                    "2": "anger",
+                    "3": "annoyance",
+                    "4": "approval",
+                    "5": "caring",
+                    "6": "confusion",
+                    "7": "curiosity",
+                    "8": "desire",
+                    "9": "disappointment",
+                    "10": "disapproval",
+                    "11": "disgust",
+                    "12": "embarrassment",
+                    "13": "excitement",
+                    "14": "fear",
+                    "15": "gratitude",
+                    "16": "grief",
+                    "17": "joy",
+                    "18": "love",
+                    "19": "nervousness",
+                    "20": "optimism",
+                    "21": "pride",
+                    "22": "realization",
+                    "23": "relief",
+                    "24": "remorse",
+                    "25": "sadness",
+                    "26": "surprise",
+                    "27": "neutral"
+                }
+            },
+            "process_every_value": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "classes": [
+                    "admiration",
+                    "amusement",
+                    "anger",
+                    "annoyance",
+                    "approval",
+                    "caring",
+                    "confusion",
+                    "curiosity",
+                    "desire",
+                    "disappointment",
+                    "disapproval",
+                    "disgust",
+                    "embarrassment",
+                    "excitement",
+                    "fear",
+                    "gratitude",
+                    "grief",
+                    "joy",
+                    "love",
+                    "nervousness",
+                    "optimism",
+                    "pride",
+                    "realization",
+                    "relief",
+                    "remorse",
+                    "sadness",
+                    "surprise",
+                    "neutral"
+                ],
+                "type_of_classes": "emotions"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_label",
+    "templates": "templates.classification.multi_label.all",
+    "__tags__": {
+        "annotations_creators": "crowdsourced",
+        "arxiv": "2005.00547",
+        "language": "en",
+        "language_creators": "found",
+        "license": "apache-2.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": [
+            "multi-class-classification",
+            "multi-label-classification"
+        ]
+    },
+    "__description__": "The GoEmotions dataset contains 58k carefully curated Reddit comments labeled for 27 emotion categories or Neutral. The raw data is included as well as the smaller, simplified version of the dataset with predefined train/val/test splits… See the full description on the dataset page: https://huggingface.co/datasets/go_emotions."
+}

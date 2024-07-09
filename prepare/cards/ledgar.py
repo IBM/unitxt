@@ -1,9 +1,9 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     TaskCard,
 )
 from unitxt.test_utils.card import test_card
@@ -21,10 +21,9 @@ card = TaskCard(
     loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
     preprocess_steps=[
         MapInstanceValues({"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels.names,
-                "text_type": "text",
                 "type_of_class": "contractual clauses",
             }
         ),
@@ -34,7 +33,6 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "found",
         "arxiv": ["2110.00976", "2109.00904", "1805.01217", "2104.08671"],
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "cc-by-4.0",
@@ -51,9 +49,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        'Dataset Card for "LexGLUE"\n'
-        "Dataset Summary\n"
-        "Inspired by the recent widespread use of the GLUE multi-task benchmark NLP dataset (Wang et al., 2018), the subsequent more difficult SuperGLUE (Wang et al., 2019), other previous multi-task NLP benchmarks (Conneau and Kiela, 2018; McCann et al., 2018), and similar initiatives in other domains (Peng et al., 2019), we introduce the Legal General Language Understanding Evaluation (LexGLUE) benchmark, a benchmark dataset to… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue."
+        "LEDGAR dataset aims contract provision (paragraph) classification. The contract provisions come from contracts obtained from the US Securities and Exchange Commission (SEC) filings, which are publicly available from EDGAR. Each label represents the single main topic (theme) of the corresponding contract provision… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue."
     ),
 )
 test_card(card, debug=False)

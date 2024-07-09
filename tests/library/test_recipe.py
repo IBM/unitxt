@@ -44,6 +44,7 @@ class TestRecipes(UnitxtTestCase):
                     "references": ["not entailment"],
                     "group": "unitxt",
                     "postprocessors": ["processors.to_string_stripped"],
+                    "data_classification_policy": ["public"],
                 },
             )
             break
@@ -97,6 +98,7 @@ class TestRecipes(UnitxtTestCase):
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(result, target)
@@ -108,7 +110,7 @@ class TestRecipes(UnitxtTestCase):
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
             demos_pool_size=5,
-            num_demos=3,
+            num_demos=1,
         )
 
         instances = [
@@ -125,14 +127,23 @@ class TestRecipes(UnitxtTestCase):
         )
 
         self.assertDictEqual(
-            recipe.production_preprocess(instances)[0],
-            recipe.production_preprocess(instances)[0],
+            recipe.produce(instances)[0],
+            recipe.produce(instances)[0],
         )
 
-        self.assertDictEqual(
-            recipe.produce(instances)[0],
-            recipe.produce(instances)[0],
-        )
+        i1 = recipe.production_preprocess(instances)[0]
+        i2 = recipe.production_preprocess(instances)[0]
+        for meta_data in ["card", "template", "format", "system_prompt"]:
+            if meta_data in i1["recipe_metadata"]:
+                i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
+                    meta_data
+                ]._to_raw_dict()
+                if not isinstance(i2["recipe_metadata"][meta_data], dict):
+                    i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
+                        meta_data
+                    ]._to_raw_dict()
+
+        self.assertDictEqual(i1, i2)
 
     def test_standard_recipe_production_with_demos(self):
         recipe = StandardRecipe(
@@ -169,6 +180,7 @@ class TestRecipes(UnitxtTestCase):
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
+            "data_classification_policy": [],
         }
 
         self.assertDictEqual(result, target)
@@ -499,7 +511,7 @@ class TestRecipes(UnitxtTestCase):
             demos_pool_size=3,
             max_train_instances=10,
             max_test_instances=5,
-            num_demos=3,
+            num_demos=1,
         )
 
         stream = recipe()
@@ -512,8 +524,9 @@ class TestRecipes(UnitxtTestCase):
 
         d = load_dataset(
             dataset_file,
-            "type=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=5",
+            "__type__=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
             streaming=True,
+            trust_remote_code=True,
         )
 
         iterator = iter(d["train"])

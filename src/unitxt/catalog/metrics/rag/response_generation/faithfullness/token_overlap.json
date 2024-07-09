@@ -1,20 +1,16 @@
 {
-    "type": "metric_pipeline",
+    "__type__": "metric_pipeline",
     "main_score": "precision",
     "preprocess_steps": [
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "task_data/contexts",
-                    "references"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "task_data/contexts",
+            "to_field": "references"
         }
     ],
     "postpreprocess_steps": [
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "score/instance/f1": "score/instance/faithfullness_f1_token_overlap",
                 "score/instance/recall": "score/instance/faithfullness_recall_token_overlap",

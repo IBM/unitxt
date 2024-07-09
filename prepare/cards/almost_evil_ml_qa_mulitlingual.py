@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     FilterByCondition,
     ListFieldValues,
     RemoveFields,
@@ -11,13 +11,12 @@ from unitxt.test_utils.card import test_card
 
 langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
 # Counter({'en': 1995, 'de': 2302, 'it': 2210, 'fr': 2156, 'es': 2090, 'ru': 2058, 'nl': 2017, 'pt': 1994})
-
 for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
         preprocess_steps=[
             LoadJson(field="METADATA", to_field="metadata"),
-            CopyFields(field_to_field=[("metadata/language", "extracted_language")]),
+            Copy(field="metadata/language", to_field="extracted_language"),
             FilterByCondition(values={"extracted_language": lang}, condition="eq"),
             RemoveFields(fields=["extracted_language", "metadata"]),
             SplitRandomMix(
@@ -29,20 +28,15 @@ for lang in langs:
         task="tasks.qa.open",
         templates="templates.qa.open.all",
         __tags__={
-            "QnA": True,
-            "croissant": True,
+            "flags": ["QnA", "wikihow"],
             "language": ["en", "ru", "pt", "it", "es", "fr", "de", "nl"],
             "license": "cc-by-nc-3.0",
             "region": "us",
             "size_categories": "10K<n<100K",
             "task_categories": "question-answering",
-            "wikihow": True,
         },
         __description__=(
-            "Dataset Card for multilingual WikiHow with ~16.8K entries. ~(2-2.2)K for each language.\n"
-            "Warning [1]\n"
-            "The WikiHow team contacted me and made it clear that they forbid the use of their data for machine learning purposes. However, I am not calling for anything, and this dataset only shows the concept, and I strongly advise against violating their ToS.\n"
-            "However, consultation with lawyers made it clear that dataset can be used for such purposes if the project has… See the full description on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k."
+            "Contains Parquet of a list of instructions and WikiHow articles on different languages. See the full description (and warnings) on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k."
         ),
     )
 

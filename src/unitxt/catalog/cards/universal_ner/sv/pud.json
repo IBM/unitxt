@@ -1,7 +1,7 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "universalner/universal_ner",
         "name": "sv_pud",
         "requirements_list": [
@@ -10,13 +10,13 @@
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "ner_tags": "labels"
             }
         },
         {
-            "type": "get_item_by_index",
+            "__type__": "get_item_by_index",
             "field": "labels",
             "items_list": [
                 "O",
@@ -30,7 +30,7 @@
             "process_every_value": true
         },
         {
-            "type": "iob_extractor",
+            "__type__": "iob_extractor",
             "labels": [
                 "Person",
                 "Organization",
@@ -49,7 +49,7 @@
             "outside_label": "O"
         },
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",
@@ -59,10 +59,8 @@
             "not_exist_ok": true
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
-                "text_type": "text",
-                "class_type": "entity type",
                 "classes": [
                     "Person",
                     "Organization",
@@ -93,5 +91,5 @@
         "region": "us",
         "task_categories": "token-classification"
     },
-    "__description__": "Universal Named Entity Recognition (UNER) aims to fill a gap in multilingual NLP: high quality NER datasets in many languages with a shared tagset.\nUNER is modeled after the Universal Dependencies project, in that it is intended to be a large community annotation effort with language-universal guidelines. Further, we use the same text corpora as Universal Dependencies."
+    "__description__": "Universal Named Entity Recognition (UNER) aims to fill a gap in multilingual NLP: high quality NER datasets in many languages with a shared tagset. UNER is modeled after the Universal Dependencies project, in that it is intended to be a large community annotation effort with language-universal guidelines. Further, we use the same text corpora as Universal Dependencies… See the full description on the dataset page: https://huggingface.co/datasets/universalner/universal_ner"
 }

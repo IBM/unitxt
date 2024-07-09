@@ -4,14 +4,14 @@ from typing import Any, Dict, Optional
 
 from datasets import Features, Sequence, Value
 
-from .operator import StreamInstanceOperator
+from .operator import InstanceOperator
 
 
 class Validator(ABC):
     pass
 
 
-class ValidateSchema(Validator, StreamInstanceOperator):
+class ValidateSchema(Validator, InstanceOperator):
     schema: Features = None
 
     def verify(self):

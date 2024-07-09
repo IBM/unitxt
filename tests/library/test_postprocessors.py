@@ -139,6 +139,18 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_to_list_by_hyphen_space(self):
+        parser, _ = fetch_artifact("processors.to_list_by_hyphen_space")
+        inputs = ["- cat\n- dog", "- man\n- woman\n- dog"]
+        targets = [["cat", "dog"], ["man", "woman", "dog"]]
+
+        check_operator(
+            operator=parser,
+            inputs=list_to_stream_with_prediction_and_references(inputs),
+            targets=list_to_stream_with_prediction_and_references(targets),
+            tester=self,
+        )
+
     def test_select_closest_option(self):
         inputs = [
             {

@@ -3,19 +3,23 @@ import sys
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
 from unitxt.operators import Shuffle
+from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
+settings = get_settings()
 dataset_name = "trec"
 
-ds_builder = load_dataset_builder(dataset_name)
+ds_builder = load_dataset_builder(
+    dataset_name, trust_remote_code=settings.allow_unverified_code
+)
 classlabels = ds_builder.info.features["fine_label"]
 
 expand_label_text = {
@@ -85,7 +89,7 @@ card = TaskCard(
         ),
         RenameFields(field_to_field={"fine_label": "label"}),
         MapInstanceValues(mappers={"label": map_label_to_text}),
-        AddFields(
+        Set(
             fields={
                 "classes": classes,
                 "text_type": "utterance",
@@ -97,7 +101,6 @@ card = TaskCard(
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "expert-generated",
-        "croissant": True,
         "language": "en",
         "language_creators": "expert-generated",
         "license": "unknown",
@@ -109,9 +112,8 @@ card = TaskCard(
         "task_ids": "multi-class-classification",
     },
     __description__=(
-        "The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set.\n"
-        "The dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700.\n"
-        "Data are collected from four sources: 4,500 English questions published by USC (Hovy et al., 2001), about 500 manually constructed questions for a few rare classes, 894 TREC 8 and TREC 9 questions, and also 500 questions from TREC 10 which serves as the test set. These questions were manually labeled."
+        "The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set. \n"
+        "The dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700… See the full description on the dataset page: https://huggingface.co/datasets/trec"
     ),
 )
 test_card(card, debug=False)

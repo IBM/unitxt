@@ -11,6 +11,26 @@ LLM as a Judge Metrics Guide 📊
 This section will walk you through harnessing the power of LLM as judge (LLMaJ) metrics using the Unitxt package. LLM as a judge
 provides a method to assess the performance of a model based on the judgments of another model.
 
+When to use LLM as Judge
+------------------------
+
+LLMs as judges are most useful when
+    1. You don't have ground truth (references) to compare with
+    2. When you have ground truth, but comparing the ground truth to the model response is non-trivial (e.g. requires semantic understanding)
+    3. When you want to assess specific properties of the model's output that can easily expressed via an LLM prompt (e.g. does the model response contain profanity).
+
+Disadvantages of LLM as Judge
+-----------------------------
+
+While LLMs as Judges are powerful and effective in many cases, they have some drawbacks:
+    1. Good LLM as Judges are often large models with relatively high inference latency.
+    2. Deploying large LLMs is difficult and may require API access to external services.
+    3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgements and can also be biased.
+       This means that unless you have a prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgements and see they match your expectations. 
+
+
+Using LLMs
+-----------
 In this guide, we'll explore three key aspects of LLMaJ:
     1. Utilizing LLM as judge as a metric in Unitxt.
     2. Incorporating a new LLM as a judge metric into Unitxt.
@@ -64,7 +84,7 @@ From here, constructing the full unitxt recipe string is standard and straightfo
     card=cards.mt_bench.generation.english_single_turn,
     template=templates.empty,
     format=formats.empty,
-    metrics=[metrics.llm_as_judge.rating.mistralai_Mistral_7B_Instruct_v0_2_huggingface_template_mt_bench_single_turn]
+    metrics=[metrics.llm_as_judge.rating.mistral_7b_instruct_v0_2_huggingface_template_mt_bench_single_turn]
 
 .. note::
 
@@ -272,7 +292,7 @@ We will create a card, as we do for every other Unitxt scenario:
     from unitxt.catalog import add_to_catalog
     from unitxt.loaders import LoadHF
     from unitxt.operators import (
-        CopyFields,
+        Copy,
         FilterByCondition,
         RenameFields,
     )
@@ -294,10 +314,11 @@ We will create a card, as we do for every other Unitxt scenario:
                     "model_output": "answer",
                 }
             ),
-            LiteralEval("question", to_field="question"),
-            CopyFields(field_to_field={"question/0": "question"}),
-            LiteralEval("answer", to_field="answer"),
-            CopyFields(field_to_field={"answer/0": "answer"}),
+            LiteralEval(field="question"),
+            Copy(field="question/0", to_field="question"),
+            LiteralEval(field="answer"),
+            Copy(field="answer/0", to_field="answer")
+,
         ],
         task="tasks.response_assessment.rating.single_turn",
         templates=["templates.response_assessment.rating.mt_bench_single_turn"],

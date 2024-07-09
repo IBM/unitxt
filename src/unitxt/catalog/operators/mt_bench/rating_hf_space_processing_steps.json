@@ -1,0 +1,120 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "turns": "model_input"
+            },
+            "apply_to_streams": [
+                "questions"
+            ]
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "model": "model_id",
+                "judge": "judge_model_id",
+                "user_prompt": "judge_input",
+                "judgment": "judge_output"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "choices": "model_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_id",
+            "apply_to_streams": [
+                "judgment",
+                "model_answer"
+            ],
+            "_argv": [
+                "model_id"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "model_id": {
+                    "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
+                    "vicuna-30b-gpt4": "vicuna-33b-v1.3"
+                }
+            },
+            "strict": false,
+            "apply_to_streams": [
+                "judgment",
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field": "model_output/0/turns",
+            "to_field": "model_output",
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "questions",
+            "right_stream": "judgment",
+            "how": "inner",
+            "on": [
+                "question_id"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "merged_stream",
+            "right_stream": "model_answer",
+            "how": "inner",
+            "on": [
+                "question_id",
+                "model_id"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "model_answer",
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "merged_stream": "test"
+            }
+        },
+        {
+            "__type__": "select_fields",
+            "fields": [
+                "question_id",
+                "category",
+                "model_input",
+                "reference",
+                "turn",
+                "model_id",
+                "judge_model_id",
+                "score",
+                "model_output",
+                "judge_input",
+                "judge_output"
+            ]
+        }
+    ]
+}

@@ -1,10 +1,10 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     GetItemByIndex,
     RenameFields,
+    Set,
 )
 from unitxt.span_lableing_operators import IobExtractor
 from unitxt.test_utils.card import test_card
@@ -60,7 +60,7 @@ for sub_task in sub_tasks:
                 inside_labels=["I-PER", "I-ORG", "I-LOC"],
                 outside_label="O",
             ),
-            CopyFields(
+            Copy(
                 field_to_field={
                     "spans/*/start": "spans_starts",
                     "spans/*/end": "spans_ends",
@@ -69,10 +69,8 @@ for sub_task in sub_tasks:
                 get_default=[],
                 not_exist_ok=True,
             ),
-            AddFields(
+            Set(
                 fields={
-                    "text_type": "text",
-                    "class_type": "entity type",
                     "classes": ["Person", "Organization", "Location"],
                 }
             ),
@@ -100,8 +98,7 @@ for sub_task in sub_tasks:
             "task_categories": "token-classification",
         },
         __description__=(
-            "Universal Named Entity Recognition (UNER) aims to fill a gap in multilingual NLP: high quality NER datasets in many languages with a shared tagset.\n"
-            "UNER is modeled after the Universal Dependencies project, in that it is intended to be a large community annotation effort with language-universal guidelines. Further, we use the same text corpora as Universal Dependencies."
+            "Universal Named Entity Recognition (UNER) aims to fill a gap in multilingual NLP: high quality NER datasets in many languages with a shared tagset. UNER is modeled after the Universal Dependencies project, in that it is intended to be a large community annotation effort with language-universal guidelines. Further, we use the same text corpora as Universal Dependencies… See the full description on the dataset page: https://huggingface.co/datasets/universalner/universal_ner"
         ),
     )
 

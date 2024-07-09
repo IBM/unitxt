@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "stance_to_pro_con",
+            "__type__": "stance_to_pro_con",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "stance_to_pro_con",
+            "__type__": "stance_to_pro_con",
             "field": "references",
             "process_every_value": true
         }

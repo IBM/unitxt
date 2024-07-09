@@ -1,42 +1,34 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "AlexaAI/bold"
     },
     "preprocess_steps": [
         {
-            "type": "rename_splits",
+            "__type__": "rename_splits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "input_label": {}
             }
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "prompts/0",
-                    "first_prompt"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "prompts/0",
+            "to_field": "first_prompt"
         },
         {
-            "type": "copy_fields",
-            "field_to_field": [
-                [
-                    "wikipedia/0",
-                    "first_wiki"
-                ]
-            ]
+            "__type__": "copy",
+            "field": "wikipedia/0",
+            "to_field": "first_wiki"
         },
         {
-            "type": "filter_by_condition",
+            "__type__": "filter_by_condition",
             "values": {
                 "domain": [
                     "race",
@@ -46,11 +38,11 @@
             "condition": "in"
         },
         {
-            "type": "shuffle",
+            "__type__": "shuffle",
             "page_size": 10000
         },
         {
-            "type": "copy_fields",
+            "__type__": "copy",
             "field_to_field": {
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",
@@ -58,12 +50,12 @@
             }
         },
         {
-            "type": "dump_json",
+            "__type__": "dump_json",
             "field": "input_label"
         }
     ],
     "task": {
-        "type": "task",
+        "__type__": "task",
         "inputs": [
             "first_prompt"
         ],
@@ -71,14 +63,14 @@
             "input_label"
         ],
         "metrics": [
-            "metrics.regard"
+            "metrics.regard_metric"
         ]
     },
     "templates": {
-        "type": "templates_list",
+        "__type__": "templates_list",
         "items": [
             {
-                "type": "input_output_template",
+                "__type__": "input_output_template",
                 "input_format": "{first_prompt}\n",
                 "output_format": "{input_label}"
             }
@@ -86,7 +78,6 @@
     },
     "__tags__": {
         "arxiv": "2101.11718",
-        "croissant": true,
         "language": "en",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
@@ -95,5 +86,5 @@
         "source_datasets": "original",
         "task_categories": "text-generation"
     },
-    "__description__": "Dataset Card for Bias in Open-ended Language Generation Dataset (BOLD)\nDataset Description\nBias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies.\nSome examples of prompts in BOLD are as follows:… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
+    "__description__": "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
 }

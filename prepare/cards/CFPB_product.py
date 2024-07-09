@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     MapInstanceValues,
     RenameFields,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -51,15 +51,9 @@ for subset, url in subset_and_urls.items():
             ),
             RenameFields(field_to_field=field_to_field[subset]),
             MapInstanceValues(mappers={"label": mappers[subset]}),
-            AddFields(
-                fields={
-                    "classes": list(mappers[subset].values()),
-                    "text_type": "text",
-                    "type_of_class": "topic",
-                }
-            ),
+            Set(fields={"classes": list(mappers[subset].values())}),
         ],
-        task="tasks.classification.multi_class",
+        task="tasks.classification.multi_class.topic_classification",
         templates="templates.classification.multi_class.all",
     )
     test_card(card, debug=False)

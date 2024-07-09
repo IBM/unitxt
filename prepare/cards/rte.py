@@ -1,8 +1,8 @@
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
     RenameFields,
+    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -15,7 +15,7 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "entailment", "1": "not entailment"}}
         ),
-        AddFields(
+        Set(
             fields={
                 "classes": ["entailment", "not entailment"],
                 "type_of_relation": "entailment",
@@ -35,14 +35,11 @@ card = TaskCard(
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",
-        "coreference-nli": True,
-        "croissant": True,
+        "flags": ["coreference-nli", "paraphrase-identification", "qa-nli"],
         "language": "en",
         "language_creators": "other",
         "license": "other",
         "multilinguality": "monolingual",
-        "paraphrase-identification": True,
-        "qa-nli": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
@@ -56,13 +53,7 @@ card = TaskCard(
         ],
     },
     __description__=(
-        "Dataset Card for GLUE\n"
-        "Dataset Summary\n"
-        "GLUE, the General Language Understanding Evaluation benchmark (https://gluebenchmark.com/) is a collection of resources for training, evaluating, and analyzing natural language understanding systems.\n"
-        "Supported Tasks and Leaderboards\n"
-        "The leaderboard for the GLUE benchmark can be found at this address. It comprises the following tasks:\n"
-        "ax\n"
-        "A manually-curated evaluation dataset for fine-grained… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+        "The Recognizing Textual Entailment (RTE) datasets come from a series of annual textual entailment challenges. The authors of the benchmark combined the data from RTE1 (Dagan et al., 2006), RTE2 (Bar Haim et al., 2006), RTE3 (Giampiccolo et al., 2007), and RTE5 (Bentivogli et al., 2009)… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
     ),
 )
 

@@ -10,6 +10,7 @@ Done by run create_examples_for_recipes_file
 Done by run create_examples_for_recipes_file
 4. Compare dir A and dir B using generate_diff_html (defined in a separate file).
 """
+
 import concurrent.futures
 import itertools
 import json

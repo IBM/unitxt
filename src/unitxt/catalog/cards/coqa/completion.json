@@ -1,20 +1,20 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "stanfordnlp/coqa"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "context_type": "dialog",
                 "completion_type": "response"
             }
         },
         {
-            "type": "zip_field_values",
+            "__type__": "zip_field_values",
             "fields": [
                 "questions",
                 "answers/input_text"
@@ -22,7 +22,7 @@
             "to_field": "dialog"
         },
         {
-            "type": "dictify",
+            "__type__": "dictify",
             "field": "dialog",
             "with_keys": [
                 "user",
@@ -31,11 +31,11 @@
             "process_every_value": true
         },
         {
-            "type": "duplicate_by_sub_lists",
+            "__type__": "duplicate_by_sub_lists",
             "field": "dialog"
         },
         {
-            "type": "serialize_dialog",
+            "__type__": "serialize_dialog",
             "field": "dialog",
             "to_field": "context",
             "context_field": "story",
@@ -51,8 +51,9 @@
             "1704.04683",
             "1506.03340"
         ],
-        "conversational-qa": true,
-        "croissant": true,
+        "flags": [
+            "conversational-qa"
+        ],
         "language": "en",
         "language_creators": "found",
         "license": "other",
@@ -68,5 +69,5 @@
         "task_categories": "question-answering",
         "task_ids": "extractive-qa"
     },
-    "__description__": "Dataset Card for \"coqa\"\nDataset Summary\nCoQA is a large-scale dataset for building Conversational Question Answering systems.\nOur dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage.\nSupported Tasks and Leaderboards\nMore Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+    "__description__": "CoQA is a large-scale dataset for building Conversational Question Answering systems. \nOur dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage. Supported Tasks and Leaderboards More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
 }

@@ -19,10 +19,13 @@ Unitxt conforms to the Huggingface datasets and metrics API, so it can be used w
   predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
   
   metric = evaluate.load("unitxt/metric",trust_remote_code=True)
-  scores = metric.compute(predictions=predictions,references=testset)
+  dataset_with_scores = metric.compute(predictions=predictions,references=testset)
+  [print(item) for item in scores[0]['score']['global'].items()] 
 
 Note, the `trust_remote_code=True` flag is required because in the background the Huggingface API downloads and installs the
-latest version of unitxt.  The core of unitxt has minimal dependencies (none beyond Huggingface evaluate).
+latest version of Unitxt from https://huggingface.co/datasets/unitxt/data/tree/main.
+
+The core of Unitxt has minimal dependencies (none beyond Huggingface evaluate).
 Note that specific metrics or other operators, may required specific dependencies, which are checked before the first time they are used.
 An error message is printed if the there are missing installed dependencies.
 
@@ -52,5 +55,23 @@ You can then use the API:
   inference_model = HFPipelineBasedInferenceEngine(model_name=model_name, max_new_tokens=32)
   predictions = inference_model.infer(test_dataset)
 
-  scores = evaluate(predictions=predictions, data=test_dataset)
+  dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
+  [print(item) for item in dataset_with_scores[0]['score']['global'].items()] 
+
+
+.. warning::
+   It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
+   the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
+
+If you get an error message like:
+
+.. code-block::
+
+   datasets_modules.datasets.unitxt--data.df049865776d8814049d4543a4068e50cda79b1558dc933047f4a41d087cc120.hf_utils.UnitxtVersionsConflictError:
+   Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0.
+
+It means that you are loading datasets using the Huggingface API, but you also have a local version of Unitxt
+installed, and the versions are not compatible.  You should either update the local installed Unitxt
+to the Unitxt Huggingface dataset version, or uninstall the local Unitxt package (in case you don't require the access to Unitxt
+direct APIs), or change the code to load the datasets using the direct Unitxt APIs and not use the Huggingface API.
 

@@ -54,7 +54,7 @@ def get_templates(template_data):
 def load_cards_data():
     def is_valid_data(data):
         for item in ["task", "templates"]:
-            if isinstance(data[item], dict):
+            if item not in data or isinstance(data[item], dict):
                 return False
         return True
 
@@ -89,6 +89,9 @@ def load_cards_data():
     json_data.update(formats_jsons)
     system_prompts, system_prompts_jsons = get_catalog_items("system_prompts")
     json_data.update(system_prompts_jsons)
+    _, tasks_jsons = get_catalog_items("tasks")
+    json_data.update(tasks_jsons)
+
     return cards_data, json_data, formats, system_prompts
 
 

@@ -1,6 +1,5 @@
+import importlib.util
 import os
-
-import pkg_resources
 
 from .version import version
 
@@ -127,24 +126,25 @@ if Settings.is_uninitilized():
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "info"
+    settings.use_eager_execution = False
     settings.remote_metrics = []
-    settings.allow_passing_data_to_remote_api = (bool, False)
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)
     settings.metrics_master_key_token = None
     settings.seed = (int, 42)
     settings.skip_artifacts_prepare_and_verify = (bool, False)
+    settings.data_classification_policy = None
 
 if Constants.is_uninitilized():
     constants = Constants()
     constants.dataset_file = os.path.join(os.path.dirname(__file__), "dataset.py")
     constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
     constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
-    try:
-        constants.default_catalog_path = pkg_resources.resource_filename(
-            "unitxt", "catalog"
-        )
-    except ModuleNotFoundError:
+    unitxt_pkg = importlib.util.find_spec("unitxt")
+    if unitxt_pkg and unitxt_pkg.origin:
+        unitxt_dir = os.path.dirname(unitxt_pkg.origin)
+        constants.default_catalog_path = os.path.join(unitxt_dir, "catalog")
+    else:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path
     constants.dataset_url = "unitxt/data"

@@ -1,13 +1,13 @@
 {
-    "type": "sequential_operator",
+    "__type__": "sequential_operator",
     "steps": [
         {
-            "type": "to_list_by_comma",
+            "__type__": "to_list_by_comma",
             "field": "prediction",
             "process_every_value": false
         },
         {
-            "type": "to_list_by_comma",
+            "__type__": "to_list_by_comma",
             "field": "references",
             "process_every_value": true
         }

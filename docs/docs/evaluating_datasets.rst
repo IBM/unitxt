@@ -25,13 +25,13 @@ Evaluating a dataset can be done using the Huggingface metric API without direct
   predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
   
   metric = evaluate.load('unitxt/metric')
-  scores = metric.compute(predictions=predictions,references=testset)
+  dataset_with_scores = metric.compute(predictions=predictions,references=testset)
 
 The following prints the scores defined in WNLI task (f1_micro, f1_macro, accuracy, as well as their confidence intervals).
 
 .. code-block:: python
   
-    [print(item) for item in scores[0]['score']['global'].items()] 
+    [print(item) for item in dataset_with_scores[0]['score']['global'].items()] 
 
 
 .. code-block::

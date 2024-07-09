@@ -1,17 +1,17 @@
-from unitxt.blocks import AddFields, CopyFields, LoadHF, TaskCard
+from unitxt.blocks import Copy, LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="wmt14", name="fr-en", streaming=True),
     preprocess_steps=[
-        CopyFields(
+        Copy(
             field_to_field=[
                 ["translation/en", "text"],
                 ["translation/fr", "translation"],
             ],
         ),
-        AddFields(
+        Set(
             fields={
                 "source_language": "english",
                 "target_language": "french",

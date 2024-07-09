@@ -1,22 +1,16 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "GEM/xlsum",
         "name": "english"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "text": "document",
                 "target": "summary"
-            }
-        },
-        {
-            "type": "add_fields",
-            "fields": {
-                "document_type": "document"
             }
         }
     ],
@@ -25,7 +19,6 @@
     "__tags__": {
         "annotations_creators": "none",
         "arxiv": "1607.01759",
-        "croissant": true,
         "language": "und",
         "language_creators": "unknown",
         "license": "cc-by-nc-sa-4.0",
@@ -35,5 +28,5 @@
         "source_datasets": "original",
         "task_categories": "summarization"
     },
-    "__description__": "We present XLSum, a comprehensive and diverse dataset comprising 1.35 million professionally\nannotated article-summary pairs from BBC, extracted using a set of carefully designed heuristics.\nThe dataset covers 45 languages ranging from low to high-resource, for many of which no\npublic dataset is currently available. XL-Sum is highly abstractive, concise,\nand of high quality, as indicated by human and intrinsic evaluation."
+    "__description__": "We present XLSum, a comprehensive and diverse dataset comprising 1.35 million professionally annotated article-summary pairs from BBC, extracted using a set of carefully designed heuristics. The dataset covers 45 languages ranging from low to high-resource, for many of which no public dataset is currently available. XL-Sum is highly abstractive, concise, and of high quality, as indicated by human and intrinsic evaluation… See the full description on the dataset page: https://huggingface.co/datasets/GEM/xlsum"
 }

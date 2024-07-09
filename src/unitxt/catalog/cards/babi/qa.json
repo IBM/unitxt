@@ -1,24 +1,24 @@
 {
-    "type": "task_card",
+    "__type__": "task_card",
     "loader": {
-        "type": "load_hf",
+        "__type__": "load_hf",
         "path": "Muennighoff/babi"
     },
     "preprocess_steps": [
         {
-            "type": "rename_fields",
+            "__type__": "rename_fields",
             "field_to_field": {
                 "passage": "context"
             }
         },
         {
-            "type": "add_fields",
+            "__type__": "set",
             "fields": {
                 "context_type": "description"
             }
         },
         {
-            "type": "list_field_values",
+            "__type__": "list_field_values",
             "fields": [
                 "answer"
             ],
@@ -28,7 +28,6 @@
     "task": "tasks.qa.with_context.extractive",
     "templates": "templates.qa.with_context.all",
     "__tags__": {
-        "croissant": true,
         "region": "us"
     },
     "__description__": "Creation (Copied & adapted from https://github.com/stanford-crfm/helm/blob/0eaaa62a2263ddb94e9850ee629423b010f57e4a/src/helm/benchmark/scenarios/babi_qa_scenario.py):\n!wget http://www.thespermwhale.com/jaseweston/babi/tasks_1-20_v1-2.tar.gz\n!tar -xf tasks_1-20_v1-2.tar.gz\nimport json\nfrom typing import List\ntasks = list(range(1, 20))\nsplits = [\"train\", \"valid\", \"test\"]\ndef process_path(path: str) -> str:\n\"\"\"Turn a path string (task 19) from the original format 's,w' to a verbal… See the full description on the dataset page: https://huggingface.co/datasets/Muennighoff/babi."

@@ -1,0 +1,43 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "kasnerz/numericnlg"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_input": "table",
+                "type_of_output": "description"
+            }
+        },
+        {
+            "__type__": "map_html_table_to_json",
+            "field": "table_html_clean",
+            "to_field": "table_out"
+        },
+        {
+            "__type__": "serialize_table_as_markdown",
+            "field": "table_out",
+            "to_field": "input"
+        },
+        {
+            "__type__": "rename_fields",
+            "field": "description",
+            "to_field": "output"
+        }
+    ],
+    "task": "tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]]",
+    "templates": "templates.generation.all",
+    "__description__": "NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
+    "__tags__": {
+        "modality": "table",
+        "urls": {
+            "arxiv": "https://aclanthology.org/2021.acl-long.115/"
+        },
+        "languages": [
+            "english"
+        ]
+    }
+}

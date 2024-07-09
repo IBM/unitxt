@@ -38,7 +38,6 @@ for subset in subsets:
             templates="templates.qa.open.all",
             __tags__={
                 "arxiv": "2402.06619",
-                "croissant": True,
                 "language": [
                     "afr",
                     "sqi",
@@ -155,10 +154,10 @@ for subset in subsets:
                 "task_categories": "text-generation",
             },
             __description__=(
-                "Dataset Summary\n"
-                "Aya Evaluation Suite contains a total of 26,750 open-ended conversation-style prompts to evaluate multilingual open-ended generation quality.To strike a balance between language coverage and the quality that comes with human curation, we create an evaluation suite that includes:\n"
-                "human-curated examples in 7 languages (tur, eng, yor, arb, zho, por, tel) → aya-human-annotated.\n"
-                "machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite."
+                "Aya Evaluation Suite contains a total of 26,750 open-ended conversation-style prompts to evaluate multilingual open-ended generation quality.\n"
+                "To strike a balance between language coverage and the quality that comes with human curation, we create an evaluation suite that includes: \n"
+                "1. human-curated examples in 7 languages (tur, eng, yor, arb, zho, por, tel) → aya-human-annotated. \n"
+                "2. machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite."
             ),
         )
 

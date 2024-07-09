@@ -1,4 +1,4 @@
 {
-    "type": "augment_whitespace",
+    "__type__": "augment_whitespace",
     "augment_model_input": true
 }

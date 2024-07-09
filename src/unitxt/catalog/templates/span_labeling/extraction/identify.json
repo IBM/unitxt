@@ -1,5 +1,5 @@
 {
-    "type": "span_labeling_template",
+    "__type__": "span_labeling_template",
     "input_format": "{text_type}: {text}",
     "instruction": "From the following {text_type}, identify spans with {class_type}:{classes}.",
     "postprocessors": [

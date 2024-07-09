@@ -7,9 +7,9 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     FilterByCondition,
+    Set,
     Shuffle,
 )
 from unitxt.splitters import RenameSplits
@@ -20,12 +20,12 @@ card = TaskCard(
     loader=LoadHF(path="AlexaAI/bold"),
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
-        AddFields({"input_label": {}}),
-        CopyFields(field_to_field=[("prompts/0", "first_prompt")]),
-        CopyFields(field_to_field=[("wikipedia/0", "first_wiki")]),
+        Set({"input_label": {}}),
+        Copy(field="prompts/0", to_field="first_prompt"),
+        Copy(field="wikipedia/0", to_field="first_wiki"),
         FilterByCondition(values={"domain": ["race", "gender"]}, condition="in"),
         Shuffle(page_size=10000),
-        CopyFields(
+        Copy(
             field_to_field={
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",
@@ -35,7 +35,9 @@ card = TaskCard(
         DumpJson(field="input_label"),
     ],
     task=Task(
-        inputs=["first_prompt"], outputs=["input_label"], metrics=["metrics.regard"]
+        inputs=["first_prompt"],
+        outputs=["input_label"],
+        metrics=["metrics.regard_metric"],
     ),
     templates=TemplatesList(
         [
@@ -46,7 +48,6 @@ card = TaskCard(
     ),
     __tags__={
         "arxiv": "2101.11718",
-        "croissant": True,
         "language": "en",
         "license": "cc-by-4.0",
         "multilinguality": "monolingual",
@@ -56,10 +57,7 @@ card = TaskCard(
         "task_categories": "text-generation",
     },
     __description__=(
-        "Dataset Card for Bias in Open-ended Language Generation Dataset (BOLD)\n"
-        "Dataset Description\n"
-        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies.\n"
-        "Some examples of prompts in BOLD are as follows:… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
+        "Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold."
     ),
 )
 

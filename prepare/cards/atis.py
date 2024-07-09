@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
+    Set,
 )
 from unitxt.processors import SplitStrip
 from unitxt.span_lableing_operators import IobExtractor
@@ -108,7 +108,7 @@ card = TaskCard(
             inside_labels=["I-" + c for c in classes],
             outside_label="O",
         ),
-        CopyFields(
+        Copy(
             field_to_field={
                 "spans/*/start": "spans_starts",
                 "spans/*/end": "spans_ends",
@@ -117,17 +117,11 @@ card = TaskCard(
             get_default=[],
             not_exist_ok=True,
         ),
-        AddFields(
-            fields={
-                "text_type": "text",
-                "class_type": "entity type",
-                "classes": classes,
-            }
-        ),
+        Set(fields={"classes": classes}),
     ],
     task="tasks.span_labeling.extraction",
     templates="templates.span_labeling.extraction.all",
-    __tags__={"croissant": True, "region": "us"},
+    __tags__={"region": "us"},
 )
 
 test_card(card)

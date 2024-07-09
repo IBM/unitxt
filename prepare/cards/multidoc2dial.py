@@ -1,10 +1,10 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
     ExecuteExpression,
     ListFieldValues,
     RenameFields,
+    Set,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
@@ -21,14 +21,13 @@ card_abstractive = TaskCard(
         ),
         ListFieldValues(fields=["utterance"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
-        AddFields({"context_type": "document"}),
+        Set({"context_type": "document"}),
     ],
     task="tasks.qa.with_context.abstractive",
     templates="templates.qa.with_context.all",
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2109.12595",
-        "croissant": True,
         "language": "en",
         "language_creators": ["crowdsourced", "expert-generated"],
         "license": "apache-2.0",
@@ -40,7 +39,7 @@ card_abstractive = TaskCard(
         "task_ids": "open-domain-qa",
     },
     __description__=(
-        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents."
+        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents… See the full description on the dataset page: https://huggingface.co/datasets/multidoc2dial"
     ),
 )
 
@@ -52,14 +51,13 @@ card_extractive = TaskCard(
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answers"),
         ExecuteExpression(expression="question.split('[SEP]')[0]", to_field="question"),
-        AddFields({"context_type": "document"}),
+        Set({"context_type": "document"}),
     ],
     task="tasks.qa.with_context.extractive",
     templates="templates.qa.with_context.all",
     __tags__={
         "annotations_creators": "crowdsourced",
         "arxiv": "2109.12595",
-        "croissant": True,
         "language": "en",
         "language_creators": ["crowdsourced", "expert-generated"],
         "license": "apache-2.0",
@@ -71,7 +69,7 @@ card_extractive = TaskCard(
         "task_ids": "open-domain-qa",
     },
     __description__=(
-        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents."
+        "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents… See the full description on the dataset page: https://huggingface.co/datasets/multidoc2dial"
     ),
 )
 

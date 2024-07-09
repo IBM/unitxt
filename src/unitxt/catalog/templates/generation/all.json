@@ -1,6 +1,7 @@
 {
-    "type": "templates_list",
+    "__type__": "templates_list",
     "items": [
-        "templates.generation.default"
+        "templates.generation.default",
+        "templates.generation.empty"
     ]
 }

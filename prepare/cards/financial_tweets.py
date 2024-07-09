@@ -2,9 +2,9 @@ import sys
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -49,35 +49,35 @@ card = TaskCard(
             }  # TODO see the mapping due to sizes?
         ),
         MapInstanceValues(mappers={"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": list(mappers.values()),
                 "text_type": "tweet",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "other",
-        "croissant": True,
-        "finance": True,
-        "hedgefunds": True,
+        "flags": [
+            "finance",
+            "hedgefunds",
+            "markets",
+            "quant",
+            "stocks",
+            "twitter",
+            "wallstreet",
+        ],
         "language": "en",
         "language_creators": "other",
         "license": "mit",
-        "markets": True,
         "multilinguality": "monolingual",
-        "quant": True,
         "region": "us",
         "size_categories": "10K<n<100K",
         "source_datasets": "original",
-        "stocks": True,
         "task_categories": "text-classification",
         "task_ids": "multi-class-classification",
-        "twitter": True,
-        "wallstreet": True,
     },
     __description__=(
         "Dataset Description\n"

@@ -69,7 +69,7 @@ def camel_to_snake_case(s):
     return s.lower()
 
 
-def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
+def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     """Constructs a formatted string of a dictionary.
 
     Args:
@@ -77,18 +77,29 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
         indent (int, optional): The current level of indentation. Defaults to 0.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
         max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
+        keys (List[Str], optional): the list of fields to print
     """
     max_chars = max_chars or shutil.get_terminal_size()[0] - 10
     indent_str = " " * indent
     indent_delta_str = " " * indent_delta
     res = ""
 
-    for key, value in d.items():
+    if keys is None:
+        keys = d.keys()
+    for key in keys:
+        if key not in d.keys():
+            raise ValueError(
+                f"Dictionary does not contain field {key} specified in 'keys' argument. The available keys are {d.keys()}"
+            )
+        value = d[key]
         if isinstance(value, dict):
             res += f"{indent_str}{key}:\n"
             res += construct_dict_str(value, indent + indent_delta, max_chars=max_chars)
         else:
             str_value = str(value)
+            str_value = re.sub(r"\w+=None, ", "", str_value)
+            str_value = re.sub(r"\w+={}, ", "", str_value)
+            str_value = re.sub(r"\w+=\[\], ", "", str_value)
             line_width = max_chars - indent
             lines = str_value.split("\n")
             res += f"{indent_str}{key} ({type(value).__name__}):\n"
@@ -103,10 +114,12 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None):
     return res
 
 
-def print_dict(d, indent=0, indent_delta=4, max_chars=None):
-    dict_str = construct_dict_str(d, indent, indent_delta, max_chars)
+def print_dict(
+    d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None, log_level="info"
+):
+    dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
-    logger.info(dict_str)
+    getattr(logger, log_level)(dict_str)
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:
@@ -132,8 +145,8 @@ def is_made_of_sub_strings(string, sub_strings):
     return bool(re.match(pattern, string))
 
 
-# Giveמ all the lines of a file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
-# and an object name, e.g. TaskCard,
+# Giveמ all the lines of a card preparer file, e.g. all the lines of prepare/cards/cohere_for_ai.py,
+# and an object name, e.g. TaskCard(,
 # return the ordinal number of the line that starts that object, in our example: the
 # line number of the following line (notice that the line where TaskCard is imported
 # is not supposed to return):
@@ -142,10 +155,13 @@ def is_made_of_sub_strings(string, sub_strings):
 # the matching close:
 #         )
 # This util depends on ruff to ensure this setting of the card file: that a close of one
-# tag and the open of the next tag, do not sit in same line, both tags being
-# major level within TaskCard
+# tag and the open of the next tag, do not sit in same line, when both tags being
+# major level within TaskCard.
+# It also prepares for the case that  __description__ tag does not contain balanced
+# parentheses, since it is often cut in the middle, (with  "... see more at")
 # flake8: noqa: B007
-def lines_defining_obj(
+# flake8: noqa: C901
+def lines_defining_obj_in_card(
     all_lines: List[str], obj_name: str, start_search_at_line: int = 0
 ) -> Tuple[int, int]:
     for starting_line in range(start_search_at_line, len(all_lines)):
@@ -157,7 +173,52 @@ def lines_defining_obj(
         return (-1, -1)
     num_of_opens = 0
     num_of_closes = 0
-    for ending_line in range(starting_line, len(all_lines)):
+    ending_line = starting_line - 1
+    while ending_line < len(all_lines):
+        ending_line += 1
+
+        if "__description__" in all_lines[ending_line]:
+            # can not trust parentheses inside description, because this is mainly truncated
+            # free text.
+            # We do trust the indentation enforced by ruff, and the way we build __description__:
+            # a line consisting of only __description__=(
+            # followed by one or more lines of text, can not trust opens and closes
+            # in them, followed by a line consisting of only:  ),
+            # where the ) is indented with the beginning of __description__
+            # We also prepare for the case that, when not entered by us, __description__=
+            # is not followed by a ( and the whole description does not end with a single ) in its line.
+            # We build on ruff making the line following the description start with same indentation
+            # or 4 less (i.e., the following line is the closing of the card).
+            tag_indentation = all_lines[ending_line].index("__description__")
+            starts_with_parent = "__description__=(" in all_lines[ending_line]
+            if starts_with_parent:
+                last_line_to_start_with = (" " * tag_indentation) + r"\)"
+            else:
+                # actually, the line that follows the description
+                last_line_to_start_with1 = (" " * tag_indentation) + "[^ ]"
+                last_line_to_start_with2 = (" " * (tag_indentation - 4)) + "[^ ]"
+                last_line_to_start_with = (
+                    "("
+                    + last_line_to_start_with1
+                    + "|"
+                    + last_line_to_start_with2
+                    + ")"
+                )
+            ending_line += 1
+            while not re.search("^" + last_line_to_start_with, all_lines[ending_line]):
+                ending_line += 1
+            if "__description__" in obj_name:
+                return (
+                    starting_line,
+                    ending_line if starts_with_parent else ending_line - 1,
+                )
+
+            if starts_with_parent:
+                ending_line += 1
+
+            # we conrinue in card, having passed the description, ending line points
+            # to the line that follows description
+
         num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))
         num_of_closes += len(re.findall(r"[)}\]]", all_lines[ending_line]))
         if num_of_closes == num_of_opens:

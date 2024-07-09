@@ -5,11 +5,11 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
-    AddFields,
-    CopyFields,
+    Copy,
     ExecuteExpression,
     FilterByCondition,
     ListFieldValues,
+    Set,
 )
 from unitxt.test_utils.card import test_card
 
@@ -80,7 +80,7 @@ def add_card(split: str):
     card = TaskCard(
         loader=LoadHF(path="abacusai/WikiQA-Free_Form_QA"),
         preprocess_steps=[
-            CopyFields(
+            Copy(
                 field_to_field={
                     "conversations/0/value": "inputs",
                     "conversations/0/tok_len": "inputs_len",
@@ -102,7 +102,7 @@ def add_card(split: str):
                 imports_list=["re"],
                 to_field="question",
             ),
-            AddFields({"context_type": "document"}),
+            Set({"context_type": "document"}),
             SplitRandomMix(
                 {
                     "train": f"{split}[80%]",
@@ -113,9 +113,8 @@ def add_card(split: str):
         ],
         task="tasks.qa.with_context.extractive",
         templates="templates.qa.with_context.all",
-        __tags__={"croissant": True, "region": "us"},
+        __tags__={"region": "us"},
         __description__=(
-            'Dataset Card for "WikiQA-Free_Form_QA"\n'
             "The WikiQA task is the task of answering a question based on the information given in a Wikipedia document. We have built upon the short answer format data in Google Natural Questions to construct our QA task. It is formatted as a document and a question. We ensure the answer to the question is a short answer which is either a single word or a small sentence directly cut pasted from the document. Having the task structured as such, we can… See the full description on the dataset page: https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA."
         ),
     )

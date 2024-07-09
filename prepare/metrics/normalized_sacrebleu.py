@@ -1,39 +1,41 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import MetricPipeline, NormalizedSacrebleu
-from unitxt.operators import CopyFields, MapInstanceValues
+from unitxt.operators import Copy, MapInstanceValues
+from unitxt.processors import LowerCase
 from unitxt.test_utils.metrics import test_metric
 
 language_to_tokenizer = {
+    "german": None,
     "deutch": None,
-    "french": None,
-    "romanian": None,
-    "english": None,
-    "German": None,
-    "French": None,
-    "Spanish": None,
-    "Portuguese": None,
-    "Arabic": "intl",
-    "Korean": "ko-mecab",
-    "fr": None,
     "de": None,
-    "es": None,
-    "pt": None,
+    "french": None,
+    "fr": None,
+    "romanian": None,
+    "ro": None,
+    "english": None,
     "en": None,
+    "spanish": None,
+    "es": None,
+    "portuguese": None,
+    "pt": None,
+    "arabic": "intl",
     "ar": "intl",
+    "korean": "ko-mecab",
     "ko": "ko-mecab",
     "japanese": "ja-mecab",
-    "Japanese": "ja-mecab",
     "ja": "ja-mecab",
 }
 
 metric = MetricPipeline(
     main_score="sacrebleu",
     preprocess_steps=[
-        CopyFields(
-            field_to_field=[("task_data/target_language", "task_data/tokenize")],
+        Copy(
+            field="task_data/target_language",
+            to_field="task_data/tokenize",
             not_exist_ok=True,
             get_default="en",
         ),
+        LowerCase(field="task_data/tokenize"),
         MapInstanceValues(
             mappers={"task_data/tokenize": language_to_tokenizer},
             strict=True,
@@ -113,7 +115,7 @@ references = [
         "他方、成績評価の甘い授業が高く評価されたり、人気取りに走る教師が出たりし、成績の安売りや大学教師のレベルダウンという弊害をもたらす恐れがある、などの反省意見もある."
     ],
 ]
-task_data = len(predictions) * [{"target_language": "ja", "tokenize": "ja-mecab"}]
+task_data = len(predictions) * [{"target_language": "ja"}]
 
 instance_targets = [
     {
@@ -169,7 +171,7 @@ outputs = test_metric(
 
 predictions = ["لى يسارك ، بر ماركت.", "ﻣَﺮَّﺕ ﻋِﺪَّﺓُ ﺳَﻨَﻮَﺍﺕٍ ﻗَﺒﻞ ﺃَﻥ ﺃَﺭَﺍﻫَﺎ ﻣِﻦ ﺟَﺪِﻳﺪٍ"]
 references = [["على ، ستمر سوبر ماركت."], ["ﻣَﺮَّﺕ ﻋِﺪَّﺓُ ﺳَﻨَﻮَﺍﺕٍ ﻗَﺒﻞ ﺃَﻥ ﺃَﺭَﺍﻫَﺎ ﻣِﻦ ﺟَﺪِﻳﺪٍ"]]
-task_data = len(predictions) * [{"target_language": "ar", "tokenize": "intl"}]
+task_data = len(predictions) * [{"target_language": "ar"}]
 instance_targets = [
     {
         "counts": [3, 1, 0, 0],
@@ -227,7 +229,7 @@ references = [
     ["이 가게에서 신발을 살 거예요", "이 가에서 신발살 거예요"],
     ["저는 한국 친구를 사귀고 싶습니다", "저는 한구를 사귀 싶습니다"],
 ]
-task_data = len(predictions) * [{"target_language": "ko", "tokenize": "ko-mecab"}]
+task_data = len(predictions) * [{"target_language": "Korean"}]
 
 instance_targets = [
     {

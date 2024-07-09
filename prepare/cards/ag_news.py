@@ -1,9 +1,9 @@
 from datasets import load_dataset_builder
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    AddFields,
     LoadHF,
     MapInstanceValues,
+    Set,
     SplitRandomMix,
     TaskCard,
 )
@@ -26,19 +26,17 @@ card = TaskCard(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
         MapInstanceValues(mappers={"label": mappers}),
-        AddFields(
+        Set(
             fields={
                 "classes": classlabels.names,
                 "text_type": "sentence",
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
         "annotations_creators": "found",
-        "croissant": True,
         "language": "en",
         "language_creators": "found",
         "license": "unknown",
@@ -50,14 +48,7 @@ card = TaskCard(
         "task_ids": "topic-classification",
     },
     __description__=(
-        'Dataset Card for "ag_news"\n'
-        "Dataset Summary\n"
-        "AG is a collection of more than 1 million news articles. News articles have been\n"
-        "gathered from more than 2000 news sources by ComeToMyHead in more than 1 year of\n"
-        "activity. ComeToMyHead is an academic news search engine which has been running\n"
-        "since July, 2004. The dataset is provided by the academic community for research\n"
-        "purposes in data mining (clustering, classification, etc), information retrieval\n"
-        "(ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/ag_news."
+        "AG is a collection of more than 1 million news articles. News articles have been gathered from more than 2000 news sources by ComeToMyHead in more than 1 year of activity. ComeToMyHead is an academic news search engine which has been running since July 2004. The dataset is provided by the academic community for research purposes in data mining (clustering, classification, etc), information retrieval (ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/ag_news."
     ),
 )
 test_card(card, debug=False)

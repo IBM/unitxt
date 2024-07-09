@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.blocks import AddFields, LoadHF, TaskCard
+from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.test_utils.card import test_card
 
 dataset_name = "claim_stance_topic"
@@ -66,18 +66,16 @@ class_names = [
 card = TaskCard(
     loader=LoadHF(path="ibm/claim_stance", name=f"{dataset_name}"),
     preprocess_steps=[
-        AddFields(
+        Set(
             fields={
                 "classes": class_names,
                 "text_type": "argument",  # TODO maybe text?
-                "type_of_class": "topic",
             }
         ),
     ],
-    task="tasks.classification.multi_class",
+    task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",
     __tags__={
-        "croissant": True,
         "language": "en",
         "license": "cc-by-3.0",
         "region": "us",
@@ -85,12 +83,7 @@ card = TaskCard(
         "task_categories": "text-classification",
     },
     __description__=(
-        "Dataset Card for Claim Stance Dataset\n"
-        "Dataset Summary\n"
-        "Claim Stance\n"
-        "This dataset contains 2,394 labeled Wikipedia claims for 55 topics. The dataset includes the stance (Pro/Con) of each claim towards the topic,\n"
-        "as well as fine-grained annotations, based on the semantic model of Stance Classification of Context-Dependent Claims (topic target,\n"
-        "topic sentiment towards its target, claim target, claim sentiment towards its target, and the relation… See the full description on the dataset page: https://huggingface.co/datasets/ibm/claim_stance."
+        "Claim Stance contains 2,394 labeled Wikipedia claims for 55 topics. The dataset includes the stance (Pro/Con) of each claim towards the topic, as well as fine-grained annotations, based on the semantic model of Stance Classification of Context-Dependent Claims (topic target, topic sentiment towards its target, claim target, claim sentiment towards its target, and the relation between the targets)… See the full description on the dataset page: https://huggingface.co/datasets/ibm/claim_stance."
     ),
 )
 
