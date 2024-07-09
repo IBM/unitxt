@@ -35,7 +35,9 @@ card = TaskCard(
         DumpJson(field="input_label"),
     ],
     task=Task(
-        inputs=["first_prompt"], outputs=["input_label"], metrics=["metrics.regard"]
+        inputs=["first_prompt"],
+        outputs=["input_label"],
+        metrics=["metrics.regard_metric"],
     ),
     templates=TemplatesList(
         [
