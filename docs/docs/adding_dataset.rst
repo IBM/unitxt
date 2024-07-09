@@ -22,7 +22,7 @@ The information needed for loading your data will be defined in  :class:`TaskCar
 The Task
 ---------
 
-When we "add a dataset", we are actually adding data for a particiular NLP task such as translation, sentiment classification, question answering, summarization, etc.
+Where we "add a dataset", we are actually adding data for a particiular NLP task such as translation, sentiment classification, question answering, summarization, etc.
 In fact, the same dataset can be used for multiple NLP tasks. For example, a dataset with question and answer pairs, can be used for both
 question answering and question generation.  Similarly, a dataset with corresponding English and French sentences, can be used for
 an Engish to French translation task or for a French to English translation task.
