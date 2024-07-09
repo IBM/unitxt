@@ -1720,7 +1720,7 @@ class CustomF1(GlobalMetric):
         if not isinstance(elements_list, list):
             elements_list = [elements_list]
         return {
-            k: Counter(
+            k: Counter(    #### zwraca dict {grupa: Counter({Tuple(...): ilosc tych tupli})} -> dla kazdego labela bierze te dane, ktore maja ten label i ich ilosc
                 [
                     self.get_element_representation(value, additional_input)
                     for value in elements_list
@@ -1734,10 +1734,10 @@ class CustomF1(GlobalMetric):
             }
         }
 
-    def calculate_groups_ratio(self, actual_group, total_group):
+    def calculate_groups_ratio(self, actual_group, total_group): #### tutaj wchodzi Counter(dane:ilosc),Counter(dane:ilosc)
         return sum(
             [min(actual_group[k], total_group[k]) for k in actual_group.keys()]
-        ), sum(actual_group.values())
+        ), sum(actual_group.values()) ####     -> zwraca sume ilosc pokrywajacych sie danych, ilosc wszystkich danych
 
     def precision(self, pn, pd, rn, rd):
         return self.zero_division if pn == 0 and pd == 0 else pn / pd
@@ -1758,10 +1758,10 @@ class CustomF1(GlobalMetric):
         for sublist, additional_input in zip(elements, task_data):
             if not isinstance(sublist, list):
                 sublist = [sublist]
-            for e in sublist:
+            for e in sublist: #### e - tuple z danymi ("john",'managerOf','hannah')
                 if self.should_ignore_element(e, additional_input):
                     continue
-                groups.add(self.get_element_group(e, additional_input))
+                groups.add(self.get_element_group(e, additional_input)) #### -> wyciaga label z tupli i dodaje do setu
         return groups
 
     def compute(
@@ -1777,31 +1777,31 @@ class CustomF1(GlobalMetric):
         else:
             groups = self.groups
         groups_statistics = {}
-        for references_batch, predictions_batch, additional_input in zip(
+        for references_batch, predictions_batch, additional_input in zip( ####  set: reference_batch - prawda, predictions_batch - output modelu
             references, predictions, task_data
         ):
-            grouped_references = self.group_elements(references_batch, additional_input)
-            grouped_predictions = self.group_elements(
+            grouped_references = self.group_elements(references_batch, additional_input) # {grupa:Counter(dane:ilosc)}: wyciagamy grupy, przyklady i ilości z prawdy
+            grouped_predictions = self.group_elements( # {grupa:ilosc}: wyciagamy grupy przyklady i ilosci z outputu llma
                 predictions_batch, additional_input
             )
-            all_groups = set(grouped_references.keys()).union(
-                grouped_predictions.keys()
-            )
-            for group in all_groups:
-                if group not in groups_statistics:
+            all_groups = set(grouped_references.keys()).union(   ### set: robimy sume powyzszych setow z grupami
+                grouped_predictions.keys()  
+            ) 
+            for group in all_groups:   ### dla wszystkich mozliwych grup
+                if group not in groups_statistics: ### ustaw dummy statystyki
                     groups_statistics[group] = {
                         "precision_numerator": 0,
                         "precision_denominator": 0,
                         "recall_numerator": 0,
                         "recall_denominator": 0,
                     }
-                references_by_group = grouped_references.get(group, Counter([]))
-                predictions_by_group = grouped_predictions.get(group, Counter([]))
+                references_by_group = grouped_references.get(group, Counter([])) ### wez Counter(dane:ilosc) grupy z prawdy a jak jej nie ma to pusty counter
+                predictions_by_group = grouped_predictions.get(group, Counter([])) ### wez Counter(dane:ilosc) grupy z pred
                 pn, pd = self.calculate_groups_ratio(
-                    actual_group=predictions_by_group, total_group=references_by_group
+                    actual_group=predictions_by_group, total_group=references_by_group ### DLA DANEJ GRUPY: oblicz pokrywanie sie predykcji z ref oraz ilosc wszystkich refow
                 )
                 rn, rd = self.calculate_groups_ratio(
-                    actual_group=references_by_group, total_group=predictions_by_group
+                    actual_group=references_by_group, total_group=predictions_by_group ### DLA DANEJ GRUPY: oblicz pokrywanie sie predykcji z ref oraz ilosc wszystkich predykcji
                 )
                 groups_statistics[group]["precision_numerator"] += pn
                 groups_statistics[group]["precision_denominator"] += pd
@@ -1813,21 +1813,21 @@ class CustomF1(GlobalMetric):
         f1_result = {}
         recall_result = {}
         precision_result = {}
-        for group in groups_statistics.keys():
+        for group in groups_statistics.keys(): ### dla kazdej grupy wez jej jej statystyki
             pn, pd, rn, rd = (
                 groups_statistics[group]["precision_numerator"],
                 groups_statistics[group]["precision_denominator"],
                 groups_statistics[group]["recall_numerator"],
                 groups_statistics[group]["recall_denominator"],
             )
-            pn_total, pd_total, rn_total, rd_total = (
+            pn_total, pd_total, rn_total, rd_total = ( ### zsumuj góry i doły metryk po kazdej z klas
                 pn_total + pn,
                 pd_total + pd,
                 rn_total + rn,
                 rd_total + rd,
             )
             if group in groups:
-                f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd)
+                f1_result[f"f1_{group}"] = self.f1(pn, pd, rn, rd) 
                 recall_result[f"recall_{group}"] = self.recall(pn, pd, rn, rd)
                 precision_result[f"precision_{group}"] = self.precision(pn, pd, rn, rd)
             else:
@@ -1887,14 +1887,30 @@ class NER(CustomF1):
         return str(element)
 
 
-class RelationExtraction(CustomF1):
-    prediction_type = "List[Tuple[str,str,str]]"
-
+class SpecifiedRelationExtraction(CustomF1):
+    prediction_type = "List[Tuple[str, str, str]]"
+    label_index = 1
+    
     def get_element_group(self, element, additional_input):
-        return element[1]
+        return element[self.label_index]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
+
+class UnspecifiedRelationExtraction(CustomF1):
+     
+    def __init__(self):
+        self.groups = set()
+        
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+    
+    def get_element_group(self, element, additional_input):
+        return 'general'
+    
+    def get_groups(self, elements, task_data):
+        return set(['general'])
+    
 
 
 class TokenOverlap(InstanceMetric):
