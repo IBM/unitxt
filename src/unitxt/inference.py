@@ -351,8 +351,8 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         results = wml_inference.infer(dataset["test"])
     """
 
-    client = None
-    credentials = None
+    client: Any = None
+    credentials: Any = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     parameters: WMLInferenceEngineParams = field(
@@ -363,7 +363,7 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
     label: str = "wml"
     _requirements_list = {
-        "ibm-watsonx-ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
+        "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
     }
