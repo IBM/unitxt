@@ -1734,7 +1734,7 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(HuggingfaceBulkMetric):
+class Rouge(HuggingfaceInstanceMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -1765,17 +1765,22 @@ class Rouge(HuggingfaceBulkMetric):
         nltk.download("punkt")
         self.sent_tokenize = nltk.sent_tokenize
 
-    def compute(self, references, predictions, task_data: List[Dict]):
+    def compute(self, references, prediction, task_data: List[Dict]):
+        # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            predictions = [
-                "\n".join(self.sent_tokenize(prediction.strip()))
-                for prediction in predictions
-            ]
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
             references = [
-                ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                "\n".join(self.sent_tokenize(reference.strip()))
                 for reference in references
             ]
-        return super().compute(references, predictions, task_data)
+
+        hf_score = super().compute(references, prediction, task_data)
+        for metric_field in self.hf_metric_fields:
+            if isinstance(hf_score[metric_field], list):
+                assert len(hf_score[metric_field]) == 1
+                hf_score[metric_field] = hf_score[metric_field][0]
+        return hf_score
 
 
 # Computes char edit distance, ignoring whitespace
