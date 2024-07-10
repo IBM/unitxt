@@ -1300,6 +1300,49 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         return results
 
 
+class HuggingfaceInstanceMetric(InstanceMetric):
+    hf_metric_name: str
+
+    hf_metric_fields: List[str]
+    hf_compute_args: dict = {}
+
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # invokes  module.compute, which invokes, e.g., meteor's _compute
+
+        try:
+            score = self.metric.compute(
+                predictions=[prediction],
+                references=[references],
+                **self.hf_compute_args,
+            )
+        except:
+            score = {self.main_score: np.nan}
+
+        if self.hf_metric_fields is not None and len(self.hf_metric_fields) > 0:
+            to_ret = {field: score[field] for field in self.hf_metric_fields}
+            score = to_ret
+
+        return score
+
+
+class Meteor(HuggingfaceInstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = "str"
+
+    hf_metric_name = "meteor"
+    hf_metric_fields = ["meteor"]
+    hf_compute_args = {"alpha": 0.9, "beta": 3, "gamma": 0.5}
+    # the defaults in hf's Meteor
+
+
 class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
