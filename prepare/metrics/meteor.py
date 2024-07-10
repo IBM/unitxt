@@ -15,7 +15,8 @@ references = [
     ["We hope for peace"],
 ]
 
-# a correlation score. single instance is always zero
+# the floats shown here are rounded just for the test. the actually
+# returned score are 15-16 digits to the right of the decimal point
 instance_targets = [
     {"meteor": 0.69, "score": 0.69, "score_name": "meteor"},
     {"meteor": 0.64, "score": 0.64, "score_name": "meteor"},
