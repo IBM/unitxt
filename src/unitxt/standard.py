@@ -100,6 +100,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             raise ValueError(
                 f"metrics must be a list of metrics.  Got metrics = {self.metrics}"
             )
+        if self.postprocessors is not None and not isinstance(
+            self.postprocessors, List
+        ):
+            raise ValueError(
+                f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
+            )
 
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
