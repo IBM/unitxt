@@ -799,20 +799,6 @@ class TestMetrics(UnitxtTestCase):
         global_target = 5 / 6
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-    def test_rouge_l(self):
-        metric = Rouge(
-            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
-            use_aggregator=False,
-            rouge_types=["rougeL"],
-        )
-        references = [["hello", "there"], ["general kenobi", "general yoda"]]
-        predictions = ["hello there", "general kenobi"]
-        outputs = apply_metric(
-            metric=metric, predictions=predictions, references=references
-        )
-        global_target = [2 / 3, 1.0]
-        self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
-
     def test_token_overlap(self):
         metric = TokenOverlap()
         predictions = ["hello there general dude", "foo bar foobar"]

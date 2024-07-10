@@ -1699,7 +1699,6 @@ class Rouge(HuggingfaceMetric):
     prediction_type = "str"
     single_reference_per_prediction = False  # multiple references allowed
 
-    use_aggregator: bool = True
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     sent_split_newline: bool = True
@@ -1709,8 +1708,10 @@ class Rouge(HuggingfaceMetric):
     def prepare(self):
         super().prepare()
 
+        # We don't use the aggregation, to avoid running bootstrapping by the
+        # internal library (which is costly) and done by Unitxt in any case.
         self.hf_compute_args.update(
-            {"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types}
+            {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
         import nltk
@@ -1728,7 +1729,10 @@ class Rouge(HuggingfaceMetric):
                 ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
                 for reference in references
             ]
-        return super().compute(references, predictions, task_data)
+        results = super().compute(references, predictions, task_data)
+        for rouge_type in self.rouge_types:
+            results[rouge_type] = mean(results[rouge_type])
+        return results
 
 
 # Computes char edit distance, ignoring whitespace
