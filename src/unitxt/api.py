@@ -115,3 +115,10 @@ def infer(instance_or_instances, recipe, engine):
     engine, _ = fetch_artifact(engine)
     predictions = engine.infer(dataset)
     return post_process(predictions, dataset)
+
+
+def evaluate_engine(engine, recipe=None, split="train", **recipe_kwargs):
+    dataset = load_dataset(recipe, **recipe_kwargs)[split]
+    engine, _ = fetch_artifact(engine)
+    predictions = engine.infer(dataset)
+    return evaluate(predictions, dataset)

@@ -1,5 +1,12 @@
 import numpy as np
-from unitxt.api import evaluate, infer, load_dataset, post_process, produce
+from unitxt.api import (
+    evaluate,
+    evaluate_engine,
+    infer,
+    load_dataset,
+    post_process,
+    produce,
+)
 from unitxt.card import TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.task import Task
@@ -231,3 +238,9 @@ class TestAPI(UnitxtTestCase):
         predictions = infer(instances, recipe, engine)
         targets = ["365", "1"]
         self.assertListEqual(predictions, targets)
+
+    def test_evaluate_engine(self):
+        engine = "engines.model.flan.t5_small.hf"
+        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,max_train_instances=5"
+        results = evaluate_engine(engine, recipe)
+        self.assertAlmostEqual(results[0]["score"]["global"]["score"], 0.016, places=3)
