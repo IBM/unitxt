@@ -1691,7 +1691,7 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(HuggingfaceMetric):
+class Rouge(HuggingfaceBulkMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -1700,6 +1700,9 @@ class Rouge(HuggingfaceMetric):
     single_reference_per_prediction = False  # multiple references allowed
 
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    hf_metric_fields = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     sent_split_newline: bool = True
 
@@ -1729,10 +1732,7 @@ class Rouge(HuggingfaceMetric):
                 ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
                 for reference in references
             ]
-        results = super().compute(references, predictions, task_data)
-        for rouge_type in self.rouge_types:
-            results[rouge_type] = mean(results[rouge_type])
-        return results
+        return super().compute(references, predictions, task_data)
 
 
 # Computes char edit distance, ignoring whitespace
