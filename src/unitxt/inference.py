@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
-from .artifact import Artifact
+from .artifact import Artifact, return_artifact_specific_kwargs
 from .operator import PackageRequirementsMixin
 
 
@@ -122,15 +122,21 @@ class MockInferenceEngine(InferenceEngine):
 
 
 class IbmGenAiInferenceEngineParams(Artifact):
+    beam_width: Optional[int] = None
     decoding_method: Optional[Literal["greedy", "sample"]] = None
+    include_stop_sequence: Optional[bool] = None
+    length_penalty: Any = None
     max_new_tokens: Optional[int] = None
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
     repetition_penalty: Optional[float] = None
+    return_options: Any = None
     stop_sequences: Optional[List[str]] = None
     temperature: Optional[float] = None
+    time_limit: Optional[int] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
+    truncate_input_tokens: Optional[int] = None
     typical_p: Optional[float] = None
 
 
@@ -161,16 +167,7 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
-            max_new_tokens=self.parameters.max_new_tokens,
-            min_new_tokens=self.parameters.min_new_tokens,
-            random_seed=self.parameters.random_seed,
-            repetition_penalty=self.parameters.repetition_penalty,
-            stop_sequences=self.parameters.stop_sequences,
-            temperature=self.parameters.temperature,
-            top_p=self.parameters.top_p,
-            top_k=self.parameters.top_k,
-            typical_p=self.parameters.typical_p,
-            decoding_method=self.parameters.decoding_method,
+            **return_artifact_specific_kwargs(self.parameters)
         )
 
         return [
@@ -192,6 +189,11 @@ class OpenAiInferenceEngineParams(Artifact):
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: bool = None
+    service_tier: Optional[Literal["auto", "default"]] = None
 
 
 class OpenAiInferenceEngine(
@@ -234,13 +236,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
+                **return_artifact_specific_kwargs(self.parameters),
             )
             output = response.choices[0].message.content
 
@@ -303,15 +299,6 @@ class WMLInferenceEngineParams(Artifact):
     prompt_variables: Optional[Dict[str, Any]] = None
     return_options: Optional[Dict[str, bool]] = None
 
-    def initialize_wml_parameters(self) -> Dict[str, Any]:
-        from ibm_watsonx_ai.metanames import GenTextParamsMetaNames
-
-        return {
-            param_name.upper(): param_value
-            for param_name, param_value in self.to_dict().items()
-            if param_value and param_name.upper() in GenTextParamsMetaNames().get()
-        }
-
 
 class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     """Runs inference using ibm-watsonx-ai.
@@ -343,6 +330,7 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             credentials=wml_credentials,
             parameters=wml_parameters,
             model_name=model_name,
+            data_classification_policy=["public"],
         )
 
         dataset = load_dataset(
@@ -358,8 +346,6 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     parameters: WMLInferenceEngineParams = field(
         default_factory=WMLInferenceEngineParams
     )
-
-    _parameters: Dict[str, Any] = field(default_factory=dict)
 
     label: str = "wml"
     _requirements_list = {
@@ -400,7 +386,6 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def prepare(self):
         if self.client is None:
             self.client = self._initialize_wml_client()
-        self._parameters = self.parameters.initialize_wml_parameters()
 
     def verify(self):
         assert (
@@ -422,7 +407,9 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         return [
             model.generate_text(
                 prompt=instance["source"],
-                params=self._parameters,
+                params=return_artifact_specific_kwargs(
+                    self.parameters, keep_empty=False
+                ),
             )
             for instance in dataset
         ]
