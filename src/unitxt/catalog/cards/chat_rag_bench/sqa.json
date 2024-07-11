@@ -18,7 +18,12 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "ctxs/*/text": "contexts",
+                "ctxs/*/text": "contexts"
+            }
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
                 "messages": "dialog",
                 "answers": "reference_answers"
             }
@@ -30,8 +35,8 @@
             }
         }
     ],
-    "task": "tasks.rag.response_generation_multi_turn",
+    "task": "tasks.rag.response_generation_multi_turn_f1",
     "templates": {
-        "default": "templates.rag.response_generation.multi_turn.simple"
+        "default": "templates.rag.response_generation.multi_turn.simple_short_answers"
     }
 }

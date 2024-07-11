@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -7,10 +5,10 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesDict,
 )
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, RenameFields, Set
 from unitxt.test_utils.card import test_card
 
-subsets = ["doqa_travel", "doqa_cooking", "doqa_movies", "doc2dial", "sqa", "hybridial"]
+subsets = ["sqa"]
 for subset in subsets:
     card = TaskCard(
         loader=LoadHF(path="nvidia/ChatRAG-Bench", name=subset, split="test"),
@@ -21,6 +19,10 @@ for subset in subsets:
             Copy(
                 field_to_field={
                     "ctxs/*/text": "contexts",
+                }
+            ),
+            RenameFields(
+                field_to_field={
                     "messages": "dialog",
                     "answers": "reference_answers",
                 }
@@ -31,21 +33,16 @@ for subset in subsets:
                 }
             ),
         ],
-        task="tasks.rag.response_generation_multi_turn",
+        task="tasks.rag.response_generation_multi_turn_f1",
         templates=TemplatesDict(
-            {"default": "templates.rag.response_generation.multi_turn.simple"}
+            {
+                "default": "templates.rag.response_generation.multi_turn.simple_short_answers"
+            }
         ),
     )
 
-    # testing the card is too slow with the bert-score metric, so dropping it
-    card_for_test = deepcopy(card)
-    card_for_test.task.metrics = [
-        "metrics.rag.response_generation.correctness.token_overlap",
-        "metrics.rag.response_generation.faithfullness.token_overlap",
-    ]
-
     test_card(
-        card_for_test,
+        card,
         strict=True,
         demos_taken_from="test",
     )

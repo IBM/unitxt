@@ -1,0 +1,17 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "contexts": "List[str]",
+        "contexts_ids": "List[int]",
+        "dialog": "List[Dict[str,str]]"
+    },
+    "outputs": {
+        "reference_answers": "List[str]"
+    },
+    "metrics": [
+        "metrics.f1_micro_multi_label"
+    ],
+    "augmentable_inputs": [
+        "contexts"
+    ]
+}

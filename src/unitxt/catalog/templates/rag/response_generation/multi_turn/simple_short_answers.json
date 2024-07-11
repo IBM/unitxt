@@ -1,0 +1,10 @@
+{
+    "__type__": "dialog_dict_template",
+    "field": "dialog",
+    "input_format": "{contexts}\n\n{dialog}",
+    "references_field": "reference_answers",
+    "postprocessors": [
+        "processors.take_first_non_empty_line",
+        "processors.to_list_by_comma"
+    ]
+}
