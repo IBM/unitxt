@@ -1,0 +1,16 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "meta-llama/llama-3-70b-instruct",
+        "parameters": {
+            "__type__": "ibm_gen_ai_inference_engine_params",
+            "max_new_tokens": 252
+        }
+    },
+    "template": "templates.response_assessment.rating.generic_single_turn_with_reference",
+    "task": "rating.single_turn_with_reference",
+    "format": "formats.llama3_instruct",
+    "single_reference_per_prediction": true,
+    "main_score": "llama_3_70b_instruct_ibm_genai_template_generic_single_turn_with_reference"
+}
