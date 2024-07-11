@@ -7,7 +7,7 @@ from unitxt.blocks import (
     TaskCard,
     TemplatesDict,
 )
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, Set, Shuffle
 from unitxt.test_utils.card import test_card
 
 subsets = ["doqa_travel", "doqa_cooking", "doqa_movies", "doc2dial", "hybridial"]
@@ -18,6 +18,7 @@ for subset in subsets:
             SplitRandomMix(
                 {"train": "test[0.6]", "validation": "test[0.2]", "test": "test[0.2]"}
             ),
+            Shuffle(),
             Copy(
                 field_to_field={
                     "ctxs/*/text": "contexts",

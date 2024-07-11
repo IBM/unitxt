@@ -16,6 +16,9 @@
             }
         },
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "copy",
             "field_to_field": {
                 "ctxs/*/text": "contexts",
