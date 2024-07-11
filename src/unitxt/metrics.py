@@ -327,6 +327,11 @@ class MetricWithConfidenceInterval(Metric):
             # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
+
+        method = "BCa"
+        if len(instances) > 100:
+            method = "percentile"
+
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -352,6 +357,7 @@ class MetricWithConfidenceInterval(Metric):
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
+                method=method,
                 random_state=self.new_random_generator(),
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
@@ -437,6 +443,10 @@ class MetricWithConfidenceInterval(Metric):
         if self._can_compute_confidence_intervals(num_predictions=num_predictions):
             identifiers = list(range(num_predictions))
 
+            method = "BCa"
+            if num_predictions > 100:
+                method = "percentile"
+
             with warnings.catch_warnings():
                 # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
                 # the value of the computed global metric is the same on all resamplings.
@@ -446,6 +456,7 @@ class MetricWithConfidenceInterval(Metric):
                     statistic=statistic,
                     n_resamples=self.n_resamples,
                     confidence_level=self.confidence_level,
+                    method=method,
                     random_state=random_gen,
                 ).confidence_interval
             result["score_ci_low"] = ci.low

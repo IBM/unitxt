@@ -1,4 +1,5 @@
 from math import isnan
+from typing import Dict, List
 
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
@@ -38,6 +39,7 @@ from unitxt.metrics import (
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
+    HuggingfaceMetric,
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
@@ -797,6 +799,55 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         global_target = 5 / 6
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+        # compare with the HF implementation
+        class OldRouge(HuggingfaceMetric):
+            hf_metric_name = "rouge"
+            main_score = "rougeL"
+            scale = 1.0
+
+            prediction_type = "str"
+            single_reference_per_prediction = False  # multiple references allowed
+
+            use_aggregator: bool = True
+            rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+            sent_split_newline: bool = True
+
+            _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+            def prepare(self):
+                super().prepare()
+
+                self.hf_compute_args.update(
+                    {
+                        "use_aggregator": self.use_aggregator,
+                        "rouge_types": self.rouge_types,
+                    }
+                )
+
+                import nltk
+
+                nltk.download("punkt")
+                self.sent_tokenize = nltk.sent_tokenize
+
+            def compute(self, references, predictions, task_data: List[Dict]):
+                if self.sent_split_newline:
+                    predictions = [
+                        "\n".join(self.sent_tokenize(prediction.strip()))
+                        for prediction in predictions
+                    ]
+                    references = [
+                        ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                        for reference in references
+                    ]
+                return super().compute(references, predictions, task_data)
+
+        metric = OldRouge()
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_token_overlap(self):
