@@ -22,7 +22,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "copy",
             "field": "judge/0",
             "to_field": "judge_model_id",
             "apply_to_streams": [
