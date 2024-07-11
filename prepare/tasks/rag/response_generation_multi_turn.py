@@ -12,6 +12,7 @@ add_to_catalog(
         },
         outputs={"reference_answers": "List[str]"},
         metrics=[
+            "metrics.rouge",
             "metrics.rag.response_generation.correctness.token_overlap",
             "metrics.rag.response_generation.faithfullness.token_overlap",
             "metrics.rag.response_generation.correctness.bert_score.deberta_large_mnli",
