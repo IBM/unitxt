@@ -83,9 +83,66 @@ if debug:
     from unitxt import evaluate, load_dataset
 
     ds = load_dataset(
-        "card=cards.rag.response_generation.clapnq,template=templates.rag.response_generation.answer_based_on_context_inverted,demos_pool_size=100,num_demos=2,format=formats.llama3_chat,system_prompt=system_prompts.empty,demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True",
+        "card=cards.rag.response_generation.clapnq,template=templates.rag.response_generation.answer_based_on_context_inverted,demos_pool_size=100,num_demos=2,system_prompt=system_prompts.empty,demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True",
     )
 
     predictions = ds["test"]["target"]
     # 3. create a metric and evaluate the results.
     scores = evaluate(predictions=predictions, data=ds["test"])
+
+    recipe = "card=cards.rag.response_generation.clapnq,template=templates.rag.response_generation.answer_based_on_context_inverted,demos_pool_size=100,num_demos=2,system_prompt=system_prompts.empty,demos_taken_from=train,augmentor=augmentors.no_augmentation,demos_removed_from_data=True"
+    # instance = {
+    #     "contexts": ["context_1"],
+    #     "contexts_ids": [0],
+    #     "question": "question",
+    #     "reference_answers": ["reference_answer_1"],
+    #     "task_data": json.dumps(
+    #         {"contexts": ["context_1"], "references": ["reference_answer_1"]}
+    #     ),
+    #     "references": [""],
+    #     "source": "",
+    #     "postprocessors": ["processors.to_string_stripped"],
+    # }
+    # instance = ds["test"][0]
+
+    # from unitxt import produce
+
+    # result = produce(instance, recipe)
+
+    # from unitxt import evaluate
+
+    # results = evaluate(["prediction"], [instance])
+    from unitxt.blocks import (
+        TaskCard,
+        TemplatesDict,
+    )
+    from unitxt.loaders import LoadFromDictionary
+
+    def get_card(data):
+        return TaskCard(
+            loader=LoadFromDictionary(data=data),
+            task="tasks.rag.response_generation[metrics=[metrics.rag.response_generation.faithfullness.token_overlap]]",
+            templates=TemplatesDict(
+                {
+                    "please_respond": "templates.rag.response_generation.please_respond",
+                }
+            ),
+        )
+
+    data = {
+        "test": [
+            {
+                "contexts": ["I am context for the question"],
+                "contexts_ids": [0],
+                "question": "I am a question",
+                "reference_answers": ["I am a good answer"],
+            }
+        ]
+    }
+
+    res = evaluate(
+        predictions=["I am a prediction"],
+        data=load_dataset(card=get_card(data), template_card_index="please_respond")[
+            "test"
+        ],
+    )
