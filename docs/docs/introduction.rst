@@ -16,7 +16,7 @@ Unitxt deconstructs the data preparations and evaluation flows into modular comp
 
 Key Capabilities:
 
-- Built in support for variety of NLP tasks, including ones not typically found in other frameworks, such as multi label classification, targeted sentiment analysis, entity and relation extraction, table understanding, and retrieval augmented generation.
+- Built in support for a variety of NLP tasks, including ones not typically found in other frameworks, such as multi label classification, targeted sentiment analysis, entity and relation extraction, table understanding, and retrieval augmented generation.
 
 - Support for changing templates and formats.
 
