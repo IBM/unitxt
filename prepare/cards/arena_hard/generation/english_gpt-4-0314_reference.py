@@ -47,7 +47,7 @@ card = TaskCard(
         ),
         Apply(
             "reference_model",
-            function=str.lower,
+            function="str.lower",
             to_field="reference_model",
             apply_to_streams=["model_answer"],
         ),

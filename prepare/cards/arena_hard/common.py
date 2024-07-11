@@ -34,7 +34,7 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
         ),
         Apply(
             "model_id",
-            function=str.lower,
+            function="str.lower",
             to_field="model_id",
             apply_to_streams=["model_answer"],
         ),

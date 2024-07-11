@@ -1,0 +1,85 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_hf_space",
+        "space_name": "lmsys/mt-bench",
+        "revision": "a4b674c",
+        "data_files": {
+            "questions": "data/mt_bench/question.jsonl",
+            "model_answer": "data/mt_bench/model_answer/*.jsonl",
+            "judgment": "data/mt_bench/model_judgment/gpt-4_pair.jsonl"
+        }
+    },
+    "preprocess_steps": [
+        "operators.mt_bench.pairwise_hf_space_processing_steps",
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "turn": 1
+            },
+            "condition": "eq"
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "reference": null
+            },
+            "condition": "ne"
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "winner": [
+                    "model_1",
+                    "tie",
+                    "model_2"
+                ]
+            },
+            "condition": "in"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "winner": {
+                    "model_1": "choice_a",
+                    "model_2": "choice_b",
+                    "tie": "tie"
+                }
+            }
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "answer_a",
+                "model_2_output": "answer_b",
+                "reference": "reference_answer",
+                "category": "group"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "question/0",
+            "to_field": "question"
+        },
+        {
+            "__type__": "copy",
+            "field": "answer_a/0",
+            "to_field": "answer_a"
+        },
+        {
+            "__type__": "copy",
+            "field": "answer_b/0",
+            "to_field": "answer_b"
+        },
+        {
+            "__type__": "copy",
+            "field": "reference_answer/0",
+            "to_field": "reference_answer"
+        }
+    ],
+    "task": "tasks.response_assessment.pairwise_comparison.single_turn_with_reference",
+    "templates": [
+        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_reference_with_shuffling"
+    ]
+}
