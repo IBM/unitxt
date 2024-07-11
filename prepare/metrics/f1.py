@@ -20,7 +20,7 @@ add_to_catalog(metric, "metrics.f1_micro", overwrite=True)
 metric = F1MacroMultiLabel()
 add_to_catalog(metric, "metrics.f1_macro_multi_label", overwrite=True)
 
-metric = F1MicroMultiLabel()
+metric = F1MicroMultiLabel(n_resamples=None)
 add_to_catalog(metric, "metrics.f1_micro_multi_label", overwrite=True)
 
 metric = F1Binary()

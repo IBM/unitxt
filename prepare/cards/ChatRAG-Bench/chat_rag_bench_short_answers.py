@@ -14,7 +14,7 @@ for subset in subsets:
         loader=LoadHF(path="nvidia/ChatRAG-Bench", name=subset, split="test"),
         preprocess_steps=[
             SplitRandomMix(
-                {"train": "test[0.6]", "validation": "test[0.2]", "test": "test[0.2]"}
+                {"train": "test[0.4]", "validation": "test[0.25]", "test": "test[0.35]"}
             ),
             Copy(
                 field_to_field={

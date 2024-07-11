@@ -10,9 +10,9 @@
         {
             "__type__": "split_random_mix",
             "mix": {
-                "train": "test[0.6]",
-                "validation": "test[0.2]",
-                "test": "test[0.2]"
+                "train": "test[0.4]",
+                "validation": "test[0.25]",
+                "test": "test[0.35]"
             }
         },
         {
