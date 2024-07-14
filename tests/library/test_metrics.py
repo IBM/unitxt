@@ -1479,7 +1479,10 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "output": "output",
                 "type_of_output": "type",
                 "source": "<SYS_PROMPT>input</SYS_PROMPT>",
-                "metadata": {"template": "templates.generation.default"},
+                "metadata": {
+                    "template": "templates.generation.default",
+                    "data_classification_policy": ["public"],
+                },
             }
         ] * 3
 
