@@ -566,8 +566,9 @@ class LoadFromIBMCloud(Loader):
 
         if not os.path.exists(self.cache_dir):
             Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
+        self.verified = False
 
-    def verify(self):
+    def lazy_verify(self):
         super().verify()
         assert (
             self.endpoint_url is not None
@@ -582,6 +583,9 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def load_data(self):
+        if not self.verified:
+            self.lazy_verify()
+            self.verified = True
         self.sef_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
