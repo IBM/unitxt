@@ -193,6 +193,57 @@ class OpenAiInferenceEngineParams(Artifact):
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
 
+class InstructLabInferenceEngine(
+    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+):
+    base_url: str = 'http://127.0.0.1:8000/v1'
+    parameters: OpenAiInferenceEngineParams = field(
+        default_factory=OpenAiInferenceEngineParams
+    )
+    data_classification_policy = ["public", "proprietary"]
+
+    def prepare(self):
+        import requests
+        try:
+            response = requests.get(f"{self.base_url}/models")
+            response.raise_for_status()  
+            self.model = response.json()['data'][0]['id']
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Error fetching model ID: {e}")
+        except (KeyError, IndexError):
+            raise ValueError("Error: Failed to parse model ID from response JSON.")
+    
+
+    def _infer(self,dataset):
+        import requests
+        outputs = []
+        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"):
+                    
+            payload = {
+                "prompt": instance["source"],
+            }
+            param_keys = ['frequency_penalty','presence_penalty','max_tokens','seed','stop','temperature','top_p','top_logprobs']
+            for param in param_keys:
+                val = getattr(self.parameters, param)
+                if val is not None:
+                    payload[param] = val
+            
+            try:
+                response = requests.post(self.base_url+"/completions", json=payload)
+                response.raise_for_status()  
+                data = response.json()
+                output = data['choices'][0]['text']
+            except requests.exceptions.RequestException as e:
+                raise ValueError(f"Error sending request: {e}")
+            except (KeyError, IndexError):
+                raise ValueError("Error: Failed to parse response JSON or access data.")
+
+            outputs.append(output)
+        return outputs
+    
+    def _infer_log_probs(self, dataset):
+        return None
+
 
 class OpenAiInferenceEngine(
     InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
