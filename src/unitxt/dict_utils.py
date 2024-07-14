@@ -531,32 +531,38 @@ def dict_set(
         raise ValueError(f"No path in dic {dic} matches query {query}.") from e
 
 
-# dict1 and dict2 are assumed to be two different objects, sitting in
+# dict1 and to_dict2 are assumed to be two independent objects, sitting in
 # distinct pieces of memory.
-# Method checks and fixes what's needed to make dict2 a deepcopy of dict1
-# the method returns the (fixed as necessary) dict2
+# Method checks and fixes what's needed to make to_dict2 a deepcopy of dict1
+# (i.e. identical in content, but sitting in a distinct piece of memory), aiming
+# to allocate as small as possible (if at all) additional memory in the process.
+# The method returns (the fixed as necessary) to_dict2
 def deep_copy_if_different(dict1: Any, to_dict2: Any) -> Any:
-    if type(dict1) != type(to_dict2):
+    if dict1 is None:
+        return None
+
+    if to_dict2 is None or (type(dict1) != type(to_dict2)):
         return deepcopy(dict1)
 
     # both of same type
     if not isinstance(dict1, list) and not isinstance(dict1, dict):
-        # simple var
+        # simple vars
         if dict1 != to_dict2:
             to_dict2 = deepcopy(dict1)
         return to_dict2
 
     # either both are lists or both are dicts
-    if len(dict1) != len(to_dict2):
-        return deepcopy(dict1)
-
     if isinstance(dict1, list):
-        # both are lists of same length
-        for i in range(len(dict1)):
+        # both are lists
+        minlen = min(len(dict1), len(to_dict2))
+        for i in range(minlen):
             to_dict2[i] = deep_copy_if_different(dict1[i], to_dict2[i])
-        return to_dict2
+        for i in range(minlen, len(dict1)):
+            # here if to_dict2 is shorter than dict1
+            to_dict2.append(deepcopy(dict1[i]))
+        return to_dict2[: len(dict1)]
 
-    # both are dicts of same size
+    # both are dicts
     for key in dict1:
         if key not in to_dict2:
             to_dict2[key] = deepcopy(dict1[key])

@@ -2283,6 +2283,8 @@ label (str):
         instance2["predictions"]["c"] = 100  # adding a non original value
         instance2["predictions"].pop("b")  # popping out an original field
         self.assertEqual(3, instance2["predictions_orig"]["a"])
+
+        instance2["predictions_orig"]["lst"] = [1000, 2000, 3000]
         ms = MultiStream.from_iterables({"tmp": [instance2]})
         copy_if_different_operator = DeepCopyIfNeeded(
             field_to_field={"predictions_orig": "predictions"}
@@ -2292,6 +2294,19 @@ label (str):
         self.assertEqual(3, instance3["predictions"]["a"])
         self.assertNotIn("c", instance3["predictions"])
         self.assertIn("b", instance3["predictions"])
+        self.assertIn("lst", instance3["predictions"])
+        # verify that lst in "predictions" is independent of lst in "predictions_orig"
+        instance3["predictions"]["lst"][2] = 6000
+        self.assertEqual(3000, instance3["predictions_orig"]["lst"][2])
+        self.assertEqual(3, len(instance["predictions"]["lst"]))
+        instance3["predictions_orig"]["lst"].append(4000)
+        ms = copy_if_different_operator(
+            MultiStream.from_iterables({"tmp": [instance3]})
+        )
+        instance4 = next(iter(ms["tmp"]))
+        self.assertEqual(4, len(instance4["predictions"]["lst"]))
+        self.assertEqual(4000, instance4["predictions_orig"]["lst"][3])
+        self.assertEqual(3000, instance4["predictions_orig"]["lst"][2])
 
     def test_label_encoder(self):
         inputs = [
