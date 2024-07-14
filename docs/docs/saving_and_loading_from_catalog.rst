@@ -33,11 +33,11 @@ Once your catalog is registered, you can add artifacts to it:
 
     add_to_catalog(my_task, catalog_name, catalog_path="path/to/catalog/directory")
 
-It's also possible to save artifacts to the library's default catalog:
+It's also possible to add artifacts to the library's default catalog:
 
 .. code-block:: python
 
-    save_to_catalog(my_task, catalog_name)
+    add_to_catalog(my_task, catalog_name)
 
 Using Catalog Assets
 --------------------
