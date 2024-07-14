@@ -1828,7 +1828,8 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
             multi_stream = metric(multi_stream)
             multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore}
+                field_to_field={f"{k}_orig": k for k in keys_to_restore},
+                use_deepcopy=True,
             )(multi_stream)
 
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
