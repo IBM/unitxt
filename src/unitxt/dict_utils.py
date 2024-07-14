@@ -1,4 +1,5 @@
 import re
+from copy import deepcopy
 from typing import Any, List, Tuple
 
 from .text_utils import construct_dict_str
@@ -528,3 +529,43 @@ def dict_set(
 
     except Exception as e:
         raise ValueError(f"No path in dic {dic} matches query {query}.") from e
+
+
+# dict1 and dict2 are assumed to be two different objects, sitting in
+# distinct pieces of memory.
+# Method checks and fixes what's needed to make dict2 a deepcopy of dict1
+# the method returns the (fixed as necessary) dict2
+def deep_copy_if_different(dict1: Any, to_dict2: Any) -> Any:
+    if type(dict1) != type(to_dict2):
+        return deepcopy(dict1)
+
+    # both of same type
+    if not isinstance(dict1, list) and not isinstance(dict1, dict):
+        # simple var
+        if dict1 != to_dict2:
+            to_dict2 = deepcopy(dict1)
+        return to_dict2
+
+    # either both are lists or both are dicts
+    if len(dict1) != len(to_dict2):
+        return deepcopy(dict1)
+
+    if isinstance(dict1, list):
+        # both are lists of same length
+        for i in range(len(dict1)):
+            to_dict2[i] = deep_copy_if_different(dict1[i], to_dict2[i])
+        return to_dict2
+
+    # both are dicts of same size
+    for key in dict1:
+        if key not in to_dict2:
+            to_dict2[key] = deepcopy(dict1[key])
+        else:
+            to_dict2[key] = deep_copy_if_different(dict1[key], to_dict2[key])
+    keys_to_pop = []
+    for key in to_dict2:
+        if key not in dict1:
+            keys_to_pop.append(key)
+    for key in keys_to_pop:
+        to_dict2.pop(key)
+    return to_dict2

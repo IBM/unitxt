@@ -14,6 +14,7 @@ from unitxt.operators import (
     AugmentWhitespace,
     CastFields,
     Copy,
+    DeepCopyIfNeeded,
     DeterministicBalancer,
     DivideAllFieldsBy,
     DuplicateInstances,
@@ -2248,7 +2249,7 @@ label (str):
             tester=self,
         )
 
-    def test_copy_with_deep_copy(self):
+    def test_copy_with_deep_copy_and_copy_if_different(self):
         instance = {"predictions": {"a": 3, "b": 4}}
         ms = MultiStream.from_iterables({"tmp": [instance]})
         copyoperator = Copy(field="predictions", to_field="predictions_orig")
@@ -2257,6 +2258,7 @@ label (str):
         self.assertDictEqual(instance2["predictions_orig"], instance2["predictions"])
         instance2["predictions"]["a"] = 10
         self.assertEqual(10, instance2["predictions_orig"]["a"])
+
         # and with use_deep_copy = true:
         instance = {"predictions": {"a": 3, "b": 4}}
         ms = MultiStream.from_iterables({"tmp": [instance]})
@@ -2268,6 +2270,28 @@ label (str):
         self.assertDictEqual(instance2["predictions_orig"], instance2["predictions"])
         instance2["predictions"]["a"] = 10
         self.assertEqual(3, instance2["predictions_orig"]["a"])
+
+        # and with copy if different:
+        instance = {"predictions": {"a": 3, "b": 4}}
+        ms = MultiStream.from_iterables({"tmp": [instance]})
+        copyoperator = Copy(
+            field="predictions", to_field="predictions_orig", use_deepcopy=True
+        )
+        ms = copyoperator(ms)
+        instance2 = next(iter(ms["tmp"]))
+        instance2["predictions"]["a"] = 10
+        instance2["predictions"]["c"] = 100  # adding a non original value
+        instance2["predictions"].pop("b")  # popping out an original field
+        self.assertEqual(3, instance2["predictions_orig"]["a"])
+        ms = MultiStream.from_iterables({"tmp": [instance2]})
+        copy_if_different_operator = DeepCopyIfNeeded(
+            field_to_field={"predictions_orig": "predictions"}
+        )
+        ms = copy_if_different_operator(ms)
+        instance3 = next(iter(ms["tmp"]))
+        self.assertEqual(3, instance3["predictions"]["a"])
+        self.assertNotIn("c", instance3["predictions"])
+        self.assertIn("b", instance3["predictions"])
 
     def test_label_encoder(self):
         inputs = [

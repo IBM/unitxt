@@ -65,7 +65,13 @@ import requests
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
-from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .dict_utils import (
+    deep_copy_if_different,
+    dict_delete,
+    dict_get,
+    dict_set,
+    is_subpath,
+)
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -1068,6 +1074,61 @@ class Copy(FieldOperator):
         return value
 
 
+class DeepCopyIfNeeded(InstanceOperator):
+    """Copies values from specified fields to specified fields, only if different values.
+
+    All fields are assumed to occupy distinct pieces in memory, i.e., be totally independent objects.
+
+    Args:
+        field_to_field: Dict[str, str] A map from source field to target field.
+
+
+    Each source field is deepcopy-ed to its respective target field, but only if they have different values.
+    The equality is verified recursively, and only the minimum necessary (if at all) is deep-copied.
+    Everything else in the instance -- stays in place.
+
+    Examples:
+        An input instance {"field": {"a": 2, "b": 3}, "to_field" {"a":2, "b": 4}}
+        when processed by DeepCopyIfNeeded(field_to_field={"field": "to_field"}
+        would yield {"field": {"a": 2, "b": 3}, "to_field" {"a":2, "b": 3}}  while only the
+        3 is copied over, deepcopied, overwriting the 4 .
+        Every other field or subfield stays in place.
+
+    """
+
+    field_to_field: Dict[str, str]
+
+    def verify(self):
+        # see that there is no dependency in the order of copying: that there is no field that
+        # serves both as source field and a target field, because in such a case, the order of
+        # copying, which is not guaranteed at all, might affect the end result
+        super().verify()
+
+        assert (
+            self.field_to_field is not None
+            and isinstance(self.field_to_field, dict)
+            and len(self.field_to_field) > 0
+        ), f"'input argument 'field_to_field' should be a dict, conveying at least one pair. Got {self.field_to_field}"
+        for ff, tt in self.field_to_field.items():
+            for f, t in self.field_to_field.items():
+                if f == ff:
+                    continue
+                assert (
+                    t != ff
+                ), f"In input argument 'field_to_field': {self.field_to_field}, field {f} is mapped to field {t}, while the latter is mapped to {tt}. Whether {f} or {t} is processed first might impact end result."
+                assert (
+                    tt != t
+                ), f"In input argument 'field_to_field': {self.field_to_field}, two different fields: {ff} and {f} are mapped to field {tt}. Whether {ff} or {f} is processed last might impact end result."
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        for ff, tt in self.field_to_field.items():
+            instance[tt] = deep_copy_if_different(instance[ff], instance[tt])
+
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
@@ -1827,9 +1888,8 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                 metric.disable_confidence_interval_calculation()
 
             multi_stream = metric(multi_stream)
-            multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore},
-                use_deepcopy=True,
+            multi_stream = DeepCopyIfNeeded(
+                field_to_field={f"{k}_orig": k for k in keys_to_restore}
             )(multi_stream)
 
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
