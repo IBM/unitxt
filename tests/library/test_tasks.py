@@ -23,6 +23,40 @@ class TestTasks(UnitxtTestCase):
             "(<class 'str'>) are different.",
         )
 
+    def test_task_metrics_type_checking_with_inputs_outputs(self):
+        operator = Task(
+            inputs={"input": "str"},
+            outputs={"label": "str"},
+            prediction_type="str",
+            metrics=["metrics.wer", "metrics.rouge"],
+        )
+
+        operator.check_metrics_type()
+
+        operator.prediction_type = "Dict"
+        with self.assertRaises(ValueError) as e:
+            operator.check_metrics_type()
+        self.assertEqual(
+            str(e.exception),
+            "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
+            "(<class 'str'>) are different.",
+        )
+
+    def test_task_initialization_with_conflicting_fields(self):
+        with self.assertRaises(ValueError) as e:
+            Task(
+                input_fields={"input": "str"},
+                reference_fields={"label": "str"},
+                inputs={"input": "int"},
+                outputs={"label": "int"},
+                prediction_type="str",
+                metrics=["metrics.wer", "metrics.rouge"],
+            )
+        self.assertEqual(
+            str(e.exception),
+            "Conflicting attributes: 'input_fields' and 'reference_fields' cannot be set simultaneously with 'inputs' and 'outputs'.",
+        )
+
     def test_set_defaults(self):
         instances = [
             {"input": "Input1", "input_type": "something", "label": 0, "labels": []},
