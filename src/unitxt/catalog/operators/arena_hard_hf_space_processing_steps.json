@@ -75,7 +75,7 @@
         },
         {
             "__type__": "apply",
-            "function": "str",
+            "function": "builtins.str",
             "to_field": "judge_input_model_1_ordered_first",
             "apply_to_streams": [
                 "judgment"
@@ -86,7 +86,7 @@
         },
         {
             "__type__": "apply",
-            "function": "str",
+            "function": "builtins.str",
             "to_field": "judge_input_model_2_ordered_first",
             "apply_to_streams": [
                 "judgment"
