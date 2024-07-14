@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
+from .dataclass import DeprecatedField
 from .logging_utils import get_logger
 from .operator import InstanceOperator
 from .type_utils import (
@@ -38,12 +39,40 @@ class Task(InstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    input_fields: Union[Dict[str, str], List[str]]
-    reference_fields: Union[Dict[str, str], List[str]]
+    input_fields: Optional[Union[Dict[str, str], List[str]]] = None
+    reference_fields: Optional[Union[Dict[str, str], List[str]]] = None
+    inputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+        default=None,
+        metadata={
+            "deprecation_msg": "The 'inputs' field is deprecated. Please use 'input_fields' instead."
+        },
+    )
+    outputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+        default=None,
+        metadata={
+            "deprecation_msg": "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
+        },
+    )
     metrics: List[str]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
+
+    def prepare(self):
+        super().prepare()
+        if (self.input_fields is not None and self.reference_fields is not None) and (
+            self.inputs is not None and self.outputs
+        ):
+            raise ValueError(
+                "Conflicting attributes: 'input_fields' and 'reference_fields' cannot be set simultaneously with 'inputs' and 'outputs'."
+            )
+
+        self.input_fields = (
+            self.input_fields if self.input_fields is not None else self.inputs
+        )
+        self.reference_fields = (
+            self.reference_fields if self.reference_fields is not None else self.outputs
+        )
 
     def verify(self):
         for io_type in ["input_fields", "reference_fields"]:
@@ -52,6 +81,7 @@ class Task(InstanceOperator):
                 if io_type == "input_fields"
                 else self.reference_fields
             )
+
             if not isoftype(data, Dict[str, str]):
                 get_logger().warning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
