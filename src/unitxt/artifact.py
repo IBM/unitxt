@@ -557,16 +557,3 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
         return None
 
     return data_classification.get(artifact)
-
-
-def return_artifact_specific_kwargs(
-    artifact: Artifact, keep_empty: bool = True
-) -> Dict[str, Any]:
-    attributes = artifact.__annotations__.keys()
-    kwargs = {}
-    for attribute in attributes:
-        value = getattr(artifact, attribute)
-        if not keep_empty and value is None:
-            continue
-        kwargs[attribute] = value
-    return kwargs
