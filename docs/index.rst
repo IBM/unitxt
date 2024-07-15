@@ -180,6 +180,7 @@ Welcome!
    docs/production
    docs/debugging
    docs/helm
+   docs/lm_eval
    docs/glossary
    documentation
    catalog/catalog.__dir__
