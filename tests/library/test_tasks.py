@@ -42,19 +42,56 @@ class TestTasks(UnitxtTestCase):
             "(<class 'str'>) are different.",
         )
 
-    def test_task_initialization_with_conflicting_fields(self):
+    def test_task_missing_input_fields(self):
         with self.assertRaises(ValueError) as e:
             Task(
-                input_fields={"input": "str"},
+                input_fields=None,
                 reference_fields={"label": "str"},
+                prediction_type="str",
+                metrics=["metrics.wer", "metrics.rouge"],
+            )
+        self.assertEqual(
+            str(e.exception), "Missing attribute in task: 'input_fields' not set."
+        )
+
+    def test_task_missing_reference_fields(self):
+        with self.assertRaises(ValueError) as e:
+            Task(
+                input_fields={"input": "int"},
+                reference_fields=None,
+                prediction_type="str",
+                metrics=["metrics.wer", "metrics.rouge"],
+            )
+        self.assertEqual(
+            str(e.exception), "Missing attribute in task: 'reference_fields' not set."
+        )
+
+    def test_conflicting_input_fields(self):
+        with self.assertRaises(ValueError) as e:
+            Task(
                 inputs={"input": "int"},
+                input_fields={"input": "int"},
+                reference_fields={"label": "str"},
+                prediction_type="str",
+                metrics=["metrics.wer", "metrics.rouge"],
+            )
+        self.assertEqual(
+            str(e.exception),
+            "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
+        )
+
+    def test_conflicting_output_fields(self):
+        with self.assertRaises(ValueError) as e:
+            Task(
+                input_fields={"input": "int"},
+                reference_fields={"label": "str"},
                 outputs={"label": "int"},
                 prediction_type="str",
                 metrics=["metrics.wer", "metrics.rouge"],
             )
         self.assertEqual(
             str(e.exception),
-            "Conflicting attributes: 'input_fields' and 'reference_fields' cannot be set simultaneously with 'inputs' and 'outputs'.",
+            "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
         )
 
     def test_set_defaults(self):
