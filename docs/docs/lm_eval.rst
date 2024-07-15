@@ -4,9 +4,10 @@
 Running Unitxt with LM-Eval
 ===========================
 
-Unitxt can be seamlessly integrated with the :ref:`LM-Evaluation-Harness <https://github.com/EleutherAI/lm-evaluation-harness>`, enabling the selection and evaluation of models from the extensive lm-evaluation-harness models catalog using data recipes created by Unitxt.
+Unitxt can be seamlessly integrated with the `LM-Evaluation-Harness <https://github.com/EleutherAI/lm-evaluation-harness>`_, enabling the selection and evaluation of models from the extensive lm-evaluation-harness models catalog using data recipes created by Unitxt.
 
-### Installation
+Installation
+------------
 
 To begin, install lm-evaluation-harness from the source (a set version will be available in the future):
 
@@ -14,11 +15,12 @@ To begin, install lm-evaluation-harness from the source (a set version will be a
 
     pip install git+https://github.com/EleutherAI/lm-evaluation-harness
 
-### Define Your Unitxt Recipe
+Define Your Unitxt Recipe
+-------------------------
 
 Next, choose your preferred Unitxt recipe:
 
-.. code-block:: bash
+.. code-block:: python
 
     card=cards.wnli,template=templates.classification.multi_class.relation.default
 
@@ -30,7 +32,8 @@ If you are uncertain about your choice, you can utilize the :ref:`Explore Unitxt
 
 The second string parameter to `load_dataset()` is the recipe. Note that you may want to remove `max_train_instances=5` from the recipe before using it. If you wish to employ few-shot in-context learning, configure this using the `num_demos` and `demos_pool_size` parameters instead, e.g., `num_demos=5,demos_pool_size=10`.
 
-### Set Up Your Custom LM-Eval Unitxt Tasks Directory
+Set Up Your Custom LM-Eval Unitxt Tasks Directory
+-------------------------------------------------
 
 First, create a directory:
 
@@ -54,7 +57,7 @@ You can designate your task as `my_task` and save it in any folder as `./my_task
     include: unitxt
     recipe: card=cards.wnli,template=templates.classification.multi_class.relation.default
 
-Select the model you wish to evaluate from the diverse types of models supported by the lm-evaluation-harness platform (for a comprehensive list, refer to: https://github.com/EleutherAI/lm-evaluation-harness?tab=readme-ov-file#model-apis-and-inference-servers).
+Select the model you wish to evaluate from the diverse types of models supported by the lm-evaluation-harness platform (See a comprehensive list `here <https://github.com/EleutherAI/lm-evaluation-harness?tab=readme-ov-file#model-apis-and-inference-servers>`_).
 
 Execute your newly constructed task with:
 
