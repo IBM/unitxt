@@ -1,14 +1,13 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParams
+from unitxt.inference import IbmGenAiInferenceEngine
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
 
 model_name = "meta-llama/llama-3-8b-instruct"
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 card = "cards.boolq.classification"
 template = "templates.classification.multi_class.relation.default"
 

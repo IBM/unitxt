@@ -4,7 +4,7 @@ import tempfile
 import pandas as pd
 from unitxt import add_to_catalog, get_logger, register_local_catalog
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParams
+from unitxt.inference import IbmGenAiInferenceEngine
 from unitxt.templates import InputOutputTemplate
 from unitxt.text_utils import print_dict
 
@@ -60,8 +60,7 @@ add_to_catalog(
 # Run inference on mnli (entailment task) on the two templates with both 0 and 3 shot in context learning.
 card = "cards.mnli"
 model_name = "google/flan-t5-xxl"
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 
 
 df = pd.DataFrame(columns=["template", "num_demos", "f1_micro", "ci_low", "ci_high"])

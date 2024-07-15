@@ -50,13 +50,11 @@ inference_model = HFPipelineBasedInferenceEngine(
 )
 # change to this to infer with IbmGenAI APIs:
 #
-# gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# gen_params = OpenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
