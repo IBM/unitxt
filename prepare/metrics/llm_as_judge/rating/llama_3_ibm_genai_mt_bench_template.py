@@ -25,6 +25,7 @@ for model_id in model_list:
         task=task,
         format=format,
         main_score=metric_label,
+        strip_system_prompt_and_format_from_inputs=False
     )
 
     add_to_catalog(
