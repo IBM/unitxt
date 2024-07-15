@@ -1,5 +1,6 @@
 import abc
 import os
+import requests
 from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -196,14 +197,12 @@ class OpenAiInferenceEngineParams(Artifact):
 class InstructLabInferenceEngine(
     InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
 ):
-    base_url: str = 'http://127.0.0.1:8000/v1'
+    base_url: str = 'http://127.0.0.1:8000/v1' #URL for local serving of the model
     parameters: OpenAiInferenceEngineParams = field(
         default_factory=OpenAiInferenceEngineParams
     )
-    data_classification_policy = ["public", "proprietary"]
-
+    
     def prepare(self):
-        import requests
         try:
             response = requests.get(f"{self.base_url}/models")
             response.raise_for_status()  
@@ -213,12 +212,13 @@ class InstructLabInferenceEngine(
         except (KeyError, IndexError):
             raise ValueError("Error: Failed to parse model ID from response JSON.")
     
+    def extract_inference(self,http_response):
+        data = http_response.json()
+        return data['choices'][0]['text']
 
     def _infer(self,dataset):
-        import requests
         outputs = []
-        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"):
-                    
+        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"): 
             payload = {
                 "prompt": instance["source"],
             }
@@ -231,8 +231,7 @@ class InstructLabInferenceEngine(
             try:
                 response = requests.post(self.base_url+"/completions", json=payload)
                 response.raise_for_status()  
-                data = response.json()
-                output = data['choices'][0]['text']
+                output = self.extract_inference(response)
             except requests.exceptions.RequestException as e:
                 raise ValueError(f"Error sending request: {e}")
             except (KeyError, IndexError):
