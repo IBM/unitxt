@@ -329,3 +329,32 @@ class TestDataclass(UnitxtTestCase):
         self.assertEqual(d.a, 1)
         self.assertTupleEqual(d._argv, (2,))
         self.assertDictEqual(d._kwargs, {"c": 3})
+
+    def test_to_dict(self):
+        class DataclassA(Dataclass):
+            a: int
+            b: str = None
+
+        class DataclassB(DataclassA):
+            b: str = ""
+            c: bool
+
+        dataclass_a = DataclassA(a=1)
+        dataclass_b = DataclassB(a=2, c=False)
+
+        self.assertDictEqual(
+            dataclass_a.to_dict(keep_empty=False),
+            {"a": 1},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(),
+            {"a": 2, "b": "", "c": False},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(classes=[DataclassA, DataclassB]),
+            {"a": 2, "b": "", "c": False},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(classes=[dataclass_b]),
+            {"b": "", "c": False},
+        )

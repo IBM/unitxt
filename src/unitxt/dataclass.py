@@ -4,7 +4,7 @@ import functools
 import warnings
 from abc import ABCMeta
 from inspect import Parameter, Signature
-from typing import Any, Dict, final
+from typing import Any, Dict, List, Optional, final
 
 _FIELDS = "__fields__"
 
@@ -517,9 +517,30 @@ class Dataclass(metaclass=DataclassMeta):
         """Convert to raw dict."""
         return {field.name: getattr(self, field.name) for field in fields(self)}
 
-    def to_dict(self):
-        """Convert to dict."""
-        return _asdict_inner(self._to_raw_dict())
+    def to_dict(self, classes: Optional[List] = None, keep_empty: bool = True):
+        """Convert to dict.
+
+        Args:
+            classes (List, optional): List of parent classes which attributes should
+                be returned. If set to None, then all class' attributes are returned.
+            keep_empty (bool): If True, then  parameters are returned regardless if
+                their values are None or not.
+        """
+        if not classes:
+            attributes_dict = _asdict_inner(self._to_raw_dict())
+        else:
+            attributes = []
+            for cls in classes:
+                attributes += list(cls.__annotations__.keys())
+            attributes_dict = {
+                attribute: getattr(self, attribute) for attribute in attributes
+            }
+
+        return {
+            attribute: value
+            for attribute, value in attributes_dict.items()
+            if keep_empty or value is not None
+        }
 
     def __repr__(self) -> str:
         """String representation."""

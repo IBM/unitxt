@@ -1,11 +1,12 @@
 import abc
 import os
-from dataclasses import field
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
 from .artifact import Artifact
+from .deprecation_utils import deprecation
+from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 
 
@@ -21,6 +22,23 @@ class InferenceEngine(abc.ABC, Artifact):
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
         return self._infer(dataset)
+
+    @deprecation(version="2.0.0")
+    def _set_inference_parameters(self):
+        """Sets inference parameters of an instance based on 'parameters' attribute (if given)."""
+        if hasattr(self, "parameters") and self.parameters is not None:
+            get_logger().warning(
+                f"The 'parameters' attribute of '{self.get_pretty_print_name()}' "
+                f"is deprecated. Please pass inference parameters directly to the "
+                f"inference engine instance instead."
+            )
+
+            for param, param_dict_val in self.parameters.to_dict(
+                [self.parameters]
+            ).items():
+                param_inst_val = getattr(self, param)
+                if param_inst_val is None:
+                    setattr(self, param, param_dict_val)
 
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
@@ -121,29 +139,55 @@ class MockInferenceEngine(InferenceEngine):
         return ["[[10]]" for instance in dataset]
 
 
-class IbmGenAiInferenceEngineParams(Artifact):
+class IbmGenAiInferenceEngineParamsMixin(Artifact):
+    beam_width: Optional[int] = None
     decoding_method: Optional[Literal["greedy", "sample"]] = None
+    include_stop_sequence: Optional[bool] = None
+    length_penalty: Any = None
     max_new_tokens: Optional[int] = None
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
     repetition_penalty: Optional[float] = None
+    return_options: Any = None
     stop_sequences: Optional[List[str]] = None
     temperature: Optional[float] = None
+    time_limit: Optional[int] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
+    truncate_input_tokens: Optional[int] = None
     typical_p: Optional[float] = None
 
 
-class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+@deprecation(version="2.0.0", alternative=IbmGenAiInferenceEngineParamsMixin)
+class IbmGenAiInferenceEngineParams(Artifact):
+    beam_width: Optional[int] = None
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    include_stop_sequence: Optional[bool] = None
+    length_penalty: Any = None
+    max_new_tokens: Optional[int] = None
+    min_new_tokens: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    return_options: Any = None
+    stop_sequences: Optional[List[str]] = None
+    temperature: Optional[float] = None
+    time_limit: Optional[int] = None
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
+    truncate_input_tokens: Optional[int] = None
+    typical_p: Optional[float] = None
+
+
+class IbmGenAiInferenceEngine(
+    InferenceEngine, IbmGenAiInferenceEngineParamsMixin, PackageRequirementsMixin
+):
     label: str = "ibm_genai"
     model_name: str
-    parameters: IbmGenAiInferenceEngineParams = field(
-        default_factory=IbmGenAiInferenceEngineParams
-    )
     _requirements_list = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
     data_classification_policy = ["public", "proprietary"]
+    parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
     def prepare(self):
         from genai import Client, Credentials
@@ -157,20 +201,13 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         credentials = Credentials(api_key=api_key)
         self.client = Client(credentials=credentials)
 
+        self._set_inference_parameters()
+
     def _infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
-            max_new_tokens=self.parameters.max_new_tokens,
-            min_new_tokens=self.parameters.min_new_tokens,
-            random_seed=self.parameters.random_seed,
-            repetition_penalty=self.parameters.repetition_penalty,
-            stop_sequences=self.parameters.stop_sequences,
-            temperature=self.parameters.temperature,
-            top_p=self.parameters.top_p,
-            top_k=self.parameters.top_k,
-            typical_p=self.parameters.typical_p,
-            decoding_method=self.parameters.decoding_method,
+            **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
         return [
@@ -183,6 +220,23 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         ]
 
 
+class OpenAiInferenceEngineParamsMixin(Artifact):
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: bool = None
+    service_tier: Optional[Literal["auto", "default"]] = None
+
+
+@deprecation(version="2.0.0", alternative=OpenAiInferenceEngineParamsMixin)
 class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
@@ -192,20 +246,26 @@ class OpenAiInferenceEngineParams(Artifact):
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: bool = None
+    service_tier: Optional[Literal["auto", "default"]] = None
 
 
 class OpenAiInferenceEngine(
-    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+    InferenceEngine,
+    LogProbInferenceEngine,
+    OpenAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     label: str = "openai"
     model_name: str
-    parameters: OpenAiInferenceEngineParams = field(
-        default_factory=OpenAiInferenceEngineParams
-    )
     _requirements_list = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
     data_classification_policy = ["public"]
+    parameters: Optional[OpenAiInferenceEngineParams] = None
 
     def prepare(self):
         from openai import OpenAI
@@ -218,6 +278,8 @@ class OpenAiInferenceEngine(
         )
 
         self.client = OpenAI(api_key=api_key)
+
+        self._set_inference_parameters()
 
     def _infer(self, dataset):
         outputs = []
@@ -234,13 +296,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
+                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             output = response.choices[0].message.content
 
@@ -263,15 +319,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
-                logprobs=True,
-                top_logprobs=self.parameters.top_logprobs,
+                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             top_logprobs_response = response.choices[0].logprobs.content
             output = [
@@ -287,6 +335,24 @@ class OpenAiInferenceEngine(
         return outputs
 
 
+class WMLInferenceEngineParamsMixin(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    length_penalty: Optional[Dict[str, Union[int, float]]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    min_new_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
+    stop_sequences: Optional[List[str]] = None
+    time_limit: Optional[int] = None
+    truncate_input_tokens: Optional[int] = None
+    prompt_variables: Optional[Dict[str, Any]] = None
+    return_options: Optional[Dict[str, bool]] = None
+
+
+@deprecation(version="2.0.0", alternative=WMLInferenceEngineParamsMixin)
 class WMLInferenceEngineParams(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     length_penalty: Optional[Dict[str, Union[int, float]]] = None
@@ -303,17 +369,10 @@ class WMLInferenceEngineParams(Artifact):
     prompt_variables: Optional[Dict[str, Any]] = None
     return_options: Optional[Dict[str, bool]] = None
 
-    def initialize_wml_parameters(self) -> Dict[str, Any]:
-        from ibm_watsonx_ai.metanames import GenTextParamsMetaNames
 
-        return {
-            param_name.upper(): param_value
-            for param_name, param_value in self.to_dict().items()
-            if param_value and param_name.upper() in GenTextParamsMetaNames().get()
-        }
-
-
-class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class WMLInferenceEngine(
+    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+):
     """Runs inference using ibm-watsonx-ai.
 
     Attributes:
@@ -328,21 +387,23 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
-        parameters (WMLInferenceEngineParams): An instance of 'WMLInferenceEngineParams'
-            which defines parameters used for inference. All the parameters are optional.
+        parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
+            which defines inference parameters and their values. Deprecated attribute, please
+            pass respective parameters directly to the WMLInferenceEngine class instead.
 
     Examples:
         from .api import load_dataset
 
-        wml_parameters = WMLInferenceEngineParams(top_p=0.5, random_seed=123)
         wml_credentials = {
             "url": "some_url", "project_id": "some_id", "api_key": "some_key"
         }
         model_name = "google/flan-t5-xxl"
         wml_inference = WMLInferenceEngine(
             credentials=wml_credentials,
-            parameters=wml_parameters,
             model_name=model_name,
+            data_classification_policy=["public"],
+            top_p=0.5,
+            random_seed=123,
         )
 
         dataset = load_dataset(
@@ -351,24 +412,18 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         results = wml_inference.infer(dataset["test"])
     """
 
-    client = None
-    credentials = None
+    client: Any = None
+    credentials: Any = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
-    parameters: WMLInferenceEngineParams = field(
-        default_factory=WMLInferenceEngineParams
-    )
-
-    _parameters: Dict[str, Any] = field(default_factory=dict)
-
     label: str = "wml"
     _requirements_list = {
-        "ibm-watsonx-ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
+        "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
     }
-
     data_classification_policy = ["proprietary"]
+    parameters: Optional[WMLInferenceEngineParams] = None
 
     @staticmethod
     def _read_wml_credentials_from_env() -> Dict[str, str]:
@@ -400,7 +455,8 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def prepare(self):
         if self.client is None:
             self.client = self._initialize_wml_client()
-        self._parameters = self.parameters.initialize_wml_parameters()
+
+        self._set_inference_parameters()
 
     def verify(self):
         assert (
@@ -422,7 +478,7 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         return [
             model.generate_text(
                 prompt=instance["source"],
-                params=self._parameters,
+                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
             )
             for instance in dataset
         ]
