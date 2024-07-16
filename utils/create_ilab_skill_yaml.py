@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from lh_eval_api import load_lh_dataset
+from unitxt.api import load_dataset
+from unitxt import register_local_catalog
 from typing import List, Optional
 import yaml
 import json
 import random
-
-from unitxt.api import load_dataset
+from dataclasses import dataclass
 
 @dataclass
 class SeedExample:
@@ -88,18 +89,29 @@ class IlabSkillAdder:
 
 
 if __name__ == "__main__":
-    dataset = load_dataset(card='cards.squad',template='templates.qa.with_context.simple')
-    dataset =dataset['train']
-    task_description = "SQUAD with context simple"
+    register_local_catalog("../fm-eval/fm_eval/catalogs/private")
+    task_description = "cat multi label"
     creator = 'RF'
-    yaml_file = "squad_samples.yaml"
+    yaml_file = "cat_samples.yaml"
+    
+    template = "templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none"
+    card = 'cards.cat'
+    
+    question_field = 'source' #question
+    answer_field = 'references' #answers
+    context_field = 'context'
+
+    loaded_dataset = load_dataset(card=card,template=template)
+    dataset = loaded_dataset['train']
+   
     examples = []
     random_indexes = random.sample(range(len(dataset)), 5)
     for idx in random_indexes:
-        example_data =  json.loads(dataset[idx]['task_data'])
-        question = example_data['question']
-        answer = example_data['answers'][0]
-        context = example_data['context'] if 'context' in example_data else None
+        # example_data =  json.loads(dataset[idx]['task_data'])
+        example_data = dataset[idx]
+        question = example_data[question_field]
+        answer = example_data[answer_field]
+        context = example_data[context_field] if context_field in example_data else None
         examples.append(SeedExample(
             question=question, answer=answer, context=context
         ))
