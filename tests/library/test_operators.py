@@ -3084,12 +3084,32 @@ Agent:"""
         input_multi_stream = MultiStream(
             {
                 "questions": [
-                    {"question": "question_1", "id": "1"},
-                    {"question": "question_2", "id": "2"},
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                    {
+                        "question": "question_2",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
                 ],
                 "answers": [
-                    {"answer": "answer_1", "id": "1"},
-                    {"answer": "answer_2", "id": "2"},
+                    {
+                        "answer": "answer_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                    {
+                        "answer": "answer_2",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
                 ],
                 "train": [{"field": "train1"}],
             }
@@ -3107,8 +3127,20 @@ Agent:"""
         )
         joined_stream = list(output_multi_stream["questions_and_answers"])
         expected_joined_stream = [
-            {"question": "question_1", "id": "1", "answer": "answer_1"},
-            {"question": "question_2", "id": "2", "answer": "answer_2"},
+            {
+                "question": "question_1",
+                "id": "1",
+                "answer": "answer_1",
+                "data_classification_policy": ["public"],
+                "recipe_metadata": [],
+            },
+            {
+                "question": "question_2",
+                "id": "2",
+                "answer": "answer_2",
+                "data_classification_policy": ["public"],
+                "recipe_metadata": [],
+            },
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
