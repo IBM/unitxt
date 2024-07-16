@@ -1,6 +1,10 @@
 from dataclasses import dataclass
 from typing import List, Optional
 import yaml
+import json
+import random
+
+from unitxt.api import load_dataset
 
 @dataclass
 class SeedExample:
@@ -78,21 +82,35 @@ class IlabSkillAdder:
         
         with open(self.yaml_file_path, 'w') as file:
             yaml.dump(data, file, default_flow_style=False, sort_keys=False)
+        
+        print(f"Data saved to {self.yaml_file_path}")
 
 
 
 if __name__ == "__main__":
+    dataset = load_dataset(card='cards.squad',template='templates.qa.with_context.simple')
+    dataset =dataset['train']
+    task_description = "SQUAD with context simple"
+    creator = 'RF'
+    yaml_file = "squad_samples.yaml"
+    examples = []
+    random_indexes = random.sample(range(len(dataset)), 5)
+    for idx in random_indexes:
+        example_data =  json.loads(dataset[idx]['task_data'])
+        question = example_data['question']
+        answer = example_data['answers'][0]
+        context = example_data['context'] if 'context' in example_data else None
+        examples.append(SeedExample(
+            question=question, answer=answer, context=context
+        ))
+
+    print(f"Using the following indexes: {random_indexes}")
+
     IlabSkillAdder(
-        task_description="Task Description Here",
-        created_by="Creator Name",
-        seed_examples=[
-            SeedExample(question="Question 1", answer="Answer 1"),
-            SeedExample(question="Question 2", answer="Answer 2", context="Context for question 2"),
-            SeedExample(question="Question 3", answer="Answer 3"),
-            SeedExample(question="Question 4", answer="Answer 4"),
-            SeedExample(question="Question 5", answer="Answer 5")
-        ],
-        yaml_file_path="mySkill.yaml"
+        task_description=task_description,
+        created_by=creator,
+        seed_examples=examples,
+        yaml_file_path=yaml_file
     )
 
 
