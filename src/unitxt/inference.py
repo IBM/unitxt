@@ -221,6 +221,7 @@ class InstructLabInferenceEngine(
         for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"): 
             payload = {
                 "prompt": instance["source"],
+                'model': self.model
             }
             param_keys = ['frequency_penalty','presence_penalty','max_tokens','seed','stop','temperature','top_p','top_logprobs']
             for param in param_keys:

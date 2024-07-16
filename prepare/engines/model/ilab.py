@@ -15,7 +15,7 @@ if __name__ == '__main__':
     )
     inference_model = InstructLabInferenceEngine(
         # parameters=OpenAiInferenceEngineParams(),
-        # base_url = 'http://127.0.0.1:8080/v1'
+        base_url = 'http://150.239.222.172:8080/v1'
         )
     predictions = inference_model.infer(test_dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
