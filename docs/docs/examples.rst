@@ -92,7 +92,7 @@ Evaluate the quality of an LLM as judge
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Demonstrates how to evaluate an LLM as judge by checking its scores using the gold references of a dataset.
-It checks if the judge consistently prefers correct outputs over clearly wrong ones,
+It checks if the judge consistently prefers correct outputs over clearly wrong ones.
 Note that to check the the ability of the LLM as judge to discern sutble differences between 
 partially correct answers requires more refined tests and corresponding labeled data.
 The example shows an 8b llama based judge is not a good judge for a summarization task,
