@@ -3,12 +3,12 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "question": "str",
             "answer_a": "str",
             "answer_b": "str",
         },
-        outputs={
+        reference_fields={
             "winner": "str"
         },  # TODO: Support and change to "Literal['choice_a', 'choice_b', 'tie']"
         metrics=["metrics.accuracy", "metrics.f1_micro", "metrics.f1_macro"],

@@ -24,8 +24,8 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        inputs=["choices", "question1", "question2"],
-        outputs=["label"],
+        input_fields=["choices", "question1", "question2"],
+        reference_fields=["label"],
         metrics=["metrics.accuracy"],
     ),
     templates=TemplatesList(

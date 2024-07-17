@@ -1,10 +1,10 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "document": "str",
         "document_type": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "summary": "str"
     },
     "prediction_type": "str",

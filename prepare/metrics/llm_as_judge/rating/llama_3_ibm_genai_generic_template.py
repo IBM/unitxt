@@ -17,6 +17,7 @@ metric = LLMAsJudge(
     task="rating.single_turn",
     format=format,
     main_score=metric_label,
+    prediction_type="str",
 )
 
 add_to_catalog(

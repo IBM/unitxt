@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "dialog_a": "List[Tuple[str, str]]",
         "dialog_b": "List[Tuple[str, str]]",
         "reference_dialog": "List[Tuple[str, str]]"
     },
-    "outputs": {
+    "reference_fields": {
         "winner": "str"
     },
     "metrics": [

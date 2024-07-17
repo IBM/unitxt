@@ -593,23 +593,26 @@ class TestTemplates(UnitxtTestCase):
             choices = ["True", "False"]
             inputs = [
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {"choices": choices, "label": 0},
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {"choices": choices, "label": 0},
                 },
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {"choices": choices, "label": "False"},
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {"choices": choices, "label": "False"},
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
-                    "outputs": {"choices": ["True", "small"], "label": "small"},
+                    "input_fields": {"choices": ["True", "small"], "text": "example A"},
+                    "reference_fields": {
+                        "choices": ["True", "small"],
+                        "label": "small",
+                    },
                 },
             ]
 
             targets = [
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {
                         "choices": choices,
                         "label": 0,
                         "options": [f"{first}", f"{second}"],
@@ -621,8 +624,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {
                         "choices": choices,
                         "label": "False",
                         "options": [f"{first}", f"{second}"],
@@ -634,8 +637,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "small"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "small"],
                         "label": "small",
                         "options": [f"{first}", f"{second}"],
@@ -679,23 +682,26 @@ class TestTemplates(UnitxtTestCase):
 
             inputs = [
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {"choices": ["True", "False"], "label": 0},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {"choices": ["True", "False"], "label": 0},
                 },
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {"choices": ["True", "False"], "label": "False"},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
+                        "choices": ["True", "False"],
+                        "label": "False",
+                    },
                 },
                 {
-                    "inputs": {"choices": ["True", temp], "text": "example A"},
-                    "outputs": {"choices": ["True", temp], "label": temp},
+                    "input_fields": {"choices": ["True", temp], "text": "example A"},
+                    "reference_fields": {"choices": ["True", temp], "label": temp},
                 },
             ]
 
             targets = [
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "False"],
                         "label": 0,
                         "options": [f"{first}", f"{second}"],
@@ -707,8 +713,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "False"],
                         "label": 1,
                         "options": [f"{first}", f"{second}"],
@@ -720,8 +726,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": [temp, "True"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": [temp, "True"], "text": "example A"},
+                    "reference_fields": {
                         "choices": [temp, "True"],
                         "label": 0,
                         "options": [f"{first}", f"{second}"],

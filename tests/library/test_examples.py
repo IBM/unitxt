@@ -34,12 +34,13 @@ class TestExamples(UnitxtTestCase):
         excluded_files = [
             "use_llm_as_judge_metric.py",
             "standalone_evaluation_llm_as_judge.py",
-            "evaluation_summarization_dataset_llm_as_judge.py",
+            "evaluate_summarization_dataset_llm_as_judge.py",
             "evaluate_different_formats.py",
             "evaluate_different_templates.py",
             "evaluate_dataset_by_llm_as_judge_no_install.py",
             "evaluate_a_judge_model_capabilities_on_arena_hard.py",
             "evaluate_a_model_using_arena_hard.py",
+            "evaluate_llm_as_judge.py",
         ]
         for file in all_example_files:
             logger.info(

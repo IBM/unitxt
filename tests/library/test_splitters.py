@@ -16,8 +16,8 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
         if choices is None:
             choices = ["class_a", "class_b"]
         return {
-            "inputs": {"choices": choices, "text": text},
-            "outputs": {
+            "input_fields": {"choices": choices, "text": text},
+            "reference_fields": {
                 "labels": labels,
             },
         }
@@ -41,7 +41,7 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
 
             counts = Counter()
             for i in range(0, num_samples):
-                counts[result[i]["outputs"]["labels"][0]] += 1
+                counts[result[i]["reference_fields"]["labels"][0]] += 1
             self.assertEqual(counts["dog"], 1)
             self.assertEqual(counts["cat"], 1)
             self.assertEqual(len(counts.keys()), 3)
@@ -65,7 +65,7 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
 
             counts = Counter()
             for i in range(0, num_samples):
-                counts[result[i]["outputs"]["labels"][0]] += 1
+                counts[result[i]["reference_fields"]["labels"][0]] += 1
             self.assertEqual(set(counts.keys()), {"dog", "cat"})
 
     def test_sample_list(self):
@@ -84,7 +84,7 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
 
             counts = Counter()
             for j in range(0, num_samples):
-                counts[str(result[j]["outputs"]["labels"])] += 1
+                counts[str(result[j]["reference_fields"]["labels"])] += 1
             self.assertTrue(
                 counts["['dog', 'cat']"] == 1 or counts["['cat']"] == 1,
                 f"unexpected counts: {counts}",
@@ -123,8 +123,8 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
         )
 
     def test_exemplar_repr_missing_fields(self):
-        self._test_exemplar_repr_missing_field(missing_field="inputs")
-        self._test_exemplar_repr_missing_field(missing_field="outputs")
+        self._test_exemplar_repr_missing_field(missing_field="input_fields")
+        self._test_exemplar_repr_missing_field(missing_field="reference_fields")
 
     def test_filter_with_bad_input(self):
         sampler = DiverseLabelsSampler(3)
@@ -139,10 +139,10 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
         filtered_instances = sampler.filter_source_by_instance(instances, instance)
         self.assertEqual(len(filtered_instances), 2)
 
-        del instance["inputs"]
+        del instance["input_fields"]
         with self.assertRaises(ValueError) as cm:
             sampler.filter_source_by_instance(instances, instance)
         self.assertEqual(
-            f"'inputs' field is missing from '{instance}'.",
+            f"'input_fields' field is missing from '{instance}'.",
             str(cm.exception),
         )

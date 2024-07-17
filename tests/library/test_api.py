@@ -192,8 +192,8 @@ class TestAPI(UnitxtTestCase):
         card = TaskCard(
             loader=LoadHF(path="glue", name="wnli"),
             task=Task(
-                inputs=["sentence1", "sentence2"],
-                outputs=["label"],
+                input_fields=["sentence1", "sentence2"],
+                reference_fields=["label"],
                 metrics=["metrics.accuracy"],
             ),
             templates=TemplatesList(

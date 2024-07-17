@@ -81,10 +81,24 @@ Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 Evaluate an existing dataset from the catalog comparing two custom LLM as judges
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Demonstrates how to evaluate a document summarization dataset by define an LLM as a judge metrics, specify the template it uses to produce the input to the judge, and select the judge model and platform.
+Demonstrates how to evaluate a document summarization dataset by defining an LLM as a judge metric, specifying the template it uses to produce the input to the judge, and selecting the judge model and platform.
 The example adds two LLM judges, one that uses the ground truth (references) from the dataset and one that does not.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluation_summarization_dataset_llm_as_judge.py>`_ 
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_summarization_dataset_llm_as_judge.py>`_ 
+
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
+Evaluate the quality of an LLM as judge 
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to evaluate an LLM as judge by checking its scores using the gold references of a dataset.
+It checks if the judge consistently prefers correct outputs over clearly wrong ones.
+Note that to check the the ability of the LLM as judge to discern sutble differences between 
+partially correct answers requires more refined tests and corresponding labeled data.
+The example shows an 8b llama based judge is not a good judge for a summarization task,
+while the 70b model performs much better.  
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge.py>`_ 
 
 Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 

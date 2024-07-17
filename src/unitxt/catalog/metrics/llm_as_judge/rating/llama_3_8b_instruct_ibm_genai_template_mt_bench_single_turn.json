@@ -8,5 +8,6 @@
     "template": "templates.response_assessment.rating.mt_bench_single_turn",
     "task": "rating.single_turn",
     "format": "formats.llama3_instruct",
-    "main_score": "llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn"
+    "main_score": "llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn",
+    "prediction_type": "str"
 }
