@@ -21,6 +21,7 @@ for model_id in model_list:
         task=task,
         format=format,
         main_score=metric_label,
+        prediction_type="str",
     )
 
     add_to_catalog(
