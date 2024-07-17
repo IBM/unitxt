@@ -73,7 +73,7 @@ for metric_to_check in metrics_to_check:
     # The score of correct predictions should be close to 1 with low standard deviation
     # The score of wrong predictions should be close to 0 with low standard deviation
     # The score of the truncated prediction, should be between the values.
-    # Also prints the precent of examples the wrong / truncated prediction get a higher score than the correct prediction.
+    # Also prints the percent of examples the wrong / truncated prediction get a higher score than the correct prediction.
 
     logger.info(f"Meta evaluation of metric: {metric_to_check}")
     logger.info(f"Scores of correct predictions: {correct_prediction_scores}")
