@@ -1,9 +1,9 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "question": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "answers": "List[str]"
     },
     "prediction_type": "str",

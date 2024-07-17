@@ -3,8 +3,8 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={"question": "str", "answer": "str", "reference_answer": "str"},
-        outputs={"rating": "float"},
+        input_fields={"question": "str", "answer": "str", "reference_answer": "str"},
+        reference_fields={"rating": "float"},
         metrics=["metrics.spearman"],
     ),
     "tasks.response_assessment.rating.single_turn_with_reference",
