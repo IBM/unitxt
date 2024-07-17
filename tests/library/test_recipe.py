@@ -94,7 +94,7 @@ class TestRecipes(UnitxtTestCase):
             '"choices": ["yes", "not", "maybe"], '
             '"answer": "maybe", '
             '"options": [" A", " B", " C"], '
-            '"metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
@@ -176,7 +176,7 @@ class TestRecipes(UnitxtTestCase):
             ' "choices": ["yes", "not", "maybe"],'
             ' "answer": "maybe",'
             ' "options": [" A", " B", " C"],'
-            ' "metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
