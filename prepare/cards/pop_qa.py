@@ -17,8 +17,8 @@ card = TaskCard(
         LoadJson(field="possible_answers"),
     ],
     task=Task(
-        inputs=["question", "prop", "subj"],
-        outputs=["possible_answers"],
+        input_fields=["question", "prop", "subj"],
+        reference_fields=["possible_answers"],
         metrics=["metrics.accuracy"],
     ),
     templates=TemplatesList(

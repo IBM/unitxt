@@ -2,6 +2,7 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
+from .dataclass import DeprecatedField
 from .logging_utils import get_logger
 from .operator import InstanceOperator
 from .type_utils import (
@@ -17,10 +18,10 @@ class Task(InstanceOperator):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
-        inputs (Union[Dict[str, str], List[str]]):
+        input_fields (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance input fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
-        outputs (Union[Dict[str, str], List[str]]):
+        reference_fields (Union[Dict[str, str], List[str]]):
             Dictionary with string names of instance output fields and types of respective values.
             In case a list is passed, each type will be assumed to be Any.
         metrics (List[str]): List of names of metrics to be used in the task.
@@ -29,25 +30,64 @@ class Task(InstanceOperator):
             be set to Any.
         defaults (Optional[Dict[str, Any]]):
             An optional dictionary with default values for chosen input/output keys. Needs to be
-            consistent with names and types provided in 'inputs' and/or 'outputs' arguments.
+            consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
             Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
-        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'inputs'.
+        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
         "outputs" -- for the fields listed in Arg "outputs".
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    inputs: Union[Dict[str, str], List[str]]
-    outputs: Union[Dict[str, str], List[str]]
+    input_fields: Optional[Union[Dict[str, str], List[str]]] = None
+    reference_fields: Optional[Union[Dict[str, str], List[str]]] = None
+    inputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+        default=None,
+        metadata={
+            "deprecation_msg": "The 'inputs' field is deprecated. Please use 'input_fields' instead."
+        },
+    )
+    outputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+        default=None,
+        metadata={
+            "deprecation_msg": "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
+        },
+    )
     metrics: List[str]
     prediction_type: Optional[str] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
 
+    def prepare(self):
+        super().prepare()
+        if self.input_fields is not None and self.inputs is not None:
+            raise ValueError(
+                "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'"
+            )
+        if self.reference_fields is not None and self.outputs is not None:
+            raise ValueError(
+                "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'"
+            )
+
+        self.input_fields = (
+            self.input_fields if self.input_fields is not None else self.inputs
+        )
+        self.reference_fields = (
+            self.reference_fields if self.reference_fields is not None else self.outputs
+        )
+
     def verify(self):
-        for io_type in ["inputs", "outputs"]:
-            data = self.inputs if io_type == "inputs" else self.outputs
+        if self.input_fields is None:
+            raise ValueError("Missing attribute in task: 'input_fields' not set.")
+        if self.reference_fields is None:
+            raise ValueError("Missing attribute in task: 'reference_fields' not set.")
+        for io_type in ["input_fields", "reference_fields"]:
+            data = (
+                self.input_fields
+                if io_type == "input_fields"
+                else self.reference_fields
+            )
+
             if not isoftype(data, Dict[str, str]):
                 get_logger().warning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
@@ -56,10 +96,10 @@ class Task(InstanceOperator):
                     f"will raise an exception."
                 )
                 data = {key: "Any" for key in data}
-                if io_type == "inputs":
-                    self.inputs = data
+                if io_type == "input_fields":
+                    self.input_fields = data
                 else:
-                    self.outputs = data
+                    self.reference_fields = data
 
         if not self.prediction_type:
             get_logger().warning(
@@ -74,8 +114,8 @@ class Task(InstanceOperator):
 
         for augmentable_input in self.augmentable_inputs:
             assert (
-                augmentable_input in self.inputs
-            ), f"augmentable_input {augmentable_input} is not part of {self.inputs}"
+                augmentable_input in self.input_fields
+            ), f"augmentable_input {augmentable_input} is not part of {self.input_fields}"
 
         self.verify_defaults()
 
@@ -121,13 +161,13 @@ class Task(InstanceOperator):
                     f"however, the key '{default_name}' is of type '{type(default_name)}'."
                 )
 
-                val_type = self.inputs.get(default_name) or self.outputs.get(
+                val_type = self.input_fields.get(
                     default_name
-                )
+                ) or self.reference_fields.get(default_name)
 
                 assert val_type, (
                     f"If specified, all keys of the 'defaults' must refer to a chosen "
-                    f"key in either 'inputs' or 'outputs'. However, the name '{default_name}' "
+                    f"key in either 'input_fields' or 'reference_fields'. However, the name '{default_name}' "
                     f"was provided which does not match any of the keys."
                 )
 
@@ -146,16 +186,16 @@ class Task(InstanceOperator):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        verify_required_schema(self.inputs, instance)
-        verify_required_schema(self.outputs, instance)
+        verify_required_schema(self.input_fields, instance)
+        verify_required_schema(self.reference_fields, instance)
 
-        inputs = {key: instance[key] for key in self.inputs.keys()}
-        outputs = {key: instance[key] for key in self.outputs.keys()}
+        input_fields = {key: instance[key] for key in self.input_fields.keys()}
+        reference_fields = {key: instance[key] for key in self.reference_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
         return {
-            "inputs": inputs,
-            "outputs": outputs,
+            "input_fields": input_fields,
+            "reference_fields": reference_fields,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
         }

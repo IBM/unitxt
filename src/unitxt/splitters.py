@@ -137,12 +137,14 @@ class Sampler(Artifact):
     def filter_source_by_instance(
         self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
-        if "inputs" not in instance:
-            raise ValueError(f"'inputs' field is missing from '{instance}'.")
+        if "input_fields" not in instance:
+            raise ValueError(f"'input_fields' field is missing from '{instance}'.")
         # l = list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
         try:
             return [
-                item for item in instances_pool if item["inputs"] != instance["inputs"]
+                item
+                for item in instances_pool
+                if item["input_fields"] != instance["input_fields"]
             ]
         except Exception as e:
             raise e
@@ -195,9 +197,9 @@ class DiverseLabelsSampler(Sampler):
         self.labels_cache = None
 
     def exemplar_repr(self, exemplar):
-        if "inputs" not in exemplar:
-            raise ValueError(f"'inputs' field is missing from '{exemplar}'.")
-        inputs = exemplar["inputs"]
+        if "input_fields" not in exemplar:
+            raise ValueError(f"'input_fields' field is missing from '{exemplar}'.")
+        inputs = exemplar["input_fields"]
         if self.choices not in inputs:
             raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
@@ -209,13 +211,13 @@ class DiverseLabelsSampler(Sampler):
                     f"Unexpected input choices value '{choices}'. Expected a list or a string."
                 )
 
-        if "outputs" not in exemplar:
-            raise ValueError(f"'outputs' field is missing from '{exemplar}'.")
-        outputs = exemplar["outputs"]
+        if "reference_fields" not in exemplar:
+            raise ValueError(f"'reference_fields' field is missing from '{exemplar}'.")
+        outputs = exemplar["reference_fields"]
         if self.labels not in outputs:
             raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
 
-        exemplar_outputs = exemplar["outputs"][self.labels]
+        exemplar_outputs = exemplar["reference_fields"][self.labels]
         if not isinstance(exemplar_outputs, list):
             raise ValueError(
                 f"Unexpected exemplar_outputs value '{exemplar_outputs}'. Expected a list."

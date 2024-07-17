@@ -1,6 +1,6 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "text_a": "str",
         "text_a_type": "str",
         "text_b": "str",
@@ -8,7 +8,7 @@
         "classes": "List[str]",
         "type_of_relation": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "label": "str"
     },
     "prediction_type": "str",

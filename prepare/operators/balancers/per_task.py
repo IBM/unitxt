@@ -5,27 +5,27 @@ from unitxt.operators import (
     MinimumOneExamplePerLabelRefiner,
 )
 
-balancer = DeterministicBalancer(fields=["outputs/label"])
+balancer = DeterministicBalancer(fields=["reference_fields/label"])
 
 add_to_catalog(balancer, "operators.balancers.classification.by_label", overwrite=True)
 
-balancer = DeterministicBalancer(fields=["outputs/answer"])
+balancer = DeterministicBalancer(fields=["reference_fields/answer"])
 
 add_to_catalog(balancer, "operators.balancers.qa.by_answer", overwrite=True)
 
-balancer = LengthBalancer(fields=["outputs/labels"], segments_boundaries=[1])
+balancer = LengthBalancer(fields=["reference_fields/labels"], segments_boundaries=[1])
 
 add_to_catalog(
     balancer, "operators.balancers.multi_label.zero_vs_many_labels", overwrite=True
 )
 
-balancer = LengthBalancer(fields=["outputs/labels"], segments_boundaries=[1])
+balancer = LengthBalancer(fields=["reference_fields/labels"], segments_boundaries=[1])
 
 add_to_catalog(
     balancer, "operators.balancers.ner.zero_vs_many_entities", overwrite=True
 )
 
-balancer = MinimumOneExamplePerLabelRefiner(fields=["outputs/label"])
+balancer = MinimumOneExamplePerLabelRefiner(fields=["reference_fields/label"])
 
 add_to_catalog(
     balancer,

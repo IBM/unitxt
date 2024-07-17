@@ -1,13 +1,13 @@
 {
     "__type__": "task",
-    "inputs": [
+    "input_fields": [
         "input",
         "input_type",
         "output_type",
         "choices",
         "instruction"
     ],
-    "outputs": [
+    "reference_fields": [
         "choices",
         "output_choice"
     ],
