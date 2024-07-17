@@ -3,8 +3,8 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={"text": "str", "text_type": "str", "sentiment_class": "str"},
-        outputs={
+        input_fields={"text": "str", "text_type": "str", "sentiment_class": "str"},
+        reference_fields={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
             "text": "List[str]",
@@ -21,8 +21,8 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"text": "str", "text_type": "str"},
-        outputs={
+        input_fields={"text": "str", "text_type": "str"},
+        reference_fields={
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",
             "text": "List[str]",

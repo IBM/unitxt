@@ -1,12 +1,12 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "text": "str",
         "text_type": "str",
         "classes": "List[str]",
         "type_of_classes": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "labels": "List[str]"
     },
     "prediction_type": "List[str]",

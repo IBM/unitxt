@@ -36,8 +36,8 @@ class ToUnitxtGroup(InstanceOperatorValidator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         task_data = {
-            **instance["inputs"],
-            **instance["outputs"],
+            **instance["input_fields"],
+            **instance["reference_fields"],
             "metadata": {
                 "template": self.artifact_to_jsonable(
                     instance["recipe_metadata"]["template"]

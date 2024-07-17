@@ -2505,7 +2505,7 @@ references (str):
 
     def test_augment_whitespace_task_input_with_error(self):
         text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["sentence"])
         with self.assertRaises(ValueError):
@@ -2513,11 +2513,11 @@ references (str):
 
     def test_augment_whitespace_task_input(self):
         text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
         outputs = apply_operator(operator, inputs)
-        normalized_output_source = outputs[0]["inputs"]["text"].split()
+        normalized_output_source = outputs[0]["input_fields"]["text"].split()
         normalized_input_source = text.split()
         assert (
             normalized_output_source == normalized_input_source
@@ -2525,10 +2525,10 @@ references (str):
 
     def test_augment_whitespace_with_none_text_error(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
         check_operator_exception(
             operator,
             inputs,
@@ -2614,7 +2614,7 @@ references (str):
 
     def test_augment_prefix_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True, suffixes=suffixes, prefixes=None
@@ -2624,12 +2624,12 @@ references (str):
             apply_operator(operator, inputs)
         self.assertEqual(
             str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get input_fields/sentence from {'input_fields': {'text': 'She is riding a black horse\\t\\t  '}}",
         )
 
     def test_augment_prefix_suffix_task_input(self):
         text = "\n She is riding a black horse  \t\t  "
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True,
@@ -2639,13 +2639,13 @@ references (str):
         )
         operator.set_task_input_fields(["text"])
         outputs = apply_operator(operator, inputs)
-        output0 = str(outputs[0]["inputs"]["text"]).rstrip("".join(suffixes))
+        output0 = str(outputs[0]["input_fields"]["text"]).rstrip("".join(suffixes))
         assert (
             " \t\t " not in output0 and "\n" not in output0
         ), f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
         assert (
             output0 == text.strip()[: len(output0)]
-        ), f"The prefix of {outputs[0]['inputs']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
+        ), f"The prefix of {outputs[0]['input_fields']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
 
     def test_augment_prefix_suffix_with_non_string_suffixes_error(self):
         prefixes = [10, 20, "O", "P"]
@@ -2660,13 +2660,13 @@ references (str):
 
     def test_augment_prefix_suffix_with_none_input_error(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True, suffixes=suffixes, prefixes=None
         )
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
         check_operator_exception(
             operator,
             inputs,
@@ -2676,10 +2676,10 @@ references (str):
 
     def test_test_operator_without_tester_param(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
 
         check_operator_exception(
             operator,
@@ -2689,10 +2689,10 @@ references (str):
 
     def test_test_operator_unexpected_pass(self):
         text = "Should be ok"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
 
         try:
             check_operator_exception(
@@ -2703,7 +2703,7 @@ references (str):
         except Exception as e:
             self.assertEqual(
                 str(e),
-                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}",
             )
 
     def test_duplicate_instance(self):
