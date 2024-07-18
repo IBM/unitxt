@@ -1,6 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.inference import IbmGenAiInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.random_utils import get_seed
 
 model_list = [
     "meta-llama/llama-3-8b-instruct",
@@ -11,7 +12,9 @@ template = "templates.safety.unsafe_content"
 task = "rating.single_turn"
 
 for model_id in model_list:
-    inference_model = IbmGenAiInferenceEngine(model_name=model_id, max_new_tokens=252)
+    inference_model = IbmGenAiInferenceEngine(
+        model_name=model_id, max_new_tokens=252, random_seed=get_seed()
+    )
     model_label = model_id.split("/")[1].replace("-", "_").replace(".", ",").lower()
     model_label = f"{model_label}_ibm_genai"
     template_label = template.split(".")[-1]
