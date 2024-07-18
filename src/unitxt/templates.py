@@ -95,9 +95,7 @@ class Template(InstanceOperator):
         }
 
     @abstractmethod
-    def input_fields_to_source(
-        self, input_fields: Dict[str, object]
-    ) -> Tuple[str, str]:
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
         pass
 
     def set_titles(self, data):
