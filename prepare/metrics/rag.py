@@ -445,9 +445,6 @@ for axis, base_metric, main_score in [
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
 
-# -----------------------
-# Rag end-to-end metrics in fm-eval format
-
 #############################################
 #### End to end rag metrics #################
 #############################################
