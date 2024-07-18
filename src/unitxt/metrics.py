@@ -448,7 +448,7 @@ class MetricWithConfidenceInterval(Metric):
                         references=sample_refs,
                         predictions=sample_preds,
                         task_data=sample_task_data,
-                    )["score"]
+                    )[score_name]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
@@ -565,11 +565,12 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
 
         result = self._compute(references, predictions, task_data)
         global_score.update(self._add_score_prefixes_to_score_dict(result))
-        score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, task_data, score_name
-        )
-        global_score.update(confidence_interval)
+        score_names = self.ci_scores if self.ci_scores else [global_score["score_name"]]
+        for score_name in score_names:
+            confidence_interval = self.compute_global_confidence_intervals(
+                references, predictions, task_data, score_name
+            )
+            global_score.update(confidence_interval)
 
         for instance in instances:
             self.update_and_adjust_global_score(instance, global_score)
