@@ -50,7 +50,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.test_utils.metrics import apply_metric
+from unitxt.test_utils.metrics import apply_metric, check_scores
 
 from tests.utils import UnitxtTestCase
 
@@ -1150,8 +1150,8 @@ class TestMetrics(UnitxtTestCase):
         )
 
         expected_global_result = {
-            "my_perplexity": 0.05986589565873146,
-            "score": 0.05986589565873146,
+            "my_perplexity": 0.06,
+            "score": 0.06,
             "score_name": "my_perplexity",
         }
 
@@ -1162,18 +1162,21 @@ class TestMetrics(UnitxtTestCase):
             for key, value in global_result.items()
             if key in expected_global_result
         }
-        self.assertDictEqual(global_result, expected_global_result)
 
-        instance_targets = [
+        expected_instance_results = [
             {
-                "my_perplexity": 0.05986589565873146,
-                "score": 0.05986589565873146,
+                "my_perplexity": 0.06,
+                "score": 0.06,
                 "score_name": "my_perplexity",
-                "my_reference_scores": [0.05986589565873146],
+                "my_reference_scores": [0.06],
             }
         ]
-        for output, target in zip(outputs, instance_targets):
-            self.assertDictEqual(output["score"]["instance"], target)
+        check_scores(
+            expected_global_result,
+            expected_instance_results,
+            global_outputs=outputs[0]["score"]["global"],
+            instance_outputs=[outputs[0]["score"]["instance"]],
+        )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):
