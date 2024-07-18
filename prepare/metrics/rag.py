@@ -1,13 +1,13 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import (
-    BertScore,
-    MetricPipeline,
-    Reward,
-    SentenceBert,
-    TokenOverlap,
-)
+from unitxt.metrics import BertScore, MetricPipeline, Reward, SentenceBert, TokenOverlap
 from unitxt.operators import Copy, ListFieldValues
 from unitxt.test_utils.metrics import test_metric
+
+from prepare.tasks.rag.rag_task import (
+    TaskRagEndToEndConstants,
+    TaskRagEndToEndOutputConstants,
+    TaskRagEndToEndReferenceConstants,
+)
 
 metrics = {
     "metrics.token_overlap": TokenOverlap(),
@@ -444,3 +444,147 @@ for axis, base_metric, main_score in [
     add_to_catalog(
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
+
+# -----------------------
+# Rag end-to-end metrics in fm-eval format
+
+#############################################
+#### End to end rag metrics #################
+#############################################
+
+end_to_end_artifact_names = [
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS,
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_REWARD,
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS,
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS,
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE,
+]
+
+end_to_end_artifact_name_to_main_score = {
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS: "recall",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_REWARD: "score",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS: "precision",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS: "score",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE: "score",
+}
+
+end_to_end_artifact_names_to_main_metric = {
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS: "metrics.token_overlap",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_REWARD: "metrics.reward.deberta_v3_large_v2",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS: "metrics.token_overlap",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS: "metrics.mrr",
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE: "metrics.perplexity_q.flan_t5_small",
+}
+
+assert len(end_to_end_artifact_names) == len(end_to_end_artifact_name_to_main_score)
+assert len(end_to_end_artifact_names) == len(end_to_end_artifact_names_to_main_metric)
+
+copy_field_prediction_answer_to_prediction = Copy(
+    field_to_field=[
+        (
+            f"{TaskRagEndToEndOutputConstants.PREDICTION}/{TaskRagEndToEndOutputConstants.ANSWER}",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_answers_to_references = Copy(
+    field_to_field={
+        f"task_data/{TaskRagEndToEndReferenceConstants.REFERENCE_ANSWERS}": "references"
+    },
+)
+
+copy_field_reference_contexts_to_references = Copy(
+    field_to_field={
+        f"task_data/{TaskRagEndToEndReferenceConstants.REFERENCE_CONTEXTS}": "references"
+    }
+)
+
+copy_field_prediction_contexts_to_prediction = Copy(
+    field_to_field=[
+        (
+            f"{TaskRagEndToEndOutputConstants.PREDICTION}/{TaskRagEndToEndOutputConstants.CONTEXTS}",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_prediction_context_ids_to_prediction = Copy(
+    field_to_field=[
+        (
+            f"{TaskRagEndToEndOutputConstants.PREDICTION}/{TaskRagEndToEndOutputConstants.CONTEXT_IDS}",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_context_ids_to_references_in_a_list = ListFieldValues(
+    fields=[f"task_data/{TaskRagEndToEndReferenceConstants.REFERENCE_CONTEXT_IDS}"],
+    to_field="references",
+)
+
+copy_field_prediction_contexts_to_references = Copy(
+    field_to_field=[
+        (
+            f"{TaskRagEndToEndOutputConstants.PREDICTION}/{TaskRagEndToEndOutputConstants.CONTEXTS}",
+            "references",
+        )
+    ],
+)
+
+
+copy_field_question_to_prediction = Copy(
+    field_to_field=[
+        (
+            f"task_data/{TaskRagEndToEndOutputConstants.QUESTION}",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_question_to_references_in_a_list = ListFieldValues(
+    fields=[f"task_data/{TaskRagEndToEndOutputConstants.QUESTION}"],
+    to_field="references",
+)
+
+end_to_end_artifact_names_to_preprocess_steps = {
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS: [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_reference_answers_to_references,
+    ],
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_REWARD: [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_question_to_references_in_a_list,
+    ],
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS: [
+        copy_field_prediction_contexts_to_references,
+        copy_field_prediction_answer_to_prediction,
+    ],
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS: [
+        copy_field_prediction_context_ids_to_prediction,
+        copy_field_reference_context_ids_to_references_in_a_list,
+    ],
+    TaskRagEndToEndConstants.METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE: [
+        copy_field_prediction_contexts_to_references,
+        copy_field_question_to_prediction,
+    ],
+}
+
+assert len(end_to_end_artifact_names) == len(
+    end_to_end_artifact_names_to_preprocess_steps
+)
+
+for artifact_name in end_to_end_artifact_names:
+    metric_short_name = artifact_name.split(".")[-1]
+    if metric_short_name == "rouge":  # rouge does not need a prefix
+        score_prefix = ""
+    else:
+        score_prefix = f"[score_prefix={metric_short_name}_]"
+
+    metric = MetricPipeline(
+        main_score=end_to_end_artifact_name_to_main_score[artifact_name],
+        preprocess_steps=end_to_end_artifact_names_to_preprocess_steps[artifact_name],
+        metric=f"{end_to_end_artifact_names_to_main_metric[artifact_name]}{score_prefix}",
+    )
+
+    add_to_catalog(metric, name=artifact_name, overwrite=True)
