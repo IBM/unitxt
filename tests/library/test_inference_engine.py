@@ -11,6 +11,28 @@ class TestInferenceEngine(UnitxtTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
+        assert inference_model.is_pipeline_initialized()
+
+        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
+        instances = [
+            {"question": "How many days there are in a week", "answers": ["7"]},
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
+                "answers": ["2"],
+            },
+        ]
+        dataset = produce(instances, recipe)
+
+        predictions = inference_model.infer(dataset)
+
+        targets = ["365", "1"]
+        self.assertListEqual(predictions, targets)
+
+    def test_pipeline_based_inference_engine_lzay_load(self):
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
+        )
+        assert not inference_model.is_pipeline_initialized()
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
             {"question": "How many days there are in a week", "answers": ["7"]},

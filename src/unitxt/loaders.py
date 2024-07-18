@@ -30,6 +30,7 @@ Available Loaders Overview:
 
 ------------------------
 """
+
 import fnmatch
 import itertools
 import os
@@ -73,10 +74,12 @@ class Loader(SourceOperator):
     Args:
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
+        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading. Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
     """
 
     loader_limit: int = None
     streaming: bool = False
+    num_proc: int = None
 
     def get_limit(self):
         if settings.global_loader_limit is not None and self.loader_limit is not None:
@@ -150,6 +153,7 @@ class LoadHF(Loader):
         data_files: Optional specification of particular data files to load.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
+        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset
@@ -168,6 +172,7 @@ class LoadHF(Loader):
     ] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
+    num_proc: Optional[int] = None
     _cache: dict = InternalField(default=None)
     requirements_list: List[str] = OptionalField(default_factory=list)
 
@@ -198,6 +203,7 @@ class LoadHF(Loader):
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
+                        num_proc=self.num_proc,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -233,6 +239,7 @@ class LoadHF(Loader):
                         cache_dir=dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
+                        num_proc=self.num_proc,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -559,8 +566,9 @@ class LoadFromIBMCloud(Loader):
 
         if not os.path.exists(self.cache_dir):
             Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
+        self.verified = False
 
-    def verify(self):
+    def lazy_verify(self):
         super().verify()
         assert (
             self.endpoint_url is not None
@@ -575,6 +583,9 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def load_data(self):
+        if not self.verified:
+            self.lazy_verify()
+            self.verified = True
         self.sef_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )

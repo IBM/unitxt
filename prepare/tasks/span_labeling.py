@@ -3,13 +3,13 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "text": "str",
             "text_type": "str",
             "class_type": "str",
             "classes": "List[str]",
         },
-        outputs={
+        reference_fields={
             "text": "str",
             "spans_starts": "List[int]",
             "spans_ends": "List[int]",

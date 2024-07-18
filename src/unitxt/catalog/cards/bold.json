@@ -56,14 +56,14 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "first_prompt"
         ],
-        "outputs": [
+        "reference_fields": [
             "input_label"
         ],
         "metrics": [
-            "metrics.regard"
+            "metrics.regard_metric"
         ]
     },
     "templates": {

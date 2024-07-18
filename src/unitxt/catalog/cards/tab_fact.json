@@ -3,10 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "ibm/tab_fact",
-        "streaming": false
+        "streaming": false,
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
-        "splitters.small_no_test",
         {
             "__type__": "serialize_table_as_indexed_row_major",
             "field_to_field": [

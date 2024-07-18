@@ -272,7 +272,7 @@ class Set(InstanceOperator):
         return instance
 
 
-@deprecation(version="1.11.0", alternative=Set)
+@deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
     pass
 
@@ -552,7 +552,7 @@ class Augmentor(InstanceOperator):
 
     def set_task_input_fields(self, task_input_fields: List[str]):
         self._task_input_fields = [
-            "inputs/" + task_input_field for task_input_field in task_input_fields
+            "input_fields/" + task_input_field for task_input_field in task_input_fields
         ]
 
     def process(
@@ -1061,7 +1061,7 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
-@deprecation(version="1.11.0", alternative=Copy)
+@deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
 

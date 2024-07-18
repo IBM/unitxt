@@ -17,6 +17,7 @@ from unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FinQAEval,
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
     FixedGroupAbsvalNormCohensHParaphraseStringContainment,
     FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
@@ -1452,7 +1453,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
-        format = "formats.llama3_chat"
+        format = "formats.llama3_instruct"
         task = "rating.single_turn"
         template = "templates.response_assessment.rating.mt_bench_single_turn"
 
@@ -1512,3 +1513,110 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
+
+    def test_fin_qa_eval(self):
+        table = """[
+            [
+                "",
+                "amount ( in millions )"
+            ],
+            [
+                "2014 net revenue",
+                "$ 5735"
+            ],
+            [
+                "retail electric price",
+                "187"
+            ],
+            [
+                "volume/weather",
+                "95"
+            ],
+            [
+                "waterford 3 replacement steam generator provision",
+                "-32 ( 32 )"
+            ],
+            [
+                "miso deferral",
+                "-35 ( 35 )"
+            ],
+            [
+                "louisiana business combination customer credits",
+                "-107 ( 107 )"
+            ],
+            [
+                "other",
+                "-14 ( 14 )"
+            ],
+            [
+                "2015 net revenue",
+                "$ 5829"
+            ]
+        ]"""
+
+        table2 = """[
+            [
+                "statement of income classification",
+                "statement of income loss on swaps",
+                "statement of income gain on note",
+                "statement of income net income effect",
+                "statement of income gain on swaps",
+                "loss on note",
+                "net income effect"
+            ],
+            [
+                "other income",
+                "$ -4614 ( 4614 )",
+                "$ 4614",
+                "$ 2014",
+                "$ 20692",
+                "$ -20692 ( 20692 )",
+                "$ 2014"
+            ]
+        ]"""
+
+        metric = FinQAEval()
+        references = [
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(153.7, 139.9), divide(#0, 139.9)"],
+        ]
+        task_data = [
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94%%"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {
+                "table": table2,
+                "program_re": "subtract(153.7, 139.9), divide(#0, 139.9)",
+                "answer": "9.9%",
+            },
+        ]
+        predictions = [
+            "subtract(5829, 5735)",  # right program, right accuracy
+            "subtract(5829, 5730)--",  # wrong program, wrong accuracy
+            "subtract(5829, 5735)   ",  # answer with special chars (in task data)
+            "subtract(5824, 5730), ",  # wrong program, right accuracy
+            "subtract(153.7, 139.9), divide(#0, 139.9), ,",  # 2 operations
+        ]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        actual_scores = [
+            (
+                output["score"]["instance"]["program_accuracy"]
+                + output["score"]["instance"]["execution_accuracy"]
+            )
+            / 2
+            for output in outputs
+        ]
+        target_scores = [1, 0, 1, 0.5, 1]
+
+        for i in range(len(actual_scores)):
+            self.assertAlmostEqual(actual_scores[i], target_scores[i])

@@ -1,14 +1,10 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import HuggingfaceMetric
+from unitxt.metrics import SafetyMetric
 from unitxt.test_utils.metrics import test_metric
 
-metric = HuggingfaceMetric(
-    hf_metric_name="src/metrics/safety",
-    main_score="safety",
-    hf_main_score="score",
-    scale=1.0,
+metric = SafetyMetric(
     n_resamples=None,
-    # Regard passes task data in the legacy way using references
+    # Safety passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
     # type and reference type are different
     prediction_type="Any",
@@ -52,4 +48,4 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
 )
-add_to_catalog(metric, "metrics.safety", overwrite=True)
+add_to_catalog(metric, "metrics.safety_metric", overwrite=True)

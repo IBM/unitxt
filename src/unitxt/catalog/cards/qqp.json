@@ -28,12 +28,12 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "choices",
             "question1",
             "question2"
         ],
-        "outputs": [
+        "reference_fields": [
             "label"
         ],
         "metrics": [

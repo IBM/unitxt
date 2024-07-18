@@ -14,6 +14,7 @@ For key-value pairs, expected input format is:
 {"key1": "value1", "key2": value2, "key3": "value3"}
 ------------------------
 """
+
 import json
 import random
 from abc import ABC, abstractmethod
@@ -605,3 +606,20 @@ class MapHTMLTableToJSON(FieldOperator):
         # return dictionary
 
         return {"header": header, "rows": rows}
+
+
+class MapTableListsToStdTableJSON(FieldOperator):
+    """Converts lists table format to the basic one (JSON).
+
+    JSON format
+    {
+        "header": ["col1", "col2"],
+        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+    }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        return self.map_tablelists_to_stdtablejson_util(table_content=table)
+
+    def map_tablelists_to_stdtablejson_util(self, table_content: str) -> Dict:
+        return {"header": table_content[0], "rows": table_content[1:]}

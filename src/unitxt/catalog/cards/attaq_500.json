@@ -543,14 +543,14 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "input"
         ],
-        "outputs": [
+        "reference_fields": [
             "input_label"
         ],
         "metrics": [
-            "metrics.safety"
+            "metrics.safety_metric"
         ]
     },
     "templates": {

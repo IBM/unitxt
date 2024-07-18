@@ -8,8 +8,9 @@
             "to_field": "prediction"
         },
         {
-            "__type__": "copy",
+            "__type__": "wrap",
             "field": "ground_truths_context_ids",
+            "inside": "list",
             "to_field": "references"
         }
     ],

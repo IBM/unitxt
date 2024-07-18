@@ -111,6 +111,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.processing.steps.append(self.test_refiner)
 
     def prepare_metrics_and_postprocessors(self):
+        # Check is done here to ensure get_postprocessor is called on
+        # a Template object
+        if self.template is not None and not isinstance(self.template, Template):
+            raise ValueError(
+                f"template argument must be an object of type Template.  Got template = {self.template}"
+            )
+
         if self.postprocessors is None:
             postprocessors = self.template.get_postprocessors()
         else:
@@ -120,6 +127,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             metrics = self.card.task.metrics
         else:
             metrics = self.metrics
+
+        metrics = [
+            metric if isinstance(metric, str) else metric.to_json()
+            for metric in metrics
+        ]
+
         return metrics, postprocessors
 
     def set_pipelines(self):

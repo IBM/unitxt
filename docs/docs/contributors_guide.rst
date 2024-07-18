@@ -1,14 +1,14 @@
 .. _contributors_guide:
 
-=================
+==================
 Contributors Guide
-=================
+==================
 
 This guide will assist you in contributing to unitxt.
 
----------------------
+------------------------
 The Unitxt Documentation
----------------------
+------------------------
 
 The unitxt external documentation is at https://unitxt.readthedocs.io/en/main/docs/introduction.html.
 
@@ -19,7 +19,7 @@ The documentation is produced from two sources:
   into the documentation for the latest version.
 
 Editing the RST files
-***********
+*********************
 
 The main file is **index.rst**. Files for the different sections are under **docs/docs**.
 
@@ -41,9 +41,9 @@ To test the documentation locally:
 
 3. Access the documentation at http://localhost:8478/.
 
----------------------
+-----------------------------
 Creating a new Unitxt release
----------------------
+-----------------------------
 
 The following process describes how to create a new release of Unitxt.
 

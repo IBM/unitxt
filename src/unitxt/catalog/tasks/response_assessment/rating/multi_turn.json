@@ -1,9 +1,9 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "dialog": "List[Tuple[str, str]]"
     },
-    "outputs": {
+    "reference_fields": {
         "rating": "float"
     },
     "metrics": [

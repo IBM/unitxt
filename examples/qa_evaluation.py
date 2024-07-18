@@ -6,6 +6,7 @@ from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
+from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -49,34 +50,24 @@ inference_model = HFPipelineBasedInferenceEngine(
 )
 # change to this to infer with IbmGenAI APIs:
 #
-# gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# gen_params = OpenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 # Print results
 for instance in evaluated_dataset:
-    logger.info("*" * 80)
-    logger.info(f"Model input:\n{instance['source']}")
-    logger.info(
-        f"Model prediction (as returned by the model):\n{instance['prediction']}"
+    print_dict(
+        instance,
+        keys_to_print=[
+            "source",
+            "prediction",
+            "processed_prediction",
+            "references",
+            "score",
+        ],
     )
-    logger.info(
-        f"Model prediction (after post processing):\n{instance['processed_prediction']}"
-    )
-    logger.info(f"References:\n{instance['references']}")
-    logger.info(
-        f"References (after post processing):\n{instance['processed_references']}"
-    )
-    score_name = instance["score"]["instance"]["score_name"]
-    score = instance["score"]["instance"]["score"]
-    logger.info(f"Sample score ({score_name}) : {score}")
-global_score = evaluated_dataset[0]["score"]["global"]["score"]
-logger.info("*" * 80)
-logger.info(f"Aggregated score ({score_name}) : {global_score}")

@@ -17,11 +17,11 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "text",
             "test_list_str"
         ],
-        "outputs": [
+        "reference_fields": [
             "test_list",
             "code"
         ],
