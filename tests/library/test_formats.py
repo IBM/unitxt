@@ -1,4 +1,12 @@
+from unitxt.artifact import fetch_artifact
+from unitxt.card import TaskCard
 from unitxt.formats import HFSystemFormat, SystemFormat
+from unitxt.loaders import LoadHF
+from unitxt.operators import ExecuteExpression, FilterByExpression, Set
+from unitxt.settings_utils import get_settings
+from unitxt.splitters import RenameSplits
+from unitxt.standard import StandardRecipe
+from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.operators import (
     check_operator,
 )
@@ -311,6 +319,93 @@ class TestFormats(UnitxtTestCase):
         }
 
         self.assertDictEqual(result, target)
+
+    # flake8: noqa: RUF001
+    def test_system_format_with_demos_different_target_prefixes(self):
+        settings = get_settings()
+        settings.allow_unverified_code = True
+
+        task, _ = fetch_artifact("tasks.qa.multiple_choice.with_topic")
+        task.input_fields["core_of_question"] = "str"
+
+        template = MultipleChoiceTemplate(
+            input_format="The following are multiple choice questions (with answers) about {topic}.\n{question}\nPotential Answers:\n{choices}\nAnswer:",
+            target_field="answer",
+            postprocessors=["processors.first_character"],
+            choices_separator="\n",
+            target_prefix="The {core_of_question} is: ",
+        )
+
+        card = TaskCard(
+            loader=LoadHF(path="cais/mmlu", name="elementary_mathematics"),
+            preprocess_steps=[
+                RenameSplits({"test": "train"}),
+                Set({"topic": "elementary mathematics"}),
+                FilterByExpression("'what is the' in question.lower()"),
+                ExecuteExpression(
+                    to_field="core_of_question",
+                    expression='question[12+question.lower().index("what is the "):].replace("?","")',
+                ),
+            ],
+            # task="tasks.qa.multiple_choice.with_topic",
+            task=task,
+            # templates=["templates.qa.multiple_choice.with_topic.mmlu"],
+            templates=[template],
+        )
+
+        recipe = StandardRecipe(
+            card=card,
+            loader_limit=500,
+            demos_pool_size=5,
+            num_demos=3,
+            template_card_index=0,
+        )
+        ms = recipe()
+        trains = list(ms["train"])
+
+        formatted_source = trains[0]["source"]
+        target_formatted_source = (
+            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
+            "What is the remainder of 21 divided by 7?\n"
+            "Potential Answers:\n"
+            "A. 21\n"
+            "B. 7\n"
+            "C. 1\n"
+            "D. None of these\n"
+            "Answer:\n"
+            "The remainder of 21 divided by 7 is: D\n"
+            "\n"
+            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
+            "Use the expression below to answer the question. 3 × [(2 × 6 – 5) + (8 ÷ 4)] – 1 What is the value of the expression?\n"
+            "Potential Answers:\n"
+            "A. 9\n"
+            "B. 11\n"
+            "C. 26\n"
+            "D. 32\n"
+            "Answer:\n"
+            "The value of the expression is: C\n"
+            "\n"
+            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
+            "A soccer team has $90.00 to buy soccer balls. If one soccer ball costs $15.60, what is the greatest number of soccer balls the team can buy?\n"
+            "Potential Answers:\n"
+            "A. 4\n"
+            "B. 5\n"
+            "C. 6\n"
+            "D. 7\n"
+            "Answer:\n"
+            "The greatest number of soccer balls the team can buy is: B\n"
+            "\n"
+            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
+            "What is the quotient for the expression 2,314 / 4?\n"
+            "Potential Answers:\n"
+            "A. 508\n"
+            "B. 508 r2\n"
+            "C. 578\n"
+            "D. 578 r2\n"
+            "Answer:\n"
+            "The quotient for the expression 2,314 / 4 is: "
+        )
+        self.assertEqual(target_formatted_source, formatted_source)
 
     def test_system_format_with_args(self):
         system_format = SystemFormat(

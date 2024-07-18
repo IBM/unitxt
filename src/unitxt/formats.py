@@ -165,10 +165,20 @@ class SystemFormat(BaseFormat):
 
         demos_string = ""
         for demo_instance in demo_instances:
+            demo_source = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="source"
+            )
+            demo_target = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="target"
+            )
+            demo_target_prefix = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="target_prefix"
+            )
+
             demo_str = self.demo_format.format(
-                target_prefix=target_prefix,
-                source=demo_instance["source"],
-                target=demo_instance["target"],
+                target_prefix=demo_target_prefix,
+                source=demo_source,
+                target=demo_target,
                 **self.format_args,
             )
             demos_string += demo_str
