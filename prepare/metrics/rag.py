@@ -444,3 +444,6 @@ for axis, base_metric, main_score in [
     add_to_catalog(
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
+
+### end to end metrics - fm eval format
+
