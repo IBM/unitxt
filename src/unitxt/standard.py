@@ -352,7 +352,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
         demos_field (str, optional): Field name for demos. Default is "demos".
         demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
-        sampler (Sampler, optional): Sampler object to be used in the recipe.
+        sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
         instruction_card_index (int, optional): Index of instruction card to be used

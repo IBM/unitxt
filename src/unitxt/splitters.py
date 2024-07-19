@@ -1,10 +1,12 @@
 import itertools
 from abc import abstractmethod
 from copy import deepcopy
+from difflib import get_close_matches
 from random import Random
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .artifact import Artifact
+from .dict_utils import dict_get
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .random_utils import new_random_generator
 from .split_utils import (
@@ -130,7 +132,7 @@ class Sampler(Artifact):
 
     @abstractmethod
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
         pass
 
@@ -151,10 +153,49 @@ class Sampler(Artifact):
 
 
 class RandomSampler(Sampler):
+    """Selects a random sample of instances."""
+
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]] = None,
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
+        return self.random_generator.sample(instances_pool, self.sample_size)
+
+
+class CloseTextSampler(Sampler):
+    """Selects the samples of instances which are the closest textual match to the given instance.
+
+    Comparison is done based on a given field in the instance.
+
+    """
+
+    field: str
+
+    def sample(
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+    ) -> List[Dict[str, object]]:
+        field = f"input_fields/{self.field}"
+        value = dict_get(instance, field)
+
+        instances_pool = list(instances_pool)
+
+        # Get 'sample_size'  closest matchest texts based on field
+        options = []
+        for instance_in_pool in instances_pool:
+            options.append(dict_get(instance_in_pool, field))
+        closest_matches = get_close_matches(
+            value, options, n=self.sample_size, cutoff=0
+        )
+        # Randmly select 'sample_size' instances that are from the closest matches text
+        # (There may be multiple instance with same text in the given field, and the order returned is
+        # is also randomized )
+        instances_pool = [
+            instance_in_pool
+            for instance_in_pool in instances_pool
+            if dict_get(instance_in_pool, field) in closest_matches
+        ]
         return self.random_generator.sample(instances_pool, self.sample_size)
 
 
@@ -237,7 +278,9 @@ class DiverseLabelsSampler(Sampler):
         return labels
 
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]] = None,
     ) -> List[Dict[str, object]]:
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
