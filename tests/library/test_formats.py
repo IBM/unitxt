@@ -1,12 +1,10 @@
-from unitxt.artifact import fetch_artifact
 from unitxt.card import TaskCard
 from unitxt.formats import HFSystemFormat, SystemFormat
-from unitxt.loaders import LoadHF
-from unitxt.operators import ExecuteExpression, FilterByExpression, Set
-from unitxt.settings_utils import get_settings
-from unitxt.splitters import RenameSplits
+from unitxt.loaders import LoadFromDictionary
 from unitxt.standard import StandardRecipe
-from unitxt.templates import MultipleChoiceTemplate
+from unitxt.system_prompts import TextualSystemPrompt
+from unitxt.task import Task
+from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.operators import (
     check_operator,
 )
@@ -320,90 +318,104 @@ class TestFormats(UnitxtTestCase):
 
         self.assertDictEqual(result, target)
 
-    # flake8: noqa: RUF001
     def test_system_format_with_demos_different_target_prefixes(self):
-        settings = get_settings()
-        settings.allow_unverified_code = True
+        instances = [
+            {"question": "1+1", "answer": "2"},
+            {"question": "2+2", "answer": "4"},
+            {"question": "3+3", "answer": "6"},
+            {"question": "4+4", "answer": "8"},
+            {"question": "5+5", "answer": "10"},
+            {"question": "6+6", "answer": "12"},
+            {"question": "7+7", "answer": "14"},
+            {"question": "8+8", "answer": "16"},
+            {"question": "9+9", "answer": "18"},
+            {"question": "10+10", "answer": "20"},
+        ]
 
-        task, _ = fetch_artifact("tasks.qa.multiple_choice.with_topic")
-        task.input_fields["core_of_question"] = "str"
+        task = Task(
+            input_fields={"question": "str"},
+            reference_fields={"answer": "str"},
+            prediction_type="str",
+            metrics=["metrics.accuracy"],
+        )
 
-        template = MultipleChoiceTemplate(
-            input_format="The following are multiple choice questions (with answers) about {topic}.\n{question}\nPotential Answers:\n{choices}\nAnswer:",
-            target_field="answer",
-            postprocessors=["processors.first_character"],
-            choices_separator="\n",
-            target_prefix="The {core_of_question} is: ",
+        template = InputOutputTemplate(
+            input_format="Solve: {question}\nAnswer: ",
+            output_format="{answer}",
+            postprocessors=[],
+            target_prefix="{question} = ",
         )
 
         card = TaskCard(
-            loader=LoadHF(path="cais/mmlu", name="elementary_mathematics"),
-            preprocess_steps=[
-                RenameSplits({"test": "train"}),
-                Set({"topic": "elementary mathematics"}),
-                FilterByExpression("'what is the' in question.lower()"),
-                ExecuteExpression(
-                    to_field="core_of_question",
-                    expression='question[12+question.lower().index("what is the "):].replace("?","")',
-                ),
-            ],
-            # task="tasks.qa.multiple_choice.with_topic",
+            loader=LoadFromDictionary(data={"train": instances}),
+            preprocess_steps=[],
             task=task,
-            # templates=["templates.qa.multiple_choice.with_topic.mmlu"],
             templates=[template],
         )
 
         recipe = StandardRecipe(
             card=card,
-            loader_limit=500,
+            loader_limit=20,
             demos_pool_size=5,
-            num_demos=3,
+            num_demos=2,
             template_card_index=0,
+            system_prompt=TextualSystemPrompt("\nSolve the following exercises.\n "),
         )
         ms = recipe()
         trains = list(ms["train"])
 
-        formatted_source = trains[0]["source"]
+        formatted_source = (
+            trains[0]["source"]
+            + "\n\n"
+            + trains[1]["source"]
+            + "\n\n"
+            + trains[2]["source"]
+        )
         target_formatted_source = (
-            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
-            "What is the remainder of 21 divided by 7?\n"
-            "Potential Answers:\n"
-            "A. 21\n"
-            "B. 7\n"
-            "C. 1\n"
-            "D. None of these\n"
-            "Answer:\n"
-            "The remainder of 21 divided by 7 is: D\n"
             "\n"
-            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
-            "Use the expression below to answer the question. 3 × [(2 × 6 – 5) + (8 ÷ 4)] – 1 What is the value of the expression?\n"
-            "Potential Answers:\n"
-            "A. 9\n"
-            "B. 11\n"
-            "C. 26\n"
-            "D. 32\n"
-            "Answer:\n"
-            "The value of the expression is: C\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 4+4\n"
+            "Answer: \n"
+            "4+4 = 8\n"
             "\n"
-            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
-            "A soccer team has $90.00 to buy soccer balls. If one soccer ball costs $15.60, what is the greatest number of soccer balls the team can buy?\n"
-            "Potential Answers:\n"
-            "A. 4\n"
-            "B. 5\n"
-            "C. 6\n"
-            "D. 7\n"
-            "Answer:\n"
-            "The greatest number of soccer balls the team can buy is: B\n"
+            "Solve: 3+3\n"
+            "Answer: \n"
+            "3+3 = 6\n"
             "\n"
-            "The following are multiple choice questions (with answers) about elementary mathematics.\n"
-            "What is the quotient for the expression 2,314 / 4?\n"
-            "Potential Answers:\n"
-            "A. 508\n"
-            "B. 508 r2\n"
-            "C. 578\n"
-            "D. 578 r2\n"
-            "Answer:\n"
-            "The quotient for the expression 2,314 / 4 is: "
+            "Solve: 6+6\n"
+            "Answer: \n"
+            "6+6 = \n"
+            "\n"
+            "\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 4+4\n"
+            "Answer: \n"
+            "4+4 = 8\n"
+            "\n"
+            "Solve: 5+5\n"
+            "Answer: \n"
+            "5+5 = 10\n"
+            "\n"
+            "Solve: 7+7\n"
+            "Answer: \n"
+            "7+7 = \n"
+            "\n"
+            "\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 1+1\n"
+            "Answer: \n"
+            "1+1 = 2\n"
+            "\n"
+            "Solve: 2+2\n"
+            "Answer: \n"
+            "2+2 = 4\n"
+            "\n"
+            "Solve: 8+8\n"
+            "Answer: \n"
+            "8+8 = "
         )
         self.assertEqual(target_formatted_source, formatted_source)
 
