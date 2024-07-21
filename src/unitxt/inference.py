@@ -201,6 +201,7 @@ class InstructLabInferenceEngine(
     parameters: OpenAiInferenceEngineParams = field(
         default_factory=OpenAiInferenceEngineParams
     )
+    batch_size: int = 10
     
     def prepare(self):
         try:
@@ -212,33 +213,35 @@ class InstructLabInferenceEngine(
         except (KeyError, IndexError):
             raise ValueError("Error: Failed to parse model ID from response JSON.")
     
-    def extract_inference(self,http_response):
+    def extract_inferences(self,http_response):
         data = http_response.json()
-        return data['choices'][0]['text']
+        return [choice['text']  for choice in data['choices']]
+
+    def get_dataset_batch(self, dataset):
+        return [dataset[i:i + self.batch_size]['source'] for i in range(0, len(dataset), self.batch_size)]
+
+    def add_parametes_to_payload(self, payload):
+        params = {attr: getattr(self.parameters, attr) for attr in OpenAiInferenceEngineParams.__dict__.keys() if not attr.startswith("_") and getattr(self.parameters, attr) is not None}
+        payload.update(params)
 
     def _infer(self,dataset):
         outputs = []
-        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"): 
+        for batch in tqdm(self.get_dataset_batch(dataset), desc=f"Inferring with InstructLab - model: {self.model}"):
             payload = {
-                "prompt": instance["source"],
+                "prompt": batch,
                 'model': self.model
             }
-            param_keys = ['frequency_penalty','presence_penalty','max_tokens','seed','stop','temperature','top_p','top_logprobs']
-            for param in param_keys:
-                val = getattr(self.parameters, param)
-                if val is not None:
-                    payload[param] = val
-            
+            self.add_parametes_to_payload(payload)
             try:
                 response = requests.post(self.base_url+"/completions", json=payload)
                 response.raise_for_status()  
-                output = self.extract_inference(response)
+                batch_outputs = self.extract_inferences(response)
             except requests.exceptions.RequestException as e:
                 raise ValueError(f"Error sending request: {e}")
             except (KeyError, IndexError):
                 raise ValueError("Error: Failed to parse response JSON or access data.")
 
-            outputs.append(output)
+            outputs.extend(batch_outputs)
         return outputs
     
     def _infer_log_probs(self, dataset):
