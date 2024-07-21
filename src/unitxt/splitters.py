@@ -343,7 +343,7 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
                 raise ValueError(
                     f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
                 )
-            sampled_instances = self.sampler.sample(source_stream)
+            sampled_instances = self.sampler.sample(source_stream, instance)
             instance[self.target_field] = sampled_instances
             return instance
         except FaultyStreamError as e:

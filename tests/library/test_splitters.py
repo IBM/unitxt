@@ -1,5 +1,9 @@
 import copy
 
+from unitxt.api import load_dataset
+from unitxt.blocks import TaskCard
+from unitxt.collections_operators import Wrap
+from unitxt.loaders import LoadFromDictionary
 from unitxt.splitters import CloseTextSampler, DiverseLabelsSampler
 
 from tests.utils import UnitxtTestCase
@@ -199,3 +203,47 @@ class TestCloseTextSampler(UnitxtTestCase):
             'query "input_fields/wrong_field" did not match any item in dict',
             str(cm.exception),
         )
+
+    def test_end2end(self):
+        data = {
+            "train": [
+                {"question": "What is your name?", "answer": "John"},
+                {"question": "In which country is Paris located?", "answer": "France"},
+                {"question": "At what time do we they eat dinner?", "answer": "22:00"},
+                {"question": "What's your name, please?", "answer": "Mary"},
+                {"question": "What is your name?", "answer": "Sunny"},
+            ],
+            "test": [
+                {"question": "What's your name?", "answer": "John"},
+            ],
+        }
+
+        card = TaskCard(
+            loader=LoadFromDictionary(data=data),
+            task="tasks.qa.open",
+            preprocess_steps=[Wrap(field="answer", inside="list", to_field="answers")],
+        )
+
+        dataset = load_dataset(
+            card=card,
+            template="templates.qa.open.title",
+            demos_pool_size=4,
+            num_demos=2,
+            sampler=CloseTextSampler(field="question"),
+        )
+        expected_output = """Answer the question.
+Question:
+What's your name, please?
+Answer:
+Mary
+
+Question:
+What is your name?
+Answer:
+John
+
+Question:
+What's your name?
+Answer:
+"""
+        self.assertEqual(dataset["test"][0]["source"], expected_output)
