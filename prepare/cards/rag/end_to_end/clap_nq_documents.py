@@ -10,7 +10,7 @@ from unitxt.operators import Copy, ListFieldValues, Set
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
-from prepare.cards.rag.end_to_end.clap_nq.clap_nq_benchmark import (
+from prepare.cards.rag.end_to_end.clap_nq_benchmark import (
     ClapNqBenchmarkConstants,
 )
 from prepare.tasks.rag.rag_task import (
