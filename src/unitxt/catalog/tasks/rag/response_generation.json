@@ -2,7 +2,7 @@
     "__type__": "task",
     "input_fields": {
         "contexts": "List[str]",
-        "contexts_ids": "List[int]",
+        "contexts_ids": "Union[List[int],List[str]]",
         "question": "str"
     },
     "reference_fields": {
