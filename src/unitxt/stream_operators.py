@@ -109,7 +109,10 @@ class JoinStreams(MultiStreamOperator):
                 columns=[f"{common_col}_x", f"{common_col}_y"], errors="ignore"
             )
 
-        assert len(merged_df) > 0, "JoinStreams resulted in an empty stream."
+        assert len(merged_df) > 0, (
+            "JoinStreams resulted in an empty stream."
+            " If you used 'loader_limit' it might be the cause of the error"
+        )
         return merged_df.to_dict(orient="records")
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
