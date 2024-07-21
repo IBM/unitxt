@@ -115,7 +115,7 @@ Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_har
 Evaluate a judge model performance judging the Arena Hard Benchmark
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-DDemonstrates how to evaluate the capabilities of a user model, to act as a judge on the Arena Hard benchmark.
+Demonstrates how to evaluate the capabilities of a user model, to act as a judge on the Arena Hard benchmark.
 The model is evaluated on its capability to give a judgment that is in correlation with GPT4 judgment on the benchmark.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard.py>`_
