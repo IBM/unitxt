@@ -99,6 +99,10 @@ class JoinStreams(MultiStreamOperator):
                 axis=1,
             ).all()
 
+        # If 2 streams / Dataframes contains column with the same names, which are not the columns the join is operated
+        # on they will be renamed to "[column_name]_x" and "[column_name]_y". Some of these columns are metadsta
+        # columns that unitxt adds, which must be kept the same. This code verify that all datasets have
+        # the same metadata values and rename the columns accordingly.
         common_cols_to_verify = ["data_classification_policy", "recipe_metadata"]
         for common_col in common_cols_to_verify:
             assert_col_values_are_identical(
