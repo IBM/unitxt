@@ -14,7 +14,7 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
-from .stream import DynamicStream, MultiStream
+from .stream import DynamicStream, MultiStream, Stream
 
 
 class Splitter(MultiStreamOperator):
@@ -278,7 +278,6 @@ class SpreadSplit(MultiStreamOperator):
 
     def before_process_multi_stream(self):
         self.local_cache = None
-        self.per_stream_rand_gens = None
         super().before_process_multi_stream()
 
     def verify(self):
@@ -287,10 +286,7 @@ class SpreadSplit(MultiStreamOperator):
         assert self.sample_size is not None, "Sample size must be specified"
         return super().verify()
 
-    def add_demos_to_stream_generator(
-        self, stream_name: str, multi_stream: MultiStream
-    ) -> Generator:
-        stream = multi_stream[stream_name]
+    def add_demos_to_stream_generator(self, stream: Stream) -> Generator:
         for instance in stream:
             source_stream = self.local_cache
             source_stream = Sampler.filter_source_by_instance(source_stream, instance)
@@ -298,20 +294,17 @@ class SpreadSplit(MultiStreamOperator):
                 raise ValueError(
                     f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sample_size}."
                 )
-            sampled_instances = self.per_stream_rand_gens[stream_name].sample(
-                source_stream, self.sample_size
+
+            random_generator = new_random_generator(
+                sub_seed={**instance["input_fields"], **instance["reference_fields"]}
             )
+            sampled_instances = random_generator.sample(source_stream, self.sample_size)
             instance[self.target_field] = sampled_instances
 
             yield instance
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         try:
-            if self.per_stream_rand_gens is None:
-                self.per_stream_rand_gens = {
-                    stream_name: new_random_generator(sub_seed=stream_name)
-                    for stream_name in multi_stream
-                }
             if self.local_cache is None:
                 self.local_cache = deepcopy(list(multi_stream[self.source_stream]))
 
@@ -319,10 +312,7 @@ class SpreadSplit(MultiStreamOperator):
             for stream_name in multi_stream:
                 result[stream_name] = DynamicStream(
                     self.add_demos_to_stream_generator,
-                    gen_kwargs={
-                        "stream_name": stream_name,
-                        "multi_stream": multi_stream,
-                    },
+                    gen_kwargs={"stream": multi_stream[stream_name]},
                 )
             return MultiStream(result)
         except Exception as e:
