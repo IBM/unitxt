@@ -27,7 +27,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Answer the question, basing your answer on the context\n\n",
+        instruction="Answer the question, basing your answer on the context",
         input_format="Question: {question}.\nContext: {contexts}\n",
         target_prefix="Answer:",
         references_field="reference_answers",
