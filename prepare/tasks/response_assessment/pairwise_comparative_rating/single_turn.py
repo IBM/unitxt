@@ -3,14 +3,14 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "question": "str",
             "answer_a": "str",
             "answer_b": "str",
             "model_a": "str",
             "model_b": "str",
         },
-        outputs={
+        reference_fields={
             "answer_a_preference": "int",  # Positive numbers for preferring answer_a, negative for answer_b.
         },
         prediction_type="int",
