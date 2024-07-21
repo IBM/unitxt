@@ -4,7 +4,7 @@ from unitxt.api import load_dataset
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadFromDictionary
-from unitxt.splitters import CloseTextSampler, DiverseLabelsSampler
+from unitxt.splitters import CloseTextSampler, DiverseLabelsSampler, FixedIndicesSampler
 
 from tests.utils import UnitxtTestCase
 
@@ -247,3 +247,41 @@ What's your name?
 Answer:
 """
         self.assertEqual(dataset["test"][0]["source"], expected_output)
+
+
+class TestFixedIndicesSampler(UnitxtTestCase):
+    """Tests for the FixedIndicesSampler  object."""
+
+    @staticmethod
+    def new_exemplar(question: str, answer: str):
+        """Return an exemplar in a correct format."""
+        return {
+            "input_fields": {"question": question, "answer": answer},
+        }
+
+    def test_sample(self):
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+            self.new_exemplar("In which country is Paris located?", "France"),
+            self.new_exemplar("What's the time?", "22:00"),
+            self.new_exemplar("What is your name, please?", "Mary"),
+        ]
+
+        sampler = FixedIndicesSampler(indices=[2, 0])
+
+        results = sampler.sample(instances)
+        self.assertEqual(results, [instances[2], instances[0]])
+
+    def test_out_of_bound_sample(self):
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+            self.new_exemplar("In which country is Paris located?", "France"),
+        ]
+
+        sampler = FixedIndicesSampler(indices=[2])
+        with self.assertRaises(ValueError) as cm:
+            sampler.sample(instances)
+        self.assertIn(
+            "FixedIndicesSampler 'indices' field contains index (2) which is out of bounds of the instance pool ( of size 2)",
+            str(cm.exception),
+        )

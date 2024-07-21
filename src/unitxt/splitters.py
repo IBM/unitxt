@@ -164,6 +164,28 @@ class RandomSampler(Sampler):
         return self.random_generator.sample(instances_pool, self.sample_size)
 
 
+class FixedIndicesSampler(Sampler):
+    """Selects a fix set of samples based on a list of indices."""
+
+    indices: List[int]
+
+    def sample(
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]] = None,
+    ) -> List[Dict[str, object]]:
+        num_instances = len(instances_pool)
+
+        instances = []
+        for index in self.indices:
+            if index >= num_instances:
+                raise ValueError(
+                    f"FixedIndicesSampler 'indices' field contains index ({index}) which is out of bounds of the instance pool ( of size {num_instances})"
+                )
+            instances.append(instances_pool[index])
+        return instances
+
+
 class CloseTextSampler(Sampler):
     """Selects the samples of instances which are the closest textual match to the given instance.
 
