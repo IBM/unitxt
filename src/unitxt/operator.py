@@ -428,37 +428,6 @@ class BaseFieldOperator(Artifact):
         pass
 
 
-class InstanceOperatorWithMultiStreamAccess(StreamingOperator):
-    """A class representing an instance operator with global access in the streaming system.
-
-    An instance operator with global access is a type of `StreamingOperator` that operates on individual instances within a `Stream` and can also access other streams.
-    It uses the `accessible_streams` attribute to determine which other streams it has access to.
-    In order to make this efficient and to avoid qudratic complexity, it caches the accessible streams by default.
-    """
-
-    def __call__(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        result = {}
-
-        for stream_name, stream in multi_stream.items():
-            stream = DynamicStream(
-                self.generator,
-                gen_kwargs={"stream": stream, "multi_stream": multi_stream},
-            )
-            result[stream_name] = stream
-
-        return MultiStream(result)
-
-    def generator(self, stream, multi_stream):
-        yield from (
-            self.process(self.verify_instance(instance), multi_stream)
-            for instance in stream
-        )
-
-    @abstractmethod
-    def process(self, instance: dict, multi_stream: MultiStream) -> dict:
-        pass
-
-
 class SequentialMixin(Artifact):
     max_steps: Optional[int] = None
     steps: List[StreamingOperator] = field(default_factory=list)

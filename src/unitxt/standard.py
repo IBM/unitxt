@@ -281,7 +281,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 AddDemosField(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
-                    sampler=self.sampler,
+                    sample_size=self.num_demos,
                 )
             )
         self.verblization.steps.append(self.system_prompt)

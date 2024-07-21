@@ -2,10 +2,10 @@ import itertools
 from abc import abstractmethod
 from copy import deepcopy
 from random import Random
-from typing import Dict, List
+from typing import Dict, Generator, List
 
 from .artifact import Artifact
-from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
+from .operator import MultiStreamOperator
 from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
@@ -14,7 +14,7 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
-from .stream import EmptyStreamError, FaultyStreamError, MultiStream
+from .stream import DynamicStream, MultiStream
 
 
 class Splitter(MultiStreamOperator):
@@ -134,8 +134,9 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         pass
 
+    @staticmethod
     def filter_source_by_instance(
-        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+        instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
         if "input_fields" not in instance:
             raise ValueError(f"'input_fields' field is missing from '{instance}'.")
@@ -270,40 +271,61 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
+class SpreadSplit(MultiStreamOperator):
     source_stream: str = None
     target_field: str = None
-    sampler: Sampler = None
+    sample_size: int = None
 
-    def prepare(self):
+    def before_process_multi_stream(self):
         self.local_cache = None
-        self.sampler.prepare()
+        self.per_stream_rand_gens = None
+        super().before_process_multi_stream()
 
     def verify(self):
         assert self.source_stream is not None, "Source stream must be specified"
         assert self.target_field is not None, "Target field must be specified"
-        assert self.sampler is not None, "Sampler must be specified"
+        assert self.sample_size is not None, "Sample size must be specified"
         return super().verify()
 
-    def process(
-        self, instance: Dict[str, object], multi_stream: MultiStream
-    ) -> Dict[str, object]:
+    def add_demos_to_stream_generator(
+        self, stream_name: str, multi_stream: MultiStream
+    ) -> Generator:
+        stream = multi_stream[stream_name]
+        for instance in stream:
+            source_stream = self.local_cache
+            source_stream = Sampler.filter_source_by_instance(source_stream, instance)
+            if len(source_stream) < self.sample_size:
+                raise ValueError(
+                    f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sample_size}."
+                )
+            sampled_instances = self.per_stream_rand_gens[stream_name].sample(
+                source_stream, self.sample_size
+            )
+            instance[self.target_field] = sampled_instances
+
+            yield instance
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
         try:
+            if self.per_stream_rand_gens is None:
+                self.per_stream_rand_gens = {
+                    stream_name: new_random_generator(sub_seed=stream_name)
+                    for stream_name in multi_stream
+                }
             if self.local_cache is None:
                 self.local_cache = deepcopy(list(multi_stream[self.source_stream]))
 
-            source_stream = self.local_cache
-            source_stream = self.sampler.filter_source_by_instance(
-                source_stream, instance
-            )
-            if len(source_stream) < self.sampler.sample_size:
-                raise ValueError(
-                    f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
+            result = {}
+            for stream_name in multi_stream:
+                result[stream_name] = DynamicStream(
+                    self.add_demos_to_stream_generator,
+                    gen_kwargs={
+                        "stream_name": stream_name,
+                        "multi_stream": multi_stream,
+                    },
                 )
-            sampled_instances = self.sampler.sample(source_stream)
-            instance[self.target_field] = sampled_instances
-            return instance
-        except FaultyStreamError as e:
-            raise EmptyStreamError(
+            return MultiStream(result)
+        except Exception as e:
+            raise ValueError(
                 f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
             ) from e
