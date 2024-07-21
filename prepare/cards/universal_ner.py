@@ -51,6 +51,7 @@ for sub_task in sub_tasks:
             requirements_list=["conllu"],
         ),
         preprocess_steps=[
+            # The dataset is sorted by classes
             Shuffle(page_size=sys.maxsize),
             RenameFields(
                 field_to_field={"ner_tags": "labels"},
