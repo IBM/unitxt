@@ -5,7 +5,7 @@ from unitxt.templates import (
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Please respond to the following question using the context\n\n",
+        instruction="Please respond to the following question using the context",
         input_format="Context: {contexts}\nQuestion: {question}.\n",
         target_prefix="Response:",
         references_field="reference_answers",
