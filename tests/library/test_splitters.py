@@ -181,7 +181,7 @@ class TestCloseTextSampler(UnitxtTestCase):
         results = sampler.sample(
             instances, self.new_exemplar("What is the time?", "don't know")
         )
-        self.assertEqual(results, [instances[2], instances[0]])
+        self.assertEqual(results, [instances[0], instances[2]])
 
         num_samples = 1
         sampler = CloseTextSampler(num_samples, field="answer")
@@ -233,14 +233,14 @@ class TestCloseTextSampler(UnitxtTestCase):
         )
         expected_output = """Answer the question.
 Question:
-What's your name, please?
-Answer:
-Mary
-
-Question:
 What is your name?
 Answer:
 John
+
+Question:
+What's your name, please?
+Answer:
+Mary
 
 Question:
 What's your name?

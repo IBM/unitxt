@@ -2,7 +2,6 @@ import itertools
 from abc import abstractmethod
 from copy import deepcopy
 from difflib import get_close_matches
-from random import Random
 from typing import Dict, List, Optional
 
 from .artifact import Artifact
@@ -111,7 +110,6 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
-    random_generator: Random = new_random_generator(sub_seed="Sampler")
 
     def prepare(self):
         super().prepare()
@@ -124,11 +122,6 @@ class Sampler(Artifact):
             ), f"sample_size must be a natural number, got {self.sample_size}"
             size = int(size)
         self.sample_size = size
-
-    def init_new_random_generator(self):
-        self.random_generator = new_random_generator(
-            sub_seed="init_new_random_generator"
-        )
 
     @abstractmethod
     def sample(
@@ -161,7 +154,8 @@ class RandomSampler(Sampler):
         instance: Optional[Dict[str, object]] = None,
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return self.random_generator.sample(instances_pool, self.sample_size)
+        random_generator = new_random_generator(sub_seed=str(instance))
+        return random_generator.sample(instances_pool, self.sample_size)
 
 
 class FixedIndicesSampler(Sampler):
@@ -218,7 +212,8 @@ class CloseTextSampler(Sampler):
             for instance_in_pool in instances_pool
             if dict_get(instance_in_pool, field) in closest_matches
         ]
-        return self.random_generator.sample(instances_pool, self.sample_size)
+        random_generator = new_random_generator(sub_seed=str(instance))
+        return random_generator.sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -307,7 +302,8 @@ class DiverseLabelsSampler(Sampler):
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        self.random_generator.shuffle(all_labels)
+        random_generator = new_random_generator(sub_seed=str(instance))
+        random_generator.shuffle(all_labels)
         from collections import Counter
 
         if self.sample_size > len(instances_pool):
@@ -328,10 +324,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = self.random_generator.sample(self.labels_cache[label], allocation)
+            sample = random_generator.sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
-        self.random_generator.shuffle(result)
+        random_generator.shuffle(result)
         return result
 
 
