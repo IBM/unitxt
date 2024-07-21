@@ -328,10 +328,6 @@ class MetricWithConfidenceInterval(Metric):
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
 
-        method = "BCa"
-        if len(instances) > 100:
-            method = "percentile"
-
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -357,7 +353,6 @@ class MetricWithConfidenceInterval(Metric):
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
-                method=method,
                 random_state=self.new_random_generator(),
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
@@ -443,10 +438,6 @@ class MetricWithConfidenceInterval(Metric):
         if self._can_compute_confidence_intervals(num_predictions=num_predictions):
             identifiers = list(range(num_predictions))
 
-            method = "BCa"
-            if num_predictions > 100:
-                method = "percentile"
-
             with warnings.catch_warnings():
                 # Avoid RuntimeWarning in bootstrap computation. This happens on small datasets where
                 # the value of the computed global metric is the same on all resamplings.
@@ -456,7 +447,6 @@ class MetricWithConfidenceInterval(Metric):
                     statistic=statistic,
                     n_resamples=self.n_resamples,
                     confidence_level=self.confidence_level,
-                    method=method,
                     random_state=random_gen,
                 ).confidence_interval
             result["score_ci_low"] = ci.low
@@ -1342,16 +1332,46 @@ class HuggingfaceInstanceMetric(InstanceMetric):
         return score
 
 
-class Meteor(HuggingfaceInstanceMetric):
+class Meteor(InstanceMetric):
     main_score = "meteor"
     ci_scores = ["meteor"]
     reduction_map = {"mean": ["meteor"]}
     prediction_type = "str"
 
-    hf_metric_name = "meteor"
-    hf_metric_fields = ["meteor"]
-    hf_compute_args = {"alpha": 0.9, "beta": 3, "gamma": 0.5}
-    # the defaults in hf's Meteor
+    _requirements_list: List[str] = ["nltk"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+    # unitxt uses nltk version >= 3.8
+
+    def prepare(self):
+        import nltk
+
+        nltk.download("wordnet")
+        nltk.download("omw-1.4")
+
+    def verify(self):
+        import importlib.metadata as importlib_metadata
+
+        from datasets.config import version
+
+        nltk_version = version.parse(importlib_metadata.version("nltk"))
+        assert nltk_version >= version.Version(
+            "3.6.6"
+        ), "nltk version must be at least 3.6.6"
+
+    def compute(self, references, prediction, task_data):
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        score = meteor_score.meteor_score(
+            [word_tokenize(ref) for ref in references],
+            word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {"meteor": score}
 
 
 class F1(GlobalMetric):
@@ -1745,7 +1765,46 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(HuggingfaceInstanceMetric):
+class Rouge(InstanceMetric):
+    main_score = "rougeL"
+    prediction_type = "str"
+    single_reference_per_prediction = False  # multiple references allowed
+    rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+    sent_split_newline: bool = True
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        import nltk
+        from rouge_score import rouge_scorer
+
+        nltk.download("punkt")
+        self.sent_tokenize = nltk.sent_tokenize
+
+        # for a single instance, prediction is of type str, and references: list of str
+        if self.sent_split_newline:
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
+            references = [
+                "\n".join(self.sent_tokenize(reference.strip()))
+                for reference in references
+            ]
+
+        # the following is taken from HF rouge, using the defaults:
+        # use_aggregator=True, use_stemmer=False, tokenizer=None
+        scorer = rouge_scorer.RougeScorer(
+            rouge_types=self.rouge_types, use_stemmer=False, tokenizer=None
+        )
+        # with Unitxt, references is a list
+        score = scorer.score_multi(references, prediction)
+        for key in score:
+            score[key] = score[key].fmeasure
+        return score
+
+
+class RougeHF(HuggingfaceInstanceMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
