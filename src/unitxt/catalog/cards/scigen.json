@@ -1,0 +1,55 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "kasnerz/scigen"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train",
+                "validation": "validation",
+                "test": "test"
+            }
+        },
+        {
+            "__type__": "construct_table_structure",
+            "fields": [
+                "table_column_names",
+                "table_content_values",
+                "table_caption"
+            ],
+            "to_field": "table"
+        },
+        {
+            "__type__": "serialize_table_as_indexed_row_major",
+            "field_to_field": [
+                [
+                    "table",
+                    "input"
+                ]
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_input": "Table"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_output": "Text"
+            }
+        },
+        {
+            "__type__": "rename_fields",
+            "field_to_field": {
+                "text": "output"
+            }
+        }
+    ],
+    "task": "tasks.generation",
+    "templates": "templates.generation.all"
+}
