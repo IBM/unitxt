@@ -1,0 +1,14 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "table": "str",
+        "output": "str",
+        "reference_output": "str"
+    },
+    "outputs": {
+        "rating": "float"
+    },
+    "metrics": [
+        "metrics.spearman"
+    ]
+}
