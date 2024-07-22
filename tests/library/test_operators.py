@@ -2839,10 +2839,13 @@ class TestApplyMetric(UnitxtTestCase):
         instance = {
             "demos": [
                 {
-                    "inputs": {"text": "was so not good"},
-                    "outputs": {"label": "negative"},
+                    "input_fields": {"text": "was so not good"},
+                    "reference_fields": {"label": "negative"},
                 },
-                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
+                {
+                    "input_fields": {"text": "was so good"},
+                    "reference_fields": {"label": "positive"},
+                },
             ]
         }
 
@@ -2852,8 +2855,8 @@ class TestApplyMetric(UnitxtTestCase):
         target = {
             "demos": [
                 {
-                    "inputs": {"text": "was so not good"},
-                    "outputs": {"label": "negative"},
+                    "input_fields": {"text": "was so not good"},
+                    "reference_fields": {"label": "negative"},
                     "source": 'This is my sentence: "was so not good"',
                     "target": "negative",
                     "references": ["negative"],
@@ -2861,8 +2864,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"text": "was so good"},
-                    "outputs": {"label": "positive"},
+                    "input_fields": {"text": "was so good"},
+                    "reference_fields": {"label": "positive"},
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
@@ -2882,12 +2885,12 @@ class TestApplyMetric(UnitxtTestCase):
         instance = {
             "demos": [
                 {
-                    "inputs": {"text": "who was he?"},
-                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "input_fields": {"text": "who was he?"},
+                    "reference_fields": {"answer": ["Dan", "Yossi"]},
                 },
                 {
-                    "inputs": {"text": "who was she?"},
-                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "input_fields": {"text": "who was she?"},
+                    "reference_fields": {"answer": ["Shira", "Yael"]},
                 },
             ]
         }
@@ -2898,8 +2901,8 @@ class TestApplyMetric(UnitxtTestCase):
         target = {
             "demos": [
                 {
-                    "inputs": {"text": "who was he?"},
-                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "input_fields": {"text": "who was he?"},
+                    "reference_fields": {"answer": ["Dan", "Yossi"]},
                     "source": "This is my sentence: who was he?",
                     "target": "Dan",
                     "references": ["Dan", "Yossi"],
@@ -2907,8 +2910,8 @@ class TestApplyMetric(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"text": "who was she?"},
-                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "input_fields": {"text": "who was she?"},
+                    "reference_fields": {"answer": ["Shira", "Yael"]},
                     "source": "This is my sentence: who was she?",
                     "target": "Shira",
                     "references": ["Shira", "Yael"],
@@ -2925,7 +2928,7 @@ class TestApplyMetric(UnitxtTestCase):
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
-            "inputs": {},
+            "input_fields": {},
         }
         demos_instances = [
             {"source": "1+2", "target": "3", "instruction": "solve the math exercises"},
@@ -2964,7 +2967,7 @@ Agent:"""
         instance = {
             "source": "1+1",
             "target": "2",
-            "inputs": {},
+            "input_fields": {},
             "instruction": "solve the math exercises",
             "demos": demo_instances,
         }
@@ -2993,7 +2996,7 @@ Agent:"""
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
-            "inputs": {},
+            "input_fields": {},
         }
 
         target = """Instruction:solve the math exercises
@@ -3011,7 +3014,7 @@ Agent:"""
         self.assertEqual(instance["source"], target)
 
     def test_model_input_formatter_without_demonstrations_or_instruction(self):
-        instance = {"source": "1+1", "target": "2", "inputs": {}}
+        instance = {"source": "1+1", "target": "2", "input_fields": {}}
         target = """User:1+1
 Agent:"""
 
@@ -3024,7 +3027,12 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
 
     def test_system_format_without_demonstrations_and_empty_instruction(self):
-        instance = {"source": "1+1", "target": "2", "instruction": "", "inputs": {}}
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "",
+            "input_fields": {},
+        }
 
         target = """User:1+1
 Agent:"""

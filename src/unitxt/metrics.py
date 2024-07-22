@@ -326,6 +326,7 @@ class MetricWithConfidenceInterval(Metric):
             # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
+
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -1497,6 +1498,81 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         return results
 
 
+class HuggingfaceInstanceMetric(InstanceMetric):
+    hf_metric_name: str
+
+    hf_metric_fields: List[str]
+    hf_compute_args: dict = {}
+
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # invokes  module.compute, which invokes, e.g., meteor's _compute
+
+        try:
+            score = self.metric.compute(
+                predictions=[prediction],
+                references=[references],
+                **self.hf_compute_args,
+            )
+        except:
+            score = {self.main_score: np.nan}
+
+        if self.hf_metric_fields is not None and len(self.hf_metric_fields) > 0:
+            to_ret = {field: score[field] for field in self.hf_metric_fields}
+            score = to_ret
+
+        return score
+
+
+class Meteor(InstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = "str"
+
+    _requirements_list: List[str] = ["nltk"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+    # unitxt uses nltk version >= 3.8
+
+    def prepare(self):
+        import nltk
+
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
+
+    def verify(self):
+        import importlib.metadata as importlib_metadata
+
+        from datasets.config import version
+
+        nltk_version = version.parse(importlib_metadata.version("nltk"))
+        assert nltk_version >= version.Version(
+            "3.6.6"
+        ), "nltk version must be at least 3.6.6"
+
+    def compute(self, references, prediction, task_data):
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {"meteor": score}
+
+
 class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
@@ -1888,7 +1964,49 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(HuggingfaceMetric):
+class Rouge(InstanceMetric):
+    main_score = "rougeL"
+    prediction_type = "str"
+    single_reference_per_prediction = False  # multiple references allowed
+    rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+    sent_split_newline: bool = True
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+    def prepare(self):
+        import nltk
+        from rouge_score import rouge_scorer
+
+        self.rouge_scorer = rouge_scorer
+
+        nltk.download("punkt", quiet=True)
+        self.sent_tokenize = nltk.sent_tokenize
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # for a single instance, prediction is of type str, and references: list of str
+        if self.sent_split_newline:
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
+            references = [
+                "\n".join(self.sent_tokenize(reference.strip()))
+                for reference in references
+            ]
+
+        # the following is taken from HF rouge, using the defaults:
+        # use_aggregator=True, use_stemmer=False, tokenizer=None
+        scorer = self.rouge_scorer.RougeScorer(
+            rouge_types=self.rouge_types, use_stemmer=False, tokenizer=None
+        )
+        # with Unitxt, references is a list
+        score = scorer.score_multi(references, prediction)
+        for key in score:
+            score[key] = score[key].fmeasure
+        return score
+
+
+class RougeHF(HuggingfaceInstanceMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -1896,8 +2014,10 @@ class Rouge(HuggingfaceMetric):
     prediction_type = "str"
     single_reference_per_prediction = False  # multiple references allowed
 
-    use_aggregator: bool = True
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    hf_metric_fields = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     sent_split_newline: bool = True
 
@@ -1906,26 +2026,33 @@ class Rouge(HuggingfaceMetric):
     def prepare(self):
         super().prepare()
 
+        # We don't use the aggregation, to avoid running bootstrapping by the
+        # internal library (which is costly) and done by Unitxt in any case.
         self.hf_compute_args.update(
-            {"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types}
+            {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
         import nltk
 
-        nltk.download("punkt")
+        nltk.download("punkt", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
-    def compute(self, references, predictions, task_data: List[Dict]):
+    def compute(self, references, prediction, task_data: List[Dict]):
+        # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            predictions = [
-                "\n".join(self.sent_tokenize(prediction.strip()))
-                for prediction in predictions
-            ]
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
             references = [
-                ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                "\n".join(self.sent_tokenize(reference.strip()))
                 for reference in references
             ]
-        return super().compute(references, predictions, task_data)
+
+        hf_score = super().compute(references, prediction, task_data)
+        for metric_field in self.hf_metric_fields:
+            if isinstance(hf_score[metric_field], list):
+                assert len(hf_score[metric_field]) == 1
+                hf_score[metric_field] = hf_score[metric_field][0]
+        return hf_score
 
 
 # Computes char edit distance, ignoring whitespace

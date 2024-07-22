@@ -1,6 +1,10 @@
 import copy
 
-from unitxt.splitters import DiverseLabelsSampler
+from unitxt.api import load_dataset
+from unitxt.blocks import TaskCard
+from unitxt.collections_operators import Wrap
+from unitxt.loaders import LoadFromDictionary
+from unitxt.splitters import CloseTextSampler, DiverseLabelsSampler, FixedIndicesSampler
 
 from tests.utils import UnitxtTestCase
 
@@ -35,7 +39,10 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["cow"], "Moo1"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances,
+                self.new_exemplar(choices, ["any"], "any"),
+            )
 
             from collections import Counter
 
@@ -59,7 +66,10 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["cow"], "Moo1"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances,
+                self.new_exemplar(choices, ["any"], "any"),
+            )
 
             from collections import Counter
 
@@ -79,7 +89,9 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["dog"], "Bark2"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances, self.new_exemplar(choices, ["any"], "any")
+            )
             from collections import Counter
 
             counts = Counter()
@@ -144,5 +156,142 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
             sampler.filter_source_by_instance(instances, instance)
         self.assertEqual(
             f"'input_fields' field is missing from '{instance}'.",
+            str(cm.exception),
+        )
+
+
+class TestCloseTextSampler(UnitxtTestCase):
+    """Tests for the CloseTextSampler object."""
+
+    @staticmethod
+    def new_exemplar(question: str, answer: str):
+        """Return an exemplar in a correct format."""
+        return {
+            "input_fields": {"question": question, "answer": answer},
+        }
+
+    def test_sample(self):
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+            self.new_exemplar("In which country is Paris located?", "France"),
+            self.new_exemplar("What's the time?", "22:00"),
+            self.new_exemplar("What is your name, please?", "Mary"),
+        ]
+
+        num_samples = 2
+        sampler = CloseTextSampler(num_samples, field="question")
+
+        results = sampler.sample(
+            instances, self.new_exemplar("What's your name?", "don't know")
+        )
+        self.assertEqual(results, [instances[0], instances[3]])
+
+        results = sampler.sample(
+            instances, self.new_exemplar("What is the time?", "don't know")
+        )
+        self.assertEqual(results, [instances[2], instances[0]])
+
+        num_samples = 1
+        sampler = CloseTextSampler(num_samples, field="answer")
+        results = sampler.sample(
+            instances, self.new_exemplar("Who do I love?", "Mary Lu")
+        )
+        self.assertEqual(results, [instances[3]])
+
+    def test_filter_with_wrong_field(self):
+        num_samples = 2
+        sampler = CloseTextSampler(num_samples, field="wrong_field")
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+        ]
+        instance = self.new_exemplar("What's your name?", "don't know")
+        with self.assertRaises(ValueError) as cm:
+            sampler.sample(instances, instance)
+        self.assertIn(
+            'query "input_fields/wrong_field" did not match any item in dict',
+            str(cm.exception),
+        )
+
+    def test_end2end(self):
+        data = {
+            "train": [
+                {"question": "What is your name?", "answer": "John"},
+                {"question": "In which country is Paris located?", "answer": "France"},
+                {"question": "At what time do we they eat dinner?", "answer": "22:00"},
+                {"question": "What's your name, please?", "answer": "Mary"},
+                {"question": "Is this your car?", "answer": "yes"},
+                {"question": "What is your name?", "answer": "Sunny"},
+            ],
+            "test": [
+                {"question": "What's your name?", "answer": "John"},
+            ],
+        }
+
+        card = TaskCard(
+            loader=LoadFromDictionary(data=data),
+            task="tasks.qa.open",
+            preprocess_steps=[Wrap(field="answer", inside="list", to_field="answers")],
+        )
+
+        dataset = load_dataset(
+            card=card,
+            template="templates.qa.open.title",
+            demos_pool_size=5,
+            num_demos=2,
+            sampler=CloseTextSampler(field="question"),
+        )
+        expected_output = """Answer the question.
+Question:
+What is your name?
+Answer:
+John
+
+Question:
+What's your name, please?
+Answer:
+Mary
+
+Question:
+What's your name?
+Answer:
+"""
+        self.assertEqual(dataset["test"][0]["source"], expected_output)
+
+
+class TestFixedIndicesSampler(UnitxtTestCase):
+    """Tests for the FixedIndicesSampler  object."""
+
+    @staticmethod
+    def new_exemplar(question: str, answer: str):
+        """Return an exemplar in a correct format."""
+        return {
+            "input_fields": {"question": question, "answer": answer},
+        }
+
+    def test_sample(self):
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+            self.new_exemplar("In which country is Paris located?", "France"),
+            self.new_exemplar("What's the time?", "22:00"),
+            self.new_exemplar("What is your name, please?", "Mary"),
+        ]
+        instance = self.new_exemplar("What's your name?", "don't know")
+        sampler = FixedIndicesSampler(indices=[2, 0])
+
+        results = sampler.sample(instances, instance)
+        self.assertEqual(results, [instances[2], instances[0]])
+
+    def test_out_of_bound_sample(self):
+        instances = [
+            self.new_exemplar("What is your name?", "John"),
+            self.new_exemplar("In which country is Paris located?", "France"),
+        ]
+
+        instance = self.new_exemplar("What's your name?", "don't know")
+        sampler = FixedIndicesSampler(indices=[2])
+        with self.assertRaises(ValueError) as cm:
+            sampler.sample(instances, instance)
+        self.assertIn(
+            "FixedIndicesSampler 'indices' field contains index (2) which is out of bounds of the instance pool ( of size 2)",
             str(cm.exception),
         )

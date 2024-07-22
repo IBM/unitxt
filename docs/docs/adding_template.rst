@@ -77,30 +77,32 @@ Making Your Custom Template
 ----------------------------
 
 In order to make your own template, you need to create a class inheriting from `Template` and
-implementing its two abstract methods:
+implementing its abstract methods:
 
 .. code-block:: python
 
-    @abstractmethod
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+     @abstractmethod
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
+        """Create the textual input for the model from the input fields"""
         pass
 
     @abstractmethod
-    def outputs_to_target_and_references(
-        self, outputs: Dict[str, object]
-    ) -> Tuple[str, List[str]]:
+    def reference_fields_to_target_and_references(self, reference_fields: Dict[str, object]) -> Tuple[str, List[str]]:
+        """Create a list of references from the reference fields. Also returns one of the references
+           as the 'target' - the reference used if the instance is used as a demonstration."
         pass
 
-For instance:
+    
+
+For instance, this templates passes all the input fields to the model as a json string.
+It also formats the references , by taking two of the dataset reference fields the 'top_answer' and 'alternative_answer'.
 
 .. code-block:: python
 
     class MyCustomTemplate(Template):
 
-        def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-            return str(inputs) # use all the task inputs fields in their dictionary look
-
-        def outputs_to_target_and_references(
-            self, outputs: Dict[str, object]
-        ) -> Tuple[str, List[str]]:
-            return outputs["label"], [outputs["label"]]
+        def input_fields_to_source(self, inputs_fields: Dict[str, object]) -> str:
+            return json.dumps(inputs_fields) # provide the json string with all fields as the input to the model
+        def reference_fields_to_target_and_references(self, reference_fields: Dict[str, object]) -> Tuple[str, List[str]]
+            return outputs_fields["top_answer"],  # target
+                   [outputs_fields["top_answer"],outputs_fields["alternative_answer"]]   # all references
