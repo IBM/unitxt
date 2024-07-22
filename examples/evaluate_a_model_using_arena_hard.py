@@ -3,7 +3,7 @@ from unitxt.inference import MockInferenceEngine
 from unitxt.text_utils import print_dict
 
 model_id = "meta-llama/llama-3-70b-instruct"
-model_format = "formats.llama3_chat"
+model_format = "formats.llama3_instruct"
 
 """
 We are evaluating only on a small subset (by using "select(range(4)), in order for the example to finish quickly.
