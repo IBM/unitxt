@@ -7,6 +7,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -17,8 +18,25 @@ card = TaskCard(
         SerializeTableAsMarkdown(field="table_out", to_field="input"),
         RenameFields(field="description", to_field="output"),
     ],
-    task="tasks.generation[metrics=[metrics.bleu,metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.meteor]]",
-    templates="templates.generation.all",
+    task=Task(
+        input_fields={
+            "input": "str",
+            "type_of_input": "str",
+            "caption": "str",
+            "type_of_output": "str",
+        },
+        reference_fields={"output": "str"},
+        prediction_type="str",
+        metrics=[
+            "metrics.bleu",
+            "metrics.rouge",
+            "metrics.bert_score.bert_base_uncased",
+            "metrics.meteor",
+        ],
+        augmentable_inputs=["input"],
+        defaults={"type_of_output": "Text"},
+    ),
+    templates="templates.generation.structured",
     __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     __tags__={
         "modality": "table",
