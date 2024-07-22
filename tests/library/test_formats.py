@@ -1,4 +1,10 @@
+from unitxt.card import TaskCard
 from unitxt.formats import HFSystemFormat, SystemFormat
+from unitxt.loaders import LoadFromDictionary
+from unitxt.standard import StandardRecipe
+from unitxt.system_prompts import TextualSystemPrompt
+from unitxt.task import Task
+from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.operators import (
     check_operator,
 )
@@ -331,6 +337,107 @@ class TestFormats(UnitxtTestCase):
         }
 
         self.assertDictEqual(result, target)
+
+    def test_system_format_with_demos_different_target_prefixes(self):
+        instances = [
+            {"question": "1+1", "answer": "2"},
+            {"question": "2+2", "answer": "4"},
+            {"question": "3+3", "answer": "6"},
+            {"question": "4+4", "answer": "8"},
+            {"question": "5+5", "answer": "10"},
+            {"question": "6+6", "answer": "12"},
+            {"question": "7+7", "answer": "14"},
+            {"question": "8+8", "answer": "16"},
+            {"question": "9+9", "answer": "18"},
+            {"question": "10+10", "answer": "20"},
+        ]
+
+        task = Task(
+            input_fields={"question": "str"},
+            reference_fields={"answer": "str"},
+            prediction_type="str",
+            metrics=["metrics.accuracy"],
+        )
+
+        template = InputOutputTemplate(
+            input_format="Solve: {question}\nAnswer: ",
+            output_format="{answer}",
+            postprocessors=[],
+            target_prefix="{question} = ",
+        )
+
+        card = TaskCard(
+            loader=LoadFromDictionary(data={"train": instances}),
+            preprocess_steps=[],
+            task=task,
+            templates=[template],
+        )
+
+        recipe = StandardRecipe(
+            card=card,
+            loader_limit=20,
+            demos_pool_size=5,
+            num_demos=2,
+            template_card_index=0,
+            system_prompt=TextualSystemPrompt("\nSolve the following exercises.\n "),
+        )
+        ms = recipe()
+        trains = list(ms["train"])
+
+        formatted_source = (
+            trains[0]["source"]
+            + "\n\n"
+            + trains[1]["source"]
+            + "\n\n"
+            + trains[2]["source"]
+        )
+        target_formatted_source = (
+            "\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 4+4\n"
+            "Answer: \n"
+            "4+4 = 8\n"
+            "\n"
+            "Solve: 3+3\n"
+            "Answer: \n"
+            "3+3 = 6\n"
+            "\n"
+            "Solve: 6+6\n"
+            "Answer: \n"
+            "6+6 = \n"
+            "\n"
+            "\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 3+3\n"
+            "Answer: \n"
+            "3+3 = 6\n"
+            "\n"
+            "Solve: 4+4\n"
+            "Answer: \n"
+            "4+4 = 8\n"
+            "\n"
+            "Solve: 7+7\n"
+            "Answer: \n"
+            "7+7 = \n"
+            "\n"
+            "\n"
+            "Solve the following exercises.\n"
+            " \n"
+            "Solve: 4+4\n"
+            "Answer: \n"
+            "4+4 = 8\n"
+            "\n"
+            "Solve: 5+5\n"
+            "Answer: \n"
+            "5+5 = 10\n"
+            "\n"
+            "Solve: 8+8\n"
+            "Answer: \n"
+            "8+8 = "
+        )
+        self.assertEqual(target_formatted_source, formatted_source)
 
     def test_system_format_with_args(self):
         system_format = SystemFormat(
