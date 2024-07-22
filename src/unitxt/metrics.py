@@ -1347,8 +1347,13 @@ class Meteor(InstanceMetric):
     def prepare(self):
         import nltk
 
-        nltk.download("wordnet")
-        nltk.download("omw-1.4")
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
 
     def verify(self):
         import importlib.metadata as importlib_metadata
@@ -1361,12 +1366,9 @@ class Meteor(InstanceMetric):
         ), "nltk version must be at least 3.6.6"
 
     def compute(self, references, prediction, task_data):
-        from nltk import word_tokenize
-        from nltk.translate import meteor_score
-
-        score = meteor_score.meteor_score(
-            [word_tokenize(ref) for ref in references],
-            word_tokenize(prediction),
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
             alpha=self.alpha,
             beta=self.beta,
             gamma=self.gamma,
@@ -1776,13 +1778,16 @@ class Rouge(InstanceMetric):
     sent_split_newline: bool = True
     _requirements_list: List[str] = ["nltk", "rouge_score"]
 
-    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+    def prepare(self):
         import nltk
         from rouge_score import rouge_scorer
 
-        nltk.download("punkt")
+        self.rouge_scorer = rouge_scorer
+
+        nltk.download("punkt", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
             prediction = "\n".join(self.sent_tokenize(prediction.strip()))
@@ -1794,7 +1799,7 @@ class Rouge(InstanceMetric):
 
         # the following is taken from HF rouge, using the defaults:
         # use_aggregator=True, use_stemmer=False, tokenizer=None
-        scorer = rouge_scorer.RougeScorer(
+        scorer = self.rouge_scorer.RougeScorer(
             rouge_types=self.rouge_types, use_stemmer=False, tokenizer=None
         )
         # with Unitxt, references is a list
@@ -1832,7 +1837,7 @@ class RougeHF(HuggingfaceInstanceMetric):
 
         import nltk
 
-        nltk.download("punkt")
+        nltk.download("punkt", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, prediction, task_data: List[Dict]):
