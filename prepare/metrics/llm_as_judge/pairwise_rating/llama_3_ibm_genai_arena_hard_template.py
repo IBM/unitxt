@@ -5,7 +5,7 @@ from unitxt.inference import (
 from unitxt.llm_as_judge import LLMAsJudge
 
 model_list = ["meta-llama/llama-3-8b-instruct", "meta-llama/llama-3-70b-instruct"]
-format = "formats.llama3_chat"
+format = "formats.llama3_instruct"
 templates = [
     "templates.response_assessment.pairwise_comparative_rating.arena_hard",
     "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",

@@ -8,6 +8,6 @@
     },
     "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
     "task": "pairwise_comparative_rating.single_turn",
-    "format": "formats.llama3_chat",
+    "format": "formats.llama3_instruct",
     "main_score": "llama_3_70b_instruct_ibm_genai_template_arena_hard_with_shuffling"
 }
