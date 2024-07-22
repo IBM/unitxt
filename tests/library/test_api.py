@@ -24,7 +24,7 @@ class TestAPI(UnitxtTestCase):
             '"min_value": 1.0, '
             '"max_value": 5.0, '
             '"attribute_value": 5.0, '
-            '"metadata": {"template": "templates.regression.two_texts.simple"}}',
+            '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -53,7 +53,10 @@ class TestAPI(UnitxtTestCase):
                 "min_value": 1.0,
                 "max_value": 5.0,
                 "attribute_value": 5.0,
-                "metadata": {"template": "templates.regression.two_texts.simple"},
+                "metadata": {
+                    "data_classification_policy": ["public"],
+                    "template": "templates.regression.two_texts.simple",
+                },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
             "group": "unitxt",
@@ -125,7 +128,14 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\n"
+            "premise: When Tatyana reached the cabin, her mother was sleeping. "
+            "She was careful not to disturb her, undressing and climbing back "
+            "into her berth.\n"
+            "hypothesis: mother was careful not to disturb her, undressing and "
+            "climbing back into her berth.\n"
+            "The entailment class is entailment\n\n"
+            "premise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
             "target": "?",
             "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
@@ -135,7 +145,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -164,7 +174,14 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.\nhypothesis: The police were trying to stop the drug trade in the neighborhood.\nThe entailment class is not entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\n"
+            "premise: When Tatyana reached the cabin, her mother was sleeping. "
+            "She was careful not to disturb her, undressing and climbing back "
+            "into her berth.\n"
+            "hypothesis: mother was careful not to disturb her, undressing and "
+            "climbing back into her berth.\n"
+            "The entailment class is entailment\n\n"
+            "premise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
             "target": "?",
             "references": ["?"],
             "task_data": '{"text_a": "It works perfectly", '
@@ -174,7 +191,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",

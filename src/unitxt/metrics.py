@@ -47,7 +47,6 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
@@ -327,6 +326,7 @@ class MetricWithConfidenceInterval(Metric):
             # otherwise, the aggregation_func needs to be applied AFTER resampling the instances;
             #   that is, re-form the groups, calculate the function, and take the mean of the group scores
             aggregation_func = self.average_item_scores
+
         for score_name in score_names:
             # If all computed instance level scores are the same, there is no point in computing
             # confidence intervals. So skip to the next score.
@@ -525,7 +525,6 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-
         global_score.update(self._add_score_prefixes_to_score_dict(result))
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
@@ -576,7 +575,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     reduction_map: Dict[str, List[str]]
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    implemented_reductions: List[str] = field(
+        default_factory=lambda: ["mean", "weighted_win_rate"]
+    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
@@ -651,6 +652,26 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instances=instances, score_names=ci_fields_with_prefix
                 )
                 global_score.update(confidence_interval)
+            if reduction == "weighted_win_rate":
+                for field_name in fields:
+                    field_name_with_prefix = self._add_score_prefix(field_name)
+                    total_battles = 0
+                    wins = 0
+                    for instance in instances:
+                        s = instance["score"]["instance"][field_name_with_prefix]
+                        if s > 0:
+                            total_battles += s
+                            wins += s
+                        elif s < 0:
+                            total_battles += abs(s)
+                        else:
+                            total_battles += 2
+                            wins += 1
+
+                    global_score[field_name_with_prefix] = wins / total_battles
+                    if field_name == self.main_score:
+                        global_score["score"] = global_score[field_name_with_prefix]
+                        global_score["score_name"] = self.score_prefix + self.main_score
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
@@ -664,6 +685,183 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         pass
+
+
+class WeightedWinRateCorrelation(GlobalMetric):
+    main_score = "spearman_corr"
+    average = None  # Report per class then aggregate by mean
+    metric = "weighted_win_rate_correlation"
+    # prediction_type = "int"
+    # single_reference_per_prediction = True
+
+    # prediction_type = "int"
+
+    @staticmethod
+    def _update_battles_dataframe(
+        df: pd.DataFrame,
+        model_a: str,
+        model_b: str,
+        model_a_wins: int,
+        model_b_wins: int,
+    ):
+        import pandas as pd
+
+        # Sort the model tuple alphabetically
+        if model_b < model_a:
+            temp = model_a
+            model_a = model_b
+            model_b = temp
+            temp = model_a_wins
+            model_a_wins = model_b_wins
+            model_b_wins = temp
+
+        # Check if a row with these models already exists
+        row = df[(df["model_a"] == model_a) & (df["model_b"] == model_b)]
+
+        if not row.empty:
+            # Update the existing row
+            index = row.index[0]
+            df.at[index, "model_a_win_count"] += model_a_wins
+            df.at[index, "model_b_win_count"] += model_b_wins
+            df.at[index, "total_battles"] += model_a_wins + model_b_wins
+        else:
+            # Add a new row
+            new_row = {
+                "model_a": model_a,
+                "model_b": model_b,
+                "model_a_win_count": model_a_wins,
+                "model_b_win_count": model_b_wins,
+                "total_battles": model_a_wins + model_b_wins,
+            }
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        return df
+
+    @staticmethod
+    def _get_win_rate_df(df: pd.DataFrame):
+        # Step 1: Aggregate wins for each model
+        # Create separate DataFrames for wins and battles
+        df_wins_a = df[["model_a", "model_a_win_count"]].rename(
+            columns={"model_a": "model", "model_a_win_count": "wins"}
+        )
+        df_wins_b = df[["model_b", "model_b_win_count"]].rename(
+            columns={"model_b": "model", "model_b_win_count": "wins"}
+        )
+        df_wins = pd.concat([df_wins_a, df_wins_b])
+
+        # Aggregate total wins for each model
+        total_wins = df_wins.groupby("model").sum().reset_index()
+
+        # Step 2: Calculate total battles for each model
+        # Count appearances in model_a and model_b
+        battles_a = df[["model_a", "total_battles"]].rename(
+            columns={"model_a": "model"}
+        )
+        battles_b = df[["model_b", "total_battles"]].rename(
+            columns={"model_b": "model"}
+        )
+        battles = pd.concat([battles_a, battles_b])
+
+        # Aggregate total battles for each model
+        total_battles = battles.groupby("model").sum().reset_index()
+
+        # Step 3: Merge and compute win rate
+        win_rates = total_wins.merge(total_battles, on="model")
+        win_rates["win_rate"] = win_rates["wins"] / win_rates["total_battles"]
+        return win_rates
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ) -> dict:
+        import pandas as pd
+
+        """Computes a scores dictionary on a list of references, predictions and input.
+
+        This function is called once per instance, and then another time
+        over all data instances.
+
+        Returns:
+            a dictionary of scores that is set as:
+              the instance scores when called on a single data instance
+              the global score when called on the all data instances
+        """
+        if len(predictions) == 1:
+            prediction = predictions[0]
+            gold_ref = references[0][0]
+            return {"loss": abs(prediction - gold_ref)}
+
+        pred_df = pd.DataFrame(
+            columns=[
+                "model_a",
+                "model_b",
+                "model_a_win_count",
+                "model_b_win_count",
+                "total_battles",
+            ]
+        )
+        ref_df = pd.DataFrame(
+            columns=[
+                "model_a",
+                "model_b",
+                "model_a_win_count",
+                "model_b_win_count",
+                "total_battles",
+            ]
+        )
+
+        for instance_task_data, prediction, gold_ref in zip(
+            task_data, predictions, references
+        ):
+            gold_ref = int(gold_ref[0])
+            model_a = instance_task_data["model_a"]
+            model_b = instance_task_data["model_b"]
+            if prediction > 0:
+                model_a_wins = prediction
+                model_b_wins = 0
+            elif prediction < 0:
+                model_a_wins = 0
+                model_b_wins = -1 * prediction
+            else:
+                model_a_wins = 1
+                model_b_wins = 1
+
+            pred_df = self._update_battles_dataframe(
+                pred_df, model_a, model_b, model_a_wins, model_b_wins
+            )
+
+            if gold_ref > 0:
+                model_a_wins = gold_ref
+                model_b_wins = 0
+            elif gold_ref < 0:
+                model_a_wins = 0
+                model_b_wins = -1 * gold_ref
+            else:
+                model_a_wins = 1
+                model_b_wins = 1
+
+            ref_df = self._update_battles_dataframe(
+                ref_df, model_a, model_b, model_a_wins, model_b_wins
+            )
+
+        pred_df_win_rate = self._get_win_rate_df(pred_df)
+        ref_df_win_rate = self._get_win_rate_df(ref_df)
+
+        from scipy.stats import pearsonr, spearmanr
+
+        merged_df = pd.merge(
+            pred_df_win_rate, ref_df_win_rate, on="model", suffixes=("_pred", "_ref")
+        )
+        pearson_corr, _ = pearsonr(
+            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+        )
+        spearman_corr, _ = spearmanr(
+            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+        )
+
+        return {"pearson_corr": pearson_corr, "spearman_corr": spearman_corr}
 
 
 class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
@@ -1300,6 +1498,81 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
         return results
 
 
+class HuggingfaceInstanceMetric(InstanceMetric):
+    hf_metric_name: str
+
+    hf_metric_fields: List[str]
+    hf_compute_args: dict = {}
+
+    def prepare(self):
+        super().prepare()
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # invokes  module.compute, which invokes, e.g., meteor's _compute
+
+        try:
+            score = self.metric.compute(
+                predictions=[prediction],
+                references=[references],
+                **self.hf_compute_args,
+            )
+        except:
+            score = {self.main_score: np.nan}
+
+        if self.hf_metric_fields is not None and len(self.hf_metric_fields) > 0:
+            to_ret = {field: score[field] for field in self.hf_metric_fields}
+            score = to_ret
+
+        return score
+
+
+class Meteor(InstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = "str"
+
+    _requirements_list: List[str] = ["nltk"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+    # unitxt uses nltk version >= 3.8
+
+    def prepare(self):
+        import nltk
+
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
+
+    def verify(self):
+        import importlib.metadata as importlib_metadata
+
+        from datasets.config import version
+
+        nltk_version = version.parse(importlib_metadata.version("nltk"))
+        assert nltk_version >= version.Version(
+            "3.6.6"
+        ), "nltk version must be at least 3.6.6"
+
+    def compute(self, references, prediction, task_data):
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {"meteor": score}
+
+
 class F1(GlobalMetric):
     _metric = None
     main_score = "f1_macro"
@@ -1691,7 +1964,49 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(HuggingfaceMetric):
+class Rouge(InstanceMetric):
+    main_score = "rougeL"
+    prediction_type = "str"
+    single_reference_per_prediction = False  # multiple references allowed
+    rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+    sent_split_newline: bool = True
+    _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+    def prepare(self):
+        import nltk
+        from rouge_score import rouge_scorer
+
+        self.rouge_scorer = rouge_scorer
+
+        nltk.download("punkt", quiet=True)
+        self.sent_tokenize = nltk.sent_tokenize
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # for a single instance, prediction is of type str, and references: list of str
+        if self.sent_split_newline:
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
+            references = [
+                "\n".join(self.sent_tokenize(reference.strip()))
+                for reference in references
+            ]
+
+        # the following is taken from HF rouge, using the defaults:
+        # use_aggregator=True, use_stemmer=False, tokenizer=None
+        scorer = self.rouge_scorer.RougeScorer(
+            rouge_types=self.rouge_types, use_stemmer=False, tokenizer=None
+        )
+        # with Unitxt, references is a list
+        score = scorer.score_multi(references, prediction)
+        for key in score:
+            score[key] = score[key].fmeasure
+        return score
+
+
+class RougeHF(HuggingfaceInstanceMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -1699,8 +2014,10 @@ class Rouge(HuggingfaceMetric):
     prediction_type = "str"
     single_reference_per_prediction = False  # multiple references allowed
 
-    use_aggregator: bool = True
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
+    hf_metric_fields = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+    ci_scores = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
 
     sent_split_newline: bool = True
 
@@ -1709,26 +2026,33 @@ class Rouge(HuggingfaceMetric):
     def prepare(self):
         super().prepare()
 
+        # We don't use the aggregation, to avoid running bootstrapping by the
+        # internal library (which is costly) and done by Unitxt in any case.
         self.hf_compute_args.update(
-            {"use_aggregator": self.use_aggregator, "rouge_types": self.rouge_types}
+            {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
         import nltk
 
-        nltk.download("punkt")
+        nltk.download("punkt", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
-    def compute(self, references, predictions, task_data: List[Dict]):
+    def compute(self, references, prediction, task_data: List[Dict]):
+        # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            predictions = [
-                "\n".join(self.sent_tokenize(prediction.strip()))
-                for prediction in predictions
-            ]
+            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+
             references = [
-                ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                "\n".join(self.sent_tokenize(reference.strip()))
                 for reference in references
             ]
-        return super().compute(references, predictions, task_data)
+
+        hf_score = super().compute(references, prediction, task_data)
+        for metric_field in self.hf_metric_fields:
+            if isinstance(hf_score[metric_field], list):
+                assert len(hf_score[metric_field]) == 1
+                hf_score[metric_field] = hf_score[metric_field][0]
+        return hf_score
 
 
 # Computes char edit distance, ignoring whitespace

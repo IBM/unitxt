@@ -1,3 +1,5 @@
+import sys
+
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
@@ -5,6 +7,7 @@ from unitxt.operators import (
     GetItemByIndex,
     RenameFields,
     Set,
+    Shuffle,
 )
 from unitxt.span_lableing_operators import IobExtractor
 from unitxt.test_utils.card import test_card
@@ -48,6 +51,8 @@ for sub_task in sub_tasks:
             requirements_list=["conllu"],
         ),
         preprocess_steps=[
+            # The dataset is sorted by classes
+            Shuffle(page_size=sys.maxsize),
             RenameFields(
                 field_to_field={"ner_tags": "labels"},
             ),
