@@ -46,7 +46,7 @@ class SubsetCreationConstants:
     NEGATIVE_DOCUMENTS_FACTOR = 4
 
 
-# We want to create a subset of ClapNq - based on a subset of 200 questions from the benchmark.
+# We want to create a subset of ClapNq - based on a subset of questions from the benchmark.
 random.seed(SubsetCreationConstants.RANDOM_SEED)
 # 1 - first we read the benchmark and the documents
 benchmark_train_df = pd.read_csv(ClapNqBenchmarkConstants.TRAIN_RAW_FILE_URL, sep="\t")
