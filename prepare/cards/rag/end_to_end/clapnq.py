@@ -41,7 +41,7 @@ class ClapNqDocumentsConstants:
 @dataclass(frozen=True)
 class SubsetCreationConstants:
     # For subset creation
-    SUBSET_SIZE = 10
+    SUBSET_SIZE = 100
     RANDOM_SEED = 43
     NEGATIVE_DOCUMENTS_FACTOR = 4
 
