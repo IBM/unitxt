@@ -41,12 +41,12 @@ add_to_catalog(
             "processors.lower_case_till_punc",
         ],
     ),
-    "templates.generation.structured.with_caption",
+    "templates.generation.with_caption",
     overwrite=True,
 )
 
 add_to_catalog(
-    TemplatesList(["templates.generation.structured.with_caption"]),
+    TemplatesList(["templates.generation.with_caption"]),
     "templates.generation.structured",
     overwrite=True,
 )
