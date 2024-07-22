@@ -1,0 +1,109 @@
+{
+    "__type__": "task_card",
+    "loader": [
+        {
+            "__type__": "load_from_dictionary",
+            "data": {
+                "train": [
+                    {
+                        "id": -4258357150327998742,
+                        "question": "the meaning behind the song you raise me up",
+                        "doc-id-list": "850565219_1659-2204",
+                        "answers": "The song was made by and for Løvland himself and performed for the very first time at the funeral of Løvland's mother. He noted ``there's something about the song people are embracing - which becomes emotionally strong. I believe people think of it as a song they use for their own purposes."
+                    }
+                ],
+                "test": [
+                    {
+                        "id": 8713188615749424843,
+                        "question": "which stage of the cell cycle is variable",
+                        "doc-id-list": "807039939_6640-7777",
+                        "answers": "The first phase within interphase , from the end of the previous M phase until the beginning of DNA synthesis , is called G ( G indicating gap ) .\r\nThe duration of G is highly variable , even among different cells of the same species .::The duration of G (G indicating gap), the first phase within interphase, is highly variable, even among different cells of the same species."
+                    },
+                    {
+                        "id": -5564082149455239127,
+                        "question": "who is quality of human being is necessary to lead a happy life",
+                        "doc-id-list": "799861066_3352-4764",
+                        "answers": "Researchers have begun in recent times to distinguish two aspects of personal well - being : Emotional well - being , in which respondents are asked about the quality of their everyday emotional experiences -- the frequency and intensity of their experiences of , for example , joy , stress , sadness , anger , and affection -- and life evaluation , in which respondents are asked to think about their life in general and evaluate it against a scale .\r\nQuality of life can simply mean happiness , the subjective state of mind ."
+                    },
+                    {
+                        "id": 2013677806126951373,
+                        "question": "give three reasons why the fynbos biome is so important to south africa and the world",
+                        "doc-id-list": "804464877_3428-4531",
+                        "answers": "Of the world 's six floral kingdoms, Fynbos is the smallest and richest per unit of area. The diversity of fynbos plants is extremely high, with over 9000 species of plants occurring in the area, around 6200 of which are endemic, i.e. growing nowhere else in the world. South Africa's Western Cape has a level of botanic diversity that exceeds that of the richest tropical rainforest in South America, including the Amazon. Of the Ericas, over 600 occur in the fynbos kingdom, while only two or three dozen have been described in the rest of the world."
+                    },
+                    {
+                        "id": 3176041515418332100,
+                        "question": "what kind of car is the mach 5",
+                        "doc-id-list": "828161756_258-976",
+                        "answers": "The Mach Five is the racing car Speed Racer drives in the anime series of the same name.  It features a set of special devices which Speed Racer uses throughout the series. In the original 1967 series, the Mach Five is a white racing car with an \"M\" written on its hood.  In the 1993 American remake, the design was completely changed."
+                    },
+                    {
+                        "id": -8041775374831436682,
+                        "question": "what happens to toby at the end of the office",
+                        "doc-id-list": "822159927_64585-66528",
+                        "answers": "In the series finale, it's revealed that Toby was fired immediately after Dwight fired Kevin Malone and Toby then moved to New York where he's trying to become a novelist and has six roommates.  In a photo gallery NBC released of `` where are they now? '' info, it's revealed that Toby has returned to his destiny by taking on an HR position at a TJ Maxx store.::In the series finale, it's revealed that Toby was fired and then moved to New York where he's trying to become a novelist. In a photo gallery NBC released of `` where are they now? '' info, it's revealed that Toby has returned to his destiny by taking on an HR position at a TJ Maxx store."
+                    },
+                    {
+                        "id": -2399489377049908954,
+                        "question": "when did the us place an embargo on cuba",
+                        "doc-id-list": "800332980_257-1955",
+                        "answers": "An embargo was first imposed by the United States on sale of arms to Cuba on March 14, 1958, during the Fulgencio Batista regime.  Again on October 19, 1960 (almost two years after the Batista regime was deposed by the Cuban Revolution) the U.S. placed an embargo on exports to Cuba except for food and medicine after Cuba nationalized American-owned Cuban oil refineries without compensation.  On February 7, 1962 the embargo was extended to include almost all imports.  Currently, the Cuban embargo is enforced mainly through six statutes: the Trading with the Enemy Act of 1917, the Foreign Assistance Act of 1961, the Cuban Assets Control Regulations of 1963, the Cuban Democracy Act of 1992, the Helms--Burton Act of 1996, and the Trade Sanctions Reform and Export Enhancement Act of 2000.   In 1999, President Bill Clinton expanded the trade embargo by also disallowing foreign subsidiaries of U.S. companies to trade with Cuba.::An embargo was first imposed by the United States on sale of arms to Cuba on March 14, 1958, during the Fulgencio Batista regime. On October 19, 1960, the U.S. placed an embargo on exports to Cuba except for food and medicine after Cuba nationalized American-owned Cuban oil refineries without compensation. On February 7, 1962 the embargo was extended to include almost all imports. Currently, the Cuban embargo is enforced mainly through six statutes: the Trading with the Enemy Act of 1917, the Foreign Assistance Act of 1961, the Cuban Assets Control Regulations of 1963, the Cuban Democracy Act of 1992, the Helms--Burton Act of 1996, and the Trade Sanctions Reform and Export Enhancement Act of 2000. In 1999, President Bill Clinton expanded the trade embargo by also disallowing foreign subsidiaries of U.S. companies to trade with Cuba."
+                    },
+                    {
+                        "id": -8687340786359128185,
+                        "question": "who came up with the concept of time",
+                        "doc-id-list": "863646880_6992-7938",
+                        "answers": "Artifacts from the Paleolithic suggest that the moon was used to reckon time as early as 6,000 years ago.   Other early forms of calendars originated in Mesoamerica, particularly in ancient Mayan civilization."
+                    },
+                    {
+                        "id": -325736180194371137,
+                        "question": "what is the meaning of ayes and noes",
+                        "doc-id-list": "855883720_11344-11863",
+                        "answers": "When a question is stated by the Speaker in the House of Commons,   shouts of `` Aye '' , indicate agreement,  shouts of `` No '' indicate disagreement."
+                    },
+                    {
+                        "id": 2960221046363328616,
+                        "question": "who wrote cant get you out of my head",
+                        "doc-id-list": "799567928_777-1431",
+                        "answers": "`` Can't Get You Out of My Head '' is a song recorded by Australian singer Kylie Minogue and jointly written, composed, and produced by Cathy Dennis and Rob Davis."
+                    }
+                ]
+            }
+        }
+    ],
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "id": "question_id"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "reference_contexts": [],
+                "is_answerable_label": true,
+                "metadata_field": ""
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "doc-id-list"
+            ],
+            "to_field": "reference_context_ids"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "answers"
+            ],
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.end_to_end",
+    "templates": {
+        "default": "templates.rag.end_to_end.json_predictions"
+    }
+}
