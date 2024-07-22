@@ -10,10 +10,12 @@ We are evaluating only on a small subset (by using "select(range(4)), in order f
 The dataset full size if around 40k examples. You should use around 1k-4k in your evaluations.
 """
 dataset = load_dataset(
-    f"card=cards.arena_hard.generation.english_gpt_4_0314_reference,"
-    "template=templates.empty,"
-    f"format={model_format},"
-    "metrics=['metrics.llm_as_judge.pairwise_comparative_rating.llama_3_8b_instruct_ibm_genai_template_arena_hard_with_shuffling']"
+    card="cards.arena_hard.generation.english_gpt_4_0314_reference",
+    template="templates.empty",
+    format=model_format,
+    metrics=[
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_8b_instruct_ibm_genai_template_arena_hard_with_shuffling"
+    ],
 )["test"].select(range(4))
 
 inference_model = MockInferenceEngine(model_name=model_id)

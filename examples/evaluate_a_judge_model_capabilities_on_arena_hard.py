@@ -10,9 +10,9 @@ We are evaluating only on a small subset (by using "select(range(4)), in order f
 The dataset full size if around 40k examples. You should use around 1k-4k in your evaluations.
 """
 dataset = load_dataset(
-    f"card=cards.arena_hard.response_assessment.pairwise_comparative_rating.both_games_gpt_4_judge,"
-    "template=templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling,"
-    f"format={model_format}"
+    card="cards.arena_hard.response_assessment.pairwise_comparative_rating.both_games_gpt_4_judge",
+    template="templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
+    format=model_format,
 )["test"].select(range(4))
 
 inference_model = MockInferenceEngine(model_name=model_id)
