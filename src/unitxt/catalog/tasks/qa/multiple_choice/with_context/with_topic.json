@@ -8,7 +8,7 @@
         "choices": "List[str]"
     },
     "outputs": {
-        "answer": "Union[int,str]",
+        "answer": "Union[int, str]",
         "choices": "List[str]"
     },
     "prediction_type": "str",

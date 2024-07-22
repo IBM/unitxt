@@ -24,9 +24,9 @@ card = TaskCard(
     loader=LoadFromDictionary(data=data),
     # Define the QA task input and output and metrics.
     task=Task(
-        inputs={"question": "str"},
-        outputs={"answer": "str"},
-        prediction_type="str",
+        inputs={"question": str},
+        outputs={"answer": str},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     # Create a simple template that formats the input.

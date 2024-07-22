@@ -546,7 +546,7 @@ class OutputQuantizingTemplate(InputOutputTemplate):
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
     labels_separator: str = ", "
-    postprocessors: List[str] = ["processors.to_list_by_comma"]
+    postprocessors = ["processors.to_list_by_comma"]
     output_format: str = "{labels}"
     empty_label: str = "None"
 

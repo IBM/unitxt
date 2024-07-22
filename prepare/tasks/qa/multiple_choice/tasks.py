@@ -1,16 +1,18 @@
+from typing import List, Union
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
         inputs={
-            "context": "str",
-            "context_type": "str",
-            "question": "str",
-            "choices": "List[str]",
+            "context": str,
+            "context_type": str,
+            "question": str,
+            "choices": List[str],
         },
-        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
-        prediction_type="str",
+        outputs={"answer": Union[int, str], "choices": List[str]},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context",
@@ -20,9 +22,9 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"topic": "str", "question": "str", "choices": "List[str]"},
-        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
-        prediction_type="str",
+        inputs={"topic": str, "question": str, "choices": List[str]},
+        outputs={"answer": Union[int, str], "choices": List[str]},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_topic",
@@ -31,9 +33,9 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"question": "str", "choices": "List[str]"},
-        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
-        prediction_type="str",
+        inputs={"question": str, "choices": List[str]},
+        outputs={"answer": Union[int, str], "choices": List[str]},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.open",
@@ -43,14 +45,14 @@ add_to_catalog(
 add_to_catalog(
     Task(
         inputs={
-            "topic": "str",
-            "context": "str",
-            "context_type": "str",
-            "question": "str",
-            "choices": "List[str]",
+            "topic": str,
+            "context": str,
+            "context_type": str,
+            "question": str,
+            "choices": List[str],
         },
-        outputs={"answer": "Union[int,str]", "choices": "List[str]"},
-        prediction_type="str",
+        outputs={"answer": Union[int, str], "choices": List[str]},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context.with_topic",

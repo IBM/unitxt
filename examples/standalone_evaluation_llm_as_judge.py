@@ -56,9 +56,9 @@ llm_judge_metric = LLMAsJudge(
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
     task=Task(
-        inputs={"question": "str"},
-        outputs={"answer": "str"},
-        prediction_type="str",
+        inputs={"question": str},
+        outputs={"answer": str},
+        prediction_type=str,
         metrics=[llm_judge_metric],
     ),
     templates=TemplatesDict(

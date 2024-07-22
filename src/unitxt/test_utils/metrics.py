@@ -147,6 +147,11 @@ def test_evaluate(
     task_data: Optional[List[dict]],
     metric_name: str,
 ):
+    if settings.test_metric_disable:
+        logger.info(
+            "test_evaluate() functionality is disabled because unitxt.settings.test_metric_disable=True or UNITXT_TEST_METRIC_DISABLE environment variable is set"
+        )
+        return
     evaluation_result, global_outputs = evaluate(
         task_data, metric_names=[metric_name], compute_conf_intervals=True
     )

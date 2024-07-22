@@ -1,10 +1,21 @@
+from typing import List
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs=["input", "input_type", "output_type", "choices", "instruction"],
-        outputs=["choices", "output_choice"],
+        inputs={
+            "input": str,
+            "input_type": str,
+            "output_type": str,
+            "choices": List[str],
+            "instruction": str,
+        },
+        outputs={
+            "choices": List[str],
+            "output_choice": int,
+        },
         metrics=[
             "metrics.accuracy",
         ],

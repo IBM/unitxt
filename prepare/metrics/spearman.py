@@ -10,7 +10,7 @@ metric = MetricPipeline(
         Copy(field="references/0", to_field="references"),
     ],
     metric=Spearmanr(),
-    prediction_type="float",
+    prediction_type=float,
 )
 
 predictions = [1.0, 2.0, 1.0]

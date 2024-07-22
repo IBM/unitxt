@@ -25,9 +25,9 @@ The task is formally defined as:
    from unitxt.blocks import Task
 
    task = Task(
-        inputs={"num1" : "int", "num2" : "int"},
-        outputs={"sum" : "int"},
-        prediction_type="int",
+        inputs={"num1" : int, "num2" : int},
+        outputs={"sum" : int},
+        prediction_type=int,
         metrics=[
             "metrics.sum_accuracy",
             "metrics.sum_accuracy_approximate"

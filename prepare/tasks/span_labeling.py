@@ -1,21 +1,23 @@
+from typing import List, Tuple
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
         inputs={
-            "text": "str",
-            "text_type": "str",
-            "class_type": "str",
-            "classes": "List[str]",
+            "text": str,
+            "text_type": str,
+            "class_type": str,
+            "classes": List[str],
         },
         outputs={
-            "text": "str",
-            "spans_starts": "List[int]",
-            "spans_ends": "List[int]",
-            "labels": "List[str]",
+            "text": str,
+            "spans_starts": List[int],
+            "spans_ends": List[int],
+            "labels": List[str],
         },
-        prediction_type="List[Tuple[str,str]]",
+        prediction_type=List[Tuple[str, str]],
         metrics=[
             "metrics.ner",
         ],

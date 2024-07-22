@@ -161,6 +161,18 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def prediction_type_definition(self):
+        class TempAccuracy(Accuracy):
+            prediction_type = int
+
+        self.assertEqual(TempAccuracy().prediction_type, int)
+
+    def test_prediction_type_definition_deprecated(self):
+        class TempAccuracy2(Accuracy):
+            prediction_type = "int"
+
+        self.assertEqual(TempAccuracy2().prediction_type, int)
+
     def test_accuracy(self):
         metric = Accuracy()
 

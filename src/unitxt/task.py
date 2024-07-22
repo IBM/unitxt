@@ -2,15 +2,31 @@ from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
+from .deprecation_utils import deprecation
 from .logging_utils import get_logger
 from .operator import InstanceOperator
 from .type_utils import (
+    Type,
     get_args,
     get_origin,
+    is_type_dict,
     isoftype,
+    parse_type_dict,
     parse_type_string,
+    to_type_dict,
+    to_type_string,
     verify_required_schema,
 )
+
+
+@deprecation(
+    version="2.0.0",
+    msg="use python type instead of type strings (e.g Dict[str] instead of 'Dict[str]')",
+)
+def parse_string_types_instead_of_actual_objects(obj):
+    if isinstance(obj, dict):
+        return parse_type_dict(obj)
+    return parse_type_string(obj)
 
 
 class Task(InstanceOperator):
@@ -38,24 +54,34 @@ class Task(InstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    inputs: Union[Dict[str, str], List[str]]
-    outputs: Union[Dict[str, str], List[str]]
+    inputs: Union[Dict[str, Type], Dict[str, str], List[str]]
+    outputs: Union[Dict[str, Type], List[str]]
     metrics: List[str]
-    prediction_type: Optional[str] = None
+    prediction_type: Optional[Union[Type, str]] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
+
+    def prepare(self):
+        if isoftype(self.inputs, Dict[str, str]):
+            self.inputs = parse_string_types_instead_of_actual_objects(self.inputs)
+        if isoftype(self.outputs, Dict[str, str]):
+            self.outputs = parse_string_types_instead_of_actual_objects(self.outputs)
+        if isinstance(self.prediction_type, str):
+            self.prediction_type = parse_string_types_instead_of_actual_objects(
+                self.prediction_type
+            )
 
     def verify(self):
         for io_type in ["inputs", "outputs"]:
             data = self.inputs if io_type == "inputs" else self.outputs
-            if not isoftype(data, Dict[str, str]):
+            if isinstance(data, list) or not is_type_dict(data):
                 get_logger().warning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
-                    f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
+                    f"For example, {{'text': str, 'classes': List[str]}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
                     f"will raise an exception."
                 )
-                data = {key: "Any" for key in data}
+                data = {key: Any for key in data}
                 if io_type == "inputs":
                     self.inputs = data
                 else:
@@ -68,7 +94,7 @@ class Task(InstanceOperator):
                 "Setting `prediction_type` to 'Any' (no checking is done). In future version "
                 "of unitxt this will raise an exception."
             )
-            self.prediction_type = "Any"
+            self.prediction_type = Any
 
         self.check_metrics_type()
 
@@ -79,14 +105,33 @@ class Task(InstanceOperator):
 
         self.verify_defaults()
 
+    @classmethod
+    def process_data_after_load(cls, data):
+        if isinstance(data["inputs"], dict):
+            data["inputs"] = parse_type_dict(data["inputs"])
+        if isinstance(data["outputs"], dict):
+            data["outputs"] = parse_type_dict(data["outputs"])
+        if "prediction_type" in data:
+            data["prediction_type"] = parse_type_string(data["prediction_type"])
+        return data
+
+    def process_data_before_dump(self, data):
+        if isinstance(data["inputs"], dict):
+            data["inputs"] = to_type_dict(data["inputs"])
+        if isinstance(data["outputs"], dict):
+            data["outputs"] = to_type_dict(data["outputs"])
+        if "prediction_type" in data:
+            data["prediction_type"] = to_type_string(data["prediction_type"])
+        return data
+
     @staticmethod
     @lru_cache(maxsize=None)
     def get_metric_prediction_type(metric_id: str):
         metric = fetch_artifact(metric_id)[0]
-        return metric.get_prediction_type()
+        return metric.prediction_type
 
     def check_metrics_type(self) -> None:
-        prediction_type = parse_type_string(self.prediction_type)
+        prediction_type = self.prediction_type
         for metric_id in self.metrics:
             metric_prediction_type = Task.get_metric_prediction_type(metric_id)
 
@@ -131,9 +176,9 @@ class Task(InstanceOperator):
                     f"was provided which does not match any of the keys."
                 )
 
-                assert isoftype(default_value, parse_type_string(val_type)), (
+                assert isoftype(default_value, val_type), (
                     f"The value of '{default_name}' from the 'defaults' must be of "
-                    f"type '{val_type}', however, it is of type '{type(default_value)}'."
+                    f"type '{to_type_string(val_type)}', however, it is of type '{type(default_value)}'."
                 )
 
     def set_default_values(self, instance: Dict[str, Any]) -> Dict[str, Any]:
@@ -161,5 +206,6 @@ class Task(InstanceOperator):
         }
 
 
+@deprecation(version="2.0.0", alternative=Task)
 class FormTask(Task):
     pass
