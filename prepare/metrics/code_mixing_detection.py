@@ -1,4 +1,3 @@
-import torch
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import IsCodeMixed
@@ -35,9 +34,9 @@ global_target = {
 
 metric = IsCodeMixed()
 
-if not torch.cuda.is_available() and not torch.backends.mps.is_available():
-    logger.info("no gpu available, cannot test metric")
-else:
+# Because the metric requires downloading very large model (multiple >10GBs), only run
+# the test when explicitly requested.
+if __name__ == "__main__":
     outputs = test_metric(
         metric=metric,
         predictions=examples,
