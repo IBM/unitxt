@@ -1,5 +1,6 @@
 import ast
 import json
+import os
 import re
 import string
 import uuid
@@ -26,6 +27,7 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
+from .doc_utils import DOCUMENTATION_HUGGINGFACE_METRICS, additional_info
 from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -1373,6 +1375,12 @@ class HuggingfaceMetric(GlobalMetric):
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
 
     def verify(self):
+        if os.path.exists(self.hf_metric_name):
+            logger.warning(
+                f"{self.get_metric_name()} uses a huggingface metric {self.hf_metric_name} which is defined in a local file."
+                f"This may cause issues when running on different machine or different root directories. {additional_info(DOCUMENTATION_HUGGINGFACE_METRICS)}"
+            )
+
         assert (
             self.hf_additional_input_fields is None
             or isoftype(self.hf_additional_input_fields, List[str])

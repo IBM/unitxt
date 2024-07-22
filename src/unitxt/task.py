@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .dataclass import DeprecatedField
+from .doc_utils import DOCUMENTATION_ADDING_TASK, additional_info
 from .logging_utils import get_logger
 from .operator import InstanceOperator
 from .type_utils import (
@@ -94,6 +95,7 @@ class Task(InstanceOperator):
                     f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
                     f"will raise an exception."
+                    + additional_info(DOCUMENTATION_ADDING_TASK)
                 )
                 data = {key: "Any" for key in data}
                 if io_type == "input_fields":
@@ -107,6 +109,7 @@ class Task(InstanceOperator):
                 "template post processors is compatible with the expected input of the metrics. "
                 "Setting `prediction_type` to 'Any' (no checking is done). In future version "
                 "of unitxt this will raise an exception."
+                + additional_info(DOCUMENTATION_ADDING_TASK)
             )
             self.prediction_type = "Any"
 
@@ -144,6 +147,7 @@ class Task(InstanceOperator):
             raise ValueError(
                 f"The task's prediction type ({prediction_type}) and '{metric_id}' "
                 f"metric's prediction type ({metric_prediction_type}) are different."
+                + additional_info(DOCUMENTATION_ADDING_TASK)
             )
 
     def verify_defaults(self):
@@ -153,6 +157,7 @@ class Task(InstanceOperator):
                     f"If specified, the 'defaults' must be a dictionary, "
                     f"however, '{self.defaults}' was provided instead, "
                     f"which is of type '{type(self.defaults)}'."
+                    + additional_info(DOCUMENTATION_ADDING_TASK)
                 )
 
             for default_name, default_value in self.defaults.items():

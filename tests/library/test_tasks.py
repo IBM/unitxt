@@ -17,10 +17,10 @@ class TestTasks(UnitxtTestCase):
         operator.prediction_type = "Dict"
         with self.assertRaises(ValueError) as e:
             operator.check_metrics_type()
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
             "(<class 'str'>) are different.",
+            str(e.exception),
         )
 
     def test_task_metrics_type_checking_with_inputs_outputs(self):
@@ -36,10 +36,10 @@ class TestTasks(UnitxtTestCase):
         operator.prediction_type = "Dict"
         with self.assertRaises(ValueError) as e:
             operator.check_metrics_type()
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
             "(<class 'str'>) are different.",
+            str(e.exception),
         )
 
     def test_task_missing_input_fields(self):
@@ -62,7 +62,7 @@ class TestTasks(UnitxtTestCase):
                 prediction_type="str",
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
+        self.assertIn(
             str(e.exception), "Missing attribute in task: 'reference_fields' not set."
         )
 
