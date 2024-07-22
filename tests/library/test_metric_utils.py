@@ -21,12 +21,16 @@ class TestMetricUtils(UnitxtTestCase):
             def prepare(self):
                 self.n_resamples = None
                 self.rouge_types = ["rougeL"]
+                self.ci_scores = ["rougeL"]
+                self.hf_metric_fields = ["rougeL"]
+                self.reduction_map = {"mean": ["rougeL"]}
                 self.use_aggregator = False
                 super().prepare()
 
-            def compute(self, references, predictions, task_data: List[Dict]):
-                res_list = super().compute(references, predictions, task_data)["rougeL"]
-                return {"rougeL": nanmean(res_list)}
+            def compute(self, references, prediction, task_data: List[Dict]):
+                # single score for a single instance
+                res = super().compute(references, prediction, task_data)["rougeL"]
+                return {"rougeL": res}
 
         metric = AvgRougeNoBootstrap()
         references = [
