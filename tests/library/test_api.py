@@ -24,7 +24,7 @@ class TestAPI(UnitxtTestCase):
             '"min_value": 1.0, '
             '"max_value": 5.0, '
             '"attribute_value": 5.0, '
-            '"metadata": {"template": "templates.regression.two_texts.simple"}}',
+            '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -53,7 +53,10 @@ class TestAPI(UnitxtTestCase):
                 "min_value": 1.0,
                 "max_value": 5.0,
                 "attribute_value": 5.0,
-                "metadata": {"template": "templates.regression.two_texts.simple"},
+                "metadata": {
+                    "data_classification_policy": ["public"],
+                    "template": "templates.regression.two_texts.simple",
+                },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
             "group": "unitxt",
@@ -142,7 +145,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -188,7 +191,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",

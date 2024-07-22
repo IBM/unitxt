@@ -82,18 +82,6 @@ class JoinStreams(MultiStreamOperator):
         left_stream_df = pd.DataFrame(left_stream)
         right_stream_df = pd.DataFrame(right_stream)
 
-        # Remove common col we don't join on, so we don't have unexpected column (standard behavior is to add a suffix)
-        common_cols = set(left_stream_df.columns).intersection(
-            set(right_stream_df.columns)
-        )
-        on = self.on if self.on is not None else []
-        left_on = self.left_on if self.left_on is not None else []
-        right_on = self.right_on if self.right_on is not None else []
-        on_cols = set(on + left_on + right_on)
-        col_to_remove = list(common_cols - on_cols)
-        left_stream_df = left_stream_df.drop(columns=col_to_remove, errors="ignore")
-        right_stream_df = right_stream_df.drop(columns=col_to_remove, errors="ignore")
-
         merged_df = pd.merge(
             left_stream_df,
             right_stream_df,
@@ -101,6 +89,33 @@ class JoinStreams(MultiStreamOperator):
             on=self.on,
             left_on=self.left_on,
             right_on=self.right_on,
+        )
+
+        def assert_col_values_are_identical(
+            df: pd.DataFrame, col_name_1: str, col_name_2
+        ):
+            assert df.apply(
+                lambda row: str(row[col_name_1]) == str(row[col_name_2]),
+                axis=1,
+            ).all()
+
+        # If 2 streams / Dataframes contains column with the same names, which are not the columns the join is operated
+        # on they will be renamed to "[column_name]_x" and "[column_name]_y". Some of these columns are metadsta
+        # columns that unitxt adds, which must be kept the same. This code verify that all datasets have
+        # the same metadata values and rename the columns accordingly.
+        common_cols_to_verify = ["data_classification_policy", "recipe_metadata"]
+        for common_col in common_cols_to_verify:
+            assert_col_values_are_identical(
+                merged_df, f"{common_col}_x", f"{common_col}_y"
+            )
+            merged_df[common_col] = merged_df[f"{common_col}_x"]
+            merged_df = merged_df.drop(
+                columns=[f"{common_col}_x", f"{common_col}_y"], errors="ignore"
+            )
+
+        assert len(merged_df) > 0, (
+            "JoinStreams resulted in an empty stream."
+            " If you used 'loader_limit' it might be the cause of the error"
         )
         return merged_df.to_dict(orient="records")
 
@@ -123,4 +138,22 @@ class DeleteSplits(MultiStreamOperator):
         generators = {
             key: val for key, val in multi_stream.items() if key not in self.splits
         }
+        return MultiStream(generators)
+
+
+class DuplicateSplit(MultiStreamOperator):
+    """Operator which duplicate a split.
+
+    Attributes:
+        split (str): The split to duplicate from the stream.
+        to_split (str): The duplicate split's name.
+    """
+
+    split: str
+    to_split: str
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        assert self.split in multi_stream
+        generators = multi_stream
+        generators[self.to_split] = generators[self.split]
         return MultiStream(generators)
