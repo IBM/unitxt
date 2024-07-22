@@ -43,7 +43,10 @@ class LLMAsJudge(BulkInstanceMetric):
                 instance = SequentialOperator(
                     steps=[template, "formats.empty"]
                 ).process_instance(
-                    {"inputs": task_data_instance, "outputs": task_data_instance}
+                    {
+                        "input_fields": task_data_instance,
+                        "reference_fields": task_data_instance,
+                    }
                 )
                 instances.append(instance["source"])
                 """
