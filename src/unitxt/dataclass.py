@@ -1,6 +1,7 @@
 import copy
 import dataclasses
 import functools
+import inspect
 import warnings
 from abc import ABCMeta
 from inspect import Parameter, Signature
@@ -123,6 +124,17 @@ class UnexpectedArgumentError(TypeError):
 standard_variables = dir(object)
 
 
+def is_class_method(func):
+    if inspect.ismethod(func):
+        return True
+    if inspect.isfunction(func):
+        sig = inspect.signature(func)
+        params = list(sig.parameters.values())
+        if len(params) > 0 and params[0].name in ["self", "cls"]:
+            return True
+    return False
+
+
 def is_possible_field(field_name, field_value):
     """Check if a name-value pair can potentially represent a field.
 
@@ -133,11 +145,11 @@ def is_possible_field(field_name, field_value):
     Returns:
         bool: True if the name-value pair can represent a field, False otherwise.
     """
-    return (
-        field_name not in standard_variables
-        and not field_name.startswith("__")
-        and not callable(field_value)
-    )
+    if field_name in standard_variables:
+        return False
+    if is_class_method(field_value):
+        return False
+    return True
 
 
 def get_fields(cls, attrs):
@@ -180,20 +192,21 @@ def get_fields(cls, attrs):
         }
 
         if field_name in attrs:
-            field = attrs[field_name]
-            if isinstance(field, Field):
-                args = {**dataclasses.asdict(field), **args}
-            elif isinstance(field, dataclasses.Field):
+            field_value = attrs[field_name]
+            if isinstance(field_value, Field):
+                args = {**dataclasses.asdict(field_value), **args}
+            elif isinstance(field_value, dataclasses.Field):
                 args = {
-                    "default": field.default,
-                    "name": field.name,
-                    "type": field.type,
-                    "init": field.init,
-                    "default_factory": field.default_factory,
+                    "default": field_value.default,
+                    "name": field_value.name,
+                    "type": field_value.type,
+                    "init": field_value.init,
+                    "default_factory": field_value.default_factory,
                     **args,
                 }
             else:
-                args["default"] = field
+                args["default"] = field_value
+                args["default_factory"] = None
         else:
             args["default"] = dataclasses.MISSING
             args["default_factory"] = None
@@ -413,6 +426,7 @@ class Dataclass(metaclass=DataclassMeta):
         Checks for abstract fields when an instance is created.
         Warn when a deprecated is used
         """
+        super().__init__()
         _init_fields = [field for field in fields(self) if field.init]
         _init_fields_names = [field.name for field in _init_fields]
         _init_positional_fields_names = [
