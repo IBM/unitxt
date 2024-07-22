@@ -9,8 +9,9 @@
         {
             "__type__": "split_random_mix",
             "mix": {
-                "train": "train[50%]",
-                "test": "train[50%]"
+                "train": "train[70%]",
+                "validation": "train[15%]",
+                "test": "train[15%]"
             }
         },
         {
