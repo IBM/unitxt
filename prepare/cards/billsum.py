@@ -1,9 +1,7 @@
-import sys
-
 from unitxt import add_to_catalog
 from unitxt.blocks import Set, SplitRandomMix, TaskCard
 from unitxt.loaders import LoadHF
-from unitxt.operators import FilterByExpression, RenameFields, Shuffle
+from unitxt.operators import FilterByExpression, RenameFields
 from unitxt.test_utils.card import test_card
 
 # https://huggingface.co/datasets/billsum

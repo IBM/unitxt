@@ -9,15 +9,21 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
     card = TaskCard(
         loader=LoadHF(path="webis/tldr-17", streaming=True),
         preprocess_steps=[
-                             SplitRandomMix({"train": "train[70%]", "validation": "train[15%]", "test": "train[15%]"}),
-                             RenameFields(field_to_field={"content": "document"}),
-                             Set(fields={"document_type": "document"}),
-                         ]
-                         + (
-                             [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}")]
-                             if n_chars_to_filter_by != "max"
-                             else []
-                         ),
+            SplitRandomMix(
+                {
+                    "train": "train[70%]",
+                    "validation": "train[15%]",
+                    "test": "train[15%]",
+                }
+            ),
+            RenameFields(field_to_field={"content": "document"}),
+            Set(fields={"document_type": "document"}),
+        ]
+        + (
+            [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}")]
+            if n_chars_to_filter_by != "max"
+            else []
+        ),
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",
         __tags__={
