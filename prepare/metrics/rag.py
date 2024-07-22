@@ -419,23 +419,6 @@ for axis, base_metric, main_score in [
 
 # end to end
 
-
-class TaskRagEndToEndConstants:
-    # Templates
-    TEMPLATE_RAG_END_TO_END_JSON_PREDICTIONS: str = (
-        "templates.rag.end_to_end.json_predictions"
-    )
-    # Task names
-    TASKS_RAG_END_TO_END: str = "tasks.rag.end_to_end"
-    # Metrics
-
-    # METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS: str = "metrics.rag.end_to_end.answer_correctness"
-    # METRICS_RAG_END_TO_END_ANSWER_REWARD: str = "metrics.rag.end_to_end.answer_reward"
-    # METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS: str = "metrics.rag.end_to_end.answer_faithfulness"
-    # METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS: str = "metrics.rag.end_to_end.context_correctness"
-    # METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE: str = "metrics.rag.end_to_end.context_relevance"
-
-
 end_to_end_artifact_names = [
     "metrics.rag.end_to_end.answer_correctness",
     "metrics.rag.end_to_end.answer_reward",
