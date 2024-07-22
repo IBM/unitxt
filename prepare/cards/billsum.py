@@ -16,7 +16,6 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
             SplitRandomMix(
                 {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
             ),
-            Shuffle(page_size=sys.maxsize),
             RenameFields(field_to_field={"text": "document"}),
             Set(fields={"document_type": "document"}),
         ]
