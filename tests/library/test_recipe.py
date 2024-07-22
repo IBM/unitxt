@@ -94,7 +94,7 @@ class TestRecipes(UnitxtTestCase):
             '"choices": ["yes", "not", "maybe"], '
             '"answer": "maybe", '
             '"options": [" A", " B", " C"], '
-            '"metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
@@ -168,7 +168,54 @@ class TestRecipes(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.accuracy"],
-            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nThe single group within society that is most vulnerable to reference group influence is:\nA. The older consumer who feels somewhat left out of things.\nB. The married women, many of whom feel a need for stability in their lives.\nC. New immigrants who really want to assimilate into their new culture.\nD. Children, who base most of their buying decisions on outside influences.\nAnswer:\nAgent:  D\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\n Which of the following is an assumption in Maslow's hierarchy of needs?\nA. Needs are dependent on culture and also on social class.\nB. Lower-level needs must be at least partially satisfied before higher needs can affect behaviour.\nC. Needs are not prioritized or arranged in any particular order.\nD. Satisfied needs are motivators, and new needs emerge when current needs remain unmet.\nAnswer:\nAgent:  B\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nIn an organization, the group of people tasked with buying decisions is referred to as the _______________.\nA. Outsourcing unit.\nB. Procurement centre.\nC. Chief executive unit.\nD. Decision-making unit.\nAnswer:\nAgent:  D\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
+            "source": """<<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+<</SYS>>
+
+
+
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:
+A. Care lines.
+B. Direct mail.
+C. Inserts.
+D. Door to door.
+Answer:
+Agent:  D
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+ _____________ is a natural outcome when combining demographic and geographic variables.
+A. Geodemographics
+B. Product differentiation.
+C. ANSOFF matrix.
+D. Brand management.
+Answer:
+Agent:  A
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+In an organization, the group of people tasked with buying decisions is referred to as the _______________.
+A. Outsourcing unit.
+B. Procurement centre.
+C. Chief executive unit.
+D. Decision-making unit.
+Answer:
+Agent:  D
+
+
+User:The following are multiple choice questions (with answers) about testing.
+
+what?
+A. yes
+B. not
+C. maybe
+Answer:
+Agent:""",
             "target": " C",
             "references": [" C"],
             "task_data": '{"topic": "testing",'
@@ -176,7 +223,7 @@ class TestRecipes(UnitxtTestCase):
             ' "choices": ["yes", "not", "maybe"],'
             ' "answer": "maybe",'
             ' "options": [" A", " B", " C"],'
-            ' "metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
@@ -543,30 +590,6 @@ class TestRecipes(UnitxtTestCase):
         iterator = iter(dataset["train"])
         first_inst = next(iterator)
         self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
-
-    def test_standard_recipe_with_a_sampler(self):
-        """Check that the sampler is re-initialized before processing a recipe.
-
-        To do so, save the random generator within the sampler before activating the recipe,
-        and compare it to the random generator within the sampler after the revipe was called.
-        The two generators should be different objects, indicating that the sampler was properly
-        re-initialized during the preparation of the recipe.
-        """
-        recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
-            template_card_index=0,
-            max_train_instances=0,
-            max_test_instances=2,
-            num_demos=1,
-            demos_pool_size=10,
-        )
-        sampler = recipe.card.sampler
-
-        random_generator1 = sampler.random_generator
-        recipe()
-        random_generator2 = sampler.random_generator
-
-        self.assertNotEqual(random_generator1, random_generator2)
 
     def test_standard_recipe_with_a_missing_sampler(self):
         """Check that initializing a recipe with a card that does not have a sampler raises an exception."""

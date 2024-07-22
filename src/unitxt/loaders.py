@@ -858,7 +858,9 @@ class LoadFromHFSpace(LoadHF):
 
     def _map_wildcard_path_to_full_paths(self):
         api = HfApi()
-        repo_files = api.list_repo_files(self.space_name, repo_type="space")
+        repo_files = api.list_repo_files(
+            self.space_name, repo_type="space", revision=self.revision
+        )
         if isinstance(self.data_files, str):
             self.data_files = self._get_file_list_from_wildcard_path(
                 self.data_files, repo_files

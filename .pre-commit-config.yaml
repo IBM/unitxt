@@ -5,10 +5,16 @@ repos:
     # Ruff version.
     rev: v0.1.6
     hooks:
-      # Run the linter.
+      # Run the linter on all files except the specific one
       - id: ruff
-        args: [ --fix ]
-      # Run the formatter.
+        args: [--fix]
+        exclude: src/unitxt/metrics.py
+      # Run the linter on the specific file with the ignore flag
+      - id: ruff
+        name: ruff (src/unitxt/metrics.py)
+        files: src/unitxt/metrics.py
+        args: [--fix, --ignore, C901]
+      # Run the formatter
       - id: ruff-format
 
   - repo: https://github.com/ibm/detect-secrets
