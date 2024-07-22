@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "input_fields": {
+    "inputs": {
         "contexts": "List[str]",
-        "contexts_ids": "Union[List[int],List[str]]",
-        "question": "str"
+        "contexts_ids": "List[int]",
+        "dialog": "List[Dict[str,str]]"
     },
-    "reference_fields": {
+    "outputs": {
         "reference_answers": "List[str]"
     },
     "metrics": [
@@ -15,7 +15,6 @@
         "metrics.rag.response_generation.correctness.bert_score.deberta_large_mnli"
     ],
     "augmentable_inputs": [
-        "contexts",
-        "question"
+        "contexts"
     ]
 }

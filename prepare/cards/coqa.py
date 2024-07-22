@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Wrap
+from unitxt.collections_operators import Dictify, DuplicateBySubLists, Get, Slice, Wrap
 from unitxt.dialog_operators import SerializeDialog
 from unitxt.operators import Copy, ZipFieldValues
 from unitxt.test_utils.card import test_card
@@ -17,6 +17,7 @@ card = TaskCard(
         Dictify(field="dialog", with_keys=["user", "system"], process_every_value=True),
         DuplicateBySubLists(field="dialog"),
         Get(field="dialog", item=-1, to_field="last_turn"),
+        Slice(field="dialog", start=0, stop=-1, to_field="dialog"),
         Copy(
             field_to_field={"last_turn/user": "question", "last_turn/system": "answer"},
         ),
@@ -106,5 +107,9 @@ card = TaskCard(
     ),
 )
 
-test_card(card)
+test_card(
+    card,
+    format="formats.llama3_instruct",
+    system_prompt="system_prompts.models.llama2",
+)
 add_to_catalog(card, "cards.coqa.completion", overwrite=True)
