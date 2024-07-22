@@ -47,7 +47,6 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 
@@ -526,7 +525,6 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-
         global_score.update(self._add_score_prefixes_to_score_dict(result))
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
@@ -577,7 +575,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     reduction_map: Dict[str, List[str]]
 
-    implemented_reductions: List[str] = field(default_factory=lambda: ["mean"])
+    implemented_reductions: List[str] = field(
+        default_factory=lambda: ["mean", "weighted_win_rate"]
+    )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
@@ -652,6 +652,26 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instances=instances, score_names=ci_fields_with_prefix
                 )
                 global_score.update(confidence_interval)
+            if reduction == "weighted_win_rate":
+                for field_name in fields:
+                    field_name_with_prefix = self._add_score_prefix(field_name)
+                    total_battles = 0
+                    wins = 0
+                    for instance in instances:
+                        s = instance["score"]["instance"][field_name_with_prefix]
+                        if s > 0:
+                            total_battles += s
+                            wins += s
+                        elif s < 0:
+                            total_battles += abs(s)
+                        else:
+                            total_battles += 2
+                            wins += 1
+
+                    global_score[field_name_with_prefix] = wins / total_battles
+                    if field_name == self.main_score:
+                        global_score["score"] = global_score[field_name_with_prefix]
+                        global_score["score_name"] = self.score_prefix + self.main_score
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
@@ -665,6 +685,183 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         pass
+
+
+class WeightedWinRateCorrelation(GlobalMetric):
+    main_score = "spearman_corr"
+    average = None  # Report per class then aggregate by mean
+    metric = "weighted_win_rate_correlation"
+    # prediction_type = "int"
+    # single_reference_per_prediction = True
+
+    # prediction_type = "int"
+
+    @staticmethod
+    def _update_battles_dataframe(
+        df: pd.DataFrame,
+        model_a: str,
+        model_b: str,
+        model_a_wins: int,
+        model_b_wins: int,
+    ):
+        import pandas as pd
+
+        # Sort the model tuple alphabetically
+        if model_b < model_a:
+            temp = model_a
+            model_a = model_b
+            model_b = temp
+            temp = model_a_wins
+            model_a_wins = model_b_wins
+            model_b_wins = temp
+
+        # Check if a row with these models already exists
+        row = df[(df["model_a"] == model_a) & (df["model_b"] == model_b)]
+
+        if not row.empty:
+            # Update the existing row
+            index = row.index[0]
+            df.at[index, "model_a_win_count"] += model_a_wins
+            df.at[index, "model_b_win_count"] += model_b_wins
+            df.at[index, "total_battles"] += model_a_wins + model_b_wins
+        else:
+            # Add a new row
+            new_row = {
+                "model_a": model_a,
+                "model_b": model_b,
+                "model_a_win_count": model_a_wins,
+                "model_b_win_count": model_b_wins,
+                "total_battles": model_a_wins + model_b_wins,
+            }
+            df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+
+        return df
+
+    @staticmethod
+    def _get_win_rate_df(df: pd.DataFrame):
+        # Step 1: Aggregate wins for each model
+        # Create separate DataFrames for wins and battles
+        df_wins_a = df[["model_a", "model_a_win_count"]].rename(
+            columns={"model_a": "model", "model_a_win_count": "wins"}
+        )
+        df_wins_b = df[["model_b", "model_b_win_count"]].rename(
+            columns={"model_b": "model", "model_b_win_count": "wins"}
+        )
+        df_wins = pd.concat([df_wins_a, df_wins_b])
+
+        # Aggregate total wins for each model
+        total_wins = df_wins.groupby("model").sum().reset_index()
+
+        # Step 2: Calculate total battles for each model
+        # Count appearances in model_a and model_b
+        battles_a = df[["model_a", "total_battles"]].rename(
+            columns={"model_a": "model"}
+        )
+        battles_b = df[["model_b", "total_battles"]].rename(
+            columns={"model_b": "model"}
+        )
+        battles = pd.concat([battles_a, battles_b])
+
+        # Aggregate total battles for each model
+        total_battles = battles.groupby("model").sum().reset_index()
+
+        # Step 3: Merge and compute win rate
+        win_rates = total_wins.merge(total_battles, on="model")
+        win_rates["win_rate"] = win_rates["wins"] / win_rates["total_battles"]
+        return win_rates
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Any],
+    ) -> dict:
+        import pandas as pd
+
+        """Computes a scores dictionary on a list of references, predictions and input.
+
+        This function is called once per instance, and then another time
+        over all data instances.
+
+        Returns:
+            a dictionary of scores that is set as:
+              the instance scores when called on a single data instance
+              the global score when called on the all data instances
+        """
+        if len(predictions) == 1:
+            prediction = predictions[0]
+            gold_ref = references[0][0]
+            return {"loss": abs(prediction - gold_ref)}
+
+        pred_df = pd.DataFrame(
+            columns=[
+                "model_a",
+                "model_b",
+                "model_a_win_count",
+                "model_b_win_count",
+                "total_battles",
+            ]
+        )
+        ref_df = pd.DataFrame(
+            columns=[
+                "model_a",
+                "model_b",
+                "model_a_win_count",
+                "model_b_win_count",
+                "total_battles",
+            ]
+        )
+
+        for instance_task_data, prediction, gold_ref in zip(
+            task_data, predictions, references
+        ):
+            gold_ref = int(gold_ref[0])
+            model_a = instance_task_data["model_a"]
+            model_b = instance_task_data["model_b"]
+            if prediction > 0:
+                model_a_wins = prediction
+                model_b_wins = 0
+            elif prediction < 0:
+                model_a_wins = 0
+                model_b_wins = -1 * prediction
+            else:
+                model_a_wins = 1
+                model_b_wins = 1
+
+            pred_df = self._update_battles_dataframe(
+                pred_df, model_a, model_b, model_a_wins, model_b_wins
+            )
+
+            if gold_ref > 0:
+                model_a_wins = gold_ref
+                model_b_wins = 0
+            elif gold_ref < 0:
+                model_a_wins = 0
+                model_b_wins = -1 * gold_ref
+            else:
+                model_a_wins = 1
+                model_b_wins = 1
+
+            ref_df = self._update_battles_dataframe(
+                ref_df, model_a, model_b, model_a_wins, model_b_wins
+            )
+
+        pred_df_win_rate = self._get_win_rate_df(pred_df)
+        ref_df_win_rate = self._get_win_rate_df(ref_df)
+
+        from scipy.stats import pearsonr, spearmanr
+
+        merged_df = pd.merge(
+            pred_df_win_rate, ref_df_win_rate, on="model", suffixes=("_pred", "_ref")
+        )
+        pearson_corr, _ = pearsonr(
+            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+        )
+        spearman_corr, _ = spearmanr(
+            merged_df["win_rate_pred"], merged_df["win_rate_ref"]
+        )
+
+        return {"pearson_corr": pearson_corr, "spearman_corr": spearman_corr}
 
 
 class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):

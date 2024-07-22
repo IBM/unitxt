@@ -39,9 +39,10 @@ class ToUnitxtGroup(InstanceOperatorValidator):
             **instance["input_fields"],
             **instance["reference_fields"],
             "metadata": {
+                "data_classification_policy": instance["data_classification_policy"],
                 "template": self.artifact_to_jsonable(
                     instance["recipe_metadata"]["template"]
-                )
+                ),
             },
         }
         instance["task_data"] = json.dumps(task_data)

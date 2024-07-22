@@ -25,7 +25,11 @@ class LLMAsJudge(BulkInstanceMetric):
     """
 
     main_score: str = "llm_as_judge"
-    task: Literal["rating.single_turn", "single_turn_with_reference"]
+    task: Literal[
+        "rating.single_turn",
+        "rating.single_turn_with_reference",
+        "pairwise_comparative_rating.single_turn",
+    ]
     template: str
     format: Optional[str] = None
     system_prompt: Optional[str] = None
@@ -82,18 +86,47 @@ class LLMAsJudge(BulkInstanceMetric):
                     input_instances, predictions, references
                 )
             ]
+        elif self.task == "pairwise_comparative_rating.single_turn":
+            instances = [
+                {
+                    "question": input_instance,
+                    "answer_a": prediction,
+                    "answer_b": reference[0],
+                    "model_a": "input_model",
+                    "model_b": "baseline_model",
+                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice,
+                }
+                for input_instance, prediction, reference in zip(
+                    input_instances, predictions, references
+                )
+            ]
         else:
             raise NotImplementedError(
                 f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             )
         return instances
 
+    @staticmethod
+    def _add_metadata_to_judge_instances(
+        instances: List[List[Any]], task_data: List[Dict]
+    ):
+        for instance, data in zip(instances, task_data):
+            instance["data_classification_policy"] = data["metadata"][
+                "data_classification_policy"
+            ]
+
     def prepare(self):
         super().prepare()
+        if self.task == "pairwise_comparative_rating.single_turn":
+            self.reduction_map = {"weighted_win_rate": [self.main_score]}
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
 
-        supported_tasks = ["rating.single_turn", "rating.single_turn_with_reference"]
+        supported_tasks = [
+            "rating.single_turn",
+            "rating.single_turn_with_reference",
+            "pairwise_comparative_rating.single_turn",
+        ]
         assert self.task in supported_tasks, (
             f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             f"The supported tasks types are: {', '.join(supported_tasks)}."
@@ -124,6 +157,7 @@ class LLMAsJudge(BulkInstanceMetric):
         instances = self._get_instance_for_judge_model(
             input_instances, predictions, references
         )
+        self._add_metadata_to_judge_instances(instances, task_data)
 
         card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
         recipe_args = {
@@ -141,10 +175,27 @@ class LLMAsJudge(BulkInstanceMetric):
         dataset = produce(instances, recipe)
         verdicts = self.inference_model.infer(dataset)
         meta_scores = evaluate(predictions=verdicts, data=dataset)
-        return [
-            {
-                self.main_score: instance["processed_prediction"],
-                "judge_raw_output": verdict,
-            }
-            for instance, verdict in zip(meta_scores, verdicts)
-        ]
+
+        res_list = []
+        for instance, verdict in zip(meta_scores, verdicts):
+            if self.task == "pairwise_comparative_rating.single_turn":
+                is_model_b_the_baseline = (
+                    instance["task_data"]["model_b"] == "baseline_model"
+                )
+                if is_model_b_the_baseline:
+                    model_a_preference_score = instance["processed_prediction"]
+                else:
+                    model_a_preference_score = instance["processed_prediction"] * -1
+
+                res = {
+                    self.main_score: model_a_preference_score,
+                    "judge_raw_output": verdict,
+                }
+            else:
+                res = {
+                    self.main_score: instance["processed_prediction"],
+                    "judge_raw_output": verdict,
+                }
+            res_list.append(res)
+
+        return res_list
