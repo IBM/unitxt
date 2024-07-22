@@ -7,7 +7,7 @@ add_to_catalog(
     Task(
         input_fields={
             "contexts": "List[str]",
-            "contexts_ids": "List[int]",
+            "contexts_ids": "Union[List[int],List[str]]",
             "question": "str",
         },
         reference_fields={"reference_answers": "List[str]"},
