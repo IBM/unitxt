@@ -39,7 +39,10 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["cow"], "Moo1"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances,
+                self.new_exemplar(choices, ["any"], "any"),
+            )
 
             from collections import Counter
 
@@ -63,7 +66,10 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["cow"], "Moo1"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances,
+                self.new_exemplar(choices, ["any"], "any"),
+            )
 
             from collections import Counter
 
@@ -83,7 +89,9 @@ class TestDiverseLabelsSampler(UnitxtTestCase):
                 self.new_exemplar(choices, ["dog"], "Bark2"),
                 self.new_exemplar(choices, ["duck"], "Quack"),
             ]
-            result = sampler.sample(instances)
+            result = sampler.sample(
+                instances, self.new_exemplar(choices, ["any"], "any")
+            )
             from collections import Counter
 
             counts = Counter()
@@ -181,7 +189,7 @@ class TestCloseTextSampler(UnitxtTestCase):
         results = sampler.sample(
             instances, self.new_exemplar("What is the time?", "don't know")
         )
-        self.assertEqual(results, [instances[0], instances[2]])
+        self.assertEqual(results, [instances[2], instances[0]])
 
         num_samples = 1
         sampler = CloseTextSampler(num_samples, field="answer")
@@ -211,6 +219,7 @@ class TestCloseTextSampler(UnitxtTestCase):
                 {"question": "In which country is Paris located?", "answer": "France"},
                 {"question": "At what time do we they eat dinner?", "answer": "22:00"},
                 {"question": "What's your name, please?", "answer": "Mary"},
+                {"question": "Is this your car?", "answer": "yes"},
                 {"question": "What is your name?", "answer": "Sunny"},
             ],
             "test": [
@@ -227,7 +236,7 @@ class TestCloseTextSampler(UnitxtTestCase):
         dataset = load_dataset(
             card=card,
             template="templates.qa.open.title",
-            demos_pool_size=4,
+            demos_pool_size=5,
             num_demos=2,
             sampler=CloseTextSampler(field="question"),
         )
@@ -266,10 +275,10 @@ class TestFixedIndicesSampler(UnitxtTestCase):
             self.new_exemplar("What's the time?", "22:00"),
             self.new_exemplar("What is your name, please?", "Mary"),
         ]
-
+        instance = self.new_exemplar("What's your name?", "don't know")
         sampler = FixedIndicesSampler(indices=[2, 0])
 
-        results = sampler.sample(instances)
+        results = sampler.sample(instances, instance)
         self.assertEqual(results, [instances[2], instances[0]])
 
     def test_out_of_bound_sample(self):
@@ -278,9 +287,10 @@ class TestFixedIndicesSampler(UnitxtTestCase):
             self.new_exemplar("In which country is Paris located?", "France"),
         ]
 
+        instance = self.new_exemplar("What's your name?", "don't know")
         sampler = FixedIndicesSampler(indices=[2])
         with self.assertRaises(ValueError) as cm:
-            sampler.sample(instances)
+            sampler.sample(instances, instance)
         self.assertIn(
             "FixedIndicesSampler 'indices' field contains index (2) which is out of bounds of the instance pool ( of size 2)",
             str(cm.exception),

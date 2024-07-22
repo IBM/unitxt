@@ -129,6 +129,9 @@ class Sampler(Artifact):
     ) -> List[Dict[str, object]]:
         pass
 
+    def get_random_generator_based_on_instance(self, instance):
+        return new_random_generator(sub_seed={**instance["input_fields"]})
+
     def filter_source_by_instance(
         self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
@@ -151,10 +154,10 @@ class RandomSampler(Sampler):
     def sample(
         self,
         instances_pool: List[Dict[str, object]],
-        instance: Optional[Dict[str, object]] = None,
+        instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        random_generator = new_random_generator(sub_seed=str(instance))
+        random_generator = self.get_random_generator_based_on_instance(instance)
         return random_generator.sample(instances_pool, self.sample_size)
 
 
@@ -166,7 +169,7 @@ class FixedIndicesSampler(Sampler):
     def sample(
         self,
         instances_pool: List[Dict[str, object]],
-        instance: Optional[Dict[str, object]] = None,
+        instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         num_instances = len(instances_pool)
 
@@ -212,7 +215,7 @@ class CloseTextSampler(Sampler):
             for instance_in_pool in instances_pool
             if dict_get(instance_in_pool, field) in closest_matches
         ]
-        random_generator = new_random_generator(sub_seed=str(instance))
+        random_generator = self.get_random_generator_based_on_instance(instance)
         return random_generator.sample(instances_pool, self.sample_size)
 
 
@@ -297,12 +300,12 @@ class DiverseLabelsSampler(Sampler):
     def sample(
         self,
         instances_pool: List[Dict[str, object]],
-        instance: Optional[Dict[str, object]] = None,
+        instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        random_generator = new_random_generator(sub_seed=str(instance))
+        random_generator = self.get_random_generator_based_on_instance(instance)
         random_generator.shuffle(all_labels)
         from collections import Counter
 
