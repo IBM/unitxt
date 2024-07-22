@@ -416,3 +416,155 @@ for axis, base_metric, main_score in [
     add_to_catalog(
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
+
+# end to end
+
+
+class TaskRagEndToEndConstants:
+    # Templates
+    TEMPLATE_RAG_END_TO_END_JSON_PREDICTIONS: str = (
+        "templates.rag.end_to_end.json_predictions"
+    )
+    # Task names
+    TASKS_RAG_END_TO_END: str = "tasks.rag.end_to_end"
+    # Metrics
+
+    # METRICS_RAG_END_TO_END_ANSWER_CORRECTNESS: str = "metrics.rag.end_to_end.answer_correctness"
+    # METRICS_RAG_END_TO_END_ANSWER_REWARD: str = "metrics.rag.end_to_end.answer_reward"
+    # METRICS_RAG_END_TO_END_ANSWER_FAITHFULNESS: str = "metrics.rag.end_to_end.answer_faithfulness"
+    # METRICS_RAG_END_TO_END_CONTEXT_CORRECTNESS: str = "metrics.rag.end_to_end.context_correctness"
+    # METRICS_RAG_END_TO_END_CONTEXT_RELEVANCE: str = "metrics.rag.end_to_end.context_relevance"
+
+
+end_to_end_artifact_names = [
+    "metrics.rag.end_to_end.answer_correctness",
+    "metrics.rag.end_to_end.answer_reward",
+    "metrics.rag.end_to_end.answer_faithfulness",
+    "metrics.rag.end_to_end.context_correctness",
+    "metrics.rag.end_to_end.context_relevance",
+]
+
+end_to_end_artifact_name_to_main_score = {
+    "metrics.rag.end_to_end.answer_correctness": "recall",
+    "metrics.rag.end_to_end.answer_reward": "score",
+    "metrics.rag.end_to_end.answer_faithfulness": "precision",
+    "metrics.rag.end_to_end.context_correctness": "score",
+    "metrics.rag.end_to_end.context_relevance": "score",
+}
+
+end_to_end_artifact_names_to_main_metric = {
+    "metrics.rag.end_to_end.answer_correctness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.answer_reward": "metrics.reward.deberta_v3_large_v2",
+    "metrics.rag.end_to_end.answer_faithfulness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.context_correctness": "metrics.mrr",
+    "metrics.rag.end_to_end.context_relevance": "metrics.perplexity_q.flan_t5_small",
+}
+
+assert len(end_to_end_artifact_names) == len(end_to_end_artifact_name_to_main_score)
+assert len(end_to_end_artifact_names) == len(end_to_end_artifact_names_to_main_metric)
+
+copy_field_prediction_answer_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/answer",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_answers_to_references = Copy(
+    field_to_field={"task_data/reference_answers": "references"},
+)
+
+copy_field_reference_contexts_to_references = Copy(
+    field_to_field={"task_data/reference_contexts": "references"}
+)
+
+copy_field_prediction_contexts_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_prediction_context_ids_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/context_ids",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_context_ids_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/reference_context_ids"],
+    to_field="references",
+)
+
+copy_field_prediction_contexts_to_references = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "references",
+        )
+    ],
+)
+
+
+copy_field_question_to_prediction = Copy(
+    field_to_field=[
+        (
+            "task_data/question",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_question_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/question"],
+    to_field="references",
+)
+
+end_to_end_artifact_names_to_preprocess_steps = {
+    "metrics.rag.end_to_end.answer_correctness": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_reference_answers_to_references,
+    ],
+    "metrics.rag.end_to_end.answer_reward": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_question_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.answer_faithfulness": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_prediction_answer_to_prediction,
+    ],
+    "metrics.rag.end_to_end.context_correctness": [
+        copy_field_prediction_context_ids_to_prediction,
+        copy_field_reference_context_ids_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.context_relevance": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_question_to_prediction,
+    ],
+}
+
+assert len(end_to_end_artifact_names) == len(
+    end_to_end_artifact_names_to_preprocess_steps
+)
+
+for artifact_name in end_to_end_artifact_names:
+    metric_short_name = artifact_name.split(".")[-1]
+    if metric_short_name == "rouge":  # rouge does not need a prefix
+        score_prefix = ""
+    else:
+        score_prefix = f"[score_prefix={metric_short_name}_]"
+
+    metric = MetricPipeline(
+        main_score=end_to_end_artifact_name_to_main_score[artifact_name],
+        preprocess_steps=end_to_end_artifact_names_to_preprocess_steps[artifact_name],
+        metric=f"{end_to_end_artifact_names_to_main_metric[artifact_name]}{score_prefix}",
+    )
+
+    add_to_catalog(metric, artifact_name, overwrite=True)
