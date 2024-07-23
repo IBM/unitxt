@@ -2,9 +2,19 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "kasnerz/scigen"
+        "path": "kasnerz/scigen",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "table_content_values": "[]"
+            },
+            "condition": "ne"
+        },
         {
             "__type__": "construct_table_structure",
             "fields": [
