@@ -7,13 +7,15 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import FilterByCondition
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="kasnerz/scigen"),
+    loader=LoadHF(path="kasnerz/scigen", data_classification_policy=["public"]),
     preprocess_steps=[
+        FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
         ConstructTableStructure(
             fields=["table_column_names", "table_content_values"],
             to_field="table",
