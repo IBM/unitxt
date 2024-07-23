@@ -24,9 +24,6 @@ language_to_tokenizer = {
     "ko": "ko-mecab",
     "japanese": "ja-mecab",
     "ja": "ja-mecab",
-    "zho_simpl": "zh",
-    "zho_trad": "zh",
-    "zh": "zh",
 }
 
 metric = MetricPipeline(
