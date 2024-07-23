@@ -1,10 +1,12 @@
 from math import isnan
 from typing import Dict, List
 
+from unitxt.aggregators import Aggregator
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
+    F1,
     NER,
     Accuracy,
     BinaryAccuracy,
@@ -36,6 +38,7 @@ from unitxt.metrics import (
     FixedGroupPDRParaphraseAccuracy,
     FixedGroupPDRParaphraseStringContainment,
     FuzzyNer,
+    GrouperAggregator,
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
@@ -1059,17 +1062,12 @@ class TestMetrics(UnitxtTestCase):
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
-        from dataclasses import field
-        from statistics import mean
         from typing import List
 
         class NoAggFuncReduction(Accuracy):
-            implemented_reductions: List[str] = field(
-                default_factory=lambda: ["mean", "group_mean", "some_other_func"]
-            )
-            reduction_map = {"some_other_func": {"agg_func": ["mean", mean, False]}}
+            aggregator: List[Aggregator] = []
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AssertionError):
             # should raise error because no aggregation_function will be defined, since only mean and group_mean are implemented
             metric = NoAggFuncReduction()
             apply_metric(
@@ -1080,7 +1078,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoAggFunc(Accuracy):
-            reduction_map = {"group_mean": {"func": ["mean", mean]}}
+            aggregator = 9
 
         with self.assertRaises(AssertionError):
             # should raise error because no "agg_func" field in group_mean
@@ -1093,7 +1091,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoCallableAggFunc(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", "some string", False]}}
+            aggregator = (1, 2)
 
         with self.assertRaises(AssertionError):
             # should raise error because second field of agg_func should be callable
@@ -1106,7 +1104,7 @@ class TestMetrics(UnitxtTestCase):
             )
 
         class NoBooleanGrouping(Accuracy):
-            reduction_map = {"group_mean": {"agg_func": ["mean", mean, 1]}}
+            aggregator = None
 
         with self.assertRaises(AssertionError):
             # should raise error because third field in agg_func is not boolean
@@ -1459,6 +1457,23 @@ class TestConfidenceIntervals(UnitxtTestCase):
             },
         )
 
+        aggregator_one_group = F1()
+        grouper_aggregator = GrouperAggregator(
+            split_to_groups_by_query="task_data/group_id",
+            one_group_aggregator=aggregator_one_group,
+            ci_samples_from_groups_scores=True,
+        )
+        global_metric_to_test_on_groups = F1(aggregator=grouper_aggregator)
+        global_metric_to_test_on_groups.ci_scores = [
+            global_metric_to_test_on_groups.main_score
+        ]
+        global_metric_to_test_on_groups.aggregating_function_name = ""
+        self._test_grouped_instance_confidence_interval(
+            metric=global_metric_to_test_on_groups,
+            expected_ci_low=0.0,
+            expected_ci_high=0.2287146,
+        )
+
     def _test_grouped_instance_confidence_interval(
         self,
         metric,
@@ -1470,19 +1485,24 @@ class TestConfidenceIntervals(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric,
             predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
+            references=GROUPED_INSTANCE_REFERENCES
+            if not isinstance(metric, F1)
+            else [[ref[0]] for ref in GROUPED_INSTANCE_REFERENCES],
             task_data=GROUPED_INSTANCE_ADDL_INPUTS,
         )
-        # get first element of reduction_map values
-        reduction_params = next(iter(metric.reduction_map.values()))
-        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
+        # all metrics here are grouped. compute the prefix:
+        prefix = (
+            "fixed_group"
+            if metric.aggregator.ci_samples_from_groups_scores
+            else "group"
+        )
         group_score_name = "_".join(
             [
                 prefix,
-                metric.reduction_map["group_mean"]["agg_func"][0],
+                metric.aggregating_function_name,
                 metric.main_score,
             ]
-        )
+        ).replace("__", "_")
 
         if expected_global_result is None:
             expected_global_result = {
@@ -1714,6 +1734,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "metrics.recall_macro_multi_label",
             ],
             weights=None,
+            n_resamples=None,  # global_target reflects ci of the last self.metric computed
         )
 
         predictions = [["A"], ["B"], [""], ["A"]]

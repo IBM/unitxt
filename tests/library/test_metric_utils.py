@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from unitxt.fusion import FixedFusion
 from unitxt.metric_utils import MultiStreamScoreMean
 from unitxt.metrics import Rouge
@@ -12,27 +10,12 @@ class TestMetricUtils(UnitxtTestCase):
     def test_rougel_simple_avg_with_fuse_and_split(self):
         from numpy import nanmean
 
-        class AvgRougeNoBootstrap(Rouge):
-            # no bootstrap whatsoever
-            # hf rouge, for use_aggregator = True:
-            #         if use_aggregator:
-            #             aggregator = scoring.BootstrapAggregator()
-            # and returns a bootstrapped version of the mean score
-            def prepare(self):
-                self.n_resamples = None
-                self.rouge_types = ["rougeL"]
-                self.ci_scores = ["rougeL"]
-                self.hf_metric_fields = ["rougeL"]
-                self.reduction_map = {"mean": ["rougeL"]}
-                self.use_aggregator = False
-                super().prepare()
-
-            def compute(self, references, prediction, task_data: List[Dict]):
-                # single score for a single instance
-                res = super().compute(references, prediction, task_data)["rougeL"]
-                return {"rougeL": res}
-
-        metric = AvgRougeNoBootstrap()
+        metric = Rouge(
+            rouge_types=["rougeL"],
+            ci_scores=["rougeL"],
+            score_names=["rougeL"],
+            n_resamples=None,
+        )
         references = [
             ["hello", "there"],
             ["general kenobi", "general yoda"],

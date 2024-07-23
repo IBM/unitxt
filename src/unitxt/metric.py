@@ -2,8 +2,10 @@ from typing import Dict, Iterable, List
 
 import evaluate
 
+from .aggregators import __file__ as _
 from .api import __file__ as _
 from .artifact import __file__ as _
+from .base_metrics import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
