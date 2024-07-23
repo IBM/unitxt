@@ -62,7 +62,7 @@ Evaluate the impact of different demonstration example selections
 
 Demonstrates how different methods of selecting the demonstrations in in-context learning affect the results.
 Three methods are considered: fixed selection of example demonstrations for all test instance,
-random selection of demonstrations from a demo pool for each test instance, 
+random selection of example demonstrations for each test instance, 
 and choosing the demonstration examples most (lexically) similar to each test instance.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_demo_selections.py>`_ 
