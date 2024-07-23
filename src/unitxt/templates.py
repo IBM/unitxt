@@ -67,7 +67,11 @@ class Template(InstanceOperator):
                 return instance
 
         inputs = instance.get("inputs")
+        if inputs is None:
+            inputs = instance.get("input_fields")
         outputs = instance.get("outputs")
+        if outputs is None:
+            outputs = instance.get("reference_fields")
         inputs, outputs = self.preprocess_inputs_and_outputs(inputs, outputs)
 
         self.set_titles(inputs)
@@ -401,16 +405,20 @@ class MultipleChoiceTemplate(Template):
         return target, [target]
 
     def _shuffle_choices(self, instance):
-        target_index = self.outputs_to_target_index(instance["outputs"])
-        original_label_choice = instance["outputs"][self.choices_field][target_index]
-        choices = instance["inputs"][self.choices_field]
+        target_index = self.outputs_to_target_index(instance["reference_fields"])
+        original_label_choice = instance["reference_fields"][self.choices_field][
+            target_index
+        ]
+        choices = instance["input_fields"][self.choices_field]
         random_generator = new_random_generator(
-            {**instance["inputs"], **instance["outputs"]}
+            {**instance["input_fields"], **instance["reference_fields"]}
         )
         random_generator.shuffle(choices)
-        instance["inputs"][self.choices_field] = choices
-        instance["outputs"][self.choices_field] = choices
-        instance["outputs"][self.target_field] = choices.index(original_label_choice)
+        instance["input_fields"][self.choices_field] = choices
+        instance["reference_fields"][self.choices_field] = choices
+        instance["reference_fields"][self.target_field] = choices.index(
+            original_label_choice
+        )
         return instance
 
     def process(
@@ -419,9 +427,10 @@ class MultipleChoiceTemplate(Template):
         if self.shuffle_choices:
             instance = self._shuffle_choices(instance)
         result = super().process(instance, stream_name)
-        if "options" not in result["outputs"]:
-            result["outputs"]["options"] = self.inputs_to_choices(
-                instance["outputs"], self.target_choice_format
+
+        if "options" not in result["reference_fields"]:
+            result["reference_fields"]["options"] = self.inputs_to_choices(
+                instance["reference_fields"], self.target_choice_format
             )
         return result
 

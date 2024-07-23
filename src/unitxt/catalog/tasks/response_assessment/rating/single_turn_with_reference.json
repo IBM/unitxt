@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "question": "str",
         "answer": "str",
         "reference_answer": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "rating": "float"
     },
     "metrics": [

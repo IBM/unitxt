@@ -5,8 +5,8 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={"dialog": List[Tuple[str, str]]},
-        outputs={"rating": float},
+        input_fields={"dialog": List[Tuple[str, str]]},
+        reference_fields={"rating": float},
         metrics=["metrics.spearman"],
     ),
     "tasks.response_assessment.rating.multi_turn",

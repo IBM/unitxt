@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "contexts": "List[str]",
-        "contexts_ids": "List[int]",
+        "contexts_ids": "Union[List[int],List[str]]",
         "question": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "reference_answers": "List[str]"
     },
     "metrics": [

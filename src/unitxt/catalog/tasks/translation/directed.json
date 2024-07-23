@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "text": "str",
         "source_language": "str",
         "target_language": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "translation": "str"
     },
     "prediction_type": "str",

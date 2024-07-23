@@ -5,14 +5,14 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "input": str,
             "input_type": str,
             "output_type": str,
             "choices": List[str],
             "instruction": str,
         },
-        outputs={
+        reference_fields={
             "choices": List[str],
             "output_choice": int,
         },

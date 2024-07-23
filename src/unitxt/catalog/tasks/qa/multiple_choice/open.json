@@ -1,10 +1,10 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "question": "str",
         "choices": "List[str]"
     },
-    "outputs": {
+    "reference_fields": {
         "answer": "Union[int, str]",
         "choices": "List[str]"
     },

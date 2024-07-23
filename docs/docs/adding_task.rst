@@ -13,8 +13,8 @@ Tasks are fundamental to Unitxt, acting as standardized interface for integratin
 
 The Task schema is a formal definition of the NLP task, including its inputs, outputs, and default evaluation metrics.
 
-The `inputs` of the task are a set of fields that are used to format the textual input to the model.
-The `output` of the task are a set of fields that are used to format the expected textual output from the model (gold references).
+The `input_fields` of the task are a set of fields that are used to format the textual input to the model.
+The `reference_fields` of the task are a set of fields that are used to format the expected textual output from the model (gold references).
 The `metrics` of the task are a set of default metrics to be used to evaluate the outputs of the model.
 
 As an example, consider an evaluation task for LLMs to evaluate how well they are able to calculate the sum of two integer numbers.
@@ -25,8 +25,8 @@ The task is formally defined as:
    from unitxt.blocks import Task
 
    task = Task(
-        inputs={"num1" : int, "num2" : int},
-        outputs={"sum" : int},
+        input_fields={"num1" : int, "num2" : int},
+        reference_fields={"sum" : int},
         prediction_type=int,
         metrics=[
             "metrics.sum_accuracy",

@@ -1,13 +1,13 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "input": "str",
         "input_type": "str",
         "output_type": "str",
         "choices": "List[str]",
         "instruction": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "choices": "List[str]",
         "output_choice": "int"
     },

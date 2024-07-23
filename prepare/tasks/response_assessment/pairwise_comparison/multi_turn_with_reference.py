@@ -5,12 +5,12 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "dialog_a": List[Tuple[str, str]],
             "dialog_b": List[Tuple[str, str]],
             "reference_dialog": List[Tuple[str, str]],
         },
-        outputs={
+        reference_fields={
             "winner": str
         },  # TODO: Support and change to "Literal['choice_a', 'choice_b', 'tie']"},
         metrics=["metrics.accuracy"],

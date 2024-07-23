@@ -5,13 +5,13 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "context": str,
             "context_type": str,
             "question": str,
             "choices": List[str],
         },
-        outputs={"answer": Union[int, str], "choices": List[str]},
+        reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
@@ -22,8 +22,8 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"topic": str, "question": str, "choices": List[str]},
-        outputs={"answer": Union[int, str], "choices": List[str]},
+        input_fields={"topic": str, "question": str, "choices": List[str]},
+        reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
@@ -33,8 +33,8 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"question": str, "choices": List[str]},
-        outputs={"answer": Union[int, str], "choices": List[str]},
+        input_fields={"question": str, "choices": List[str]},
+        reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
@@ -44,14 +44,14 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "topic": str,
             "context": str,
             "context_type": str,
             "question": str,
             "choices": List[str],
         },
-        outputs={"answer": Union[int, str], "choices": List[str]},
+        reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
         metrics=["metrics.accuracy"],
     ),

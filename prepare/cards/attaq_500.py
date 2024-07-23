@@ -527,7 +527,9 @@ card = TaskCard(
         DumpJson(field="input_label"),
     ],
     task=Task(
-        inputs=["input"], outputs=["input_label"], metrics=["metrics.safety_metric"]
+        input_fields=["input"],
+        reference_fields=["input_label"],
+        metrics=["metrics.safety_metric"],
     ),
     templates=TemplatesList(
         [

@@ -152,6 +152,7 @@ def test_evaluate(
             "test_evaluate() functionality is disabled because unitxt.settings.test_metric_disable=True or UNITXT_TEST_METRIC_DISABLE environment variable is set"
         )
         return
+
     evaluation_result, global_outputs = evaluate(
         task_data, metric_names=[metric_name], compute_conf_intervals=True
     )

@@ -5,8 +5,8 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={"context": str, "context_type": str, "choices": List[str]},
-        outputs={"answer": int, "choices": List[str]},
+        input_fields={"context": str, "context_type": str, "choices": List[str]},
+        reference_fields={"answer": int, "choices": List[str]},
         prediction_type=Any,
         metrics=["metrics.accuracy"],
     ),
@@ -16,8 +16,12 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"context": str, "context_type": str, "completion_type": str},
-        outputs={"completion": str},
+        input_fields={
+            "context": str,
+            "context_type": str,
+            "completion_type": str,
+        },
+        reference_fields={"completion": str},
         prediction_type=str,
         metrics=["metrics.rouge"],
     ),
@@ -27,8 +31,12 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"context": str, "context_type": str, "completion_type": str},
-        outputs={"completion": str},
+        input_fields={
+            "context": str,
+            "context_type": str,
+            "completion_type": str,
+        },
+        reference_fields={"completion": str},
         prediction_type=Dict[str, Any],
         metrics=["metrics.squad"],
     ),

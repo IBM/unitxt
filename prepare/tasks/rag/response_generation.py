@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
@@ -7,12 +7,12 @@ from unitxt.blocks import (
 
 add_to_catalog(
     Task(
-        inputs={
+        input_fields={
             "contexts": List[str],
-            "contexts_ids": List[int],
+            "contexts_ids": Union[List[int], List[str]],
             "question": str,
         },
-        outputs={"reference_answers": List[str]},
+        reference_fields={"reference_answers": List[str]},
         metrics=[
             "metrics.rag.response_generation.correctness.token_overlap",
             "metrics.rag.response_generation.faithfullness.token_overlap",
