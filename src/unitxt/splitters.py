@@ -16,6 +16,7 @@ from .split_utils import (
     slice_streams,
 )
 from .stream import EmptyStreamError, FaultyStreamError, MultiStream
+from .type_utils import isoftype
 
 
 class Splitter(MultiStreamOperator):
@@ -166,6 +167,12 @@ class FixedIndicesSampler(Sampler):
 
     indices: List[int]
 
+    def verify(self):
+        assert isoftype(
+            self.indices, List[int]
+        ), f"'indices' of {self.__class__.__name__} must be List[int]. Value {self.indices} is of type {type(self.indices)}"
+        super().verify()
+
     def sample(
         self,
         instances_pool: List[Dict[str, object]],
@@ -174,7 +181,7 @@ class FixedIndicesSampler(Sampler):
         num_instances = len(instances_pool)
 
         instances = []
-        for index in self.indices:
+        for index in self.indices[0 : self.sample_size]:
             if index >= num_instances:
                 raise ValueError(
                     f"FixedIndicesSampler 'indices' field contains index ({index}) which is out of bounds of the instance pool ( of size {num_instances})"
