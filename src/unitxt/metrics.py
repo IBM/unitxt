@@ -697,10 +697,6 @@ class WeightedWinRateCorrelation(GlobalMetric):
     main_score = "spearman_corr"
     average = None  # Report per class then aggregate by mean
     metric = "weighted_win_rate_correlation"
-    # prediction_type = "int"
-    # single_reference_per_prediction = True
-
-    # prediction_type = "int"
 
     @staticmethod
     def _update_battles_dataframe(
@@ -1540,7 +1536,7 @@ class Meteor(InstanceMetric):
     main_score = "meteor"
     ci_scores = ["meteor"]
     reduction_map = {"mean": ["meteor"]}
-    prediction_type = "str"
+    prediction_type = str
 
     _requirements_list: List[str] = ["nltk"]
     alpha: float = 0.9
@@ -1549,6 +1545,7 @@ class Meteor(InstanceMetric):
     # unitxt uses nltk version >= 3.8
 
     def prepare(self):
+        super().prepare()
         import nltk
 
         nltk.download("wordnet", quiet=True)
@@ -1973,7 +1970,7 @@ class F1MacroMultiLabel(F1MultiLabel):
 
 class Rouge(InstanceMetric):
     main_score = "rougeL"
-    prediction_type = "str"
+    prediction_type = str
     single_reference_per_prediction = False  # multiple references allowed
     rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
     reduction_map = {"mean": ["rouge1", "rouge2", "rougeL", "rougeLsum"]}
@@ -1983,6 +1980,7 @@ class Rouge(InstanceMetric):
     _requirements_list: List[str] = ["nltk", "rouge_score"]
 
     def prepare(self):
+        super().prepare()
         import nltk
         from rouge_score import rouge_scorer
 
