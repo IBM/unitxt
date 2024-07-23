@@ -353,9 +353,9 @@ class TestFormats(UnitxtTestCase):
         ]
 
         task = Task(
-            input_fields={"question": "str"},
-            reference_fields={"answer": "str"},
-            prediction_type="str",
+            input_fields={"question": str},
+            reference_fields={"answer": str},
+            prediction_type=str,
             metrics=["metrics.accuracy"],
         )
 

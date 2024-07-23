@@ -130,7 +130,8 @@ class Metric(Artifact):
 
     def process_data_before_dump(self, data):
         if "prediction_type" in data:
-            data["prediction_type"] = to_type_string(data["prediction_type"])
+            if not isinstance(data["prediction_type"], str):
+                data["prediction_type"] = to_type_string(data["prediction_type"])
         return data
 
     def _add_score_prefix(self, score_name):

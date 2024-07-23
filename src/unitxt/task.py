@@ -162,9 +162,11 @@ class Task(InstanceOperator):
         possible_dicts = ["inputs", "input_fields", "outputs", "reference_fields"]
         for dict_name in possible_dicts:
             if dict_name in data and isinstance(data[dict_name], dict):
-                data[dict_name] = to_type_dict(data[dict_name])
+                if not isoftype(data[dict_name], Dict[str, str]):
+                    data[dict_name] = to_type_dict(data[dict_name])
         if "prediction_type" in data:
-            data["prediction_type"] = to_type_string(data["prediction_type"])
+            if not isinstance(data["prediction_type"], str):
+                data["prediction_type"] = to_type_string(data["prediction_type"])
         return data
 
     @staticmethod
