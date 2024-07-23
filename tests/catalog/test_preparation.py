@@ -23,6 +23,43 @@ glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 
 
+def process_file(file):
+    logger.info(
+        "\n_____________________________________________\n"
+        f"  Testing preparation file:\n  {file}."
+        "\n_____________________________________________\n"
+    )
+    try:
+        start_time = time.time()
+        try:
+            import_module_from_file(file)
+        except (MissingKaggleCredentialsError, GatedRepoError) as e:
+            logger.info(f"Skipping file {file} due to ignored error {e}")
+            return file, None
+        except OSError as e:
+            if "You are trying to access a gated repo" in str(e):
+                logger.info(f"Skipping file {file} due to ignored error {e}")
+                return file, None
+            raise
+        logger.info(f"Testing preparation file: {file} passed")
+
+        elapsed_time = time.time() - start_time
+        minutes = int(elapsed_time // 60)
+        seconds = int(elapsed_time % 60)
+        formatted_time = f"{minutes:02}:{seconds:02}"
+        logger.info(
+            "\n_____________________________________________\n"
+            f"  Finished testing preparation file:\n  {file}."
+            f"  Preparation Time: {formatted_time}"
+            "\n_____________________________________________\n"
+        )
+
+        return file.split("prepare")[-1], formatted_time
+    except Exception as e:
+        logger.critical(f"Testing preparation file '{file}' failed:")
+        raise e
+
+
 class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
@@ -30,43 +67,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
         times = {}
         all_preparation_files.sort()
 
-        def process_file(file):
-            logger.info(
-                "\n_____________________________________________\n"
-                f"  Testing preparation file:\n  {file}."
-                "\n_____________________________________________\n"
-            )
-            try:
-                start_time = time.time()
-                try:
-                    import_module_from_file(file)
-                except (MissingKaggleCredentialsError, GatedRepoError) as e:
-                    logger.info(f"Skipping file {file} due to ignored error {e}")
-                    return file, None
-                except OSError as e:
-                    if "You are trying to access a gated repo" in str(e):
-                        logger.info(f"Skipping file {file} due to ignored error {e}")
-                        return file, None
-                    raise
-                logger.info(f"Testing preparation file: {file} passed")
-
-                elapsed_time = time.time() - start_time
-                minutes = int(elapsed_time // 60)
-                seconds = int(elapsed_time % 60)
-                formatted_time = f"{minutes:02}:{seconds:02}"
-                logger.info(
-                    "\n_____________________________________________\n"
-                    f"  Finished testing preparation file:\n  {file}."
-                    f"  Preparation Time: {formatted_time}"
-                    "\n_____________________________________________\n"
-                )
-
-                return file.split("prepare")[-1], formatted_time
-            except Exception as e:
-                logger.critical(f"Testing preparation file '{file}' failed:")
-                raise e
-
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=4) as executor:
             futures = {
                 executor.submit(process_file, file): file
                 for file in all_preparation_files
