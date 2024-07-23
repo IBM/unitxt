@@ -1,0 +1,22 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "recall",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": [
+                [
+                    "prediction/answer",
+                    "prediction"
+                ]
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/reference_answers": "references"
+            }
+        }
+    ],
+    "metric": "metrics.token_overlap[score_prefix=answer_correctness_]"
+}

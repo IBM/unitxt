@@ -1,0 +1,23 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": [
+                [
+                    "prediction/context_ids",
+                    "prediction"
+                ]
+            ]
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "task_data/reference_context_ids"
+            ],
+            "to_field": "references"
+        }
+    ],
+    "metric": "metrics.mrr[score_prefix=context_correctness_]"
+}

@@ -1,0 +1,13 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "document_id": "str",
+        "title": "str",
+        "passages": "List[str]",
+        "metadata_field": "str"
+    },
+    "outputs": [],
+    "metrics": [
+        "metrics.rouge"
+    ]
+}
