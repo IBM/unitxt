@@ -66,8 +66,8 @@ card = TaskCard(
         ),
     ],
     task="tasks.rag.end_to_end",
-    templates=["templates.empty"],
-    # templates=TemplatesDict({"default": "templates.rag.end_to_end.json_predictions"}),
+    # templates=["templates.empty"],
+    templates=TemplatesDict({"default": "templates.rag.end_to_end.json_predictions"}),
 )
 
 test_card(
