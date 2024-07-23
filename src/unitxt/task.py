@@ -96,7 +96,7 @@ class Task(InstanceOperator):
             self.input_fields = parse_string_types_instead_of_actual_objects(
                 self.input_fields
             )
-        if isoftype(self.outputs, Dict[str, str]):
+        if isoftype(self.reference_fields, Dict[str, str]):
             self.reference_fields = parse_string_types_instead_of_actual_objects(
                 self.reference_fields
             )
@@ -150,19 +150,19 @@ class Task(InstanceOperator):
 
     @classmethod
     def process_data_after_load(cls, data):
-        if isinstance(data["inputs"], dict):
-            data["inputs"] = parse_type_dict(data["inputs"])
-        if isinstance(data["outputs"], dict):
-            data["outputs"] = parse_type_dict(data["outputs"])
+        possible_dicts = ["inputs", "input_fields", "outputs", "reference_fields"]
+        for dict_name in possible_dicts:
+            if dict_name in data and isinstance(data[dict_name], dict):
+                data[dict_name] = parse_type_dict(data[dict_name])
         if "prediction_type" in data:
             data["prediction_type"] = parse_type_string(data["prediction_type"])
         return data
 
     def process_data_before_dump(self, data):
-        if isinstance(data["inputs"], dict):
-            data["inputs"] = to_type_dict(data["inputs"])
-        if isinstance(data["outputs"], dict):
-            data["outputs"] = to_type_dict(data["outputs"])
+        possible_dicts = ["inputs", "input_fields", "outputs", "reference_fields"]
+        for dict_name in possible_dicts:
+            if dict_name in data and isinstance(data[dict_name], dict):
+                data[dict_name] = to_type_dict(data[dict_name])
         if "prediction_type" in data:
             data["prediction_type"] = to_type_string(data["prediction_type"])
         return data
@@ -200,13 +200,13 @@ class Task(InstanceOperator):
                 raise ValueError(
                     f"If specified, the 'defaults' must be a dictionary, "
                     f"however, '{self.defaults}' was provided instead, "
-                    f"which is of type '{type(self.defaults)}'."
+                    f"which is of type '{to_type_string(type(self.defaults))}'."
                 )
 
             for default_name, default_value in self.defaults.items():
                 assert isinstance(default_name, str), (
                     f"If specified, all keys of the 'defaults' must be strings, "
-                    f"however, the key '{default_name}' is of type '{type(default_name)}'."
+                    f"however, the key '{default_name}' is of type '{to_type_string(type(default_name))}'."
                 )
 
                 val_type = self.input_fields.get(
@@ -221,7 +221,7 @@ class Task(InstanceOperator):
 
                 assert isoftype(default_value, val_type), (
                     f"The value of '{default_name}' from the 'defaults' must be of "
-                    f"type '{to_type_string(val_type)}', however, it is of type '{type(default_value)}'."
+                    f"type '{to_type_string(val_type)}', however, it is of type '{to_type_string(type(default_value))}'."
                 )
 
     def set_default_values(self, instance: Dict[str, Any]) -> Dict[str, Any]:
