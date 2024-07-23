@@ -19,7 +19,7 @@ import pandas as pd
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
-from .artifact import Artifact
+from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
     InternalField,
@@ -4531,3 +4531,61 @@ class IsCodeMixed(BulkInstanceMetric):
         )
         processed_stream = self.processor.process(stream)
         return processed_stream.to_dataset()["test"]
+
+
+class MetricsEnsemble(InstanceMetric):
+    """Metrics Ensemble class for creating ensemble of given metrics.
+
+    Attributes:
+        main_score (str): The main score label used for evaluation.
+        metrics (List[Union[Metric, str]]): List of metrics that will be ensemble.
+        weights (List[float]): Weight of each the metrics
+        InstanceMetric currently allows two reductions:
+        reduction_map (Dict[str, List[str]]. Parameter for specifying the redaction method of the global score.
+                                             (see it definition at InstanceMetric class). This class define its default
+                                             value to reduce by the mean of the main score.
+
+    """
+
+    main_score = "ensemble_score"
+    reduction_map = {"mean": [main_score]}
+    metrics: List[Union[Metric, str]]
+    weights: List[float] = None
+
+    def get_prefix_name(self, i):
+        return f"ensemble_{i}_"
+
+    def prepare(self):
+        super().prepare()
+        self.metrics = [fetch_artifact(metric)[0] for metric in self.metrics]
+        for i, metric in enumerate(self.metrics):
+            metric.score_prefix = self.get_prefix_name(i)
+        if self.weights is None:
+            self.weights = [1 / len(self.metrics) for _ in range(len(self.metrics))]
+
+    def create_ensemble_scores(self, instance):
+        score = self.ensemble(instance)
+        instance[
+            "prediction"
+        ] = score  # We use here the prediction field to pass the score to the compute method.
+        return instance
+
+    def ensemble(self, instance):
+        score = 0
+        for i, (metric, weight) in enumerate(zip(self.metrics, self.weights)):
+            score += (
+                instance["score"]["instance"][
+                    self.get_prefix_name(i) + metric.main_score
+                ]
+                * weight
+            )
+        return score
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        for metric in self.metrics:
+            stream = list(metric.process(stream=stream, stream_name=stream_name))
+        stream = [self.create_ensemble_scores(g) for g in stream]
+        return super().process(stream=stream, stream_name=stream_name)
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        return {self.main_score: prediction}

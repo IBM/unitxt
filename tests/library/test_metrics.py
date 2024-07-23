@@ -43,6 +43,7 @@ from unitxt.metrics import (
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
     PrecisionBinary,
@@ -52,7 +53,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.test_utils.metrics import apply_metric, check_scores
+from unitxt.test_utils.metrics import apply_metric, check_scores, test_metric
 
 from tests.utils import UnitxtTestCase
 
@@ -1675,3 +1676,69 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
         for i in range(len(actual_scores)):
             self.assertAlmostEqual(actual_scores[i], target_scores[i])
+
+    def test_metrics_ensemble(self):
+        metric = MetricsEnsemble(
+            main_score="ensemble_score",
+            metrics=[
+                "metrics.precision_micro_multi_label",
+                "metrics.recall_macro_multi_label",
+            ],
+            weights=None,
+        )
+
+        predictions = [["A"], ["B"], [""], ["A"]]
+        references = [[["B", "A"]], [["B"]], [["A"]], [[""]]]
+
+        instance_targets = [
+            {
+                "ensemble_score": 0.75,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 0.5,
+                "score": 0.75,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 1.0,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 1.0,
+                "score": 1.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+        ]
+
+        global_target = {
+            "ensemble_0_precision_micro": 0.5,
+            "ensemble_0_precision_micro_ci_high": 1.0,
+            "ensemble_0_precision_micro_ci_low": 0.0,
+            "ensemble_1_recall_macro": 0.33,
+            "ensemble_1_recall_macro_ci_high": 0.56,
+            "ensemble_1_recall_macro_ci_low": 0.0,
+            "ensemble_score": 0.44,
+            "score": 0.44,
+            "score_ci_high": 0.56,
+            "score_ci_low": 0.0,
+            "score_name": "ensemble_score",
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
