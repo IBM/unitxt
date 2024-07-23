@@ -7,6 +7,10 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "filter_by_expression",
+            "expression": "len(table) > 1"
+        },
+        {
             "__type__": "copy_fields",
             "field_to_field": [
                 [

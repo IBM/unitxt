@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "meta-llama/llama-3-70b-instruct",
+        "max_new_tokens": 2048,
+        "random_seed": 42
+    },
+    "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+    "task": "pairwise_comparative_rating.single_turn",
+    "format": "formats.llama3_instruct",
+    "main_score": "llama_3_70b_instruct_ibm_genai_template_arena_hard"
+}
