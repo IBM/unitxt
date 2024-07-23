@@ -12,7 +12,7 @@ add_to_catalog(
         reference_fields={
             "winner": str
         },  # TODO: Support and change to "Literal['choice_a', 'choice_b', 'tie']"},
-        metrics=["metrics.accuracy"],
+        metrics=["metrics.accuracy", "metrics.f1_micro", "metrics.f1_macro"],
     ),
     "tasks.response_assessment.pairwise_comparison.multi_turn",
     overwrite=True,

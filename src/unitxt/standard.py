@@ -58,8 +58,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
-        if self.sampler:  # e.g. when num_demos is 0, the sampler may not be initialized
-            self.sampler.init_new_random_generator()
 
     def verify(self):
         super().verify()
@@ -96,6 +94,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 raise ValueError(
                     f"max_train_instances should not exceed loader_limit ({self.loader_limit}), Got max_train_instances={self.max_train_instances}"
                 )
+        if self.metrics is not None and not isinstance(self.metrics, List):
+            raise ValueError(
+                f"metrics must be a list of metrics.  Got metrics = {self.metrics}"
+            )
+        if self.postprocessors is not None and not isinstance(
+            self.postprocessors, List
+        ):
+            raise ValueError(
+                f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
+            )
 
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
@@ -352,7 +360,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
         demos_field (str, optional): Field name for demos. Default is "demos".
         demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
-        sampler (Sampler, optional): Sampler object to be used in the recipe.
+        sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
         instruction_card_index (int, optional): Index of instruction card to be used

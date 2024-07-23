@@ -47,7 +47,7 @@ card = TaskCard(
     ],
     task="tasks.response_assessment.pairwise_comparison.single_turn",
     templates=[
-        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_shuffle"
+        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_shuffling"
     ],
 )
 

@@ -173,5 +173,4 @@ for subset in subsets:
             card,
             f"cards.cohere_for_ai.{subset}.{lang}",
             overwrite=True,
-            catalog_path="src/unitxt/catalog",
         )

@@ -50,8 +50,8 @@ class Task(InstanceOperator):
             Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
-        "inputs" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
-        "outputs" -- for the fields listed in Arg "outputs".
+        "input_fields" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
+        "reference_fields" -- for the fields listed in Arg "reference_fields".
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
