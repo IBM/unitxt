@@ -55,8 +55,8 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                     self.assertTrue(True)
 
                 elapsed_time = time.time() - start_time
-                minutes = elapsed_time // 60
-                seconds = elapsed_time % 60
+                minutes = int(elapsed_time // 60)
+                seconds = int(elapsed_time % 60)
                 formatted_time = f"{minutes:02}:{seconds:02}"
                 logger.info(
                     "\n_____________________________________________\n"
