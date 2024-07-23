@@ -6,19 +6,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
-            "mix": {
-                "train": "train",
-                "validation": "validation",
-                "test": "test"
-            }
-        },
-        {
             "__type__": "construct_table_structure",
             "fields": [
                 "table_column_names",
-                "table_content_values",
-                "table_caption"
+                "table_content_values"
             ],
             "to_field": "table"
         },
@@ -34,22 +25,57 @@
         {
             "__type__": "set",
             "fields": {
-                "type_of_input": "Table"
+                "type_of_input": "table"
             }
         },
         {
             "__type__": "set",
             "fields": {
-                "type_of_output": "Text"
+                "type_of_output": "text"
             }
         },
         {
             "__type__": "rename_fields",
             "field_to_field": {
-                "text": "output"
+                "text": "output",
+                "table_caption": "caption"
             }
         }
     ],
-    "task": "tasks.generation[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
-    "templates": "templates.generation.all"
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "input": "str",
+            "type_of_input": "str",
+            "caption": "str",
+            "type_of_output": "str"
+        },
+        "reference_fields": {
+            "output": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference"
+        ],
+        "augmentable_inputs": [
+            "input"
+        ],
+        "defaults": {
+            "type_of_output": "Text"
+        }
+    },
+    "templates": {
+        "__type__": "templates_list",
+        "items": [
+            {
+                "__type__": "input_output_template",
+                "input_format": "Given the following {type_of_input} and caption, generate the corresponding {type_of_output}.\n{type_of_input}: \n{input} \ncaption: \n{caption} \n{type_of_output}:",
+                "output_format": "{output}",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc"
+                ]
+            }
+        ]
+    }
 }
