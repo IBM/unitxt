@@ -60,7 +60,7 @@ Related documentation: :ref:`Formatting tutorial <adding_format>`.
 Evaluate the impact of different demonstration example selections 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Demonstrates how different methods of selecting the example demonstrations when applying in-context learning effect the results.
+Demonstrates how different methods of selecting the demonstrations in in-context learning affect the results.
 Three methods are considered: fixed selection of example demonstrations for all test instance,
 random selection of demonstrations from a demo pool for each test instance, 
 and choosing the demonstration examples most (lexically) similar to each test instance.
