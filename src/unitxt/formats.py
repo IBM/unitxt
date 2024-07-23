@@ -59,10 +59,13 @@ class BaseFormat(Format):
     demos_field: str = "demos"
 
     @staticmethod
-    def _retrieve_field_and_pop_from_instance(instance, field_name) -> str:
+    def _retrieve_field_and_pop_from_instance(
+        instance, field_name, do_pop: bool = True
+    ) -> str:
         if field_name is not None and field_name in instance:
             field_value = instance[field_name]
-            instance.pop(field_name)
+            if do_pop:
+                instance.pop(field_name)
             assert (
                 field_value is not None
             ), f"Value in field '{field_name}' should not be none. Received instance: {instance}"
@@ -165,10 +168,20 @@ class SystemFormat(BaseFormat):
 
         demos_string = ""
         for demo_instance in demo_instances:
+            demo_source = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="source", do_pop=False
+            )
+            demo_target = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="target", do_pop=False
+            )
+            demo_target_prefix = self._retrieve_field_and_pop_from_instance(
+                instance=demo_instance, field_name="target_prefix", do_pop=False
+            )
+
             demo_str = self.demo_format.format(
-                target_prefix=target_prefix,
-                source=demo_instance["source"],
-                target=demo_instance["target"],
+                target_prefix=demo_target_prefix,
+                source=demo_source,
+                target=demo_target,
                 **self.format_args,
             )
             demos_string += demo_str
