@@ -37,7 +37,9 @@ add_to_catalog(
             "metadata_field": "str",
         },
         outputs=[],
-        metrics=["metrics.rouge"],
+        metrics=[
+            "metrics.rouge"
+        ],  # We can not define an empty metric, so we gave here a simple one- although rouge is not related
     ),
     "tasks.rag.corpora",
     overwrite=True,
