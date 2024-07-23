@@ -4,6 +4,7 @@ from unitxt.test_utils.card import test_card
 
 # https://localizely.com/iso-639-2-list/
 iso_lang_code_mapping = {
+    "eng": "English",
     "afr": "Afrikaans",
     "amh": "Amharic",
     "ara": "Arabic",
@@ -108,41 +109,58 @@ iso_lang_code_mapping = {
 }
 
 
-langs = [lang for lang in iso_lang_code_mapping.keys() if "eng" not in lang]
+langs_to_include = [  # langs currently supported by sacrebleu
+    "ara",
+    "fra",
+    "deu",
+    "jpn",
+    "kor",
+    "por",
+    "ron",
+    "spa",
+]
+
+langs = [
+    lang
+    for lang in iso_lang_code_mapping.keys()
+    if ("eng" not in lang and lang in langs_to_include)
+]
 pairs = [{"src": lang, "tgt": "eng"} for lang in langs] + [
     {"src": "eng", "tgt": lang} for lang in langs
 ]
 
-pair = {"src": "eng", "tgt": "jpn"}
-lang_rename = {"eng": "english", "jpn": "japanese"}
+for pair in pairs:
+    card = TaskCard(
+        loader=LoadHF(path="gsarti/flores_101", name="all"),
+        preprocess_steps=[
+            SplitRandomMix({"validation": "dev", "test": "devtest"}),
+            Copy(
+                field_to_field={
+                    f"sentence_{pair['src']}": "text",
+                    f"sentence_{pair['tgt']}": "translation",
+                },
+            ),
+            Set(
+                fields={
+                    "source_language": iso_lang_code_mapping[pair["src"]].lower(),
+                    "target_language": iso_lang_code_mapping[pair["tgt"]].lower(),
+                }
+            ),
+        ],
+        task="tasks.translation.directed",
+        templates="templates.translation.directed.all",
+    )
 
-card = TaskCard(
-    loader=LoadHF(path="gsarti/flores_101", name="all"),
-    preprocess_steps=[
-        SplitRandomMix({"validation": "dev", "test": "devtest"}),
-        Copy(
-            field_to_field={
-                f"sentence_{pair['src']}": "text",
-                f"sentence_{pair['tgt']}": "translation",
-            },
-        ),
-        Set(
-            fields={
-                "source_language": lang_rename[pair["src"]],
-                "target_language": lang_rename[pair["tgt"]],
-            }
-        ),
-    ],
-    task="tasks.translation.directed",
-    templates="templates.translation.directed.all",
-)
-
-test_card(card, demos_taken_from="test")
-add_to_catalog(card, f"cards.mt.flores_101.{pair['src']}_{pair['tgt']}", overwrite=True)
+    test_card(card, demos_taken_from="test")
+    add_to_catalog(
+        card, f"cards.mt.flores_101.{pair['src']}_{pair['tgt']}", overwrite=True
+    )
 
 if __name__ == "__main__":
     from unitxt import load_dataset
 
     ds = load_dataset(
-        "card=cards.mt.flores_101.eng_jpn,template_card_index=0",
+        "card=cards.mt.flores_101.eng_deu,template_card_index=0",
     )
+
+    ds["test"][0]
