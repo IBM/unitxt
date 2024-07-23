@@ -66,7 +66,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                 logger.critical(f"Testing preparation file '{file}' failed:")
                 raise e
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = {
                 executor.submit(process_file, file): file
                 for file in all_preparation_files
