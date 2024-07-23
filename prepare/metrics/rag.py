@@ -419,14 +419,6 @@ for axis, base_metric, main_score in [
 
 # end to end
 
-end_to_end_artifact_names = [
-    "metrics.rag.end_to_end.answer_correctness",
-    "metrics.rag.end_to_end.answer_reward",
-    "metrics.rag.end_to_end.answer_faithfulness",
-    "metrics.rag.end_to_end.context_correctness",
-    "metrics.rag.end_to_end.context_relevance",
-]
-
 end_to_end_artifact_name_to_main_score = {
     "metrics.rag.end_to_end.answer_correctness": "recall",
     "metrics.rag.end_to_end.answer_reward": "score",
@@ -443,8 +435,9 @@ end_to_end_artifact_names_to_main_metric = {
     "metrics.rag.end_to_end.context_relevance": "metrics.perplexity_q.flan_t5_small",
 }
 
-assert len(end_to_end_artifact_names) == len(end_to_end_artifact_name_to_main_score)
-assert len(end_to_end_artifact_names) == len(end_to_end_artifact_names_to_main_metric)
+assert len(end_to_end_artifact_name_to_main_score) == len(
+    end_to_end_artifact_names_to_main_metric
+)
 
 copy_field_prediction_answer_to_prediction = Copy(
     field_to_field=[
@@ -533,11 +526,8 @@ end_to_end_artifact_names_to_preprocess_steps = {
     ],
 }
 
-assert len(end_to_end_artifact_names) == len(
-    end_to_end_artifact_names_to_preprocess_steps
-)
 
-for artifact_name in end_to_end_artifact_names:
+for artifact_name in end_to_end_artifact_names_to_preprocess_steps.keys():
     metric_short_name = artifact_name.split(".")[-1]
     if metric_short_name == "rouge":  # rouge does not need a prefix
         score_prefix = ""
