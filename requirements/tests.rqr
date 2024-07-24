@@ -2,6 +2,7 @@ bert_score
 transformers
 sentence_transformers
 ibm-cos-sdk
+kaggle==1.6.14
 opendatasets
 httpretty~=1.1.4
 editdistance
