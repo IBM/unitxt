@@ -88,22 +88,22 @@ class IlabSkillAdder:
 
 
 
-if __name__ == "__main__":
+def cat_example():
     register_local_catalog("../fm-eval/fm_eval/catalogs/private")
     task_description = "cat multi label"
     creator = 'RF'
     yaml_file = "cat_samples.yaml"
-    
+
     template = "templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none"
     card = 'cards.cat'
-    
-    question_field = 'source' #question
-    answer_field = 'references' #answers
+
+    question_field = 'source'  # question
+    answer_field = 'references'  # answers
     context_field = 'context'
 
-    loaded_dataset = load_dataset(card=card,template=template)
+    loaded_dataset = load_dataset(card=card, template=template)
     dataset = loaded_dataset['train']
-   
+
     examples = []
     random_indexes = random.sample(range(len(dataset)), 5)
     for idx in random_indexes:
@@ -116,6 +116,34 @@ if __name__ == "__main__":
             question=question, answer=answer, context=context
         ))
 
+        print(f"Using the following indexes: {random_indexes}")
+
+        IlabSkillAdder(
+            task_description=task_description,
+            created_by=creator,
+            seed_examples=examples,
+            yaml_file_path=yaml_file
+        )
+
+
+def cnn_dailymail_example():
+    dataset = load_dataset(card="cards.cnn_dailymail", template="templates.summarization.abstractive.instruct_full",
+                           loader_limit=1000, )
+    dataset = dataset['train']
+    task_description = "dailymail summerizaion with context simple"
+    creator = 'eladv'
+    yaml_file = "qna.yaml"
+    examples = []
+    random_indexes = random.sample(range(len(dataset)), 5)
+    for idx in random_indexes:
+        example_data = json.loads(dataset[idx]['task_data'])
+        question = 'Summarize the following article.\n'
+        answer = example_data['summary']
+        context = example_data['document']
+        examples.append(SeedExample(
+            question=question, answer=answer, context=context
+        ))
+
     print(f"Using the following indexes: {random_indexes}")
 
     IlabSkillAdder(
@@ -124,5 +152,9 @@ if __name__ == "__main__":
         seed_examples=examples,
         yaml_file_path=yaml_file
     )
+
+    
+if __name__ == "__main__":
+    cnn_dailymail_example()
 
 

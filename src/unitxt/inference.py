@@ -248,6 +248,30 @@ class InstructLabInferenceEngine(
         return None
 
 
+class NonBatchedInstructLabInferenceEngine(InstructLabInferenceEngine):
+    def extract_inference(self, http_response):
+        data = http_response.json()
+        return data['choices'][0]['text']
+
+    def _infer(self,dataset):
+        outputs = []
+        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"):
+            payload = {
+                "prompt": instance["source"],
+                'model': self.model
+            }
+            self.add_parametes_to_payload(payload)
+            try:
+                response = requests.post(self.base_url + "/completions", json=payload)
+                response.raise_for_status()
+                output = self.extract_inference(response)
+            except requests.exceptions.RequestException as e:
+                raise ValueError(f"Error sending request: {e}")
+            except (KeyError, IndexError):
+                raise ValueError("Error: Failed to parse response JSON or access data.")
+            outputs.append(output)
+        return outputs
+
 class OpenAiInferenceEngine(
     InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
 ):
