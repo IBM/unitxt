@@ -196,7 +196,7 @@ class LLMAsJudge(BulkInstanceMetric):
                 res = {
                     self.main_score: instance["processed_prediction"],
                     "judge_raw_output": verdict,
-                    "judge_raw_input": instance["processed_prediction"]["source"],
+                    "judge_raw_input": instance["source"],
                 }
             res_list.append(res)
 
