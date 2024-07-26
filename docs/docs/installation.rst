@@ -3,7 +3,7 @@
 Installation
 ==============
 
-Unitxt conforms to the Huggingface datasets and metrics API, so it can be used without explicitly installing the unitxt package.
+Unitxt conforms to the Huggingface Dataset and Metric APIs, so it can be used without explicitly installing the unitxt package.
 
 .. code-block:: python
 
@@ -26,15 +26,15 @@ Note, the `trust_remote_code=True` flag is required because in the background th
 latest version of Unitxt from https://huggingface.co/datasets/unitxt/data/tree/main.
 
 The core of Unitxt has minimal dependencies (none beyond Huggingface evaluate).
-Note that specific metrics or other operators, may required specific dependencies, which are checked before the first time they are used.
+Note that specific metrics or other operators may required specific dependencies, which are checked before the first time they are used.
 An error message is printed if the there are missing installed dependencies.
 
 The benefit of using the Huggingface API approach is that you can load a Unitxt dataset, just like every other Huggingface dataset, 
 so it can be used in preexisting code without modifications.  
 However, this incurs extra overhead when Huggingface downloads the unitxt package and does not expose all unitxt capabilities
-(e.g. defining new datasets, metrics, templates, and more)
+(e.g., defining new datasets, metrics, templates, and more).
 
-To get the full capabilities of Unitxt , install Unitxt locally from pip:
+To get the full capabilities of Unitxt, install Unitxt locally from pip:
 
 .. code-block:: bash
 
@@ -60,7 +60,7 @@ You can then use the API:
 
 
 .. warning::
-   It's important not to mix calls to the Unitxt directs APIs and the Huggingface APIs in the same program.  Use either
+   It's important not to mix calls to the Unitxt direct APIs and the Huggingface APIs in the same program.  Use either
    the direct Unitxt APIs or the Huggingface APIs to load datasets and metrics.
 
 If you get an error message like:
@@ -71,7 +71,10 @@ If you get an error message like:
    Located installed unitxt version 1.9.0 that is older than unitxt Huggingface dataset version 1.10.0.
 
 It means that you are loading datasets using the Huggingface API, but you also have a local version of Unitxt
-installed, and the versions are not compatible.  You should either update the local installed Unitxt
-to the Unitxt Huggingface dataset version, or uninstall the local Unitxt package (in case you don't require the access to Unitxt
-direct APIs), or change the code to load the datasets using the direct Unitxt APIs and not use the Huggingface API.
+installed, and the versions are not compatible.  To fix this issue, you should choose one of the following three options:
+* Update the locally installed Unitxt
+to the Unitxt Huggingface dataset version
+* Uninstall the local Unitxt package (in case you don't require the access to Unitxt
+direct APIs), or
+* Change the code to load the datasets using the direct Unitxt APIs and not use the Huggingface API.
 
