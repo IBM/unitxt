@@ -231,6 +231,15 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
+    def validate_ci_in_global_score(self, gs: dict):
+        for score_ci in ["score_ci_low", "score_ci_high"]:
+            if (
+                score_ci in gs
+                and "score_name" in gs
+                and gs["score_name"] + score_ci[5:] not in gs
+            ):
+                gs.pop(score_ci)
+
 
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
@@ -534,6 +543,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
+            self.validate_ci_in_global_score(instance["score"]["global"])
             yield instance
 
     def _compute(
@@ -675,6 +685,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
+            self.validate_ci_in_global_score(instance["score"]["global"])
             yield instance
 
     @abstractmethod
@@ -1069,6 +1080,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in instances:
             instance["score"]["global"].update(global_score)
+            self.validate_ci_in_global_score(instance["score"]["global"])
         yield from instances
 
     def compute_instance_scores(

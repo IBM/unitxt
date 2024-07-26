@@ -1740,8 +1740,6 @@ class TestConfidenceIntervals(UnitxtTestCase):
             "ensemble_1_recall_macro_ci_low": 0.0,
             "ensemble_score": 0.44,
             "score": 0.44,
-            "score_ci_high": 0.56,
-            "score_ci_low": 0.0,
             "score_name": "ensemble_score",
         }
 
