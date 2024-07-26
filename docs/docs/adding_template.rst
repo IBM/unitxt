@@ -9,8 +9,8 @@ Templates ✨
 =====================================
 
 In this section you learn how to add a Template. Templates are the way for unitxt to take your task data and verbalize the task instructions to the model.
-The templates made by the community can be found in the catalog :ref:`templates section <catalog.templates>`.
-And the documentation for the base classes used for templates can be found here: :ref:`Templates Documentation<templates>`
+The templates made by the community can be found in the catalog :ref:`templates section <catalog.templates>`,
+and the documentation for the base classes used for templates can be found here: :ref:`Templates Documentation<templates>`.
 
 Unitxt Prompt Structure
 ----------------------------
@@ -32,12 +32,15 @@ Within the template, there are also different parts:
    :width: 75%
    :align: center
 
-Including the task `instruction`, marked in green, appear once at the top of the example.
-The `input_format` marked in red, formatting the layout of the different fields of the task.
-And the `target_prefix` marked in yellow, priming the target. Now we understand the taxonomy
-of the different parts of the template we can see how to define it in code and add it to the unitxt catalog.
+Including:
+# The task `instruction`, marked in green, appear once at the top of the example
+# The `input_format` marked in red, formatting the layout of the different fields of the task, and
+# The `target_prefix` marked in yellow, which primes the target.
 
-Adding a new Template
+Now that we understand the taxonomy
+of the different parts of the template, we can see how to define it in code and add it to the unitxt catalog.
+
+Adding a New Template
 ----------------------------
 
 In this code example, we will use a translation task with the following task fields in every instance: `text`, `text_type`, `source_language`, `target_language`, and lastly the target `translation`.
@@ -64,7 +67,7 @@ There are different templates for different types of data. For example, for data
 .. code-block:: python
 
     MultiReferenceTemplate(
-        instruction="Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of a few words.\n\n",
+        instruction="Answer the question based on the information provided in the document given below. The answer should be a single word, a number, or a short phrase of a few words.\n\n",
         input_format="Document: {context}\nQuestion: {question}",
         output_format="{answer}",
         target_prefix="Answer: ",
@@ -94,8 +97,8 @@ implementing its abstract methods:
 
     
 
-For instance, this templates passes all the input fields to the model as a json string.
-It also formats the references , by taking two of the dataset reference fields the 'top_answer' and 'alternative_answer'.
+For instance, this template passes all the input fields to the model as a json string.
+It also formats the references by taking two of the dataset reference fields: the 'top_answer' and the 'alternative_answer.'
 
 .. code-block:: python
 
