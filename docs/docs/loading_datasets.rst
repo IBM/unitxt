@@ -4,10 +4,7 @@
 Loading Datasets
 ===================================
 
-Loading a dataset
------------------
-
-You can load a Unitxt dataset, using the Huggingface dataset API, 
+You can load a Unitxt dataset using the Huggingface dataset API 
 without installing the Unitxt package by using the following code:
 
 .. code-block:: python
@@ -58,12 +55,12 @@ This prints the reference text (expected output of the model) of the first sampl
     'not entailment'
 
 
-Loading a customized datasets
+Loading a customized dataset
 -----------------------------
 
 Unitxt enables formatting the dataset in different ways.
 
-As example, here we load wnli in 3 shots format:
+As example, here we load wnli in the 3 shots format:
 
 .. code-block:: python
 
