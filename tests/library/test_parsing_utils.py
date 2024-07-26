@@ -18,6 +18,18 @@ class TestParsingUtils(UnitxtTestCase):
         expected = {"name": "John-Doe", "-age": 30, "--height": 5.8}
         self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
 
+        # constants: True, False, None
+        query = "name=John-Doe,-age=30,--height=5.8,wife=None,happy=False,rich=True"
+        expected = {
+            "name": "John-Doe",
+            "-age": 30,
+            "--height": 5.8,
+            "wife": None,
+            "happy": False,
+            "rich": True,
+        }
+        self.assertEqual(parse_key_equals_value_string_to_dict(query), expected)
+
     def test_parse_key_equals_value_string_to_dict_with_spaces(self):
         query = "first name=Jane Doe, last name=Doe, country=USA, balance=100.50"
         expected = {
