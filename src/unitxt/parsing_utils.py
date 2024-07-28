@@ -55,6 +55,8 @@ def consume_name_val(instring: str) -> Tuple[Any, str]:
         return (True, instring)
     if name_val == "False":
         return (False, instring)
+    if name_val == "None":
+        return (None, instring)
 
     sign = 1
     if name_val.startswith("-"):
@@ -135,7 +137,7 @@ def consume_assignment(instring: str) -> Tuple[Any, str]:
     if not instring.startswith("="):
         raise ValueError(f"malformed assignment in: {orig_instring}")
     (term, instring) = consume_term(instring[1:].strip())
-    if (term is None) or not (isinstance(term, (int, float, bool)) or len(term) > 0):
+    if not ((term is None) or isinstance(term, (int, float, bool)) or (len(term) > 0)):
         raise ValueError(f"malformed assigned value in: {orig_instring}")
     return ({name: term}, instring)
 
