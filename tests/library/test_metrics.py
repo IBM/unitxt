@@ -1539,6 +1539,28 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 metric_label: 1.0,
                 "score_name": metric_label,
                 "score": 1.0,
+                "judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                "Please act as an impartial judge and "
+                "evaluate the quality of the response "
+                "provided by an AI assistant to the user "
+                "question displayed below. Your evaluation "
+                "should consider factors such as the "
+                "helpfulness, relevance, accuracy, depth, "
+                "creativity, and level of detail of the "
+                "response. Begin your evaluation by "
+                "providing a short explanation. Be as "
+                "objective as possible. After providing your "
+                "explanation, you must rate the response on "
+                "a scale of 1 to 10 by strictly following "
+                'this format: "[[rating]]", for example: '
+                '"Rating: [[5]]".\n\n'
+                "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+                "[Question]\n"
+                "Given the following type, generate the corresponding type. type: input\n\n\n"
+                "[The Start of Assistant's Answer]\n"
+                "[[10]]\n"
+                "[The End of Assistant's "
+                "Answer]<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
                 "judge_raw_output": "[[10]]",
             }
         ] * 3
