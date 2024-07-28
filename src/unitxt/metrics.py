@@ -250,6 +250,8 @@ class Metric(Artifact):
     # the current metric: "score_name" and "score". The current metric, named instance["score"]["global"]["score_name"],
     # only has score value, which repeats in field instance["score"]["global"]["score"], and does not have ci_scores,
     # which is also reflected in the absence of fields "score_ci_low" and "score_ci_high" from instance["score"]["global"].
+    # If CI IS computed for the current metric, gs contains "score_ci_low" and "score_ci_high", and these overwrite
+    # the ones existing in instance["score"]["global"] by a simple python-dictionary-update, and no need for any further fixeup.
     def update_and_adjust_global_score(self, instance: Dict[str, Any], gs: dict):
         instance["score"]["global"].update(gs)
         for score_ci in ["score_ci_low", "score_ci_high"]:
