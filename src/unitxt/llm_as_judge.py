@@ -2,9 +2,11 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .api import evaluate, produce
 from .artifact import Artifact, fetch_artifact, settings
+from .formats import Format
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
+from .system_prompts import SystemPrompt
 
 
 class LLMAsJudge(BulkInstanceMetric):
@@ -122,6 +124,7 @@ class LLMAsJudge(BulkInstanceMetric):
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
 
+    def verify(self):
         supported_tasks = [
             "rating.single_turn",
             "rating.single_turn_with_reference",
@@ -131,6 +134,16 @@ class LLMAsJudge(BulkInstanceMetric):
             f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             f"The supported tasks types are: {', '.join(supported_tasks)}."
         )
+
+        if self.format and not isinstance(self.format, Format):
+            raise ValueError(
+                f"Provided format argument to 'LLMAsJudge' metric is not of type Format, but {type(self.format)}"
+            )
+
+        if self.system_prompt and not isinstance(self.system_prompt, SystemPrompt):
+            raise ValueError(
+                f"Provided system_prompt argument to 'LLMAsJudge' metric is not of type SystemPrompt, but {type(self.system_prompt)}"
+            )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
             if self.format:
