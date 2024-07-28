@@ -7,6 +7,6 @@ system_prompt = TextualSystemPrompt(
 
 add_to_catalog(
     system_prompt,
-    "system_prompt.models.japanese_llama",
+    "system_prompts.models.japanese_llama",
     overwrite=True,
 )
