@@ -57,6 +57,18 @@ Demonstrates how different formats and system prompts effect the input provided 
 
 Related documentation: :ref:`Formatting tutorial <adding_format>`.
 
+Evaluate the impact of different demonstration example selections 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how different methods of selecting the demonstrations in in-context learning affect the results.
+Three methods are considered: fixed selection of example demonstrations for all test instance,
+random selection of example demonstrations for each test instance, 
+and choosing the demonstration examples most (lexically) similar to each test instance.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_demo_selections.py>`_ 
+
+Related documentation: :ref:`Formatting tutorial <adding_format>`.
+
 LLM as Judges
 --------------
 
@@ -93,7 +105,7 @@ Evaluate the quality of an LLM as judge
 
 Demonstrates how to evaluate an LLM as judge by checking its scores using the gold references of a dataset.
 It checks if the judge consistently prefers correct outputs over clearly wrong ones.
-Note that to check the the ability of the LLM as judge to discern sutble differences between 
+Note that to check the the ability of the LLM as judge to discern suitable differences between
 partially correct answers requires more refined tests and corresponding labeled data.
 The example shows an 8b llama based judge is not a good judge for a summarization task,
 while the 70b model performs much better.  
@@ -101,5 +113,37 @@ while the 70b model performs much better.
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge.py>`_ 
 
 Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
+
+Evaluate your model on the Arena Hard benchmark using a custom LLMaJ
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to evaluate a user model on the Arena Hard benchmark, using an LLMaJ other than the GPT4.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_model_using_arena_hard.py>`_
+
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`.
+
+Evaluate a judge model performance judging the Arena Hard Benchmark
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to evaluate the capabilities of a user model, to act as a judge on the Arena Hard benchmark.
+The model is evaluated on its capability to give a judgment that is in correlation with GPT4 judgment on the benchmark.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard.py>`_
+
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`.
+
+Evaluate using ensemble of LLM as a judge metrics
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to create a metric which is an ensemble of LLM as a judge metrics.
+The example shows how to ensemble two judges which uses different templates.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_using_metrics_ensemble.py>`_
+
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+
+
 
 

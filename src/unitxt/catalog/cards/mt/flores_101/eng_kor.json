@@ -1,0 +1,33 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "gsarti/flores_101",
+        "name": "all"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "validation": "dev",
+                "test": "devtest"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "sentence_eng": "text",
+                "sentence_kor": "translation"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "source_language": "english",
+                "target_language": "korean"
+            }
+        }
+    ],
+    "task": "tasks.translation.directed",
+    "templates": "templates.translation.directed.all"
+}

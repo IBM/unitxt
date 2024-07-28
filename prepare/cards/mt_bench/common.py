@@ -19,12 +19,12 @@ mt_bench_rating_hf_space_processing_steps = SequentialOperator(
         RenameFields(
             field_to_field={
                 "model": "model_id",
-                "judge": "judge_model_id",
                 "user_prompt": "judge_input",
                 "judgment": "judge_output",
             },
             apply_to_streams=["judgment"],
         ),
+        Copy(field="judge/0", to_field="judge_model_id", apply_to_streams=["judgment"]),
         RenameFields(
             field_to_field={"choices": "model_output"},
             apply_to_streams=["model_answer"],
@@ -93,7 +93,6 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
         # region Judgment file
         RenameFields(
             field_to_field={
-                "judge": "judge_model_id",
                 "g1_user_prompt": "judge_input_model_1_ordered_first",
                 "g2_user_prompt": "judge_input_model_2_ordered_first",
                 "g1_judgment": "judge_output_model_1_ordered_first",
@@ -103,6 +102,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             },
             apply_to_streams=["judgment"],
         ),
+        Copy(field="judge/0", to_field="judge_model_id", apply_to_streams=["judgment"]),
         Apply(
             "model_1",
             function="str.lower",
