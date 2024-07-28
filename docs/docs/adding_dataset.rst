@@ -27,7 +27,7 @@ In fact, the same dataset can be used for multiple NLP tasks. For example, a dat
 question answering and question generation.  Similarly, a dataset with corresponding English and French sentences can be used for
 an Engish-to-French translation task or for a French-to-English translation task.
 
-The task schema is a formal definition of the NLP task, including its inputs, outputs, and default evaluation metrics.
+The task schema is a formal definition of the NLP task.
 
 The `input_fields` of the task are a set of fields that are used to format the textual input to the model.
 The `reference_fields` of the task are a set of fields used to format the expected textual output from the model (gold references).
@@ -35,9 +35,11 @@ The `metrics` of the task are a set of default metrics used to evaluate the outp
 
 While language models generate textual predictions, the metrics often evaluate on different datatypes.  For example,
 Spearman's correlation is evaluated on numeric predictions vs numeric reference, and multi-label F1 is evaluated on a list of string class name prediction_type
-vs. a reference list of string classes.  The `prediction_type` of the task defines the common prediction (and reference) types for all metrics of the task.
+vs. a reference list of string classes. 
 
-Note that the task does not perform any verbalization or formatting of the task input and output fields - this is the responsibility of the template.
+The `prediction_type` of the task defines the common prediction (and reference) types for all metrics of the task.
+
+Note that the task does not perform any verbalization or formatting of the task input and reference fields - this is the responsibility of the template.
 
 In the example below, we formalize a translation task between `source_language` and a `target_language`.
 The text to translate is in the field `text` and the reference answer in the `translation` field.
@@ -78,7 +80,7 @@ The Preprocessing Pipeline
 The preprocessing pipeline consists of operations to prepare your data according to the task's schema.
 
 For example, to prepare the wmt16 dataset for the translation task, we need to map the raw dataset field names to the standard
-input and output fields of the task.  We also need to add new fields for the source and target language.
+input fields and reference fields of the task.  We also need to add new fields for the source and target language.
 
 .. code-block:: python
 
@@ -105,12 +107,12 @@ For custom operators, refer to the :ref:`Operators Tutorial <adding_operator>`.
 The Template
 ----------------
 
-The responsibility of the template is to verbalize the task's input and output fields to the input of the model and the gold references.
+The responsibility of the template is to verbalize the task's input fields and references fields to the input of the model and the gold references.
 For example, taking the input fields `text`, `source_language`, and `target_language` and format them as a prompt.
 
 `Translate this sentence from {source_language} to {target_language}: {text}.``
 
-The template also verbalizes the output fields as gold references.  In Unitxt, references are the expected textual outputs of the model.
+The template also verbalizes the reference fields as gold references.  In Unitxt, references are the expected textual outputs of the model.
 In this example, the `translation` field is taken, as is, as a gold reference.
 However, in other cases, the output field may undergo some transformations.
 
