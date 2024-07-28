@@ -33,20 +33,20 @@ add_to_catalog(
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Given the following {type_of_input} and caption, generate the corresponding {type_of_output}."
-        "\n{type_of_input}: \n{input} \ncaption: \n{caption} \n{type_of_output}:",
+        input_format="Given the following {type_of_input_a} and {type_of_input_b}, generate the corresponding {type_of_output}."
+        "\n{type_of_input_a}: \n{input_a} \n{type_of_input_b}: \n{input_b} \n{type_of_output}:",
         output_format="{output}",
         postprocessors=[
             "processors.take_first_non_empty_line",
             "processors.lower_case_till_punc",
         ],
     ),
-    "templates.generation.with_caption",
+    "templates.generation.from_pair.default",
     overwrite=True,
 )
 
 add_to_catalog(
-    TemplatesList(["templates.generation.with_caption"]),
-    "templates.generation.structured",
+    TemplatesList(["templates.generation.from_pair.default"]),
+    "templates.generation.from_pair.all",
     overwrite=True,
 )

@@ -7,36 +7,25 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="kasnerz/numericnlg"),  # TODO: load from github repo
     preprocess_steps=[
-        Set(fields={"type_of_input": "table", "type_of_output": "description"}),
+        Set(
+            fields={
+                "type_of_input_a": "table",
+                "type_of_input_b": "caption",
+                "type_of_output": "description",
+            }
+        ),
         MapHTMLTableToJSON(field="table_html_clean", to_field="table_out"),
-        SerializeTableAsMarkdown(field="table_out", to_field="input"),
+        SerializeTableAsMarkdown(field="table_out", to_field="input_a"),
         RenameFields(field="description", to_field="output"),
+        RenameFields(field="caption", to_field="input_b"),
     ],
-    task=Task(
-        input_fields={
-            "input": "str",
-            "type_of_input": "str",
-            "caption": "str",
-            "type_of_output": "str",
-        },
-        reference_fields={"output": "str"},
-        prediction_type="str",
-        metrics=[
-            "metrics.bleu",
-            "metrics.rouge",
-            "metrics.bert_score.bert_base_uncased",
-            "metrics.meteor",
-        ],
-        augmentable_inputs=["input"],
-        defaults={"type_of_output": "Text"},
-    ),
-    templates="templates.generation.structured",
+    task="tasks.generation.from_pair",
+    templates="templates.generation.from_pair.all",
     __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     __tags__={
         "modality": "table",
