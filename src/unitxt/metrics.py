@@ -231,14 +231,32 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    def validate_ci_in_global_score(self, gs: dict):
+    # update instance["score"]["global"] with the newly computed global score, gs, for the
+    # current metric computed.  gs contains "score" and "score_name" fields that reflect
+    # (the main_score of) the current metric.
+    # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
+    # of its fields "score" and "score_name", to reflect the current metric, overwriting previous metrics' settings
+    # of these fields (if any previous metric exists).
+    # When gs does NOT contain ci score (because CI was not computed for the current metric), but
+    # one of the previous metrics computed did have, the last of such previous metrics set the values in
+    # fields "score_ci_low" and "score_ci_high" in instance["score"]["global"] to reflect its
+    # (the previous metric's) CI scores.
+    # Because CI is not computed for the current metric, gs does not contain fields "score_ci_low" and
+    # "score_ci_high" to overwrite the ones existing in instance["score"]["global"], and these might be left in
+    # instance["score"]["global"], but their values, that are not associated with the current metric, are,
+    # therefore, not consistent with "score_name".
+    # In such a case, following the python-dictionary-update, we pop out fields "score_ci_low" and
+    # "score_ci_high" from instance["score"]["global"], so that now all the fields "score.." are consistent with
+    # the current metric: "score_name" and "score". The current metric, named instance["score"]["global"]["score_name"],
+    # only has score value, which repeats in field instance["score"]["global"]["score"], and does not have ci_scores,
+    # which is also reflected in the absence of fields "score_ci_low" and "score_ci_high" from instance["score"]["global"].
+    def update_and_adjust_global_score(self, instance: Dict[str, Any], gs: dict):
+        instance["score"]["global"].update(gs)
         for score_ci in ["score_ci_low", "score_ci_high"]:
-            if (
-                score_ci in gs
-                and "score_name" in gs
-                and gs["score_name"] + score_ci[5:] not in gs
-            ):
-                gs.pop(score_ci)
+            if score_ci in gs:
+                continue
+            if score_ci in instance["score"]["global"]:
+                instance["score"]["global"].pop(score_ci)
 
 
 class MetricWithConfidenceInterval(Metric):
@@ -542,8 +560,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         global_score.update(confidence_interval)
 
         for instance in instances:
-            instance["score"]["global"].update(global_score)
-            self.validate_ci_in_global_score(instance["score"]["global"])
+            self.update_and_adjust_global_score(instance, global_score)
             yield instance
 
     def _compute(
@@ -684,8 +701,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                         global_score["score_name"] = self.score_prefix + self.main_score
 
         for instance in instances:
-            instance["score"]["global"].update(global_score)
-            self.validate_ci_in_global_score(instance["score"]["global"])
+            self.update_and_adjust_global_score(instance, global_score)
             yield instance
 
     @abstractmethod
@@ -1079,8 +1095,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 global_score.update(confidence_interval)
 
         for instance in instances:
-            instance["score"]["global"].update(global_score)
-            self.validate_ci_in_global_score(instance["score"]["global"])
+            self.update_and_adjust_global_score(instance, global_score)
         yield from instances
 
     def compute_instance_scores(
@@ -1715,7 +1730,7 @@ class FinQAEval(InstanceMetric):
 
     def finqa_eval_program(
         self, references: List[List], prediction: str, task_data: Dict, finqa_module
-    ) -> (float, float):
+    ) -> Tuple[float, float]:
         prog_correct = False
         pred_item = finqa_module.program_tokenization(prediction)
         program = task_data["program_re"]
@@ -1727,7 +1742,7 @@ class FinQAEval(InstanceMetric):
 
     def finqa_eval_execution(
         self, references: List[List], prediction: str, task_data: Dict, finqa_module
-    ) -> (float, float):
+    ) -> Tuple[float, float]:
         exe_correct = False
         last_char = prediction.rfind(")")
         prediction = prediction[: last_char + 1]
