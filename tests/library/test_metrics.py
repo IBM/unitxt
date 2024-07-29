@@ -164,6 +164,18 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def prediction_type_definition(self):
+        class TempAccuracy(Accuracy):
+            prediction_type = int
+
+        self.assertEqual(TempAccuracy().prediction_type, int)
+
+    def test_prediction_type_definition_deprecated(self):
+        class TempAccuracy2(Accuracy):
+            prediction_type = "int"
+
+        self.assertEqual(TempAccuracy2().prediction_type, int)
+
     def test_accuracy(self):
         metric = Accuracy()
 
@@ -1740,8 +1752,6 @@ class TestConfidenceIntervals(UnitxtTestCase):
             "ensemble_1_recall_macro_ci_low": 0.0,
             "ensemble_score": 0.44,
             "score": 0.44,
-            "score_ci_high": 0.56,
-            "score_ci_low": 0.0,
             "score_name": "ensemble_score",
         }
 

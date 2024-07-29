@@ -46,9 +46,9 @@ We will use the `bleu` metric for a reference based evaluation.
 .. code-block:: python
 
     task=Task(
-        input_fields= { "text" : "str", "source_language" : "str", "target_language" : "str"},
-        reference_fields= {"translation" : "str"},
-        prediction_type="str",
+        input_fields= { "text" : str, "source_language" : str, "target_language" : str},
+        reference_fields= {"translation" : str},
+        prediction_type=str,
         metrics=["metrics.bleu"],
     ),
 

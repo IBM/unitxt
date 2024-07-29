@@ -1,9 +1,11 @@
 import typing
 
 from unitxt.type_utils import (
+    UnsupportedTypeError,
     format_type_string,
     infer_type,
     infer_type_string,
+    is_type,
     isoftype,
     issubtype,
     parse_type_string,
@@ -267,9 +269,9 @@ class TestAssertTyping(UnitxtTestCase):
 
     def test_verify_required_schema(self):
         schema = {
-            "field_1": "Dict[str, float]",
-            "field_2": "int",
-            "field_3": "Tuple[List[str], Optional[str]]",
+            "field_1": typing.Dict[str, float],
+            "field_2": int,
+            "field_3": typing.Tuple[typing.List[str], typing.Optional[str]],
         }
 
         obj = {
@@ -342,3 +344,25 @@ class TestAssertTyping(UnitxtTestCase):
             "Union[List[Union[int,float]],Tuple[Union[int,float]]]",
             format_type_string("List[int|float]|Tuple[int|float]"),
         )
+
+    def test_is_type(self):
+        self.assertTrue(is_type(typing.Dict[str, str]))
+        self.assertTrue(is_type(typing.List[str]))
+        self.assertTrue(is_type(typing.Tuple[str, str]))
+        self.assertTrue(is_type(typing.Union[str, int]))
+        self.assertTrue(is_type(typing.Optional[str]))
+        self.assertTrue(is_type(str))
+        self.assertTrue(is_type(float))
+        self.assertTrue(is_type(int))
+        self.assertTrue(is_type(list))
+        self.assertTrue(is_type(dict))
+        self.assertFalse(is_type([1, 2]))
+
+        with self.assertRaises(UnsupportedTypeError):
+            isoftype(4, (int, int))
+
+        with self.assertRaises(UnsupportedTypeError):
+            isoftype(3, "int")
+
+        with self.assertRaises(UnsupportedTypeError):
+            isoftype(3, typing.List)
