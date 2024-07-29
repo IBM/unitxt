@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 
 from unitxt import add_to_catalog
@@ -70,9 +71,16 @@ card = TaskCard(
     templates=TemplatesDict({"default": "templates.rag.end_to_end.json_predictions"}),
 )
 
+wrong_answer = {
+    "contexts": ["hi"],
+    "is_answerable": True,
+    "answer": "Don't know",
+    "context_ids": ["id0"],
+}
 test_card(
     card,
     strict=True,
+    full_mismatch_prediction_values=[json.dumps(wrong_answer)],
     debug=False,
     demos_taken_from="test",
     demos_pool_size=5,
@@ -111,13 +119,5 @@ card = TaskCard(
     ),
 )
 
-# Not strict because Rouge does not return 1.0 even if predictions are equal to references, when txt is only "-'"
-# Check only one language to speed up process
-test_card(
-    card,
-    strict=False,
-    debug=False,
-    demos_taken_from="test",
-    demos_pool_size=5,
-)
+# Not testing card, because documents are not evaluated.
 add_to_catalog(card, "cards.rag.documents.clap_nq.en", overwrite=True)
