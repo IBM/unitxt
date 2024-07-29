@@ -23,7 +23,7 @@ python -m venv unitxt-venv
 Then, activate the virtual environment:
 
 ```bash
-source unitxt-venv/bin/activate
+source unitxt-venv/Scripts/activate
 ```
 
 Then, install the project:
