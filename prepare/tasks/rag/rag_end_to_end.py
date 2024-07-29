@@ -1,18 +1,20 @@
+from typing import Any, Dict, List
+
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
 
 add_to_catalog(
     Task(
-        inputs={
-            "question": "str",
-            "question_id": "Any",
-            "metadata_field": "str",
+        input_fields={
+            "question": str,
+            "question_id": Any,
+            "metadata_field": str,
         },
-        outputs={
-            "reference_answers": "list[str]",
-            "reference_contexts": "list[str]",
-            "reference_context_ids": "list[str|int]",
-            "is_answerable_label": "bool",
+        reference_fields={
+            "reference_answers": List[str],
+            "reference_contexts": List[str],
+            "reference_context_ids": List[str | int],
+            "is_answerable_label": bool,
         },
         metrics=[
             "metrics.rag.end_to_end.answer_correctness",
@@ -21,7 +23,7 @@ add_to_catalog(
             "metrics.rag.end_to_end.context_correctness",
             "metrics.rag.end_to_end.context_relevance",
         ],
-        prediction_type="dict",
+        prediction_type=Dict[str, Any],
         augmentable_inputs=["question"],
     ),
     "tasks.rag.end_to_end",
@@ -30,13 +32,14 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "document_id": "str",
-            "title": "str",
-            "passages": "List[str]",
-            "metadata_field": "str",
+        input_fields={
+            "document_id": str,
+            "title": str,
+            "passages": List[str],
+            "metadata_field": str,
         },
-        outputs=[],
+        reference_fields={},
+        prediction_type=Any,
         metrics=[
             "metrics.rouge"
         ],  # We can not define an empty metric, so we gave here a simple one- although rouge is not related
