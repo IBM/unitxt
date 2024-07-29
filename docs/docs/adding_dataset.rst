@@ -2,13 +2,13 @@
 
 .. note::
 
-   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
+   To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
 Datasets ✨
 =================
 
-This guide will assist you in adding or using your new dataset in unitxt.
+This guide will assist you in adding or using your new dataset in Unitxt.
 
 The information needed for loading your data will be defined in  :class:`TaskCard <unitxt.card.TaskCard>` class:
 
@@ -29,8 +29,8 @@ an Engish to French translation task or for a French to English translation task
 
 The Task schema is a formal definition of the NLP task , including its inputs, outputs, and default evaluation metrics.
 
-The `inputs` of the task are a set of fields that are used to format the textual input to the model.
-The `output` of the task are a set of fields that are used to format the textual expected output from the model (gold references).
+The `input_fields` of the task are a set of fields that are used to format the textual input to the model.
+The `reference_fields` of the task are a set of fields that are used to format the textual expected output from the model (gold references).
 The `metrics` of the task are a set of default metrics to be used to evaluate the outputs of the model.
 
 While language models generate textual predictions, the metrics often evaluate on a different datatypes.  For example,
@@ -46,9 +46,9 @@ We will use the `bleu` metric for a reference based evaluation.
 .. code-block:: python
 
     task=Task(
-        inputs= { "text" : "str", "source_language" : "str", "target_language" : "str"},
-        outputs= {"translation" : "str"},
-        prediction_type="str",
+        input_fields= { "text" : str, "source_language" : str, "target_language" : str},
+        reference_fields= {"translation" : str},
+        prediction_type=str,
         metrics=["metrics.bleu"],
     ),
 

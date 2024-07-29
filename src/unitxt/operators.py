@@ -303,6 +303,10 @@ class SelectFields(InstanceOperator):
 
     fields: List[str]
 
+    def prepare(self):
+        super().prepare()
+        self.fields.extend(["data_classification_policy", "recipe_metadata"])
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -552,7 +556,7 @@ class Augmentor(InstanceOperator):
 
     def set_task_input_fields(self, task_input_fields: List[str]):
         self._task_input_fields = [
-            "inputs/" + task_input_field for task_input_field in task_input_fields
+            "input_fields/" + task_input_field for task_input_field in task_input_fields
         ]
 
     def process(

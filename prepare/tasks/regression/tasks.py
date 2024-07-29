@@ -1,16 +1,18 @@
+from typing import Any, Optional
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={
-            "text": "str",
-            "attribute_name": "str",
-            "min_value": "Optional[float]",
-            "max_value": "Optional[float]",
+        input_fields={
+            "text": str,
+            "attribute_name": str,
+            "min_value": Optional[float],
+            "max_value": Optional[float],
         },
-        outputs={"attribute_value": "float"},
-        prediction_type="Any",
+        reference_fields={"attribute_value": float},
+        prediction_type=Any,
         metrics=["metrics.spearman"],
         augmentable_inputs=["text"],
     ),
@@ -20,15 +22,15 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text1": "str",
-            "text2": "str",
-            "attribute_name": "str",
-            "min_value": "Optional[float]",
-            "max_value": "Optional[float]",
+        input_fields={
+            "text1": str,
+            "text2": str,
+            "attribute_name": str,
+            "min_value": Optional[float],
+            "max_value": Optional[float],
         },
-        outputs={"attribute_value": "float"},
-        prediction_type="Any",
+        reference_fields={"attribute_value": float},
+        prediction_type=Any,
         metrics=["metrics.spearman"],
         augmentable_inputs=["text1", "text2"],
     ),
@@ -38,15 +40,15 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text1": "str",
-            "text2": "str",
-            "attribute_name": "str",
-            "min_value": "Optional[float]",
-            "max_value": "Optional[float]",
+        input_fields={
+            "text1": str,
+            "text2": str,
+            "attribute_name": str,
+            "min_value": Optional[float],
+            "max_value": Optional[float],
         },
-        outputs={"attribute_value": "float"},
-        prediction_type="Any",
+        reference_fields={"attribute_value": float},
+        prediction_type=Any,
         metrics=["metrics.spearman"],
         augmentable_inputs=["text1", "text2"],
         defaults={"attribute_name": "similarity"},

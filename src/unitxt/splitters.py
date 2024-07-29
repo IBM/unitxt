@@ -1,10 +1,11 @@
 import itertools
 from abc import abstractmethod
 from copy import deepcopy
-from random import Random
-from typing import Dict, List
+from difflib import get_close_matches
+from typing import Dict, List, Optional
 
 from .artifact import Artifact
+from .dict_utils import dict_get
 from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
 from .random_utils import new_random_generator
 from .split_utils import (
@@ -15,6 +16,7 @@ from .split_utils import (
     slice_streams,
 )
 from .stream import EmptyStreamError, FaultyStreamError, MultiStream
+from .type_utils import isoftype
 
 
 class Splitter(MultiStreamOperator):
@@ -109,7 +111,6 @@ class SliceSplit(Splitter):
 
 class Sampler(Artifact):
     sample_size: int = None
-    random_generator: Random = new_random_generator(sub_seed="Sampler")
 
     def prepare(self):
         super().prepare()
@@ -123,37 +124,106 @@ class Sampler(Artifact):
             size = int(size)
         self.sample_size = size
 
-    def init_new_random_generator(self):
-        self.random_generator = new_random_generator(
-            sub_seed="init_new_random_generator"
-        )
-
     @abstractmethod
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
         pass
+
+    def get_random_generator_based_on_instance(self, instance):
+        return new_random_generator(sub_seed={**instance["input_fields"]})
 
     def filter_source_by_instance(
         self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
-        if "inputs" not in instance:
-            raise ValueError(f"'inputs' field is missing from '{instance}'.")
+        if "input_fields" not in instance:
+            raise ValueError(f"'input_fields' field is missing from '{instance}'.")
         # l = list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
         try:
             return [
-                item for item in instances_pool if item["inputs"] != instance["inputs"]
+                item
+                for item in instances_pool
+                if item["input_fields"] != instance["input_fields"]
             ]
         except Exception as e:
             raise e
 
 
 class RandomSampler(Sampler):
+    """Selects a random sample of instances."""
+
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        return self.random_generator.sample(instances_pool, self.sample_size)
+        random_generator = self.get_random_generator_based_on_instance(instance)
+        return random_generator.sample(instances_pool, self.sample_size)
+
+
+class FixedIndicesSampler(Sampler):
+    """Selects a fix set of samples based on a list of indices."""
+
+    indices: List[int]
+
+    def verify(self):
+        assert isoftype(
+            self.indices, List[int]
+        ), f"'indices' of {self.__class__.__name__} must be List[int]. Value {self.indices} is of type {type(self.indices)}"
+        super().verify()
+
+    def sample(
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]],
+    ) -> List[Dict[str, object]]:
+        num_instances = len(instances_pool)
+
+        instances = []
+        for index in self.indices[0 : self.sample_size]:
+            if index >= num_instances:
+                raise ValueError(
+                    f"FixedIndicesSampler 'indices' field contains index ({index}) which is out of bounds of the instance pool ( of size {num_instances})"
+                )
+            instances.append(instances_pool[index])
+        return instances
+
+
+class CloseTextSampler(Sampler):
+    """Selects the samples of instances which are the closest textual match to the given instance.
+
+    Comparison is done based on a given field in the instance.
+
+    """
+
+    field: str
+
+    def sample(
+        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+    ) -> List[Dict[str, object]]:
+        field = f"input_fields/{self.field}"
+        value = dict_get(instance, field)
+
+        instances_pool = list(instances_pool)
+
+        # Get 'sample_size'  closest matchest texts based on field
+        options = []
+        for instance_in_pool in instances_pool:
+            options.append(dict_get(instance_in_pool, field))
+        closest_matches = get_close_matches(
+            value, options, n=self.sample_size, cutoff=0
+        )
+        # Randmly select 'sample_size' instances that are from the closest matches text
+        # (There may be multiple instance with same text in the given field, and the order returned is
+        # is also randomized )
+        instances_pool = [
+            instance_in_pool
+            for instance_in_pool in instances_pool
+            if dict_get(instance_in_pool, field) in closest_matches
+        ]
+        random_generator = self.get_random_generator_based_on_instance(instance)
+        return random_generator.sample(instances_pool, self.sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -195,9 +265,9 @@ class DiverseLabelsSampler(Sampler):
         self.labels_cache = None
 
     def exemplar_repr(self, exemplar):
-        if "inputs" not in exemplar:
-            raise ValueError(f"'inputs' field is missing from '{exemplar}'.")
-        inputs = exemplar["inputs"]
+        if "input_fields" not in exemplar:
+            raise ValueError(f"'input_fields' field is missing from '{exemplar}'.")
+        inputs = exemplar["input_fields"]
         if self.choices not in inputs:
             raise ValueError(f"'{self.choices}' field is missing from '{inputs}'.")
         choices = inputs[self.choices]
@@ -209,13 +279,13 @@ class DiverseLabelsSampler(Sampler):
                     f"Unexpected input choices value '{choices}'. Expected a list or a string."
                 )
 
-        if "outputs" not in exemplar:
-            raise ValueError(f"'outputs' field is missing from '{exemplar}'.")
-        outputs = exemplar["outputs"]
+        if "reference_fields" not in exemplar:
+            raise ValueError(f"'reference_fields' field is missing from '{exemplar}'.")
+        outputs = exemplar["reference_fields"]
         if self.labels not in outputs:
             raise ValueError(f"'{self.labels}' field is missing from '{outputs}'.")
 
-        exemplar_outputs = exemplar["outputs"][self.labels]
+        exemplar_outputs = exemplar["reference_fields"][self.labels]
         if not isinstance(exemplar_outputs, list):
             raise ValueError(
                 f"Unexpected exemplar_outputs value '{exemplar_outputs}'. Expected a list."
@@ -235,12 +305,15 @@ class DiverseLabelsSampler(Sampler):
         return labels
 
     def sample(
-        self, instances_pool: List[Dict[str, object]]
+        self,
+        instances_pool: List[Dict[str, object]],
+        instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        self.random_generator.shuffle(all_labels)
+        random_generator = self.get_random_generator_based_on_instance(instance)
+        random_generator.shuffle(all_labels)
         from collections import Counter
 
         if self.sample_size > len(instances_pool):
@@ -261,10 +334,10 @@ class DiverseLabelsSampler(Sampler):
 
         result = []
         for label, allocation in allocations.items():
-            sample = self.random_generator.sample(self.labels_cache[label], allocation)
+            sample = random_generator.sample(self.labels_cache[label], allocation)
             result.extend(sample)
 
-        self.random_generator.shuffle(result)
+        random_generator.shuffle(result)
         return result
 
 
@@ -298,7 +371,7 @@ class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
                 raise ValueError(
                     f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
                 )
-            sampled_instances = self.sampler.sample(source_stream)
+            sampled_instances = self.sampler.sample(source_stream, instance)
             instance[self.target_field] = sampled_instances
             return instance
         except FaultyStreamError as e:

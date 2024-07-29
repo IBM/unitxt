@@ -1,6 +1,6 @@
 {
     "__type__": "deterministic_balancer",
     "fields": [
-        "outputs/answer"
+        "reference_fields/answer"
     ]
 }

@@ -27,8 +27,10 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "LOC", "ORG"],
@@ -36,10 +38,10 @@ class TestTemplates(UnitxtTestCase):
                 },
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -50,8 +52,10 @@ class TestTemplates(UnitxtTestCase):
 
         targets = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "LOC", "ORG"],
@@ -64,10 +68,10 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "",
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -88,19 +92,19 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"text": "hello world"},
-                "outputs": {"labels": ["cat", "dog"]},
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
             },
             {
-                "inputs": {"text": "hello world"},
-                "outputs": {"labels": ["man", "woman", "dog"]},
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
             },
         ]
 
         targets = [
             {
-                "inputs": {"text": "hello world"},
-                "outputs": {"labels": ["cat", "dog"]},
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
                 "source": "hello world",
                 "target": "cat, dog",
                 "references": ["cat, dog"],
@@ -108,8 +112,8 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "",
             },
             {
-                "inputs": {"text": "hello world"},
-                "outputs": {"labels": ["man", "woman", "dog"]},
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
                 "source": "hello world",
                 "target": "man, woman, dog",
                 "references": ["man, woman, dog"],
@@ -129,15 +133,15 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"text": "who was he?"},
-                "outputs": {"answer": ["Dan", "Yossi"]},
+                "input_fields": {"text": "who was he?"},
+                "reference_fields": {"answer": ["Dan", "Yossi"]},
             }
         ]
 
         targets = [
             {
-                "inputs": {"text": "who was he?"},
-                "outputs": {"answer": ["Dan", "Yossi"]},
+                "input_fields": {"text": "who was he?"},
+                "reference_fields": {"answer": ["Dan", "Yossi"]},
                 "source": "This is my sentence: who was he?",
                 "target": target,
                 "references": ["Dan", "Yossi"],
@@ -161,8 +165,8 @@ class TestTemplates(UnitxtTestCase):
             input_format="This is my sentence: {text}", references_field="answer"
         )
         instance = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": references},
+            "input_fields": {"text": "who was he?"},
+            "reference_fields": {"answer": references},
         }
 
         with self.assertRaises(ValueError) as e:
@@ -191,29 +195,35 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
-                "outputs": {"label": "positive"},
+                "input_fields": {
+                    "labels": ["positive", "negative"],
+                    "text": "hello world",
+                },
+                "reference_fields": {"label": "positive"},
             },
             {
-                "inputs": {
+                "input_fields": {
                     "labels": ["positive", "negative"],
                     "text": ["hello world\n", "hell"],
                 },
-                "outputs": {"label": "positive"},
+                "reference_fields": {"label": "positive"},
             },
             {
-                "inputs": {
+                "input_fields": {
                     "labels": ["positive", "negative"],
                     "text": ["hello world\n", "hell"],
                 },
-                "outputs": {"label": ["positive", "1"]},
+                "reference_fields": {"label": ["positive", "1"]},
             },
         ]
 
         targets = [
             {
-                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
-                "outputs": {"label": "positive"},
+                "input_fields": {
+                    "labels": ["positive", "negative"],
+                    "text": "hello world",
+                },
+                "reference_fields": {"label": "positive"},
                 "source": "This is my text:'hello world'",
                 "target": "positive",
                 "references": ["positive"],
@@ -221,11 +231,11 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "Sentiment is: ",
             },
             {
-                "inputs": {
+                "input_fields": {
                     "labels": ["positive", "negative"],
                     "text": ["hello world\n", "hell"],
                 },
-                "outputs": {"label": "positive"},
+                "reference_fields": {"label": "positive"},
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive",
                 "references": ["positive"],
@@ -233,11 +243,11 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "Sentiment is: ",
             },
             {
-                "inputs": {
+                "input_fields": {
                     "labels": ["positive", "negative"],
                     "text": ["hello world\n", "hell"],
                 },
-                "outputs": {"label": ["positive", "1"]},
+                "reference_fields": {"label": ["positive", "1"]},
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive, 1",
                 "references": ["positive, 1"],
@@ -261,7 +271,7 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_input_template.process(inputs[0])
         self.assertEqual(
-            "\"Available inputs are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text:'{no_text}''\"",
+            "\"Available input fields are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text:'{no_text}''\"",
             str(ke.exception),
         )
 
@@ -271,7 +281,7 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_output_template.process(inputs[0])
         self.assertEqual(
-            "\"Available outputs are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'\"",
+            "\"Available reference fields are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'\"",
             str(ke.exception),
         )
 
@@ -286,15 +296,21 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
-                "outputs": {"label": "positive", "reference": "1"},
+                "input_fields": {
+                    "labels": ["positive", "negative"],
+                    "text": "hello world",
+                },
+                "reference_fields": {"label": "positive", "reference": "1"},
             },
         ]
 
         targets = [
             {
-                "inputs": {"labels": ["positive", "negative"], "text": "hello world"},
-                "outputs": {"label": "positive", "reference": "1"},
+                "input_fields": {
+                    "labels": ["positive", "negative"],
+                    "text": "hello world",
+                },
+                "reference_fields": {"label": "positive", "reference": "1"},
                 "source": "This is my text:'hello world'",
                 "target": "positive",
                 "references": ["1"],
@@ -306,23 +322,25 @@ class TestTemplates(UnitxtTestCase):
         check_operator(template, inputs, targets, tester=self)
 
         with self.assertRaises(KeyError):
-            template.outputs_to_target_and_references(
-                outputs={"label": "positive", "references": "1"}
+            template.reference_fields_to_target_and_references(
+                reference_fields={"label": "positive", "references": "1"}
             )
 
         class ToCoverTemplate(Template):
-            def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-                ret = super().inputs_to_source(inputs)
+            def input_fields_to_source(
+                self, inputs: Dict[str, object]
+            ) -> Tuple[str, str]:
+                ret = super().input_fields_to_source(inputs)
                 return (ret, ret)
 
-            def outputs_to_target_and_references(
+            def reference_fields_to_target_and_references(
                 self, outputs: Dict[str, object]
             ) -> Tuple[str, List[str]]:
-                return super().outputs_to_target_and_references(outputs)
+                return super().reference_fields_to_target_and_references(outputs)
 
         to_cover_template = ToCoverTemplate()
-        to_cover_template.inputs_to_source({"a": 1})
-        to_cover_template.outputs_to_target_and_references({"a": 1})
+        to_cover_template.input_fields_to_source({"a": 1})
+        to_cover_template.reference_fields_to_target_and_references({"a": 1})
 
         class ToCoverTemplatesDict(TemplatesDict):
             def verify(self):
@@ -344,7 +362,7 @@ class TestTemplates(UnitxtTestCase):
             "Is text_b of news?": {"text": "text_b", "class": "news"},
         }
         for expected_processed_input, inputs in processed_input_to_inputs.items():
-            processed = template.inputs_to_source(inputs)
+            processed = template.input_fields_to_source(inputs)
             self.assertEqual(expected_processed_input, processed)
 
     def test_yes_no_template_process_input_missing_input_field(self):
@@ -355,9 +373,9 @@ class TestTemplates(UnitxtTestCase):
         )
         with self.assertRaises(TemplateFormatKeyError) as cm:
             wrong_field_name = "wrong_field_name"
-            template.inputs_to_source(inputs={wrong_field_name: ["news"]})
+            template.input_fields_to_source(input_fields={wrong_field_name: ["news"]})
         self.assertEqual(
-            "\"Available inputs are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'\"",
+            "\"Available input fields are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'\"",
             str(cm.exception),
         )
 
@@ -380,7 +398,9 @@ class TestTemplates(UnitxtTestCase):
             yes_answer: {label_field: ["news", "sports"], class_field: "news"},
         }
         for expected_processed_output, outputs in processed_output_to_outputs.items():
-            processed, references = template.outputs_to_target_and_references(outputs)
+            processed, references = template.reference_fields_to_target_and_references(
+                outputs
+            )
             self.assertEqual(expected_processed_output, processed)
             self.assertEqual(references, [expected_processed_output])
 
@@ -397,17 +417,17 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(RuntimeError) as cm:
             outputs = {class_field: "news"}
-            template.outputs_to_target_and_references(outputs=outputs)
+            template.reference_fields_to_target_and_references(reference_fields=outputs)
         self.assertEqual(
-            f"Available outputs are {list(outputs.keys())}, missing required label field: '{label_field}'.",
+            f"Available reference_fields are {list(outputs.keys())}, missing required label field: '{label_field}'.",
             str(cm.exception),
         )
 
         with self.assertRaises(RuntimeError) as cm:
             outputs = {label_field: ["news", "sports"]}
-            template.outputs_to_target_and_references(outputs=outputs)
+            template.reference_fields_to_target_and_references(reference_fields=outputs)
         self.assertEqual(
-            f"Available outputs are {list(outputs.keys())}, missing required class field: '{class_field}'.",
+            f"Available reference_fields are {list(outputs.keys())}, missing required class field: '{class_field}'.",
             str(cm.exception),
         )
 
@@ -419,8 +439,8 @@ class TestTemplates(UnitxtTestCase):
                 input_format="", class_field="", label_field="labels"
             )
             with self.assertRaises(RuntimeError) as cm:
-                template.outputs_to_target_and_references(
-                    outputs={"labels": wrong_labels_value}
+                template.reference_fields_to_target_and_references(
+                    reference_fields={"labels": wrong_labels_value}
                 )
             self.assertEqual(
                 f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expecting a list.",
@@ -439,8 +459,8 @@ class TestTemplates(UnitxtTestCase):
                 input_format="", class_field=class_field, label_field=label_field
             )
             with self.assertRaises(RuntimeError) as cm:
-                template.outputs_to_target_and_references(
-                    outputs={
+                template.reference_fields_to_target_and_references(
+                    reference_fields={
                         label_field: ["news"],
                         class_field: wrong_class_value,
                     }
@@ -462,8 +482,10 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "PER", "ORG"],
@@ -471,10 +493,10 @@ class TestTemplates(UnitxtTestCase):
                 },
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -485,8 +507,10 @@ class TestTemplates(UnitxtTestCase):
 
         targets = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "PER", "ORG"],
@@ -499,10 +523,10 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "",
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -523,8 +547,10 @@ class TestTemplates(UnitxtTestCase):
 
         inputs = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "PER", "ORG"],
@@ -532,10 +558,10 @@ class TestTemplates(UnitxtTestCase):
                 },
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -546,8 +572,10 @@ class TestTemplates(UnitxtTestCase):
 
         targets = [
             {
-                "inputs": {"text": "John,: Doe is from New York and works at Goo:gle."},
-                "outputs": {
+                "input_fields": {
+                    "text": "John,: Doe is from New York and works at Goo:gle."
+                },
+                "reference_fields": {
                     "spans_starts": [0, 19, 41],
                     "spans_ends": [10, 27, 48],
                     "labels": ["PER", "PER", "ORG"],
@@ -562,10 +590,10 @@ class TestTemplates(UnitxtTestCase):
                 "target_prefix": "",
             },
             {
-                "inputs": {
+                "input_fields": {
                     "text": "John,: Doe is from New York and works at Goo:gle.",
                 },
-                "outputs": {
+                "reference_fields": {
                     "spans_starts": [],
                     "spans_ends": [],
                     "labels": [],
@@ -593,23 +621,26 @@ class TestTemplates(UnitxtTestCase):
             choices = ["True", "False"]
             inputs = [
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {"choices": choices, "label": 0},
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {"choices": choices, "label": 0},
                 },
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {"choices": choices, "label": "False"},
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {"choices": choices, "label": "False"},
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
-                    "outputs": {"choices": ["True", "small"], "label": "small"},
+                    "input_fields": {"choices": ["True", "small"], "text": "example A"},
+                    "reference_fields": {
+                        "choices": ["True", "small"],
+                        "label": "small",
+                    },
                 },
             ]
 
             targets = [
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {
                         "choices": choices,
                         "label": 0,
                         "options": [f"{first}", f"{second}"],
@@ -621,8 +652,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": choices, "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": choices, "text": "example A"},
+                    "reference_fields": {
                         "choices": choices,
                         "label": "False",
                         "options": [f"{first}", f"{second}"],
@@ -634,8 +665,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": ["True", "small"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "small"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "small"],
                         "label": "small",
                         "options": [f"{first}", f"{second}"],
@@ -659,7 +690,7 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
         self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
 
@@ -679,23 +710,26 @@ class TestTemplates(UnitxtTestCase):
 
             inputs = [
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {"choices": ["True", "False"], "label": 0},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {"choices": ["True", "False"], "label": 0},
                 },
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {"choices": ["True", "False"], "label": "False"},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
+                        "choices": ["True", "False"],
+                        "label": "False",
+                    },
                 },
                 {
-                    "inputs": {"choices": ["True", temp], "text": "example A"},
-                    "outputs": {"choices": ["True", temp], "label": temp},
+                    "input_fields": {"choices": ["True", temp], "text": "example A"},
+                    "reference_fields": {"choices": ["True", temp], "label": temp},
                 },
             ]
 
             targets = [
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "False"],
                         "label": 0,
                         "options": [f"{first}", f"{second}"],
@@ -707,8 +741,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": ["True", "False"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
+                    "reference_fields": {
                         "choices": ["True", "False"],
                         "label": 1,
                         "options": [f"{first}", f"{second}"],
@@ -720,8 +754,8 @@ class TestTemplates(UnitxtTestCase):
                     "target_prefix": "",
                 },
                 {
-                    "inputs": {"choices": [temp, "True"], "text": "example A"},
-                    "outputs": {
+                    "input_fields": {"choices": [temp, "True"], "text": "example A"},
+                    "reference_fields": {
                         "choices": [temp, "True"],
                         "label": 0,
                         "options": [f"{first}", f"{second}"],
@@ -745,7 +779,7 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
         self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available inputs are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
 
@@ -774,15 +808,18 @@ class TestTemplates(UnitxtTestCase):
         self.assertEqual(result, target)
 
     def test_render_template(self):
-        instance = {"inputs": {"text": "was so bad"}, "outputs": {"label": "negative"}}
+        instance = {
+            "input_fields": {"text": "was so bad"},
+            "reference_fields": {"label": "negative"},
+        }
         template = InputOutputTemplate(
             input_format='This is my sentence: "{text}"', output_format="{label}"
         )
 
         result = template.process(instance)
         target = {
-            "inputs": {"text": "was so bad"},
-            "outputs": {"label": "negative"},
+            "input_fields": {"text": "was so bad"},
+            "reference_fields": {"label": "negative"},
             "source": 'This is my sentence: "was so bad"',
             "target": "negative",
             "references": ["negative"],
@@ -796,14 +833,14 @@ class TestTemplates(UnitxtTestCase):
             input_format="This is my sentence: {text}", references_field="answer"
         )
         instance = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
+            "input_fields": {"text": "who was he?"},
+            "reference_fields": {"answer": ["Dan", "Yossi"]},
         }
 
         result = template.process(instance)
         target = {
-            "inputs": {"text": "who was he?"},
-            "outputs": {"answer": ["Dan", "Yossi"]},
+            "input_fields": {"text": "who was he?"},
+            "reference_fields": {"answer": ["Dan", "Yossi"]},
             "source": "This is my sentence: who was he?",
             "target": "Dan",
             "references": ["Dan", "Yossi"],

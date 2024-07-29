@@ -3,13 +3,13 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs=[
+        input_fields=[
             "input_text",
             "input_text_type",
             "required_attribute",
             "output_text_type",
         ],
-        outputs=["output_text"],
+        reference_fields=["output_text"],
         metrics=[
             "metrics.rouge",
         ],
@@ -21,8 +21,8 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs=["input_text", "text_type"],
-        outputs=["output_text"],
+        input_fields=["input_text", "text_type"],
+        reference_fields=["output_text"],
         metrics=[
             "metrics.rouge",
         ],

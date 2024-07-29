@@ -24,9 +24,9 @@ card = TaskCard(
     loader=LoadFromDictionary(data=data),
     # Define the QA task input and output and metrics.
     task=Task(
-        inputs={"question": "str"},
-        outputs={"answer": "str"},
-        prediction_type="str",
+        input_fields={"question": str},
+        reference_fields={"answer": str},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     # Create a simple template that formats the input.
@@ -55,13 +55,11 @@ inference_model = HFPipelineBasedInferenceEngine(
 )
 # change to this to infer with IbmGenAI APIs:
 #
-# gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# gen_params = IOpenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # Note that to run with OpenAI APIs you need to change the loader specification, to
 # define that your data can be sent to a public API:

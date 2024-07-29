@@ -566,8 +566,9 @@ class LoadFromIBMCloud(Loader):
 
         if not os.path.exists(self.cache_dir):
             Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
+        self.verified = False
 
-    def verify(self):
+    def lazy_verify(self):
         super().verify()
         assert (
             self.endpoint_url is not None
@@ -582,6 +583,9 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def load_data(self):
+        if not self.verified:
+            self.lazy_verify()
+            self.verified = True
         self.sef_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
@@ -854,7 +858,9 @@ class LoadFromHFSpace(LoadHF):
 
     def _map_wildcard_path_to_full_paths(self):
         api = HfApi()
-        repo_files = api.list_repo_files(self.space_name, repo_type="space")
+        repo_files = api.list_repo_files(
+            self.space_name, repo_type="space", revision=self.revision
+        )
         if isinstance(self.data_files, str):
             self.data_files = self._get_file_list_from_wildcard_path(
                 self.data_files, repo_files

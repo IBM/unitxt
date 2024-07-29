@@ -3,7 +3,7 @@ from unitxt.metrics import HuggingfaceMetric
 from unitxt.test_utils.metrics import test_metric
 
 metric = HuggingfaceMetric(
-    hf_metric_name="bleu", main_score="bleu", scale=1.0, prediction_type="str"
+    hf_metric_name="bleu", main_score="bleu", scale=1.0, prediction_type=str
 )
 
 predictions = ["hello there general kenobi", "foo bar foobar", "", "not empty"]
