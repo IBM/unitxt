@@ -3,12 +3,16 @@
     "main_score": "precision",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "rag_response_generation_faithfullness_token_overlap"
+        },
+        {
             "__type__": "copy",
             "field": "task_data/contexts",
             "to_field": "references"
         }
     ],
-    "postpreprocess_steps": [
+    "postprocess_steps": [
         {
             "__type__": "copy",
             "field_to_field": {
@@ -20,6 +24,10 @@
                 "score/global/precision": "score/global/faithfullness_precision_token_overlap"
             },
             "not_exist_ok": true
+        },
+        {
+            "__type__": "restore_prediction_references",
+            "name": "rag_response_generation_faithfullness_token_overlap"
         }
     ],
     "metric": "metrics.token_overlap",

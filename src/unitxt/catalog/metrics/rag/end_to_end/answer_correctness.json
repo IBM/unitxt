@@ -3,6 +3,10 @@
     "main_score": "recall",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "end_to_end_answer_correctness"
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [
@@ -18,5 +22,11 @@
             }
         }
     ],
-    "metric": "metrics.token_overlap[score_prefix=answer_correctness_]"
+    "metric": "metrics.token_overlap[score_prefix=answer_correctness_]",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "end_to_end_answer_correctness"
+        }
+    ]
 }

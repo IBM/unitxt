@@ -1064,6 +1064,38 @@ class Copy(FieldOperator):
         return value
 
 
+class SavePredictionReferences(InstanceOperator):
+    name: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction" in instance:
+            instance["prediction_save_" + self.name] = deepcopy(instance["prediction"])
+        if "references" in instance:
+            instance["references_save_" + self.name] = deepcopy(instance["references"])
+        return instance
+
+
+class RestorePredictionReferences(InstanceOperator):
+    name: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction_save_" + self.name in instance:
+            instance["prediction"] = instance["prediction_save_" + self.name]
+            instance.pop("prediction_save_" + self.name)
+        else:  # there was no "prediction" when saved
+            instance.pop("prediction")
+        if "references_save_" + self.name in instance:
+            instance["references"] = instance["references_save_" + self.name]
+            instance.pop("references_save_" + self.name)
+        else:
+            instance.pop("references")
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass

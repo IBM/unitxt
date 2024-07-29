@@ -6,7 +6,12 @@ from unitxt.metrics import (
     SentenceBert,
     TokenOverlap,
 )
-from unitxt.operators import Copy, ListFieldValues
+from unitxt.operators import (
+    Copy,
+    ListFieldValues,
+    RestorePredictionReferences,
+    SavePredictionReferences,
+)
 from unitxt.test_utils.metrics import test_metric
 
 metrics = {
@@ -65,11 +70,12 @@ global_target = {
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
+        SavePredictionReferences(name="token_overlap_with_context"),
         Copy(field="task_data/context", to_field="references"),
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=metrics["metrics.token_overlap"],
-    postpreprocess_steps=[
+    postprocess_steps=[
         Copy(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
@@ -80,6 +86,7 @@ metric = MetricPipeline(
                 ),
             ],
         ),
+        RestorePredictionReferences(name="token_overlap_with_context"),
     ],
 )
 add_to_catalog(metric, "metrics.token_overlap_with_context", overwrite=True)
@@ -319,21 +326,27 @@ for metric_id, metric in metrics.items():
 context_relevance = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
+        SavePredictionReferences(name="rag_context_relevance"),
         Copy(field="contexts", to_field="references"),
         Copy(field="question", to_field="prediction"),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
+    postprocess_steps=[
+        RestorePredictionReferences(name="rag_context_relevance"),
+    ],
 )
 add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
 context_perplexity = MetricPipeline(
     main_score="score",
     preprocess_steps=[
+        SavePredictionReferences(name="rag_context_perplexity"),
         Copy(field="contexts", to_field="references"),
         Copy(field="question", to_field="prediction"),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
-    postpreprocess_steps=[
-        Copy(field="score/instance/reference_scores", to_field="score/instance/score")
+    postprocess_steps=[
+        Copy(field="score/instance/reference_scores", to_field="score/instance/score"),
+        RestorePredictionReferences(name="rag_context_perplexity"),
     ],
 )
 add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
@@ -349,16 +362,21 @@ for new_catalog_name, base_catalog_name in [
     metric = MetricPipeline(
         main_score="precision",
         preprocess_steps=[
+            SavePredictionReferences(name=new_catalog_name),
             Copy(field="contexts", to_field="references"),
             Copy(field="answer", to_field="prediction"),
         ],
         metric=base_catalog_name,
+        postprocess_steps=[
+            RestorePredictionReferences(name=new_catalog_name),
+        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 
 answer_reward = MetricPipeline(
     main_score="score",
     preprocess_steps=[
+        SavePredictionReferences(name="rag_answer_reward"),
         Copy(field="question", to_field="references"),
         Copy(field="answer", to_field="prediction"),
         # This metric compares the answer (as the prediction) to the question (as the reference).
@@ -367,15 +385,22 @@ answer_reward = MetricPipeline(
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric="metrics.reward.deberta_v3_large_v2",
+    postprocess_steps=[
+        RestorePredictionReferences(name="rag_answer_reward"),
+    ],
 )
 add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
 answer_inference = MetricPipeline(
     main_score="perplexity",
     preprocess_steps=[
+        SavePredictionReferences(name="rag_answer_inference"),
         Copy(field="contexts", to_field="references"),
         Copy(field="answer", to_field="prediction"),
     ],
     metric="metrics.perplexity_nli.t5_nli_mixture",
+    postprocess_steps=[
+        RestorePredictionReferences(name="rag_answer_inference"),
+    ],
 )
 add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
 
@@ -387,28 +412,39 @@ for axis, base_metric, main_score in [
 ]:
     preprocess_steps = (
         [
+            SavePredictionReferences(
+                name=f"rag_response_generation_{axis}_{base_metric}"
+            ),
             Copy(field="task_data/contexts", to_field="references"),
         ]
         if axis == "faithfullness"
         else []
     )
 
+    postprocess_steps = [
+        Copy(
+            field_to_field={
+                "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
+                "score/instance/recall": f"score/instance/{axis}_recall_{base_metric}",
+                "score/instance/precision": f"score/instance/{axis}_precision_{base_metric}",
+                "score/global/f1": f"score/global/{axis}_f1_{base_metric}",
+                "score/global/recall": f"score/global/{axis}_recall_{base_metric}",
+                "score/global/precision": f"score/global/{axis}_precision_{base_metric}",
+            },
+            not_exist_ok=True,
+        ),
+    ]
+    if axis == "faithfullness":
+        postprocess_steps.append(
+            RestorePredictionReferences(
+                name=f"rag_response_generation_{axis}_{base_metric}"
+            )
+        )
+
     metric = MetricPipeline(
         main_score=main_score,
         preprocess_steps=preprocess_steps,
-        postpreprocess_steps=[
-            Copy(
-                field_to_field={
-                    "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
-                    "score/instance/recall": f"score/instance/{axis}_recall_{base_metric}",
-                    "score/instance/precision": f"score/instance/{axis}_precision_{base_metric}",
-                    "score/global/f1": f"score/global/{axis}_f1_{base_metric}",
-                    "score/global/recall": f"score/global/{axis}_recall_{base_metric}",
-                    "score/global/precision": f"score/global/{axis}_precision_{base_metric}",
-                },
-                not_exist_ok=True,
-            ),
-        ],
+        postprocess_steps=postprocess_steps,
         metric=f"metrics.{base_metric}",
         prediction_type=str,
     )
@@ -505,22 +541,27 @@ copy_field_question_to_references_in_a_list = ListFieldValues(
 
 end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.answer_correctness": [
+        SavePredictionReferences(name="end_to_end_answer_correctness"),
         copy_field_prediction_answer_to_prediction,
         copy_field_reference_answers_to_references,
     ],
     "metrics.rag.end_to_end.answer_reward": [
+        SavePredictionReferences(name="end_to_end_answer_reward"),
         copy_field_prediction_answer_to_prediction,
         copy_field_question_to_references_in_a_list,
     ],
     "metrics.rag.end_to_end.answer_faithfulness": [
+        SavePredictionReferences(name="end_to_end_answer_faithfulness"),
         copy_field_prediction_contexts_to_references,
         copy_field_prediction_answer_to_prediction,
     ],
     "metrics.rag.end_to_end.context_correctness": [
+        SavePredictionReferences(name="end_to_end_context_correctness"),
         copy_field_prediction_context_ids_to_prediction,
         copy_field_reference_context_ids_to_references_in_a_list,
     ],
     "metrics.rag.end_to_end.context_relevance": [
+        SavePredictionReferences(name="end_to_end_context_relevance"),
         copy_field_prediction_contexts_to_references,
         copy_field_question_to_prediction,
     ],
@@ -538,6 +579,9 @@ for artifact_name in end_to_end_artifact_names_to_preprocess_steps.keys():
         main_score=end_to_end_artifact_name_to_main_score[artifact_name],
         preprocess_steps=end_to_end_artifact_names_to_preprocess_steps[artifact_name],
         metric=f"{end_to_end_artifact_names_to_main_metric[artifact_name]}{score_prefix}",
+        postprocess_steps=[
+            RestorePredictionReferences(name=artifact_name[12:].replace(".", "_"))
+        ],
     )
 
     add_to_catalog(metric, artifact_name, overwrite=True)

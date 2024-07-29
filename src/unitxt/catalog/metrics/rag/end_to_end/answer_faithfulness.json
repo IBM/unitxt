@@ -3,6 +3,10 @@
     "main_score": "precision",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "end_to_end_answer_faithfulness"
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [
@@ -21,5 +25,11 @@
             ]
         }
     ],
-    "metric": "metrics.token_overlap[score_prefix=answer_faithfulness_]"
+    "metric": "metrics.token_overlap[score_prefix=answer_faithfulness_]",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "end_to_end_answer_faithfulness"
+        }
+    ]
 }

@@ -3,6 +3,10 @@
     "main_score": "score",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "end_to_end_answer_reward"
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [
@@ -19,5 +23,11 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.reward.deberta_v3_large_v2[score_prefix=answer_reward_]"
+    "metric": "metrics.reward.deberta_v3_large_v2[score_prefix=answer_reward_]",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "end_to_end_answer_reward"
+        }
+    ]
 }

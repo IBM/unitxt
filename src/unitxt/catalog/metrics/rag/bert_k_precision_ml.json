@@ -3,6 +3,10 @@
     "main_score": "precision",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "metrics.rag.bert_k_precision_ml"
+        },
+        {
             "__type__": "copy",
             "field": "contexts",
             "to_field": "references"
@@ -13,5 +17,11 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"
+    "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "metrics.rag.bert_k_precision_ml"
+        }
+    ]
 }
