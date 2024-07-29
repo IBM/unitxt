@@ -15,22 +15,11 @@ class ClapNqBenchmark:
     TRAIN_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/train/question_train_answerable.tsv"
     TEST_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
 
-    # Fields
-    # ID: str = "id"
-    # QUESTION: str = "question"
-    # DOC_ID_LIST: str = "doc-id-list"
-    # ANSWERS: str = "answers"
-
 
 @dataclass(frozen=True)
 class ClapNqDocuments:
     # Raw_data
     RAW_FILE_URL: str = "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
-
-    # Fields
-    # ID: str = "id"
-    # TEXT: str = "text"
-    # TITLE: str = "title"
 
 
 card = TaskCard(
