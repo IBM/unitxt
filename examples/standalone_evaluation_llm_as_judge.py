@@ -14,18 +14,42 @@ logger = get_logger()
 # First, we define the examples data.
 data = {
     "test": [
-        {"question": "What is the capital of Texas?", "answer": ""},
-        {"question": "What is the color of the sky?", "answer": ""},
+        {
+            "query": "What is the capital of Texas?",
+            "document": "The capital of Texas is Austin.",
+            "reference_answer": "Austin",
+        },
+        {
+            "query": "What is the color of the sky?",
+            "document": "The sky is generally black during the night.",
+            "reference_answer": "Black",
+        },
     ]
 }
 # Second, We define the prompt we show to the judge.
+#
+# Note that "question" is the full input provided to the original model, and "answer" is the original model
+# output.  For example , this is sample input provided to the LLM as judge model.
+#
+# Please act as an impartial judge and evaluate if the assistant's answer is correct. Answer "[[10]]" if the answer is accurate, and "[[0]]" if the answer is wrong. Please use the exact format of the verdict as "[[rate]]".
+# You can explain your answer after the verdict.
+# [User's input]
+# Answer the following query based on the provided document.
+# Document:
+# The sky is generally black during the night.
+# Query:
+# What is the color of the sky?
+#
+# [Assistant's Answer]
+# black
+
 judge_correctness_template = InputOutputTemplate(
     instruction="Please act as an impartial judge and evaluate if the assistant's answer is correct."
     ' Answer "[[10]]" if the answer is accurate, and "[[0]]" if the answer is wrong. '
     'Please use the exact format of the verdict as "[[rate]]". '
     "You can explain your answer after the verdict"
     ".\n\n",
-    input_format="[Question]\n{question}\n\n" "[Assistant's Answer]\n{answer}\n",
+    input_format="[User's input]\n{question}\n" "[Assistant's Answer]\n{answer}\n",
     output_format="[[{rating}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",
@@ -56,17 +80,17 @@ llm_judge_metric = LLMAsJudge(
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
     task=Task(
-        input_fields={"question": str},
-        reference_fields={"answer": str},
+        input_fields={"query": str, "document": str},
+        reference_fields={"reference_answer": str},
         prediction_type=str,
         metrics=[llm_judge_metric],
     ),
     templates=TemplatesDict(
         {
             "simple": InputOutputTemplate(
-                instruction="Answer the following question.",
-                input_format="{question}",
-                output_format="{answer}",
+                instruction="Answer the following query based on the provided document.",
+                input_format="Document:\n{document}\nQuery:\n{query}",
+                output_format="{reference_answer}",
                 postprocessors=["processors.lower_case"],
             )
         }
