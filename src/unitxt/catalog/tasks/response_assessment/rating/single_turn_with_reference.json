@@ -10,5 +10,6 @@
     },
     "metrics": [
         "metrics.spearman"
-    ]
+    ],
+    "prediction_type": "float"
 }
