@@ -3,10 +3,10 @@ import sys
 from unitxt import add_to_catalog
 
 sys.path.append("/Users/pklocek/fm_eval_workspace/unitxt/src/unitxt/metrics.py")
-from unitxt.metrics import RelationExtraction
+from unitxt.metrics import SpecifiedRelationExtraction
 from unitxt.test_utils.metrics import test_metric
 
-metric = RelationExtraction()
+metric = SpecifiedRelationExtraction()
 
 predictions = [[("Amir", "employedBy", "IBM"), ("Yaron", "employedBy", "IBM")]]
 references = [
@@ -218,4 +218,4 @@ outputs = test_metric(
     global_target=global_target,
 )
 
-add_to_catalog(metric, "metrics.relation_extraction", overwrite=True)
+add_to_catalog(metric, "metrics.specified_relation_extraction", overwrite=True)

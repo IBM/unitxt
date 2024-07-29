@@ -1,0 +1,20 @@
+{
+    "__type__": "form_task",
+    "inputs": {
+        "text": "List[str]",
+        "relation_type": "str"
+    },
+    "outputs": {
+        "subject_mentions": "List[str]",
+        "label": "List[str]",
+        "object_mentions": "List[str]",
+        "text": "List[str]"
+    },
+    "prediction_type": "List[Tuple[str,str,str]]",
+    "metrics": [
+        "metrics.specified_relation_extraction"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
+}
