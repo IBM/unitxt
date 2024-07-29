@@ -410,7 +410,7 @@ for axis, base_metric, main_score in [
             ),
         ],
         metric=f"metrics.{base_metric}",
-        prediction_type="str",
+        prediction_type=str,
     )
 
     add_to_catalog(

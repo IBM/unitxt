@@ -6,7 +6,7 @@
         "choices": "List[str]"
     },
     "reference_fields": {
-        "answer": "Union[int,str]",
+        "answer": "Union[int, str]",
         "choices": "List[str]"
     },
     "prediction_type": "str",

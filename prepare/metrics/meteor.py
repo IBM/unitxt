@@ -51,7 +51,7 @@ outputs = test_metric(
 
 # compare results with the HF version of meteor
 metric2 = HuggingfaceMetric(
-    hf_metric_name="meteor", main_score="meteor", prediction_type="str"
+    hf_metric_name="meteor", main_score="meteor", prediction_type=str
 )
 
 outputs = test_metric(
