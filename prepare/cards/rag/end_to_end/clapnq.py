@@ -16,10 +16,10 @@ class ClapNqBenchmark:
     TEST_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
 
     # Fields
-    ID: str = "id"
-    QUESTION: str = "question"
-    DOC_ID_LIST: str = "doc-id-list"
-    ANSWERS: str = "answers"
+    # ID: str = "id"
+    # QUESTION: str = "question"
+    # DOC_ID_LIST: str = "doc-id-list"
+    # ANSWERS: str = "answers"
 
 
 @dataclass(frozen=True)
@@ -28,11 +28,9 @@ class ClapNqDocuments:
     RAW_FILE_URL: str = "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
 
     # Fields
-    ID: str = "id"
-    TEXT: str = "text"
-    TITLE: str = "title"
-
-    ARTIFACT_NAME: str = "cards.rag.documents.clap_nq.en"
+    # ID: str = "id"
+    # TEXT: str = "text"
+    # TITLE: str = "title"
 
 
 card = TaskCard(
@@ -46,8 +44,8 @@ card = TaskCard(
     preprocess_steps=[
         Copy(
             field_to_field={
-                ClapNqBenchmark.QUESTION: "question",
-                ClapNqBenchmark.ID: "question_id",
+                "question": "question",
+                "id": "question_id",
             },
         ),
         Set(
@@ -58,11 +56,11 @@ card = TaskCard(
             }
         ),
         ListFieldValues(
-            fields=[ClapNqBenchmark.DOC_ID_LIST],
+            fields=["doc-id-list"],
             to_field="reference_context_ids",
         ),
         ListFieldValues(
-            fields=[ClapNqBenchmark.ANSWERS],
+            fields=["answers"],
             to_field="reference_answers",
         ),
     ],
@@ -94,12 +92,12 @@ card = TaskCard(
     preprocess_steps=[
         Copy(
             field_to_field={
-                ClapNqDocuments.ID: "document_id",
-                ClapNqDocuments.TITLE: "title",
+                "id": "document_id",
+                "title": "title",
             },
         ),
         ListFieldValues(
-            fields=[ClapNqDocuments.TEXT],
+            fields=["text"],
             to_field="passages",
         ),
         Set(
