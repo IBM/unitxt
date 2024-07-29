@@ -2,13 +2,13 @@
 
 .. note::
 
-   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
+   To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
 Datasets ✨
 =================
 
-This guide will assist you in adding or using your new dataset in unitxt.
+This guide will assist you in adding or using your new dataset in Unitxt.
 
 The information needed for loading your data will be defined in  :class:`TaskCard <unitxt.card.TaskCard>` class:
 

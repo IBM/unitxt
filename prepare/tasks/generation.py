@@ -13,3 +13,27 @@ add_to_catalog(
     "tasks.generation",
     overwrite=True,
 )
+
+add_to_catalog(
+    Task(
+        input_fields={
+            "input_a": "str",
+            "type_of_input_a": "str",
+            "input_b": "str",
+            "type_of_input_b": "str",
+            "type_of_output": "str",
+        },
+        reference_fields={"output": "str"},
+        prediction_type="str",
+        metrics=[
+            "metrics.bleu",
+            "metrics.rouge",
+            "metrics.bert_score.bert_base_uncased",
+            "metrics.meteor",
+        ],
+        augmentable_inputs=["input_a", "input_b"],
+        defaults={"type_of_output": "Text"},
+    ),
+    "tasks.generation.from_pair",
+    overwrite=True,
+)
