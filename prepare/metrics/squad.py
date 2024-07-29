@@ -1,11 +1,13 @@
 from unitxt.blocks import AddID, Copy, Set
 from unitxt.catalog import add_to_catalog
 from unitxt.metrics import MetricPipeline, Squad
+from unitxt.operators import RestorePredictionReferences, SavePredictionReferences
 from unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="f1",
     preprocess_steps=[
+        SavePredictionReferences(name="squad"),
         AddID(),
         Set(
             {
@@ -33,6 +35,9 @@ metric = MetricPipeline(
         ),
     ],
     metric=Squad(),
+    postprocess_steps=[
+        RestorePredictionReferences(name="squad"),
+    ],
 )
 
 predictions = ["1976", "Beyoncé and", "climate change"]

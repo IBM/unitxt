@@ -2035,7 +2035,6 @@ label (str):
                 fields={"a/d": "float", "b": "int"},
                 failure_defaults={"a/d": 0.0, "b": 0},
                 process_every_value=True,
-                use_nested_query=True,
             ),
             inputs=[{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}],
             targets=[{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}],

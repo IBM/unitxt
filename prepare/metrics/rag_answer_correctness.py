@@ -1,6 +1,11 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy, RenameFields
+from unitxt.operators import (
+    Copy,
+    RenameFields,
+    RestorePredictionReferences,
+    SavePredictionReferences,
+)
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 
@@ -42,10 +47,14 @@ for new_catalog_name, base_catalog_name in [
     metric = MetricPipeline(
         main_score="recall",
         preprocess_steps=[
+            SavePredictionReferences(name=new_catalog_name),
             Copy(field="ground_truths", to_field="references"),
             Copy(field="answer", to_field="prediction"),
         ],
         metric=base_catalog_name,
+        postprocess_steps=[
+            RestorePredictionReferences(name=new_catalog_name),
+        ],
     )
     add_to_catalog(metric, new_catalog_name, overwrite=True)
 

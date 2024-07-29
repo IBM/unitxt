@@ -4,6 +4,10 @@
     "single_reference_per_prediction": true,
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "nDCG"
+        },
+        {
             "__type__": "cast_fields",
             "fields": {
                 "prediction": "float",
@@ -11,11 +15,16 @@
             },
             "failure_defaults": {
                 "prediction": null
-            },
-            "use_nested_query": true
+            }
         }
     ],
     "metric": {
         "__type__": "ndcg"
-    }
+    },
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "nDCG"
+        }
+    ]
 }

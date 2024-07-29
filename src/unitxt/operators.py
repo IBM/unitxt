@@ -351,6 +351,7 @@ class InstanceFieldOperator(InstanceOperator):
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
+    use_deepcopy: bool = False
 
     def verify(self):
         super().verify()
@@ -1065,6 +1066,34 @@ class Copy(FieldOperator):
         return copy.deepcopy(value)
 
 
+class SavePredictionReferences(InstanceOperator):
+    name: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction" in instance:
+            instance["prediction_save_" + self.name] = deepcopy(instance["prediction"])
+        if "references" in instance:
+            instance["references_save_" + self.name] = deepcopy(instance["references"])
+        return instance
+
+
+class RestorePredictionReferences(InstanceOperator):
+    name: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction_save_" + self.name in instance:
+            instance["prediction"] = instance["prediction_save_" + self.name]
+            instance.pop("prediction_save_" + self.name)
+        if "references_save_" + self.name in instance:
+            instance["references"] = instance["references_save_" + self.name]
+            instance.pop("references_save_" + self.name)
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
@@ -1115,7 +1144,6 @@ class CastFields(InstanceOperator):
 
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
-    use_nested_query: bool = False
     process_every_value: bool = False
 
     def prepare(self):

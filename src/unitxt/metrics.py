@@ -238,7 +238,7 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    # update instance["score"]["global"] with the newly computed global score, global_score, for the
+    # update instance["score"]["global"] with the newly computed global score, for the
     # current metric computed.  global_score contains "score" and "score_name" fields that reflect
     # (the main_score of) the current metric.
     # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
@@ -1344,9 +1344,7 @@ class StringContainment(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
-        default_factory=list
-    )
+    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1383,7 +1381,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
+        for step in self.postprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 

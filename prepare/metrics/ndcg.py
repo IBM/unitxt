@@ -1,7 +1,11 @@
 import numpy as np
 from unitxt import add_to_catalog
-from unitxt.blocks import CastFields
 from unitxt.metrics import NDCG, MetricPipeline
+from unitxt.operators import (
+    CastFields,
+    RestorePredictionReferences,
+    SavePredictionReferences,
+)
 from unitxt.test_utils.metrics import test_metric
 
 # Normalized Discounted Cumulative Gain
@@ -9,13 +13,16 @@ metric = MetricPipeline(
     main_score="nDCG",
     single_reference_per_prediction=True,
     preprocess_steps=[
+        SavePredictionReferences(name="nDCG"),
         CastFields(
             fields={"prediction": "float", "references/0": "float"},
             failure_defaults={"prediction": None},
-            use_nested_query=True,
         ),
     ],
     metric=NDCG(),
+    postprocess_steps=[
+        RestorePredictionReferences(name="nDCG"),
+    ],
 )
 
 predictions = [

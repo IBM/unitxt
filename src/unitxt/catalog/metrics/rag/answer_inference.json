@@ -3,6 +3,10 @@
     "main_score": "perplexity",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "rag_answer_inference"
+        },
+        {
             "__type__": "copy",
             "field": "contexts",
             "to_field": "references"
@@ -13,5 +17,11 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.perplexity_nli.t5_nli_mixture"
+    "metric": "metrics.perplexity_nli.t5_nli_mixture",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "rag_answer_inference"
+        }
+    ]
 }

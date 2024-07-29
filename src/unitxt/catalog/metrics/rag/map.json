@@ -3,6 +3,10 @@
     "main_score": "score",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "metrics.rag.map"
+        },
+        {
             "__type__": "copy",
             "field": "context_ids",
             "to_field": "prediction"
@@ -14,5 +18,11 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.map"
+    "metric": "metrics.map",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "metrics.rag.map"
+        }
+    ]
 }
