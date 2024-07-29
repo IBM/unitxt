@@ -13,7 +13,7 @@ add_to_catalog(
         reference_fields={
             "reference_answers": List[str],
             "reference_contexts": List[str],
-            "reference_context_ids": List[str | int],
+            "reference_context_ids": List[str],
             "is_answerable_label": bool,
         },
         metrics=[
