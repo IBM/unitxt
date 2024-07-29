@@ -6,6 +6,7 @@ add_to_catalog(
         input_fields={"question": str, "answer": str},
         reference_fields={"rating": float},
         metrics=["metrics.spearman"],
+        prediction_type=float,
     ),
     "tasks.response_assessment.rating.single_turn",
     overwrite=True,

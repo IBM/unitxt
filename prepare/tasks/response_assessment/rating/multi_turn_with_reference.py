@@ -11,6 +11,7 @@ add_to_catalog(
         },
         reference_fields={"rating": float},
         metrics=["metrics.spearman"],
+        prediction_type=float,
     ),
     "tasks.response_assessment.rating.multi_turn_with_reference",
     overwrite=True,
