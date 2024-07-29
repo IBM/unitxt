@@ -10,11 +10,7 @@ from copy import deepcopy
 from dataclasses import field
 from operator import itemgetter
 from statistics import mean
-<<<<<<< HEAD
-from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
-=======
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
->>>>>>> main
 
 import evaluate
 import numpy
