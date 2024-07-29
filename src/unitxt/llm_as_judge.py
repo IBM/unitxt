@@ -37,6 +37,7 @@ class LLMAsJudge(BulkInstanceMetric):
     inference_model: InferenceEngine
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
+    prediction_type = Any  # Because handled with multiple tasks
 
     def _get_input_instances(self, task_data: List[Dict]) -> List:
         if self.strip_system_prompt_and_format_from_inputs:
@@ -190,11 +191,13 @@ class LLMAsJudge(BulkInstanceMetric):
                 res = {
                     self.main_score: model_a_preference_score,
                     "judge_raw_output": verdict,
+                    "judge_raw_input": instance["source"],
                 }
             else:
                 res = {
                     self.main_score: instance["processed_prediction"],
                     "judge_raw_output": verdict,
+                    "judge_raw_input": instance["source"],
                 }
             res_list.append(res)
 
