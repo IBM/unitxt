@@ -180,7 +180,7 @@ Adding a New Instance metric
             main_score = "sum_accuracy" # name of the main score
             reduction_map = {"mean": ["sum_accuracy"]} # defines that the global score is a mean of the instance scores
             ci_scores = ["sum_accuracy"] # define that confidence internal should be calculated on the score
-            prediction_type = "int"      # the metric expect the prediction as an int
+            prediction_type = int      # the metric expect the prediction as an int
 
             # Relation tolerance for errors by default it is 0, but can be changed for approximate comparison
             relative_tolerance : float = 0
@@ -259,7 +259,7 @@ This is a global metric because it performs the calculation over all the instanc
         In most realistic cases, the score is likely to be zer or negative.
 
         """
-        prediction_type = "int"
+        prediction_type = int
         main_score="sensitivity_to_numeric_magnitude"
         single_reference_per_prediction = True  # validates only one reference is passed per prediction
 
