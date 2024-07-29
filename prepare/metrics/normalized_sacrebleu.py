@@ -28,7 +28,7 @@ language_to_tokenizer = {
 
 metric = MetricPipeline(
     main_score="sacrebleu",
-    prediction_type="str",
+    prediction_type=str,
     preprocess_steps=[
         Copy(
             field="task_data/target_language",

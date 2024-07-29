@@ -74,12 +74,13 @@ def depraction_wrapper(obj, version, alt_text):
     return wrapper
 
 
-def deprecation(version, alternative=None):
+def deprecation(version, alternative=None, msg=None):
     """Decorator for marking functions or class methods as deprecated.
 
     Args:
         version (str): The version at which the function or method becomes deprecated.
         alternative (str, optional): Suggested alternative to the deprecated functionality.
+        msg (str, optional): Additional message regarding the deprecation reason or alternatives.
 
     Returns:
         callable: A decorator that can be applied to functions or class methods.
@@ -87,6 +88,7 @@ def deprecation(version, alternative=None):
 
     def decorator(obj):
         alt_text = f" Use {alternative} instead." if alternative is not None else ""
+        alt_text += msg if msg is not None else ""
         if callable(obj):
             func = obj
         elif hasattr(obj, "__init__"):
