@@ -13,6 +13,7 @@ add_to_catalog(
         ]
     ),
     "processors.load_json_predictions",
+    overwrite=True,
 )
 
 add_to_catalog(
