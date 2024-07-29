@@ -224,7 +224,9 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            return cls._class_register[obj.pop("__type__")](**obj)
+            artifact_class = cls._class_register[obj.pop("__type__")]
+            obj = artifact_class.process_data_after_load(obj)
+            return artifact_class(**obj)
 
         return obj
 
@@ -289,7 +291,17 @@ class Artifact(Dataclass):
             self.verify()
 
     def _to_raw_dict(self):
-        return {"__type__": self.__type__, **self._init_dict}
+        return {
+            "__type__": self.__type__,
+            **self.process_data_before_dump(self._init_dict),
+        }
+
+    def process_data_before_dump(self, data):
+        return data
+
+    @classmethod
+    def process_data_after_load(cls, data):
+        return data
 
     def to_json(self):
         data = self.to_dict()
@@ -454,7 +466,6 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
-
     # Load from dictionary (fails if not valid dictionary)
     return Artifact.from_dict(artifact_rep), None
 

@@ -4,7 +4,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Get, Slice
-from unitxt.operators import ListFieldValues, Set, ShuffleFieldValues
+from unitxt.operators import IndexOf, ListFieldValues, Set, ShuffleFieldValues
 from unitxt.string_operators import Join, Replace, Split, Strip
 from unitxt.test_utils.card import test_card
 
@@ -31,6 +31,9 @@ card = TaskCard(
                 "output_type": "response",
                 "instruction": "Respond the following dialog in an helpful and harmfull way.",
             }
+        ),
+        IndexOf(
+            search_in="choices", index_of="output_choice", to_field="output_choice"
         ),
     ],
     task="tasks.evaluation.preference",
