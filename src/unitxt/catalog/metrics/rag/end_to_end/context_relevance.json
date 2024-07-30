@@ -3,6 +3,10 @@
     "main_score": "score",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "end_to_end_context_relevance"
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [
@@ -21,5 +25,11 @@
             ]
         }
     ],
-    "metric": "metrics.perplexity_q.flan_t5_small[score_prefix=context_relevance_]"
+    "metric": "metrics.perplexity_q.flan_t5_small[score_prefix=context_relevance_]",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "end_to_end_context_relevance"
+        }
+    ]
 }

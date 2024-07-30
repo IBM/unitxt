@@ -3,6 +3,10 @@
     "main_score": "score",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "rag_context_perplexity"
+        },
+        {
             "__type__": "copy",
             "field": "contexts",
             "to_field": "references"
@@ -14,11 +18,15 @@
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
-    "postpreprocess_steps": [
+    "postprocess_steps": [
         {
             "__type__": "copy",
             "field": "score/instance/reference_scores",
             "to_field": "score/instance/score"
+        },
+        {
+            "__type__": "restore_prediction_references",
+            "name": "rag_context_perplexity"
         }
     ]
 }

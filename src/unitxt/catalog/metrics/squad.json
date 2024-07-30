@@ -3,6 +3,10 @@
     "main_score": "f1",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "squad"
+        },
+        {
             "__type__": "add_id"
         },
         {
@@ -61,5 +65,11 @@
     ],
     "metric": {
         "__type__": "squad"
-    }
+    },
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "squad"
+        }
+    ]
 }

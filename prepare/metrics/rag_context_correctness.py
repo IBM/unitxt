@@ -1,7 +1,12 @@
 from unitxt import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy, RenameFields
+from unitxt.operators import (
+    Copy,
+    RenameFields,
+    RestorePredictionReferences,
+    SavePredictionReferences,
+)
 
 for metric_name, catalog_name in [
     ("map", "metrics.rag.map"),
@@ -12,12 +17,16 @@ for metric_name, catalog_name in [
     metric = MetricPipeline(
         main_score="score",
         preprocess_steps=[
+            SavePredictionReferences(name=catalog_name),
             Copy(field="context_ids", to_field="prediction"),
             Wrap(
                 field="ground_truths_context_ids", inside="list", to_field="references"
             ),
         ],
         metric=f"metrics.{metric_name}",
+        postprocess_steps=[
+            RestorePredictionReferences(name=catalog_name),
+        ],
     )
     add_to_catalog(metric, catalog_name, overwrite=True)
 

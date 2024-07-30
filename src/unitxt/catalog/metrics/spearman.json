@@ -3,6 +3,10 @@
     "main_score": "spearmanr",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "spearman"
+        },
+        {
             "__type__": "copy",
             "field": "references/0",
             "to_field": "references"
@@ -11,5 +15,11 @@
     "metric": {
         "__type__": "spearmanr"
     },
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "spearman"
+        }
+    ],
     "prediction_type": "float"
 }

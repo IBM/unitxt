@@ -3,6 +3,10 @@
     "main_score": "score",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "end_to_end_context_correctness"
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [
@@ -19,5 +23,11 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.mrr[score_prefix=context_correctness_]"
+    "metric": "metrics.mrr[score_prefix=context_correctness_]",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "end_to_end_context_correctness"
+        }
+    ]
 }

@@ -3,6 +3,10 @@
     "main_score": "recall",
     "preprocess_steps": [
         {
+            "__type__": "save_prediction_references",
+            "name": "metrics.rag.recall"
+        },
+        {
             "__type__": "copy",
             "field": "ground_truths",
             "to_field": "references"
@@ -13,5 +17,11 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.token_overlap"
+    "metric": "metrics.token_overlap",
+    "postprocess_steps": [
+        {
+            "__type__": "restore_prediction_references",
+            "name": "metrics.rag.recall"
+        }
+    ]
 }
