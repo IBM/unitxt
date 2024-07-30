@@ -19,7 +19,7 @@ Evaluating a dataset can be done using the Huggingface metric API without direct
   testset = dataset['test']
   model_inputs = testset['source']
 
-  # These two lines can be replaces by any inference engine, that receives the model_input strings
+  # These two lines can be replaced by any inference engine, that receives the model_input strings
   # and returns models predictions as string.
   model = pipeline(model='google/flan-t5-base')
   predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
