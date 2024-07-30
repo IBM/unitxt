@@ -386,19 +386,27 @@ class MetricWithConfidenceInterval(Metric):
                 return self.resample_from_non_nan(scores)
 
             # apply bootstrap only on the relevant field
-            ci = bootstrap(
+            boot_strapped_results = bootstrap(
                 (instances,),
                 statistic=statistic,
                 n_resamples=self.n_resamples,
                 confidence_level=self.confidence_level,
                 random_state=self.new_random_generator(),
-            ).confidence_interval
+            )
+            ci = boot_strapped_results.confidence_interval
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
+            if self.override_score_with_ci_mid:
+                ci_mid = boot_strapped_results.bootstrap_distribution[
+                    self.n_resamples // 2
+                ]
+                result[full_score_name] = ci_mid
             if score_name == self.main_score:
                 result["score_ci_low"] = ci.low
                 result["score_ci_high"] = ci.high
+                if self.override_score_with_ci_mid:
+                    result["score"] = ci_mid
         return result
 
     def resample_from_non_nan(self, values):
@@ -913,6 +921,10 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
+    # whether to return the aggregated instance scores as the global score,
+    # or, as is customary with HaggingFace Rouge: bootstrap from the instance scores, and return the
+    # mid score of the samples
+    override_score_with_ci_mid: bool = False
 
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
@@ -2011,6 +2023,8 @@ class Rouge(InstanceMetric):
 
     sent_split_newline: bool = True
     _requirements_list: List[str] = ["nltk", "rouge_score"]
+    n_resamples = 1000
+    override_score_with_ci_mid = True
 
     def prepare(self):
         super().prepare()
