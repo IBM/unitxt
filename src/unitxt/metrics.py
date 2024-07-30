@@ -403,7 +403,7 @@ class MetricWithConfidenceInterval(Metric):
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
             if self.override_score_with_ci_mid:
-                ci_mid = boot_strapped_results.bootstrap_distribution[
+                ci_mid = sorted(boot_strapped_results.bootstrap_distribution)[
                     self.n_resamples // 2
                 ]
                 result[full_score_name] = ci_mid
