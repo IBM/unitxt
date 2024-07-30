@@ -278,6 +278,11 @@ class MetricWithConfidenceInterval(Metric):
     confidence_level: float = 0.95
     ci_scores: List[str] = None
 
+    # whether to return the aggregated instance scores as the global score,
+    # or, as is customary with HaggingFace Rouge: bootstrap from the instance scores, and return the
+    # mid score of the samples
+    override_score_with_ci_mid: bool = False
+
     @staticmethod
     def new_random_generator():
         # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
@@ -921,10 +926,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     n_resamples: int = OptionalField(
         default_factory=lambda: settings.num_resamples_for_instance_metrics
     )
-    # whether to return the aggregated instance scores as the global score,
-    # or, as is customary with HaggingFace Rouge: bootstrap from the instance scores, and return the
-    # mid score of the samples
-    override_score_with_ci_mid: bool = False
 
     # some group_mean aggregation functions (3rd element of "agg_func" list in the reduction)
     # only require a list of instance scores (e.g., mean, median, etc.).  Others aggregation functions
