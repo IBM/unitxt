@@ -277,3 +277,29 @@ class ExtractArenaHardNumericalJudgment(FieldOperator):
 
         except:
             return 0
+
+
+class ExtractMtBenchStringJudgment(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        allowed_values = ["yes", "unsure", "no", "error"]
+
+        def get_first_word(x):
+            first_word = re.compile(r"^(\W*\w+\W*)")
+            word_chars = re.compile(r"\W*(\w*)\W*")
+            if x is None:
+                return "error"
+            m = first_word.search(x)
+            word = m.group(0) if m else "error"
+            m = word_chars.search(word)
+            return m.group(1) if m else "error"
+
+        string_val = get_first_word(text).lower()
+        if text is None:
+            string_val = "error"
+        string_val = string_val if string_val in allowed_values else "error"
+
+        if string_val == "yes":
+            return 1.0
+        if string_val == "no":
+            return 0.0
+        return 0.5
