@@ -43,6 +43,7 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
     )
     test_card(
         card,
+        loader_limit=50,  # the default 30 does not suffice for stream validation to pass the filtering preprocess step
         format="formats.textual_assistant",
     )
     add_to_catalog(

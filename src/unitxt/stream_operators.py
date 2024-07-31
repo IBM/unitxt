@@ -31,6 +31,7 @@ The rest of this section is dedicated for operators that operates on streams.
 
 """
 
+import copy
 from typing import (
     List,
     Literal,
@@ -155,5 +156,5 @@ class DuplicateSplit(MultiStreamOperator):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         assert self.split in multi_stream
         generators = multi_stream
-        generators[self.to_split] = generators[self.split]
+        generators[self.to_split] = copy.deepcopy(generators[self.split])
         return MultiStream(generators)
