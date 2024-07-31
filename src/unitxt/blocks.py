@@ -21,6 +21,7 @@ from .recipe import SequentialRecipe
 from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
 from .stream import MultiStream
 from .struct_data_operators import (
+    ConstructTableStructure,
     ListToKeyValPairs,
     MapHTMLTableToJSON,
     SerializeKeyValPairs,
