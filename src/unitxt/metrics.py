@@ -8,7 +8,6 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
-from operator import itemgetter
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
@@ -39,7 +38,9 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy
+from .operators import (
+    Copy,
+)
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -653,24 +654,18 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
+
         instances = []
 
-        # consume the stream
-        references, predictions = map(
-            list,
-            zip(
-                *[
-                    itemgetter("references", "prediction")(
-                        self.verify_instance(instance)
-                    )
-                    for instance in stream
-                ]
-            ),
-        )
+        for instance in stream:
+            self.verify_instance(instance)
+            instances.append(instance)
 
+        predictions = [instance["prediction"] for instance in instances]
+        references = [instance["references"] for instance in instances]
         task_data = [
             instance["task_data"] if "task_data" in instance else {}
-            for instance in stream
+            for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
@@ -685,7 +680,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
 
-        for instance, score in zip(stream, instance_scores):
+        for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
 
@@ -694,7 +689,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
             assert (
@@ -1423,6 +1417,19 @@ class StringContainmentRatio(InstanceMetric):
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
+    """Applies a sequence of preprocess_operators followed by metric, followed by postprocess operators.
+
+    The preprocess operators meant to prepare prediction and references, in case these are not yet
+    prepared for feeding into metric.  postprocess operators meant to revert modifications done in the
+    post processing, as needed.
+
+    To ensure that at least prediction and references, as restored to their value upon entring to this class,
+    this class saves their value, and restores at the end. In case of a change (which is not expected, since
+    the instance should be ready to go though another, independent metric), a warning message is logged
+    before the restore.
+
+    """
+
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)

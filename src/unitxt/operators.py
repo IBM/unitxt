@@ -39,7 +39,6 @@ General Operators List:
 ------------------------
 """
 
-import copy
 import operator
 import uuid
 import zipfile
@@ -66,6 +65,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .logging_utils import get_logger
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -82,12 +82,13 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import DynamicStream, Stream
+from .stream import DynamicStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import deepcopy, flatten_dict
 
 settings = get_settings()
+logger = get_logger()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -201,13 +202,12 @@ class MapInstanceValues(InstanceOperator):
 
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
-        if self.strict and (val_as_str not in mapper):
+        if val_as_str in mapper:
+            return mapper[val_as_str]
+        if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
             )
-        # By default deep copy the value in mapper to avoid shared modifications
-        if val_as_str in mapper:
-            return deepcopy(mapper[val_as_str])
         return val
 
 
@@ -427,11 +427,6 @@ class InstanceFieldOperator(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        # Need to deep copy instance, because when assigning two dictionary fields,
-        # dict_set() the target field dictionary fields.
-        # This means that if this target field was assigned to another field before,
-        # the field is updated as well.
-        instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
@@ -1061,7 +1056,12 @@ class Copy(FieldOperator):
     """
 
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        return value
+
+
+class DeepCopy(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return deepcopy(value)
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1786,7 +1786,18 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric
 
-        first_instance = stream.peek()
+        # Number of instances in input stream is assumed to be small. This is why
+        # each metric consumes all of them and lays in its main memory, and even generates some 1000
+        # copies thereof for the sake of CI.
+        # So we start with deep copying here, to make a 'frozen' status of the stream, a status to be
+        # applied to each of the metrics listed in metric_field, so that the evaluation of one does not
+        # affect the evaluation of another (typically, affecting via change of
+        # instance as part of preprocess_steps of MetricPipeline).
+        instances_upon_entrance_to_metrics_evaluations = []
+        for instance in stream:
+            instances_upon_entrance_to_metrics_evaluations.append(deepcopy(instance))
+
+        first_instance = instances_upon_entrance_to_metrics_evaluations[0]
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1803,16 +1814,6 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
-        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
-        # for further metrics' processing, instead of just modifying the score field.
-        # Here we keep all the fields besides the score, and restore them after the metric finishes.
-        first_instance = stream.peek()
-        keys_to_restore = set(first_instance.keys()).difference({"score"})
-        multi_stream = MultiStream({"tmp": stream})
-        multi_stream = CopyFields(
-            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
-        )(multi_stream)
-
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(
@@ -1821,17 +1822,24 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
-
+            multi_stream = MultiStream(
+                {
+                    "tmp": ListStream(
+                        instances_list=deepcopy(
+                            instances_upon_entrance_to_metrics_evaluations
+                        )
+                    )
+                }
+            )
             multi_stream = metric(multi_stream)
-            multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore}
-            )(multi_stream)
+            for evaluated_instance, freezed_instance in zip(
+                multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
+            ):
+                freezed_instance["score"] = deepcopy(evaluated_instance["score"])
 
-        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
-            multi_stream
+        yield from ListStream(
+            instances_list=instances_upon_entrance_to_metrics_evaluations
         )
-        stream = multi_stream["tmp"]
-        yield from stream
 
 
 class MergeStreams(MultiStreamOperator):
