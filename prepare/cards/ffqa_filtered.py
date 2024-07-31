@@ -91,6 +91,7 @@ def add_card(split: str):
             FilterByCondition(
                 values={"inputs_len": token_limit_map[split]},
                 condition="lt",
+                error_on_filtered_all=False,  # necessary for eagering mode
             ),
             ExecuteExpression(
                 expression='re.search(r"Document:\\s(.*)(\\n\\n|$)", inputs).group(1)',
@@ -119,7 +120,7 @@ def add_card(split: str):
         ),
     )
 
-    test_card(card)
+    test_card(card=card)
     add_to_catalog(card, f"cards.ffqa_filtered.{split}", overwrite=True)
 
 

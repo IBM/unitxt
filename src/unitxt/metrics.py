@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from copy import deepcopy
 from dataclasses import field
-from operator import itemgetter
 from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
@@ -39,7 +38,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy
+from .operators import Copy, RestorePredictionReferences, SavePredictionReferences
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -622,24 +621,18 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
+
         instances = []
 
-        # consume the stream
-        references, predictions = map(
-            list,
-            zip(
-                *[
-                    itemgetter("references", "prediction")(
-                        self.verify_instance(instance)
-                    )
-                    for instance in stream
-                ]
-            ),
-        )
+        for instance in stream:
+            self.verify_instance(instance)
+            instances.append(instance)
 
+        predictions = [instance["prediction"] for instance in instances]
+        references = [instance["references"] for instance in instances]
         task_data = [
             instance["task_data"] if "task_data" in instance else {}
-            for instance in stream
+            for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
@@ -654,14 +647,13 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
 
-        for instance, score in zip(stream, instance_scores):
+        for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
 
             instance["score"]["instance"].update(
                 self._add_score_prefixes_to_score_dict(score)
             )
-            instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
             assert (
@@ -1426,11 +1418,13 @@ class MetricPipeline(MultiStreamOperator, Metric):
         )
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
+        multi_stream = SavePredictionReferences()(multi_stream)
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
         for step in self.postpreprocess_steps:
             multi_stream = step(multi_stream)
+        multi_stream = RestorePredictionReferences()(multi_stream)
         return self.prepare_score(multi_stream)
 
 

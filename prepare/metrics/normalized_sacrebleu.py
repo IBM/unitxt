@@ -116,7 +116,7 @@ references = [
         "他方、成績評価の甘い授業が高く評価されたり、人気取りに走る教師が出たりし、成績の安売りや大学教師のレベルダウンという弊害をもたらす恐れがある、などの反省意見もある."
     ],
 ]
-task_data = len(predictions) * [{"target_language": "ja"}]
+task_data = [{"target_language": "ja"}, {"target_language": "ja"}]
 
 instance_targets = [
     {
@@ -172,7 +172,7 @@ outputs = test_metric(
 
 predictions = ["لى يسارك ، بر ماركت.", "ﻣَﺮَّﺕ ﻋِﺪَّﺓُ ﺳَﻨَﻮَﺍﺕٍ ﻗَﺒﻞ ﺃَﻥ ﺃَﺭَﺍﻫَﺎ ﻣِﻦ ﺟَﺪِﻳﺪٍ"]
 references = [["على ، ستمر سوبر ماركت."], ["ﻣَﺮَّﺕ ﻋِﺪَّﺓُ ﺳَﻨَﻮَﺍﺕٍ ﻗَﺒﻞ ﺃَﻥ ﺃَﺭَﺍﻫَﺎ ﻣِﻦ ﺟَﺪِﻳﺪٍ"]]
-task_data = len(predictions) * [{"target_language": "ar"}]
+task_data = [{"target_language": "ar"}, {"target_language": "ar"}]
 instance_targets = [
     {
         "counts": [3, 1, 0, 0],
@@ -230,7 +230,7 @@ references = [
     ["이 가게에서 신발을 살 거예요", "이 가에서 신발살 거예요"],
     ["저는 한국 친구를 사귀고 싶습니다", "저는 한구를 사귀 싶습니다"],
 ]
-task_data = len(predictions) * [{"target_language": "Korean"}]
+task_data = [{"target_language": "Korean"}, {"target_language": "Korean"}]
 
 instance_targets = [
     {

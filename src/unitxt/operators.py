@@ -1834,6 +1834,34 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+class SavePredictionReferences(InstanceOperator):
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction" in instance:
+            instance["prediction_save__"] = deepcopy(instance["prediction"])
+        if "references" in instance:
+            instance["references_save__"] = deepcopy(instance["references"])
+        return instance
+
+
+class RestorePredictionReferences(InstanceOperator):
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "prediction_save__" in instance:
+            instance["prediction"] = instance["prediction_save__"]
+            instance.pop("prediction_save__")
+        else:  # there was no "prediction" when saved
+            instance.pop("prediction")
+        if "references_save__" in instance:
+            instance["references"] = instance["references_save__"]
+            instance.pop("references_save__")
+        else:
+            instance.pop("references")
+        return instance
+
+
 class MergeStreams(MultiStreamOperator):
     """Merges multiple streams into a single stream.
 
