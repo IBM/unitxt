@@ -1321,21 +1321,29 @@ class UnsortedListExactMatch(InstanceMetric):
 
 
 class StringContainment(InstanceMetric):
+    """Metric that checks if a prediction string contains any of the reference strings.
+
+    If score_by_ratio is True, the score is the ratio of references contained in the prediction.
+    """
+
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
 
     prediction_type = Any  # string representation is compared
-    single_reference_per_prediction = False  # multiple references allowed
+    score_by_ratio = False
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
-        result = {
-            self.main_score: float(
-                any(str(reference) in str(prediction) for reference in references)
-            )
-        }
+        contain_results = [
+            str(reference) in str(prediction) for reference in references
+        ]
+        if self.score_by_ratio:
+            score = sum(contain_results) / len(contain_results)
+        else:
+            score = float(any(contain_results))
+        result = {self.main_score: score}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
