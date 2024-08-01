@@ -34,7 +34,7 @@ The task is formally defined as:
         ],
    )
 
-The `input` and `output` fields of the task are used to format the textual input to the model.
+The `input_fields` and `reference_fields` of the task are used to format the textual input to the model.
 
 The task does not verbalize the input to the model, as this can be done in different ways by different templates.
 For example, same input could be verbalized as
