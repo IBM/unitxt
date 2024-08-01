@@ -19,7 +19,6 @@ from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
-from .hf_utils import verify_versions_compatibility
 from .inference import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _
@@ -69,16 +68,9 @@ class Dataset(datasets.GeneratorBasedBuilder):
     def generators(self):
         if not hasattr(self, "_generators") or self._generators is None:
             if is_package_installed("unitxt"):
-                verify_versions_compatibility("dataset", self.VERSION)
-
-                from unitxt.dataset_utils import (
-                    get_dataset_artifact as get_dataset_artifact_installed,
+                logger.warning(
+                    "Loading Unitxt dataset with HuggingFace API and not installed version ..."
                 )
-
-                logger.info("Loading with installed unitxt library...")
-                dataset = get_dataset_artifact_installed(self.config.name)
-            else:
-                logger.info("Loading with huggingface unitxt copy...")
                 dataset = get_dataset_artifact(self.config.name)
 
             self._generators = dataset()

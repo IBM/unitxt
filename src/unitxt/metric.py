@@ -19,12 +19,12 @@ from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
-from .hf_utils import verify_versions_compatibility
 from .inference import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import __file__ as _
+from .logging_utils import get_logger
 from .metric_utils import UNITXT_METRIC_SCHEMA, _compute
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
@@ -55,6 +55,7 @@ from .validate import __file__ as _
 from .version import __file__ as _
 
 constants = get_constants()
+logger = get_logger()
 
 
 class Metric(evaluate.Metric):
@@ -79,18 +80,9 @@ class Metric(evaluate.Metric):
         split_name: str = "all",
     ):
         if is_package_installed("unitxt"):
-            verify_versions_compatibility("metric", self.VERSION)
-
-            from unitxt.metric_utils import _compute as _compute_installed
-
-            return _compute_installed(
-                predictions=predictions,
-                references=references,
-                flatten=flatten,
-                split_name=split_name,
-                calc_confidence_intervals=self.calc_confidence_intervals,
+            logger.warning(
+                "Unitxt metrics loaded from HuggingFace version and not from local installation of unitxt"
             )
-
         return _compute(
             predictions=predictions,
             references=references,
