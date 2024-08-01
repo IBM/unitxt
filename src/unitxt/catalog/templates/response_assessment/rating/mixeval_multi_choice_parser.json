@@ -1,0 +1,9 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "A task was given to a model with a list of options as possible answers, there's also the golden response. Act as a judge comparing the model's response and the golden response and give a rating of [[10]] if the model's response matches the golden response otherwise provide a rating of [[0]].\n\nStrictly follow the output format below and maintain the double square brackets.\n```\nrating: [[your-rating]]\n```\n\nThe task, the model's response chosen from the options list, and the golden response are as follows:\n",
+    "input_format": "Task: {question}\n\nModel's Response: {answer}\n\nGolden Response: {reference_answer}\n\n",
+    "output_format": "[[{rating}]]",
+    "postprocessors": [
+        "processors.extract_mt_bench_rating_judgment"
+    ]
+}
