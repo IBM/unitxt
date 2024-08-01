@@ -4,7 +4,7 @@
 Loading Datasets
 ===================================
 
-You can load a Unitxt dataset, using the Huggingface Dataset API 
+You can load a Unitxt dataset, using the HuggingFace Dataset API
 without installing the Unitxt package by using the following code:
 
 .. code-block:: python
@@ -56,7 +56,7 @@ This prints the reference text (expected output of the model) of the first sampl
 
 
 Loading a customized dataset
------------------------------
+----------------------------
 
 Unitxt enables formatting the dataset in different ways.
 
