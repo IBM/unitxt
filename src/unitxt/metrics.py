@@ -1321,28 +1321,53 @@ class UnsortedListExactMatch(InstanceMetric):
 
 
 class StringContainment(InstanceMetric):
-    """Metric that checks if a prediction string contains any of the reference strings.
-
-    If score_by_ratio is True, the score is the ratio of references contained in the prediction.
-    """
-
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
 
     prediction_type = Any  # string representation is compared
-    score_by_ratio = False
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        result = {
+            self.main_score: float(
+                any(str(reference) in str(prediction) for reference in references)
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
+class StringContainmentRatio(InstanceMetric):
+    """Metric that returns the ratio of values from a specific field contained in the prediction.
+
+    Attributes:
+        field: The field from the task_data that contains the values to be checked for containment.
+               Example task:
+                    Task(
+                        input_fields={"question": str},
+                        reference_fields={"entities": str},
+                        prediction_type=str,
+                        metrics=["string_containment_ratio[field=entities]"],
+                    )
+    """
+
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+    ci_scores = ["string_containment"]
+    field: str = "entities"
+
+    prediction_type = Any  # string representation is compared
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
         contain_results = [
-            str(reference) in str(prediction) for reference in references
+            str(value) in str(prediction) for value in task_data[self.field]
         ]
-        if self.score_by_ratio:
-            score = sum(contain_results) / len(contain_results)
-        else:
-            score = float(any(contain_results))
+        score = sum(contain_results) / len(contain_results)
         result = {self.main_score: score}
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score

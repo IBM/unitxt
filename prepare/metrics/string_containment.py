@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import StringContainment
+from unitxt.metrics import StringContainment, StringContainmentRatio
 from unitxt.test_utils.metrics import test_metric
 
 metric = StringContainment()
@@ -33,10 +33,11 @@ outputs = test_metric(
 add_to_catalog(metric, "metrics.string_containment", overwrite=True)
 
 
-# Add another metric with score_by_ratio = True
+# Add metrics.string_containment.ratio
 
-metric = StringContainment()
-metric.score_by_ratio = True
+reference_field = "entities"
+
+metric = StringContainmentRatio()
 
 instance_targets = [
     {"string_containment": 0.75, "score": 0.75, "score_name": "string_containment"},
@@ -56,9 +57,10 @@ global_target = {
 outputs = test_metric(
     metric=metric,
     predictions=predictions,
-    references=references,
+    references=[["dummy"] for _ in references],
     instance_targets=instance_targets,
     global_target=global_target,
+    task_data=[{reference_field: w} for w in references],
 )
 
 add_to_catalog(metric, "metrics.string_containment.ratio", overwrite=True)
