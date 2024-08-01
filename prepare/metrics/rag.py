@@ -30,6 +30,9 @@ metrics = {
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
     ),
+    "metrics.sentence_bert.bge_large_en_1.5": SentenceBert(
+        model_name="BAAI/bge-large-en-v1.5"
+    ),
     "metrics.reward.deberta_v3_large_v2": Reward(
         model_name="OpenAssistant/reward-model-deberta-v3-large-v2"
     ),
@@ -316,68 +319,6 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.correctness
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
-context_relevance = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-)
-add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
-context_perplexity = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-    postpreprocess_steps=[
-        Copy(field="score/instance/reference_scores", to_field="score/instance/score")
-    ],
-)
-add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
-for new_catalog_name, base_catalog_name in [
-    ("metrics.rag.faithfulness", "metrics.token_overlap"),
-    ("metrics.rag.k_precision", "metrics.token_overlap"),
-    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_large_mnli"),
-    (
-        "metrics.rag.bert_k_precision_ml",
-        "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
-    ),
-]:
-    metric = MetricPipeline(
-        main_score="precision",
-        preprocess_steps=[
-            Copy(field="contexts", to_field="references"),
-            Copy(field="answer", to_field="prediction"),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, new_catalog_name, overwrite=True)
-
-answer_reward = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        Copy(field="question", to_field="references"),
-        Copy(field="answer", to_field="prediction"),
-        # This metric compares the answer (as the prediction) to the question (as the reference).
-        # We have to wrap the question by a list (otherwise it will be a string),
-        # because references are expected to be lists
-        ListFieldValues(fields=["references"], to_field="references"),
-    ],
-    metric="metrics.reward.deberta_v3_large_v2",
-)
-add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
-answer_inference = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="answer", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_nli.t5_nli_mixture",
-)
-add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
 
 for axis, base_metric, main_score in [
     ("correctness", "token_overlap", "f1"),
