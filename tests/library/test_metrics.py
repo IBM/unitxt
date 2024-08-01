@@ -48,6 +48,7 @@ from unitxt.metrics import (
     Perplexity,
     PrecisionBinary,
     RecallBinary,
+    RelationExtraction,
     RocAuc,
     Rouge,
     TokenOverlap,
@@ -961,6 +962,41 @@ class TestMetrics(UnitxtTestCase):
         )
         self.assertTrue("f1_Person" not in outputs[0]["score"]["global"])
         self.assertTrue("f1_Location" not in outputs[0]["score"]["global"])
+
+    def test_relation_extr(self):
+        metric = RelationExtraction()
+        predictions = [
+            [
+                ("Dalia", "employedBy", "Anna"),
+                ("Carl", "managerOf", "Mike"),
+                ("Jake", "basedIn", "Toronto"),
+            ]
+        ]
+        references = [
+            [
+                [
+                    ("Dalia", "employedBy", "Anna"),
+                    ("John", "managerOf", "Jason"),
+                ]
+            ]
+        ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        global_target = 1.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_employedBy"]
+        )
+        global_target = 0.0
+        self.assertAlmostEqual(
+            global_target, outputs[0]["score"]["global"]["f1_managerOf"]
+        )
+        metric.report_per_group_scores = False
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertTrue("f1_employedBy" not in outputs[0]["score"]["global"])
+        self.assertTrue("f1_managetOf" not in outputs[0]["score"]["global"])
 
     def test_llama_index_correctness(self):
         metric = LlamaIndexCorrectness(model_name="mock")
