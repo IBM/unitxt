@@ -37,7 +37,7 @@ add_to_catalog(metric, "metrics.string_containment", overwrite=True)
 
 reference_field = "entities"
 
-metric = StringContainmentRatio()
+metric = StringContainmentRatio(field=reference_field)
 
 instance_targets = [
     {"string_containment": 0.75, "score": 0.75, "score_name": "string_containment"},

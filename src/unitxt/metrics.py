@@ -1357,7 +1357,7 @@ class StringContainmentRatio(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
-    field: str = "entities"
+    field: str | None = None
 
     prediction_type = Any  # string representation is compared
 
@@ -1372,6 +1372,13 @@ class StringContainmentRatio(InstanceMetric):
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
+
+    def verify(self):
+        super().verify()
+        if self.field is None:
+            raise ValueError(
+                "StringContainmentRatio metric requires the field attribute to be set."
+            )
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
