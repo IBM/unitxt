@@ -4,29 +4,25 @@ from unitxt.metrics import (
 )
 from unitxt.operators import Copy
 
-context_relevance_perplexity = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-)
-add_to_catalog(
-    context_relevance_perplexity, "metrics.rag.context_relevance", overwrite=True
-)
+base = "metrics.rag.context_relevance"
+default = "perplexity"
 
-context_relevance_bge = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.sentence_bert.bge_large_en_1.5",
-)
-add_to_catalog(
-    context_relevance_bge, "metrics.rag.context_relevance.bge", overwrite=True
-)
+for new_catalog_name, base_catalog_name, main_score in [
+    ("perplexity", "metrics.perplexity_q.flan_t5_small", "perplexity"),
+    ("sentence_bert", "metrics.sentence_bert.bge_large_en_1.5", "score"),
+]:
+    metric = MetricPipeline(
+        main_score=main_score,
+        preprocess_steps=[
+            Copy(field="contexts", to_field="references"),
+            Copy(field="question", to_field="prediction"),
+        ],
+        metric=base_catalog_name,
+    )
+    add_to_catalog(metric, f"{base}.{new_catalog_name}", overwrite=True)
+
+    if new_catalog_name == default:
+        add_to_catalog(metric, base, overwrite=True)
 
 context_perplexity = MetricPipeline(
     main_score="score",

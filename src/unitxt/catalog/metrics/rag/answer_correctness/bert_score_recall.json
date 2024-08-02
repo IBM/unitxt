@@ -1,0 +1,17 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "recall",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "ground_truths",
+            "to_field": "references"
+        },
+        {
+            "__type__": "copy",
+            "field": "answer",
+            "to_field": "prediction"
+        }
+    ],
+    "metric": "metrics.bert_score.deberta_large_mnli"
+}
