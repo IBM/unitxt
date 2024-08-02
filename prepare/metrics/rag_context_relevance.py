@@ -9,7 +9,7 @@ default = "perplexity"
 
 for new_catalog_name, base_catalog_name, main_score in [
     ("perplexity", "metrics.perplexity_q.flan_t5_small", "perplexity"),
-    ("sentence_bert", "metrics.sentence_bert.bge_large_en_1.5", "score"),
+    ("sentence_bert", "metrics.sentence_bert.bge_large_en_1_5", "score"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,

@@ -13,5 +13,5 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.sentence_bert.bge_large_en_1.5"
+    "metric": "metrics.sentence_bert.bge_large_en_1_5"
 }
