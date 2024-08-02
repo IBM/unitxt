@@ -63,4 +63,4 @@ outputs = test_metric(
     task_data=[{reference_field: w} for w in references],
 )
 
-add_to_catalog(metric, "metrics.string_containment.ratio", overwrite=True)
+add_to_catalog(metric, "metrics.string_containment_ratio", overwrite=True)
