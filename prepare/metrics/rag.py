@@ -30,7 +30,7 @@ metrics = {
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
     ),
-    "metrics.sentence_bert.bge_large_en_1.5": SentenceBert(
+    "metrics.sentence_bert.bge_large_en_1_5": SentenceBert(
         model_name="BAAI/bge-large-en-v1.5"
     ),
     "metrics.reward.deberta_v3_large_v2": Reward(
