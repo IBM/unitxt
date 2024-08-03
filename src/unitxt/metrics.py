@@ -1357,7 +1357,7 @@ class StringContainmentRatio(InstanceMetric):
     reduction_map = {"mean": ["string_containment"]}
     main_score = "string_containment"
     ci_scores = ["string_containment"]
-    field: str | None = None
+    field: str = None
 
     prediction_type = Any  # string representation is compared
 
