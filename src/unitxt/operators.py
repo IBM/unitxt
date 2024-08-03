@@ -201,13 +201,12 @@ class MapInstanceValues(InstanceOperator):
 
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
-        if self.strict and (val_as_str not in mapper):
+        if val_as_str in mapper:
+            return mapper[val_as_str]
+        if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
             )
-        # By default deep copy the value in mapper to avoid shared modifications
-        if val_as_str in mapper:
-            return deepcopy(mapper[val_as_str])
         return val
 
 
@@ -1857,7 +1856,7 @@ class RestorePredictionReferences(InstanceOperator):
         if "references_save__" in instance:
             instance["references"] = instance["references_save__"]
             instance.pop("references_save__")
-        else:
+        else:  # there was no "references" when saved
             instance.pop("references")
         return instance
 
