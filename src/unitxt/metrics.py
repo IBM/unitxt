@@ -239,8 +239,8 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    # update instance["score"]["global"] with the newly computed global score, global_score, for the
-    # current metric computed.  global_score contains "score" and "score_name" fields that reflect
+    # update instance["score"]["global"] with the global score just computed for the
+    # current metric.  global_score contains "score" and "score_name" fields that reflect
     # (the main_score of) the current metric.
     # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
     # of its fields "score" and "score_name", to reflect the current metric, overwriting previous metrics' settings
