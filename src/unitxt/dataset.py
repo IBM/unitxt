@@ -14,7 +14,7 @@ from .dataset_utils import get_dataset_artifact
 from .deprecation_utils import __file__ as _
 from .dialog_operators import __file__ as _
 from .dict_utils import __file__ as _
-from .doc_utils import __file__ as _
+from .error_utils import __file__ as _
 from .eval_utils import __file__ as _
 from .file_utils import __file__ as _
 from .formats import __file__ as _

@@ -28,7 +28,7 @@ from .dataclass import (
     OptionalField,
 )
 from .deprecation_utils import deprecation
-from .error_utils import DOCUMENTATION_HUGGINGFACE_METRICS, UnitxtWarning
+from .error_utils import Documentation, UnitxtWarning
 from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -1459,7 +1459,7 @@ class HuggingfaceMetric(GlobalMetric):
             UnitxtWarning(
                 f"{self.get_metric_name()} uses a huggingface metric {self.hf_metric_name} which is defined in a local file."
                 f"This may cause issues when running on different machine or different root directories.",
-                DOCUMENTATION_HUGGINGFACE_METRICS,
+                Documentation.HUGGINGFACE_METRICS,
             )
 
         assert (
