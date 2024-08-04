@@ -221,7 +221,7 @@ Now everything is ready to use the data! We use a standard recipe to load it wit
     dataset = load_dataset(recipe)
 
 
-Or even simpler with Hugging Face datasets:
+Or even simpler with HuggingFace datasets:
 
 .. code-block:: python
 
