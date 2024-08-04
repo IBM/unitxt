@@ -52,10 +52,14 @@
         },
         {
             "__type__": "rename_fields",
-            "field_to_field": {
-                "src": "input",
-                "tgt": "output_choice"
-            }
+            "field": "src",
+            "to_field": "input"
+        },
+        {
+            "__type__": "index_of",
+            "search_in": "choices",
+            "index_of": "tgt",
+            "to_field": "output_choice"
         }
     ],
     "task": "tasks.evaluation.preference",

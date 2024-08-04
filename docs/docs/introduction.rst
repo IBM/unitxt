@@ -12,7 +12,7 @@ Unitxt is an innovative library for textual data preparation and evaluation of g
 In the dynamic landscape of generative NLP, traditional text processing pipelines limit research flexibility and reproducibility, as they are tailored to specific dataset, task, and model combinations.
 The escalating complexity, involving system prompts, model-specific formats, instructions, and more, calls for a shift to a structured, modular, and customizable solution.
 
-Unitxt deconstructs the data preparations and evaluation flows into modular components, enabling easy customization and sharing between practitioners.
+Unitxt deconstructs the data preparation and evaluation flows into modular components, enabling easy customization and sharing between practitioners.
 
 Key Capabilities:
 
@@ -20,11 +20,11 @@ Key Capabilities:
 
 - Support for changing templates and formats
 
-- Support for loading data from different datasources (e.g., local files, Hugging Face, cloud storage, Kaggle)
+- Support for loading data from different datasources (e.g., local files, HuggingFace, cloud storage, Kaggle)
 
 - Large collection of metrics (including LLMs as Judges)
 
-- Compatible with Hugging Face Dataset and Metric APIs without needing any installation
+- Compatible with HuggingFace Datasets and Metrics APIs without needing any installation
 
 - The same Unitxt data preparation pipeline can be used for both evaluation and inference in production systems
 
