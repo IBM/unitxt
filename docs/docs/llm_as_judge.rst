@@ -138,21 +138,21 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 1. **Selecting a Judge Model**: We will utilize the *mistralai/Mistral-7B-Instruct-v0.2* model from Huggingface as our judge model.
 2. **Selecting an Execution Platform**: We will opt to execute the model locally using Huggingface.
 
-    For this example, we will use the *HFPipelineInferenceEngine* class:
+    For this example, we will use the *HFPipelineBasedInferenceEngine* class:
 
     .. code-block:: python
 
-        from unitxt.inference import HFPipelineInferenceEngine
+        from unitxt.inference import HFPipelineBasedInferenceEngine
         from unitxt.llm_as_judge import LLMAsJudge
 
         model_id = "mistralai/Mistral-7B-Instruct-v0.2"
-        inference_model = HFPipelineInferenceEngine(model_name=model_id, max_generated_tokens=256)
+        inference_model = HFPipelineBasedInferenceEngine(model_name=model_id, max_generated_tokens=256)
 
 
     .. note::
 
         If you wish to use a different platform for running your judge model, you can implement
-        a new `InferenceEngine` class and substitute it with the `HFPipelineInferenceEngine`.
+        a new `InferenceEngine` class and substitute it with the `HFPipelineBasedInferenceEngine`.
         You can find the definition of the `InferenceEngine` abstract class and pre-built inference engines
         (e.g., `OpenAiInferenceEngine`) in `src/unitxt/inference.py`.
 

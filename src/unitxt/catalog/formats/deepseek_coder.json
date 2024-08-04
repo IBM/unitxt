@@ -1,0 +1,5 @@
+{
+    "__type__": "system_format",
+    "demo_format": "### Instruction:\n{source}\n## Response:\n{target_prefix}{target}\n<EOT>\n",
+    "model_input_format": "{system_prompt}\n{demos}### Instruction:\n{source}\n### Response:\n{target_prefix}"
+}

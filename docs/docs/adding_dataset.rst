@@ -2,13 +2,13 @@
 
 .. note::
 
-   To use this tutorial, you need to :ref:`install unitxt <install_unitxt>`.
+   To use this tutorial, you need to :ref:`install Unitxt <install_unitxt>`.
 
 =================
 Datasets ✨
 =================
 
-This guide will assist you in adding or using your new dataset in unitxt.
+This guide will assist you in adding or using your new dataset in Unitxt.
 
 The information needed for loading your data will be defined in the :class:`TaskCard <unitxt.card.TaskCard>` class:
 
@@ -49,9 +49,9 @@ We use the `bleu` metric for a reference-based evaluation.
 .. code-block:: python
 
     task=Task(
-        input_fields= { "text" : "str", "source_language" : "str", "target_language" : "str"},
-        reference_fields= {"translation" : "str"},
-        prediction_type="str",
+        input_fields= { "text" : str, "source_language" : str, "target_language" : str},
+        reference_fields= {"translation" : str},
+        prediction_type=str,
         metrics=["metrics.bleu"],
     ),
 
