@@ -38,7 +38,11 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy, RestorePredictionReferences, SavePredictionReferences
+from .operators import (
+    Copy,
+    DeepCopy,
+    RemoveFields,
+)
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -1382,9 +1386,7 @@ class StringContainmentRatio(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
-        default_factory=list
-    )
+    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1404,28 +1406,25 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
-        self.prepare_score = Copy(
-            field_to_field=[
-                [
-                    f"score/instance/{self.metric._add_score_prefix(self.main_score)}",
-                    "score/instance/score",
-                ],
-                [
-                    f"score/global/{self.metric._add_score_prefix(self.main_score)}",
-                    "score/global/score",
-                ],
-            ],
+        prefix = self.metric._add_score_prefix(self.main_score)
+
+        self.pipeline = SequentialOperator(
+            steps=[
+                DeepCopy(field="prediction", to_field="stash/prediction"),
+                DeepCopy(field="references", to_field="stash/references"),
+                *self.preprocess_steps,
+                self.metric,
+                *self.postprocess_steps,
+                Copy(field="stash/prediction", to_field="prediction"),
+                Copy(field="stash/references", to_field="references"),
+                RemoveFields(fields=["stash"]),
+                Copy(field=f"score/instance/{prefix}", to_field="score/instance/score"),
+                Copy(field=f"score/global/{prefix}", to_field="score/global/score"),
+            ]
         )
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        multi_stream = SavePredictionReferences()(multi_stream)
-        for step in self.preprocess_steps:
-            multi_stream = step(multi_stream)
-        multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
-            multi_stream = step(multi_stream)
-        multi_stream = RestorePredictionReferences()(multi_stream)
-        return self.prepare_score(multi_stream)
+        return self.pipeline(multi_stream)
 
 
 class HuggingfaceMetric(GlobalMetric):

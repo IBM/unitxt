@@ -1063,6 +1063,11 @@ class Copy(FieldOperator):
         return value
 
 
+class DeepCopy(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return deepcopy(value)
+
+
 @deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
@@ -1831,34 +1836,6 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # )
         stream = multi_stream["tmp"]
         yield from stream
-
-
-class SavePredictionReferences(InstanceOperator):
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if "prediction" in instance:
-            instance["prediction_save__"] = deepcopy(instance["prediction"])
-        if "references" in instance:
-            instance["references_save__"] = deepcopy(instance["references"])
-        return instance
-
-
-class RestorePredictionReferences(InstanceOperator):
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if "prediction_save__" in instance:
-            instance["prediction"] = instance["prediction_save__"]
-            instance.pop("prediction_save__")
-        else:  # there was no "prediction" when saved
-            instance.pop("prediction")
-        if "references_save__" in instance:
-            instance["references"] = instance["references_save__"]
-            instance.pop("references_save__")
-        else:  # there was no "references" when saved
-            instance.pop("references")
-        return instance
 
 
 class MergeStreams(MultiStreamOperator):
