@@ -2,9 +2,12 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .api import evaluate, produce
 from .artifact import Artifact, fetch_artifact, settings
+from .formats import Format
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
+from .system_prompts import SystemPrompt
+from .templates import Template
 
 
 class LLMAsJudge(BulkInstanceMetric):
@@ -14,9 +17,9 @@ class LLMAsJudge(BulkInstanceMetric):
         main_score (str): The main score label used for evaluation.
         task (Literal["rating.single_turn"]): The type of task the llm-as-judge runs. This defines the output and input
          format of the jude model.
-        template (str): The template used when generating inputs for the judge llm.
-        format (str): The format used when generating inputs for judge llm.
-        system_prompt (str): The system prompt used when generating inputs for judge llm.
+        template (Template): The template used when generating inputs for the judge llm.
+        format (Format): The format used when generating inputs for judge llm.
+        system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
         strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
          inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
         inference_model (InferenceEngine): the module that creates the inference of the judge llm.
@@ -30,13 +33,14 @@ class LLMAsJudge(BulkInstanceMetric):
         "rating.single_turn_with_reference",
         "pairwise_comparative_rating.single_turn",
     ]
-    template: str
-    format: Optional[str] = None
-    system_prompt: Optional[str] = None
+    template: Template
+    format: Format = None
+    system_prompt: SystemPrompt = None
     strip_system_prompt_and_format_from_inputs: bool = True
     inference_model: InferenceEngine
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
+    prediction_type = Any  # Because handled with multiple tasks
 
     def _get_input_instances(self, task_data: List[Dict]) -> List:
         if self.strip_system_prompt_and_format_from_inputs:
@@ -122,6 +126,7 @@ class LLMAsJudge(BulkInstanceMetric):
         if self.reduction_map is None:
             self.reduction_map = {"mean": [self.main_score]}
 
+    def verify(self):
         supported_tasks = [
             "rating.single_turn",
             "rating.single_turn_with_reference",
@@ -131,6 +136,20 @@ class LLMAsJudge(BulkInstanceMetric):
             f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             f"The supported tasks types are: {', '.join(supported_tasks)}."
         )
+
+        if not isinstance(self.template, Template):
+            raise ValueError(
+                f"Provided template argument to 'LLMAsJudge' metric is not of type Template, but {type(self.template)}"
+            )
+        if self.format and not isinstance(self.format, Format):
+            raise ValueError(
+                f"Provided format argument to 'LLMAsJudge' metric is not of type Format, but {type(self.format)}"
+            )
+
+        if self.system_prompt and not isinstance(self.system_prompt, SystemPrompt):
+            raise ValueError(
+                f"Provided system_prompt argument to 'LLMAsJudge' metric is not of type SystemPrompt, but {type(self.system_prompt)}"
+            )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
             if self.format:
@@ -190,11 +209,13 @@ class LLMAsJudge(BulkInstanceMetric):
                 res = {
                     self.main_score: model_a_preference_score,
                     "judge_raw_output": verdict,
+                    "judge_raw_input": instance["source"],
                 }
             else:
                 res = {
                     self.main_score: instance["processed_prediction"],
                     "judge_raw_output": verdict,
+                    "judge_raw_input": instance["source"],
                 }
             res_list.append(res)
 

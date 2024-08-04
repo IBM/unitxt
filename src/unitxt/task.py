@@ -3,15 +3,31 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .dataclass import DeprecatedField
+from .deprecation_utils import deprecation
 from .error_utils import DOCUMENTATION_ADDING_TASK, UnitxtError, UnitxtWarning
 from .operator import InstanceOperator
 from .type_utils import (
+    Type,
     get_args,
     get_origin,
+    is_type_dict,
     isoftype,
+    parse_type_dict,
     parse_type_string,
+    to_type_dict,
+    to_type_string,
     verify_required_schema,
 )
+
+
+@deprecation(
+    version="2.0.0",
+    msg="use python type instead of type strings (e.g Dict[str] instead of 'Dict[str]')",
+)
+def parse_string_types_instead_of_actual_objects(obj):
+    if isinstance(obj, dict):
+        return parse_type_dict(obj)
+    return parse_type_string(obj)
 
 
 class Task(InstanceOperator):
@@ -39,22 +55,22 @@ class Task(InstanceOperator):
         "metrics" -- to contain the value of Arg 'metrics'
     """
 
-    input_fields: Optional[Union[Dict[str, str], List[str]]] = None
-    reference_fields: Optional[Union[Dict[str, str], List[str]]] = None
-    inputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+    input_fields: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
+    reference_fields: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
+    inputs: Union[Dict[str, Type], Dict[str, str], List[str]] = DeprecatedField(
         default=None,
         metadata={
             "deprecation_msg": "The 'inputs' field is deprecated. Please use 'input_fields' instead."
         },
     )
-    outputs: Union[Dict[str, str], List[str]] = DeprecatedField(
+    outputs: Union[Dict[str, Type], Dict[str, str], List[str]] = DeprecatedField(
         default=None,
         metadata={
             "deprecation_msg": "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
         },
     )
     metrics: List[str]
-    prediction_type: Optional[str] = None
+    prediction_type: Optional[Union[Type, str]] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
 
@@ -76,6 +92,19 @@ class Task(InstanceOperator):
             self.reference_fields if self.reference_fields is not None else self.outputs
         )
 
+        if isoftype(self.input_fields, Dict[str, str]):
+            self.input_fields = parse_string_types_instead_of_actual_objects(
+                self.input_fields
+            )
+        if isoftype(self.reference_fields, Dict[str, str]):
+            self.reference_fields = parse_string_types_instead_of_actual_objects(
+                self.reference_fields
+            )
+        if isinstance(self.prediction_type, str):
+            self.prediction_type = parse_string_types_instead_of_actual_objects(
+                self.prediction_type
+            )
+
     def verify(self):
         if self.input_fields is None:
             raise ValueError("Missing attribute in task: 'input_fields' not set.")
@@ -88,15 +117,15 @@ class Task(InstanceOperator):
                 else self.reference_fields
             )
 
-            if not isoftype(data, Dict[str, str]):
+            if isinstance(data, list) or not is_type_dict(data):
                 UnitxtWarning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
-                    f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
+                    f"For example, {{'text': str, 'classes': List[str]}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
                     f"will raise an exception.",
                     DOCUMENTATION_ADDING_TASK,
                 )
-                data = {key: "Any" for key in data}
+                data = {key: Any for key in data}
                 if io_type == "input_fields":
                     self.input_fields = data
                 else:
@@ -110,7 +139,7 @@ class Task(InstanceOperator):
                 "of unitxt this will raise an exception.",
                 DOCUMENTATION_ADDING_TASK,
             )
-            self.prediction_type = "Any"
+            self.prediction_type = Any
 
         self.check_metrics_type()
 
@@ -121,14 +150,35 @@ class Task(InstanceOperator):
 
         self.verify_defaults()
 
+    @classmethod
+    def process_data_after_load(cls, data):
+        possible_dicts = ["inputs", "input_fields", "outputs", "reference_fields"]
+        for dict_name in possible_dicts:
+            if dict_name in data and isinstance(data[dict_name], dict):
+                data[dict_name] = parse_type_dict(data[dict_name])
+        if "prediction_type" in data:
+            data["prediction_type"] = parse_type_string(data["prediction_type"])
+        return data
+
+    def process_data_before_dump(self, data):
+        possible_dicts = ["inputs", "input_fields", "outputs", "reference_fields"]
+        for dict_name in possible_dicts:
+            if dict_name in data and isinstance(data[dict_name], dict):
+                if not isoftype(data[dict_name], Dict[str, str]):
+                    data[dict_name] = to_type_dict(data[dict_name])
+        if "prediction_type" in data:
+            if not isinstance(data["prediction_type"], str):
+                data["prediction_type"] = to_type_string(data["prediction_type"])
+        return data
+
     @staticmethod
     @lru_cache(maxsize=None)
     def get_metric_prediction_type(metric_id: str):
         metric = fetch_artifact(metric_id)[0]
-        return metric.get_prediction_type()
+        return metric.prediction_type
 
     def check_metrics_type(self) -> None:
-        prediction_type = parse_type_string(self.prediction_type)
+        prediction_type = self.prediction_type
         for metric_id in self.metrics:
             metric_prediction_type = Task.get_metric_prediction_type(metric_id)
 
@@ -155,14 +205,14 @@ class Task(InstanceOperator):
                 raise UnitxtError(
                     f"If specified, the 'defaults' must be a dictionary, "
                     f"however, '{self.defaults}' was provided instead, "
-                    f"which is of type '{type(self.defaults)}'.",
+                    f"which is of type '{to_type_string(type(self.defaults))}'.",
                     DOCUMENTATION_ADDING_TASK,
                 )
 
             for default_name, default_value in self.defaults.items():
                 assert isinstance(default_name, str), (
                     f"If specified, all keys of the 'defaults' must be strings, "
-                    f"however, the key '{default_name}' is of type '{type(default_name)}'."
+                    f"however, the key '{default_name}' is of type '{to_type_string(type(default_name))}'."
                 )
 
                 val_type = self.input_fields.get(
@@ -175,9 +225,9 @@ class Task(InstanceOperator):
                     f"was provided which does not match any of the keys."
                 )
 
-                assert isoftype(default_value, parse_type_string(val_type)), (
+                assert isoftype(default_value, val_type), (
                     f"The value of '{default_name}' from the 'defaults' must be of "
-                    f"type '{val_type}', however, it is of type '{type(default_value)}'."
+                    f"type '{to_type_string(val_type)}', however, it is of type '{to_type_string(type(default_value))}'."
                 )
 
     def set_default_values(self, instance: Dict[str, Any]) -> Dict[str, Any]:
@@ -205,5 +255,6 @@ class Task(InstanceOperator):
         }
 
 
+@deprecation(version="2.0.0", alternative=Task)
 class FormTask(Task):
     pass

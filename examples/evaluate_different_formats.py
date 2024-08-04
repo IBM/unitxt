@@ -17,7 +17,10 @@ for format in [
     "formats.empty",
     "formats.llama3_instruct_all_demos_in_one_turn",
 ]:
-    for system_prompt in ["system_prompts.models.llama2", "system_prompts.empty"]:
+    for system_prompt in [
+        "system_prompts.models.llama2",
+        "system_prompts.empty",
+    ]:
         dataset = load_dataset(
             card=card,
             template=template,
@@ -49,11 +52,50 @@ for format in [
             global_scores,
             keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
         )
-        all_scores[(format, system_prompt)] = global_scores
+        all_scores[(model_name, format, system_prompt)] = global_scores
 
+model_name = "deepseek-ai/deepseek-coder-33b-instruct"
+inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
+card = "cards.human_eval"
 
-for (format, system_prompt), global_scores in all_scores.items():
-    logger.info(f"**** score for format '{format}' and system prompt '{system_prompt}'")
+for format in [
+    "formats.empty",
+    "formats.deepseek_coder",
+]:
+    for system_prompt in [
+        "system_prompts.empty",
+        "system_prompts.models.deepseek_coder",
+    ]:
+        dataset = load_dataset(
+            dataset_query=f"card={card},template_card_index=0,format={format},system_prompt={system_prompt},demos_taken_from=test,num_demos=2,demos_pool_size=20,max_test_instances=300"
+        )
+
+        test_dataset = dataset["test"]
+
+        predictions = inference_model.infer(test_dataset)
+        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+        logger.info(
+            f"Sample input and output for format '{format}' and system prompt '{system_prompt}':"
+        )
+        print_dict(
+            evaluated_dataset[0],
+            keys_to_print=[
+                "source",
+                "prediction",
+            ],
+        )
+        global_scores = evaluated_dataset[0]["score"]["global"]
+        print_dict(
+            global_scores,
+            keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
+        )
+        all_scores[(model_name, format, system_prompt)] = global_scores
+
+for (model_name, format, system_prompt), global_scores in all_scores.items():
+    logger.info(
+        f"**** score for model {model_name} and format '{format}' and system prompt '{system_prompt}'"
+    )
     logger.info(
         f"**** {global_scores['score_name']} : {global_scores['score']} - 95% confidence internal [{global_scores['score_ci_low']},{global_scores['score_ci_high']}]"
     )

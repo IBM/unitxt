@@ -410,9 +410,134 @@ for axis, base_metric, main_score in [
             ),
         ],
         metric=f"metrics.{base_metric}",
-        prediction_type="str",
+        prediction_type=str,
     )
 
     add_to_catalog(
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
+
+# end to end
+
+end_to_end_artifact_name_to_main_score = {
+    "metrics.rag.end_to_end.answer_correctness": "recall",
+    "metrics.rag.end_to_end.answer_reward": "score",
+    "metrics.rag.end_to_end.answer_faithfulness": "precision",
+    "metrics.rag.end_to_end.context_correctness": "score",
+    "metrics.rag.end_to_end.context_relevance": "score",
+}
+
+end_to_end_artifact_names_to_main_metric = {
+    "metrics.rag.end_to_end.answer_correctness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.answer_reward": "metrics.reward.deberta_v3_large_v2",
+    "metrics.rag.end_to_end.answer_faithfulness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.context_correctness": "metrics.mrr",
+    "metrics.rag.end_to_end.context_relevance": "metrics.perplexity_q.flan_t5_small",
+}
+
+assert len(end_to_end_artifact_name_to_main_score) == len(
+    end_to_end_artifact_names_to_main_metric
+)
+
+copy_field_prediction_answer_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/answer",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_answers_to_references = Copy(
+    field_to_field={"task_data/reference_answers": "references"},
+)
+
+copy_field_reference_contexts_to_references = Copy(
+    field_to_field={"task_data/reference_contexts": "references"}
+)
+
+copy_field_prediction_contexts_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_prediction_context_ids_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/context_ids",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_context_ids_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/reference_context_ids"],
+    to_field="references",
+)
+
+copy_field_prediction_contexts_to_references = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "references",
+        )
+    ],
+)
+
+
+copy_field_question_to_prediction = Copy(
+    field_to_field=[
+        (
+            "task_data/question",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_question_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/question"],
+    to_field="references",
+)
+
+end_to_end_artifact_names_to_preprocess_steps = {
+    "metrics.rag.end_to_end.answer_correctness": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_reference_answers_to_references,
+    ],
+    "metrics.rag.end_to_end.answer_reward": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_question_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.answer_faithfulness": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_prediction_answer_to_prediction,
+    ],
+    "metrics.rag.end_to_end.context_correctness": [
+        copy_field_prediction_context_ids_to_prediction,
+        copy_field_reference_context_ids_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.context_relevance": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_question_to_prediction,
+    ],
+}
+
+
+for artifact_name in end_to_end_artifact_names_to_preprocess_steps.keys():
+    metric_short_name = artifact_name.split(".")[-1]
+    if metric_short_name == "rouge":  # rouge does not need a prefix
+        score_prefix = ""
+    else:
+        score_prefix = f"[score_prefix={metric_short_name}_]"
+
+    metric = MetricPipeline(
+        main_score=end_to_end_artifact_name_to_main_score[artifact_name],
+        preprocess_steps=end_to_end_artifact_names_to_preprocess_steps[artifact_name],
+        metric=f"{end_to_end_artifact_names_to_main_metric[artifact_name]}{score_prefix}",
+    )
+
+    add_to_catalog(metric, artifact_name, overwrite=True)
