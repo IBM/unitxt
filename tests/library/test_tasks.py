@@ -46,19 +46,19 @@ class TestTasks(UnitxtTestCase):
         )
 
     def test_task_missing_input_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields=None,
                 reference_fields={"label": str},
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception), "Missing attribute in task: 'input_fields' not set."
+        self.assertIn(
+            "Missing attribute in task: 'input_fields' not set.", str(e.exception)
         )
 
     def test_task_missing_reference_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields={"input": int},
                 reference_fields=None,
@@ -66,11 +66,11 @@ class TestTasks(UnitxtTestCase):
                 metrics=["metrics.wer", "metrics.rouge"],
             )
         self.assertIn(
-            str(e.exception), "Missing attribute in task: 'reference_fields' not set."
+            "Missing attribute in task: 'reference_fields' not set.", str(e.exception)
         )
 
     def test_conflicting_input_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 inputs={"input": int},
                 input_fields={"input": int},
@@ -78,13 +78,13 @@ class TestTasks(UnitxtTestCase):
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
+            str(e.exception),
         )
 
     def test_conflicting_output_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields={"input": int},
                 reference_fields={"label": str},
@@ -92,9 +92,9 @@ class TestTasks(UnitxtTestCase):
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
+            str(e.exception),
         )
 
     def test_set_defaults(self):

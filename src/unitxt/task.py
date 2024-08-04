@@ -77,12 +77,14 @@ class Task(InstanceOperator):
     def prepare(self):
         super().prepare()
         if self.input_fields is not None and self.inputs is not None:
-            raise ValueError(
-                "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'"
+            raise UnitxtError(
+                "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
+                DOCUMENTATION_ADDING_TASK,
             )
         if self.reference_fields is not None and self.outputs is not None:
-            raise ValueError(
-                "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'"
+            raise UnitxtError(
+                "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
+                DOCUMENTATION_ADDING_TASK,
             )
 
         self.input_fields = (
@@ -107,9 +109,15 @@ class Task(InstanceOperator):
 
     def verify(self):
         if self.input_fields is None:
-            raise ValueError("Missing attribute in task: 'input_fields' not set.")
+            raise UnitxtError(
+                "Missing attribute in task: 'input_fields' not set.",
+                DOCUMENTATION_ADDING_TASK,
+            )
         if self.reference_fields is None:
-            raise ValueError("Missing attribute in task: 'reference_fields' not set.")
+            raise UnitxtError(
+                "Missing attribute in task: 'reference_fields' not set.",
+                DOCUMENTATION_ADDING_TASK,
+            )
         for io_type in ["input_fields", "reference_fields"]:
             data = (
                 self.input_fields
