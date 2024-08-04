@@ -3,8 +3,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .dataclass import DeprecatedField
-from .doc_utils import DOCUMENTATION_ADDING_TASK, additional_info
-from .logging_utils import get_logger
+from .error_utils import DOCUMENTATION_ADDING_TASK, UnitxtError, UnitxtWarning
 from .operator import InstanceOperator
 from .type_utils import (
     get_args,
@@ -90,12 +89,12 @@ class Task(InstanceOperator):
             )
 
             if not isoftype(data, Dict[str, str]):
-                get_logger().warning(
+                UnitxtWarning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
                     f"For example, {{'text': 'str', 'classes': 'List[str]'}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
-                    f"will raise an exception."
-                    + additional_info(DOCUMENTATION_ADDING_TASK)
+                    f"will raise an exception.",
+                    DOCUMENTATION_ADDING_TASK,
                 )
                 data = {key: "Any" for key in data}
                 if io_type == "input_fields":
@@ -104,12 +103,12 @@ class Task(InstanceOperator):
                     self.reference_fields = data
 
         if not self.prediction_type:
-            get_logger().warning(
+            UnitxtWarning(
                 "'prediction_type' was not set in Task. It is used to check the output of "
                 "template post processors is compatible with the expected input of the metrics. "
                 "Setting `prediction_type` to 'Any' (no checking is done). In future version "
-                "of unitxt this will raise an exception."
-                + additional_info(DOCUMENTATION_ADDING_TASK)
+                "of unitxt this will raise an exception.",
+                DOCUMENTATION_ADDING_TASK,
             )
             self.prediction_type = "Any"
 
@@ -144,20 +143,20 @@ class Task(InstanceOperator):
             ):
                 continue
 
-            raise ValueError(
+            raise UnitxtError(
                 f"The task's prediction type ({prediction_type}) and '{metric_id}' "
-                f"metric's prediction type ({metric_prediction_type}) are different."
-                + additional_info(DOCUMENTATION_ADDING_TASK)
+                f"metric's prediction type ({metric_prediction_type}) are different.",
+                DOCUMENTATION_ADDING_TASK,
             )
 
     def verify_defaults(self):
         if self.defaults:
             if not isinstance(self.defaults, dict):
-                raise ValueError(
+                raise UnitxtError(
                     f"If specified, the 'defaults' must be a dictionary, "
                     f"however, '{self.defaults}' was provided instead, "
-                    f"which is of type '{type(self.defaults)}'."
-                    + additional_info(DOCUMENTATION_ADDING_TASK)
+                    f"which is of type '{type(self.defaults)}'.",
+                    DOCUMENTATION_ADDING_TASK,
                 )
 
             for default_name, default_value in self.defaults.items():

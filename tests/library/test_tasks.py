@@ -1,3 +1,4 @@
+from unitxt.error_utils import UnitxtError
 from unitxt.task import Task
 
 from tests.utils import UnitxtTestCase
@@ -15,7 +16,7 @@ class TestTasks(UnitxtTestCase):
         operator.check_metrics_type()
 
         operator.prediction_type = "Dict"
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             operator.check_metrics_type()
         self.assertIn(
             "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
@@ -34,7 +35,7 @@ class TestTasks(UnitxtTestCase):
         operator.check_metrics_type()
 
         operator.prediction_type = "Dict"
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             operator.check_metrics_type()
         self.assertIn(
             "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "

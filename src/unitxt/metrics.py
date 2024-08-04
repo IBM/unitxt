@@ -27,7 +27,7 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
-from .doc_utils import DOCUMENTATION_HUGGINGFACE_METRICS, additional_info
+from .error_utils import DOCUMENTATION_HUGGINGFACE_METRICS, UnitxtWarning
 from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -1376,9 +1376,10 @@ class HuggingfaceMetric(GlobalMetric):
 
     def verify(self):
         if os.path.exists(self.hf_metric_name):
-            logger.warning(
+            UnitxtWarning(
                 f"{self.get_metric_name()} uses a huggingface metric {self.hf_metric_name} which is defined in a local file."
-                f"This may cause issues when running on different machine or different root directories. {additional_info(DOCUMENTATION_HUGGINGFACE_METRICS)}"
+                f"This may cause issues when running on different machine or different root directories.",
+                DOCUMENTATION_HUGGINGFACE_METRICS,
             )
 
         assert (
