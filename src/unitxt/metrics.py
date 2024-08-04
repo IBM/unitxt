@@ -1326,7 +1326,6 @@ class StringContainment(InstanceMetric):
     ci_scores = ["string_containment"]
 
     prediction_type = Any  # string representation is compared
-    single_reference_per_prediction = False  # multiple references allowed
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
@@ -1339,6 +1338,51 @@ class StringContainment(InstanceMetric):
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result
+
+
+class StringContainmentRatio(InstanceMetric):
+    """Metric that returns the ratio of values from a specific field contained in the prediction.
+
+    Attributes:
+        field: The field from the task_data that contains the values to be checked for containment.
+               Example task:
+                    Task(
+                        input_fields={"question": str},
+                        reference_fields={"entities": str},
+                        prediction_type=str,
+                        metrics=["string_containment_ratio[field=entities]"],
+                    )
+    """
+
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+    ci_scores = ["string_containment"]
+    field: str = None
+
+    prediction_type = Any  # string representation is compared
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        if self.field not in task_data:
+            raise ValueError(
+                f"'{self.field}' field required by {__class__.__name__} is not in passed in task_data: {task_data}"
+            )
+        contain_results = [
+            str(value) in str(prediction) for value in task_data[self.field]
+        ]
+        score = sum(contain_results) / len(contain_results)
+        result = {self.main_score: score}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+    def verify(self):
+        super().verify()
+        if self.field is None:
+            raise ValueError(
+                "StringContainmentRatio metric requires the 'field' attribute to be set."
+            )
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
