@@ -35,7 +35,8 @@ The `metrics` of the task are a set of default metrics used to evaluate the outp
 
 While language models generate textual predictions, the metrics often evaluate on different datatypes.  For example,
 Spearman's correlation is evaluated on numeric predictions vs numeric reference, and multi-label F1 is evaluated on a list of string class name predictions
-vs. a list of reference string classes. 
+vs. a reference list of string class names.
+`
 
 The `prediction_type` of the task defines the common prediction (and reference) types for all metrics of the task.
 
