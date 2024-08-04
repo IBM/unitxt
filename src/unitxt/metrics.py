@@ -1364,6 +1364,8 @@ class StringContainmentRatio(InstanceMetric):
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
     ) -> dict:
+        if self.field not in task_data:
+             raise ValueError(f"'{field}' field required by {__class__.__name__} is not in passed in task_data: {task_data}")
         contain_results = [
             str(value) in str(prediction) for value in task_data[self.field]
         ]
