@@ -1377,7 +1377,7 @@ class StringContainmentRatio(InstanceMetric):
         super().verify()
         if self.field is None:
             raise ValueError(
-                "StringContainmentRatio metric requires the field attribute to be set."
+                "StringContainmentRatio metric requires the 'field' attribute to be set."
             )
 
 
