@@ -34,7 +34,7 @@ The `reference_fields` of the task are a set of fields used to format the expect
 The `metrics` of the task are a set of default metrics used to evaluate the outputs of the model.
 
 While language models generate textual predictions, the metrics often evaluate on different datatypes.  For example,
-Spearman's correlation is evaluated on numeric predictions vs numeric reference, and multi-label F1 is evaluated on a list of string class name predictions
+Spearman's correlation is evaluated on numeric predictions vs numeric references, and multi-label F1 is evaluated on a prediction which is a list of string class names
 vs. a reference list of string class names.
 `
 
