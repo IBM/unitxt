@@ -371,7 +371,10 @@ class WMLInferenceEngineParams(Artifact):
 
 
 class WMLInferenceEngine(
-    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    LogProbInferenceEngine,
+    WMLInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     """Runs inference using ibm-watsonx-ai.
 
@@ -466,7 +469,7 @@ class WMLInferenceEngine(
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
         super().verify()
 
-    def _infer(self, dataset):
+    def _load_model_and_params(self):
         from ibm_watsonx_ai.foundation_models import ModelInference
 
         model = ModelInference(
@@ -474,11 +477,40 @@ class WMLInferenceEngine(
             deployment_id=self.deployment_id,
             api_client=self.client,
         )
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
+
+        return model, params
+
+    def _infer(self, dataset):
+        model, params = self._load_model_and_params()
 
         return [
             model.generate_text(
                 prompt=instance["source"],
-                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+                params=params,
             )
             for instance in dataset
         ]
+
+    def _infer_log_probs(self, dataset):
+        model, params = self._load_model_and_params()
+
+        params = {
+            **params,
+            "return_options": {
+                "input_tokens": True,
+                "generated_tokens": True,
+                "token_logprobs": True,
+                "top_n_tokens": 5,
+            },
+        }
+
+        results = [
+            model.generate(
+                prompt=instance["source"],
+                params=params,
+            )["results"]
+            for instance in dataset
+        ]
+
+        return [result[0]["generated_tokens"] for result in results]
