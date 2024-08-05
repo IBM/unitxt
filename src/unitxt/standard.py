@@ -312,7 +312,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.postprocessors is not None:
             self.finalize.steps.append(
-                Set(fields={"postprocessores": self.postprocessors})
+                Set(fields={"postprocessors": self.postprocessors})
             )
 
         if self.metrics is not None:

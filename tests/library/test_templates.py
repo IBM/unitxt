@@ -131,9 +131,8 @@ class TestTemplates(UnitxtTestCase):
         check_operator(template, inputs, targets, tester=self)
 
     def test_apply_single_template(self):
-        template = ApplySingleTemplate(
-            template=MultiLabelTemplate(input_format="{text}"), demos_field="demos"
-        )
+        base_template = MultiLabelTemplate(input_format="{text}")
+        template = ApplySingleTemplate(template=base_template, demos_field="demos")
 
         inputs = [
             {
@@ -180,6 +179,7 @@ class TestTemplates(UnitxtTestCase):
                         "postprocessors": ["processors.to_list_by_comma"],
                     }
                 ],
+                "recipe_metadata": {"template": base_template},
             },
             {
                 "input_fields": {"text": "hello world"},
@@ -202,16 +202,19 @@ class TestTemplates(UnitxtTestCase):
                         "postprocessors": ["processors.to_list_by_comma"],
                     }
                 ],
+                "recipe_metadata": {"template": base_template},
             },
         ]
 
         check_operator(template, inputs, targets, tester=self)
 
     def test_apply_random_template(self):
+        temp1 = MultiLabelTemplate(input_format="temp1 {text}")
+        temp2 = MultiLabelTemplate(input_format="temp2 {text}")
         template = ApplyRandomTemplate(
             templates=[
-                MultiLabelTemplate(input_format="temp1 {text}"),
-                MultiLabelTemplate(input_format="temp2 {text}"),
+                temp1,
+                temp2,
             ],
             demos_field="demos",
         )
@@ -261,6 +264,7 @@ class TestTemplates(UnitxtTestCase):
                         "postprocessors": ["processors.to_list_by_comma"],
                     }
                 ],
+                "recipe_metadata": {"template": temp2},
             },
             {
                 "input_fields": {"text": "hello world"},
@@ -283,6 +287,7 @@ class TestTemplates(UnitxtTestCase):
                         "postprocessors": ["processors.to_list_by_comma"],
                     }
                 ],
+                "recipe_metadata": {"template": temp1},
             },
         ]
 

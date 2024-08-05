@@ -137,7 +137,6 @@ class ApplyTemplate(InstanceOperator):
         pass
 
     def apply(self, template: Template, instance: Dict[str, Any]):
-        dict_set(instance, "recipe_metadata/template", template)
         return template.process_instance(instance)
 
     def process(
@@ -152,7 +151,7 @@ class ApplyTemplate(InstanceOperator):
                 self.apply(template, demo_instance)
                 for demo_instance in instance[self.demos_field]
             ]
-
+        dict_set(instance, "recipe_metadata/template", template)
         return self.apply(template, instance)
 
 
