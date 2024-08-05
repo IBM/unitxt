@@ -2,11 +2,13 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .api import evaluate, produce
 from .artifact import Artifact, fetch_artifact, settings
+from .card import TaskCard
 from .formats import Format
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 from .system_prompts import SystemPrompt
+from .task import Task
 from .templates import Template
 
 
@@ -81,9 +83,10 @@ class LLMAsJudge(BulkInstanceMetric):
         elif self.task == "rating.single_turn_with_reference":
             instances = [
                 {
+                    "reference_answer": reference[0],
+                    # we keep these fields for backward compatibility:
                     "question": input_instance,
                     "answer": prediction,
-                    "reference_answer": reference[0],
                     "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
@@ -98,7 +101,7 @@ class LLMAsJudge(BulkInstanceMetric):
                     "answer_b": reference[0],
                     "model_a": "input_model",
                     "model_b": "baseline_model",
-                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice,
+                    "rating": 0,  # This is a dummy value that is not used in practice,
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -111,9 +114,7 @@ class LLMAsJudge(BulkInstanceMetric):
         return instances
 
     @staticmethod
-    def _add_metadata_to_judge_instances(
-        instances: List[List[Any]], task_data: List[Dict]
-    ):
+    def _add_metadata_to_judge_instances(instances: List[Dict], task_data: List[Dict]):
         for instance, data in zip(instances, task_data):
             instance["data_classification_policy"] = data["metadata"][
                 "data_classification_policy"
@@ -166,6 +167,33 @@ class LLMAsJudge(BulkInstanceMetric):
                     " Support will be added in future updates)."
                 )
 
+    def _get_judge_task_card(self) -> TaskCard:
+        if self.task == "rating.single_turn":
+            input_fields = {"question": str, "answer": str}
+        elif self.task == "rating.single_turn_with_reference":
+            input_fields = {"question": str, "answer": str, "reference_answer": str}
+        elif self.task == "pairwise_comparative_rating.single_turn":
+            input_fields = {
+                "question": str,
+                "answer_a": str,
+                "answer_b": str,
+                "model_a": str,
+                "model_b": str,
+            }
+        else:
+            raise NotImplementedError(
+                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
+            )
+
+        task = Task(
+            input_fields=input_fields,
+            reference_fields={"rating": float},
+            metrics=["metrics.spearman"],
+            prediction_type=float,
+        )
+
+        return TaskCard(loader=None, preprocess_steps=[], task=task)
+
     def compute(
         self,
         references: List[List[Any]],
@@ -178,7 +206,7 @@ class LLMAsJudge(BulkInstanceMetric):
         )
         self._add_metadata_to_judge_instances(instances, task_data)
 
-        card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
+        card = self._get_judge_task_card()
         recipe_args = {
             "card": card,
             "template": self.template,
@@ -220,3 +248,41 @@ class LLMAsJudge(BulkInstanceMetric):
             res_list.append(res)
 
         return res_list
+
+
+class ScoreLLMAsJudge(LLMAsJudge):
+    task = "rating.single_turn"
+
+    def _get_judge_task_card(self) -> TaskCard:
+        task = Task(
+            input_fields={
+                "model_input": str,
+                "model_output": str,
+                "reference_answer": str,
+            },
+            reference_fields={"score": float},
+            metrics=["metrics.spearman"],
+            prediction_type=float,
+        )
+
+        return TaskCard(loader=None, preprocess_steps=[], task=task)
+
+    def _get_instance_for_judge_model(
+        self, input_instances: List[str], predictions: List, references: List
+    ) -> List[Dict]:
+        return [
+            {
+                "model_input": input_instance,
+                "model_output": prediction,
+                "reference_answer": reference[0]
+                if len(reference) > 0
+                else "no reference answer available",
+                "score": 5.0,  # This is a dummy value that is not used in practice
+            }
+            for input_instance, prediction, reference in zip(
+                input_instances, predictions, references
+            )
+        ]
+
+    def prepare(self):
+        super().prepare()

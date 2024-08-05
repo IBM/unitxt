@@ -3,7 +3,7 @@ from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import ScoreLLMAsJudge
 from unitxt.templates import InputOutputTemplate
 from unitxt.text_utils import print_dict
 
@@ -17,8 +17,8 @@ judge_summary_rating_template = InputOutputTemplate(
     "Please make sure to start with your rank ([[rank]]) before anything else.\n"
     "For example: [[9]] The summary catches the main text ideas."
     ".\n\n",
-    input_format="[Text:\n{question}\n\n" "Assistant's summary:\n{answer}\n",
-    output_format="[[{rating}]]",
+    input_format="[Text:\n{model_input}\n\n" "Assistant's summary:\n{model_output}\n",
+    output_format="[[{score}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",
     ],
@@ -37,12 +37,10 @@ inference_model = HFPipelineBasedInferenceEngine(
 # inference_model = IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", max_new_tokens=512)
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
-llm_judge_metric = LLMAsJudge(
+llm_judge_metric = ScoreLLMAsJudge(
     inference_model=inference_model,
     template=judge_summary_rating_template,
-    task="rating.single_turn",
     main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
-    strip_system_prompt_and_format_from_inputs=False,
 )
 
 # Load XSUM dataset, with the above metric.
@@ -94,19 +92,18 @@ judge_summary_rating_with_reference_template = InputOutputTemplate(
     "Please make sure to start with your rank ([[rank]]) before anything else.\n"
     "For example: [[9]] The summary catches the main text ideas."
     ".\n\n",
-    input_format="[Text:\n{question}\n\n"
+    input_format="[Text:\n{model_input}\n\n"
     "[The Start of Reference Summary]\n{reference_answer}\n[The End of Reference summary]\n\n"
-    "[The Start of Assistant's summary]\n{answer}\n[The End of Assistant's summary]",
-    output_format="[[{rating}]]",
+    "[The Start of Assistant's summary]\n{model_output}\n[The End of Assistant's summary]",
+    output_format="[[{score}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",
     ],
 )
 
-llm_judge_with_summary_metric = LLMAsJudge(
+llm_judge_with_summary_metric = ScoreLLMAsJudge(
     inference_model=inference_model,
     template=judge_summary_rating_with_reference_template,
-    task="rating.single_turn_with_reference",
     main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
     single_reference_per_prediction=True,
     strip_system_prompt_and_format_from_inputs=False,

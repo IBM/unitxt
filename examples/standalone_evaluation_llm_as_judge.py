@@ -4,7 +4,7 @@ from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import ScoreLLMAsJudge
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
@@ -49,8 +49,9 @@ judge_correctness_template = InputOutputTemplate(
     'Please use the exact format of the verdict as "[[rate]]". '
     "You can explain your answer after the verdict"
     ".\n\n",
-    input_format="[User's input]\n{question}\n" "[Assistant's Answer]\n{answer}\n",
-    output_format="[[{rating}]]",
+    input_format="[User's input]\n{model_input}\n"
+    "[Assistant's Answer]\n{model_output}\n",
+    output_format="[[{score}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",
     ],
@@ -69,10 +70,9 @@ inference_model = HFPipelineBasedInferenceEngine(
 
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
-llm_judge_metric = LLMAsJudge(
+llm_judge_metric = ScoreLLMAsJudge(
     inference_model=inference_model,
     template=judge_correctness_template,
-    task="rating.single_turn",
     main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
     strip_system_prompt_and_format_from_inputs=False,
 )
