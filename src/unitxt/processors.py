@@ -196,6 +196,17 @@ class StrToFloatFormat(FieldOperator):
             return str(text)
 
 
+class StrToFloat(FieldOperator):
+    no_match_value: float = 0.0
+    divide_by_10: bool = False
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            return float(text) / 10 if self.divide_by_10 else float(text)
+        except Exception:
+            return self.no_match_value
+
+
 class ToYesOrNone(FieldOperator):
     def process_value(self, text: Any) -> Any:
         if text == "yes":
@@ -277,3 +288,18 @@ class ExtractArenaHardNumericalJudgment(FieldOperator):
 
         except:
             return 0
+
+
+class MapStrToScore(FieldOperator):
+    mapper: Dict[str, float]
+    not_found_value: float = 0
+
+    def verify(self):
+        for k, v in self.mapper.items():
+            assert 0 <= v <= 1, (
+                f"MapToScore is suppose to map value to a score that is between 0 and 1,"
+                f" but mapper[{k}]={v}."
+            )
+
+    def process_value(self, text: Any) -> Any:
+        return self.mapper.get(text, self.not_found_value)
