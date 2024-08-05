@@ -7,11 +7,11 @@ from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
 from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
 from .recipe import Recipe
-from .schema import ToUnitxtGroup
+from .schema import Finalize
 from .splitters import Sampler, SeparateSplit, SpreadSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
-from .templates import Template
+from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template
 
 logger = get_logger()
 
@@ -28,6 +28,8 @@ class AddDemosField(SpreadSplit):
 class BaseRecipe(Recipe, SourceSequentialOperator):
     card: TaskCard
     template: Template = None
+    templates: List[Template] = NonPositionalField(default=None)
+    template_card_index: int = NonPositionalField(default=None)
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
     metrics: List[str] = NonPositionalField(default=None)
@@ -105,6 +107,18 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
             )
 
+        if sum(x is not None for x in [self.template, self.templates]) != 1:
+            raise ValueError(
+                "You must set in the recipe either `template`, `template_card_index` or `templates`."
+            )
+
+        if self.template is not None:
+            self.verify_template(self.template)
+
+        if self.templates is not None:
+            for template in self.templates:
+                self.verify_template(template)
+
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
         self.train_refiner.apply_to_streams = ["train"]
@@ -118,30 +132,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.processing.steps.append(self.test_refiner)
 
-    def prepare_metrics_and_postprocessors(self):
-        # Check is done here to ensure get_postprocessor is called on
-        # a Template object
-        if self.template is not None and not isinstance(self.template, Template):
+    def verify_template(self, template):
+        if not isinstance(template, Template):
             raise ValueError(
-                f"template argument must be an object of type Template.  Got template = {self.template}"
+                f"template argument must be an object of type Template. Got template = {template}"
             )
-
-        if self.postprocessors is None:
-            postprocessors = self.template.get_postprocessors()
-        else:
-            postprocessors = self.postprocessors
-
-        if self.metrics is None:
-            metrics = self.card.task.metrics
-        else:
-            metrics = self.metrics
-
-        metrics = [
-            metric if isinstance(metric, str) else metric.to_json()
-            for metric in metrics
-        ]
-
-        return metrics, postprocessors
 
     def set_pipelines(self):
         self.loading = SequentialOperator()
@@ -158,8 +153,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.processing.__description__ = (
             "Setting task fields (and selecting demos per sample if needed)."
         )
-        self.verblization = SequentialOperator()
-        self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
+        self.verbalization = SequentialOperator()
+        self.verbalization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
         self.finalize = SequentialOperator()
         self.finalize.__description__ = "Adding post processors. Removing intermediate fields. Creating the final output dataset."
 
@@ -169,7 +164,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.standardization,
             self.processing,
             self.metadata,
-            self.verblization,
+            self.verbalization,
             self.finalize,
         ]
 
@@ -193,7 +188,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.verblization, self.finalize]
+        self.inference.steps = [self.verbalization, self.finalize]
 
         self._demos_pool_cache = None
 
@@ -243,11 +238,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.metadata.steps.append(
             Set(
                 fields={
-                    "recipe_metadata": {
-                        "template": self.template,
-                        "system_prompt": self.system_prompt,
-                        "format": self.format,
-                    }
+                    "recipe_metadata/system_prompt": self.system_prompt,
+                    "recipe_metadata/format": self.format,
                 }
             )
         )
@@ -283,52 +275,74 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.prepare_refiners()
 
-        self.verblization.steps.append(self.template)
         if self.num_demos > 0:
-            self.verblization.steps.append(
+            self.verbalization.steps.append(
                 AddDemosField(
                     source_stream=self.demos_pool_name,
                     target_field=self.demos_field,
                     sampler=self.sampler,
                 )
             )
-        self.verblization.steps.append(self.system_prompt)
-        self.verblization.steps.append(self.format)
+            if self.templates is not None:
+                self.verbalization.steps.append(
+                    ApplyRandomTemplate(
+                        templates=self.templates, demos_field=self.demos_field
+                    )
+                )
+            else:
+                self.verbalization.steps.append(
+                    ApplySingleTemplate(
+                        template=self.template, demos_field=self.demos_field
+                    )
+                )
+        else:
+            if self.templates is not None:
+                self.verbalization.steps.append(
+                    ApplyRandomTemplate(templates=self.templates)
+                )
+            else:
+                self.verbalization.steps.append(
+                    ApplySingleTemplate(template=self.template)
+                )
+
+        self.verbalization.steps.append(self.system_prompt)
+        self.verbalization.steps.append(self.format)
         if self.augmentor.augment_model_input:
-            self.verblization.steps.append(self.augmentor)
+            self.verbalization.steps.append(self.augmentor)
 
-        metrics, postprocessors = self.prepare_metrics_and_postprocessors()
-
-        self.finalize.steps.append(
-            ToUnitxtGroup(
-                group="unitxt",
-                metrics=metrics,
-                postprocessors=postprocessors,
+        if self.postprocessors is not None:
+            self.finalize.steps.append(
+                Set(fields={"postprocessores": self.postprocessors})
             )
-        )
+
+        if self.metrics is not None:
+            self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
+
+        self.finalize.steps.append(Finalize())
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
     template_card_index: int = None
 
     def prepare(self):
-        assert (
-            self.template_card_index is None or self.template is None
-        ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-        assert not (
-            self.template_card_index is None and self.template is None
-        ), "Specify either template or template_card_index in card"
-        if self.template_card_index is not None:
-            try:
-                self.template = self.card.templates[self.template_card_index]
-            except Exception as e:
-                if isinstance(self.card.templates, dict):
-                    options = list(self.card.templates.keys())
-                else:
-                    options = list(range(0, len(self.card.templates)))
-                raise ValueError(
-                    f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
-                ) from e
+        if self.templates is None:
+            assert (
+                self.template_card_index is None or self.template is None
+            ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
+            assert not (
+                self.template_card_index is None and self.template is None
+            ), "Specify either template or template_card_index in card"
+            if self.template_card_index is not None:
+                try:
+                    self.template = self.card.templates[self.template_card_index]
+                except Exception as e:
+                    if isinstance(self.card.templates, dict):
+                        options = list(self.card.templates.keys())
+                    else:
+                        options = list(range(0, len(self.card.templates)))
+                    raise ValueError(
+                        f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
+                    ) from e
 
         super().prepare()
 

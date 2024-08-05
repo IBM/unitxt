@@ -1,6 +1,8 @@
 from typing import Dict, List, Tuple
 
 from unitxt.templates import (
+    ApplyRandomTemplate,
+    ApplySingleTemplate,
     InputOutputTemplate,
     InputOutputTemplateWithCustomTarget,
     KeyValTemplate,
@@ -66,6 +68,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
             {
                 "input_fields": {
@@ -82,6 +85,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
         ]
 
@@ -110,6 +114,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["cat, dog"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
             },
             {
                 "input_fields": {"text": "hello world"},
@@ -119,6 +124,165 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["man, woman, dog"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_apply_single_template(self):
+        template = ApplySingleTemplate(
+            template=MultiLabelTemplate(input_format="{text}"), demos_field="demos"
+        )
+
+        inputs = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                    }
+                ],
+            },
+        ]
+
+        targets = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "source": "hello world",
+                "target": "cat, dog",
+                "references": ["cat, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                        "source": "hello world",
+                        "target": "cat, dog",
+                        "references": ["cat, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "source": "hello world",
+                "target": "man, woman, dog",
+                "references": ["man, woman, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                        "source": "hello world",
+                        "target": "man, woman, dog",
+                        "references": ["man, woman, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_apply_random_template(self):
+        template = ApplyRandomTemplate(
+            templates=[
+                MultiLabelTemplate(input_format="temp1 {text}"),
+                MultiLabelTemplate(input_format="temp2 {text}"),
+            ],
+            demos_field="demos",
+        )
+
+        inputs = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                    }
+                ],
+            },
+        ]
+
+        targets = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "source": "temp2 hello world",
+                "target": "cat, dog",
+                "references": ["cat, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                        "source": "temp2 hello world",
+                        "target": "cat, dog",
+                        "references": ["cat, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "source": "temp1 hello world",
+                "target": "man, woman, dog",
+                "references": ["man, woman, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                        "source": "temp1 hello world",
+                        "target": "man, woman, dog",
+                        "references": ["man, woman, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
             },
         ]
 
@@ -147,6 +311,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["Dan", "Yossi"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
             }
         ]
 
@@ -229,6 +394,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
             {
                 "input_fields": {
@@ -241,6 +407,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
             {
                 "input_fields": {
@@ -253,6 +420,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive, 1"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 
@@ -316,6 +484,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["1"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 
@@ -521,6 +690,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": [r"John\,\: Doe, New York"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
             {
                 "input_fields": {
@@ -537,6 +707,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
         ]
 
@@ -588,6 +759,10 @@ class TestTemplates(UnitxtTestCase):
                 ],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": [
+                    "processors.load_json",
+                    "processors.dict_of_lists_to_value_key_pairs",
+                ],
             },
             {
                 "input_fields": {
@@ -604,6 +779,10 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": [
+                    "processors.load_json",
+                    "processors.dict_of_lists_to_value_key_pairs",
+                ],
             },
         ]
 
@@ -650,6 +829,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": choices, "text": "example A"},
@@ -663,6 +843,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": ["True", "small"], "text": "example A"},
@@ -676,6 +857,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
 
@@ -693,8 +875,6 @@ class TestTemplates(UnitxtTestCase):
             "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
-
-        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
 
     def test_multiple_choice_template_with_shuffle(self):
         enumerators = ["capitals", "lowercase", "numbers", "roman"]
@@ -739,6 +919,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": ["True", "False"], "text": "example A"},
@@ -752,6 +933,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": [temp, "True"], "text": "example A"},
@@ -765,6 +947,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
 
@@ -782,8 +965,6 @@ class TestTemplates(UnitxtTestCase):
             "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
             str(ve.exception),
         )
-
-        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
@@ -825,6 +1006,7 @@ class TestTemplates(UnitxtTestCase):
             "references": ["negative"],
             "instruction": "",
             "target_prefix": "",
+            "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)
 
@@ -846,5 +1028,6 @@ class TestTemplates(UnitxtTestCase):
             "references": ["Dan", "Yossi"],
             "instruction": "",
             "target_prefix": "",
+            "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)

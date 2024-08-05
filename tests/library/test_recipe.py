@@ -310,6 +310,25 @@ Agent:""",
             print_dict(instance)
             break
 
+    def test_random_template(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            templates=[
+                "templates.key_val",
+                "templates.classification.multi_class.relation.truthfulness.flan_5",
+            ],
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        stream = recipe()
+
+        for instance in stream["train"]:
+            print_dict(instance)
+            break
+
     def test_standard_recipe_with_balancer(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
