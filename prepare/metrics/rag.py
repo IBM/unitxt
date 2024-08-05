@@ -30,6 +30,9 @@ metrics = {
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
     ),
+    "metrics.sentence_bert.minilm_l12_v2": SentenceBert(
+        model_name="sentence-transformers/all-MiniLM-L12-v2"
+    ),
     "metrics.sentence_bert.bge_large_en_1_5": SentenceBert(
         model_name="BAAI/bge-large-en-v1.5"
     ),
