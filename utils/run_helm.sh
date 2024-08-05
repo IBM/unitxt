@@ -1,4 +1,4 @@
-recipe="card=cards.sst2,template=templates.classification.multi_class.default,num_demos=1,demos_pool_size=10,loader_limit=100"
+recipe="card=cards.sst2,template=templates.classification.multi_class.title,num_demos=1,demos_pool_size=10,loader_limit=100"
 model="microsoft/phi-1_5"
 
 helm-run \
