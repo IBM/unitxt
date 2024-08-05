@@ -35,6 +35,45 @@ class TestAPI(UnitxtTestCase):
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)
 
+    def test_load_dataset_with_multi_num_demos(self):
+        dataset = load_dataset(
+            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2"
+        )
+        instance = {
+            "metrics": ["metrics.spearman"],
+            "data_classification_policy": ["public"],
+            "target": "3.8",
+            "references": ["3.8"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.cast_to_float_return_zero_if_failed",
+            ],
+            "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
+            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple"}}',
+            "group": "unitxt",
+        }
+
+        self.assertEqual(len(dataset["train"]), 5)
+        self.assertDictEqual(dataset["train"][0], instance)
+
+    def test_load_dataset_with_multi_templates(self):
+        dataset = load_dataset(
+            "card=cards.stsb,templates=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+        )
+        instance = {
+            "metrics": ["metrics.spearman"],
+            "data_classification_policy": ["public"],
+            "target": "5.0",
+            "references": ["5.0"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val"}}',
+            "group": "unitxt",
+        }
+
+        self.assertEqual(len(dataset["train"]), 5)
+        self.assertDictEqual(dataset["train"][0], instance)
+
     def test_evaluate(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional, Union
 
 from .card import TaskCard
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
@@ -8,7 +8,7 @@ from .operator import SequentialOperator, SourceSequentialOperator, StreamingOpe
 from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
 from .recipe import Recipe
 from .schema import Finalize
-from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template
@@ -18,10 +18,6 @@ logger = get_logger()
 
 # Used to give meaningful name to recipe steps
 class CreateDemosPool(SeparateSplit):
-    pass
-
-
-class AddDemosField(SpreadSplit):
     pass
 
 
@@ -46,7 +42,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
-    num_demos: int = 0
+    num_demos: Optional[Union[int, List[int]]] = None
     demos_removed_from_data: bool = True
 
     demos_pool_name: str = "demos_pool"
@@ -61,16 +57,22 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
 
+    @property
+    def max_demos_size(self):
+        if isinstance(self.num_demos, list):
+            return max(self.num_demos)
+        return self.num_demos
+
     def verify(self):
         super().verify()
-        if self.num_demos > 0:
+        if self.use_demos:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
                     "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
-            if self.demos_pool_size < self.num_demos:
+            if self.demos_pool_size < self.max_demos_size:
                 raise ValueError(
-                    f"num_demos (got: {self.num_demos}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
+                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
                 )
             if self.loader_limit and self.demos_pool_size > self.loader_limit:
                 raise ValueError(
@@ -197,13 +199,21 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         return list(self.inference_instance(ms)["__inference__"])
 
     def production_demos_pool(self):
-        if self.num_demos > 0:
+        if self.use_demos:
             if self._demos_pool_cache is None:
                 self._demos_pool_cache = list(
                     self.inference_demos()[self.demos_pool_name]
                 )
             return self._demos_pool_cache
         return []
+
+    @property
+    def has_custom_demos_pool(self):
+        return self.demos_pool_size is not None and self.demos_pool_size > 0
+
+    @property
+    def use_demos(self):
+        return self.num_demos is not None and self.max_demos_size > 0
 
     def produce(self, task_instances):
         """Use the recipe in production to produce model ready query from standard task instance."""
@@ -252,7 +262,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
-        if self.demos_pool_size is not None and self.demos_pool_size > 0:
+        if self.has_custom_demos_pool:
             self.processing.steps.append(
                 CreateDemosPool(
                     from_split=self.demos_taken_from,
@@ -262,7 +272,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             )
 
-        if self.num_demos > 0:
+        if self.use_demos:
             if self.sampler is None:
                 if self.card.sampler is None:
                     raise ValueError(
@@ -271,18 +281,30 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 self.sampler = self.card.sampler
 
-            self.sampler.set_size(self.num_demos)
-
         self.prepare_refiners()
 
-        if self.num_demos > 0:
-            self.verbalization.steps.append(
-                AddDemosField(
-                    source_stream=self.demos_pool_name,
-                    target_field=self.demos_field,
-                    sampler=self.sampler,
+        if self.use_demos:
+            if isinstance(self.num_demos, int):
+                self.verbalization.steps.append(
+                    ConstantSizeSample(
+                        from_stream=self.demos_pool_name,
+                        to_field=self.demos_field,
+                        sampler=self.sampler,
+                        sample_size=self.num_demos,
+                    )
                 )
-            )
+            elif isinstance(self.num_demos, list):
+                self.verbalization.steps.append(
+                    RandomSizeSample(
+                        from_stream=self.demos_pool_name,
+                        to_field=self.demos_field,
+                        sampler=self.sampler,
+                        sample_sizes=self.num_demos,
+                    )
+                )
+            else:
+                raise ValueError("num_demos must be int or List[int]")
+
             if self.templates is not None:
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(
