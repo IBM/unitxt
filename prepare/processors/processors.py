@@ -12,6 +12,8 @@ from unitxt.processors import (
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
+    InferDictsToBinaryLogprobs,
+    InferDictsToBinaryLogProbsLastToken,
     LiteralEval,
     LowerCase,
     LowerCaseTillPunc,
@@ -368,4 +370,36 @@ add_to_catalog(
     ),
     "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            InferDictsToBinaryLogprobs(
+                binary_class_names=(
+                    "No",
+                    "Yes",
+                ),
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.infer_logprobs_to_yes_no_probs",
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            InferDictsToBinaryLogProbsLastToken(
+                binary_class_names=(
+                    "No",
+                    "Yes",
+                ),
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.infer_last_token_logprobs_to_yes_no_probs",
 )

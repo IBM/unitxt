@@ -1,0 +1,14 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "infer_dicts_to_binary_log_probs_last_token",
+            "binary_class_names": [
+                "No",
+                "Yes"
+            ],
+            "field": "prediction",
+            "process_every_value": false
+        }
+    ]
+}

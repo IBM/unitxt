@@ -4,6 +4,8 @@ import re
 from difflib import get_close_matches
 from typing import Any, Dict
 
+import numpy as np
+
 from .operators import FieldOperator, InstanceFieldOperator
 
 
@@ -277,3 +279,57 @@ class ExtractArenaHardNumericalJudgment(FieldOperator):
 
         except:
             return 0
+
+
+class InferDictsToBinaryLogprobs(FieldOperator):
+    binary_class_names: list[str]
+
+    def process_value(self, obj: Any) -> Any:
+        try:
+            n_first_tokens = np.min([3, len(obj)])
+        except:
+            return []
+
+        for i in range(n_first_tokens):
+            try:
+                pos_probs, neg_probs = self.get_pos_neg_probs(pred_dict=obj[i])
+                if pos_probs or neg_probs:
+                    sum_probs = sum(pos_probs) + sum(neg_probs)
+                    if sum_probs > 0.0001:
+                        return sum(pos_probs) / sum_probs
+            except:
+                pass
+        return []
+
+    def get_pos_neg_probs(self, pred_dict):
+        token_logprobs = pred_dict["top_tokens"]
+        pos_probs = [
+            np.exp(d["logprob"])
+            for d in token_logprobs
+            if self.binary_class_names[1].lower() in d["text"].lower()
+        ]
+        neg_probs = [
+            np.exp(d["logprob"])
+            for d in token_logprobs
+            if self.binary_class_names[0].lower() in d["text"].lower()
+        ]
+        return pos_probs, neg_probs
+
+
+class InferDictsToBinaryLogProbsLastToken(InferDictsToBinaryLogprobs):
+    def process_value(self, obj: Any) -> Any:
+        try:
+            n_last_tokens = min([3, len(obj)])
+        except:
+            return []
+
+        for i in range(-1, -(n_last_tokens + 1), -1):
+            try:
+                pos_probs, neg_probs = self.get_pos_neg_probs(pred_dict=obj[i])
+                if pos_probs or neg_probs:
+                    sum_probs = sum(pos_probs) + sum(neg_probs)
+                    if sum_probs > 0.0001:
+                        return sum(pos_probs) / sum_probs
+            except:
+                pass
+        return []
