@@ -5,7 +5,7 @@ from unitxt.metrics import (
 from unitxt.operators import Copy
 
 base = "metrics.rag.context_relevance"
-default = "perplexity"
+default = "perplexity_flan_t5_small"
 
 for new_catalog_name, base_catalog_name, main_score in [
     ("perplexity_flan_t5_small", "metrics.perplexity_q.flan_t5_small", "perplexity"),
