@@ -13,7 +13,6 @@ from unitxt.processors import (
     FirstCharacter,
     GetStringAfter,
     InferDictsToBinaryLogprobs,
-    InferDictsToBinaryLogProbsLastToken,
     LiteralEval,
     LowerCase,
     LowerCaseTillPunc,
@@ -376,30 +375,31 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             InferDictsToBinaryLogprobs(
-                binary_class_names=(
-                    "No",
-                    "Yes",
-                ),
+                neg_class_name="No",
+                pos_class_name="Yes",
+                num_logprobs_to_take=3,
                 field="prediction",
                 process_every_value=False,
             ),
         ]
     ),
     "processors.infer_logprobs_to_yes_no_probs",
+    overwrite=True,
 )
 
 add_to_catalog(
     SequentialOperator(
         steps=[
-            InferDictsToBinaryLogProbsLastToken(
-                binary_class_names=(
-                    "No",
-                    "Yes",
-                ),
+            InferDictsToBinaryLogprobs(
+                neg_class_name="No",
+                pos_class_name="Yes",
+                take_logprobs_from_end=True,
+                num_logprobs_to_take=3,
                 field="prediction",
                 process_every_value=False,
             ),
         ]
     ),
     "processors.infer_last_token_logprobs_to_yes_no_probs",
+    overwrite=True,
 )
