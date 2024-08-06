@@ -21,19 +21,19 @@ Evaluating a dataset can be done using the HuggingFace Metrics API without direc
   # and returns model predictions as string.
   model = pipeline(model='google/flan-t5-base')
   predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
-  
+
   metric = evaluate.load('unitxt/metric')
   dataset_with_scores = metric.compute(predictions=predictions,references=testset)
 
 The following prints the scores defined in WNLI task (f1_micro, f1_macro, accuracy, as well as their confidence intervals).
 
 .. code-block:: python
-  
-    [print(item) for item in dataset_with_scores[0]['score']['global'].items()] 
+
+    [print(item) for item in dataset_with_scores[0]['score']['global'].items()]
 
 
 .. code-block::
-  
+
     ('f1_macro', 0.393939393939394)
     ('f1_entailment', 0.787878787878788)
     ('f1_not entailment', 0.0)
@@ -49,3 +49,12 @@ The following prints the scores defined in WNLI task (f1_micro, f1_macro, accura
     ('f1_micro', 0.65)
     ('f1_micro_ci_low', 0.4000000000000001)
     ('f1_micro_ci_high', 0.8000000000000002)
+
+
+If you want to evaluate with few templates or few num_demos you can run:
+
+.. code-block:: python
+
+  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],demos_pool_size=10,max_test_instances=100',trust_remote_code=True)
+
+This will randomly sample from the templates and for each instance assign a random template from the list and run number of demonstration from the list.
