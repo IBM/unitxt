@@ -314,7 +314,7 @@ Agent:""",
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
-            templates=[
+            template=[
                 "templates.key_val",
                 "templates.classification.multi_class.relation.truthfulness.flan_5",
             ],

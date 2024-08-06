@@ -58,7 +58,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_with_multi_templates(self):
         dataset = load_dataset(
-            "card=cards.stsb,templates=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         instance = {
             "metrics": ["metrics.spearman"],

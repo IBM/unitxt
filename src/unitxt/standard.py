@@ -22,12 +22,14 @@ class CreateDemosPool(SeparateSplit):
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
+    # Base parameters
     card: TaskCard
-    template: Template = None
-    templates: List[Template] = NonPositionalField(default=None)
-    template_card_index: int = NonPositionalField(default=None)
+    template: Union[Template, List[Template]] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
+
+    # Additional parameters
+    template_card_index: int = NonPositionalField(default=None)
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
 
@@ -109,17 +111,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
             )
 
-        if sum(x is not None for x in [self.template, self.templates]) != 1:
+        if self.template is None:
             raise ValueError(
                 "You must set in the recipe either `template`, `template_card_index` or `templates`."
             )
 
-        if self.template is not None:
-            self.verify_template(self.template)
-
-        if self.templates is not None:
-            for template in self.templates:
+        if isinstance(self.template, list):
+            for template in self.template:
                 self.verify_template(template)
+        else:
+            self.verify_template(self.template)
 
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
@@ -305,10 +306,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             else:
                 raise ValueError("num_demos must be int or List[int]")
 
-            if self.templates is not None:
+            if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(
-                        templates=self.templates, demos_field=self.demos_field
+                        templates=self.template, demos_field=self.demos_field
                     )
                 )
             else:
@@ -318,9 +319,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 )
         else:
-            if self.templates is not None:
+            if isinstance(self.template, list):
                 self.verbalization.steps.append(
-                    ApplyRandomTemplate(templates=self.templates)
+                    ApplyRandomTemplate(templates=self.template)
                 )
             else:
                 self.verbalization.steps.append(
@@ -347,24 +348,23 @@ class StandardRecipeWithIndexes(BaseRecipe):
     template_card_index: int = None
 
     def prepare(self):
-        if self.templates is None:
-            assert (
-                self.template_card_index is None or self.template is None
-            ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-            assert not (
-                self.template_card_index is None and self.template is None
-            ), "Specify either template or template_card_index in card"
-            if self.template_card_index is not None:
-                try:
-                    self.template = self.card.templates[self.template_card_index]
-                except Exception as e:
-                    if isinstance(self.card.templates, dict):
-                        options = list(self.card.templates.keys())
-                    else:
-                        options = list(range(0, len(self.card.templates)))
-                    raise ValueError(
-                        f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
-                    ) from e
+        assert (
+            self.template_card_index is None or self.template is None
+        ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
+        assert not (
+            self.template_card_index is None and self.template is None
+        ), "Specify either template or template_card_index in card"
+        if self.template_card_index is not None:
+            try:
+                self.template = self.card.templates[self.template_card_index]
+            except Exception as e:
+                if isinstance(self.card.templates, dict):
+                    options = list(self.card.templates.keys())
+                else:
+                    options = list(range(0, len(self.card.templates)))
+                raise ValueError(
+                    f"card_template_index '{self.template_card_index}' is not defined in card. Possible card_template_index options: {options}"
+                ) from e
 
         super().prepare()
 
