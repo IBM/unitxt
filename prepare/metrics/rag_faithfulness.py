@@ -16,7 +16,7 @@ for new_catalog_name, base_catalog_name, main_score in [
         "precision",
     ),
     ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "score"),
-    ("sentence_bert_mini_lm", "metrics.sentence_bert.bge_large_en_1_5", "score"),
+    ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "score"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,
