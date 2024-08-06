@@ -1,11 +1,10 @@
 from unitxt import add_to_catalog
 from unitxt.inference import HFPipelineBasedInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import ScoreLLMAsJudge
 
 model_list = ["mistralai/Mistral-7B-Instruct-v0.2"]
 format = "formats.models.mistral.instruction"
 template = "templates.response_assessment.rating.mt_bench_single_turn"
-task = "rating.single_turn"
 
 for model_id in model_list:
     inference_model = HFPipelineBasedInferenceEngine(
@@ -15,10 +14,9 @@ for model_id in model_list:
     model_label = f"{model_label}_huggingface"
     template_label = template.split(".")[-1]
     metric_label = f"{model_label}_template_{template_label}"
-    metric = LLMAsJudge(
+    metric = ScoreLLMAsJudge(
         inference_model=inference_model,
         template=template,
-        task=task,
         format=format,
         main_score=metric_label,
         prediction_type=str,

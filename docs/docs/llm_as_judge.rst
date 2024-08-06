@@ -128,10 +128,9 @@ To construct a new LLM as a Judge metric, several key components must be defined
 
 1. **Judge Model**: Select a model that will assess the performance of other models.
 2. **Execution Platform**: Choose the platform responsible for executing the judge model, such as Huggingface or OpenAI API.
-3. **The Judging Task**: This define the inputs the judge model expect to receive and its output. This is coupled with the template. Two common tasks are single model rating we saw above and pairwise model comparison, in which the outputs of two models is compared, to see which better addressed the required input.
-4. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
-5. **Format**: Specify the format in which the judge model expects to receive prompts.
-6. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
+3. **Template**: Develop a template reflecting the criteria for judgment, usually incorporating both the input and output of the evaluated model.
+4. **Format**: Specify the format in which the judge model expects to receive prompts.
+5. **System Prompt (Optional)**: Optionally, include a system prompt to provide additional context for evaluation.
 
 Let's walk through an example of creating a new LLM as a Judge metric, specifically recreating the MT-Bench judge metric single-model-rating evaluation:
 
@@ -157,24 +156,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
         (e.g., `OpenAiInferenceEngine`) in `src/unitxt/inference.py`.
 
 
-3. **Selecting the Judging Task**: This is a standard Unitxt task that defines the api of the judge model. The task specifies the input fields expected by the judge model, such as "question" and "answer," in the example below, which are utilized in the subsequent template. Additionally, it defines the expected output field as a float type. Another significant field is "metrics," which is utilized for the (meta) evaluation of the judge, as explained in the following section. Currently supported tasks are "rating.single_turn" and "rating.single_turn_with_reference".
-
-    .. code-block:: python
-
-        from unitxt.blocks import Task
-        from unitxt.catalog import add_to_catalog
-
-        add_to_catalog(
-            Task(
-                inputs={"question": "str", "answer": "str"},
-                outputs={"rating": "float"},
-                metrics=["metrics.spearman"],
-            ),
-            "tasks.response_assessment.rating.single_turn",
-            overwrite=True,
-        )
-
-4. **Define the Template**: We want to construct a template that is identical to the MT-Bench judge metric. Pay attention that this metric have field that are compatible with the task we chose ("question", "answer" and "rating").
+3. **Define the Template**: We want to construct a template that is identical to the MT-Bench judge metric. Pay attention that this metric have field that are compatible with the task we chose ("question", "answer" and "rating").
 
     .. code-block:: python
 
@@ -210,9 +192,9 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
         This processor simply extract the number within [[ ]] and divide it by 10 in order to scale to to [0, 1].
 
 
-5. **Define Format**: Define the format expected by the judge model for receiving prompts. For Mitral models, you can use the format already available in the Unitxt catalog under *"formats.models.mistral.instruction""*.
+4. **Define Format**: Define the format expected by the judge model for receiving prompts. For Mitral models, you can use the format already available in the Unitxt catalog under *"formats.models.mistral.instruction""*.
 
-6. **Define System Prompt**: We will not use a system prompt in this example.
+5. **Define System Prompt**: We will not use a system prompt in this example.
 
 With these components defined, creating a new LLM as a Judge metric is straightforward:
 
@@ -220,12 +202,11 @@ With these components defined, creating a new LLM as a Judge metric is straightf
 
     from unitxt import add_to_catalog
     from unitxt.inference import HFPipelineBasedInferenceEngine
-    from unitxt.llm_as_judge import LLMAsJudge
+    from unitxt.llm_as_judge import ScoreLLMAsJudge
 
     model_id = "mistralai/Mistral-7B-Instruct-v0.2"
     format = "formats.models.mistral.instruction"
     template = "templates.response_assessment.rating.mt_bench_single_turn"
-    task = "rating.single_turn"
 
     inference_model = HFPipelineBasedInferenceEngine(
         model_name=model_id, max_new_tokens=256, use_fp16=True
@@ -234,10 +215,9 @@ With these components defined, creating a new LLM as a Judge metric is straightf
     model_label = f"{model_label}_huggingface"
     template_label = template.split(".")[-1]
     metric_label = f"{model_label}_template_{template_label}"
-    metric = LLMAsJudge(
+    metric = ScoreLLMAsJudge(
         inference_model=inference_model,
         template=template,
-        task=task,
         format=format,
         main_score=metric_label,
     )

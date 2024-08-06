@@ -109,7 +109,7 @@ class LLMAsJudge(BulkInstanceMetric):
             ]
         else:
             raise NotImplementedError(
-                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
+                f"Error in '{self.__class__.__name__}' metric. {self.task} is not a supported task type."
             )
         return instances
 
@@ -134,34 +134,34 @@ class LLMAsJudge(BulkInstanceMetric):
             "pairwise_comparative_rating.single_turn",
         ]
         assert self.task in supported_tasks, (
-            f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
+            f"Error in '{self.__class__.__name__}' metric. {self.task} is not a supported task type."
             f"The supported tasks types are: {', '.join(supported_tasks)}."
         )
 
         if not isinstance(self.template, Template):
             raise ValueError(
-                f"Provided template argument to 'LLMAsJudge' metric is not of type Template, but {type(self.template)}"
+                f"Provided template argument to '{self.__class__.__name__}' metric is not of type Template, but {type(self.template)}"
             )
         if self.format and not isinstance(self.format, Format):
             raise ValueError(
-                f"Provided format argument to 'LLMAsJudge' metric is not of type Format, but {type(self.format)}"
+                f"Provided format argument to '{self.__class__.__name__}' metric is not of type Format, but {type(self.format)}"
             )
 
         if self.system_prompt and not isinstance(self.system_prompt, SystemPrompt):
             raise ValueError(
-                f"Provided system_prompt argument to 'LLMAsJudge' metric is not of type SystemPrompt, but {type(self.system_prompt)}"
+                f"Provided system_prompt argument to '{self.__class__.__name__}' metric is not of type SystemPrompt, but {type(self.system_prompt)}"
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
             if self.format:
                 raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                    "Error in '{self.__class__.__name__}' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support formatting. Please remove the format definition from the recipe"
                     " (OpenAi Chat API take care of the formatting automatically)."
                 )
             if self.system_prompt:
                 raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                    "Error in '{self.__class__.__name__}' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support system prompt. Please remove the system_prompt definition from the recipe"
                     " (Current implementation of Unitxt does not support this."
                     " Support will be added in future updates)."
@@ -182,7 +182,7 @@ class LLMAsJudge(BulkInstanceMetric):
             }
         else:
             raise NotImplementedError(
-                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
+                f"Error in '{self.__class__.__name__}' metric. {self.task} is not a supported task type."
             )
 
         task = Task(

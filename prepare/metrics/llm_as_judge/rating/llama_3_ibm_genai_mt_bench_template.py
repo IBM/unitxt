@@ -1,12 +1,11 @@
 from unitxt import add_to_catalog
 from unitxt.inference import IbmGenAiInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import ScoreLLMAsJudge
 from unitxt.random_utils import get_seed
 
 model_list = ["meta-llama/llama-3-8b-instruct", "meta-llama/llama-3-70b-instruct"]
 format = "formats.llama3_instruct"
 template = "templates.response_assessment.rating.mt_bench_single_turn"
-task = "rating.single_turn"
 
 for model_id in model_list:
     inference_model = IbmGenAiInferenceEngine(
@@ -16,10 +15,9 @@ for model_id in model_list:
     model_label = f"{model_label}_ibm_genai"
     template_label = template.split(".")[-1]
     metric_label = f"{model_label}_template_{template_label}"
-    metric = LLMAsJudge(
+    metric = ScoreLLMAsJudge(
         inference_model=inference_model,
         template=template,
-        task=task,
         format=format,
         main_score=metric_label,
         prediction_type=str,
