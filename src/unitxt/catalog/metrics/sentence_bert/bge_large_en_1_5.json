@@ -1,0 +1,4 @@
+{
+    "__type__": "sentence_bert",
+    "model_name": "BAAI/bge-large-en-v1.5"
+}
