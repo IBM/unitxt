@@ -595,9 +595,39 @@ def escape_chars(s, chars_to_escape):
 # Check that each reference_field is a List[str] of the same size, and have a
 # def outputs_to_target_and_references() that iterators of the 3 fields and create a string “(subject1, relation1, object1), (subject2, relation2, object2) “.
 # Then it should have a post processor that takes a string like “(subject1, relation1, object1), (subject2, relation2, object2) ” and converts in to List[Tuple[str,str,str]].
-class TupleTemplate(MultiLabelTemplate):
+class TupleTemplate(InputOutputTemplate): 
     tuple_fields: List[str] #### f.e. ('subject', 'relation', 'object')
-
+    postprocessors: List[str] = ["processors.to_list_of_tuples_from_string_by_comma"]
+    empty_label: str = "None"
+    
+    # Checks if all lists (or other collections) that contain components for tuples creation are equal size. 
+    # Example: ['John','Mary], ['Engineer','Surgeon'] -> [('John','Engineer'), ('Mary','Surgeon')] - equal length is required for complementing tuples.
+    def check_len_of_references_components(self, outputs: Dict[str, object]):
+        
+        unique_lengths = set([len(val) for val in outputs.values()])
+        if not len(unique_lengths) == 1:
+            lengths = {key:len(outputs[key]) for key in outputs.keys()}
+            raise ValueError(
+                f"Reference fields are not of equal length!\n{lengths}"
+            )
+        if len(outputs) == 0:
+            raise ValueError(
+                f"Empty dataset!"
+            )
+        print(outputs)
+    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+        self.check_len_of_references_components(outputs)
+        
+        
+        references_grouped = zip(*outputs.values())
+        reference_str = ', '.join([str(t) for t in references_grouped])
+        return super().outputs_to_target_and_references({self.labels_field: reference_str})
+        
+        
+        
+        
+        
+        # return super().outputs_to_target_and_references(outputs)
 
 class SpanLabelingBaseTemplate(MultiLabelTemplate):
     spans_starts_field: str = "spans_starts"

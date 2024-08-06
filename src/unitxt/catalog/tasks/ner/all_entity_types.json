@@ -1,16 +1,16 @@
 {
     "__type__": "task",
-    "input_fields": {
+    "inputs": {
         "text": "str",
         "entity_types": "List[str]"
     },
-    "reference_fields": {
+    "outputs": {
         "spans_starts": "List[int]",
         "spans_ends": "List[int]",
         "text": "str",
         "labels": "List[str]"
     },
-    "prediction_type": "List[Tuple[str, str]]",
+    "prediction_type": "List[Tuple[str,str]]",
     "metrics": [
         "metrics.ner"
     ],

@@ -1,22 +1,21 @@
 from unitxt.blocks import FormTask
 from unitxt.catalog import add_to_catalog
 
-add_to_catalog(
-    FormTask(
-        inputs={"text": "List[str]", "relation_type": "str"},
-        outputs={
-            "subject_mentions": "List[str]",
-            "label": "List[str]",
-            "object_mentions": "List[str]",
-            "text": 'List[str]'
-        },
-        prediction_type="List[Tuple[str,str,str]]",
-        metrics=["metrics.specified_relation_extraction"],
-        augmentable_inputs=["text"],
-    ),
-    "tasks.relation_extraction.single_relation_type_for_pair_no_spans",
-    overwrite=True,
-)
+# add_to_catalog(
+#     FormTask(
+#         inputs={"text": "List[str]", "relation_type": "str"},
+#         outputs={
+#             "subject_mentions": "List[str]",
+#             "labels": "List[str]",
+#             "object_mentions": "List[str]",
+#         },
+#         prediction_type="List[Tuple[str,str,str]]",
+#         metrics=["metrics.specified_relation_extraction"],
+#         augmentable_inputs=["text"],
+#     ),
+#     "tasks.relation_extraction.single_relation_type",
+#     overwrite=True,
+# )
 
 add_to_catalog(
     FormTask(
@@ -25,13 +24,12 @@ add_to_catalog(
             "subject_mentions": "List[str]",
             "labels": "List[str]",
             "object_mentions": "List[str]",
-            "text": "List[str]",
         },
         prediction_type="List[Tuple[str,str,str]]",
         metrics=["metrics.specified_relation_extraction"],
         augmentable_inputs=["text"],
     ),
-    "tasks.relation_extraction.all_relation_types_for_pairs_no_spans",
+    "tasks.relation_extraction.all_relation_types",
     overwrite=True,
 )
 

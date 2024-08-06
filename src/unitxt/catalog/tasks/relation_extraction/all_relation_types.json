@@ -8,7 +8,7 @@
         "subject_mentions": "List[str]",
         "labels": "List[str]",
         "object_mentions": "List[str]",
-        "text": "List[str]"
+        "text": "str"
     },
     "prediction_type": "List[Tuple[str,str,str]]",
     "metrics": [
