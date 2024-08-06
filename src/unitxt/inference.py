@@ -495,14 +495,25 @@ class WMLInferenceEngine(
     def _infer_log_probs(self, dataset):
         model, params = self._load_model_and_params()
 
+        user_return_options = params.pop("return_options", {})
+        # currently this is the only configuration that returns generated logprobs and behaves as expected
+        logprobs_return_options = {
+            "input_tokens": True,
+            "generated_tokens": True,
+            "token_logprobs": True,
+            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
+        }
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
+
         params = {
             **params,
-            "return_options": {
-                "input_tokens": True,
-                "generated_tokens": True,
-                "token_logprobs": True,
-                "top_n_tokens": 5,
-            },
+            "return_options": logprobs_return_options,
         }
 
         results = [
