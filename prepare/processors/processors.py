@@ -9,6 +9,7 @@ from unitxt.processors import (
     ExtractArenaHardNumericalJudgment,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
+    ExtractMtBenchStringJudgment,
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
@@ -367,5 +368,22 @@ add_to_catalog(
         ]
     ),
     "processors.extract_arena_hard_numerical_judgment",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            ExtractMtBenchStringJudgment(
+                field="prediction",
+            ),
+            ExtractMtBenchStringJudgment(
+                field="references",
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.extract_mt_bench_string_judgment",
     overwrite=True,
 )
