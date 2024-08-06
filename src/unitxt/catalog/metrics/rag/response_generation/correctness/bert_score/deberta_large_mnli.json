@@ -2,7 +2,7 @@
     "__type__": "metric_pipeline",
     "main_score": "recall",
     "preprocess_steps": [],
-    "postprocess_steps": [
+    "postpreprocess_steps": [
         {
             "__type__": "copy",
             "field_to_field": {

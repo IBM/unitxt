@@ -14,7 +14,7 @@
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
-    "postprocess_steps": [
+    "postpreprocess_steps": [
         {
             "__type__": "copy",
             "field": "score/instance/reference_scores",

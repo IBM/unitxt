@@ -1386,7 +1386,9 @@ class StringContainmentRatio(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
+        default_factory=list
+    )
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1414,7 +1416,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
                 DeepCopy(field="references", to_field="stash/references"),
                 *self.preprocess_steps,
                 self.metric,
-                *self.postprocess_steps,
+                *self.postpreprocess_steps,
                 Copy(field="stash/prediction", to_field="prediction"),
                 Copy(field="stash/references", to_field="references"),
                 RemoveFields(fields=["stash"]),

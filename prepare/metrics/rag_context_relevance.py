@@ -32,7 +32,7 @@ context_perplexity = MetricPipeline(
         Copy(field="question", to_field="prediction"),
     ],
     metric="metrics.perplexity_q.flan_t5_small",
-    postprocess_steps=[
+    postpreprocess_steps=[
         Copy(field="score/instance/reference_scores", to_field="score/instance/score")
     ],
 )

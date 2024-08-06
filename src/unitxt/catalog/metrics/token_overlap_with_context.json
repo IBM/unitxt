@@ -18,7 +18,7 @@
     "metric": {
         "__type__": "token_overlap"
     },
-    "postprocess_steps": [
+    "postpreprocess_steps": [
         {
             "__type__": "copy",
             "field_to_field": [
