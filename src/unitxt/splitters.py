@@ -109,36 +109,25 @@ class SliceSplit(Splitter):
         return MultiStream.from_generators(generators)
 
 
+def get_random_generator_based_on_instance(instance):
+    return new_random_generator(sub_seed={**instance["input_fields"]})
+
+
 class Sampler(Artifact):
-    sample_size: int = None
-
-    def prepare(self):
-        super().prepare()
-        self.set_size(self.sample_size)
-
-    def set_size(self, size):
-        if isinstance(size, str):
-            assert (
-                size.isdigit()
-            ), f"sample_size must be a natural number, got {self.sample_size}"
-            size = int(size)
-        self.sample_size = size
-
     @abstractmethod
     def sample(
-        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+        self,
+        sample_size: int,
+        instances_pool: List[Dict[str, object]],
+        instance: Dict[str, object],
     ) -> List[Dict[str, object]]:
         pass
-
-    def get_random_generator_based_on_instance(self, instance):
-        return new_random_generator(sub_seed={**instance["input_fields"]})
 
     def filter_source_by_instance(
         self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
     ) -> List[Dict[str, object]]:
         if "input_fields" not in instance:
             raise ValueError(f"'input_fields' field is missing from '{instance}'.")
-        # l = list(filter(lambda x: x["inputs"] != instance["inputs"], instances_pool))
         try:
             return [
                 item
@@ -154,12 +143,13 @@ class RandomSampler(Sampler):
 
     def sample(
         self,
+        sample_size,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         instances_pool = list(instances_pool)
-        random_generator = self.get_random_generator_based_on_instance(instance)
-        return random_generator.sample(instances_pool, self.sample_size)
+        random_generator = get_random_generator_based_on_instance(instance)
+        return random_generator.sample(instances_pool, sample_size)
 
 
 class FixedIndicesSampler(Sampler):
@@ -175,13 +165,14 @@ class FixedIndicesSampler(Sampler):
 
     def sample(
         self,
+        sample_size,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         num_instances = len(instances_pool)
 
         instances = []
-        for index in self.indices[0 : self.sample_size]:
+        for index in self.indices[0:sample_size]:
             if index >= num_instances:
                 raise ValueError(
                     f"FixedIndicesSampler 'indices' field contains index ({index}) which is out of bounds of the instance pool ( of size {num_instances})"
@@ -200,7 +191,10 @@ class CloseTextSampler(Sampler):
     field: str
 
     def sample(
-        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
+        self,
+        sample_size: int,
+        instances_pool: List[Dict[str, object]],
+        instance: Dict[str, object],
     ) -> List[Dict[str, object]]:
         field = f"input_fields/{self.field}"
         value = dict_get(instance, field)
@@ -211,9 +205,7 @@ class CloseTextSampler(Sampler):
         options = []
         for instance_in_pool in instances_pool:
             options.append(dict_get(instance_in_pool, field))
-        closest_matches = get_close_matches(
-            value, options, n=self.sample_size, cutoff=0
-        )
+        closest_matches = get_close_matches(value, options, n=sample_size, cutoff=0)
         # Randmly select 'sample_size' instances that are from the closest matches text
         # (There may be multiple instance with same text in the given field, and the order returned is
         # is also randomized )
@@ -222,8 +214,8 @@ class CloseTextSampler(Sampler):
             for instance_in_pool in instances_pool
             if dict_get(instance_in_pool, field) in closest_matches
         ]
-        random_generator = self.get_random_generator_based_on_instance(instance)
-        return random_generator.sample(instances_pool, self.sample_size)
+        random_generator = get_random_generator_based_on_instance(instance)
+        return random_generator.sample(instances_pool, sample_size)
 
 
 class DiverseLabelsSampler(Sampler):
@@ -306,26 +298,27 @@ class DiverseLabelsSampler(Sampler):
 
     def sample(
         self,
+        sample_size: int,
         instances_pool: List[Dict[str, object]],
         instance: Optional[Dict[str, object]],
     ) -> List[Dict[str, object]]:
         if self.labels_cache is None:
             self.labels_cache = self.divide_by_repr(instances_pool)
         all_labels = list(self.labels_cache.keys())
-        random_generator = self.get_random_generator_based_on_instance(instance)
+        random_generator = get_random_generator_based_on_instance(instance)
         random_generator.shuffle(all_labels)
         from collections import Counter
 
-        if self.sample_size > len(instances_pool):
+        if sample_size > len(instances_pool):
             raise ValueError(
-                f"Request sample size {self.sample_size} is greater than number of instances {len(instances_pool)}"
+                f"Request sample size {sample_size} is greater than number of instances {len(instances_pool)}"
             )
         total_allocated = 0
         allocations = Counter()
 
-        while total_allocated < self.sample_size:
+        while total_allocated < sample_size:
             for label in all_labels:
-                if total_allocated < self.sample_size:
+                if total_allocated < sample_size:
                     if len(self.labels_cache[label]) - allocations[label] > 0:
                         allocations[label] += 1
                         total_allocated += 1
@@ -341,40 +334,56 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class SpreadSplit(InstanceOperatorWithMultiStreamAccess):
-    source_stream: str = None
-    target_field: str = None
-    sampler: Sampler = None
+class Sample(InstanceOperatorWithMultiStreamAccess):
+    from_stream: str
+    to_field: str
+    sampler: Sampler
 
     def prepare(self):
         self.local_cache = None
         self.sampler.prepare()
 
-    def verify(self):
-        assert self.source_stream is not None, "Source stream must be specified"
-        assert self.target_field is not None, "Target field must be specified"
-        assert self.sampler is not None, "Sampler must be specified"
-        return super().verify()
+    @abstractmethod
+    def get_sample_size(self, instance) -> int:
+        pass
 
     def process(
         self, instance: Dict[str, object], multi_stream: MultiStream
     ) -> Dict[str, object]:
+        sample_size = self.get_sample_size(instance)
         try:
             if self.local_cache is None:
-                self.local_cache = deepcopy(list(multi_stream[self.source_stream]))
+                self.local_cache = deepcopy(list(multi_stream[self.from_stream]))
 
             source_stream = self.local_cache
             source_stream = self.sampler.filter_source_by_instance(
                 source_stream, instance
             )
-            if len(source_stream) < self.sampler.sample_size:
+            if len(source_stream) < sample_size:
                 raise ValueError(
                     f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
                 )
-            sampled_instances = self.sampler.sample(source_stream, instance)
-            instance[self.target_field] = sampled_instances
+            sampled_instances = self.sampler.sample(
+                sample_size=sample_size, instances_pool=source_stream, instance=instance
+            )
+            instance[self.to_field] = sampled_instances
             return instance
         except FaultyStreamError as e:
             raise EmptyStreamError(
-                f"Unable to fetch instances from '{self.source_stream}' to '{self.target_field}', due to {e.__class__.__name__}: {e}"
+                f"Unable to fetch instances from '{self.from_stream}' to '{self.to_field}', due to {e.__class__.__name__}: {e}"
             ) from e
+
+
+class ConstantSizeSample(Sample):
+    sample_size: int
+
+    def get_sample_size(self, instance) -> int:
+        return self.sample_size
+
+
+class RandomSizeSample(Sample):
+    sample_sizes: List[int]
+
+    def get_sample_size(self, instance) -> int:
+        random_generator = get_random_generator_based_on_instance(instance)
+        return random_generator.choice(self.sample_sizes)

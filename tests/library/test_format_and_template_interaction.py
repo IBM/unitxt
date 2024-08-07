@@ -90,6 +90,7 @@ class TestFormatAndTemplateInteraction(UnitxtTestCase):
                             "source": required_input,
                             "target": target,
                             "references": [target],
+                            "postprocessors": ["processors.to_string_stripped"],
                         }
                     ],
                     tester=self,

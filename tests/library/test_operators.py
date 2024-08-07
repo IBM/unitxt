@@ -2862,6 +2862,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["negative"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"text": "was so good"},
@@ -2871,6 +2872,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["positive"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }
@@ -2908,6 +2910,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["Dan", "Yossi"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"text": "who was she?"},
@@ -2917,6 +2920,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["Shira", "Yael"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }

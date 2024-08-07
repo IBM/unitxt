@@ -310,6 +310,44 @@ Agent:""",
             print_dict(instance)
             break
 
+    def test_random_template(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template=[
+                "templates.key_val",
+                "templates.classification.multi_class.relation.truthfulness.flan_5",
+            ],
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        stream = recipe()
+
+        for instance in stream["train"]:
+            print_dict(instance)
+            break
+
+    def test_random_num_demos(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=[0, 1, 3, 5],
+        )
+
+        stream = recipe()
+        lengths = set()
+        for i, instance in enumerate(stream["train"]):
+            if i > 30:
+                break
+            lengths.add(len(instance["source"].split("\nAgent:")))
+
+        self.assertEqual(len(lengths), 4)
+
     def test_standard_recipe_with_balancer(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
