@@ -431,7 +431,12 @@ class WMLInferenceEngine(
     @staticmethod
     def _read_wml_credentials_from_env() -> Dict[str, str]:
         credentials = {}
-        for env_var_name in ["WML_URL", "WML_PROJECT_ID", "WML_APIKEY"]:
+
+        project_or_deployment_var_name = (
+            "WML_SPACE_ID" if "WML_SPACE_ID" in os.environ else "WML_PROJECT_ID"
+        )
+
+        for env_var_name in ["WML_URL", project_or_deployment_var_name, "WML_APIKEY"]:
             env_var = os.environ.get(env_var_name)
             assert env_var, (
                 f"Error while trying to run 'WMLInferenceEngine'. "
@@ -452,7 +457,10 @@ class WMLInferenceEngine(
             self.credentials = self._read_wml_credentials_from_env()
 
         client = APIClient(credentials=self.credentials)
-        client.set.default_project(self.credentials["project_id"])
+        if "space_id" in self.credentials:
+            client.set.default_space(self.credentials["space_id"])
+        else:
+            client.set.default_project(self.credentials["project_id"])
         return client
 
     def prepare(self):
