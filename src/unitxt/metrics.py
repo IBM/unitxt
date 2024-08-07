@@ -560,14 +560,19 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 if isinstance(self.main_score, str):
                     instance_score[self.main_score] = no_score_value
 
-            instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
-            )
+            instance["score"]["instance"].update(instance_score)
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-        global_score.update(self._add_score_prefixes_to_score_dict(result))
-        score_names = self.ci_scores if self.ci_scores else [global_score["score_name"]]
+        global_score.update(result)
+
+        if self.ci_scores:
+            score_names = [
+                self._add_score_prefix(score_name) for score_name in self.ci_scores
+            ]
+        else:
+            score_names = [global_score["score_name"]]
+
         for score_name in score_names:
             confidence_interval = self.compute_global_confidence_intervals(
                 references, predictions, task_data, score_name
@@ -587,7 +592,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         result = self.compute(references, predictions, task_data)
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
-        return result
+        return self._add_score_prefixes_to_score_dict(result)
 
     @abstractmethod
     def compute(
