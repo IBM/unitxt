@@ -1422,9 +1422,7 @@ class StringContainmentRatio(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
-        default_factory=list
-    )
+    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1461,7 +1459,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
+        for step in self.postprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
