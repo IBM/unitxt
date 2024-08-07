@@ -131,8 +131,8 @@ def cnn_dailymail_example():
                            loader_limit=1000, )
     dataset = dataset['train']
     task_description = "dailymail summerizaion with context simple"
-    creator = 'eladv'
-    yaml_file = "qna.yaml"
+    creator = 'roni'
+    yaml_file = "dailymail_summarization_w_context.yaml"
     examples = []
     random_indexes = random.sample(range(len(dataset)), 5)
     for idx in random_indexes:
@@ -145,7 +145,7 @@ def cnn_dailymail_example():
         ))
 
     print(f"Using the following indexes: {random_indexes}")
-
+    task_description = f"{task_description}. Indices: {random_indexes}"
     IlabSkillAdder(
         task_description=task_description,
         created_by=creator,
