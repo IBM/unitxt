@@ -30,7 +30,7 @@ The size of the demo pool is determined by a mandatory parameter called ``demos_
 It determines the positioning of the task `instruction`, `system_prompt` and `demos` the `source` query and required output from the model, the `target`.
 
 Below is in example of how to define the layout of the different parts.
-This example is based on this blog post explaining the prompt structure of the llama2 model: `Blog Post<https://huggingface.co/blog/llama2#how-to-prompt-llama-2>`_
+This example is based on this blog post explaining the prompt structure of the llama2 model: `Blog Post <https://huggingface.co/blog/llama2#how-to-prompt-llama-2>`_
 
 So the actual template looks like this:
 
