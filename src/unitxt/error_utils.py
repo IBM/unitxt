@@ -9,6 +9,7 @@ class Documentation:
     URL = "https://www.unitxt.ai/en/latest/"
     HUGGINGFACE_METRICS = "docs/adding_metric.html#adding-a-hugginface-metric"
     ADDING_TASK = "docs/adding_task.html"
+    ADDING_TEMPLATE = "docs/adding_template.html"
 
 
 def additional_info(path: str) -> str:
