@@ -33,9 +33,13 @@ Within the template, there are also different parts:
    :align: center
 
 Including:
-* The task `instruction`, marked in green, which appears once at the top of the example
-* The `input_format`, marked in red, formatting the layout of the different fields of the task, and
+
+* The task `instruction`, marked in green, which appears once at the top of the example.
+
+* The `input_format`, marked in red, formatting the layout of the different fields of the task.
+
 * The `target_prefix`, marked in yellow, priming the target.
+
 Now that we understand the taxonomy
 of the different parts of the template, we can see how to define it in code and add it to the unitxt catalog.
 
@@ -57,8 +61,11 @@ We can define a template for this task like this:
     ),
 
 
-The `instruction` attribute defines that part of the prompt that appears once, while the `input_format` defines the part of prompt that repeats for 
-each in-context learning demonstration and for the final instance.  The `output_format` defines how the reference answer is verbalized as string.   
+The `instruction` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
+while the `input_format` defines the part of prompt that repeats for 
+each in-context learning demonstration and for the final instance (marked red in the second figure above).
+
+The `output_format` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
 The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
 becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
