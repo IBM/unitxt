@@ -94,7 +94,7 @@ so the metric computation will ignore case. When needed, It is possible to add p
     )
 
 The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
-For example, one template may prompt the model to answer `Yes`` or `No` while another 
+For example, one template may prompt the model to answer `Yes` or `No` while another 
 template may prompt the model to answer `True` or `False`. Both can use different post processors to convert them to standard model prediction of `0` or `1`
 
 You can see all the available predefined post processors in the catalog (:ref:`Processor <processors>`.)
