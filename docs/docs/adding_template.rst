@@ -61,7 +61,7 @@ The `instruction` attribute defines that part of the prompt that appears once, w
 each in-context learning demonstration and for the final instance.  The `output_format` defines how the reference answer is verbalized as string.   
 The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
-become the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
+becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
 
 .. note::
     If you don't have references , just specify `output_format=""`.
