@@ -528,3 +528,32 @@ def dict_set(
 
     except Exception as e:
         raise ValueError(f"No path in dic {dic} matches query {query}.") from e
+
+
+def are_equal(obj1: Any, obj2: Any) -> bool:
+    if (obj1 is None) != (obj2 is None):
+        return False
+    if obj1 is None:  # hence both are None
+        return True
+    # both are not None:
+    if type(obj1) != type(obj2):
+        return False
+    if isinstance(obj1, dict):  # hence both are dict
+        if len(obj1) != len(obj2):
+            return False
+        for key in obj1:
+            if key not in obj2:
+                return False
+            if not are_equal(obj1[key], obj2[key]):
+                return False
+        return True
+    if isinstance(obj1, list):  # hence both are lists
+        if len(obj1) != len(obj2):
+            return False
+        for i in range(len(obj1)):
+            if not are_equal(obj1[i], obj2[i]):
+                return False
+        return True
+
+    # both obj are simple: str, float, or int
+    return obj1 == obj2

@@ -40,8 +40,8 @@ from .operator import (
 )
 from .operators import (
     Copy,
+    CopyIfNotEqual,
     DeepCopy,
-    RemoveFields,
 )
 from .random_utils import get_seed
 from .settings_utils import get_settings
@@ -1384,6 +1384,19 @@ class StringContainmentRatio(InstanceMetric):
 
 
 class MetricPipeline(MultiStreamOperator, Metric):
+    """Applies a sequence of preprocess_operators followed by metric, followed by postprocess operators.
+
+    The preprocess operators meant to prepare prediction and references, in case these are not yet
+    prepared for feeding into metric.  postprocess operators meant to revert modifications done in the
+    post processing, as needed.
+
+    To ensure that at least prediction and references, as restored to their value upon entring to this class,
+    this class saves their value, and restores at the end. In case of a change (which is not expected, since
+    the instance should be ready to go though another, independent metric), a warning message is logged
+    before the restore.
+
+    """
+
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postpreprocess_steps: Optional[List[StreamingOperator]] = field(
@@ -1412,14 +1425,13 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
         self.pipeline = SequentialOperator(
             steps=[
-                DeepCopy(field="prediction", to_field="stash/prediction"),
-                DeepCopy(field="references", to_field="stash/references"),
+                DeepCopy(field="prediction", to_field="stash_prediction"),
+                DeepCopy(field="references", to_field="stash_references"),
                 *self.preprocess_steps,
                 self.metric,
                 *self.postpreprocess_steps,
-                Copy(field="stash/prediction", to_field="prediction"),
-                Copy(field="stash/references", to_field="references"),
-                RemoveFields(fields=["stash"]),
+                CopyIfNotEqual("references", "stash_references"),
+                CopyIfNotEqual("prediction", "stash_prediction"),
                 Copy(field=f"score/instance/{prefix}", to_field="score/instance/score"),
                 Copy(field=f"score/global/{prefix}", to_field="score/global/score"),
             ]

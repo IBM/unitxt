@@ -65,7 +65,8 @@ import requests
 from .artifact import Artifact, fetch_artifact
 from .dataclass import DeprecatedField, NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
-from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .dict_utils import are_equal, dict_delete, dict_get, dict_set, is_subpath
+from .logging_utils import get_logger
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -88,6 +89,7 @@ from .type_utils import isoftype
 from .utils import flatten_dict
 
 settings = get_settings()
+logger = get_logger()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -1056,6 +1058,35 @@ class Copy(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return value
+
+
+class CopyIfNotEqual(InstanceOperator):
+    """check whether the values in field1 and field2 are equal. if not: log a warning message and copy field2 into field1.
+
+    In any case, pop field2 from the instance.
+
+    args: field1 and field2, that are names of fields
+    """
+
+    field1: str
+    field2: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        assert (
+            self.field1 in instance
+        ), f"{self.field1} is missing from instance {instance}"
+        assert (
+            self.field2 in instance
+        ), f"{self.field2} is missing from instance {instance}"
+        if not are_equal(instance[self.field1], instance[self.field2]):
+            logger.warning(
+                f"Field {self.field1} was changed in the process, from value={instance[self.field2]} to value={instance[self.field1]}"
+            )
+            instance[self.field1] = instance[self.field2]
+        instance.pop(self.field2)
+        return instance
 
 
 class DeepCopy(FieldOperator):
