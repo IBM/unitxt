@@ -83,6 +83,8 @@ The post processors applied both to the model prediction and to the references.
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
 so the metric computation will ignore case. When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
 
+.. code-block:: python
+    
     template = InputOutputTemplate(
         instruction="In the following task, you translate a {text_type}.",
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
