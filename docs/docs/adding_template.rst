@@ -72,7 +72,7 @@ Post Processors
 ---------------
 
 The template also defines the post processing steps done on the output predictions of the model before they are passed to the :ref:`Metrics <metric>`.
-The post processors applied both to the textual prediction and to the references. 
+The post processors applied both to the model prediction and to the references. 
 For example, we could use the `processors.lower_case` processor to lowercase both the model predictions and references,
 so the metrics computation will ignore case. 
 
