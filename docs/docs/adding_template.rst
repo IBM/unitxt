@@ -57,7 +57,7 @@ We can define a template for this task like this:
     ),
 
 
-The `instruction` attribute defines that part of the prompt that appears one, while the `input_format` defines the part of prompt that repeats for 
+The `instruction` attribute defines that part of the prompt that appears once, while the `input_format` defines the part of prompt that repeats for 
 each in-context learning demonstration and for the final instance.  The `output_format` defines how the reference answer is verbalized as string.   
 The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
