@@ -34,11 +34,11 @@ Within the template, there are also different parts:
 
 Including:
 
-* The task `instruction`, marked in green, which appears once at the top of the example.
+* The task ``instruction``, marked in green, which appears once at the top of the example.
 
-* The `input_format`, marked in red, formatting the layout of the different fields of the task.
+* The ``input_format``, marked in red, formatting the layout of the different fields of the task.
 
-* The `target_prefix`, marked in yellow, priming the target.
+* The ``target_prefix``, marked in yellow, priming the target.
 
 Now that we understand the taxonomy
 of the different parts of the template, we can see how to define it in code and add it to the unitxt catalog.
@@ -61,19 +61,19 @@ We can define a template for this task like this:
     ),
 
 
-The `instruction` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
-while the `input_format` defines the part of prompt that repeats for 
+The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
+while the ``input_format`` defines the part of prompt that repeats for 
 each in-context learning demonstration and for the final instance (marked red in the second figure above).
 
-The `output_format` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
+The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
 The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
 becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
 
 .. note::
-    If you don't have references , just specify `output_format=""`.
+    If you don't have references , just specify ``output_format=""``.
     If you have multiple references, use the MultiReferenceTemplate (see below)
-    The only fields that are mandatory are the `input_format` and `output_format`
+    The only fields that are mandatory are the ``input_format`` and ``output_format``
 
 Post Processors
 ---------------
@@ -84,7 +84,7 @@ For example, we could use the ``processors.lower_case`` processor to lowercase b
 so the metric computation will ignore case. When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
 
 .. code-block:: python
-    
+
     template = InputOutputTemplate(
         instruction="In the following task, you translate a {text_type}.",
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
@@ -96,8 +96,8 @@ so the metric computation will ignore case. When needed, It is possible to add p
     )
 
 The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
-For example, one template may prompt the model to answer `Yes` or `No` while another 
-template may prompt the model to answer `True` or `False`. Both can use different post processors to convert them to standard model prediction of `0` or `1`
+For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
+template may prompt the model to answer ``True``` or ```False```. Both can use different post processors to convert them to standard model prediction of `0` or `1`
 
 You can see all the available predefined post processors in the catalog (:ref:`Processor <processors>`.)
 
@@ -115,14 +115,14 @@ There are different templates for different types of data. For example, for data
         references_field="answers",
     )
 
-The template uses the list of values in the dataset field defined by the `references_field` attribute to define all the references.
+The template uses the list of values in the dataset field defined by the ``references_field`` attribute to define all the references.
 
 You can see all the available predefined templates here: :ref:`Templates Documentation<templates>`.
 
 Making Your Custom Template
 ----------------------------
 
-In order to make your own template, you need to create a class inheriting from `Template` and
+In order to make your own template, you need to create a class inheriting from ``Template`` and
 implementing its abstract methods:
 
 .. code-block:: python
