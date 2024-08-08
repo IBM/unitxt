@@ -11,7 +11,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "cluster": "group"
             },
@@ -48,7 +48,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_id": "reference_model"
             },
@@ -96,7 +96,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_input": "input",
                 "category": "group",

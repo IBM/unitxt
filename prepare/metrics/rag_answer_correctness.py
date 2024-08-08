@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy, RenameFields
+from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 
@@ -18,8 +18,8 @@ def test_answer_correctness(task_data, catalog_name, global_target, instance_tar
     test_pipeline = MetricPipeline(
         main_score="score",
         preprocess_steps=[
-            RenameFields(field_to_field={"task_data/ground_truths": "ground_truths"}),
-            RenameFields(field_to_field={"task_data/answer": "answer"}),
+            Rename(field_to_field={"task_data/ground_truths": "ground_truths"}),
+            Rename(field_to_field={"task_data/answer": "answer"}),
         ],
         metric=f"{catalog_name}",
     )

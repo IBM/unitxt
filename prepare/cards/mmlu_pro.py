@@ -1,5 +1,5 @@
 import datasets
-from unitxt.blocks import LoadHF, RenameFields, Set, TaskCard
+from unitxt.blocks import LoadHF, Rename, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import FilterByExpression
 from unitxt.splitters import RenameSplits
@@ -16,7 +16,7 @@ def main():
             preprocess_steps=[
                 FilterByExpression(f"category == '{topic}'"),
                 RenameSplits({"validation": "train"}),
-                RenameFields(
+                Rename(
                     field_to_field={
                         "options": "choices",
                         "answer_index": "answer",

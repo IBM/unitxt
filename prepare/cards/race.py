@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import IndexOf, RenameFields, Set
+from unitxt.operators import IndexOf, Rename, Set
 from unitxt.test_utils.card import test_card
 
 numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -11,7 +11,7 @@ for subset in ["all", "high", "middle"]:
         preprocess_steps=[
             Set({"numbering": numbering}),
             IndexOf(search_in="numbering", index_of="answer", to_field="answer"),
-            RenameFields(
+            Rename(
                 field_to_field={"options": "choices", "article": "context"},
             ),
             Set({"context_type": "article"}),

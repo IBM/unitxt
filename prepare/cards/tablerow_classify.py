@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     LoadFromKaggle,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     SerializeTableRowAsText,
     Set,
     SplitRandomMix,
@@ -19,7 +19,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[70%]", "validation": "train[10%]", "test": "train[20%]"}
         ),
-        RenameFields(field_to_field={"HeartDisease": "label"}),
+        Rename(field_to_field={"HeartDisease": "label"}),
         MapInstanceValues(mappers={"label": {"0": "Normal", "1": "Heart Disease"}}),
         Set(
             fields={

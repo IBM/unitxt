@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
-from unitxt.operators import ListFieldValues, RenameFields, Set
+from unitxt.operators import ListFieldValues, Rename, Set
 from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
@@ -27,7 +27,7 @@ for dataset_name in [
         ),
         preprocess_steps=[
             Set({"context_type": "description"}),
-            RenameFields(field_to_field={"label": "answer"}),
+            Rename(field_to_field={"label": "answer"}),
             ListFieldValues(fields=["ans0", "ans1", "ans2"], to_field="choices"),
         ],
         task="tasks.qa.multiple_choice.with_context",

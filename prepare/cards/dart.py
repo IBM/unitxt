@@ -1,6 +1,6 @@
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     SerializeTriples,
     Set,
     TaskCard,
@@ -14,7 +14,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         SerializeTriples(field_to_field=[["tripleset", "serialized_triples"]]),
-        RenameFields(field_to_field={"serialized_triples": "input"}),
+        Rename(field_to_field={"serialized_triples": "input"}),
         Copy(field="annotations/text/0", to_field="output"),
         Set(fields={"type_of_input": "Triples"}),
     ],

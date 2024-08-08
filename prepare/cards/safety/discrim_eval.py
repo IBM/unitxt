@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.operators import (
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.splitters import RenameSplits
@@ -27,7 +27,7 @@ for dataset_name in ["explicit", "implicit"]:
                     "choices": ["yes", "no"],
                 }
             ),
-            RenameFields(field_to_field={"filled_template": "question"}),
+            Rename(field_to_field={"filled_template": "question"}),
         ],
         task="tasks.qa.multiple_choice.open",
         templates=TemplatesList(

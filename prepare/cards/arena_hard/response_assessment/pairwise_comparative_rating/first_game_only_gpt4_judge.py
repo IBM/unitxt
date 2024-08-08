@@ -5,7 +5,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -23,7 +23,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         "operators.arena_hard_hf_space_processing_steps",
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_a",

@@ -48,7 +48,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",

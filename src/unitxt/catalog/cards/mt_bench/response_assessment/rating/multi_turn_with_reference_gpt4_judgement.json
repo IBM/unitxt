@@ -33,7 +33,7 @@
             "condition": "ne"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "score": "rating",
                 "category": "group"

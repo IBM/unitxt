@@ -1,6 +1,6 @@
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -14,7 +14,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "sentence1": "text1",
                 "sentence2": "text2",

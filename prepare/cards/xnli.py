@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -34,7 +34,7 @@ for lang in langs:
         preprocess_steps=[
             RenameSplits({"validation_matched": "validation"}),
             "splitters.small_no_test",
-            RenameFields(field_to_field={"premise": "text_a", "hypothesis": "text_b"}),
+            Rename(field_to_field={"premise": "text_a", "hypothesis": "text_b"}),
             MapInstanceValues(
                 mappers={
                     "label": {"0": "entailment", "1": "neutral", "2": "contradiction"}

@@ -5,7 +5,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
     Copy,
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.splitters import RenameSplits
@@ -16,7 +16,7 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits({"train": "test"}),
         Copy(field="turns/0", to_field="turns"),
-        RenameFields(
+        Rename(
             field_to_field={
                 "turns": "input",
                 "category": "group",

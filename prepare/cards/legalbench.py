@@ -7,7 +7,7 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import RenameFields, Set, Shuffle
+from unitxt.operators import Rename, Set, Shuffle
 from unitxt.string_operators import FormatText
 from unitxt.test_utils.card import test_card
 
@@ -115,7 +115,7 @@ for task_name, task_cfg in task_cfgs.items():
                 else []
             )
             + [
-                RenameFields(
+                Rename(
                     field_to_field={
                         task_cfg["non_task_entries"]["text_field_name"]: "text",
                         task_cfg["non_task_entries"]["label_field_name"]: "label",

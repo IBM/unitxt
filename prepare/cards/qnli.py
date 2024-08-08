@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import RenameFields
+from unitxt.operators import Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -23,7 +23,7 @@ card = TaskCard(
                 "text_b_type": "sentence",
             }
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "question": "text_a",
                 "sentence": "text_b",

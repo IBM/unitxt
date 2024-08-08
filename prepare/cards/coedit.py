@@ -9,7 +9,7 @@ from unitxt.operators import (
     IndexOf,
     ListFieldValues,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     Shuffle,
     ShuffleFieldValues,
@@ -28,7 +28,7 @@ gec_card = TaskCard(
         Split(field="src", by=": "),
         Slice(field="src", start=1),
         Join(field="src", by=": "),
-        RenameFields(field_to_field={"src": "original_text"}),
+        Rename(field_to_field={"src": "original_text"}),
         ListFieldValues(fields=["tgt"], to_field="corrected_texts"),
     ],
     task="tasks.grammatical_error_correction",
@@ -120,7 +120,7 @@ card = TaskCard(
                 "input_type": "sentence",
             }
         ),
-        RenameFields(field="src", to_field="input"),
+        Rename(field="src", to_field="input"),
         IndexOf(search_in="choices", index_of="tgt", to_field="output_choice"),
     ],
     task="tasks.evaluation.preference",
@@ -185,7 +185,7 @@ card = TaskCard(
                 "choices_text_type": "sentences",
             }
         ),
-        RenameFields(field_to_field={"tgt": "choice"}),
+        Rename(field_to_field={"tgt": "choice"}),
     ],
     task="tasks.selection.by_attribute",
     templates="templates.selection.by_attribute.all",
@@ -246,7 +246,7 @@ card = TaskCard(
                 "output_text_type": "sentence",
             }
         ),
-        RenameFields(field_to_field={"tgt": "output_text", "src": "input_text"}),
+        Rename(field_to_field={"tgt": "output_text", "src": "input_text"}),
     ],
     task="tasks.rewriting.by_attribute",
     templates="templates.rewriting.by_attribute.all",
@@ -283,7 +283,7 @@ card = TaskCard(
                 "text_type": "sentence",
             }
         ),
-        RenameFields(field_to_field={"tgt": "output_text", "src": "input_text"}),
+        Rename(field_to_field={"tgt": "output_text", "src": "input_text"}),
     ],
     task="tasks.rewriting.paraphrase",
     templates="templates.rewriting.paraphrase.all",

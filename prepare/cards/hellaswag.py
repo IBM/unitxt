@@ -1,20 +1,20 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import CastFields, RenameFields, Set
+from unitxt.operators import CastFields, Rename, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="hellaswag"),
     preprocess_steps=[
         "splitters.large_no_test",
-        RenameFields(
+        Rename(
             field_to_field={
                 "ctx": "context",
                 "activity_label": "topic",
                 "endings": "choices",
             }
         ),
-        RenameFields(field_to_field={"label": "answer"}),
+        Rename(field_to_field={"label": "answer"}),
         CastFields(fields={"answer": "int"}),
         Set(fields={"context_type": "sentence"}),
     ],

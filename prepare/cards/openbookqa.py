@@ -1,15 +1,15 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import IndexOf, RenameFields
+from unitxt.operators import IndexOf, Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="openbookqa"),
     preprocess_steps=[
-        RenameFields(
+        Rename(
             field_to_field={"choices/text": "choices_text", "choices/label": "labels"},
         ),
-        RenameFields(
+        Rename(
             field_to_field={"choices_text": "choices", "question_stem": "question"},
         ),
         IndexOf(search_in="labels", index_of="answerKey", to_field="answer"),

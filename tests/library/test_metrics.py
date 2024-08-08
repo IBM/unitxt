@@ -54,7 +54,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.operators import RenameFields
+from unitxt.operators import Rename
 from unitxt.test_utils.metrics import (
     apply_metric,
     check_scores,
@@ -1923,10 +1923,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
             test_pipeline = MetricPipeline(
                 main_score="score",
                 preprocess_steps=[
-                    RenameFields(
-                        field_to_field={"task_data/context_ids": "context_ids"}
-                    ),
-                    RenameFields(
+                    Rename(field_to_field={"task_data/context_ids": "context_ids"}),
+                    Rename(
                         field_to_field={
                             "task_data/ground_truths_context_ids": "ground_truths_context_ids"
                         }

@@ -2,7 +2,7 @@ from datasets import get_dataset_config_names, load_dataset_builder
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -26,7 +26,7 @@ for lang in langs:
         loader=LoadHF(path="AmazonScience/massive", name=lang),
         preprocess_steps=[
             MapInstanceValues(mappers={"intent": mappers}),
-            RenameFields(field_to_field={"utt": "text", "intent": "label"}),
+            Rename(field_to_field={"utt": "text", "intent": "label"}),
             Set(
                 fields={
                     "classes": classlabels.names,

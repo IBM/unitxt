@@ -37,7 +37,7 @@
             "expression": "int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",

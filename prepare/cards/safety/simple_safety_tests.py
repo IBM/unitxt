@@ -4,7 +4,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import (
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.test_utils.card import test_card
@@ -14,7 +14,7 @@ card = TaskCard(
         path="Bertievidgen/SimpleSafetyTests", data_classification_policy=["public"]
     ),
     preprocess_steps=[
-        RenameFields(field_to_field={"prompt": "input"}),
+        Rename(field_to_field={"prompt": "input"}),
         Set(
             fields={
                 "output": "None",

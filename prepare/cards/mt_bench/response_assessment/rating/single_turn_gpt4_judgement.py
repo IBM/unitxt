@@ -3,7 +3,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
-from unitxt.operators import Copy, FilterByCondition, RenameFields
+from unitxt.operators import Copy, FilterByCondition, Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -20,7 +20,7 @@ card = TaskCard(
         "operators.mt_bench.rating_hf_space_processing_steps",
         FilterByCondition(values={"turn": 1}, condition="eq"),
         FilterByCondition(values={"reference": None}, condition="eq"),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "score": "rating",

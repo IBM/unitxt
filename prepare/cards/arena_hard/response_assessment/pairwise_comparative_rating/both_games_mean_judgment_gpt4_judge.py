@@ -6,7 +6,7 @@ from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     ExecuteExpression,
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -36,7 +36,7 @@ card = TaskCard(
             to_field="answer_a_preference",
             expression="int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))",
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_a",

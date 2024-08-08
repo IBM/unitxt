@@ -13,7 +13,7 @@ from .operators import (
     Copy,
     DivideAllFieldsBy,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
 )
 from .processors import ToString, ToStringStripped

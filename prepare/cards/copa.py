@@ -4,7 +4,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.test_utils.card import test_card
@@ -14,7 +14,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         ListFieldValues(fields=["choice1", "choice2"], to_field="choices"),
-        RenameFields(field_to_field={"premise": "context", "label": "answer"}),
+        Rename(field_to_field={"premise": "context", "label": "answer"}),
         MapInstanceValues(
             mappers={
                 "question": {  # https://people.ict.usc.edu/~gordon/copa.html

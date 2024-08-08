@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -40,7 +40,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "test", "test": "train", "validation": "validation"}
         ),  # TODO consider switch between test and train
-        RenameFields(field_to_field={"text_label": "label"}),
+        Rename(field_to_field={"text_label": "label"}),
         ListFieldValues(fields=["title", "body"], to_field="text"),
         JoinStr(separator=". ", field="text", to_field="text"),
         Set(fields={"classes": classlabels}),

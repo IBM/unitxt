@@ -14,7 +14,7 @@
         },
         "splitters.small_no_test",
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "premise": "text_a",
                 "hypothesis": "text_b"
