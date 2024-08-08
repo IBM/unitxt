@@ -1059,11 +1059,6 @@ class Copy(FieldOperator):
         return value
 
 
-class DeepCopy(FieldOperator):
-    def process_value(self, value: Any) -> Any:
-        return deepcopy(value)
-
-
 @deprecation(version="2.0.0", alternative=Copy)
 class CopyFields(Copy):
     pass
