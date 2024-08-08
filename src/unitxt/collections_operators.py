@@ -1,8 +1,8 @@
-from copy import deepcopy
 from typing import Any, Generator, List, Optional
 
 from .operators import FieldOperator, StreamOperator
 from .stream import Stream
+from .utils import deepcopy
 
 
 class Dictify(FieldOperator):

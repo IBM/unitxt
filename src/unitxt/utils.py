@@ -1,5 +1,6 @@
 import importlib.util
 import json
+import marshal
 import os
 from functools import lru_cache
 from typing import Any, Dict
@@ -125,3 +126,7 @@ def import_module_from_file(file_path):
     # Load the module
     spec.loader.exec_module(module)
     return module
+
+
+def deepcopy(obj):
+    return marshal.loads(marshal.dumps(obj))
