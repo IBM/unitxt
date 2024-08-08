@@ -1,6 +1,7 @@
 from typing import List, Optional, Union
 
 from .card import TaskCard
+from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
@@ -294,6 +295,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         sample_size=self.num_demos,
                     )
                 )
+                self.verbalization.steps.append(
+                    Set(fields={"recipe_metadata/num_demos": self.num_demos})
+                )
+
             elif isinstance(self.num_demos, list):
                 self.verbalization.steps.append(
                     RandomSizeSample(
@@ -302,6 +307,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
                     )
+                )
+                self.verbalization.steps.append(
+                    GetLength(field="demos", to_field="recipe_metadata/num_demos")
                 )
             else:
                 raise ValueError("num_demos must be int or List[int]")
