@@ -155,6 +155,7 @@ class DuplicateSplit(MultiStreamOperator):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         assert self.split in multi_stream
-        generators = multi_stream
-        generators[self.to_split] = copy.deepcopy(generators[self.split])
-        return MultiStream(generators)
+        new_stream = copy.deepcopy(multi_stream[self.split])
+        new_stream.set_copying(copying=True)
+        multi_stream[self.to_split] = new_stream
+        return multi_stream
