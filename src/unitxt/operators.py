@@ -1787,12 +1787,15 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         from .metrics import Metric
 
         # Number of instances in input stream is assumed to be small. This is why
-        # each metric consumes all of them and lays in its main memory, and even generates some 1000
-        # copies thereof for the sake of CI.
-        # So we start with deep copying here, to make a 'frozen' status of the stream, a status to be
-        # applied to each of the metrics listed in metric_field, so that the evaluation of one does not
-        # affect the evaluation of another (typically, affecting via change of
-        # instance as part of preprocess_steps of MetricPipeline).
+        # each metric consumes all of them and lays them in its main memory, and even generates
+        # some 1000 copies thereof for the sake of CI.
+        # So we start with deep copying here, to make a 'frozen' status of the stream, having
+        # passed the preprocess_steps of the task, and inference, and now getting to be evaluated,
+        # a frozen status to be fed into each of the metrics listed in metric_field,
+        # so that the evaluation of one does not affect the evaluation of another
+        # (typically, affecting via change of instance as part of
+        # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
+
         instances_upon_entrance_to_metrics_evaluations = []
         for instance in stream:
             instances_upon_entrance_to_metrics_evaluations.append(deepcopy(instance))
@@ -1825,9 +1828,8 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
             multi_stream = MultiStream(
                 {
                     "tmp": ListStream(
-                        instances_list=deepcopy(
-                            instances_upon_entrance_to_metrics_evaluations
-                        )
+                        instances_list=instances_upon_entrance_to_metrics_evaluations,
+                        copying=True,  # ensures deep copy when iterating over instances
                     )
                 }
             )
@@ -1837,9 +1839,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
             ):
                 freezed_instance["score"] = deepcopy(evaluated_instance["score"])
 
-        yield from ListStream(
-            instances_list=instances_upon_entrance_to_metrics_evaluations
-        )
+        yield from instances_upon_entrance_to_metrics_evaluations
 
 
 class MergeStreams(MultiStreamOperator):
