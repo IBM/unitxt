@@ -157,7 +157,7 @@ Given a question and one or more context, generate an answer that is correct and
 The example shows how to map the dataset input fields to the RAG response task fields
 and use the existing metrics to evaluate model results.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_ressponse_generation.py>`_
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_response_generation.py>`_
 
 Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <tasks.rag.response_generation>`.
 
