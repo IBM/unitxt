@@ -3,9 +3,12 @@ from unitxt.api import load_dataset
 from unitxt import register_local_catalog
 from typing import List, Optional
 import yaml
-import json
+from collections import Counter
 import random
 from dataclasses import dataclass
+
+FM_EVAL_LOCAL_CATALOG = "../fm-eval/fm_eval/catalogs/private"
+CREATOR = "RF"
 
 @dataclass
 class SeedExample:
@@ -86,75 +89,119 @@ class IlabSkillAdder:
         
         print(f"Data saved to {self.yaml_file_path}")
 
+@dataclass
+class IlabParameters:
+    task_description:str
+    creator:str
+    yaml_file:str
+    template:str
+    card:str
+    question_field:str
+    answer_field:str
+    context_field:str = None
+    loader_limit:int = 1000
+    local_catalog:str = None
+    use_question_field_as_text:bool=False
+    
 
+def select_indices_by_classes(dataset, num_samples):
+    def get_target_indices(target,dataset, num_indices):
+        target_indices = [i for i,x in enumerate(dataset) if target in x['target']]
+        return random.sample(target_indices,num_indices)
 
-def cat_example():
-    register_local_catalog("../fm-eval/fm_eval/catalogs/private")
-    task_description = "cat multi label"
-    creator = 'RF'
-    yaml_file = "cat_samples.yaml"
+    indices = []
+    freq_classes = Counter(dataset['target']).most_common(num_samples)
+    n = len(freq_classes)
+    base, remainder = divmod(num_samples,n)
+    distribution = [base] * n
+    for i in range(remainder):
+        distribution[i]+=1
 
-    template = "templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none"
-    card = 'cards.cat'
+    for i,cls in enumerate(freq_classes):
+        target = cls[0]
+        target_num_samples = distribution[i]
+        print(f"Fetching {target_num_samples} samples for target {target}")
+        indices.extend(get_target_indices(target,dataset,target_num_samples))
+    
+    return indices
 
-    question_field = 'source'  # question
-    answer_field = 'references'  # answers
-    context_field = 'context'
+def select_random_indices(dataset, num_samples):
+    return random.sample(range(len(dataset)), num_samples)
 
-    loaded_dataset = load_dataset(card=card, template=template)
+def create_yaml(parameters:IlabParameters,distribute=True):
+    if parameters.local_catalog:
+        register_local_catalog(parameters.local_catalog)
+    loaded_dataset = load_dataset(card=parameters.card, template =parameters.template, loader_limit = parameters.loader_limit)
     dataset = loaded_dataset['train']
-
     examples = []
-    random_indexes = random.sample(range(len(dataset)), 5)
-    for idx in random_indexes:
-        # example_data =  json.loads(dataset[idx]['task_data'])
+    if distribute:
+        indices = select_indices_by_classes(dataset,5)
+    else:
+        indices = select_random_indices(dataset,5)
+    parameters.task_description = parameters.task_description + f" (indices: {indices})"
+    for idx in indices:
         example_data = dataset[idx]
-        question = example_data[question_field]
-        answer = example_data[answer_field]
-        context = example_data[context_field] if context_field in example_data else None
+        # if 'task_data' in example_data:
+        #     example_data = json.loads(example_data['task_data'])
+
+        if parameters.use_question_field_as_text:
+            question = parameters.question_field
+        else:
+            question = example_data[parameters.question_field]
+        answer = example_data[parameters.answer_field]
+        context = example_data[parameters.context_field] if parameters.context_field else None
         examples.append(SeedExample(
             question=question, answer=answer, context=context
         ))
+    print(f"Using the following indices: {indices}")
 
-        print(f"Using the following indexes: {random_indexes}")
-
-        IlabSkillAdder(
-            task_description=task_description,
-            created_by=creator,
+    IlabSkillAdder(
+            task_description=parameters.task_description,
+            created_by=parameters.creator,
             seed_examples=examples,
-            yaml_file_path=yaml_file
+            yaml_file_path=parameters.yaml_file
         )
 
+cat_example = IlabParameters(
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    task_description="cat multi label",
+    creator = CREATOR,
+    yaml_file="cat_samples.yaml",
+    template="templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none",
+    card='cards.cat',
+    question_field = 'source',  
+    answer_field = 'references',
+    context_field = 'context',
+)
 
-def cnn_dailymail_example():
-    dataset = load_dataset(card="cards.cnn_dailymail", template="templates.summarization.abstractive.instruct_full",
-                           loader_limit=1000, )
-    dataset = dataset['train']
-    task_description = "dailymail summerizaion with context simple"
-    creator = 'roni'
-    yaml_file = "dailymail_summarization_w_context.yaml"
-    examples = []
-    random_indexes = random.sample(range(len(dataset)), 5)
-    for idx in random_indexes:
-        example_data = json.loads(dataset[idx]['task_data'])
-        question = 'Summarize the following article.\n'
-        answer = example_data['summary']
-        context = example_data['document']
-        examples.append(SeedExample(
-            question=question, answer=answer, context=context
-        ))
+cnn_example = IlabParameters(
+    task_description="dailymail summarization with context simple",
+    card="cards.cnn_dailymail",
+    creator = CREATOR,
+    yaml_file="dailymail_summarization_w_context.yaml",
+    template="templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none",
+    question_field = 'Summarize the following article.\n',  
+    use_question_field_as_text=True,
+    answer_field = 'summary',
+    context_field = 'document',
+)
 
-    print(f"Using the following indexes: {random_indexes}")
-    task_description = f"{task_description}. Indices: {random_indexes}"
-    IlabSkillAdder(
-        task_description=task_description,
-        created_by=creator,
-        seed_examples=examples,
-        yaml_file_path=yaml_file
-    )
+watson_emotion_example = IlabParameters(
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    task_description="watson emotion",
+    loader_limit=100,
+    creator=CREATOR,
+    yaml_file="watson_emotion.yaml",
+    card="cards.watson_emotion",
+    template="templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think",
+   question_field = 'source',  
+    answer_field = 'target',
+)
+
+
 
     
 if __name__ == "__main__":
-    cnn_dailymail_example()
+    create_yaml(watson_emotion_example)
 
 
