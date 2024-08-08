@@ -29,7 +29,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "sentence1": "text_a",
                 "sentence2": "text_b"

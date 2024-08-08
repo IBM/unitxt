@@ -24,12 +24,12 @@
             "to_field": "input_a"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "description",
             "to_field": "output"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "caption",
             "to_field": "input_b"
         }

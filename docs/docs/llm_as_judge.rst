@@ -294,7 +294,7 @@ We will create a card, as we do for every other Unitxt scenario:
     from unitxt.operators import (
         Copy,
         FilterByCondition,
-        RenameFields,
+        Rename,
     )
     from unitxt.processors import LiteralEval
     from unitxt.splitters import RenameSplits
@@ -306,7 +306,7 @@ We will create a card, as we do for every other Unitxt scenario:
             RenameSplits({"train": "test"}),
             FilterByCondition(values={"turn": 1}, condition="eq"),
             FilterByCondition(values={"reference": "[]"}, condition="eq"),
-            RenameFields(
+            Rename(
                 field_to_field={
                     "model_input": "question",
                     "score": "rating",

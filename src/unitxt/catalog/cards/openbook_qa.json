@@ -6,14 +6,14 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "choices/text": "choices_text",
                 "choices/label": "labels"
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "choices_text": "choices",
                 "question_stem": "question"

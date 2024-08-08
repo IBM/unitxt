@@ -2073,7 +2073,7 @@ label (str):
             f"expected error message: {expected_error_message}, but received: {ve.exception!s}.",
         )
 
-    def test_rename_fields(self):
+    def test_rename(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
