@@ -159,5 +159,5 @@ and use the existing metrics to evaluate model results.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_response_generation.py>`_
 
-Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <tasks.rag.response_generation>`.
+Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <catalog.tasks.rag.response_generation>`.
 
