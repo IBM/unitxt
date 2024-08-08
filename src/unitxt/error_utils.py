@@ -10,6 +10,9 @@ class Documentation:
     HUGGINGFACE_METRICS = "docs/adding_metric.html#adding-a-hugginface-metric"
     ADDING_TASK = "docs/adding_task.html"
     ADDING_TEMPLATE = "docs/adding_template.html"
+    MULTIPLE_METRICS_OUTPUTS = (
+        "docs/adding_metric.html#metric-outputs-with-multiple-metrics"
+    )
 
 
 def additional_info(path: str) -> str:

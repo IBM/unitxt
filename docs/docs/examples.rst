@@ -145,5 +145,19 @@ The example shows how to ensemble two judges which uses different templates.
 Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
 
+RAG
+---
 
+Evaluate RAG response generation
+++++++++++++++++++++++++++++++++
+
+Demonstrates how to use the standard Unitxt RAG response generation task.
+The response generation task is the following:
+Given a question and one or more context, generate an answer that is correct and faithful to the contexts.
+The example shows how to map the dataset input fields to the RAG response task fields
+and use the existing metrics to evaluate model results.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_response_generation.py>`_
+
+Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <catalog.tasks.rag.response_generation>`.
 
