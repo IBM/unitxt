@@ -371,7 +371,10 @@ class WMLInferenceEngineParams(Artifact):
 
 
 class WMLInferenceEngine(
-    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    LogProbInferenceEngine,
+    WMLInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     """Runs inference using ibm-watsonx-ai.
 
@@ -428,7 +431,12 @@ class WMLInferenceEngine(
     @staticmethod
     def _read_wml_credentials_from_env() -> Dict[str, str]:
         credentials = {}
-        for env_var_name in ["WML_URL", "WML_PROJECT_ID", "WML_APIKEY"]:
+
+        project_or_deployment_var_name = (
+            "WML_SPACE_ID" if "WML_SPACE_ID" in os.environ else "WML_PROJECT_ID"
+        )
+
+        for env_var_name in ["WML_URL", project_or_deployment_var_name, "WML_APIKEY"]:
             env_var = os.environ.get(env_var_name)
             assert env_var, (
                 f"Error while trying to run 'WMLInferenceEngine'. "
@@ -449,7 +457,10 @@ class WMLInferenceEngine(
             self.credentials = self._read_wml_credentials_from_env()
 
         client = APIClient(credentials=self.credentials)
-        client.set.default_project(self.credentials["project_id"])
+        if "space_id" in self.credentials:
+            client.set.default_space(self.credentials["space_id"])
+        else:
+            client.set.default_project(self.credentials["project_id"])
         return client
 
     def prepare(self):
@@ -466,7 +477,7 @@ class WMLInferenceEngine(
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
         super().verify()
 
-    def _infer(self, dataset):
+    def _load_model_and_params(self):
         from ibm_watsonx_ai.foundation_models import ModelInference
 
         model = ModelInference(
@@ -474,11 +485,51 @@ class WMLInferenceEngine(
             deployment_id=self.deployment_id,
             api_client=self.client,
         )
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
+
+        return model, params
+
+    def _infer(self, dataset):
+        model, params = self._load_model_and_params()
 
         return [
             model.generate_text(
                 prompt=instance["source"],
-                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+                params=params,
             )
             for instance in dataset
         ]
+
+    def _infer_log_probs(self, dataset):
+        model, params = self._load_model_and_params()
+
+        user_return_options = params.pop("return_options", {})
+        # currently this is the only configuration that returns generated logprobs and behaves as expected
+        logprobs_return_options = {
+            "input_tokens": True,
+            "generated_tokens": True,
+            "token_logprobs": True,
+            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
+        }
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
+
+        params = {
+            **params,
+            "return_options": logprobs_return_options,
+        }
+
+        results = [
+            model.generate(
+                prompt=instance["source"],
+                params=params,
+            )["results"]
+            for instance in dataset
+        ]
+
+        return [result[0]["generated_tokens"] for result in results]
