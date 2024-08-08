@@ -1,3 +1,4 @@
+import copy
 import importlib.util
 import json
 import os
@@ -125,3 +126,7 @@ def import_module_from_file(file_path):
     # Load the module
     spec.loader.exec_module(module)
     return module
+
+
+def deepcopy(obj):
+    return copy.deepcopy(obj)
