@@ -1,7 +1,7 @@
-import copy
 from typing import Any, Dict, List
 
 from .dataclass import Dataclass, OptionalField
+from .utils import deepcopy
 
 
 class ReusableGenerator(Dataclass):
@@ -22,7 +22,7 @@ class ReusableGenerator(Dataclass):
 class CopyingReusableGenerator(ReusableGenerator):
     def __iter__(self):
         for instance in self.activate():
-            yield copy.deepcopy(instance)
+            yield deepcopy(instance)
 
 
 # if __name__ == "__main__":

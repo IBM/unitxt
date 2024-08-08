@@ -45,7 +45,6 @@ import uuid
 import zipfile
 from abc import abstractmethod
 from collections import Counter, defaultdict
-from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
 from random import Random
@@ -86,7 +85,7 @@ from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
-from .utils import flatten_dict
+from .utils import deepcopy, flatten_dict
 
 settings = get_settings()
 
