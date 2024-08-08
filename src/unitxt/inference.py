@@ -8,6 +8,7 @@ from .artifact import Artifact
 from .deprecation_utils import deprecation
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
+from .utils import json_dump
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -376,13 +377,11 @@ class WMLInferenceEngine(
     """Runs inference using ibm-watsonx-ai.
 
     Attributes:
-        client: By default, it is created by a class instance but can be directly
-            provided instead as an instance of 'ibm_watsonx_ai.client.APIClient'.
-        credentials: By default, it is created by a class instance which tries to retrieve
-            proper environment variables ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY").
-            However, either a dictionary with the following keys: "url", "apikey",
-            "project_id", or an instance of 'ibm_watsonx_ai.credentials.Credentials'
-            can be directly provided instead.
+        credentials (Dict[str, str], optional): By default, it is created by a class
+            instance which tries to retrieve proper environment variables
+            ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY"). However, a dictionary with
+            the following keys: "url", "apikey", "project_id" can be directly provided
+            instead.
         model_name (str, optional): ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
@@ -412,8 +411,7 @@ class WMLInferenceEngine(
         results = wml_inference.infer(dataset["test"])
     """
 
-    client: Any = None
-    credentials: Any = None
+    credentials: Optional[Dict[str, str]] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     label: str = "wml"
@@ -424,6 +422,24 @@ class WMLInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[WMLInferenceEngineParams] = None
+
+    _client: Any = None
+
+    def to_json(self):
+        """Serializes the class to JSON.
+
+        Function overwrites the default `to_json` method implemented by
+        the `Artifact` class to hide possible credentials passed to the
+        engine.
+        """
+        data = self.to_dict()
+        creds: Optional[Dict[str, str]] = data.get("credentials")
+        if creds:
+            data["credentials"] = {
+                key: "<hidden>" if key != "url" else value
+                for key, value in creds.items()
+            }
+        return json_dump(data)
 
     @staticmethod
     def _read_wml_credentials_from_env() -> Dict[str, str]:
@@ -453,8 +469,7 @@ class WMLInferenceEngine(
         return client
 
     def prepare(self):
-        if self.client is None:
-            self.client = self._initialize_wml_client()
+        self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
 
@@ -472,13 +487,10 @@ class WMLInferenceEngine(
         model = ModelInference(
             model_id=self.model_name,
             deployment_id=self.deployment_id,
-            api_client=self.client,
+            api_client=self._client,
         )
 
-        return [
-            model.generate_text(
-                prompt=instance["source"],
-                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
-            )
-            for instance in dataset
-        ]
+        return model.generate_text(
+            prompt=dataset["source"],
+            params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+        )
