@@ -143,13 +143,25 @@ class Metric(Artifact):
             else score_name
         )
 
-    def _add_score_prefixes_to_score_dict(self, scores: Dict[str, Any]):
+    def _add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+        self, scores: Dict[str, Any], existing_scores: Dict[str, Any]
+    ) -> Dict[str, Any]:
         new_scores = {}
         for score_name, score in scores.items():
             score_with_prefix = self._add_score_prefix(score_name)
             new_scores[score_with_prefix] = (
                 score if score_name not in ["score_name"] else self.score_prefix + score
             )
+        for new_score_name in new_scores:
+            if new_score_name in ["score", "score_name"]:
+                continue
+            if new_score_name in existing_scores:
+                UnitxtWarning(
+                    message=f"Metric '{new_score_name}' that has just been evaluated to {new_scores[new_score_name]}, is already recorded "
+                    f"to have value {existing_scores[new_score_name]} by a previous metric evaluation on this instance or stream. "
+                    f"To avoid overwriting the existing value, add a score_prefix to the metric (e.g. score_prefix='my_second_').",
+                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                )
         return new_scores
 
     def _validate_references_and_prediction(self, references, predictions):
@@ -240,8 +252,8 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    # update instance["score"]["global"] with the newly computed global score, global_score, for the
-    # current metric computed.  global_score contains "score" and "score_name" fields that reflect
+    # update instance["score"]["global"] with the global_score just computed for the
+    # current metric.  global_score contains "score" and "score_name" fields that reflect
     # (the main_score of) the current metric.
     # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
     # of its fields "score" and "score_name", to reflect the current metric, overwriting previous metrics' settings
@@ -265,6 +277,16 @@ class Metric(Artifact):
     def update_and_adjust_global_score(
         self, instance: Dict[str, Any], global_score: dict
     ):
+        for score_name in global_score:
+            if score_name in ["score", "score_name"]:
+                continue
+            if score_name in instance["score"]["global"]:
+                UnitxtWarning(
+                    message=f"Global metric '{score_name}' that has just been evaluated to {global_score[score_name]}, is already recorded "
+                    f"to have value {instance['score']['global'][score_name]} by a previous metric evaluation on this stream. "
+                    f"To avoid overwriting the value, add a score_prefix to the metric (e.g. score_prefix='my_{score_name}'.",
+                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                )
         instance["score"]["global"].update(global_score)
         for score_ci in ["score_ci_low", "score_ci_high"]:
             if score_ci in global_score:
@@ -561,12 +583,18 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                     instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    instance_score, instance["score"]["instance"]
+                )
             )
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-        global_score.update(self._add_score_prefixes_to_score_dict(result))
+        global_score.update(
+            self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                result, global_score
+            )
+        )
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
             references, predictions, task_data, score_name
@@ -659,7 +687,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instance["score"] = {"global": {}, "instance": {}}
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    score, instance["score"]["instance"]
+                )
             )
             instances.append(instance)
 
@@ -1142,7 +1172,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instance["score"] = {"global": {}, "instance": {}}
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    instance_score, instance["score"]["instance"]
+                )
             )
 
             instances.append(instance)
