@@ -4,7 +4,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -36,7 +36,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
         ),
-        RenameFields(field_to_field={"topic": "label"}),
+        Rename(field_to_field={"topic": "label"}),
         MapInstanceValues(mappers={"label": mappers}),
         ListFieldValues(
             fields=["question_title", "question_content", "best_answer"],

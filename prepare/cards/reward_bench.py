@@ -3,7 +3,7 @@ from unitxt.blocks import (
     LoadHF,
     TaskCard,
 )
-from unitxt.operators import FilterByCondition, RenameFields, Set
+from unitxt.operators import FilterByCondition, Rename, Set
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -46,7 +46,7 @@ for subset in subset_dict.keys():
         loader=LoadHF(path="allenai/reward-bench", split="filtered"),
         preprocess_steps=[
             RenameSplits({"filtered": "test"}),
-            RenameFields(
+            Rename(
                 field_to_field={
                     "prompt": "question",
                     "chosen": "answer_a",

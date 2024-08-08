@@ -41,7 +41,7 @@ from unitxt.operators import (
     Perturb,
     RemoveFields,
     RemoveValues,
-    RenameFields,
+    Rename,
     SelectFields,
     Set,
     Shuffle,
@@ -2086,7 +2086,7 @@ label (str):
 
         # the simplest case
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c"}),
+            operator=Rename(field_to_field={"b": "c"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2094,7 +2094,7 @@ label (str):
 
         # to field is structured:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c/d"}),
+            operator=Rename(field_to_field={"b": "c/d"}),
             inputs=inputs,
             targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
             tester=self,
@@ -2102,7 +2102,7 @@ label (str):
 
         # to field is structured, to stand in place of from field:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "b/d"}),
+            operator=Rename(field_to_field={"b": "b/d"}),
             inputs=inputs,
             targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
             tester=self,
@@ -2110,7 +2110,7 @@ label (str):
 
         # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "b/d"}),
+            operator=Rename(field_to_field={"b/c/e": "b/d"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2124,7 +2124,7 @@ label (str):
 
         # to field is structured, from field is structured too, different fields:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "g/h"}),
+            operator=Rename(field_to_field={"b/c/e": "g/h"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2138,7 +2138,7 @@ label (str):
 
         # both from and to field are structured, different only in the middle of the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/g/c/d"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/g/c/d"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2150,7 +2150,7 @@ label (str):
 
         # both from and to field are structured, different down the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/b/c/f"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2161,7 +2161,7 @@ label (str):
         )
 
         with self.assertWarns(DeprecationWarning) as dw:
-            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            Rename(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
             self.assertEqual(
                 "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
                 dw.warnings[0].message.args[0],

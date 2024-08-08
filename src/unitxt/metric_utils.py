@@ -19,7 +19,7 @@ from .operators import (
     Copy,
     FlattenInstances,
     MergeStreams,
-    RenameFields,
+    Rename,
     SplitByNestedGroup,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -221,11 +221,11 @@ class MetricRecipe(SequentialOperatorInitializer):
             ),
             MultiStreamScoreMean(),
             MergeStreams(),
-            RenameFields(
+            Rename(
                 field="raw_prediction",
                 to_field="prediction",
             ),
-            RenameFields(
+            Rename(
                 field="raw_references",
                 to_field="references",
             ),
