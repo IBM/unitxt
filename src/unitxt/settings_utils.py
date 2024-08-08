@@ -126,7 +126,7 @@ if Settings.is_uninitilized():
     settings.artifactories = None
     settings.default_recipe = "standard_recipe"
     settings.default_verbosity = "info"
-    settings.use_eager_execution = False
+    settings.use_eager_execution = True
     settings.remote_metrics = []
     settings.test_card_disable = (bool, False)
     settings.test_metric_disable = (bool, False)
