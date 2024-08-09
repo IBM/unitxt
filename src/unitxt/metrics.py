@@ -7,7 +7,6 @@ import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from copy import deepcopy
 from dataclasses import field
 from operator import itemgetter
 from statistics import mean
@@ -44,6 +43,7 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
+from .utils import deepcopy
 
 logger = get_logger()
 settings = get_settings()

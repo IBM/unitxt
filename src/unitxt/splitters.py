@@ -1,6 +1,5 @@
 import itertools
 from abc import abstractmethod
-from copy import deepcopy
 from difflib import get_close_matches
 from typing import Dict, List, Optional
 
@@ -17,6 +16,7 @@ from .split_utils import (
 )
 from .stream import EmptyStreamError, FaultyStreamError, MultiStream
 from .type_utils import isoftype
+from .utils import deepcopy
 
 
 class Splitter(MultiStreamOperator):
