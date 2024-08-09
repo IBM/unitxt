@@ -25,7 +25,8 @@
             "values": {
                 "inputs_len": 4096
             },
-            "condition": "lt"
+            "condition": "lt",
+            "error_on_filtered_all": false
         },
         {
             "__type__": "execute_expression",
