@@ -315,7 +315,7 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
                 ListFieldValues(fields=["references"], to_field="references"),
             ],
             metric=metrics["metrics.token_overlap"],
-            postpreprocess_steps=[
+            postprocess_steps=[
                 RenameFields(
                     field_to_field=[
                         ("score/global/f1", "score/global/f1_overlap_with_context"),
