@@ -430,21 +430,11 @@ def verify(self):
          for key in self.credentials:
              if key not in ["url", "apikey", "project_id"],:
                  raise ValueError(f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]')
-    def to_json(self):
-        """Serializes the class to JSON.
-
-        Function overwrites the default `to_json` method implemented by
-        the `Artifact` class to hide possible credentials passed to the
-        engine.
-        """
-        data = self.to_dict()
-        creds: Optional[Dict[str, str]] = data.get("credentials")
-        if creds:
-            data["credentials"] = {
-                key: "<hidden>" if key != "url" else value
-                for key, value in creds.items()
-            }
-        return json_dump(data)
+    def process_data_before_dump(self, data):
+        if "credentials" in data:
+            for key in data["credentials"]:
+                if key != "url":
+                    data[key] = "<hidden>"
 
     @staticmethod
     def _read_wml_credentials_from_env() -> Dict[str, str]:
