@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 from tqdm import tqdm
 
 from .artifact import Artifact
+from .dataclass import InternalField
 from .deprecation_utils import deprecation
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
@@ -422,7 +423,7 @@ class WMLInferenceEngine(
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[WMLInferenceEngineParams] = None
 
-    _client: Any = None
+    _client: Any = InternalField(default=None, name="WML client")
 
     def verify(self):
         super().verify()
