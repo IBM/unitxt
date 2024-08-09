@@ -424,7 +424,12 @@ class WMLInferenceEngine(
     parameters: Optional[WMLInferenceEngineParams] = None
 
     _client: Any = None
-
+def verify(self):
+     super().verify()
+     if self.credential is not None:
+         for key in self.credentials:
+             if key not in ["url", "apikey", "project_id"],:
+                 raise ValueError(f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]')
     def to_json(self):
         """Serializes the class to JSON.
 
