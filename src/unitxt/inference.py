@@ -8,7 +8,6 @@ from .artifact import Artifact
 from .deprecation_utils import deprecation
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
-from .utils import json_dump
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -424,20 +423,36 @@ class WMLInferenceEngine(
     parameters: Optional[WMLInferenceEngineParams] = None
 
     _client: Any = None
-def verify(self):
-     super().verify()
-     if self.credential is not None:
-         for key in self.credentials:
-             if key not in ["url", "apikey", "project_id"],:
-                 raise ValueError(f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]')
+
+    def verify(self):
+        super().verify()
+
+        if self.credentials is not None:
+            for key in self.credentials:
+                if key not in ["url", "apikey", "project_id"]:
+                    raise ValueError(
+                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]'
+                    )
+
+        assert (
+            self.model_name
+            or self.deployment_id
+            and not (self.model_name and self.deployment_id)
+        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+
     def process_data_before_dump(self, data):
         if "credentials" in data:
-            for key in data["credentials"]:
+            for key, value in data["credentials"].items():
                 if key != "url":
-                    data[key] = "<hidden>"
+                    data["credentials"][key] = "<hidden>"
+                else:
+                    data["credentials"][key] = value
+        return data
 
     @staticmethod
-    def _read_wml_credentials_from_env() -> Dict[str, str]:
+    def _read_wml_credentials_from_env() -> (
+        Dict[Literal["url", "apikey", "project_id"], str]
+    ):
         credentials = {}
         for env_var_name in ["WML_URL", "WML_PROJECT_ID", "WML_APIKEY"]:
             env_var = os.environ.get(env_var_name)
@@ -467,14 +482,6 @@ def verify(self):
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
-
-    def verify(self):
-        assert (
-            self.model_name
-            or self.deployment_id
-            and not (self.model_name and self.deployment_id)
-        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
-        super().verify()
 
     def _infer(self, dataset):
         from ibm_watsonx_ai.foundation_models import ModelInference
