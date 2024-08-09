@@ -1,5 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import Set, SplitRandomMix, TaskCard
+from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import FilterByExpression, RenameFields
 from unitxt.test_utils.card import test_card
@@ -16,6 +17,7 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
             ),
             RenameFields(field_to_field={"text": "document"}),
             Set(fields={"document_type": "document"}),
+            Wrap(field="summary", inside="list", to_field="summaries"),
         ]
         + (
             [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}")]

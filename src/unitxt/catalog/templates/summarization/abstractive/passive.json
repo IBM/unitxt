@@ -1,7 +1,7 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "multi_reference_template",
     "input_format": "The following {document_type} is to be summarized into one sentence: {document}.",
-    "output_format": "{summary}",
+    "references_field": "summaries",
     "postprocessors": [
         "processors.take_first_non_empty_line"
     ]
