@@ -22,6 +22,7 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
+    DeprecatedField,
     InternalField,
     NonPositionalField,
     OptionalField,
@@ -254,10 +255,12 @@ class Metric(Artifact):
 
     # update instance["score"]["global"] with the global_score just computed for the
     # current metric.  global_score contains "score" and "score_name" fields that reflect
-    # (the main_score of) the current metric.
+    # (the main_score of) the current metric. If CI was computed for global_score, then global_score
+    # also contains "score_ci_low" and "score_ci_high" that reflect (the main_score of) the current metric.
     # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
-    # of its fields "score" and "score_name", to reflect the current metric, overwriting previous metrics' settings
-    # of these fields (if any previous metric exists).
+    # of its fields "score" and "score_name" (and "score_ci_low", "score_ci_high" if applicable),
+    # to reflect the current metric, overwriting previous metrics' settings of these fields
+    # (if any previous metric exists).
     # When global_score does NOT contain ci score (because CI was not computed for the current metric), but
     # one of the previous metrics computed did have, the last of such previous metrics set the values in
     # fields "score_ci_low" and "score_ci_high" in instance["score"]["global"] to reflect its
@@ -268,17 +271,17 @@ class Metric(Artifact):
     # therefore, not consistent with "score_name".
     # In such a case, following the python-dictionary-update, we pop out fields "score_ci_low" and
     # "score_ci_high" from instance["score"]["global"], so that now all the fields "score.." in
-    # instance["score"]["global"] are consistent with the current metric: The current metric
-    # is named instance["score"]["global"]["score_name"], its score shows in
+    # instance["score"]["global"] are consistent with the current metric: The metric that is named
+    # instance["score"]["global"]["score_name"], its score shows in
     # field instance["score"]["global"]["score"], and it does not have ci_scores,
     # which is also reflected in the absence of fields "score_ci_low" and "score_ci_high" from instance["score"]["global"].
     # If ci IS computed for the current metric, global_score contains "score_ci_low" and "score_ci_high", and these overwrite
-    # the ones existing in instance["score"]["global"] by a simple python-dictionary-update, and no need for any further fixeup.
+    # the ones existing in instance["score"]["global"] by the simple python-dictionary-update, and no need for any further fixeup.
     def update_and_adjust_global_score(
         self, instance: Dict[str, Any], global_score: dict
     ):
         for score_name in global_score:
-            if score_name in ["score", "score_name"]:
+            if score_name in ["score", "score_name", "score_ci_low", "score_ci_high"]:
                 continue
             if score_name in instance["score"]["global"]:
                 UnitxtWarning(
@@ -1422,8 +1425,11 @@ class StringContainmentRatio(InstanceMetric):
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
-        default_factory=list
+    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    postpreprocess_steps: Optional[List[StreamingOperator]] = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
+        }
     )
     metric: Metric = None
 
@@ -1444,6 +1450,23 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        has_postpreprocess = (
+            hasattr(self, "postpreprocess_steps")
+            and self.postpreprocess_steps is not None
+            and isinstance(self.postpreprocess_steps, list)
+            and len(self.postpreprocess_steps) > 0
+        )
+        has_postprocess = (
+            hasattr(self, "postprocess_steps")
+            and self.postprocess_steps is not None
+            and isinstance(self.postprocess_steps, list)
+            and len(self.postprocess_steps) > 0
+        )
+        assert not (
+            has_postpreprocess and has_postprocess
+        ), "Must define at most one of postpreprocess_steps (which is deprecated) and postprocess_steps (to be used from now on)"
+        if has_postpreprocess:
+            self.postprocess_steps = self.postpreprocess_steps
         self.prepare_score = Copy(
             field_to_field=[
                 [
@@ -1461,7 +1484,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
+        for step in self.postprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
