@@ -411,7 +411,7 @@ class WMLInferenceEngine(
         results = wml_inference.infer(dataset["test"])
     """
 
-    credentials: Optional[Dict[str, str]] = None
+    credentials: Optional[Dict[Literal["url", "apikey", "project_id"], str]] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     label: str = "wml"
