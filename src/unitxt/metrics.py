@@ -471,11 +471,17 @@ class MetricWithConfidenceInterval(Metric):
             # iterate over the rows and compute the metric on each resampling
             def metric(sample_refs, sample_preds, sample_task_data):
                 try:
-                    return self._compute(
+                    results = self._compute(
                         references=sample_refs,
                         predictions=sample_preds,
                         task_data=sample_task_data,
-                    )["score"]
+                    )
+                    results.update(
+                        self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                            results, {}
+                        )
+                    )
+                    return results[score_name]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
@@ -598,11 +604,18 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 result, global_score
             )
         )
-        score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, task_data, score_name
-        )
-        global_score.update(confidence_interval)
+        if self.ci_scores:
+            score_names = [
+                self._add_score_prefix(score_name) for score_name in self.ci_scores
+            ]
+        else:
+            score_names = [global_score["score_name"]]
+
+        for score_name in score_names:
+            confidence_interval = self.compute_global_confidence_intervals(
+                references, predictions, task_data, score_name
+            )
+            global_score.update(confidence_interval)
 
         for instance in instances:
             self.update_and_adjust_global_score(instance, global_score)
@@ -1788,6 +1801,7 @@ class F1Binary(GlobalMetric):
     _metric = None
     metric = "f1"
     single_reference_per_prediction = True
+    ci_scores = [main_score, "f1_binary_neg"]
     _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
@@ -4316,6 +4330,7 @@ class BinaryMaxF1(F1Binary):
     main_score = "max_f1_binary"
     single_reference_per_prediction = True
     average = None
+    ci_scores = [main_score, "max_f1_binary_neg"]
 
     def compute(
         self,
