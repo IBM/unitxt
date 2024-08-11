@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from .. import get_from_catalog
+from ..catalog import get_from_catalog
 from ..metrics import BulkInstanceMetric
 from ..operator import SequentialOperator
 
