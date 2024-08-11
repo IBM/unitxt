@@ -233,7 +233,7 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = None
     n: Optional[int] = None
-    parallel_tool_calls: bool = None
+    # parallel_tool_calls: bool = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
