@@ -432,7 +432,7 @@ class WMLInferenceEngine(
             for key in self.credentials:
                 if key not in ["url", "apikey", "project_id", "space_id"]:
                     raise ValueError(
-                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]'
+                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id", "space_id"]'
                     )
 
         assert (
@@ -452,7 +452,7 @@ class WMLInferenceEngine(
 
     @staticmethod
     def _read_wml_credentials_from_env() -> (
-        Dict[Literal["url", "apikey", "project_id"], str]
+        Dict[Literal["url", "apikey", "project_id", "space_id"], str]
     ):
         credentials = {}
         project_or_deployment_var_name = (
@@ -491,7 +491,7 @@ class WMLInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
+    def _load_model_and_params(self):
         from ibm_watsonx_ai.foundation_models import ModelInference
 
         model = ModelInference(
@@ -499,8 +499,45 @@ class WMLInferenceEngine(
             deployment_id=self.deployment_id,
             api_client=self._client,
         )
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
+
+        return model, params
+
+    def _infer(self, dataset):
+        model, params = self._load_model_and_params()
 
         return model.generate_text(
             prompt=dataset["source"],
-            params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+            params=params,
         )
+
+    def _infer_log_probs(self, dataset):
+        model, params = self._load_model_and_params()
+
+        user_return_options = params.pop("return_options", {})
+        # currently this is the only configuration that returns generated logprobs and behaves as expected
+        logprobs_return_options = {
+            "input_tokens": True,
+            "generated_tokens": True,
+            "token_logprobs": True,
+            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
+        }
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
+
+        params = {
+            **params,
+            "return_options": logprobs_return_options,
+        }
+
+        results = model.generate(
+            prompt=dataset["source"],
+            params=params,
+        )
+
+        return [result["results"][0]["generated_tokens"] for result in results]
