@@ -9,9 +9,14 @@
         {
             "__type__": "rename_fields",
             "field_to_field": {
-                "article": "document",
-                "highlights": "summary"
+                "article": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "highlights",
+            "inside": "list",
+            "to_field": "summaries"
         },
         {
             "__type__": "set",
