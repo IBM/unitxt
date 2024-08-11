@@ -45,7 +45,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
-    num_demos: Optional[Union[int, List[int]]] = None
+    num_demos: Optional[Union[int, List[int]]] = 0
     demos_removed_from_data: bool = True
 
     demos_pool_name: str = "demos_pool"
