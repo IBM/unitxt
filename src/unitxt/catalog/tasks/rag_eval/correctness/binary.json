@@ -1,0 +1,25 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "answer": "str",
+        "ground_truths": "List[str]",
+        "question": "str",
+        "choices": "List[str]"
+    },
+    "outputs": {
+        "is_correct": "List[str]",
+        "number_val": "Union[float, int]"
+    },
+    "metrics": [
+        "metrics.spearman",
+        "metrics.kendalltau_b",
+        "metrics.roc_auc",
+        "metrics.f1_binary",
+        "metrics.accuracy_binary",
+        "metrics.precision_binary",
+        "metrics.recall_binary",
+        "metrics.max_f1_binary",
+        "metrics.max_accuracy_binary"
+    ],
+    "prediction_type": "float"
+}
