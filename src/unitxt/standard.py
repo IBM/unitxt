@@ -33,6 +33,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
 
+    group_by: List[List[str]] = None
+
     loader_limit: int = None
 
     max_train_instances: int = None
