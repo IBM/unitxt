@@ -2127,7 +2127,7 @@ class Rouge(InstanceMetric):
 
         self.rouge_scorer = rouge_scorer
 
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
@@ -2180,7 +2180,7 @@ class RougeHF(HuggingfaceInstanceMetric):
 
         import nltk
 
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, prediction, task_data: List[Dict]):
