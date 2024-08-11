@@ -1,0 +1,8 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag_eval.answer_relevance.metric_template",
+        "templates.rag_eval.answer_relevance.judge_answer_relevance",
+        "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs"
+    ]
+}

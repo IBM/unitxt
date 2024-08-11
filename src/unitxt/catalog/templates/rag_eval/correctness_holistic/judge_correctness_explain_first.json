@@ -1,0 +1,14 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nEvidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_correct}",
+    "postprocessors": [
+        "processors.extract_from_double_brackets",
+        "processors.lower_case",
+        "processors.yes_no_to_int",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question, some corresponding evidence and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence. \nBegin your evaluation by generating your own answer to the question given the provided evidence. You must provide your answer before making the judgement.\nWhen evaluating the model prediction, compare it with your answer. You must identify and correct any mistakes, partial information, or content that does not rely on the given evidence.\nAfter providing your answer and explanation, you must output only one of the following choices as your final verdict with a label:\n\n1. The prediction is satisfactory and complete: [[Yes]]\n2. The prediction does not meet the requirements: [[No]]\n\n\nExample output: \"Final verdict: [[Yes]]\".\n"
+}

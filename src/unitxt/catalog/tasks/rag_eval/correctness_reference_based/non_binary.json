@@ -1,0 +1,19 @@
+{
+    "__type__": "task",
+    "inputs": {
+        "answer": "str",
+        "question": "str",
+        "choices": "List[str]",
+        "ground_truths": "List[str]",
+        "contexts": "List[str]"
+    },
+    "outputs": {
+        "is_correct": "List[str]",
+        "number_val": "Union[float, int]"
+    },
+    "metrics": [
+        "metrics.spearman",
+        "metrics.kendalltau_b"
+    ],
+    "prediction_type": "float"
+}
