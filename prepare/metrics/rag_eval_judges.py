@@ -1,11 +1,12 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy, Set
-from unitxt.rag_metrics.binary_judge_metric import (
+from unitxt.metrics import (
     GenerativeBinaryJudgeOpenAi,
     GenerativeBinaryJudgeWML,
+    MetricPipeline,
 )
-from unitxt.rag_metrics.rag_metrics_utils import rag_fields, test_metric
+from unitxt.operators import Copy, Set
+
+rag_fields = {"ground_truths", "answer", "contexts", "question"}
 
 metric_type_to_template = {
     "faithfulness": {
@@ -71,10 +72,10 @@ def add_judge_metrics():
                     ],
                 )
 
-                test_metric(metric_pipeline)
-
                 add_to_catalog(
-                    metric_pipeline, name=f"metrics.rag.{metric_name}", overwrite=True
+                    metric_pipeline,
+                    name=f"metrics.rag.binary_judges.{metric_name}",
+                    overwrite=True,
                 )
 
 

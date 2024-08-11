@@ -18,7 +18,9 @@ import numpy as np
 import pandas as pd
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
+from tqdm import tqdm
 
+from . import get_from_catalog
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
@@ -29,7 +31,12 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
-from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
+from .inference import (
+    HFPipelineBasedInferenceEngine,
+    InferenceEngine,
+    OpenAiInferenceEngine,
+    WMLInferenceEngine,
+)
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -4744,3 +4751,225 @@ class MetricsEnsemble(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         return {self.main_score: prediction}
+
+
+class TaskBasedJudgeMetric(BulkInstanceMetric):
+    reduction_map: Dict[str, List[str]] = None
+    prediction_type = float
+    model_name: str = None
+    task_name: str = None
+    template_name: str = None
+    model_format_name = "formats.empty"
+
+    def prepare(
+        self,
+    ):
+        self.reduction_map = {"mean": [self.main_score]}
+        # the processing steps for preparing the prompt (instruction, answer prefix etc.)
+        # that we send to the generative judge model
+        self.processor = SequentialOperator(
+            steps=[
+                self.task_name,
+                self.template_name,
+                self.model_format_name,
+            ]
+        )
+        self.set_unneeded_fields()
+
+    def compute(
+        self,
+        references: list[list[str]],
+        predictions: list[str],
+        task_data: list[dict],
+    ) -> dict:
+        pass
+
+    def set_unneeded_fields(self):
+        template_input_format = get_from_catalog(self.template_name).input_format
+        task = get_from_catalog(self.task_name)
+        unneeded_task_fields = {
+            **task.reference_fields,
+            **{
+                field: field_type
+                for field, field_type in task.input_fields.items()
+                if field not in template_input_format
+            },
+        }
+        self.unneeded_task_fields = unneeded_task_fields
+
+    def adjust_instances_to_task(self, task_data):
+        # we add mock values for fields that the task expects but are not needed here
+        for field_name, field_type in self.unneeded_task_fields.items():
+            if field_name not in task_data[0]:
+                for example in task_data:
+                    example[field_name] = (
+                        ["mock"] if field_type._name == "List" else 0.0
+                    )  # this is a very specific hack
+        return task_data
+
+
+class GenerativeBinaryJudge(TaskBasedJudgeMetric):
+    inference_engine_class = None
+    inference_model: InferenceEngine = None
+    generation_kwargs: dict = {}
+
+    def prepare(self):
+        super().prepare()
+        if self.inference_model is None:
+            self.inference_model = self.inference_engine_class(
+                model_name=self.model_name,
+                **self.generation_kwargs,
+            )
+
+        # the processing steps for converting the logprobs dicts to float predictions
+        self.post_processor = SequentialOperator(
+            steps=[
+                "processors.infer_logprobs_to_yes_no_probs",
+                "processors.cast_to_float_return_zero_if_failed",
+            ]
+        )
+
+    def compute(
+        self,
+        references: list[list[str]],
+        predictions: list[str],
+        task_data: list[dict],
+    ) -> dict:
+        processed_data = self._prepare_instances_for_model(task_data)
+        preds = self.inference_model.infer_log_probs(processed_data)
+        processed_preds = self._process_predictions(preds)
+
+        return [{self.main_score: s} for s in processed_preds]
+
+    def _prepare_instances_for_model(self, task_data: list[dict]):
+        task_data = self.adjust_instances_to_task(task_data)
+        stream = MultiStream({"test": task_data})
+
+        processed_stream = self.processor.process(stream)
+        return processed_stream.to_dataset()["test"]
+
+    def _process_predictions(self, logprob_results: list[dict]):
+        stream = MultiStream(
+            {
+                "test": [
+                    {
+                        "prediction": x,
+                        "references": [0.0],
+                    }  # the format expected by prediction post-processors
+                    for x in logprob_results
+                ]
+            }
+        )
+        processed_stream = self.post_processor.process(stream)
+        return processed_stream.to_dataset()["test"]["prediction"]
+
+
+class GenerativeBinaryJudgeWML(GenerativeBinaryJudge):
+    generation_kwargs = {"max_new_tokens": 5}
+    _requirements_list: list[str] = ["ibm_watsonx_ai"]
+    inference_engine_class = WMLInferenceEngine
+
+
+class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
+    generation_kwargs = {"logprobs": True, "max_tokens": 5}
+    _requirements_list: list[str] = ["openai"]
+    inference_engine_class = OpenAiInferenceEngine
+
+
+class ArmoRMMetric(TaskBasedJudgeMetric):
+    _requirements_list: list[str] = ["torch", "AutoTokenizer"]
+    model_name = "RLHFlow/ArmoRM-Llama3-8B-v0.1"
+    num_labels = 19
+    infer_batch_size = 2
+    max_len = 8192
+
+    def prepare(
+        self,
+    ):
+        super().prepare()
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
+
+        self.device = self._init_device()
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.tokenizer.truncation_side = "left"
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name,
+            device_map=self.device,
+            trust_remote_code=True,
+            torch_dtype=torch.bfloat16,
+        )
+
+    def _init_device(self):
+        import torch
+
+        if torch.cuda.is_available():
+            gpu_id = torch.cuda.current_device()
+            gpu_msg = f"There are {torch.cuda.device_count()} GPUs available, using GPU {gpu_id}, name: {torch.cuda.get_device_name(gpu_id)}"
+            self.device = torch.device("cuda")
+        elif torch.backends.mps.is_available():
+            gpu_msg = "Using local MPS GPU"
+            self.device = torch.device("mps")
+        else:
+            gpu_msg = "f'There are NO GPUs available.'"
+            self.device = torch.device("cpu")
+        logger.info(gpu_msg)
+
+    def compute(
+        self,
+        references: list[list[str]],
+        predictions: list[str],
+        task_data: list[dict],
+    ) -> dict:
+        text_pairs = self.get_texts_pairs(task_data)
+        processed_preds = self.get_scores(text_pairs)
+        return [{self.main_score: s} for s in processed_preds]
+
+    def get_scores(self, text_pairs):
+        import torch
+
+        sentences_batches = [
+            text_pairs[x : x + self.infer_batch_size]
+            for x in range(0, len(text_pairs), self.infer_batch_size)
+        ]
+        scores = []
+        logger.info(
+            f"Inferring {len(text_pairs)} texts in {len(sentences_batches)} batches"
+        )
+        for sentences_batch in tqdm(sentences_batches):
+            features = self.tokenizer(
+                sentences_batch,
+                padding=True,
+                truncation=True,
+                return_tensors="pt",
+                max_length=self.max_len,
+            ).to(self.device)
+
+            with torch.no_grad():
+                output = self.model(**features)
+                # there are also other possible scores to extract, as per usage example in https://huggingface.co/RLHFlow/ArmoRM-Llama3-8B-v0.1
+                preference_scores = output.score.cpu().float()
+                batch_scores = [float(score) for score in preference_scores]
+            scores.extend(batch_scores)
+
+        return scores
+
+    def get_templated_inputs(self, test_set):
+        test_set = self.adjust_instances_to_task(test_set)
+        instance_stream = MultiStream(
+            {"test": [{**instance, "contexts_ids": [0]} for instance in test_set]}
+        )
+        return self.processor.process(instance_stream).to_dataset()["test"]["source"]
+
+    def get_texts_pairs(self, test_set):
+        templated_inputs = self.get_templated_inputs(test_set)
+        return [
+            self.tokenizer.apply_chat_template(
+                [
+                    {"role": "user", "content": premise},
+                    {"role": "assistant", "content": instance["answer"]},
+                ],
+                tokenize=False,
+            )
+            for instance, premise in zip(test_set, templated_inputs)
+        ]

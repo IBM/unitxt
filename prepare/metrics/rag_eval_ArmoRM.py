@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import MetricPipeline
+from unitxt.metrics import ArmoRMMetric, MetricPipeline
 from unitxt.operators import Copy, Set
-from unitxt.rag_metrics.armorm_judge_metric import ArmoRMMetric
-from unitxt.rag_metrics.rag_metrics_utils import rag_fields, test_metric
+
+rag_fields = {"ground_truths", "answer", "contexts", "question"}
 
 metric_type_to_template = {
     "correctness_holistic": {
@@ -48,6 +48,4 @@ for metric_type, input_fields_to_template_name in metric_type_to_template.items(
             ],
         )
 
-        test_metric(metric_pipeline)
-
-        add_to_catalog(metric_pipeline, artifact_name=f"metrics.rag.{metric_name}")
+        add_to_catalog(metric_pipeline, name=f"metrics.rag.binary_judges.{metric_name}")

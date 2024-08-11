@@ -1,0 +1,31 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "answer_relevance_q_a_ArmoRM",
+    "metric": {
+        "__type__": "armo_rm_metric",
+        "main_score": "answer_relevance_q_a_ArmoRM",
+        "task_name": "tasks.qa.open",
+        "template_name": "templates.qa.open.simple2"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "ground_truths": "task_data/ground_truths",
+                "question": "task_data/question",
+                "contexts": "task_data/contexts",
+                "answer": "task_data/answer"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}
