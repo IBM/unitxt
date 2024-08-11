@@ -1,21 +1,21 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "context_relevance_q_c_judge_mixtral_8x7b_instruct_v01",
+    "main_score": "correctness_q_a_gt_judge_gpt_4o_mini",
     "metric": {
-        "__type__": "generative_binary_judge_wml",
-        "main_score": "context_relevance_q_c_judge_mixtral_8x7b_instruct_v01",
-        "model_name": "mistralai/mixtral-8x7b-instruct-v01",
-        "task_name": "tasks.rag_eval.context_relevance.binary",
-        "template_name": "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs"
+        "__type__": "generative_binary_judge_open_ai",
+        "main_score": "correctness_q_a_gt_judge_gpt_4o_mini",
+        "model_name": "gpt-4o-mini",
+        "task_name": "tasks.rag_eval.correctness.binary",
+        "template_name": "templates.rag_eval.correctness.judge_simplified_no_context_logprobs"
     },
     "preprocess_steps": [
         {
             "__type__": "copy",
             "field_to_field": {
                 "contexts": "task_data/contexts",
-                "answer": "task_data/answer",
                 "ground_truths": "task_data/ground_truths",
-                "question": "task_data/question"
+                "question": "task_data/question",
+                "answer": "task_data/answer"
             },
             "not_exist_ok": true
         },
