@@ -9,7 +9,7 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="EdinburghNLP/xsum"),
     task="tasks.summarization.abstractive",
-    preprocess_steps=[Wrap(field="summaries", inside="list", to_field="summaries")],
+    preprocess_steps=[Wrap(field="summaries", inside="list")],
     templates="templates.summarization.abstractive.all",
     __tags__={
         "annotations_creators": "found",
