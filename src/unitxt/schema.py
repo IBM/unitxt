@@ -40,6 +40,7 @@ class Finalize(InstanceOperatorValidator):
                 "template": self.artifact_to_jsonable(
                     instance["recipe_metadata"]["template"]
                 ),
+                "num_demos": instance["recipe_metadata"]["num_demos"],
             },
         }
         instance["task_data"] = json.dumps(task_data)

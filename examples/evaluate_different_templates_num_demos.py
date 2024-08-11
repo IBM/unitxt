@@ -1,30 +1,39 @@
-import evaluate
-from datasets import load_dataset
-from unitxt.text_utils import print_dict
+import json
 
-# Use the HF load_dataset API, to load the wnli entailment dataset using the standard template in the catalog for relation task with 5-shot in-context learning.
-# We set loader_limit to 200 to limit reduce download time.
-# Sample for each example a template from [templates.classification.multi_class.relation.default,templates.key_val]
-# Sample for each example a number of demonstrations from [0,5]
+from unitxt import evaluate, load_dataset
+from unitxt.logging_utils import get_logger
+
+logger = get_logger()
+
 dataset = load_dataset(
-    "unitxt/data",
-    "card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,5],demos_pool_size=100,loader_limit=200",
-    trust_remote_code=True,
+    card="cards.wnli",
+    template=[
+        "templates.classification.multi_class.relation.default",
+        "templates.key_val",
+    ],
+    num_demos=[0, 5],
+    demos_pool_size=100,
+    loader_limit=200,
 )
 
 # Print the resulting dataset.
-# The 'source' field contains the input to the model, and the 'references' field contains
-# that expected answer.
-print_dict(dataset["train"][0])
+for num_demos in [0, 5]:
+    for template in [
+        "templates.classification.multi_class.relation.default",
+        "templates.key_val",
+    ]:
+        subset = []
+        for instance in dataset["test"]:
+            metadata = json.loads(instance["task_data"])["metadata"]
+            if metadata["num_demos"] == num_demos and metadata["template"] == template:
+                subset.append(instance)
 
-# Generate predictions which are always entailment. Can be replaced with any inference method.
-predictions = ["entailment" for t in dataset["test"]]
+        # Generate predictions which are always entailment. Can be replaced with any inference method.
+        predictions = ["entailment" for t in subset]
 
-# Use the huggingface evaluate API to evaluate using the built in metrics for the task
-# (f1_micro, f1_macro, accuracy, including confidence intervals)
+        evaluated_dataset = evaluate(predictions=predictions, data=subset)
 
-metric = evaluate.load("unitxt/metric")
-evaluated_dataset = metric.compute(predictions=predictions, references=dataset["test"])
+        # Get the final score for that subset
+        score = evaluated_dataset[0]["score"]["global"]["score"]
 
-# print the aggregated scores dictionary.
-print_dict(evaluated_dataset[0]["score"]["global"])
+        logger.info(f"Num Demos: {num_demos}, Template: {template}, Score: {score}")

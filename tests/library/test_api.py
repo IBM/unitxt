@@ -24,7 +24,7 @@ class TestAPI(UnitxtTestCase):
             '"min_value": 1.0, '
             '"max_value": 5.0, '
             '"attribute_value": 5.0, '
-            '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple"}}',
+            '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -49,7 +49,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.cast_to_float_return_zero_if_failed",
             ],
             "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
-            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple"}}',
+            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
             "group": "unitxt",
         }
 
@@ -67,7 +67,7 @@ class TestAPI(UnitxtTestCase):
             "references": ["5.0"],
             "postprocessors": ["processors.to_string_stripped"],
             "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
-            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val"}}',
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 0}}',
             "group": "unitxt",
         }
 
@@ -95,6 +95,7 @@ class TestAPI(UnitxtTestCase):
                 "metadata": {
                     "data_classification_policy": ["public"],
                     "template": "templates.regression.two_texts.simple",
+                    "num_demos": 0,
                 },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
@@ -184,7 +185,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -230,7 +231,7 @@ class TestAPI(UnitxtTestCase):
             '"classes": ["entailment", "not entailment"], '
             '"type_of_relation": "entailment", '
             '"label": "?", '
-            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default"}}',
+            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
             "group": "unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",

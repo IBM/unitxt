@@ -327,6 +327,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 )
         else:
+            self.verbalization.steps.append(
+                Set(fields={"recipe_metadata/num_demos": 0})
+            )
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(templates=self.template)
