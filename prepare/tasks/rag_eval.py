@@ -38,7 +38,7 @@ for binary_val in rag_classification_metrics:
     add_to_catalog(
         Task(
             inputs=convert_to_dict_of_type(
-                ["answer", "ground_truths", "question", "choices"]
+                ["answer", "ground_truths", "question", "choices", "contexts"]
             ),
             outputs=convert_to_dict_of_type(["is_correct", "number_val"]),
             metrics=rag_classification_metrics[binary_val],

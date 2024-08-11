@@ -4,7 +4,8 @@
         "answer": "str",
         "ground_truths": "List[str]",
         "question": "str",
-        "choices": "List[str]"
+        "choices": "List[str]",
+        "contexts": "List[str]"
     },
     "outputs": {
         "is_correct": "List[str]",
