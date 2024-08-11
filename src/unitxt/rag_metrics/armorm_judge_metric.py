@@ -9,7 +9,7 @@ from .rag_metrics_utils import logger
 
 class ArmoRMMetric(TaskBasedJudgeMetric):
     _requirements_list: list[str] = ["torch", "AutoTokenizer"]
-    model_name = "microsoft/deberta-v3-small"  # RLHFlow/ArmoRM-Llama3-8B-v0.1"
+    model_name = "RLHFlow/ArmoRM-Llama3-8B-v0.1"
     num_labels = 19
     infer_batch_size = 2
     max_len = 8192
