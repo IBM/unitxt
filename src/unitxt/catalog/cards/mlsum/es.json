@@ -11,6 +11,12 @@
             "field_to_field": {
                 "text": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
         }
     ],
     "task": "tasks.summarization.abstractive",
