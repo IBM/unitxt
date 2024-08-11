@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
+from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
@@ -94,6 +95,7 @@ class Template(InstanceOperator):
             "references": references,
             "instruction": instruction,
             "target_prefix": target_prefix,
+            "postprocessors": self.postprocessors,
         }
 
     @abstractmethod
@@ -109,9 +111,6 @@ class Template(InstanceOperator):
         self, reference_fields: Dict[str, object]
     ) -> Tuple[str, List[str]]:
         pass
-
-    def get_postprocessors(self) -> List[str]:
-        return self.postprocessors
 
     def serialize_data(self, data):
         return {
@@ -135,6 +134,49 @@ class Template(InstanceOperator):
             raise TemplateFormatKeyError(
                 self, data, data_type, format_str, format_name
             ) from e
+
+
+class ApplyTemplate(InstanceOperator):
+    demos_field: Optional[str] = None
+
+    @abstractmethod
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        pass
+
+    def apply(self, template: Template, instance: Dict[str, Any]):
+        return template.process_instance(instance)
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        template = self.get_template(instance)
+
+        if self.demos_field is not None:
+            if self.demos_field not in instance:
+                raise ValueError("Demos field is missing.")
+            instance[self.demos_field] = [
+                self.apply(template, demo_instance)
+                for demo_instance in instance[self.demos_field]
+            ]
+        dict_set(instance, "recipe_metadata/template", template)
+        return self.apply(template, instance)
+
+
+class ApplySingleTemplate(ApplyTemplate):
+    template: Template
+
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        return self.template
+
+
+class ApplyRandomTemplate(ApplyTemplate):
+    templates: List[Template]
+
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        random_generator = new_random_generator(
+            {**instance["input_fields"], **instance["reference_fields"]}
+        )
+        return random_generator.choice(self.templates)
 
 
 class InputOutputTemplate(Template):

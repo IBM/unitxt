@@ -1,9 +1,9 @@
 import json
-from dataclasses import field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from datasets import Features, Sequence, Value
 
+from .artifact import Artifact
 from .dict_utils import dict_get
 from .operator import InstanceOperatorValidator
 
@@ -22,10 +22,9 @@ UNITXT_DATASET_SCHEMA = Features(
 )
 
 
-class ToUnitxtGroup(InstanceOperatorValidator):
+
+class Finalize(InstanceOperatorValidator):
     group_by: List[List[str]]
-    metrics: List[str] = None
-    postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
     remove_unnecessary_fields: bool = True
 
     @staticmethod
@@ -42,6 +41,7 @@ class ToUnitxtGroup(InstanceOperatorValidator):
             "template": self.artifact_to_jsonable(
                 instance["recipe_metadata"]["template"]
             ),
+            "num_demos": instance["recipe_metadata"]["num_demos"],
         }
         instance["metadata"] = json.dumps(metadata)
         task_data = {
@@ -72,10 +72,16 @@ class ToUnitxtGroup(InstanceOperatorValidator):
             groups.append(json.dumps(group))
 
         instance["groups"] = groups
-        if self.metrics is not None:
-            instance["metrics"] = self.metrics
-        if self.postprocessors is not None:
-            instance["postprocessors"] = self.postprocessors
+
+        instance["metrics"] = [
+            metric.to_json() if isinstance(metric, Artifact) else metric
+            for metric in instance["metrics"]
+        ]
+        instance["postprocessors"] = [
+            processor.to_json() if isinstance(processor, Artifact) else processor
+            for processor in instance["postprocessors"]
+        ]
+        
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):
