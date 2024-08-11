@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from .card import TaskCard
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
@@ -33,7 +33,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
 
-    group_by: List[List[str]] = None
+    group_by: List[Union[str, List[str]]] = None
 
     loader_limit: int = None
 
@@ -303,7 +303,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.finalize.steps.append(
             ToUnitxtGroup(
-                group="unitxt",
+                group_by=self.group_by,
                 metrics=metrics,
                 postprocessors=postprocessors,
             )
@@ -350,6 +350,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         metrics (List[str]): list of catalog metrics to use with this recipe.
         postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]): list of task_data or metadata keys to group global scores by.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.
