@@ -372,7 +372,10 @@ class WMLInferenceEngineParams(Artifact):
 
 
 class WMLInferenceEngine(
-    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    WMLInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
+    LogProbInferenceEngine,
 ):
     """Runs inference using ibm-watsonx-ai.
 
