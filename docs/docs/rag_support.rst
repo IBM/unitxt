@@ -1,4 +1,4 @@
-.. _rag_support
+.. _rag_support:
  
 =====================================
 RAG Support ✨

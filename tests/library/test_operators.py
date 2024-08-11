@@ -2831,6 +2831,14 @@ class TestApplyMetric(UnitxtTestCase):
         # check that the second score is present too
         self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
 
+    def test_apply_metric_with_two_identical_metrics(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=["metrics.accuracy", "metrics.accuracy"],
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+        self.assertAlmostEqual(global_metric_result["accuracy"], 0.5, delta=2)
+
     def test_render_demonstrations(self):
         template = InputOutputTemplate(
             input_format='This is my sentence: "{text}"', output_format="{label}"

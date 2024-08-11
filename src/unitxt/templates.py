@@ -7,17 +7,19 @@ from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
 from .dict_utils import dict_set
+from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
 from .type_utils import isoftype
 
 
-class TemplateFormatKeyError(KeyError):
+class TemplateFormatKeyError(UnitxtError):
     def __init__(self, template, data, data_type, format_str, format_name):
         keys = ", ".join(data.keys())
         super().__init__(
             f"Available {data_type}s are [{keys}] "
-            f"but {template.__class__.__name__}.{format_name} format requires a different ones: '{format_str}'"
+            f"but {template.__class__.__name__}.{format_name} format requires a different ones: '{format_str}'",
+            Documentation.ADDING_TEMPLATE,
         )
 
 
@@ -122,6 +124,11 @@ class Template(InstanceOperator):
         if serialize:
             data = self.serialize_data(data)
         try:
+            if format_str is None:
+                raise UnitxtError(
+                    f"Required field 'output_format' of class {self.__class__.__name__} not set in {self.__class__.__name__}",
+                    Documentation.ADDING_TEMPLATE,
+                )
             return format_str.format(**data)
         except KeyError as e:
             raise TemplateFormatKeyError(
@@ -513,8 +520,9 @@ class MultipleChoiceTemplate(Template):
             try:
                 return reference_fields[self.choices_field].index(target)
             except ValueError as e:
-                raise ValueError(
-                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}"
+                raise UnitxtError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}",
+                    Documentation.ADDING_TEMPLATE,
                 ) from e
         return target
 
@@ -527,8 +535,9 @@ class MultipleChoiceTemplate(Template):
             try:
                 target = reference_fields[self.choices_field].index(target)
             except ValueError as e:
-                raise ValueError(
-                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}"
+                raise UnitxtError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}",
+                    Documentation.ADDING_TEMPLATE,
                 ) from e
 
         choices = self.inputs_to_choices(reference_fields, self.target_choice_format)
@@ -536,8 +545,9 @@ class MultipleChoiceTemplate(Template):
         try:
             target = choices[target]
         except IndexError as e:
-            raise IndexError(
-                f"MultipleChoiceTemplate cannot find index number {target} in choices: {choices}"
+            raise UnitxtError(
+                f"MultipleChoiceTemplate cannot find index number {target} in choices: {choices}",
+                Documentation.ADDING_TEMPLATE,
             ) from e
 
         return target, [target]
@@ -616,21 +626,21 @@ class YesNoTemplate(Template):
         try:
             gold_class_names = reference_fields[self.label_field]
         except KeyError as e:
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Available reference_fields are {list(reference_fields.keys())}, missing required label field: '{self.label_field}'."
             ) from e
         if not isinstance(gold_class_names, list):
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Unexpected value for gold_class_names: '{gold_class_names}'. Expecting a list."
             )
         try:
             queried_class_name = reference_fields[self.class_field]
         except KeyError as e:
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Available reference_fields are {list(reference_fields.keys())}, missing required class field: '{self.class_field}'."
             ) from e
         if not queried_class_name or not isinstance(queried_class_name, str):
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Unexpected value for queried_class_names: '{queried_class_name}'. Expected a string."
             )
         if queried_class_name in gold_class_names:
@@ -716,8 +726,9 @@ class MultiLabelTemplate(InputOutputTemplate):
     ) -> str:
         labels = reference_fields[self.labels_field]
         if not isinstance(labels, list):
-            raise ValueError(
-                f"MultiLabelTemplate requires labels field '{self.labels_field}' to be a list. Got {self.labels_field}<{type(labels).__name__}>: {labels}"
+            raise UnitxtError(
+                f"MultiLabelTemplate requires labels field '{self.labels_field}' to be a list. Got {self.labels_field}<{type(labels).__name__}>: {labels}",
+                Documentation.ADDING_TEMPLATE,
             )
         if len(labels) == 0:
             labels = [self.empty_label]
@@ -736,12 +747,14 @@ class MultiReferenceTemplate(InputOutputTemplate):
     ) -> List[str]:
         references = reference_fields[self.references_field]
         if not isoftype(references, List[str]):
-            raise ValueError(
-                f"MultiReferenceTemplate requires references field '{self.references_field}' to be List[str]. Got {self.references_field}<{type(references).__name__}>: {references}"
+            raise UnitxtError(
+                f"MultiReferenceTemplate requires references field '{self.references_field}' to be List[str]. Got {self.references_field}<{type(references).__name__}>: {references}",
+                Documentation.ADDING_TEMPLATE,
             )
         if len(references) == 0:
-            raise ValueError(
-                "No references found. MultiReferenceTemplate requires at least one reference."
+            raise UnitxtError(
+                "No references found. MultiReferenceTemplate requires at least one reference.",
+                Documentation.ADDING_TEMPLATE,
             )
 
         if self.random_reference:

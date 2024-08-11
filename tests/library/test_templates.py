@@ -1,5 +1,7 @@
 from typing import Dict, List, Tuple
 
+from unitxt.dataclass import RequiredFieldError
+from unitxt.error_utils import UnitxtError
 from unitxt.templates import (
     ApplyRandomTemplate,
     ApplySingleTemplate,
@@ -339,9 +341,9 @@ class TestTemplates(UnitxtTestCase):
             "reference_fields": {"answer": references},
         }
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             template.process(instance)
-        self.assertEqual(str(e.exception), expected_exception_message)
+        self.assertIn(expected_exception_message, str(e.exception))
 
     def test_multi_reference_template_with_empty_references(self):
         self._test_multi_reference_template_with_exception(
@@ -433,28 +435,46 @@ class TestTemplates(UnitxtTestCase):
 
         # if "source" and "target" and "instruction_format" and "target_prefix" in instance - instance is not modified
         template = InputOutputTemplate(
-            input_format="This is my text:'{text}'",
+            input_format="This is my text: {text}",
             output_format="{label}",
         )
         check_operator(template, targets, targets, tester=self)
 
         err_input_template = InputOutputTemplate(
-            input_format="This is my text:'{no_text}'", output_format="{label}"
+            input_format="This is my text: {no_text}", output_format="{label}"
         )
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_input_template.process(inputs[0])
-        self.assertEqual(
-            "\"Available input fields are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text:'{no_text}''\"",
+        self.assertIn(
+            "Available input fields are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text: {no_text}'",
             str(ke.exception),
         )
 
         err_output_template = InputOutputTemplate(
-            input_format="This is my text:'{text}'", output_format="{no_label}"
+            input_format="This is my text: {text}", output_format="{no_label}"
         )
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_output_template.process(inputs[0])
-        self.assertEqual(
-            "\"Available reference fields are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'\"",
+        self.assertIn(
+            "Available reference fields are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'",
+            str(ke.exception),
+        )
+
+        err_output_template = InputOutputTemplate(
+            input_format="This is my text: {text}"
+        )
+        with self.assertRaises(UnitxtError) as ke:
+            err_output_template.process(inputs[0])
+        self.assertIn(
+            "Required field 'output_format' of class InputOutputTemplate not set in InputOutputTemplate",
+            str(ke.exception),
+        )
+
+        with self.assertRaises(RequiredFieldError) as ke:
+            err_output_template = InputOutputTemplate(output_format="{label}")
+            err_output_template.process(inputs[0])
+        self.assertIn(
+            "Required field 'input_format' of class InputOutputTemplate not set in InputOutputTemplate",
             str(ke.exception),
         )
 
@@ -495,7 +515,7 @@ class TestTemplates(UnitxtTestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(UnitxtError):
             template.reference_fields_to_target_and_references(
                 reference_fields={"label": "positive", "references": "1"}
             )
@@ -548,8 +568,8 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(TemplateFormatKeyError) as cm:
             wrong_field_name = "wrong_field_name"
             template.input_fields_to_source(input_fields={wrong_field_name: ["news"]})
-        self.assertEqual(
-            "\"Available input fields are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'\"",
+        self.assertIn(
+            "Available input fields are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'",
             str(cm.exception),
         )
 
@@ -589,18 +609,18 @@ class TestTemplates(UnitxtTestCase):
             input_format="", class_field=class_field, label_field=label_field
         )
 
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(UnitxtError) as cm:
             outputs = {class_field: "news"}
             template.reference_fields_to_target_and_references(reference_fields=outputs)
-        self.assertEqual(
+        self.assertIn(
             f"Available reference_fields are {list(outputs.keys())}, missing required label field: '{label_field}'.",
             str(cm.exception),
         )
 
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(UnitxtError) as cm:
             outputs = {label_field: ["news", "sports"]}
             template.reference_fields_to_target_and_references(reference_fields=outputs)
-        self.assertEqual(
+        self.assertIn(
             f"Available reference_fields are {list(outputs.keys())}, missing required class field: '{class_field}'.",
             str(cm.exception),
         )
@@ -612,11 +632,11 @@ class TestTemplates(UnitxtTestCase):
             template = YesNoTemplate(
                 input_format="", class_field="", label_field="labels"
             )
-            with self.assertRaises(RuntimeError) as cm:
+            with self.assertRaises(UnitxtError) as cm:
                 template.reference_fields_to_target_and_references(
                     reference_fields={"labels": wrong_labels_value}
                 )
-            self.assertEqual(
+            self.assertIn(
                 f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expecting a list.",
                 str(cm.exception),
             )
@@ -632,14 +652,14 @@ class TestTemplates(UnitxtTestCase):
             template = YesNoTemplate(
                 input_format="", class_field=class_field, label_field=label_field
             )
-            with self.assertRaises(RuntimeError) as cm:
+            with self.assertRaises(UnitxtError) as cm:
                 template.reference_fields_to_target_and_references(
                     reference_fields={
                         label_field: ["news"],
                         class_field: wrong_class_value,
                     }
                 )
-            self.assertEqual(
+            self.assertIn(
                 f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a string.",
                 str(cm.exception),
             )
@@ -876,8 +896,8 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
-        self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+        self.assertIn(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
             str(ve.exception),
         )
 
@@ -966,8 +986,8 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
-        self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+        self.assertIn(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
             str(ve.exception),
         )
 

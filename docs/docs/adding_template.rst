@@ -33,9 +33,13 @@ Within the template, there are also different parts:
    :align: center
 
 Including:
-* The task `instruction`, marked in green, which appears once at the top of the example
-* The `input_format`, marked in red, formatting the layout of the different fields of the task, and
-* The `target_prefix`, marked in yellow, priming the target.
+
+* The task ``instruction``, marked in green, which appears once at the top of the example.
+
+* The ``input_format``, marked in red, formatting the layout of the different fields of the task.
+
+* The ``target_prefix``, marked in yellow, priming the target.
+
 Now that we understand the taxonomy
 of the different parts of the template, we can see how to define it in code and add it to the unitxt catalog.
 
@@ -56,9 +60,48 @@ We can define a template for this task like this:
         output_format='{translation}',
     ),
 
-Important: the only fields that are mandatory are the `input_format` and `output_format`; without them, unitxt won't know how to use the task fields.
 
-Templates for Special Data
+The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
+while the ``input_format`` defines the part of prompt that repeats for 
+each in-context learning demonstration and for the final instance (marked red in the second figure above).
+
+The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
+The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
+If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
+becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
+
+.. note::
+    If you don't have references , just specify ``output_format=""``.
+    If you have multiple references, use the MultiReferenceTemplate (see below)
+    The only fields that are mandatory are the ``input_format`` and ``output_format``
+
+Post Processors
+---------------
+
+The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <metric>`.
+The post processors applied both to the model prediction and to the references. 
+For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
+so the metric computation will ignore case. When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
+
+.. code-block:: python
+
+    template = InputOutputTemplate(
+        instruction="In the following task, you translate a {text_type}.",
+        input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
+        target_prefix="Translation: ",
+        output_format='{translation}',
+        postprocessors= [
+                "processors.lower_case"
+            ]
+    )
+
+The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
+For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
+template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
+
+You can see all the available predefined post processors in the catalog (:ref:`Processor <processors>`.)
+
+Templates for Special Cases
 ----------------------------
 
 There are different templates for different types of data. For example, for data with many references, we have:
@@ -68,17 +111,18 @@ There are different templates for different types of data. For example, for data
     MultiReferenceTemplate(
         instruction="Answer the question based on the information provided in the document given below. The answer should be a single word, a number, or a short phrase of a few words.\n\n",
         input_format="Document: {context}\nQuestion: {question}",
-        output_format="{answer}",
         target_prefix="Answer: ",
         references_field="answers",
     )
+
+The template uses the list of values in the dataset field defined by the ``references_field`` attribute to define all the references.
 
 You can see all the available predefined templates here: :ref:`Templates Documentation<templates>`.
 
 Making Your Custom Template
 ----------------------------
 
-In order to make your own template, you need to create a class inheriting from `Template` and
+In order to make your own template, you need to create a class inheriting from ``Template`` and
 implementing its abstract methods:
 
 .. code-block:: python
