@@ -1,0 +1,32 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "correctness_holistic_q_c_a_judge_gpt_4o_mini",
+    "metric": {
+        "__type__": "generative_binary_judge_open_ai",
+        "main_score": "correctness_holistic_q_c_a_judge_gpt_4o_mini",
+        "model_name": "gpt-4o-mini",
+        "task_name": "tasks.rag_eval.correctness_holistic.binary",
+        "template_name": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "task_data/contexts",
+                "answer": "task_data/answer",
+                "ground_truths": "task_data/ground_truths",
+                "question": "task_data/question"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}
