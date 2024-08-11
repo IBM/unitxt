@@ -8,7 +8,7 @@
     "preprocess_steps": [
         {
             "__type__": "wrap",
-            "field": "summaries",
+            "field": "summary",
             "inside": "list",
             "to_field": "summaries"
         }
