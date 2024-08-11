@@ -100,3 +100,8 @@ class DuplicateBySubLists(StreamOperator):
                         to_field: elements[:i],
                     }
                 yield instance_copy
+
+
+class GetLength(FieldOperator):
+    def process_value(self, collection: Any) -> Any:
+        return len(collection)
