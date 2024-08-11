@@ -849,7 +849,7 @@ class TestMetrics(UnitxtTestCase):
 
                 import nltk
 
-                nltk.download("punkt")
+                nltk.download("punkt_tab", quiet=True)
                 self.sent_tokenize = nltk.sent_tokenize
 
             def compute(self, references, predictions, task_data: List[Dict]):
