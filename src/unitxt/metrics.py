@@ -4890,7 +4890,7 @@ class ArmoRMMetric(TaskBasedJudgeMetric):
         import torch
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-        self.device = self._init_device()
+        self._init_device()
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.tokenizer.truncation_side = "left"
         self.model = AutoModelForSequenceClassification.from_pretrained(
