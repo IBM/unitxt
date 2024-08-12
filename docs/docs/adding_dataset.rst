@@ -204,24 +204,20 @@ In the same way, you can save also your custom templates and tasks.
 Putting It All Together!
 ------------------------
 
-Now everything is ready to use the data! We use a standard recipe to load it with three in-context examples.
+Now everything is ready to use the data! We can load the dataset with three in-context examples.
 
 .. code-block:: python
 
-    from unitxt.standard import StandardRecipe
     from unitxt import load_dataset
 
-    recipe = StandardRecipe(
+    dataset = load_dataset(
         card='cards.wmt.en_de',
         num_demos=3, # The number of demonstrations for in-context learning
         demos_pool_size=100 # The size of the demonstration pool from which to sample the 5 demonstrations
         template_card_index=0 # Take the first template defined in the card
     )
 
-    dataset = load_dataset(recipe)
-
-
-Or even simpler with HuggingFace datasets:
+The dataset can also be loaded using HuggingFace dataset API:
 
 .. code-block:: python
 
