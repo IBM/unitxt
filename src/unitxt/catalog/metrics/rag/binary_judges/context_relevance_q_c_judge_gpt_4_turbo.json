@@ -1,21 +1,21 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "correctness_holistic_q_c_a_judge_gpt_4o_mini",
+    "main_score": "context_relevance_q_c_judge_gpt_4_turbo",
     "metric": {
         "__type__": "generative_binary_judge_open_ai",
-        "main_score": "correctness_holistic_q_c_a_judge_gpt_4o_mini",
-        "model_name": "gpt-4o-mini",
-        "task_name": "tasks.rag_eval.correctness_holistic.binary",
-        "template_name": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs"
+        "main_score": "context_relevance_q_c_judge_gpt_4_turbo",
+        "model_name": "gpt-4-turbo",
+        "task_name": "tasks.rag_eval.context_relevance.binary",
+        "template_name": "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs"
     },
     "preprocess_steps": [
         {
             "__type__": "copy",
             "field_to_field": {
+                "answer": "task_data/answer",
                 "contexts": "task_data/contexts",
                 "ground_truths": "task_data/ground_truths",
-                "question": "task_data/question",
-                "answer": "task_data/answer"
+                "question": "task_data/question"
             },
             "not_exist_ok": true
         },
