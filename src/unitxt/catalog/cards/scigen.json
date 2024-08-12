@@ -16,7 +16,7 @@
             "condition": "ne"
         },
         {
-            "__type__": "construct_table_structure",
+            "__type__": "construct_table_from_rows_cols",
             "fields": [
                 "table_column_names",
                 "table_content_values"

@@ -625,7 +625,7 @@ class MapTableListsToStdTableJSON(FieldOperator):
         return {"header": table_content[0], "rows": table_content[1:]}
 
 
-class ConstructTableStructure(InstanceOperator):
+class ConstructTableFromRowsCols(InstanceOperator):
     """Maps column and row field into single table field encompassing both header and rows.
 
     field[0] = header string as List

@@ -1,5 +1,5 @@
 from unitxt.blocks import (
-    ConstructTableStructure,
+    ConstructTableFromRowsCols,
     LoadHF,
     RenameFields,
     SerializeTableAsIndexedRowMajor,
@@ -16,7 +16,7 @@ card = TaskCard(
     loader=LoadHF(path="kasnerz/scigen", data_classification_policy=["public"]),
     preprocess_steps=[
         FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
-        ConstructTableStructure(
+        ConstructTableFromRowsCols(
             fields=["table_column_names", "table_content_values"],
             to_field="table",
         ),
