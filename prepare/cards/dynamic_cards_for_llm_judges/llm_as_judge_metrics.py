@@ -4,6 +4,7 @@ from unitxt.catalog import add_to_catalog
 tasks = [
     "tasks.response_assessment.rating.single_turn",
     "tasks.response_assessment.rating.single_turn_with_reference",
+    "tasks.response_assessment.pairwise_comparative_rating.single_turn",
 ]
 for task in tasks:
     card = TaskCard(loader=None, preprocess_steps=[], task=task)

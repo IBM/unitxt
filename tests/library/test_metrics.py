@@ -1,4 +1,5 @@
 from math import isnan
+from typing import Dict, List
 
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
@@ -38,9 +39,11 @@ from unitxt.metrics import (
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
+    HuggingfaceMetric,
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
     PrecisionBinary,
@@ -50,7 +53,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.test_utils.metrics import apply_metric
+from unitxt.test_utils.metrics import apply_metric, check_scores, test_metric
 
 from tests.utils import UnitxtTestCase
 
@@ -799,19 +802,54 @@ class TestMetrics(UnitxtTestCase):
         global_target = 5 / 6
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-    def test_rouge_l(self):
-        metric = Rouge(
-            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
-            use_aggregator=False,
-            rouge_types=["rougeL"],
-        )
-        references = [["hello", "there"], ["general kenobi", "general yoda"]]
-        predictions = ["hello there", "general kenobi"]
+        # compare with the HF implementation
+        class OldRouge(HuggingfaceMetric):
+            hf_metric_name = "rouge"
+            main_score = "rougeL"
+            scale = 1.0
+
+            prediction_type = "str"
+            single_reference_per_prediction = False  # multiple references allowed
+
+            use_aggregator: bool = True
+            rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+            sent_split_newline: bool = True
+
+            _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+            def prepare(self):
+                super().prepare()
+
+                self.hf_compute_args.update(
+                    {
+                        "use_aggregator": self.use_aggregator,
+                        "rouge_types": self.rouge_types,
+                    }
+                )
+
+                import nltk
+
+                nltk.download("punkt")
+                self.sent_tokenize = nltk.sent_tokenize
+
+            def compute(self, references, predictions, task_data: List[Dict]):
+                if self.sent_split_newline:
+                    predictions = [
+                        "\n".join(self.sent_tokenize(prediction.strip()))
+                        for prediction in predictions
+                    ]
+                    references = [
+                        ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                        for reference in references
+                    ]
+                return super().compute(references, predictions, task_data)
+
+        metric = OldRouge()
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        global_target = [2 / 3, 1.0]
-        self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_token_overlap(self):
         metric = TokenOverlap()
@@ -1150,8 +1188,8 @@ class TestMetrics(UnitxtTestCase):
         )
 
         expected_global_result = {
-            "my_perplexity": 0.05986589565873146,
-            "score": 0.05986589565873146,
+            "my_perplexity": 0.06,
+            "score": 0.06,
             "score_name": "my_perplexity",
         }
 
@@ -1162,18 +1200,21 @@ class TestMetrics(UnitxtTestCase):
             for key, value in global_result.items()
             if key in expected_global_result
         }
-        self.assertDictEqual(global_result, expected_global_result)
 
-        instance_targets = [
+        expected_instance_results = [
             {
-                "my_perplexity": 0.05986589565873146,
-                "score": 0.05986589565873146,
+                "my_perplexity": 0.06,
+                "score": 0.06,
                 "score_name": "my_perplexity",
-                "my_reference_scores": [0.05986589565873146],
+                "my_reference_scores": [0.06],
             }
         ]
-        for output, target in zip(outputs, instance_targets):
-            self.assertDictEqual(output["score"]["instance"], target)
+        check_scores(
+            expected_global_result,
+            expected_instance_results,
+            global_outputs=outputs[0]["score"]["global"],
+            instance_outputs=[outputs[0]["score"]["instance"]],
+        )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):
@@ -1479,7 +1520,10 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "output": "output",
                 "type_of_output": "type",
                 "source": "<SYS_PROMPT>input</SYS_PROMPT>",
-                "metadata": {"template": "templates.generation.default"},
+                "metadata": {
+                    "template": "templates.generation.default",
+                    "data_classification_policy": ["public"],
+                },
             }
         ] * 3
 
@@ -1495,6 +1539,28 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 metric_label: 1.0,
                 "score_name": metric_label,
                 "score": 1.0,
+                "judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                "Please act as an impartial judge and "
+                "evaluate the quality of the response "
+                "provided by an AI assistant to the user "
+                "question displayed below. Your evaluation "
+                "should consider factors such as the "
+                "helpfulness, relevance, accuracy, depth, "
+                "creativity, and level of detail of the "
+                "response. Begin your evaluation by "
+                "providing a short explanation. Be as "
+                "objective as possible. After providing your "
+                "explanation, you must rate the response on "
+                "a scale of 1 to 10 by strictly following "
+                'this format: "[[rating]]", for example: '
+                '"Rating: [[5]]".\n\n'
+                "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+                "[Question]\n"
+                "Given the following type, generate the corresponding type. type: input\n\n\n"
+                "[The Start of Assistant's Answer]\n"
+                "[[10]]\n"
+                "[The End of Assistant's "
+                "Answer]<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
                 "judge_raw_output": "[[10]]",
             }
         ] * 3
@@ -1620,3 +1686,69 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
         for i in range(len(actual_scores)):
             self.assertAlmostEqual(actual_scores[i], target_scores[i])
+
+    def test_metrics_ensemble(self):
+        metric = MetricsEnsemble(
+            main_score="ensemble_score",
+            metrics=[
+                "metrics.precision_micro_multi_label",
+                "metrics.recall_macro_multi_label",
+            ],
+            weights=None,
+        )
+
+        predictions = [["A"], ["B"], [""], ["A"]]
+        references = [[["B", "A"]], [["B"]], [["A"]], [[""]]]
+
+        instance_targets = [
+            {
+                "ensemble_score": 0.75,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 0.5,
+                "score": 0.75,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 1.0,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 1.0,
+                "score": 1.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+        ]
+
+        global_target = {
+            "ensemble_0_precision_micro": 0.5,
+            "ensemble_0_precision_micro_ci_high": 1.0,
+            "ensemble_0_precision_micro_ci_low": 0.0,
+            "ensemble_1_recall_macro": 0.33,
+            "ensemble_1_recall_macro_ci_high": 0.56,
+            "ensemble_1_recall_macro_ci_low": 0.0,
+            "ensemble_score": 0.44,
+            "score": 0.44,
+            "score_ci_high": 0.56,
+            "score_ci_low": 0.0,
+            "score_name": "ensemble_score",
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
