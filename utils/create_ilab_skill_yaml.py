@@ -48,7 +48,7 @@ class SeedExample:
 @dataclass
 class IlabSkillAdder:
     """
-    Represents the task description including the version, creator, and a list of seed examples.
+    Represents the task description including the sdgbuilder, creator, and a list of seed examples.
     
     Attributes:
         task_description (str): A description of the skill.
@@ -59,7 +59,7 @@ class IlabSkillAdder:
     created_by: str
     yaml_file_path: str
     seed_examples: List[SeedExample] 
-    version: int = 2
+    data_builder:str = "skills_sdg"
     num_required_examples:int = 5
 
     def __post_init__(self):
@@ -78,7 +78,7 @@ class IlabSkillAdder:
         yaml.add_representer(int, yaml.representer.SafeRepresenter.represent_int)
         
         data = {
-            'version': self.version,
+            'data_builder': self.data_builder,
             'task_description': self.task_description,
             'created_by': self.created_by,
             'seed_examples': [example._to_dict() for example in self.seed_examples]
@@ -186,22 +186,33 @@ cnn_example = IlabParameters(
     context_field = 'document',
 )
 
-watson_emotion_example = IlabParameters(
+watson_emotion_text_first_example = IlabParameters(
     local_catalog=FM_EVAL_LOCAL_CATALOG,
     task_description="watson emotion",
     loader_limit=100,
     creator=CREATOR,
-    yaml_file="watson_emotion.yaml",
+    yaml_file="sdg/watson_emotion.yaml",
     card="cards.watson_emotion",
     template="templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think",
    question_field = 'source',  
     answer_field = 'target',
 )
 
+watson_emotion_classes_first_example = IlabParameters(
+    template="templates.classification.multi_class.text_after_instruction_with_type_of_class",
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    task_description="watson emotion",
+    loader_limit=100,
+    creator=CREATOR,
+    yaml_file="sdg/watson_emotion_classes_first.yaml",
+    card="cards.watson_emotion",
+   question_field = 'source',  
+    answer_field = 'target',
+)
 
 
     
 if __name__ == "__main__":
-    create_yaml(watson_emotion_example)
+    create_yaml(watson_emotion_classes_first_example)
 
 

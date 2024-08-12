@@ -1,22 +1,46 @@
-import json
+import json,yaml
 
-def adjust_digit_sdg_format(input_file,output_file):
-    split_delimiter = '\n'
+def create_train_file(digit_file,train_output_file):
+    
 
-    renames = {'instruction':'system', 'response':'assistant'}
-
-    with open(input_file, 'r') as infile, open(output_file, 'w') as outfile:
+    with open(digit_file, 'r') as infile, open(train_output_file, 'w') as outfile:
         for line in infile:
             record = json.loads(line.strip())
-            for field in renames:
-                if field in record:
-                    record[renames[field]] = record.pop(field)
-            split_values = record['system'].split(split_delimiter)
-            record['user'] = split_values[0] + split_delimiter
-            record['system'] = split_delimiter.join(split_values[1:])
+            record['assistant'] = record.pop('response')
+            record['system'] = ''
+            record['user'] = record.pop('instruction')
             outfile.write(json.dumps(record) + '\n')
 
+# def get_user_and_system(instruction):
+#         split_delimiter = '\n'
+#         user_start_string = "text: "
+#         split_values = instruction.split(split_delimiter)
+#         if split_values[0].startswith(user_start_string):
+#             user = split_values[0]
+#             system = split_delimiter.join(split_values[1:])
+#         elif split_values[1].startswith(user_start_string):
+#             system = split_values[0] + split_delimiter
+#             user = split_delimiter.join(split_values[1:])
+#         else:
+#             raise ValueError("could not split to user and system: {instruction}")
+#         return user,system
+
+def create_test_file(yaml_file,test_output_file):
+    with open(yaml_file, 'r') as f:
+        yaml_content = yaml.safe_load(f)
+        yaml_content = yaml_content.get("seed_examples", {})
+    with open(test_output_file, 'w') as f:
+        if isinstance(yaml_content, list):
+            for entry in yaml_content:
+                entry['user'] = entry.pop('question')
+                entry['system'] = ''
+                entry['assistant'] = entry.pop('answer')
+                f.write(json.dumps(entry) + '\n')
+
 if __name__=="__main__":
-    input_file = 'sdg/digit_watson_emotion.jsonl'
-    output_file = 'sdg/sdg_watson_emotion.jsonl'
-    adjust_digit_sdg_format(input_file=input_file,output_file=output_file)
+    input_file = 'sdg/watson_emotion_classes_first_sdg.jsonl'
+    train_file = 'sdg/train_watson_emotion.jsonl'
+    create_train_file(digit_file=input_file,train_output_file=train_file)
+    yaml_file = 'sdg/watson_emotion_classes_first.yaml'
+    test_file = 'sdg/test_watson_emotion.jsonl'
+    create_test_file(yaml_file=yaml_file,test_output_file=test_file)
