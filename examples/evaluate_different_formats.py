@@ -27,9 +27,9 @@ for format in [
             format=format,
             system_prompt=system_prompt,
             num_demos=2,
-            demos_pool_size=100,
-            loader_limit=1000,
-            max_test_instances=300,
+            demos_pool_size=50,
+            loader_limit=300,
+            max_test_instances=100,
         )
 
         test_dataset = dataset["test"]
