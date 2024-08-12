@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from unitxt.error_utils import UnitxtError
 from unitxt.task import Task
 
 from tests.utils import UnitxtTestCase
@@ -17,12 +18,12 @@ class TestTasks(UnitxtTestCase):
         operator.check_metrics_type()
 
         operator.prediction_type = Dict
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             operator.check_metrics_type()
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "The task's prediction type (typing.Dict) and 'metrics.wer' metric's prediction type "
             "(<class 'str'>) are different.",
+            str(e.exception),
         )
 
     def test_task_metrics_type_checking_with_inputs_outputs(self):
@@ -36,40 +37,40 @@ class TestTasks(UnitxtTestCase):
         operator.check_metrics_type()
 
         operator.prediction_type = Dict[int, int]
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             operator.check_metrics_type()
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "The task's prediction type (typing.Dict[int, int]) and 'metrics.wer' metric's prediction type "
             "(<class 'str'>) are different.",
+            str(e.exception),
         )
 
     def test_task_missing_input_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields=None,
                 reference_fields={"label": str},
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception), "Missing attribute in task: 'input_fields' not set."
+        self.assertIn(
+            "Missing attribute in task: 'input_fields' not set.", str(e.exception)
         )
 
     def test_task_missing_reference_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields={"input": int},
                 reference_fields=None,
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception), "Missing attribute in task: 'reference_fields' not set."
+        self.assertIn(
+            "Missing attribute in task: 'reference_fields' not set.", str(e.exception)
         )
 
     def test_conflicting_input_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 inputs={"input": int},
                 input_fields={"input": int},
@@ -77,13 +78,13 @@ class TestTasks(UnitxtTestCase):
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
+            str(e.exception),
         )
 
     def test_conflicting_output_fields(self):
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             Task(
                 input_fields={"input": int},
                 reference_fields={"label": str},
@@ -91,9 +92,9 @@ class TestTasks(UnitxtTestCase):
                 prediction_type=str,
                 metrics=["metrics.wer", "metrics.rouge"],
             )
-        self.assertEqual(
-            str(e.exception),
+        self.assertIn(
             "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
+            str(e.exception),
         )
 
     def test_set_defaults(self):

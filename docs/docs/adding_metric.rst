@@ -315,7 +315,7 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
                 ListFieldValues(fields=["references"], to_field="references"),
             ],
             metric=metrics["metrics.token_overlap"],
-            postpreprocess_steps=[
+            postprocess_steps=[
                 RenameFields(
                     field_to_field=[
                         ("score/global/f1", "score/global/f1_overlap_with_context"),
@@ -378,3 +378,8 @@ Note that Huggingface metrics are independent from the tasks they are used for, 
 parameters.  It may be need to map between unitxt field names, values and types to the corresponding interface of the metric, using
 the `MetricPipeline` described in the previous section.
 
+.. note::
+
+   Use HuggingfaceMetric to wrap metrics defined in Huggingface Hub. Do not use it to wrap Huggingface metrics implemented
+   in local files.  This is because local metrics are accessed via relative or absolute file paths, and both
+   may not be relevant if running code on different machines or root directories.  

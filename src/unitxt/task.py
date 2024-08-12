@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import fetch_artifact
 from .dataclass import DeprecatedField
 from .deprecation_utils import deprecation
-from .logging_utils import get_logger
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .operator import InstanceOperator
 from .type_utils import (
     Type,
@@ -77,12 +77,14 @@ class Task(InstanceOperator):
     def prepare(self):
         super().prepare()
         if self.input_fields is not None and self.inputs is not None:
-            raise ValueError(
-                "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'"
+            raise UnitxtError(
+                "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
+                Documentation.ADDING_TASK,
             )
         if self.reference_fields is not None and self.outputs is not None:
-            raise ValueError(
-                "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'"
+            raise UnitxtError(
+                "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
+                Documentation.ADDING_TASK,
             )
 
         self.input_fields = (
@@ -107,9 +109,15 @@ class Task(InstanceOperator):
 
     def verify(self):
         if self.input_fields is None:
-            raise ValueError("Missing attribute in task: 'input_fields' not set.")
+            raise UnitxtError(
+                "Missing attribute in task: 'input_fields' not set.",
+                Documentation.ADDING_TASK,
+            )
         if self.reference_fields is None:
-            raise ValueError("Missing attribute in task: 'reference_fields' not set.")
+            raise UnitxtError(
+                "Missing attribute in task: 'reference_fields' not set.",
+                Documentation.ADDING_TASK,
+            )
         for io_type in ["input_fields", "reference_fields"]:
             data = (
                 self.input_fields
@@ -118,11 +126,12 @@ class Task(InstanceOperator):
             )
 
             if isinstance(data, list) or not is_type_dict(data):
-                get_logger().warning(
+                UnitxtWarning(
                     f"'{io_type}' field of Task should be a dictionary of field names and their types. "
                     f"For example, {{'text': str, 'classes': List[str]}}. Instead only '{data}' was "
                     f"passed. All types will be assumed to be 'Any'. In future version of unitxt this "
-                    f"will raise an exception."
+                    f"will raise an exception.",
+                    Documentation.ADDING_TASK,
                 )
                 data = {key: Any for key in data}
                 if io_type == "input_fields":
@@ -131,11 +140,12 @@ class Task(InstanceOperator):
                     self.reference_fields = data
 
         if not self.prediction_type:
-            get_logger().warning(
+            UnitxtWarning(
                 "'prediction_type' was not set in Task. It is used to check the output of "
                 "template post processors is compatible with the expected input of the metrics. "
                 "Setting `prediction_type` to 'Any' (no checking is done). In future version "
-                "of unitxt this will raise an exception."
+                "of unitxt this will raise an exception.",
+                Documentation.ADDING_TASK,
             )
             self.prediction_type = Any
 
@@ -191,18 +201,20 @@ class Task(InstanceOperator):
             ):
                 continue
 
-            raise ValueError(
+            raise UnitxtError(
                 f"The task's prediction type ({prediction_type}) and '{metric_id}' "
-                f"metric's prediction type ({metric_prediction_type}) are different."
+                f"metric's prediction type ({metric_prediction_type}) are different.",
+                Documentation.ADDING_TASK,
             )
 
     def verify_defaults(self):
         if self.defaults:
             if not isinstance(self.defaults, dict):
-                raise ValueError(
+                raise UnitxtError(
                     f"If specified, the 'defaults' must be a dictionary, "
                     f"however, '{self.defaults}' was provided instead, "
-                    f"which is of type '{to_type_string(type(self.defaults))}'."
+                    f"which is of type '{to_type_string(type(self.defaults))}'.",
+                    Documentation.ADDING_TASK,
                 )
 
             for default_name, default_value in self.defaults.items():

@@ -5,6 +5,14 @@
         "path": "EdinburghNLP/xsum"
     },
     "task": "tasks.summarization.abstractive",
+    "preprocess_steps": [
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
+        }
+    ],
     "templates": "templates.summarization.abstractive.all",
     "__tags__": {
         "annotations_creators": "found",
