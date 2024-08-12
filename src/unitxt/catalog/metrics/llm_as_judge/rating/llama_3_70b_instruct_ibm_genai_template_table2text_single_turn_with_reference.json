@@ -6,10 +6,14 @@
         "parameters": {
             "__type__": "ibm_gen_ai_inference_engine_params",
             "max_new_tokens": 252
-        }
+        },
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "template": "templates.response_assessment.rating.table2text_single_turn_with_reference",
     "task": "rating.single_turn_with_reference",
     "format": "formats.llama3_instruct",
-    "main_score": "llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference"
+    "main_score": "llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference",
+    "prediction_type": "str"
 }
