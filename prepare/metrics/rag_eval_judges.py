@@ -24,7 +24,7 @@ metric_type_to_template = {
 
 model_names = {
     "meta-llama/llama-3-70b-instruct",
-    "gpt-4o-mini",
+    "gpt-4-turbo",
     "mistralai/mixtral-8x7b-instruct-v01",
 }
 
@@ -59,7 +59,8 @@ def add_judge_metrics():
                     preprocess_steps=[
                         Copy(
                             field_to_field={
-                                field: f"task_data/{field}" for field in rag_fields
+                                field: f"task_data/{field}"
+                                for field in sorted(rag_fields)
                             },
                             not_exist_ok=True,
                         ),
