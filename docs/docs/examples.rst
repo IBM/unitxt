@@ -23,6 +23,7 @@ Evaluate an existing dataset from the Unitxt catalog (with Unitxt installation)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Demonstrates how to evaluate an existing entailment dataset (wnli) using Unitxt native APIs.
+This approach is faster than using Huggingface APIs.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
 
