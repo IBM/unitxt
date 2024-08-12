@@ -10,14 +10,24 @@ Each example is a self contained python file that you can run and later modify.
 Basic Usage
 ------------
 
-Evaluate an existing dataset from the Unitxt catalog
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Evaluate an existing dataset from the Unitxt catalog (No installation)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Demonstrates how to evaluate an existing entailment dataset (wnli) using Huggingface  datasets and evaluate APIs, with no installation required.
-
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`_
 
 Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+
+Evaluate an existing dataset from the Unitxt catalog (with Unitxt installation)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to evaluate an existing entailment dataset (wnli) using Unitxt native APIs.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
+
+Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+
 
 Evaluate a custom dataset
 +++++++++++++++++++++++++
