@@ -26,6 +26,12 @@ Then, activate the virtual environment:
 source unitxt-venv/Scripts/activate
 ```
 
+If the above command does not work because the bin directory does not exist, use this instead:
+
+```bash
+source unitxt-venv/Scripts/activate
+```
+
 Then, install the project:
 
 ```bash
