@@ -18,8 +18,8 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 from tqdm import tqdm
 
-from . import get_from_catalog
 from .artifact import Artifact, fetch_artifact
+from .catalog import get_from_catalog
 from .dataclass import (
     AbstractField,
     InternalField,
