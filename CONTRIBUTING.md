@@ -23,7 +23,7 @@ python -m venv unitxt-venv
 Then, activate the virtual environment:
 
 ```bash
-source unitxt-venv/Scripts/activate
+source unitxt-venv/bin/activate
 ```
 
 If the above command does not work because the bin directory does not exist, use this instead:
