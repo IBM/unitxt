@@ -4623,47 +4623,9 @@ class MetricsEnsemble(InstanceMetric):
         return {self.main_score: prediction}
 
 
-class LogisticRegressionMetricsEnsemble(MetricsEnsemble):
-    from sklearn.linear_model import LogisticRegression
-
-    ensemble_model = LogisticRegression()
-
-    def prepare(self):
-        super().prepare()
-        from sklearn.linear_model import LogisticRegression
-
-        self.weights = json.loads(self.weights)
-
-        self.ensemble_model = LogisticRegression(
-            penalty=self.weights["penalty"],
-            solver=self.weights["solver"],
-            C=self.weights["C"],
-            max_iter=self.weights["max_iter"],
-            tol=self.weights["tol"],
-            multi_class=self.weights["multi_class"],
-        )
-
-        self.ensemble_model.coef_ = np.array(self.weights["coef"])
-        self.ensemble_model.intercept_ = np.array(self.weights["intercept"])
-        self.ensemble_model.classes_ = np.array(self.weights["classes"])
-
-    def ensemble(self, instance):
-        prediction_lst = []
-        for i, metric in enumerate(self.metrics):
-            prediction_lst.append(
-                instance["score"]["instance"][
-                    self.get_prefix_name(i) + metric.main_score
-                ]
-            )
-        score = self.ensemble_model.predict([prediction_lst])
-        return score.tolist()[0]
-
-
 class RandomForestMetricsEnsemble(MetricsEnsemble):
-    from sklearn.ensemble import RandomForestClassifier
-
-    ensemble_model = RandomForestClassifier()
-    weights: str
+    _requirements_list: List[str] = ["sklearn"]
+    ensemble_model = None
 
     def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
         from sklearn.tree._tree import Tree
@@ -4750,10 +4712,18 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
     def prepare(self):
         super().prepare()
 
-        self.weights = json.loads(self.weights)
-        self.ensemble_model = self.decode_forest(self.weights)
+    @staticmethod
+    def load_weights(json_file):
+        with open(json_file) as file:
+            return json.load(file)
 
     def ensemble(self, instance):
+        if self.ensemble_model is None:
+            assert (
+                self.weights is not None
+            ), "RandomForestMetricsEnsemble  must set self.weights before it can be used"
+            self.ensemble_model = self.decode_forest(self.weights)
+
         prediction_lst = []
         for i, metric in enumerate(self.metrics):
             prediction_lst.append(
