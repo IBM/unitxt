@@ -2082,7 +2082,7 @@ class MinimumOneExamplePerLabelRefiner(StreamRefiner):
     For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
     MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
     MinimumOneExamplePerLabelRefiner then shuffles the results to avoid having one instance
-    from each class first and then the rest . If max instance is not set, the original stream will be used
+    from each class first and then the rest. If max instance is not set, the original stream will be used.
 
     Attributes:
         fields (List[str]): A list of field names to be used in producing the instance's signature.
