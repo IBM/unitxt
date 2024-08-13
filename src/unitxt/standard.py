@@ -1,6 +1,5 @@
 from typing import List, Optional, Union
 
-
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
@@ -35,7 +34,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
 
-    group_by: List[Union[str, List[str]]] = None
+    group_by: List[Union[str, List[str]]] = []
 
     loader_limit: int = None
 

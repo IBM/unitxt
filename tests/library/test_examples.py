@@ -43,6 +43,7 @@ class TestExamples(UnitxtTestCase):
             "evaluate_a_model_using_arena_hard.py",
             "evaluate_llm_as_judge.py",
             "evaluate_using_metrics_ensemble.py",
+            "evaluate_existing_dataset_no_install.py",
         ]
         for file in all_example_files:
             logger.info(

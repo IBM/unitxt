@@ -5,10 +5,12 @@ from unitxt.loaders import LoadHF
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 
-from tests.utils import UnitxtTestCase
+from tests.utils import UnitxtTestCase, fillna
 
 
 class TestAPI(UnitxtTestCase):
+    maxDiff = None
+
     def test_load_dataset(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
@@ -25,7 +27,8 @@ class TestAPI(UnitxtTestCase):
             '"max_value": 5.0, '
             '"attribute_value": 5.0, '
             '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
-            "group": "unitxt",
+            "groups": [],
+            "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
@@ -37,7 +40,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_with_multi_num_demos(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2"
+            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2,group_by=[num_demos,template]"
         )
         instance = {
             "metrics": ["metrics.spearman"],
@@ -50,9 +53,12 @@ class TestAPI(UnitxtTestCase):
             ],
             "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
             "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
-            "group": "unitxt",
+            "groups": [
+                '{"num_demos": 0}',
+                '{"template": "templates.regression.two_texts.simple"}',
+            ],
+            "subset": [],
         }
-
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)
 
@@ -68,13 +74,101 @@ class TestAPI(UnitxtTestCase):
             "postprocessors": ["processors.to_string_stripped"],
             "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
             "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 0}}',
-            "group": "unitxt",
+            "groups": [],
+            "subset": [],
         }
 
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)
 
+    def test_evaluate_with_group_by(self):
+        dataset = load_dataset(
+            "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.regression.two_texts.title],max_train_instances=5,max_validation_instances=5,max_test_instances=5,group_by=[template]"
+        )
+        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        results = evaluate(predictions, dataset["train"])
+        target_scores = {
+            "template": {
+                "templates.regression.two_texts.title": {
+                    "spearmanr": 0.5,
+                    "score": 0.5,
+                    "score_name": "spearmanr",
+                    "score_ci_low": -1.0,
+                    "score_ci_high": 1.0,
+                    "spearmanr_ci_low": -1.0,
+                    "spearmanr_ci_high": 1.0,
+                },
+                "templates.regression.two_texts.simple": {
+                    "spearmanr": -0.9999999999999999,
+                    "score": -0.9999999999999999,
+                    "score_name": "spearmanr",
+                    "score_ci_low": np.nan,
+                    "score_ci_high": np.nan,
+                    "spearmanr_ci_low": np.nan,
+                    "spearmanr_ci_high": np.nan,
+                },
+            }
+        }
+        self.assertDictEqual(
+            fillna(results[0]["score"]["groups"], None), fillna(target_scores, None)
+        )
+
     def test_evaluate(self):
+        dataset = load_dataset(
+            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+        )
+        predictions = ["2.5", "2.5", "2.2", "3", "4"]
+        results = evaluate(predictions, dataset["train"])
+        # Processors are not serialized by correctly yet
+        instance_with_results = {
+            "metrics": ["metrics.spearman"],
+            "data_classification_policy": ["public"],
+            "target": "5.0",
+            "references": ["5.0"],
+            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
+            "task_data": {
+                "text1": "A plane is taking off.",
+                "text2": "An air plane is taking off.",
+                "attribute_name": "similarity",
+                "min_value": 1.0,
+                "max_value": 5.0,
+                "attribute_value": 5.0,
+                "metadata": {
+                    "data_classification_policy": ["public"],
+                    "template": "templates.regression.two_texts.simple",
+                    "num_demos": 0,
+                },
+                "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
+            },
+            "groups": [],
+            "subset": [],
+            "prediction": "2.5",
+            "processed_prediction": 2.5,
+            "processed_references": [5.0],
+            "score": {
+                "global": {
+                    "spearmanr": 0.026315789473684213,
+                    "score": 0.026315789473684213,
+                    "score_name": "spearmanr",
+                    "score_ci_low": -0.970678676196682,
+                    "score_ci_high": 0.9639697714358006,
+                    "spearmanr_ci_low": -0.970678676196682,
+                    "spearmanr_ci_high": 0.9639697714358006,
+                },
+                "instance": {
+                    "score": np.nan,
+                    "score_name": "spearmanr",
+                    "spearmanr": np.nan,
+                },
+                "groups": {},
+            },
+        }
+        del results[0]["postprocessors"]
+        self.assertDictEqual(
+            fillna(results[0], None), fillna(instance_with_results, None)
+        )
+
+    def test_evaluate_with_groups(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
@@ -99,14 +193,14 @@ class TestAPI(UnitxtTestCase):
                 },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
-            "group": "unitxt",
-            "origin": "all~unitxt",
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
             ],
             "data_classification_policy": ["public"],
             "prediction": "2.5",
+            "groups": [],
+            "subset": [],
             "processed_prediction": 2.5,
             "processed_references": [5.0],
             "score": {
@@ -124,6 +218,7 @@ class TestAPI(UnitxtTestCase):
                     "score_name": "spearmanr",
                     "spearmanr": np.nan,
                 },
+                "groups": {},
             },
         }
         # Processors are not serialized by correctly yet
@@ -186,7 +281,8 @@ class TestAPI(UnitxtTestCase):
             '"type_of_relation": "entailment", '
             '"label": "?", '
             '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
-            "group": "unitxt",
+            "groups": [],
+            "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
@@ -232,7 +328,8 @@ class TestAPI(UnitxtTestCase):
             '"type_of_relation": "entailment", '
             '"label": "?", '
             '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
-            "group": "unitxt",
+            "groups": [],
+            "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",

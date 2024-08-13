@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from datasets import Features, Sequence, Value
 
@@ -14,13 +14,12 @@ UNITXT_DATASET_SCHEMA = Features(
         "references": Sequence(Value("string")),
         "metrics": Sequence(Value("string")),
         "groups": Sequence(Value("string")),
+        "subset": Sequence(Value("string")),
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
-        "meta_data": Value(dtype="string"),
         "data_classification_policy": Sequence(Value("string")),
     }
 )
-
 
 
 class Finalize(InstanceOperatorValidator):
@@ -43,7 +42,6 @@ class Finalize(InstanceOperatorValidator):
             ),
             "num_demos": instance["recipe_metadata"]["num_demos"],
         }
-        instance["metadata"] = json.dumps(metadata)
         task_data = {
             **instance["input_fields"],
             **instance["reference_fields"],
@@ -72,6 +70,7 @@ class Finalize(InstanceOperatorValidator):
             groups.append(json.dumps(group))
 
         instance["groups"] = groups
+        instance["subset"] = []
 
         instance["metrics"] = [
             metric.to_json() if isinstance(metric, Artifact) else metric
@@ -81,7 +80,7 @@ class Finalize(InstanceOperatorValidator):
             processor.to_json() if isinstance(processor, Artifact) else processor
             for processor in instance["postprocessors"]
         ]
-        
+
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):

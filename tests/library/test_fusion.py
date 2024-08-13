@@ -318,7 +318,12 @@ class TestFusion(UnitxtTestCase):
                     template="templates.classification.multi_class.relation.default",
                 ),
                 "stsb": StandardRecipe(
-                    card="cards.stsb", template="templates.regression.two_texts.title"
+                    card="cards.stsb",
+                    template=[
+                        "templates.regression.two_texts.title",
+                        "templates.regression.two_texts.title",
+                    ],
+                    group_by=["template"],
                 ),
             },
             weights={"wnli": 1, "rte": 1, "stsb": 1},
@@ -327,9 +332,16 @@ class TestFusion(UnitxtTestCase):
         predictions = ["not entailment"] * 20 + ["2"] * 10
         result = evaluate(predictions=predictions, data=dataset["test"])
 
-        self.assertEqual(result[0]["score"]["global"]["rte"]["score"], 0.5)
-        self.assertEqual(result[0]["score"]["global"]["wnli"]["score"], 0.5)
+        self.assertEqual(result[0]["score"]["groups"]["rte"]["score"], 0.5)
+        self.assertEqual(result[0]["score"]["groups"]["wnli"]["score"], 0.5)
         self.assertAlmostEqual(
-            result[0]["score"]["global"]["stsb"]["score"], 0.046, places=3
+            result[0]["score"]["groups"]["stsb"]["score"], 0.046, places=3
         )
-        self.assertAlmostEqual(result[0]["score"]["global"]["score"], 0.349, places=3)
+        self.assertAlmostEqual(
+            result[0]["score"]["groups"]["stsb"]["groups"]["template"][
+                "templates.regression.two_texts.title"
+            ]["score"],
+            0.046,
+            places=3,
+        )
+        self.assertAlmostEqual(result[0]["score"]["groups"]["score"], 0.349, places=3)

@@ -39,3 +39,13 @@ class UnitxtCatalogPreparationTestCase(unittest.TestCase):
                 warnings.simplefilter("ignore")
         register_local_catalog_for_tests()
         cls.maxDiff = None
+
+
+def fillna(data, fill_value):
+    import numpy as np
+
+    if isinstance(data, dict):
+        return {k: fillna(v, fill_value) for k, v in data.items()}
+    if isinstance(data, list):
+        return [fillna(item, fill_value) for item in data]
+    return fill_value if isinstance(data, float) and np.isnan(data) else data

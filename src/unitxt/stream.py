@@ -281,7 +281,10 @@ class MultiStream(dict):
 
     @classmethod
     def from_iterables(
-        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+        cls,
+        iterables: Dict[str, Iterable[Dict[str, Any]]],
+        caching=False,
+        copying=False,
     ):
         """Creates a MultiStream from a dictionary of iterables.
 
