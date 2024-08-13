@@ -1,7 +1,6 @@
 import json
 
-import yaml
-from unitxt import get_logger
+from unitxt import add_to_catalog, get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import (
@@ -11,9 +10,10 @@ from unitxt.inference import (
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.loaders import LoadFromDictionary
 from unitxt.metrics import (
-    LogisticRegressionMetricsEnsemble,
     RandomForestMetricsEnsemble,
 )
+from unitxt.operator import SequentialOperator
+from unitxt.operators import CastFields
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 
@@ -36,12 +36,30 @@ predictions = [
     "thank you for the question.",
 ]
 
-config_filepath = "prepare/templates/response_assessment/judges/config_judges.json"
-with open(config_filepath) as stream:
-    configs = yaml.safe_load(stream)
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": 0.5},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_0_5_if_failed",
+    overwrite=True,
+)
 
-metric_version_models = configs["relevance_v1"]["judges"]
-ensemble_model_name = configs["relevance_v1"]["ensemble_model_name"]
+config_filepath = (
+    "prepare/templates/response_assessment/judges/ensemble_related_v1.json"
+)
+with open(config_filepath) as file:
+    config = json.load(file)
+
+metric_version_models = config["judges"]
 
 template_lst = [sublist[0] for sublist in metric_version_models]
 model_lst = [sublist[1] for sublist in metric_version_models]
@@ -70,24 +88,13 @@ for i in range(len(model_lst)):
     )
     metric_lst.append(cur_metric)
 
-
-with open(
-    "prepare/templates/response_assessment/judges/ensemble_relevance_v1.json"
-) as file:
-    json_data = json.load(file)
-
-json_string = json.dumps(json_data)
-
-class_mapping = {
-    "logistic": LogisticRegressionMetricsEnsemble,
-    "random_forest": RandomForestMetricsEnsemble,
-}
-
-cls = class_mapping.get(ensemble_model_name)
-
-ensemble_metric = cls(
-    metrics=metric_lst,
-    weights=json_string,
+weights = RandomForestMetricsEnsemble.load_weights(config_filepath)
+ensemble_metric = RandomForestMetricsEnsemble(metrics=metric_lst, weights=weights)
+# ensemble_metric.load_weights(config_filepath)
+add_to_catalog(
+    ensemble_metric,
+    "metrics.llm_as_judge.related.ensemble_v1_ibmgenai_judges",
+    overwrite=True,
 )
 
 card = TaskCard(
@@ -96,7 +103,8 @@ card = TaskCard(
         input_fields={"conversation": "str"},
         reference_fields={},
         prediction_type="str",
-        metrics=[ensemble_metric],
+        # metrics=[ensemble_metric],
+        metrics=["metrics.llm_as_judge.related.ensemble_v1_ibmgenai_judges"],
     ),
     templates=TemplatesDict(
         {
