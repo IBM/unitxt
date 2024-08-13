@@ -7,9 +7,13 @@ add_to_catalog(
         input_format="\n\nConversation:\n{question}\n\nResponse:\n{answer}\n\n\nOutput:",
         output_format="[[{rating}]]",
         postprocessors=[
-            r"processors.extract_mt_bench_string_judgment",
+            # r"processors.extract_mt_bench_string_judgment",
+            "processors.take_first_word",
+            "processors.lower_case",
+            "processors.yes_no_to_int",
+            "processors.cast_to_float_return_0_5_if_failed",
         ],
     ),
-    "templates.response_assessment.judges.relevance.v3",
+    "templates.response_assessment.judges.related.v3",
     overwrite=True,
 )
