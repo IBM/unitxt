@@ -56,13 +56,13 @@ of the `universal_ner` card.
 
 
 
-The code then runs the metrics defined on the datasets on 
+The code then runs the metrics defined on the datasets based on:
 
-1.  predictions which is equal to one of the references. 
+1.  Predictions that are equal to one of the references.
 
-2.  random text predictions
+2.  Random text predictions.
 
-To help validate the post processing of the predictions and references , the code prints the post processed values.
+To help validate the post processing of the predictions and references, the code prints the post processed values.
 For example, we can see how the string "Miramar: Location" is parsed by the post processors to a list of tuples.
 
 
@@ -129,9 +129,9 @@ For example, we can see how the string "Miramar: Location" is parsed by the post
 
 
 Most metrics should return a low score (near 0) on random text and a score of 1 when the data is equal to the references.
-Errors/warnings are printed if it's not the case. 
+Errors/warnings are printed if that is not the case. 
 
-If you want to disable the these tests, set ``test_exact_match_score_when_predictions_equal_references=False`` and/or 
+If you want to disable these tests, set ``test_exact_match_score_when_predictions_equal_references=False`` and/or 
 ``test_full_mismatch_score_with_full_mismatch_prediction_values=False``.   
 
 You can set the expected scores using the following parameters:
@@ -150,7 +150,7 @@ arguments to the test_card() function.
   # Test the templates with few shots
   test_card(card,num_demos=1,demo_pool_size=10)
 
-test_card has an optional parameter flag debug. When set to True, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps. 
+test_card has an optional parameter flag debug. When set to true, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps. 
 After each step it prints the number of instances in each split, and one example from each split.
 
 .. code-block:: python
@@ -158,12 +158,12 @@ After each step it prints the number of instances in each split, and one example
   # Shows the step by step processing of data.
   test_card(card,debug=True)
 
-If you get an error, it's best that you turn this flag on, and see where in the execution flow it happens. It's also a good way if want to understand exactly how datasets are generated and what each step performs.
+If you get an error, it's best that you turn this flag on and see where in the execution flow it happens. It's also a good tactic if you want to understand exactly how datasets are generated and what each step performs.
 
 Increase log verbosity
 ----------------------
 
-If you want to get more information during the run (for example, which artifict are loaded from which catalog),
+If you want to get more information during the run (for example, which artificts are loaded from which catalog),
 you can set the UNITXT_DEFAULT_VERBOSITY environment variable or modify the global setting in the code.
 
 .. code-block:: bash
