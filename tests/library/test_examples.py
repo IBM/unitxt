@@ -38,11 +38,11 @@ class TestExamples(UnitxtTestCase):
             "evaluate_different_formats.py",
             "evaluate_different_templates.py",
             "evaluate_different_demo_selections.py",
-            "evaluate_dataset_by_llm_as_judge_no_install.py",
             "evaluate_a_judge_model_capabilities_on_arena_hard.py",
             "evaluate_a_model_using_arena_hard.py",
             "evaluate_llm_as_judge.py",
             "evaluate_using_metrics_ensemble.py",
+            "evaluate_existing_dataset_by_llm_as_judge.py",
         ]
         failed_examples_files = []
         for file in all_example_files:
