@@ -14,9 +14,9 @@ To enhance the functionality of Unitxt, users are encouraged to develop custom o
 This can be achieved by inheriting from any of the existing operators listed below or from one of the fundamental :class:`base operators<unitxt.operator>`.
 The primary task in any operator development is to implement the `process` function, which defines the unique manipulations the operator will perform.
 
-General or Specelized Operators
+General or Specialized Operators
 --------------------------------
-Some operators are specielized in specific data or specific operations such as:
+Some operators are specialized in specific data or specific operations such as:
 
 - :class:`loaders<unitxt.loaders>` for accessing data from various sources.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
@@ -33,7 +33,7 @@ Other specelized operators are used by unitxt internally:
 - :class:`templates<unitxt.templates>` for verbalizing data examples.
 - :class:`formats<unitxt.formats>` for preparing data for models.
 
-The rest of this section is dedicated for general operators.
+The rest of this section is dedicated to general operators.
 
 General Operators List:
 ------------------------
@@ -777,7 +777,7 @@ class Apply(InstanceOperator):
     Args:
         function (str): name of function.
         to_field (str): the field to store the result
-        additional arguments are field names passed to the function
+        additional arguments are field names passed in
 
     Examples:
     Store in field  "b" the uppercase string of the value in field "a"
