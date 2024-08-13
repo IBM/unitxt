@@ -97,7 +97,7 @@ Evaluate an existing dataset using a pre-defined LLM as judge
 
 Demonstrates how to evaluate an existing QA dataset (squad) using the Huggingface datasets and evaluate APIs and leveraging a predefine LLM as a judge metric.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_dataset_by_llm_as_judge_no_install.py>`_
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge.py>`_
 
 Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
