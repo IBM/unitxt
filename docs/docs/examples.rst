@@ -10,14 +10,26 @@ Each example comes with a self contained python file that you can run and later 
 Basic Usage
 ------------
 
-Evaluate an existing dataset from the Unitxt catalog
-++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Evaluate an existing dataset from the Unitxt catalog (No installation)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 This example demonstrates how to evaluate an existing entailment dataset (wnli) using HuggingFace Datasets and Evaluate APIs, with no installation required.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`_
 
 Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+
+Evaluate an existing dataset from the Unitxt catalog (with Unitxt installation)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Demonstrates how to evaluate an existing entailment dataset (wnli) using Unitxt native APIs.
+This approach is faster than using Huggingface APIs.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
+
+Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+
 
 Evaluate a custom dataset
 +++++++++++++++++++++++++
@@ -86,7 +98,7 @@ Evaluate an existing dataset using a predefined LLM as judge
 
 This example demonstrates how to evaluate an existing QA dataset (squad) using the HuggingFace Datasets and Evaluate APIs and leveraging a predefine LLM as a judge metric.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_dataset_by_llm_as_judge_no_install.py>`_
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge.py>`_
 
 Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
