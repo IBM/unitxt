@@ -73,31 +73,31 @@ class EvaluateIlab:
         )
         return dataset
 
-    def run(self):
-        trained = 'trained' if self.is_trained else 'base'
-        title = f'{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}'
+    def run(self, csv_path = None):
+        if not csv_path:
+            trained = 'trained' if self.is_trained else 'base'
+            csv_path = f'ilab/ilab_results/{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}.csv'
         for numshot in [0,5]:
             if numshot == 5 and self.num_test_samples < 50:
                 continue
-            metrics = self.test_load_infer_and_save(num_shots=numshot,title=title)
-        self.yaml_infer_by_metrics(metrics,title)
-        self.yaml_infer_llmaaj(title)
+            metrics = self.test_load_infer_and_save(num_shots=numshot,file=csv_path)
+        self.yaml_infer_by_metrics(metrics,csv_path)
+        # self.yaml_infer_llmaaj(csv_path)
 
-    def yaml_infer_llmaaj(self, title):
+    def yaml_infer_llmaaj(self, file):
         yaml_dataset = self.create_dataset_from_yaml(self.llmaaj_metric)
-        csv_path = f"{title}_yaml_llmaaj.csv"
+        csv_path = file.replace('.csv','_yaml_llmaaj.csv')
         evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
-    def yaml_infer_by_metrics(self,metrics,title):
+    def yaml_infer_by_metrics(self,metrics,file):
         yaml_dataset = self.create_dataset_from_yaml(metrics)
-        csv_path = f"{title}_yaml_metrics.csv"
+        csv_path = file.replace('.csv','_yaml_metrics.csv')
         evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
-    def test_load_infer_and_save(self,num_shots:int, title:str):
-        title = f"{title}_{num_shots}_shots_{self.num_test_samples}_samples"
-        csv_path = f"ilab/ilab_results/{title}.csv"
+    def test_load_infer_and_save(self,num_shots:int, file:str):
+        csv_path = file.replace('.csv',f'_{num_shots}_shots_{self.num_test_samples}_samples.csv')
         dataset = self.load_test_data(num_shots)
         evaluated_dataset, model_name = self.infer_from_model(dataset=dataset)
         base_run_params = {'loader_limit':str(self.num_test_samples),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots}
