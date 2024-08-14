@@ -32,6 +32,7 @@ class EvaluateIlab:
             template:str, 
             task_name:str, 
             yaml_file:str, 
+            is_trained:bool,
             local_catalog:str = None,
             num_test_samples:int = 100
             ):
@@ -42,6 +43,9 @@ class EvaluateIlab:
         self.yaml_file = yaml_file
         self.local_catalog = local_catalog
         self.num_test_samples= num_test_samples
+        self.is_trained = is_trained
+        if self.local_catalog:
+            register_local_catalog(self.local_catalog)
 
     def infer_from_model(self,dataset:DatasetDict) -> Tuple[List[Dict[str, Any]],str]:
         test_dataset = dataset['test']
@@ -56,8 +60,6 @@ class EvaluateIlab:
         return evaluated_dataset, model_name
 
     def load_test_data(self, num_shots:int):   
-        if self.local_catalog:
-            register_local_catalog(self.local_catalog)
         dataset = load_dataset(
             card=self.card,
             template=self.template,
@@ -68,7 +70,8 @@ class EvaluateIlab:
         return dataset
 
     def run(self):
-        title = self.yaml_file.split("/")[-1].replace('.yaml',"")
+        trained = 'trained' if self.is_trained else 'base'
+        title = f'{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}'
         for numshot in [0,5]:
             self.load_infer_and_save(num_shots=numshot,title=title)
         pass
@@ -183,6 +186,7 @@ if __name__ == '__main__':
     parser.add_argument('--template', type=str, required=True, help='Template name')
     parser.add_argument('--task_name',required=True, type=str,help='Task name, e.g. classification, translation etc.')
     parser.add_argument('--host_machine', type=str, required=True, help='Name of the host machine serving the model (e.g. cccxc450)')
+    parser.add_argument('--is_trained',type=bool, required=True, help='Mark if evaluation is on trained model (TRUE) or base model (FALSE)')
     parser.add_argument('--yaml_file', type=str, required=True, help='Path of yaml file containing examples')
     parser.add_argument('--local_catalog', type=str, default=None, help='Optional: If using a non unitxt card, local Catalog path, None by default')    
     parser.add_argument('--num_test_samples', type=int, default=100, help='Optional: Num of assessed records, 100 by default')
@@ -194,7 +198,9 @@ if __name__ == '__main__':
         task_name=args.task_name,
         host_machine=args.host_machine,
         yaml_file=args.yaml_file,
+        is_trained=args.is_trained,
         num_test_samples=args.num_test_samples,
+        local_catalog=args.local_catalog
     )
     evaluator.run()
         
