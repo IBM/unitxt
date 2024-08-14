@@ -35,7 +35,8 @@ class EvaluateIlab:
             is_trained:bool,
             local_catalog:str = None,
             num_test_samples:int = 100,
-            owner:str = 'ilab'
+            owner:str = 'ilab',
+            llmaaj_metric:List[str] = ['metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn']
             ):
         self.card = card
         self.host_machine = host_machine
@@ -48,6 +49,7 @@ class EvaluateIlab:
         self.owner = owner
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
+        self.llmaaj_metric = llmaaj_metric
 
     def infer_from_model(self,dataset:DatasetDict) -> Tuple[List[Dict[str, Any]],str]:
         test_dataset = dataset['test']
@@ -77,14 +79,24 @@ class EvaluateIlab:
         for numshot in [0,5]:
             if numshot == 5 and self.num_test_samples < 50:
                 continue
-            self.load_infer_and_save(num_shots=numshot,title=title)
-        
-        # TODO add logging
-        # TODO run yaml w metrics and w llmaaj
+            metrics = self.test_load_infer_and_save(num_shots=numshot,title=title)
+        self.yaml_infer_by_metrics(metrics,title)
+        self.yaml_infer_llmaaj(title)
 
+    def yaml_infer_llmaaj(self, title):
+        yaml_dataset = self.create_dataset_from_yaml(self.llmaaj_metric)
+        csv_path = f"{title}_yaml_llmaaj.csv"
+        evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
+        self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
-    def load_infer_and_save(self,num_shots:int, title:str):
-        title = f"{title}_{num_shots}_shots"
+    def yaml_infer_by_metrics(self,metrics,title):
+        yaml_dataset = self.create_dataset_from_yaml(metrics)
+        csv_path = f"{title}_yaml_metrics.csv"
+        evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
+        self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
+
+    def test_load_infer_and_save(self,num_shots:int, title:str):
+        title = f"{title}_{num_shots}_shots_{self.num_test_samples}_samples"
         csv_path = f"ilab/ilab_results/{title}.csv"
         dataset = self.load_test_data(num_shots)
         evaluated_dataset, model_name = self.infer_from_model(dataset=dataset)
@@ -95,6 +107,8 @@ class EvaluateIlab:
             model_name= model_name,
             run_params_dict=base_run_params
             )
+        metrics = evaluated_dataset[0]['metrics']
+        return metrics
 
     def save_results(self, csv_path, evaluated_dataset, model_name,run_params_dict = {}):
         global_scores = evaluated_dataset[0]['score']['global']
@@ -165,24 +179,8 @@ class EvaluateIlab:
         return dataset
 
 
-def example():
-    host_machine = 'cccxc450'
-    yaml_file = "watson-emotion_text_first.yaml"
-    task_name = 'classification'
-    template = "templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think"
-    local_catalog =  "../fm-eval/fm_eval/catalogs/private"
-    card = "cards.watson_emotion"
-    evaluator = EvaluateIlab(host_machine=host_machine, card=card, template=template,
-                             task_name=task_name, yaml_file=yaml_file, local_catalog=local_catalog)
-    evaluator.run()
-
 
 if __name__ == '__main__':
-    # TODO: have the loaded records exclude samples used for augmentation?
-    # TODO: calc score on selected 5 samples [construct dataset from yaml?]
-    # TODO: evaluation of selected 5 samples with llmaaj
-    # TODO: corr of llmaaj to overall score with gold on 100 samples
-
    
     parser = argparse.ArgumentParser(description='evaluate dataset against ilab model and save results')
     
