@@ -19,6 +19,8 @@ while [ ! -f "$PIPE_FILE" ]; do
 done
 host=$(cat "$PIPE_FILE")
 
+sleep 10
+
 echo "Server ready on host: $host"
 
 cd $unitxt_repo

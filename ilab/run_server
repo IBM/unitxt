@@ -14,9 +14,11 @@ source /dccstor/fuse/anaconda3/etc/profile.d/conda.sh
 conda activate $venv
 echo "Starting server..."
 $venv/bin/python $venv/bin/ilab model serve &
+pid_server=$!
 
 echo "Forwording port..."
 socat TCP-LISTEN:9000,fork TCP:127.0.0.1:8000 &
+pid_socat=$!
 
 VALUE=$(hostname)
 echo "$VALUE" > "$PIPE_FILE"
@@ -26,4 +28,6 @@ while [ ! -f "${PIPE_FILE}_done" ]; do
     sleep 1 
 done
 echo "DONE"
+kill $pid_server
+kill $pid_socat
 exit 0
