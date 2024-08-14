@@ -34,7 +34,8 @@ class EvaluateIlab:
             yaml_file:str, 
             is_trained:bool,
             local_catalog:str = None,
-            num_test_samples:int = 100
+            num_test_samples:int = 100,
+            owner:str = 'ilab'
             ):
         self.card = card
         self.host_machine = host_machine
@@ -44,6 +45,7 @@ class EvaluateIlab:
         self.local_catalog = local_catalog
         self.num_test_samples= num_test_samples
         self.is_trained = is_trained
+        self.owner = owner
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
 
@@ -59,13 +61,13 @@ class EvaluateIlab:
         print(evaluated_dataset[0]['score']['global'])
         return evaluated_dataset, model_name
 
-    def load_test_data(self, num_shots:int):   
+    def load_test_data(self, num_shots:int):  
         dataset = load_dataset(
             card=self.card,
             template=self.template,
             loader_limit=self.num_test_samples,
             num_demos = num_shots,
-            demos_pool_size = num_shots*4,
+            demos_pool_size = num_shots*4
         )
         return dataset
 
@@ -73,10 +75,12 @@ class EvaluateIlab:
         trained = 'trained' if self.is_trained else 'base'
         title = f'{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}'
         for numshot in [0,5]:
+            if numshot == 5 and self.num_test_samples < 50:
+                continue
             self.load_infer_and_save(num_shots=numshot,title=title)
-        pass
-        # add logging
-        # run yaml w metrics and w llmaaj
+        
+        # TODO add logging
+        # TODO run yaml w metrics and w llmaaj
 
 
     def load_infer_and_save(self,num_shots:int, title:str):
@@ -84,7 +88,7 @@ class EvaluateIlab:
         csv_path = f"ilab/ilab_results/{title}.csv"
         dataset = self.load_test_data(num_shots)
         evaluated_dataset, model_name = self.infer_from_model(dataset=dataset)
-        base_run_params = {'loader_limit':str(self.loader_limit),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots}
+        base_run_params = {'loader_limit':str(self.num_test_samples),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots}
         self.save_results(
             csv_path=csv_path, 
             evaluated_dataset=evaluated_dataset,
@@ -97,7 +101,7 @@ class EvaluateIlab:
         main_score_name = global_scores.pop('score_name')
         global_main_score = global_scores[main_score_name]
         run_data = {
-            'owner':'', 
+            'owner':self.owner, 
             'started_at':datetime.now(), 
             'framework':'Unitxt', 
             'benchmark':'ilab', 
@@ -186,10 +190,11 @@ if __name__ == '__main__':
     parser.add_argument('--template', type=str, required=True, help='Template name')
     parser.add_argument('--task_name',required=True, type=str,help='Task name, e.g. classification, translation etc.')
     parser.add_argument('--host_machine', type=str, required=True, help='Name of the host machine serving the model (e.g. cccxc450)')
-    parser.add_argument('--is_trained',type=bool, required=True, help='Mark if evaluation is on trained model (TRUE) or base model (FALSE)')
+    parser.add_argument('--is_trained',action="store_true", help='Mark if evaluation is on trained model')
     parser.add_argument('--yaml_file', type=str, required=True, help='Path of yaml file containing examples')
     parser.add_argument('--local_catalog', type=str, default=None, help='Optional: If using a non unitxt card, local Catalog path, None by default')    
     parser.add_argument('--num_test_samples', type=int, default=100, help='Optional: Num of assessed records, 100 by default')
+    parser.add_argument('--owner',type=str,default='ilab',help='Optional: Name of run owner, to be saved in result files')
     args = parser.parse_args()
 
     evaluator = EvaluateIlab(
@@ -200,7 +205,11 @@ if __name__ == '__main__':
         yaml_file=args.yaml_file,
         is_trained=args.is_trained,
         num_test_samples=args.num_test_samples,
-        local_catalog=args.local_catalog
+        local_catalog=args.local_catalog,
+        owner = args.owner
     )
     evaluator.run()
-        
+    
+    # Example:
+    # python ilab/ilab_evaluate.py --card cards.watson_emotion --template templates.classification.multi_class.text_after_instruction_with_type_of_class --task_name classification --host_machine cccxc430 --yaml_file ilab/sdg/watson_emotion_classes_first.yaml --local_catalog ../fm-eval/fm_eval/catalogs/private --num_test_samples 100
+    # add --is_trained if running on the trained model
