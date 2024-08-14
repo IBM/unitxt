@@ -1,0 +1,29 @@
+#!/bin/bash
+
+set -x
+set -e 
+
+PIPE_FILE=$1
+repo=$2
+venv=$3
+
+
+echo "PIPE_FILE: $PIPE_FILE"
+cd $repo
+source /dccstor/fuse/anaconda3/etc/profile.d/conda.sh
+conda activate $venv
+echo "Starting server..."
+$venv/bin/python $venv/bin/ilab model serve &
+
+echo "Forwording port..."
+socat TCP-LISTEN:9000,fork TCP:127.0.0.1:8000 &
+
+VALUE=$(hostname)
+echo "$VALUE" > "$PIPE_FILE"
+echo "Server is up. Waiting the client to finish..."
+while [ ! -f "${PIPE_FILE}_done" ]; do
+    echo "."
+    sleep 1 
+done
+echo "DONE"
+exit 0
