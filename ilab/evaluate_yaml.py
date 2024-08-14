@@ -41,5 +41,5 @@ def get_card(data,metrics_list):
     return card
 
 if __name__ == '__main__':
-    dataset = create_dataset_from_yaml('sdg/watson_emotion.yaml',['metrics.rouge'])
+    dataset = create_dataset_from_yaml('ilab/sdg/watson_emotion.yaml',['metrics.rouge'])
     print(dataset['test'][0])

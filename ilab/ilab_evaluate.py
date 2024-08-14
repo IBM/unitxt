@@ -39,7 +39,7 @@ def load_infer_and_save(host_machine:str, title:str, card:str,
                         num_shots:int = 0, loader_limit:int = 100, local_catalog:str = None,
                         run_params_dict:Dict={}):
     title = f"{title}_{num_shots}_shots"
-    csv_path = f"ilab_results/{card.split('.')[1]}_{title}.csv"
+    csv_path = f"ilab/ilab_results/{card.split('.')[1]}_{title}.csv"
     dataset = load_data(card,template, title, loader_limit, num_shots, local_catalog)
     evaluated_dataset, model_name = infer_from_model(host_machine=host_machine,dataset=dataset)
     base_run_params = {'loader_limit':str(loader_limit),'host':host_machine,'folder':'instructlab','num_shots':num_shots}
