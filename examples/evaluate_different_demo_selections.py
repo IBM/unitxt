@@ -20,19 +20,19 @@ inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=
 
 df = pd.DataFrame(columns=["num_demos", "sampler", "f1_micro", "ci_low", "ci_high"])
 
-for num_demos in [1, 3, 5]:
+for num_demos in [1, 2]:
     for demo_sampler in [
         RandomSampler(),
         CloseTextSampler(field="text"),
-        FixedIndicesSampler(indices=[0, 1, 2, 4, 5]),
+        FixedIndicesSampler(indices=[0, 1]),
     ]:
         dataset = load_dataset(
             card=card,
             template="templates.classification.multi_class.title",
             num_demos=num_demos,
-            demos_pool_size=300,
-            loader_limit=400,
-            max_test_instances=200,
+            demos_pool_size=50,
+            loader_limit=200,
+            max_test_instances=100,
             sampler=demo_sampler,
         )
 
