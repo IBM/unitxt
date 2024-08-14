@@ -3,16 +3,9 @@
     "loader": {
         "__type__": "load_hf",
         "path": "facebook/belebele",
-        "name": "default",
-        "split": "est_Latn"
+        "name": "est_Latn"
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "est_Latn": "test"
-            }
-        },
         {
             "__type__": "list_field_values",
             "fields": [
