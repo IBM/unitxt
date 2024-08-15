@@ -120,7 +120,8 @@ card = TaskCard(
                 "input_type": "sentence",
             }
         ),
-        RenameFields(field_to_field={"src": "input", "tgt": "output_choice"}),
+        RenameFields(field="src", to_field="input"),
+        IndexOf(search_in="choices", index_of="tgt", to_field="output_choice"),
     ],
     task="tasks.evaluation.preference",
     templates="templates.evaluation.preference.all",

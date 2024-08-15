@@ -36,7 +36,6 @@ import itertools
 import os
 import tempfile
 from abc import abstractmethod
-from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -54,6 +53,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
+from .utils import deepcopy
 
 logger = get_logger()
 settings = get_settings()
