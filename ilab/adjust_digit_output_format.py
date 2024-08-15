@@ -1,4 +1,4 @@
-import json,yaml
+import json,yaml,argparse
 
 def create_train_file(digit_file,train_output_file):
     
@@ -10,20 +10,6 @@ def create_train_file(digit_file,train_output_file):
             record['system'] = ''
             record['user'] = record.pop('instruction')
             outfile.write(json.dumps(record) + '\n')
-
-# def get_user_and_system(instruction):
-#         split_delimiter = '\n'
-#         user_start_string = "text: "
-#         split_values = instruction.split(split_delimiter)
-#         if split_values[0].startswith(user_start_string):
-#             user = split_values[0]
-#             system = split_delimiter.join(split_values[1:])
-#         elif split_values[1].startswith(user_start_string):
-#             system = split_values[0] + split_delimiter
-#             user = split_delimiter.join(split_values[1:])
-#         else:
-#             raise ValueError("could not split to user and system: {instruction}")
-#         return user,system
 
 def create_test_file(yaml_file,test_output_file):
     with open(yaml_file, 'r') as f:
@@ -44,3 +30,14 @@ if __name__=="__main__":
     yaml_file = 'ilab/sdg/watson_emotion_classes_first.yaml'
     test_file = 'ilab/sdg/test_watson_emotion.jsonl'
     create_test_file(yaml_file=yaml_file,test_output_file=test_file)
+
+    parser = argparse.ArgumentParser(description='evaluate dataset against ilab model and save results')
+    
+    parser.add_argument('--sdg_file', type=str, required=True, help='path of file created by sdg')
+    parser.add_argument('--yaml_file', type=str, required=True, help='path of yaml file')
+    parser.add_argument('--train_file',required=True, type=str,help='path of train output file')
+    parser.add_argument('--test_file',required=True, type=str,help='path of test output file')
+    args = parser.parse_args()
+    
+    create_train_file(digit_file=args.sdg_file, train_output_file=args.train_file)
+    create_test_file(yaml_file=args.yaml_file, test_output_file=args.test_file)
