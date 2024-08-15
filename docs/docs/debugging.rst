@@ -136,9 +136,9 @@ If you want to disable these tests, set ``test_exact_match_score_when_prediction
 
 You can set the expected scores using the following parameters:
 
-1. ``exact_match_score``: The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
+1. ``exact_match_score``: The expected score to be returned when predictions are equal to the gold reference. Default is 1.0.
 
-2. ``maximum_full_mismatch_score``: The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
+2. ``maximum_full_mismatch_score``: The maximum score allowed to be returned when predictions are fully mismatched. Default is 0.0.
 
 3. ``full_mismatch_prediction_values``: An optional list of prediction values to use for testing full mismatches. If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"] is used.
 
@@ -150,7 +150,7 @@ arguments to the test_card() function.
   # Test the templates with few shots
   test_card(card,num_demos=1,demo_pool_size=10)
 
-test_card has an optional parameter flag debug. When set to true, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps. 
+test_card has an optional parameter debug flag. When set to true, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps. 
 After each step it prints the number of instances in each split, and one example from each split.
 
 .. code-block:: python
@@ -163,7 +163,7 @@ If you get an error, it's best that you turn this flag on and see where in the e
 Increase log verbosity
 ----------------------
 
-If you want to get more information during the run (for example, which artificts are loaded from which catalog),
+If you want to get more information during the run (for example, which artifacts are loaded from which catalog),
 you can set the UNITXT_DEFAULT_VERBOSITY environment variable or modify the global setting in the code.
 
 .. code-block:: bash
