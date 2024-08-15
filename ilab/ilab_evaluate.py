@@ -14,7 +14,7 @@ from typing import List,Dict,Any, Tuple
 from datasets import DatasetDict
 from unitxt import register_local_catalog
 import argparse
-
+import importlib
 
 class EvaluateIlab:
     card:str
@@ -184,23 +184,39 @@ if __name__ == '__main__':
    
     parser = argparse.ArgumentParser(description='evaluate dataset against ilab model and save results')
     
-    parser.add_argument('--card', type=str, required=True, help='Card name')
-    parser.add_argument('--template', type=str, required=True, help='Template name')
-    parser.add_argument('--task_name',required=True, type=str,help='Task name, e.g. classification, translation etc.')
+    parser.add_argument('--card', type=str, help='Card name')
+    parser.add_argument('--template', type=str, help='Template name')
+    parser.add_argument('--task_name', type=str,help='Task name, e.g. classification, translation etc.')
     parser.add_argument('--host_machine', type=str, required=True, help='Name of the host machine serving the model (e.g. cccxc450)')
     parser.add_argument('--is_trained',action="store_true", help='Mark if evaluation is on trained model')
-    parser.add_argument('--yaml_file', type=str, required=True, help='Path of yaml file containing examples')
+    parser.add_argument('--yaml_file', type=str, help='Path of yaml file containing examples')
     parser.add_argument('--local_catalog', type=str, default=None, help='Optional: If using a non unitxt card, local Catalog path, None by default')    
     parser.add_argument('--num_test_samples', type=int, default=100, help='Optional: Num of assessed records, 100 by default')
     parser.add_argument('--owner',type=str,default='ilab',help='Optional: Name of run owner, to be saved in result files')
+    parser.add_argument('--card_config', type=str,
+                        help='Optional: card_config name. It should be defined at create_ilab_skill_yaml.py')
     args = parser.parse_args()
 
+    if args.card_config is not None:
+        module = importlib.import_module('create_ilab_skill_yaml')
+        config = getattr(module, args.card_config)
+        card = config.card
+        template = config.template
+        task_name = config.task_description
+        yaml_file = config.yaml_file
+    else:
+        card = args.card
+        template = args.template
+        task_name = args.task_name
+        yaml_file = args.yaml_file
+
+
     evaluator = EvaluateIlab(
-        card = args.card,
-        template = args.template,
-        task_name=args.task_name,
+        card = card,
+        template = template,
+        task_name=task_name,
         host_machine=args.host_machine,
-        yaml_file=args.yaml_file,
+        yaml_file=yaml_file,
         is_trained=args.is_trained,
         num_test_samples=args.num_test_samples,
         local_catalog=args.local_catalog,
