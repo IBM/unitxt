@@ -2108,7 +2108,17 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(InstanceMetric):
+class NLTKMixin(Artifact):
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
+        self.nltk = nltk
+
+
+class Rouge(InstanceMetric, NLTKMixin):
     main_score = "rougeL"
     prediction_type = str
     single_reference_per_prediction = False  # multiple references allowed
@@ -2121,21 +2131,17 @@ class Rouge(InstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import nltk
         from rouge_score import rouge_scorer
 
         self.rouge_scorer = rouge_scorer
 
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
@@ -2151,7 +2157,7 @@ class Rouge(InstanceMetric):
         return score
 
 
-class RougeHF(HuggingfaceInstanceMetric):
+class RougeHF(HuggingfaceInstanceMetric, NLTKMixin):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -2177,18 +2183,13 @@ class RougeHF(HuggingfaceInstanceMetric):
             {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
-        import nltk
-
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references, prediction, task_data: List[Dict]):
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
