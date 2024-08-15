@@ -1,0 +1,256 @@
+"version": 2
+"task_description": "dailymail summerizaion with context simple. Indices: [864, 394,\
+  \ 776, 911, 430]"
+"created_by": "roni"
+"seed_examples":
+- "question": "Summarize the following article.\n"
+  "answer": "EPA e-mail told employees not to answer questions from its own inspector's\
+    \ office .\nWorkers also told not to talk to reporters or Government Accountability\
+    \ Office .\nWatchdog group calls e-mail a \"gag order\"; EPA official says it's\
+    \ not about secrecy .\nTuesday news conference to address whether EPA avoided\
+    \ giving public information ."
+  "context": "WASHINGTON (CNN)  -- The Environmental Protection Agency advised employees\
+    \ last month not to answer questions from journalists, the Government Accountability\
+    \ Office or the agency's inspector general, according to an EPA e-mail made public\
+    \ Monday. California Sen. Barbara Boxer has said the EPA is becoming a \"secretive,\
+    \ dangerous ally of polluters.\" \"Please do not respond to questions or make\
+    \ any statements,\" the June 16 e-mail said, advising staff to direct questioners\
+    \ to senior staff members cleared to answer questions from outside the agency.\
+    \ Robbi Farrell, chief of staff of the EPA's compliance assurance division, sent\
+    \ the e-mail to 11 managers in the department. The e-mail was posted on a Web\
+    \ site of the Public Employees for Environmental Responsibility. The group, an\
+    \ alliance of state and federal environmental professionals, labeled the communication\
+    \ a \"gag order.\" \"The order reinforces a growing bunker mentality within an\
+    \ EPA that is the subject of a growing number of probes into political interference\
+    \ with agency operations,\" the group said. EPA press director Roxanne Smith rejected\
+    \ that characterization, saying the e-mail was about efficiency, not secrecy.\
+    \ The memo was a response to a May 2007 audit by the Inspector General's Office\
+    \ that found the EPA did not respond earlier to IG reports on problems with water\
+    \ enforcement and other issues, The Associated Press reported. The audit, however,\
+    \ did not make any recommendations governing communication between staff and the\
+    \ Inspector General's Office. \"A senior staffer in the enforcement office sent\
+    \ out an e-mail to simply help her office efficiently respond to requests from\
+    \ the press, GAO and EPA's inspector general,\" Smith told CNN. \"There is nothing\
+    \ in the procedure that restricts conversation between enforcement staff, the\
+    \ press, GAO and the IG,\" she said, adding it is \"consistent with existing agency\
+    \ polices.\" Smith is one of the people to whom recipients of the memo were told\
+    \ to direct journalists' questions. In a written statement, the EPA's Office of\
+    \ Inspector General said it did not approve the language of Robbi's warning and\
+    \ advised, \"All EPA officials and employees are required to cooperate\" with\
+    \ the office. \"This cooperation includes providing the OIG full and unrestricted\
+    \ access to EPA documents, records, and personnel,\" the statement read. \"We\
+    \ are currently engaged in discussions with OECA [Office of Enforcement and Compliance\
+    \ Assurance] to assure that OIG and OECA interpretations are consistent in this\
+    \ matter.\" And Sen. Barbara Boxer, a California Democrat who has long battled\
+    \ with the agency's administrator, Stephen Johnson, said the instructions showed\
+    \ that Johnson is \"turning the EPA into a secretive, dangerous ally of polluters,\
+    \ instead of a leader in the effort to protect the health and safety of the American\
+    \ people.\" Last week, Johnson denied a request to appear before two Senate committees\
+    \ to talk about whether the EPA's decisions comply with its staff's legal and\
+    \ technical recommendations. The committee's chairman, Sen. Patrick Leahy, D-Vermont,\
+    \ has asked the inspector general's office to assess the administration's claims\
+    \ of executive privilege as it tries to keep documents related to EPA decisions\
+    \ from Congress. Boxer chairs the Senate Committee on the Environment and Public\
+    \ Works. She is expected to hold a news conference Tuesday to talk about what\
+    \ she calls \"political interference in recent EPA decisions\" and discuss \"\
+    apparent contradictions between the sworn testimony\" of Johnson and accounts\
+    \ given by other sworn witnesses."
+- "question": "Summarize the following article.\n"
+  "answer": "22-year-old arms dealer faces congressional inquiry .\nCompany supplied\
+    \ ammunition made in China decades ago .\nCompany's contract called for bullets\
+    \ made in Hungary .\nGrandfather says dealer, 22, had \"gift\" for weaponry ."
+  "context": "(CNN) -- Efraim Diveroli's father hoped his son would become a doctor\
+    \ or lawyer. Efraim Diveroli, 22, is doing his \"patriotic\" duty as an arms dealer,\
+    \ his grandfather says. What he got instead is a 22-year-old international arms\
+    \ dealer who faces a congressional inquiry for allegedly selling old Chinese ammunition\
+    \ to the U.S. military to equip allies in Afghanistan. Diveroli is president of\
+    \ AEY Inc., a South Florida company which, according to U.S. government documents,\
+    \ has done more than $10 million of business with the U.S. government since 2004.\
+    \ The papers also reveal the company struck it big in 2007 with contracts totaling\
+    \ more than $200 million to supply ammunition, assault rifles and other weapons\
+    \ to the Afghan National Army and police. The company's contract said it would\
+    \ get the ammunition from Hungary. But Army investigators found what the Afghan\
+    \ military got included corroded ammunition made in China as long as 46 years\
+    \ ago. The New York Times reported Thursday that AEY shopped stockpiles and ammo\
+    \ dumps in old Soviet bloc allies, from Albania to Kazakhstan. Albania was a big\
+    \ customer for Chinese armaments in the 1960s and '70s, the Times reported. Angelo\
+    \ Diveroli, Efraim's grandfather, told CNN affiliate WPLG-TV that his grandson\
+    \ is being targeted by \"jealous competitors\" in the international arms market.\
+    \ Since he was a boy, the grandfather said, Efraim Diveroli has known his way\
+    \ around weapons. Read the WPLG story . \"He's a genius about anything to do with\
+    \ weapons,\" the 72-year-old says. \"Ever since he was a little boy, I would take\
+    \ him to gun shows and he could identify every model of guns. People would ask:\
+    \ How can he do that so young? He has a gift, I would tell them.'' Michael Diveroli,\
+    \ Efraim's father, told CNN affiliate WFOR-TV that he wished his son had turned\
+    \ his intellect elsewhere. He said Efraim was \"a boy genius\" who is \"hard to\
+    \ control.\" Read the WFOR story . \"I would prefer he became a nice Jewish doctor\
+    \ or lawyer rather than an arms dealer,\" WFOR quoted Michael Diveroli as saying.\
+    \  Watch how father says son runs his own show \xBB . But his son seem to have\
+    \ a good idea of the circles he was running in. \"What goes on in the Albanian\
+    \ Defense Ministry,\" the New York Times quoted him as saying. \"Who's clean?\
+    \ Who's dirty? Don't want to know about it.\" On a MySpace page Efraim Diveroli\
+    \ last updated in 2005, he says \"I probably grew up way to (sic) fast.\" But\
+    \ in a hint of where the then-19-year-old's future was heading, he wrote, \"I\
+    \ definately (sic) have the desire to be very successful in my business and this\
+    \ does take up alot (sic) of my time.\" The MySpace page also hints of his need\
+    \ for thrills. \"I'm one of those guys who needs to be entertained and having\
+    \ lots of fun all the time so if your (sic) also an undiagnosed case of ADD look\
+    \ me up,\" it says. He lists the weapon-heavy films \"Heat\" and \"Scarface\"\
+    \ among his favorites. A CNN search of Diveroli's Florida criminal record shows\
+    \ arrests, but no convictions, on offenses from misdemeanor battery to felony\
+    \ possession of stolen property. He has yet to appear in court on a March 3 arrest\
+    \ for driving under the influence. For now, relatives say Efraim Diveroli is out\
+    \ of the country. CNN attempts to contact him have not been successful. His grandfather\
+    \ told WPLG that Diveroli is now in Turkey or Albania doing his \"patriotic\"\
+    \ duty. \"He's all over the world getting what the military needs,\" Angelo Diveroli\
+    \ says. But in a MySpace message exchange with Radar magazine, a person thought\
+    \ to be David Packouz, a 25-year-old who was AEY's vice president, refers to Efraim\
+    \ Diveroli as \"my former scumbag partner\" and says he is motivated by money.\
+    \ \"Efraim Diveroli has a serious psychological illness called 'extreme greed,'\
+    \ \" Radar quotes him as writing in a report on its Web site. Packouz would not\
+    \ discuss AEY with CNN on Friday, saying he had no comment \"because of the ongoing\
+    \ investigation.\"  E-mail to a friend ."
+- "question": "Summarize the following article.\n"
+  "answer": "NEW: British mercenary Simon Mann jailed for plotting a Equatorial Guinea\
+    \ coup .\nMann testified he was \"junior\" in organization that plotted attempted\
+    \ coup .\nMann implicated former friend Mark Thatcher in 2004 plot during testimony\
+    \ ."
+  "context": "(CNN) -- British mercenary Simon Mann has been jailed for 34 years for\
+    \ his part in plotting a coup in Equatorial Guinea. Simon Mann was arrested after\
+    \ a plane carrying him and about 60 mercenaries landed in Zimbabwe. The former\
+    \ British military officer confessed to trying to topple long-time ruler Teodoro\
+    \ Obiang Nguema Mbasogo - but denied being the plot's leader. The goal of the\
+    \ plot was to install exiled opposition leader Severo Moto who is currently in\
+    \ Spain awaiting trial on charges of arms trafficking, and to gain access to the\
+    \ former Spanish colony's oil wealth. During the trial, Mann testified he was\
+    \ a \"junior\" in the organization which plotted to overthrow the tiny west African\
+    \ country's president in 2004, and that Lebanese businessman Eli Calil was the\
+    \ man in charge. \"Eli Calil was known as the cardinal -- the cardinal -- which\
+    \ I think says it all,\" Mann told the court.  Watch Mann's reaction to his sentences\
+    \ \xBB . Footage of the proceedings was broadcast by Britain's Channel 4 News,\
+    \ which says it has the only camera in the courtroom. As Mann's trial progressed\
+    \ last month, South Africa rejected Mann's allegation that it had given its tacit\
+    \ support for the coup plot. \"South Africa will never, tacitly or expressly,\
+    \ support the use of mercenaries to bring about fundamental political changes\
+    \ in any country in our continent or elsewhere in the world including Equatorial\
+    \ Guinea,\" the government said in a statement. Mann testified that several governments,\
+    \ including Spain and the United States, welcomed the idea of a coup. Mann is\
+    \ a former British army commando who was arrested four years ago after a plane\
+    \ carrying him and about 60 mercenaries landed in Zimbabwe. The government of\
+    \ Equatorial Guinea said the group was on its way to overthrow its president.\
+    \ Mann said at the time they were going to guard a diamond mine in the Democratic\
+    \ Republic of Congo. A Zimbabwe court convicted Mann of trying to buy weapons\
+    \ illegally. He served four years in jail there before being extradited to Equatorial\
+    \ Guinea's capital of Malabo earlier this year to face charges of leading an abortive\
+    \ coup. Mann testified that his former friend Mark Thatcher -- the son of former\
+    \ British Prime Minister Margaret Thatcher -- was a main partner in the plot.\
+    \ Thatcher was arrested along with Mann in 2004, and he pleaded guilty in South\
+    \ Africa the following year to unwittingly bankrolling the plot. He escaped jail\
+    \ time by paying a fine. Thatcher admitted giving $275,000 toward the charter\
+    \ of a helicopter, saying he thought was for commercial purposes and discovered\
+    \ only later it was to be used by mercenaries. But Mann said Thatcher paid $350,000\
+    \ for a helicopter and a plane which he knew would be used in the plot, and that\
+    \ he attended meetings about the plan with Calil in London. Calil, Mann said,\
+    \ initially asked him to assassinate President Obiang and talked about the possibility\
+    \ of staging a guerrilla war. Mann testified he refused both requests, considering\
+    \ them unethical, but he did agree to help stage a coup. Though he said Thatcher\
+    \ was a top figure in the plot, Mann testified that even Thatcher was under Calil\
+    \ in the group's hierarchy. Mann, appearing in a gray prison outfit, emphasized\
+    \ that he was not the man in charge. Mann's defense lawyer took 45 minutes to\
+    \ question Mann, Channel 4 reported, in contrast to the four hours of prosecution\
+    \ questioning Mann faced. Mann smiled often in the footage shown by Channel 4\
+    \ and even stuck his tongue out playfully at the camera. After his stint in the\
+    \ British army, Mann was affiliated with the South Africa-based mercenary firm\
+    \ Executive Outcomes. The firm described itself on its now-defunct Web site as\
+    \ a \"military advisory service\" that had played a \"crucial\" role in ending\
+    \ two African civil wars."
+- "question": "Summarize the following article.\n"
+  "answer": "Video of Spanair MD-82 which crashed in Madrid shows plane got off the\
+    \ ground .\nVideo shows plane bursting into flames after runway skid, source says\
+    \ .\nDNA tests will be used to identify victims from Madrid air crash .\n153 people\
+    \ died when Spanair flight crashed Wednesday during takeoff ."
+  "context": "MADRID, Spain (CNN) -- A Spanair MD-82 airliner was not on fire as it\
+    \ took off from Madrid's airport but lifted off slightly into the air, fell back\
+    \ to the ground and caught fire only after skidding off the side of the runway,\
+    \ a source familiar said Friday. The plane crash victims' bodies laid out at a\
+    \ makeshift morgue in Madrid. A total of 153 people were killed. Initially, there\
+    \ were indications that an engine might have caught fire as the plane was taking\
+    \ off, but the source said airport video shows the plane lifting off, veering\
+    \ sharply right and then dragging or skidding down the right side of the runway.\
+    \ There was a cloud of dust, the source said, followed by a fireball. Canary Islands\
+    \ regional President Paulino Rivero said after meeting with Spain's prime minister,\
+    \ Jose Luis Rodriguez Zapatero, that the latter had seen the video and described\
+    \ it as showing the plane using up all the runway as it tried to take off but\
+    \ then never reaching adequate altitude, The Associated Press reported. Eighty\
+    \ of the bodies recovered from the wreckage of Wednesday's fiery plane crash have\
+    \ been identified, Spanish authorities said Friday.   Watch as Spain deals with\
+    \ tragedy \xBB . Many of the bodies are so badly burned that fingerprint identification\
+    \ is impossible, and investigators will have to rely on DNA, officials said. Nineteen\
+    \ survivors remained hospitalized Friday. The plane was all but destroyed in the\
+    \ crash, a rescue worker said. When emergency crews arrived on the scene, \"you\
+    \ couldn't distinguish that there was an aircraft there, apart from the remains\
+    \ of the tail,\" Ergivio Corral said. \"If you didn't know it, you wouldn't have\
+    \ been able to say there was a plane.\"  Watch moment of silence \xBB . Authorities\
+    \ have handed over the remains of 35 victims to their families, officials said.\
+    \ Families of the victims are being housed in a hotel near the airport, and the\
+    \ government planned to brief them on the crash investigation Friday. The cause\
+    \ of the accident is still unknown, but Spanair spokesman Javier Mendoza said\
+    \ flight data recorders had been recovered. iReport.com: Share your photos, videos\
+    \ from the scene . \"One of them seems to be... a little bit damaged, but [investigators]\
+    \ are confident they could use the information,\" Mendoza said. \"But we have\
+    \ to wait for the downloading and the analysis\" before any conclusions can be\
+    \ drawn, he said. Witnesses reported that the plane banked violently to the right\
+    \ as it attempted to take off before slamming back to the ground and coming to\
+    \ a rest in a gully just off the runway at Madrid's Bajaras airport.  Watch as\
+    \ the wounded arrive at a hospital \xBB . The plane's departure had been delayed\
+    \ for nearly two hours due to a technical problem with the aircraft, Mendoza said,\
+    \ but it was not clear whether that fault was related to the crash. \"The heating\
+    \ problem was treated and corrected by Spanair maintenance personnel,\" he said.\
+    \ \"We have reviewed the details on this faulty situation with the inspectors\
+    \ of our civil aviation authority,\" he said, \"and we all come to the conclusion\
+    \ that was nothing abnormal in this resolution of that problem.\" Madrid observed\
+    \ five minutes of silence Thursday to honor the victims, and the country began\
+    \ three days of mourning.  See a map of the airport \xBB . The McDonnell Douglas\
+    \ MD-82 carried 162 passengers, four non-working crew members and six working\
+    \ crew members, Spanair said. The aircraft was also carrying seven passengers\
+    \ from Lufthansa Flight 2554 on a flight scheduled to take more than two hours,\
+    \ airline spokeswoman Henriette Ellekrog said. Spanair, a low-cost airline that\
+    \ has a flight-sharing agreement with Lufthansa, is owned by SAS Scandinavian\
+    \ Airlines. Twenty-two of the passengers were children, two of them infants, Spanair\
+    \ said. After contacting families, the airline published the names of those aboard\
+    \ on its Web site. It was the first fatal accident at the airport since December\
+    \ 1983, when 93 people were killed as two Spanish airliners collided while taxiing\
+    \ for takeoff. The airport, which sits eight miles (13 km) northeast of central\
+    \ Madrid, is Spain's busiest, handling more than 40 million passengers a year.\
+    \ CNN's Madrid Bureau Chief Al Goodman, Claudia Rebaza, Cal Perry and Kathleen\
+    \ Koch contributed to this report. Copyright 2008 CNN. All rights reserved.This\
+    \ material may not be published, broadcast, rewritten, or redistributed. Associated\
+    \ Press contributed to this report."
+- "question": "Summarize the following article.\n"
+  "answer": "No date set for the court-martial .\nU.S. military charges Marine after\
+    \ girl dropped charges in February .\nMost of U.S. troops in Japan are stationed\
+    \ in Okinawa ."
+  "context": "TOKYO, Japan (CNN)  -- The U.S. military in Japan has charged a Marine\
+    \ with rape and other violations of the Uniform Code of Military Justice in the\
+    \ alleged sexual assault of 14-year old girl in Okinawa. A civic group member\
+    \ protests against Hadnott near the U.S. Embassy in Tokyo on February 13. Staff\
+    \ Sgt. Tyrone Luther Hadnott, 38, has been charged with the rape of a child under\
+    \ 16, abusive sexual contact with a child, making a false official statement,\
+    \ adultery and kidnapping, the Marines said Friday. No dates for the court-martial\
+    \ have been set. In February, Japanese authorities released Hadnott after the\
+    \ girl dropped the allegations against him, but the Marine Corps conducted its\
+    \ own investigation to see if Hadnott violated codes of military justice. It held\
+    \ him at a Marine facility. The rape accusation against Hadnott stirred memories\
+    \ of a brutal rape more than a decade ago and triggered outrage across Japan.\
+    \ Prime Minister Yasuo Fukuda deplored as \"unforgivable\" the allegations against\
+    \ Hadnott. The incident also led to tight restrictions, for a time, for American\
+    \ troops and their families at the U.S. base on Okinawa. The U.S. military in\
+    \ Japan also formed a sexual assault prevention task force after the incident.\
+    \ More than 40,000 U.S. troops are stationed in Japan, most of them on Okinawa.\
+    \ The troops were placed there under a security alliance after Japan was defeated\
+    \ in World War II and was renounced its right to a military. The U.S. military\
+    \ presence has at times bred resentment among some Japanese, who have long complained\
+    \ about crime, noise and accidents. Anti-American sentiments boiled over in 1995\
+    \ after three American servicemen kidnapped and gang-raped a 12-year-old Okinawan\
+    \ schoolgirl. Two years ago, a U.S. civilian military employee was jailed for\
+    \ nine years for raping two women. E-mail to a friend ."

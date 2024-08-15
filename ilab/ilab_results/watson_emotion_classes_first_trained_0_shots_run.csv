@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+ilab,2024-08-14 12:45:31.087644,Unitxt,ilab,watson_emotion,classification,models/merlinite-7b-lab-Q4_K_M.gguf,0.0,f1_micro,"{'f1_macro': 0.0, 'f1_joy': 0.0, 'f1_anger': 0.0, 'f1_fear': 0.0, 'score': 0.0, 'score_ci_low': nan, 'score_ci_high': nan, 'f1_macro_ci_low': nan, 'f1_macro_ci_high': nan, 'accuracy': 0.0, 'f1_micro': 0.0, 'f1_micro_ci_low': nan, 'f1_micro_ci_high': nan}","{'loader_limit': '5', 'host': 'cccxc430', 'folder': 'instructlab', 'num_shots': 0}"

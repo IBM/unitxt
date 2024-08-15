@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+,2024-08-07 09:43:08.106725,Unitxt,ilab,cards.cnn_dailymail,templates.summarization.abstractive.instruct_full,models/ggml-model-f16-cnn1.gguf,0.08898688999758092,rougeL,"{'rouge1': 0.12579601569283994, 'rouge2': 0.045012210014208506, 'rougeL': 0.08898688999758092, 'rougeLsum': 0.1154818772679709, 'score': 0.08898688999758092}","{'loader_limit': '100', 'host': 'cccxc434', 'folder': 'instructlab'}"

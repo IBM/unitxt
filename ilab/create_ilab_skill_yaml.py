@@ -6,6 +6,10 @@ import yaml
 from collections import Counter
 import random
 from dataclasses import dataclass
+from unitxt.settings_utils import get_settings
+
+settings = get_settings()
+settings.allow_unverified_code = True
 
 FM_EVAL_LOCAL_CATALOG = "../fm-eval/fm_eval/catalogs/private"
 CREATOR = "RF"
@@ -94,12 +98,13 @@ class IlabParameters:
     task_description:str
     creator:str
     yaml_file:str
-    template:str
     card:str
-    question_field:str
-    answer_field:str
+    template:str = None
+    template_index:int = None
+    question_field:str = 'source'
+    answer_field:str = 'target'
     context_field:str = None
-    loader_limit:int = 1000
+    loader_limit:int = 100
     local_catalog:str = None
     use_question_field_as_text:bool=False
     
@@ -131,7 +136,12 @@ def select_random_indices(dataset, num_samples):
 def create_yaml(parameters:IlabParameters,distribute=True):
     if parameters.local_catalog:
         register_local_catalog(parameters.local_catalog)
-    loaded_dataset = load_dataset(card=parameters.card, template =parameters.template, loader_limit = parameters.loader_limit)
+    if parameters.template is not None:
+        loaded_dataset = load_dataset(card=parameters.card, template =parameters.template, loader_limit = parameters.loader_limit)
+    elif parameters.template_index is not None:
+        loaded_dataset = load_dataset(card=parameters.card, template_card_index=parameters.template_index, loader_limit = parameters.loader_limit)
+    else:
+        ValueError("must have either template or template card index") #TODO error if both are not none
     dataset = loaded_dataset['train']
     examples = []
     if distribute:
@@ -210,9 +220,59 @@ watson_emotion_classes_first_example = IlabParameters(
     answer_field = 'target',
 )
 
+fin_qa = IlabParameters(
+    template_index = 0,
+    task_description='QA',
+    creator=CREATOR,
+    yaml_file='ilab/sdg/fin_qa.yaml',
+    card='cards.fin_qa',
+)
 
+clapnq = IlabParameters(
+    card='cards.rag.response_generation.clapnq',
+    task_description='rag',
+    creator=CREATOR,
+    yaml_file='ilab/sdg/clapnq.yaml',
+    template="templates.rag.response_generation.please_respond"
+)
+
+pagerduty = IlabParameters(
+    card='cards.pagerduty',
+    template='templates.summarization.dialogue.dialogue_here_instruction_dialogue_field_write_summary_instruction',
+    task_description='summarization',
+    yaml_file='ilab/sdg/pagerduty.yaml',
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    creator=CREATOR
+)
+
+persado = IlabParameters(
+    card='cards.persado',
+    template="templates.generation.question_generation.given_input",
+    task_description='persado',
+    yaml_file='ilab/sdg/persado.yaml',
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    creator=CREATOR
+)
+
+ner = IlabParameters(
+    card='cards.entities_selected.all',
+    template='templates.ner.all_entity_types.extract_all_entities',
+    task_description='ner',
+    yaml_file='ilab/sdg/entities_all.yaml',
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    creator=CREATOR
+)
+
+cat = IlabParameters(
+    card='cards.cat',
+    template='templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none',
+    task_description='classification',
+    yaml_file='ilab/sdg/cat.yaml',
+    local_catalog=FM_EVAL_LOCAL_CATALOG,
+    creator=CREATOR
+)
     
 if __name__ == "__main__":
-    create_yaml(watson_emotion_classes_first_example)
+    create_yaml(cat)
 
 

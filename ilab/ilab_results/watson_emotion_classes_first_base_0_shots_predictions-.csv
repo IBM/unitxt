@@ -1,0 +1,301 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Happiness is nt D absence of problems, its D ability 2 deal with them   #quotes   #Love #life
+",['joy'],the emotion in this text is: joy,['joy'],0.0,f1_micro,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @ecommerce_company I did twice nothing is done. It is a lot of work. 200+ images / designs of my are there. You are peddling stolen goods.
+",['anger'],emotion: anger,['anger'],0.0,f1_micro,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I need to get away. I wish I had money to go travel for a bit. I miss my east coast friends.
+",['fear'],option 1: fear,['fear'],0.0,f1_micro,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @RockChristopher: FREE Book! (Thur-Mon) 32 Transformational stories ""Finding   Around the World."" http://t.co/hBmngfwtWc Kari Joys MS…
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @lift_behappy:  : Don't give up a lifetime of happiness for a few minutes of pleasure. via @DantsohoB
+",['joy'],emotion: fear,['joy'],0.0,f1_micro,test
+5,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @CMZart you should get your work everywhere.. Articles etc. Love it!
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+6,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @banking_company oh y'all just being y'all fraudulent selfs. I'll call on Thursday
+",['sadness'],emotion: anger,['sadness'],0.0,f1_micro,test
+7,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I'm relieved that's not a sub.
+",['joy'],answer: fear,['joy'],0.0,f1_micro,test
+8,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: No matter whats happening in Kenya I would give it all up here to be there in a moment best time of my life was in the motherland  
+",['joy'],answer: joy,['joy'],0.0,f1_micro,test
+9,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: The ending made me tear up ;( 
+",['sadness'],emotion: sadness,['sadness'],0.0,f1_micro,test
+10,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @Milzyxx just hanging with my bestie
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+11,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company not working on any devices. Could you turn it off then on again?
+",['sadness'],emotion: frustration,['sadness'],0.0,f1_micro,test
+12,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You told me you found it on a dig down in Thebes! 
+",['anger'],answer: joy,['anger'],0.0,f1_micro,test
+13,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Heyy everyone! Kiss u k.a.denise 😘😘🙈😊   #beautiful #amazing #good #day #like4like #lfl #l4l… https://t.co/LfWE3TyMNb
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+14,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You know, Burke, I don't know which species is worse.  You don't see them screwing each other over for a fucking percentage. 
+",['anger'],speaker: marty,['anger'],0.0,f1_micro,test
+15,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @chuantsay I'm sorry for the experience! Without posting any account info, can you tell us a little bit about what's going on? ^DR
+",['none'],emotion: fear,['none'],0.0,f1_micro,test
+16,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: nicolas perony i am okay , thanks .
+",['joy'],answer: joy,['joy'],0.0,f1_micro,test
+17,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Sure it wasn't sleep paralysis? 
+",['sadness'],emotion: fear,['sadness'],0.0,f1_micro,test
+18,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hello Happy! Smart GlassVisit http://t.co/q5apyDnHNX#dog #pets #sunglasses   #smartglass… https://t.co/1MqryEnYwL
+",['joy'],- fear,['joy'],0.0,f1_micro,test
+19,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Volunteer Day at CATHEDRAL KITCHEN!!! #giveback #helpyourfellowman #love #peace  
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+20,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Their steamed up windows excited George.
+",['joy'],answer: joy,['joy'],0.0,f1_micro,test
+21,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Miss kay's face is creapy   #bbmmsansi
+",['fear'],emotion: fear,['fear'],0.0,f1_micro,test
+22,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @playfulpixel That sounds good
+",['joy'],### word to vector mapping,['joy'],0.0,f1_micro,test
+23,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I've just spent &#163;80 in the past 2 days at @ecommerce_company &#128514;&#128514; I have a problem
+",['sadness'],emotion: sadness,['sadness'],0.0,f1_micro,test
+24,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Does Jozea really need to run around in his underwear...gross!!! #BB18 #eviction 
+",['disgust'],emotion: disgust,['disgust'],0.0,f1_micro,test
+25,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I know this is a little late but im sure you would get mad if i bang your girlfriend. 
+",['anger'],emotion: anger,['anger'],0.0,f1_micro,test
+26,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if entertainment can be diverted to also increase positive emotion , meaning , eudaimonia , it will be good enough .
+",['joy'],emotion: none,['joy'],0.0,f1_micro,test
+27,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @changemexs: ""@ProjetoJBFollow:hey @justinbieber if u see this,can u follow me?i've been trying SO hard 😔it's my dream😭  219  …
+",['joy'],emotion: sadness,['joy'],0.0,f1_micro,test
+28,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Even at a high state of life you still will have bitches fighting over niggas that ain't worth shit  
+",['sadness'],option: anger,['sadness'],0.0,f1_micro,test
+29,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: So if you're stuck on ways on how to be polite follow these rules. #blog #blogger #nice   #rules #society http://t.co/EXVvdfzDxH
+",['joy'],happy (joy),['joy'],0.0,f1_micro,test
+30,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: it allows thousands of people to walk into a mom and pop store and in just five minutes activate the service that gives them two products an international bank account number and an international debit card .
+",['joy'],answer: fear,['joy'],0.0,f1_micro,test
+31,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: But shit .. I must have never had a bff because nobody knows when I'm sad or mad or have been crying  
+",['sadness'],emotion: sadness,['sadness'],0.0,f1_micro,test
+32,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @romeoeldaghl @JakMak88 Racing has welcomed worse than him back. #disgraceful   #whydowefollowit
+",['anger'],### expert answers and insights,['anger'],0.0,f1_micro,test
+33,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Im really trying to throw fear & frustration out the window with my business to grow & expand. Ideas? #smallbiz   #entrepreneur
+",['fear'],emotion: anger,['fear'],0.0,f1_micro,test
+34,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: People who cut their toenails in the bus deserve to accidentally cut their toes off when the bus suddenly breaks.  
+",['disgust'],response: anger,['disgust'],0.0,f1_micro,test
+35,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Congratulations on your b day KAITO😆😎🍰✨#Kaito   #birthday #party #20 #best #friends #thanks… http://t.co/EofUzOsrEJ
+",['joy'],emotion: happiness,['joy'],0.0,f1_micro,test
+36,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @ShittyChemKid  Hello! Thank  you for reaching out and welcome in our family. What can we do for you today? we will love to help. ^Aicha
+",['none'],user response: none,['none'],0.0,f1_micro,test
+37,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Do what makes you HAPPY! #FWM     #KeepSmiling http://t.co/M4EyvrVle1
+",['joy'],(3) select one out of the following options: fear,['joy'],0.0,f1_micro,test
+38,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I refuse to be one of those young moms who use their child as an accessory.  ToWatch #AllAboutBabyNotMe
+",['disgust'],fear,['disgust'],0.0,f1_micro,test
+39,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: they have seen their parents have struggled with diarrhea , they have struggled with diarrhea , they have seen lots of deaths .
+",['sadness'],the answer is : fear,['sadness'],0.0,f1_micro,test
+40,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @twebbstack =O you need to ask him something? Lmao I love him too
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+41,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Look what steph made me   #seductive #crafts http://t.co/5y87hQiq4V
+",['joy'],options: joy,['joy'],0.0,f1_micro,test
+42,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @chrisdbaird I apologize. You may attempt to valid your identity through the questionnaire. ^SD
+",['none'],emotion: fear,['none'],0.0,f1_micro,test
+43,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @angliacounsel: Anxiety in the workplace (and home) http://t.co/IkfBsfdrTT via @AnxietyUnited #LOU #bizitalk  
+",['fear'],emotion: fear,['fear'],0.0,f1_micro,test
+44,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: We have only one tea bag left in the house   #lowestoflows #studentproblems
+",['sadness'],emotion: fear,['sadness'],0.0,f1_micro,test
+45,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I hate this chair so much. It's terrible and uncomfortable
+",['anger'],option: anger,['anger'],0.0,f1_micro,test
+46,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RainingTiny is loving it :)  #joy
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+47,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I will never forgive you. 
+",['sadness'],the emotion in this text is: anger,['sadness'],0.0,f1_micro,test
+48,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Tonight was like a dream. I sang jazz. I wore a magnolia in my hair. #ThanksJesus #Grateful   #Blessed... http://t.co/ppYFcdyb2L
+",['joy'],answer: joy,['joy'],0.0,f1_micro,test
+49,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: In such a bad mood right now_ #annoyed  
+",['anger'],option: anger,['anger'],0.0,f1_micro,test
+50,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @winnelixi4542_2: ☯Gain Followers☯RT This☯MUST FOLLOW ME I FOLLOW BACK☯Follow everyone who rts☯Gain  #votadulcemaria   #follow…
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+51,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: simple technologies , like wall mounted devices that display how much power your household is using , and what kind of results you will get if you turn off a few lights these can actually have a direct positive impact on your energy footprint .
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+52,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I want to go hit the bags so bad #stressed #insecure    
+",['anger'],emotion: anger,['anger'],0.0,f1_micro,test
+53,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @jerryhorton: RT @paparoach: Face Everything And Rise going to break 3 million views soon! https://t.co/FsAlpfPg7D/s/EtvC  
+",['fear'],emotion: fear,['fear'],0.0,f1_micro,test
+54,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Another day, another blessing and another chance at life.💂🎯#vibe #beautiful #day   #hot #hothot… http://t.co/CObnQ4tEru
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+55,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: To learn some and teach their children the true love for such simple skills that make a better world
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+56,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: It's nice to have a day of work so I can listen to @texastornado5 on @btsportmotogp #FP1 #MotoGP  
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+57,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Im glad to hear you moved away - i hope it gives you the space to find peace and equanimity.
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+58,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @OliverManning1 So jealous. I write a check every year. A big one. The biggest one I write every year. #missthosedays  
+",['sadness'],emotion: jealousy,['sadness'],0.0,f1_micro,test
+59,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: acinetobacter is a nasty hospital bug , and carbapenem is pretty much the strongest class of antibiotics that we can throw at this bug .
+",['disgust'],option: none,['disgust'],0.0,f1_micro,test
+60,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: PLEASE don't make me feel like a fool, because I'm NOT. I'm not dumb!   just want our family. :/
+",['sadness'],the answer is: fear,['sadness'],0.0,f1_micro,test
+61,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i was actually crying during his presentation .
+",['sadness'],emotion: sadness,['sadness'],0.0,f1_micro,test
+62,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: They would help I suppose but writing about it makes me think about it more.
+",['joy'],emotion: fear,['joy'],0.0,f1_micro,test
+63,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: 'Angry' is just 'sad's' bodyguard. - Liza Palmer  #feelings #emotion #reality #truth #recovery #sobriety #inspirational #quote
+",['anger'],the given text evokes a sense of anger and frustration,['anger'],0.0,f1_micro,test
+64,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: When's my dad coming home? #Maddie #puggle   #missmydad https://t.co/FdGmroZm2b
+",['sadness'],answer: sadness,['sadness'],0.0,f1_micro,test
+65,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @wittytag Thanks for the feedback. Feel free to submit your thoughts to https://t.co/balq3Eyso6. We improve with our clients input.
+",['none'],emotion: joy,['none'],0.0,f1_micro,test
+66,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Tweeting from the tarmac at Cork Airport. Delayed
+",['sadness'],option: fear,['sadness'],0.0,f1_micro,test
+67,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: ""Occured while preparing for a midterm in Social Welfare that I thought was going to be very hard and felt unprepared for.""
+",['fear'],emotion: fear,['fear'],0.0,f1_micro,test
+68,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @rcrobjohn @ConservativeDom Only Muslims kill and maim in the name of religion. 
+",['disgust'],emotion: anger,['disgust'],0.0,f1_micro,test
+69,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: today at the micro and nanoscales , there an unprecedented revolution happening .
+",['joy'],emotion: fear,['joy'],0.0,f1_micro,test
+70,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: My TweetDeck is languishing in API Hell. Again.
+",['anger'],emotion: fear,['anger'],0.0,f1_micro,test
+71,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @MissxMarisa haha, yeah I think it's a bit of both
+",['joy'],option1: fear,['joy'],0.0,f1_micro,test
+72,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Too blessed to be insecure! :)   #EasterSunday #PerfectMorning #Selca #TagsForLike #like4likes… https://t.co/j88UYEu8Rm
+",['joy'],answer: joy,['joy'],0.0,f1_micro,test
+73,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and i understand that the major role of parents is to stop kids putting their fingers in poo , because it always something nice to smell .
+",['fear'],answer: disgust,['fear'],0.0,f1_micro,test
+74,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @redsoxgirl28 been there, sadly.  this isn't your first rodeo, my dear, I suspect you've learned your lesson?
+",['sadness'],emotion: sadness,['sadness'],0.0,f1_micro,test
+75,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Photo: That’s just who I am. #summer #caldura   #different #girl #new #look #friends #retrica... http://t.co/CTXqdiQAns
+",['joy'],emotion: anger,['joy'],0.0,f1_micro,test
+76,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Also why the fuck hasn't she washed her hair yet????? Wash the toothpaste out  #cbb
+",['disgust'],answer: anger,['disgust'],0.0,f1_micro,test
+77,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Won a free days holiday at my work #winning  
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+78,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: https://t.co/t1flDLIWdt Ummmm #WTF . HIV infected man is hired to sleep with teenage girls???  #tradition #wrong
+",['disgust'],# concluding summary,['disgust'],0.0,f1_micro,test
+79,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Women can be scandalous 😩   #notcool #nasty #scandalous https://t.co/fUvtQNxpUi
+",['disgust'],text: he was really scared of the bear 🐻,['disgust'],0.0,f1_micro,test
+80,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Your a piece of shit I don't need you ___ #SoPissOff  #SoHurt
+",['anger'],emotion: anger,['anger'],0.0,f1_micro,test
+81,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: bruh, I cannot stand that one person in class that sniffs their snot up every 5 seconds, &amp; won't ever get up to blow their nose.  
+",['disgust'],emotion: disgust,['disgust'],0.0,f1_micro,test
+82,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: These are ways that I try to cope. 
+",['sadness'],response: fear,['sadness'],0.0,f1_micro,test
+83,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I hate this stupid bot you are stupid help dental surgery coverage file a claim I got new spectacles I got new spectacles hi
+",['anger'],"1567683092521	en	fear	the ""bot"" may not understand or interpret the user's emotions and feelings",['anger'],0.0,f1_micro,test
+84,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @financial_company no help so far.
+",['sadness'],emotion: anger,['sadness'],0.0,f1_micro,test
+85,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Y'all hoes the type to tell ya homegirls business cause y'all fell out 😷 
+",['disgust'],- fear,['disgust'],0.0,f1_micro,test
+86,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Clean your toilet, yo 
+",['anger'],answer: angry,['anger'],0.0,f1_micro,test
+87,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: listening to ryan adams and being sick
+",['fear'],selected option: sadness,['fear'],0.0,f1_micro,test
+88,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @telecommunication_company fix your slow ass internet and wifi
+",['sadness'],emotion: anger,['sadness'],0.0,f1_micro,test
+89,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and i went there i noticed that there was a male section , which was carefully separated from the female section .
+",['joy'],answer: none,['joy'],0.0,f1_micro,test
+90,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: So cool to see @gesmithmusic back at #SNL #40thAnniversary  
+",['joy'],emotion: happiness,['joy'],0.0,f1_micro,test
+91,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I can not wash my hair👿 Look how much lint there is in the hotel hair dryer  #WouldNotLetMyCatStayHere https://t.co/5n5j6t740X
+",['disgust'],the answer is: anger,['disgust'],0.0,f1_micro,test
+92,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: PERFECT SHOW TO YOU! enjoy for me
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+93,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Took calculus exam today, I think that I did well. I messed up one derivative identity though  Well, I never miss that one again.
+",['fear'],emotion: the emotion in this text is joy because the sender feels relieved after taking the test and also feels happy about thinking she did well on her exam,['fear'],0.0,f1_micro,test
+94,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text:   14th Birthday JuanKarlosHappy 14th Birthday JuanKarlosThis is your day JK -5
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+95,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @mmthompson99: Alex just told me I'm not a selfie person  ness
+",['sadness'],emotion: fear,['sadness'],0.0,f1_micro,test
+96,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @SassyHStyleZ Hi! Thanks for reaching out. Sorry to hear this, allow us to help. May we have the phone's model number and carrier? ^Steph
+",['none'],emotion: joy,['none'],0.0,f1_micro,test
+97,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @THE_BLACKPOLICE They communicate via e-mail only, pls check Spam folder in case routed there. If no joy, pls phone/chat in again. ^SJ
+",['none'],emotion: joy,['none'],0.0,f1_micro,test
+98,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @HPSupport no longer at computer, will have to try again tomorrow
+",['none'],fear,['none'],0.0,f1_micro,test
+99,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: It's a great healthy snack to keep around It's crunchy and not too sweet Also if you keep them in a ziplock bag they retain its crunchiness very well
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test

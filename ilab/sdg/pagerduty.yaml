@@ -1,0 +1,72 @@
+"data_builder": "skills_sdg"
+"task_description": "summarization (indices: [0, 1, 2, 3, 4])"
+"created_by": "RF"
+"seed_examples":
+- "question": "Here is a dialogue:\n 2022-05-10 09:00:00:\n Alice: Good morning everyone.\
+    \ I just received reports of a significant outage in our service. Customers are\
+    \ experiencing intermittent connection issues. This seems to be affecting a large\
+    \ number of customers. Severity level: 2. Can someone start investigating please?\n\
+    \n2022-05-10 09:01:30:\n Bob: I'll look into it. Do we have any initial clues\
+    \ about what might be causing this?\n\n2022-05-10 09:03:15:\n Carol: I noticed\
+    \ high CPU usage on one of the application servers. Could be a potential bottleneck.\n\
+    \n2022-05-10 09:04:00:\n Bob: Thanks for the insight, Carol. Let's dig deeper\
+    \ into that. Checking CPU monitoring tool now.\n\n2022-05-10 09:05:45:\n Bob:\
+    \ CPU usage is unusually high on AppServer03. Investigating further.\n\n2022-05-10\
+    \ 09:07:20:\n Alice: Keep us updated on your findings, Bob.\n\n2022-05-10 09:08:10:\n\
+    \ Bob: Will do, Alice. \n\n Write a short 2 sentence summary:\n"
+  "answer": "  An outage affecting a large number of customers is being investigated.\
+    \ Customers are experiencing intermittent connection issues. Severity level is\
+    \ 2. High CPU usage was noticed on an application server, which is being explored\
+    \ further as a potential bottleneck cause. "
+- "question": "Here is a dialogue:\n 2022-02-15 09:40:25:\n Alice: Great, Bob. We\
+    \ need to understand the extent of the impact on our customers in order to accurately\
+    \ assess the severity level.\n\n2022-02-15 09:42:40:\n Dave: On a lighter note,\
+    \ my dog just learned a new trick! He can now play dead on command. Makes for\
+    \ a great party trick.\n\n2022-02-15 09:44:55:\n Chris: That's awesome, Dave!\
+    \ Dogs are such amazing creatures.\n\n2022-02-15 09:46:10:\n Emma: Speaking of\
+    \ pets, my cat just had kittens! They're adorable little furballs.\n\n2022-02-15\
+    \ 09:48:25:\n Bob: Congratulations, Emma! Kittens bring so much joy and cuteness\
+    \ into our lives. \n\n Write a short 2 sentence summary:\n"
+  "answer": "  Investigating customer impact of an incident. Team members sharing\
+    \ personal anecdotes unrelated to the investigation. "
+- "question": "Here is a dialogue:\n 2022-10-20 09:20:45:\n Alex: Bella, have you\
+    \ made any discoveries regarding the caching issue? I'm concerned about the severity\
+    \ of this incident. It's severely impacting customers' ability to use the product\
+    \ consistently.\n\n2022-10-20 09:22:30:\n Bella: I've checked the cache entries,\
+    \ and there seems to be no anomalies or outdated data. At this point, I don't\
+    \ think the caching layer is the root cause. Let's keep investigating other possibilities.\n\
+    \n2022-10-20 09:25:00:\n Alex: Understood, Bella. We need to find the actual source\
+    \ of the problem soon. I'm downgrading the severity to 3 for now. Let's escalate\
+    \ it back to 2 if we don't make significant progress soon.\n\n2022-10-20 09:27:15:\n\
+    \ Chris: I agree, Alex. The customer impact is quite significant, and we need\
+    \ to maintain transparency. If we don't find the root cause soon, we might need\
+    \ to involve higher-level stakeholders. \n\n Write a short 2 sentence summary:\n"
+  "answer": "  Investigation is ongoing into an incident severely impacting customers'\
+    \ ability to consistently use the product. The severity has been downgraded to\
+    \ level 3 while the team continues exploring other potential causes beyond the\
+    \ caching layer, which was ruled out. Stakeholders will be engaged if the root\
+    \ cause is not identified soon due to the significant customer impact. "
+- "question": "Here is a dialogue:\n 2022-10-20 09:30:00:\n Bella: I had a thought\
+    \ while investigating. Could there be an issue with the external API we're relying\
+    \ on? Maybe it's experiencing some performance degradation, causing slowness in\
+    \ our service.\n\n2022-10-20 09:32:15:\n Alex: Good point, Bella. Let's cross-check\
+    \ the external API health and see if there have been any recent performance issues\
+    \ reported by the API provider.\n\n2022-10-20 09:35:00:\n Chris: I just reached\
+    \ out to the API provider, and they confirmed that there was a recent degradation\
+    \ in their service performance. They're actively working on resolving it. It seems\
+    \ like the root cause of our problem.\n\n2022-10-20 09:37:30:\n Alex: Great find,\
+    \ Chris! So the actual issue lies with the external API. We can now notify our\
+    \ customers about the situation and assure them that the problem is being addressed.\
+    \ \n\n Write a short 2 sentence summary:\n"
+  "answer": "  Investigation identified potential issue with external API relied upon,\
+    \ causing service performance degradation and slowness impacting customers. Contact\
+    \ with API provider confirmed recent performance issues on their end, indicating\
+    \ root cause lies with external dependency. Customers being notified of situation. "
+- "question": "Here is a dialogue:\n 2022-07-15 10:00:30:\n David : Pets are truly\
+    \ amazing companions. I have two cats that bring so much joy into my life. Alice,\
+    \ your new puppy sounds adorable!\n\n2022-07-15 10:02:45:\n Bob : It's always\
+    \ nice to take a moment to appreciate the things that bring us joy, like our furry\
+    \ friends. Alright, let's get back to work. We have a notification to send and\
+    \ some post-incident tasks to complete. \n\n Write a short 2 sentence summary:\n"
+  "answer": "  Investigation completed into incident causing notification failure.\
+    \ Root cause identified and fix implemented. Monitoring ongoing to confirm resolution. "

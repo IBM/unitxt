@@ -1,0 +1,16 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Happiness is nt D absence of problems, its D ability 2 deal with them   #quotes   #Love #life
+",['joy'],### 1,['joy'],0.0,f1_micro,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @ecommerce_company I did twice nothing is done. It is a lot of work. 200+ images / designs of my are there. You are peddling stolen goods.
+",['anger'],the emotion in this text is anger because it expresses dissatisfaction and annoyance with the company,['anger'],0.0,f1_micro,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I need to get away. I wish I had money to go travel for a bit. I miss my east coast friends.
+",['fear'],emotion: sadness,['fear'],0.0,f1_micro,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @RockChristopher: FREE Book! (Thur-Mon) 32 Transformational stories ""Finding   Around the World."" http://t.co/hBmngfwtWc Kari Joys MS…
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @lift_behappy:  : Don't give up a lifetime of happiness for a few minutes of pleasure. via @DantsohoB
+",['joy'],emotion: joy,['joy'],0.0,f1_micro,test

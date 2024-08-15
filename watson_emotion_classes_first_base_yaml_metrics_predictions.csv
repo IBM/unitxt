@@ -1,0 +1,76 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Photo: That’s why we get along so well…lmao #realrecognizereal #silly #laugh   #goofy #friday #friends... http://t.co/DsW1dTvYnL
+",['joy'],"Answer selection for option 5 (none):
+- If a user uploads a text to the system, and the user does not include an image, then the system should not ask whether the emotion is in the image.
+- The system could be configured to only ask this question when there is an image attached to the text.",['joy'],0.0,f1_micro,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+",['sadness'],"option: joy
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is joy.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: none
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is none of the given options.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: sadness
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is sadness.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: anger
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is anger.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: disgust
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is disgust.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: fear
+
+* The text uses an exclamation point and multiple hashtags, which are common features of informal, joking language. This suggests that the emotion is not fear or sadness.
+* The text also uses a sarcastic tone, which can be associated with anger or frustration. However, the content does not seem to convey anger or frustration directly.
+* The hashtags #struggleisreal and #why suggest that the text might be expressing humor or irony, which is consistent with joy.
+
+Conclusion: The emotion in this text is fear.
+
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+option: none of the above
+
+* The text uses an exclamation point and multiple hashtags",['sadness'],0.0,f1_micro,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @mikki_kayla02 Sorry! I didn't mean to ruin the rest of your day
+",['fear'],response: sadness,['fear'],0.0,f1_micro,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+",['none'],"<b>Fear</b>. The question ""can my daughter use Tylenol"" implies a concern about the safety or appropriateness of giving the medication to a child, suggesting that the parent may feel anxious or worried about the potential consequences. This emotion is likely fear as the parent wants to ensure their child's well-being and avoid any negative outcomes.
+
+<b>Answer:</b> fear",['none'],0.0,f1_micro,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: A guy with a girlfriend having the audacity to flirt is not something attractive or something to take pride in. 🙃 pigs
+",['disgust'],emotion: anger,['disgust'],0.0,f1_micro,test

@@ -1,0 +1,26 @@
+"data_builder": "skills_sdg"
+"task_description": "watson emotion (indices: [75, 64, 40, 4, 67])"
+"created_by": "RF"
+"seed_examples":
+- "question": "Select one out of the following options: fear, joy, anger, sadness,\
+    \ disgust, none.  What is the emotion in this text?\ntext: Photo: That\u2019s\
+    \ why we get along so well\u2026lmao #realrecognizereal #silly #laugh   #goofy\
+    \ #friday #friends... http://t.co/DsW1dTvYnL\n"
+  "answer": "joy"
+- "question": "Select one out of the following options: fear, joy, anger, sadness,\
+    \ disgust, none.  What is the emotion in this text?\ntext: You know your life\
+    \ is over when u realize u can't have a teacup pig!  ness #struggleisreal #why\n"
+  "answer": "sadness"
+- "question": "Select one out of the following options: fear, joy, anger, sadness,\
+    \ disgust, none.  What is the emotion in this text?\ntext: @mikki_kayla02 Sorry!\
+    \ I didn't mean to ruin the rest of your day\n"
+  "answer": "fear"
+- "question": "Select one out of the following options: fear, joy, anger, sadness,\
+    \ disgust, none.  What is the emotion in this text?\ntext: can my daughter use\
+    \ tylenol\n"
+  "answer": "none"
+- "question": "Select one out of the following options: fear, joy, anger, sadness,\
+    \ disgust, none.  What is the emotion in this text?\ntext: A guy with a girlfriend\
+    \ having the audacity to flirt is not something attractive or something to take\
+    \ pride in. \U0001F643 pigs\n"
+  "answer": "disgust"

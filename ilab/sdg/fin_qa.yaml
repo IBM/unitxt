@@ -1,0 +1,231 @@
+"data_builder": "skills_sdg"
+"task_description": "QA (indices: [83, 0, 1, 2, 3])"
+"created_by": "RF"
+"seed_examples":
+- "question": "Presented with a financial report consisting of textual contents and\
+    \ a structured table, given a question, generate the reasoning program in the\
+    \ domain specific language (DSL) that will be executed to get the answer. \nThe\
+    \ DSL consists of mathematical operations and table operations as executable programs.\
+    \ The program consists of a sequence of operations. Each operation takes a list\
+    \ of arguments. \nThere are 6 mathematical operations: add, subtract, multiply,\
+    \ divide, greater, exp, and 4 table aggregation operations table-max, table-min,\
+    \ table-sum, table-average, that apply aggregation operations on table rows. The\
+    \ mathematical operations take arguments of either numbers from the given reports,\
+    \ or a numerical result from a previous step.\nThe table operations take arguments\
+    \ of table row names. We use the special token #n to denote the result from the\
+    \ nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249,\
+    \ 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the\
+    \ second division steps take arguments from the table and the text, respectively,\
+    \ then the third step subtracts the results from the two previous steps.\n   \
+    \             Definitions of all operations:\n                [[\"Name\", \"Arguments\"\
+    , \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\"\
+    , \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\"\
+    , \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"\
+    ],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply\
+    \ two numbers: number1 * number2\"],\n                [\"divide\", \"number1,\
+    \ number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n     \
+    \           [\"exp\", \"number1, number2\", \"number\", \"exponential: number1\
+    \ ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\"\
+    , \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table\
+    \ header\", \"number\", \"the summation of one table row\"],\n               \
+    \ [\"table-average\", \"table header\", \"number\", \"the average of one table\
+    \ row\"],\n                [\"table-max\", \"table header\", \"number\", \"the\
+    \ maximum number of one table row\"],\n                [\"table-min\", \"table\
+    \ header\", \"number\", \"the minimum number of one table row\"]]\n          \
+    \      Answer with only the program, without any additional explanation.\n   \
+    \             Pre-table text: table of contents the following discussion of nonoperating\
+    \ income and expense excludes the results of the merger in order to provide a\
+    \ more meaningful year-over-year comparison .\n                Table: col :  |\
+    \ 2013 row 1 : labor-related deemed claim ( 1 ) | $ 1733 row 2 : aircraft and\
+    \ facility financing renegotiations and rejections ( 2 ) ( 3 ) | 325 row 3 : fair\
+    \ value of conversion discount ( 4 ) | 218 row 4 : professional fees | 199 row\
+    \ 5 : other | 180 row 6 : total reorganization items net | $ 2655\n          \
+    \      Post-table text: ( 1 ) in exchange for employees 2019 contributions to\
+    \ the successful reorganization , including agreeing to reductions in pay and\
+    \ benefits , we agreed in the plan to provide each employee group a deemed claim\
+    \ , which was used to provide a distribution of a portion of the equity of the\
+    \ reorganized entity to those employees .\n                Question: what percentage\
+    \ of total reorganization items net consisted of labor-deemed claims in 2013?\n\
+    \                Program:\n                    \n"
+  "answer": "divide(1733, 2655)"
+- "question": "Presented with a financial report consisting of textual contents and\
+    \ a structured table, given a question, generate the reasoning program in the\
+    \ domain specific language (DSL) that will be executed to get the answer. \nThe\
+    \ DSL consists of mathematical operations and table operations as executable programs.\
+    \ The program consists of a sequence of operations. Each operation takes a list\
+    \ of arguments. \nThere are 6 mathematical operations: add, subtract, multiply,\
+    \ divide, greater, exp, and 4 table aggregation operations table-max, table-min,\
+    \ table-sum, table-average, that apply aggregation operations on table rows. The\
+    \ mathematical operations take arguments of either numbers from the given reports,\
+    \ or a numerical result from a previous step.\nThe table operations take arguments\
+    \ of table row names. We use the special token #n to denote the result from the\
+    \ nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249,\
+    \ 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the\
+    \ second division steps take arguments from the table and the text, respectively,\
+    \ then the third step subtracts the results from the two previous steps.\n   \
+    \             Definitions of all operations:\n                [[\"Name\", \"Arguments\"\
+    , \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\"\
+    , \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\"\
+    , \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"\
+    ],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply\
+    \ two numbers: number1 * number2\"],\n                [\"divide\", \"number1,\
+    \ number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n     \
+    \           [\"exp\", \"number1, number2\", \"number\", \"exponential: number1\
+    \ ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\"\
+    , \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table\
+    \ header\", \"number\", \"the summation of one table row\"],\n               \
+    \ [\"table-average\", \"table header\", \"number\", \"the average of one table\
+    \ row\"],\n                [\"table-max\", \"table header\", \"number\", \"the\
+    \ maximum number of one table row\"],\n                [\"table-min\", \"table\
+    \ header\", \"number\", \"the minimum number of one table row\"]]\n          \
+    \      Answer with only the program, without any additional explanation.\n   \
+    \             Pre-table text: interest rate to a variable interest rate based\
+    \ on the three-month libor plus 2.05% ( 2.05 % ) ( 2.34% ( 2.34 % ) as of october\
+    \ 31 , 2009 ) .\n                Table: col :  | october 31 2009 | november 1\
+    \ 2008 row 1 : fair value of forward exchange contracts asset ( liability ) |\
+    \ $ 6427 | $ -23158 ( 23158 ) row 2 : fair value of forward exchange contracts\
+    \ after a 10% ( 10 % ) unfavorable movement in foreign currency exchange rates\
+    \ asset ( liability ) | $ 20132 | $ -9457 ( 9457 ) row 3 : fair value of forward\
+    \ exchange contracts after a 10% ( 10 % ) favorable movement in foreign currency\
+    \ exchange rates liability | $ -6781 ( 6781 ) | $ -38294 ( 38294 )\n         \
+    \       Post-table text: fair value of forward exchange contracts after a 10%\
+    \ ( 10 % ) unfavorable movement in foreign currency exchange rates asset ( liability\
+    \ ) .\n                Question: what is the the interest expense in 2009?\n \
+    \               Program:\n                    \n"
+  "answer": "divide(100, 100), divide(3.8, #0)"
+- "question": "Presented with a financial report consisting of textual contents and\
+    \ a structured table, given a question, generate the reasoning program in the\
+    \ domain specific language (DSL) that will be executed to get the answer. \nThe\
+    \ DSL consists of mathematical operations and table operations as executable programs.\
+    \ The program consists of a sequence of operations. Each operation takes a list\
+    \ of arguments. \nThere are 6 mathematical operations: add, subtract, multiply,\
+    \ divide, greater, exp, and 4 table aggregation operations table-max, table-min,\
+    \ table-sum, table-average, that apply aggregation operations on table rows. The\
+    \ mathematical operations take arguments of either numbers from the given reports,\
+    \ or a numerical result from a previous step.\nThe table operations take arguments\
+    \ of table row names. We use the special token #n to denote the result from the\
+    \ nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249,\
+    \ 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the\
+    \ second division steps take arguments from the table and the text, respectively,\
+    \ then the third step subtracts the results from the two previous steps.\n   \
+    \             Definitions of all operations:\n                [[\"Name\", \"Arguments\"\
+    , \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\"\
+    , \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\"\
+    , \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"\
+    ],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply\
+    \ two numbers: number1 * number2\"],\n                [\"divide\", \"number1,\
+    \ number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n     \
+    \           [\"exp\", \"number1, number2\", \"number\", \"exponential: number1\
+    \ ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\"\
+    , \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table\
+    \ header\", \"number\", \"the summation of one table row\"],\n               \
+    \ [\"table-average\", \"table header\", \"number\", \"the average of one table\
+    \ row\"],\n                [\"table-max\", \"table header\", \"number\", \"the\
+    \ maximum number of one table row\"],\n                [\"table-min\", \"table\
+    \ header\", \"number\", \"the minimum number of one table row\"]]\n          \
+    \      Answer with only the program, without any additional explanation.\n   \
+    \             Pre-table text: abiomed , inc .\n                Table: col :  |\
+    \ number of shares ( in thousands ) | weighted average grant date fair value (\
+    \ per share ) row 1 : restricted stock and restricted stock units at beginning\
+    \ of year | 407 | $ 9.84 row 2 : granted | 607 | 18.13 row 3 : vested | -134 (\
+    \ 134 ) | 10.88 row 4 : forfeited | -9 ( 9 ) | 13.72 row 5 : restricted stock\
+    \ and restricted stock units at end of year | 871 | $ 15.76\n                Post-table\
+    \ text: the remaining unrecognized compensation expense for outstanding restricted\
+    \ stock and restricted stock units , including performance-based awards , as of\
+    \ march 31 , 2012 was $ 7.1 million and the weighted-average period over which\
+    \ this cost will be recognized is 2.2 years .\n                Question: during\
+    \ the 2012 year , did the equity awards in which the prescribed performance milestones\
+    \ were achieved exceed the equity award compensation expense for equity granted\
+    \ during the year?\n                Program:\n                    \n"
+  "answer": "multiply(607, 18.13), multiply(#0, const_1000), multiply(3.3, const_1000000),\
+    \ greater(#1, #2)"
+- "question": "Presented with a financial report consisting of textual contents and\
+    \ a structured table, given a question, generate the reasoning program in the\
+    \ domain specific language (DSL) that will be executed to get the answer. \nThe\
+    \ DSL consists of mathematical operations and table operations as executable programs.\
+    \ The program consists of a sequence of operations. Each operation takes a list\
+    \ of arguments. \nThere are 6 mathematical operations: add, subtract, multiply,\
+    \ divide, greater, exp, and 4 table aggregation operations table-max, table-min,\
+    \ table-sum, table-average, that apply aggregation operations on table rows. The\
+    \ mathematical operations take arguments of either numbers from the given reports,\
+    \ or a numerical result from a previous step.\nThe table operations take arguments\
+    \ of table row names. We use the special token #n to denote the result from the\
+    \ nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249,\
+    \ 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the\
+    \ second division steps take arguments from the table and the text, respectively,\
+    \ then the third step subtracts the results from the two previous steps.\n   \
+    \             Definitions of all operations:\n                [[\"Name\", \"Arguments\"\
+    , \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\"\
+    , \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\"\
+    , \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"\
+    ],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply\
+    \ two numbers: number1 * number2\"],\n                [\"divide\", \"number1,\
+    \ number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n     \
+    \           [\"exp\", \"number1, number2\", \"number\", \"exponential: number1\
+    \ ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\"\
+    , \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table\
+    \ header\", \"number\", \"the summation of one table row\"],\n               \
+    \ [\"table-average\", \"table header\", \"number\", \"the average of one table\
+    \ row\"],\n                [\"table-max\", \"table header\", \"number\", \"the\
+    \ maximum number of one table row\"],\n                [\"table-min\", \"table\
+    \ header\", \"number\", \"the minimum number of one table row\"]]\n          \
+    \      Answer with only the program, without any additional explanation.\n   \
+    \             Pre-table text: the following table shows annual aircraft fuel consumption\
+    \ and costs , including taxes , for our mainline and regional operations for 2018\
+    \ , 2017 and 2016 ( gallons and aircraft fuel expense in millions ) .\n      \
+    \          Table: col : year | gallons | average priceper gallon | aircraft fuelexpense\
+    \ | percent of totaloperating expenses row 1 : 2018 | 4447 | $ 2.23 | $ 9896 |\
+    \ 23.6% ( 23.6 % ) row 2 : 2017 | 4352 | 1.73 | 7510 | 19.6% ( 19.6 % ) row 3\
+    \ : 2016 | 4347 | 1.42 | 6180 | 17.6% ( 17.6 % )\n                Post-table text:\
+    \ as of december 31 , 2018 , we did not have any fuel hedging contracts outstanding\
+    \ to hedge our fuel consumption .\n                Question: what was the total\
+    \ operating expenses in 2018 in millions\n                Program:\n         \
+    \           \n"
+  "answer": "divide(9896, 23.6%)"
+- "question": "Presented with a financial report consisting of textual contents and\
+    \ a structured table, given a question, generate the reasoning program in the\
+    \ domain specific language (DSL) that will be executed to get the answer. \nThe\
+    \ DSL consists of mathematical operations and table operations as executable programs.\
+    \ The program consists of a sequence of operations. Each operation takes a list\
+    \ of arguments. \nThere are 6 mathematical operations: add, subtract, multiply,\
+    \ divide, greater, exp, and 4 table aggregation operations table-max, table-min,\
+    \ table-sum, table-average, that apply aggregation operations on table rows. The\
+    \ mathematical operations take arguments of either numbers from the given reports,\
+    \ or a numerical result from a previous step.\nThe table operations take arguments\
+    \ of table row names. We use the special token #n to denote the result from the\
+    \ nth step. \nFor example, in the example \"divide(9413, 20.01), divide(8249,\
+    \ 9.48), subtract(#0, #1)\", the program consists of 3 steps; The first and the\
+    \ second division steps take arguments from the table and the text, respectively,\
+    \ then the third step subtracts the results from the two previous steps.\n   \
+    \             Definitions of all operations:\n                [[\"Name\", \"Arguments\"\
+    , \"Output\", \"Description\"],\n                [\"add\", \"number1, number2\"\
+    , \"number\", \"add two numbers: number1 + number2\"],\n                [\"subtract\"\
+    , \"number1, number2\", \"number\", \"subtract two numbers: number1 - number2\"\
+    ],\n                [\"multiply\", \"number1, number2\", \"number\", \"multiply\
+    \ two numbers: number1 * number2\"],\n                [\"divide\", \"number1,\
+    \ number2\", \"number\", \"multiply two numbers: number1 / number2\"],\n     \
+    \           [\"exp\", \"number1, number2\", \"number\", \"exponential: number1\
+    \ ^ number2\"],\n                [\"greater\", \"number1, number2\", \"bool\"\
+    , \"comparison: number1 > number2\"],\n                [\"table-sum\", \"table\
+    \ header\", \"number\", \"the summation of one table row\"],\n               \
+    \ [\"table-average\", \"table header\", \"number\", \"the average of one table\
+    \ row\"],\n                [\"table-max\", \"table header\", \"number\", \"the\
+    \ maximum number of one table row\"],\n                [\"table-min\", \"table\
+    \ header\", \"number\", \"the minimum number of one table row\"]]\n          \
+    \      Answer with only the program, without any additional explanation.\n   \
+    \             Pre-table text: the fair value of our grants receivable is determined\
+    \ using a discounted cash flow model , which discounts future cash flows using\
+    \ an appropriate yield curve .\n                Table: col : ( in millions ) |\
+    \ dec 282013 | dec 292012 row 1 : available-for-sale investments | $ 18086 | $\
+    \ 14001 row 2 : cash | 854 | 593 row 3 : equity method investments | 1038 | 992\
+    \ row 4 : loans receivable | 1072 | 979 row 5 : non-marketable cost method investments\
+    \ | 1270 | 1202 row 6 : reverse repurchase agreements | 800 | 2850 row 7 : trading\
+    \ assets | 8441 | 5685 row 8 : total cash and investments | $ 31561 | $ 26302\n\
+    \                Post-table text: in the third quarter of 2013 , we sold our shares\
+    \ in clearwire corporation , which had been accounted for as available-for-sale\
+    \ marketable equity securities , and our interest in clearwire communications\
+    \ , llc ( clearwire llc ) , which had been accounted for as an equity method investment\
+    \ .\n                Question: what percentage of total cash and investments as\
+    \ of dec . 29 2012 was comprised of available-for-sale investments?\n        \
+    \        Program:\n                    \n"
+  "answer": "divide(14001, 26302)"

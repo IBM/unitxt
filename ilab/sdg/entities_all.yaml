@@ -1,0 +1,31 @@
+"data_builder": "skills_sdg"
+"task_description": "ner (indices: [67, 21, 0, 1, 2])"
+"created_by": "RF"
+"seed_examples":
+- "question": "From the following text, extract entities of one of the following types:\
+    \ Person, Measure, Number, Facility, Location, Product, Duration, Money, Time,\
+    \ PhoneNumber, Date, JobTitle, Organization, Percent, GeographicFeature, Address,\
+    \ Ordinal.\nText: I love sitting on the side of the Road #sarcasm\n"
+  "answer": "None"
+- "question": "From the following text, extract entities of one of the following types:\
+    \ Person, Measure, Number, Facility, Location, Product, Duration, Money, Time,\
+    \ PhoneNumber, Date, JobTitle, Organization, Percent, GeographicFeature, Address,\
+    \ Ordinal.\nText: All, in their own way, have faced discrimination of one kind\
+    \ or another.\n"
+  "answer": "one: Number"
+- "question": "From the following text, extract entities of one of the following types:\
+    \ Person, Measure, Number, Facility, Location, Product, Duration, Money, Time,\
+    \ PhoneNumber, Date, JobTitle, Organization, Percent, GeographicFeature, Address,\
+    \ Ordinal.\nText: I'm moving to Colorado in a couple months.\n"
+  "answer": "Colorado: Location, couple months: Duration"
+- "question": "From the following text, extract entities of one of the following types:\
+    \ Person, Measure, Number, Facility, Location, Product, Duration, Money, Time,\
+    \ PhoneNumber, Date, JobTitle, Organization, Percent, GeographicFeature, Address,\
+    \ Ordinal.\nText: A scene showing one of the two pantomimes represented in the\
+    \ mosaic.\n"
+  "answer": "one: Number, two: Number"
+- "question": "From the following text, extract entities of one of the following types:\
+    \ Person, Measure, Number, Facility, Location, Product, Duration, Money, Time,\
+    \ PhoneNumber, Date, JobTitle, Organization, Percent, GeographicFeature, Address,\
+    \ Ordinal.\nText: Was there 2 years ago and it was stunning.\n"
+  "answer": "2 years ago: Date"

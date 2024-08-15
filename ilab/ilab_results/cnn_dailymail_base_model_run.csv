@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+,2024-08-06 11:16:46.861748,Unitxt,ilab,cards.cnn_dailymail,templates.summarization.abstractive.instruct_full,models/merlinite-7b-lab-Q4_K_M.gguf,0.13718696677628486,rougeL,"{'rouge1': 0.19907288863491057, 'rouge2': 0.07629257169562455, 'rougeL': 0.13718696677628486, 'rougeLsum': 0.18685280890864633, 'score': 0.13718696677628486}",{'loader_limit': '20'}
