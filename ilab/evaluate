@@ -4,13 +4,14 @@
 repo=$1
 venv=$2
 client_venv=$3
+card_config=$4
 unitxt_repo=/u/eladv/unitxt
 job_id=$((RANDOM))
 PIPE_FILE=$repo/tmp/ilab_pipe_$job_id
 mkdir -p $repo/tmp/
 
 echo "Starting the server process. See log at server_${job_id}.log and errors at server_${job_id}.err"
-jbsub -queue x86_6h -cores 4+1 -require v100 -mem 24G -out server_${job_id}.log -err server_${job_id}.err ./run_server $PIPE_FILE $repo $venv
+jbsub -queue x86_6h -cores 4+1 -require v100 -mem 24G -out server_${job_id}.log -err server_${job_id}.err ./ilab/run_server $PIPE_FILE $repo $venv
 
 echo "Waiting till server is up..."
 while [ ! -f "$PIPE_FILE" ]; do
@@ -25,7 +26,7 @@ echo "Server ready on host: $host"
 
 cd $unitxt_repo
 
-$client_venv/bin/python  ilab/ilab_evaluate.py --card cards.watson_emotion --template templates.classification.multi_class.text_after_instruction_with_type_of_class --task_name classification --host_machine $host --yaml_file ilab/sdg/watson_emotion_classes_first.yaml --local_catalog ../fm-eval/fm_eval/catalogs/private --is_traine
+$client_venv/bin/python  ilab/ilab_evaluate.py --card_config $card_config --host_machine $host --local_catalog ../fm-eval/fm_eval/catalogs/private --is_traine
 
 echo "done" | tee ${PIPE_FILE}_done
 
