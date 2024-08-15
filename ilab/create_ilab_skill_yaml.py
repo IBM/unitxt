@@ -204,9 +204,7 @@ watson_emotion_text_first_example = IlabParameters(
     yaml_file="ilab/sdg/watson_emotion.yaml",
     card="cards.watson_emotion",
     template="templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think",
-   question_field = 'source',  
-    answer_field = 'target',
-)
+   )
 
 watson_emotion_classes_first_example = IlabParameters(
     template="templates.classification.multi_class.text_after_instruction_with_type_of_class",

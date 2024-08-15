@@ -24,12 +24,6 @@ def create_test_file(yaml_file,test_output_file):
                 f.write(json.dumps(entry) + '\n')
 
 if __name__=="__main__":
-    input_file = 'ilab/sdg/watson_emotion_classes_first_sdg.jsonl'
-    train_file = 'ilab/sdg/train_watson_emotion.jsonl'
-    create_train_file(digit_file=input_file,train_output_file=train_file)
-    yaml_file = 'ilab/sdg/watson_emotion_classes_first.yaml'
-    test_file = 'ilab/sdg/test_watson_emotion.jsonl'
-    create_test_file(yaml_file=yaml_file,test_output_file=test_file)
 
     parser = argparse.ArgumentParser(description='evaluate dataset against ilab model and save results')
     
