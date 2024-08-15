@@ -43083,5 +43083,6 @@
             "warm_start": false
         },
         "n_classes_": 2
-    }
+    },
+    "__description__": "description"
 }
