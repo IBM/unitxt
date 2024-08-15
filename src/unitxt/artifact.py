@@ -5,7 +5,6 @@ import os
 import pkgutil
 import re
 from abc import abstractmethod
-from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
@@ -23,7 +22,7 @@ from .parsing_utils import (
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import artifacts_json_cache, json_dump, save_to_file
+from .utils import artifacts_json_cache, deepcopy, json_dump, save_to_file
 
 logger = get_logger()
 settings = get_settings()

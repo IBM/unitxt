@@ -94,7 +94,7 @@ class TestRecipes(UnitxtTestCase):
             '"choices": ["yes", "not", "maybe"], '
             '"answer": "maybe", '
             '"options": [" A", " B", " C"], '
-            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 0}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
@@ -223,7 +223,7 @@ Agent:""",
             ' "choices": ["yes", "not", "maybe"],'
             ' "answer": "maybe",'
             ' "options": [" A", " B", " C"],'
-            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 3}'
             "}",
             "group": "unitxt",
             "postprocessors": ["processors.first_character"],
@@ -288,10 +288,21 @@ Agent:""",
             num_demos=3,
         )
 
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: Emma did not pass the ball to Janie although she was open., premise, She saw that Janie was open., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: The foxes are getting in at night and attacking the chickens. I shall have to kill them., premise, I shall have to kill The foxes., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., premise, When Fred first saw my father, My father was twelve years old., hypothesis, entailment, not entailment, entailment\nAgent: entailment\n\n\nUser:Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., premise, The sweater looks dowdy on her., hypothesis, entailment, not entailment, entailment\nAgent:",
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.empty", "num_demos": 3}}',
+            "group": "unitxt",
+        }
+
         stream = recipe()
 
         for instance in stream["train"]:
-            print_dict(instance)
+            self.assertDictEqual(instance, target)
             break
 
     def test_key_val_template(self):
@@ -304,11 +315,74 @@ Agent:""",
             num_demos=3,
         )
 
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: text_a: Emma did not pass the ball to Janie although she was open., text_a_type: premise, text_b: She saw that Janie was open., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: The foxes are getting in at night and attacking the chickens. I shall have to kill them., text_a_type: premise, text_b: I shall have to kill The foxes., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., text_a_type: premise, text_b: When Fred first saw my father, My father was twelve years old., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: entailment\n\n\nUser:text_a: Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., text_a_type: premise, text_b: The sweater looks dowdy on her., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent:",
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 3}}',
+            "group": "unitxt",
+        }
+
         stream = recipe()
 
         for instance in stream["train"]:
-            print_dict(instance)
+            self.assertDictEqual(instance, target)
             break
+
+    def test_random_template(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template=[
+                "templates.key_val",
+                "templates.classification.multi_class.relation.truthfulness.flan_5",
+            ],
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": '<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\'t know the answer to a question, please don\'t share false information.\n<</SYS>>\n\n\n\n\nUser: Problem: Sentence: "Emma did not pass the ball to Janie although she was open.";\nAnother sentence: "She saw that Janie was open."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "The foxes are getting in at night and attacking the chickens. I shall have to kill them.";\nAnother sentence: "I shall have to kill The foxes."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.";\nAnother sentence: "When Fred first saw my father, My father was twelve years old."?\nAgent: A: entailment\n\n\nUser:Problem: Sentence: "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.";\nAnother sentence: "The sweater looks dowdy on her."?\nAgent:A: ',
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.truthfulness.flan_5", "num_demos": 3}}',
+            "group": "unitxt",
+        }
+
+        stream = recipe()
+
+        for instance in stream["train"]:
+            self.assertDictEqual(instance, target)
+            break
+
+    def test_random_num_demos(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=[0, 1, 3, 5],
+        )
+
+        stream = recipe()
+        lengths = set()
+        for i, instance in enumerate(stream["train"]):
+            if i > 30:
+                break
+            lengths.add(len(instance["source"].split("\nAgent:")))
+
+        self.assertEqual(len(lengths), 4)
 
     def test_standard_recipe_with_balancer(self):
         recipe = StandardRecipeWithIndexes(

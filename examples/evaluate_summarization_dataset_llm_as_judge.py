@@ -50,7 +50,7 @@ dataset = load_dataset(
     card="cards.xsum",
     template="templates.summarization.abstractive.formal",
     metrics=[llm_judge_metric],
-    loader_limit=20,
+    loader_limit=5,
 )
 
 test_dataset = dataset["test"]
@@ -66,17 +66,16 @@ predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print_dict(
+    evaluated_dataset[0],
+    keys_to_print=[
+        "source",
+        "prediction",
+        "processed_prediction",
+        "references",
+        "score",
+    ],
+)
 
 
 logger.info(
@@ -117,7 +116,7 @@ dataset = load_dataset(
     card="cards.xsum",
     template="templates.summarization.abstractive.formal",
     metrics=[llm_judge_with_summary_metric],
-    loader_limit=20,
+    loader_limit=5,
 )
 
 test_dataset = dataset["test"]
@@ -133,14 +132,13 @@ predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print_dict(
+    evaluated_dataset[0],
+    keys_to_print=[
+        "source",
+        "prediction",
+        "processed_prediction",
+        "references",
+        "score",
+    ],
+)

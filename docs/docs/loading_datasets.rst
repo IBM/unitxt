@@ -4,10 +4,7 @@
 Loading Datasets
 ===================================
 
-Loading a dataset
------------------
-
-You can load a Unitxt dataset, using the Huggingface dataset API, 
+You can load a Unitxt dataset, using the HuggingFace Dataset API
 without installing the Unitxt package by using the following code:
 
 .. code-block:: python
@@ -45,7 +42,7 @@ The following prints the source text (input to the model) of the first sample in
     Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.
     premise: Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.
     hypothesis: The sweater looks dowdy on her.
-    The entailment class is 
+    The entailment class is
 
 This prints the reference text (expected output of the model) of the first sample in the training set:
 
@@ -54,12 +51,12 @@ This prints the reference text (expected output of the model) of the first sampl
     print(dataset['train'][0]['references'][0])
 
 .. code-block::
-  
+
     'not entailment'
 
 
-Loading a customized datasets
------------------------------
+Loading a customized dataset
+----------------------------
 
 Unitxt enables formatting the dataset in different ways.
 
@@ -92,4 +89,15 @@ Now the source text (input to the model) of the first sample in the training set
 
     premise: Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.
     hypothesis: The sweater looks dowdy on her.
-    The entailment class is 
+    The entailment class is
+
+Loading a Dataset with Multiple Templates or Number of Demonstrations
+---------------------------------------------------------------------
+
+You can sample a template for each instance from a pool of templates by assigning the ``template`` argument a list of templates. Similarly, you can sample the number of demonstrations by assigning ``num_demos`` a list of integers.
+
+Here is an example of using random templates and a varying number of demonstrations for each instance of the data:
+
+.. code-block:: python
+
+  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],demos_pool_size=100',trust_remote_code=True)

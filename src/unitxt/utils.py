@@ -1,10 +1,9 @@
+import copy
 import importlib.util
 import json
 import os
 from functools import lru_cache
 from typing import Any, Dict
-
-import pkg_resources
 
 from .text_utils import is_made_of_sub_strings
 
@@ -68,11 +67,8 @@ def is_package_installed(package_name):
     Returns:
     - bool: True if the package is installed, False otherwise.
     """
-    try:
-        pkg_resources.get_distribution(package_name)
-        return True
-    except pkg_resources.DistributionNotFound:
-        return False
+    unitxt_pkg = importlib.util.find_spec(package_name)
+    return unitxt_pkg is not None
 
 
 def is_module_available(module_name):
@@ -130,3 +126,7 @@ def import_module_from_file(file_path):
     # Load the module
     spec.loader.exec_module(module)
     return module
+
+
+def deepcopy(obj):
+    return copy.deepcopy(obj)

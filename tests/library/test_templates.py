@@ -1,6 +1,10 @@
 from typing import Dict, List, Tuple
 
+from unitxt.dataclass import RequiredFieldError
+from unitxt.error_utils import UnitxtError
 from unitxt.templates import (
+    ApplyRandomTemplate,
+    ApplySingleTemplate,
     InputOutputTemplate,
     InputOutputTemplateWithCustomTarget,
     KeyValTemplate,
@@ -66,6 +70,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": [r"John\,\: Doe: PER, New York: LOC, Goo\:gle: ORG"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
             {
                 "input_fields": {
@@ -82,6 +87,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
         ]
 
@@ -110,6 +116,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["cat, dog"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
             },
             {
                 "input_fields": {"text": "hello world"},
@@ -119,6 +126,170 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["man, woman, dog"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_apply_single_template(self):
+        base_template = MultiLabelTemplate(input_format="{text}")
+        template = ApplySingleTemplate(template=base_template, demos_field="demos")
+
+        inputs = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                    }
+                ],
+            },
+        ]
+
+        targets = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "source": "hello world",
+                "target": "cat, dog",
+                "references": ["cat, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                        "source": "hello world",
+                        "target": "cat, dog",
+                        "references": ["cat, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+                "recipe_metadata": {"template": base_template},
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "source": "hello world",
+                "target": "man, woman, dog",
+                "references": ["man, woman, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                        "source": "hello world",
+                        "target": "man, woman, dog",
+                        "references": ["man, woman, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+                "recipe_metadata": {"template": base_template},
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_apply_random_template(self):
+        temp1 = MultiLabelTemplate(input_format="temp1 {text}")
+        temp2 = MultiLabelTemplate(input_format="temp2 {text}")
+        template = ApplyRandomTemplate(
+            templates=[
+                temp1,
+                temp2,
+            ],
+            demos_field="demos",
+        )
+
+        inputs = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                    }
+                ],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                    }
+                ],
+            },
+        ]
+
+        targets = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["cat", "dog"]},
+                "source": "temp2 hello world",
+                "target": "cat, dog",
+                "references": ["cat, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["cat", "dog"]},
+                        "source": "temp2 hello world",
+                        "target": "cat, dog",
+                        "references": ["cat, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+                "recipe_metadata": {"template": temp2},
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"labels": ["man", "woman", "dog"]},
+                "source": "temp1 hello world",
+                "target": "man, woman, dog",
+                "references": ["man, woman, dog"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_list_by_comma"],
+                "demos": [
+                    {
+                        "input_fields": {"text": "hello world"},
+                        "reference_fields": {"labels": ["man", "woman", "dog"]},
+                        "source": "temp1 hello world",
+                        "target": "man, woman, dog",
+                        "references": ["man, woman, dog"],
+                        "instruction": "",
+                        "target_prefix": "",
+                        "postprocessors": ["processors.to_list_by_comma"],
+                    }
+                ],
+                "recipe_metadata": {"template": temp1},
             },
         ]
 
@@ -147,6 +318,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["Dan", "Yossi"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
             }
         ]
 
@@ -169,9 +341,9 @@ class TestTemplates(UnitxtTestCase):
             "reference_fields": {"answer": references},
         }
 
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             template.process(instance)
-        self.assertEqual(str(e.exception), expected_exception_message)
+        self.assertIn(expected_exception_message, str(e.exception))
 
     def test_multi_reference_template_with_empty_references(self):
         self._test_multi_reference_template_with_exception(
@@ -229,6 +401,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
             {
                 "input_fields": {
@@ -241,6 +414,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
             {
                 "input_fields": {
@@ -253,6 +427,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["positive, 1"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 
@@ -260,28 +435,46 @@ class TestTemplates(UnitxtTestCase):
 
         # if "source" and "target" and "instruction_format" and "target_prefix" in instance - instance is not modified
         template = InputOutputTemplate(
-            input_format="This is my text:'{text}'",
+            input_format="This is my text: {text}",
             output_format="{label}",
         )
         check_operator(template, targets, targets, tester=self)
 
         err_input_template = InputOutputTemplate(
-            input_format="This is my text:'{no_text}'", output_format="{label}"
+            input_format="This is my text: {no_text}", output_format="{label}"
         )
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_input_template.process(inputs[0])
-        self.assertEqual(
-            "\"Available input fields are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text:'{no_text}''\"",
+        self.assertIn(
+            "Available input fields are [labels, text] but InputOutputTemplate.input_format format requires a different ones: 'This is my text: {no_text}'",
             str(ke.exception),
         )
 
         err_output_template = InputOutputTemplate(
-            input_format="This is my text:'{text}'", output_format="{no_label}"
+            input_format="This is my text: {text}", output_format="{no_label}"
         )
         with self.assertRaises(TemplateFormatKeyError) as ke:
             err_output_template.process(inputs[0])
-        self.assertEqual(
-            "\"Available reference fields are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'\"",
+        self.assertIn(
+            "Available reference fields are [label] but InputOutputTemplate.output_format format requires a different ones: '{no_label}'",
+            str(ke.exception),
+        )
+
+        err_output_template = InputOutputTemplate(
+            input_format="This is my text: {text}"
+        )
+        with self.assertRaises(UnitxtError) as ke:
+            err_output_template.process(inputs[0])
+        self.assertIn(
+            "Required field 'output_format' of class InputOutputTemplate not set in InputOutputTemplate",
+            str(ke.exception),
+        )
+
+        with self.assertRaises(RequiredFieldError) as ke:
+            err_output_template = InputOutputTemplate(output_format="{label}")
+            err_output_template.process(inputs[0])
+        self.assertIn(
+            "Required field 'input_format' of class InputOutputTemplate not set in InputOutputTemplate",
             str(ke.exception),
         )
 
@@ -316,12 +509,13 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["1"],
                 "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
+                "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 
         check_operator(template, inputs, targets, tester=self)
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(UnitxtError):
             template.reference_fields_to_target_and_references(
                 reference_fields={"label": "positive", "references": "1"}
             )
@@ -374,8 +568,8 @@ class TestTemplates(UnitxtTestCase):
         with self.assertRaises(TemplateFormatKeyError) as cm:
             wrong_field_name = "wrong_field_name"
             template.input_fields_to_source(input_fields={wrong_field_name: ["news"]})
-        self.assertEqual(
-            "\"Available input fields are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'\"",
+        self.assertIn(
+            "Available input fields are [wrong_field_name] but YesNoTemplate.input_format format requires a different ones: 'Expecting field {class} in input.'",
             str(cm.exception),
         )
 
@@ -415,18 +609,18 @@ class TestTemplates(UnitxtTestCase):
             input_format="", class_field=class_field, label_field=label_field
         )
 
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(UnitxtError) as cm:
             outputs = {class_field: "news"}
             template.reference_fields_to_target_and_references(reference_fields=outputs)
-        self.assertEqual(
+        self.assertIn(
             f"Available reference_fields are {list(outputs.keys())}, missing required label field: '{label_field}'.",
             str(cm.exception),
         )
 
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(UnitxtError) as cm:
             outputs = {label_field: ["news", "sports"]}
             template.reference_fields_to_target_and_references(reference_fields=outputs)
-        self.assertEqual(
+        self.assertIn(
             f"Available reference_fields are {list(outputs.keys())}, missing required class field: '{class_field}'.",
             str(cm.exception),
         )
@@ -438,11 +632,11 @@ class TestTemplates(UnitxtTestCase):
             template = YesNoTemplate(
                 input_format="", class_field="", label_field="labels"
             )
-            with self.assertRaises(RuntimeError) as cm:
+            with self.assertRaises(UnitxtError) as cm:
                 template.reference_fields_to_target_and_references(
                     reference_fields={"labels": wrong_labels_value}
                 )
-            self.assertEqual(
+            self.assertIn(
                 f"Unexpected value for gold_class_names: '{wrong_labels_value}'. Expecting a list.",
                 str(cm.exception),
             )
@@ -458,14 +652,14 @@ class TestTemplates(UnitxtTestCase):
             template = YesNoTemplate(
                 input_format="", class_field=class_field, label_field=label_field
             )
-            with self.assertRaises(RuntimeError) as cm:
+            with self.assertRaises(UnitxtError) as cm:
                 template.reference_fields_to_target_and_references(
                     reference_fields={
                         label_field: ["news"],
                         class_field: wrong_class_value,
                     }
                 )
-            self.assertEqual(
+            self.assertIn(
                 f"Unexpected value for queried_class_names: '{wrong_class_value}'. Expected a string.",
                 str(cm.exception),
             )
@@ -521,6 +715,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": [r"John\,\: Doe, New York"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
             {
                 "input_fields": {
@@ -537,6 +732,7 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": ["processors.to_span_label_pairs"],
             },
         ]
 
@@ -588,6 +784,10 @@ class TestTemplates(UnitxtTestCase):
                 ],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": [
+                    "processors.load_json",
+                    "processors.dict_of_lists_to_value_key_pairs",
+                ],
             },
             {
                 "input_fields": {
@@ -604,6 +804,10 @@ class TestTemplates(UnitxtTestCase):
                 "references": ["None"],
                 "instruction": "",
                 "target_prefix": "",
+                "postprocessors": [
+                    "processors.load_json",
+                    "processors.dict_of_lists_to_value_key_pairs",
+                ],
             },
         ]
 
@@ -650,6 +854,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": choices, "text": "example A"},
@@ -663,6 +868,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": ["True", "small"], "text": "example A"},
@@ -676,6 +882,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
 
@@ -689,12 +896,10 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
-        self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+        self.assertIn(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
             str(ve.exception),
         )
-
-        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
 
     def test_multiple_choice_template_with_shuffle(self):
         enumerators = ["capitals", "lowercase", "numbers", "roman"]
@@ -739,6 +944,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": ["True", "False"], "text": "example A"},
@@ -752,6 +958,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"choices": [temp, "True"], "text": "example A"},
@@ -765,6 +972,7 @@ class TestTemplates(UnitxtTestCase):
                     "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
 
@@ -778,12 +986,10 @@ class TestTemplates(UnitxtTestCase):
 
         with self.assertRaises(ValueError) as ve:
             check_operator(template, inputs, targets, tester=self)
-        self.assertEqual(
-            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: \"Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'\"",
+        self.assertIn(
+            "Error processing instance '0' from stream 'test' in MultipleChoiceTemplate due to: Available input fields are [numerals, choices, text] but MultipleChoiceTemplate.input_format format requires a different ones: 'Text: {no_text}, Choices: {no_choices}.'",
             str(ve.exception),
         )
-
-        self.assertListEqual(["post1", "post2"], template.get_postprocessors())
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
@@ -825,6 +1031,7 @@ class TestTemplates(UnitxtTestCase):
             "references": ["negative"],
             "instruction": "",
             "target_prefix": "",
+            "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)
 
@@ -846,5 +1053,6 @@ class TestTemplates(UnitxtTestCase):
             "references": ["Dan", "Yossi"],
             "instruction": "",
             "target_prefix": "",
+            "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)

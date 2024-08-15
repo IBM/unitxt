@@ -1,15 +1,14 @@
 import ast
 import json
+import os
 import re
 import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
-from copy import deepcopy
 from dataclasses import field
 from operator import itemgetter
-from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import evaluate
@@ -22,11 +21,13 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
+    DeprecatedField,
     InternalField,
     NonPositionalField,
     OptionalField,
 )
 from .deprecation_utils import deprecation
+from .error_utils import Documentation, UnitxtWarning
 from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -42,6 +43,7 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
+from .utils import deepcopy
 
 logger = get_logger()
 settings = get_settings()
@@ -141,13 +143,25 @@ class Metric(Artifact):
             else score_name
         )
 
-    def _add_score_prefixes_to_score_dict(self, scores: Dict[str, Any]):
+    def _add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+        self, scores: Dict[str, Any], existing_scores: Dict[str, Any]
+    ) -> Dict[str, Any]:
         new_scores = {}
         for score_name, score in scores.items():
             score_with_prefix = self._add_score_prefix(score_name)
             new_scores[score_with_prefix] = (
                 score if score_name not in ["score_name"] else self.score_prefix + score
             )
+        for new_score_name in new_scores:
+            if new_score_name in ["score", "score_name"]:
+                continue
+            if new_score_name in existing_scores:
+                UnitxtWarning(
+                    message=f"Metric '{new_score_name}' that has just been evaluated to {new_scores[new_score_name]}, is already recorded "
+                    f"to have value {existing_scores[new_score_name]} by a previous metric evaluation on this instance or stream. "
+                    f"To avoid overwriting the existing value, add a score_prefix to the metric (e.g. score_prefix='my_second_').",
+                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                )
         return new_scores
 
     def _validate_references_and_prediction(self, references, predictions):
@@ -238,12 +252,14 @@ class Metric(Artifact):
     def disable_confidence_interval_calculation(self):
         pass
 
-    # update instance["score"]["global"] with the newly computed global score, global_score, for the
-    # current metric computed.  global_score contains "score" and "score_name" fields that reflect
-    # (the main_score of) the current metric.
+    # update instance["score"]["global"] with the global_score just computed for the
+    # current metric.  global_score contains "score" and "score_name" fields that reflect
+    # (the main_score of) the current metric. If CI was computed for global_score, then global_score
+    # also contains "score_ci_low" and "score_ci_high" that reflect (the main_score of) the current metric.
     # A simple python-dictionary-update adds new fields to instance["score"]["global"], and also replaces the values
-    # of its fields "score" and "score_name", to reflect the current metric, overwriting previous metrics' settings
-    # of these fields (if any previous metric exists).
+    # of its fields "score" and "score_name" (and "score_ci_low", "score_ci_high" if applicable),
+    # to reflect the current metric, overwriting previous metrics' settings of these fields
+    # (if any previous metric exists).
     # When global_score does NOT contain ci score (because CI was not computed for the current metric), but
     # one of the previous metrics computed did have, the last of such previous metrics set the values in
     # fields "score_ci_low" and "score_ci_high" in instance["score"]["global"] to reflect its
@@ -254,15 +270,25 @@ class Metric(Artifact):
     # therefore, not consistent with "score_name".
     # In such a case, following the python-dictionary-update, we pop out fields "score_ci_low" and
     # "score_ci_high" from instance["score"]["global"], so that now all the fields "score.." in
-    # instance["score"]["global"] are consistent with the current metric: The current metric
-    # is named instance["score"]["global"]["score_name"], its score shows in
+    # instance["score"]["global"] are consistent with the current metric: The metric that is named
+    # instance["score"]["global"]["score_name"], its score shows in
     # field instance["score"]["global"]["score"], and it does not have ci_scores,
     # which is also reflected in the absence of fields "score_ci_low" and "score_ci_high" from instance["score"]["global"].
     # If ci IS computed for the current metric, global_score contains "score_ci_low" and "score_ci_high", and these overwrite
-    # the ones existing in instance["score"]["global"] by a simple python-dictionary-update, and no need for any further fixeup.
+    # the ones existing in instance["score"]["global"] by the simple python-dictionary-update, and no need for any further fixeup.
     def update_and_adjust_global_score(
         self, instance: Dict[str, Any], global_score: dict
     ):
+        for score_name in global_score:
+            if score_name in ["score", "score_name", "score_ci_low", "score_ci_high"]:
+                continue
+            if score_name in instance["score"]["global"]:
+                UnitxtWarning(
+                    message=f"Global metric '{score_name}' that has just been evaluated to {global_score[score_name]}, is already recorded "
+                    f"to have value {instance['score']['global'][score_name]} by a previous metric evaluation on this stream. "
+                    f"To avoid overwriting the value, add a score_prefix to the metric (e.g. score_prefix='my_{score_name}'.",
+                    additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                )
         instance["score"]["global"].update(global_score)
         for score_ci in ["score_ci_low", "score_ci_high"]:
             if score_ci in global_score:
@@ -559,12 +585,18 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                     instance_score[self.main_score] = no_score_value
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    instance_score, instance["score"]["instance"]
+                )
             )
         self._validate_references_and_prediction(references, predictions)
 
         result = self._compute(references, predictions, task_data)
-        global_score.update(self._add_score_prefixes_to_score_dict(result))
+        global_score.update(
+            self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                result, global_score
+            )
+        )
         score_name = global_score["score_name"]
         confidence_interval = self.compute_global_confidence_intervals(
             references, predictions, task_data, score_name
@@ -657,7 +689,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instance["score"] = {"global": {}, "instance": {}}
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    score, instance["score"]["instance"]
+                )
             )
             instances.append(instance)
 
@@ -669,7 +703,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             if reduction == "mean":
                 for field_name in fields:
                     field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = mean(
+                    global_score[field_name_with_prefix] = nan_mean(
                         [
                             instance["score"]["instance"][field_name_with_prefix]
                             for instance in instances
@@ -1140,7 +1174,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 instance["score"] = {"global": {}, "instance": {}}
 
             instance["score"]["instance"].update(
-                self._add_score_prefixes_to_score_dict(instance_score)
+                self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                    instance_score, instance["score"]["instance"]
+                )
             )
 
             instances.append(instance)
@@ -1326,7 +1362,6 @@ class StringContainment(InstanceMetric):
     ci_scores = ["string_containment"]
 
     prediction_type = Any  # string representation is compared
-    single_reference_per_prediction = False  # multiple references allowed
 
     def compute(
         self, references: List[Any], prediction: Any, task_data: List[Dict]
@@ -1341,11 +1376,59 @@ class StringContainment(InstanceMetric):
         return result
 
 
+class StringContainmentRatio(InstanceMetric):
+    """Metric that returns the ratio of values from a specific field contained in the prediction.
+
+    Attributes:
+        field: The field from the task_data that contains the values to be checked for containment.
+               Example task:
+                    Task(
+                        input_fields={"question": str},
+                        reference_fields={"entities": str},
+                        prediction_type=str,
+                        metrics=["string_containment_ratio[field=entities]"],
+                    )
+    """
+
+    reduction_map = {"mean": ["string_containment"]}
+    main_score = "string_containment"
+    ci_scores = ["string_containment"]
+    field: str = None
+
+    prediction_type = Any  # string representation is compared
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        if self.field not in task_data:
+            raise ValueError(
+                f"'{self.field}' field required by {__class__.__name__} is not in passed in task_data: {task_data}"
+            )
+        contain_results = [
+            str(value) in str(prediction) for value in task_data[self.field]
+        ]
+        score = sum(contain_results) / len(contain_results)
+        result = {self.main_score: score}
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+    def verify(self):
+        super().verify()
+        if self.field is None:
+            raise ValueError(
+                "StringContainmentRatio metric requires the 'field' attribute to be set."
+            )
+
+
 class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = field(
-        default_factory=list
+    postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
+    postpreprocess_steps: Optional[List[StreamingOperator]] = DeprecatedField(
+        metadata={
+            "deprecation_msg": "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
+        }
     )
     metric: Metric = None
 
@@ -1366,6 +1449,23 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        has_postpreprocess = (
+            hasattr(self, "postpreprocess_steps")
+            and self.postpreprocess_steps is not None
+            and isinstance(self.postpreprocess_steps, list)
+            and len(self.postpreprocess_steps) > 0
+        )
+        has_postprocess = (
+            hasattr(self, "postprocess_steps")
+            and self.postprocess_steps is not None
+            and isinstance(self.postprocess_steps, list)
+            and len(self.postprocess_steps) > 0
+        )
+        assert not (
+            has_postpreprocess and has_postprocess
+        ), "Must define at most one of postpreprocess_steps (which is deprecated) and postprocess_steps (to be used from now on)"
+        if has_postpreprocess:
+            self.postprocess_steps = self.postpreprocess_steps
         self.prepare_score = Copy(
             field_to_field=[
                 [
@@ -1383,7 +1483,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
         for step in self.preprocess_steps:
             multi_stream = step(multi_stream)
         multi_stream = self.metric(multi_stream)
-        for step in self.postpreprocess_steps:
+        for step in self.postprocess_steps:
             multi_stream = step(multi_stream)
         return self.prepare_score(multi_stream)
 
@@ -1409,6 +1509,13 @@ class HuggingfaceMetric(GlobalMetric):
     experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
 
     def verify(self):
+        if os.path.exists(self.hf_metric_name):
+            UnitxtWarning(
+                f"{self.get_metric_name()} uses a huggingface metric {self.hf_metric_name} which is defined in a local file."
+                f"This may cause issues when running on different machine or different root directories.",
+                Documentation.HUGGINGFACE_METRICS,
+            )
+
         assert (
             self.hf_additional_input_fields is None
             or isoftype(self.hf_additional_input_fields, List[str])
@@ -1654,7 +1761,7 @@ class F1(GlobalMetric):
             average=self.average,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[f"{self.metric}_" + self.id_to_str[label]] = result[
                     self.metric
@@ -1959,7 +2066,7 @@ class F1MultiLabel(GlobalMetric):
             assert (
                 len(result[self.metric]) == len(labels)
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
@@ -2019,7 +2126,7 @@ class Rouge(InstanceMetric):
 
         self.rouge_scorer = rouge_scorer
 
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
@@ -2072,7 +2179,7 @@ class RougeHF(HuggingfaceInstanceMetric):
 
         import nltk
 
-        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         self.sent_tokenize = nltk.sent_tokenize
 
     def compute(self, references, prediction, task_data: List[Dict]):
@@ -3360,7 +3467,7 @@ class NDCG(GlobalMetric):
                     for pred in q_predictions
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
-        return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+        return {self.main_score: nan_mean(scores) if len(scores) > 0 else np.nan}
 
 
 class RetrievalMetric(InstanceMetric):
@@ -3695,8 +3802,8 @@ def performance_drop_rate(
     if any(len(scores) == 0 for scores in group_scores_list):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    control_mean = mean(group_scores_list[0])
-    comparison_mean = mean(group_scores_list[1])
+    control_mean = nan_mean(group_scores_list[0])
+    comparison_mean = nan_mean(group_scores_list[1])
     if control_mean == 0:
         # return 0 if comparison is also 0
         if comparison_mean == 0:
@@ -3809,8 +3916,8 @@ def normalized_cohens_h(
         # no comparison can be made since there is not at least one score per type
         h, norm_h = np.nan, np.nan
     else:
-        control_mean = mean(group_scores_list[0])
-        comparison_mean = mean(group_scores_list[1])
+        control_mean = nan_mean(group_scores_list[0])
+        comparison_mean = nan_mean(group_scores_list[1])
         h = 2 * (np.arcsin(np.sqrt(comparison_mean)) - np.arcsin(np.sqrt(control_mean)))
         norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
 
@@ -3863,7 +3970,7 @@ def normalized_hedges_g(
         g, norm_g = np.nan, np.nan
     else:
         # otherwise, calculate the variances
-        group_mean = [mean(scores) for scores in group_scores_list]
+        group_mean = [nan_mean(scores) for scores in group_scores_list]
         # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
         group_var = [
             0.0 if nn == 1 else np.var(scores, ddof=1)
@@ -3922,7 +4029,7 @@ def mean_subgroup_score(
     if len(score_list) == 0:
         # no scores to use
         return np.nan
-    return mean(score_list)
+    return nan_mean(score_list)
 
 
 # metrics using mean reduction
