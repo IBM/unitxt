@@ -4624,8 +4624,15 @@ class MetricsEnsemble(InstanceMetric):
 
 
 class RandomForestMetricsEnsemble(MetricsEnsemble):
+    """This class extends the `MetricsEnsemble` base class and leverages a pre-trained scikit-learn Random Forest classification model to combine and aggregate scores from multiple judges.
+
+    `load_weights` method:
+         Loads model weights from dictionary representation of a random forest classifier.
+    `ensemble` method:
+         Decodes the RandomForestClassifier object and predict a score based on the given instance.
+    """
+
     _requirements_list: List[str] = ["sklearn"]
-    ensemble_model = None
 
     def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
         from sklearn.tree._tree import Tree
@@ -4718,11 +4725,10 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
             return json.load(file)
 
     def ensemble(self, instance):
-        if self.ensemble_model is None:
-            assert (
-                self.weights is not None
-            ), "RandomForestMetricsEnsemble  must set self.weights before it can be used"
-            self.ensemble_model = self.decode_forest(self.weights)
+        assert (
+            self.weights is not None
+        ), "RandomForestMetricsEnsemble must set self.weights before it can be used"
+        ensemble_model = self.decode_forest(self.weights)
 
         prediction_lst = []
         for i, metric in enumerate(self.metrics):
@@ -4731,5 +4737,5 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
                     self.get_prefix_name(i) + metric.main_score
                 ]
             )
-        score = self.ensemble_model.predict([prediction_lst])
+        score = ensemble_model.predict([prediction_lst])
         return score.tolist()[0]
