@@ -439,10 +439,10 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     """Loads an artifict from one of possible representations.
 
     (1) If artifact representation is already an Artifact object, return it.
-    (2) If artifact representation is a string location of a local file, load the Artifact from local file.
-    (3) If artifact representation is a string name iin the catalog, load the Artifact from the catalog.
-    (4) If artifact representation is a json string, create dictionary representation from the string and build an Artifact object from it.
-    (5) Otherwise, check the artifact representation is a dictionary and build an Artifact object from it.
+    (2) If artifact representation is a string location of a local file, load the Artifact from the local file.
+    (3) If artifact representation is a string name in the catalog, load the Artifact from the catalog.
+    (4) If artifact representation is a json string, create a dictionary representation from the string and build an Artifact object from it.
+    (5) Otherwise, check that the artifact representation is a dictionary and build an Artifact object from it.
     """
     if isinstance(artifact_rep, Artifact):
         return artifact_rep, None
