@@ -777,7 +777,7 @@ class Apply(InstanceOperator):
     Args:
         function (str): name of function.
         to_field (str): the field to store the result
-        additional arguments are field names passed in
+        any additional arguments are field names whose values will be passed directly to the function specified
 
     Examples:
     Store in field  "b" the uppercase string of the value in field "a"
