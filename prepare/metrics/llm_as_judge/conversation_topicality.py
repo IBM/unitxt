@@ -13,9 +13,7 @@ from unitxt.metrics import (
 platform = "ibm_gen_ai"
 gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=256)
 
-config_filepath = (
-    "prepare/templates/response_assessment/judges/ensemble_topicality_v1.json"
-)
+config_filepath = "prepare/metrics/llm_as_judge/ensemble_topicality_v1.json"
 
 with open(config_filepath) as file:
     config = json.load(file)
