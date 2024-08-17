@@ -1,3 +1,6 @@
+import ast
+import re
+
 import yaml
 from lh_eval_api import load_lh_dataset
 from unitxt.blocks import TaskCard, Task
@@ -19,6 +22,7 @@ import importlib
 class EvaluateIlab:
     card:str
     template:str
+    template_index: int
     task_name:str
     host_machine:str
     yaml_file:str 
@@ -28,11 +32,12 @@ class EvaluateIlab:
     def __init__(
             self, 
             host_machine:str, 
-            card:str, 
-            template:str, 
+            card:str,
             task_name:str, 
             yaml_file:str, 
             is_trained:bool,
+            template: str = None,
+            template_index: int = None,
             local_catalog:str = None,
             num_test_samples:int = 100,
             owner:str = 'ilab',
@@ -41,6 +46,7 @@ class EvaluateIlab:
         self.card = card
         self.host_machine = host_machine
         self.template = template
+        self.template_index = template_index
         self.task_name = task_name
         self.yaml_file = yaml_file
         self.local_catalog = local_catalog
@@ -81,17 +87,17 @@ class EvaluateIlab:
             if numshot == 5 and self.num_test_samples < 50:
                 continue
             metrics = self.test_load_infer_and_save(num_shots=numshot,file=csv_path)
-        self.yaml_infer_by_metrics(metrics,csv_path)
+        self.yaml_infer_by_metrics(csv_path)
         # self.yaml_infer_llmaaj(csv_path)
 
     def yaml_infer_llmaaj(self, file):
-        yaml_dataset = self.create_dataset_from_yaml(self.llmaaj_metric)
+        yaml_dataset = self.create_dataset_from_yaml()
         csv_path = file.replace('.csv','_yaml_llmaaj.csv')
         evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
-    def yaml_infer_by_metrics(self,metrics,file):
-        yaml_dataset = self.create_dataset_from_yaml(metrics)
+    def yaml_infer_by_metrics(self, file):
+        yaml_dataset = self.create_dataset_from_yaml()
         csv_path = file.replace('.csv','_yaml_metrics.csv')
         evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
@@ -144,40 +150,29 @@ class EvaluateIlab:
         
 
     
-    def create_dataset_from_yaml(self, metrics_list:List[str])-> DatasetDict:
-        def get_data_for_loader(yaml_file:str)-> dict:
-            with open(yaml_file, 'r') as f:
-                yaml_content = yaml.safe_load(f)
-                yaml_content = yaml_content.get("seed_examples", {})
-            data = { "test" :(yaml_content)}
-            return data
+    def create_dataset_from_yaml(self)-> DatasetDict:
+        with open(self.yaml_file, 'r') as f:
+            yaml_content = yaml.safe_load(f)
+            pattern = r"\(indices: (\[.*?\])\)"
+            match = re.search(pattern, yaml_content['task_description'])
+            assert match, f"yaml description should contain the chosen indices. " \
+                          f"Description: {yaml_content['task_description']}"
 
-        def get_card(data,metrics_list:List[str])->TaskCard:
-            card = TaskCard(
-                loader=LoadFromDictionary(data=data),
-                task=Task(
-                    inputs={"question": "str"},
-                outputs={"answer": "str"},
-                prediction_type="str",
-                metrics=metrics_list
-                ),
-            templates=TemplatesDict(
-                {
-                    'basic': InputOutputTemplate(
-                        instruction = '',
-                        input_format="{question}",
-                        output_format="{answer}",                
-                    )
-                }
-            )
-        )
-            return card
+            indices = match.group(1)
+            indices = ast.literal_eval(indices)
 
-        data = get_data_for_loader(yaml_file=self.yaml_file)
-        card = get_card(data, metrics_list=metrics_list)
-        dataset = load_dataset(card=card, template_card_index="basic" )
-        return dataset
-
+        if self.local_catalog:
+            register_local_catalog(self.local_catalog)
+        if self.template is not None:
+            loaded_dataset = load_dataset(card=self.card, template=self.template,
+                                          loader_limit=self.num_test_samples)
+        elif self.template_index is not None:
+            loaded_dataset = load_dataset(card=self.card, template_card_index=self.template_index,
+                                          loader_limit=self.num_test_samples)
+        else:
+            raise ValueError("must have either template or template card index")  # TODO error if both are not none
+        dataset = loaded_dataset['train']
+        return {'test': [dataset[i] for i in indices]}
 
 
 if __name__ == '__main__':
