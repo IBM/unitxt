@@ -90,16 +90,10 @@ class EvaluateIlab:
         self.yaml_infer_by_metrics(csv_path)
         # self.yaml_infer_llmaaj(csv_path)
 
-    def yaml_infer_llmaaj(self, file):
-        yaml_dataset = self.create_dataset_from_yaml()
-        csv_path = file.replace('.csv','_yaml_llmaaj.csv')
-        evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
-        self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
-
     def yaml_infer_by_metrics(self, file):
         yaml_dataset = self.create_dataset_from_yaml()
         csv_path = file.replace('.csv','_yaml_metrics.csv')
-        evaluated_yaml_datset,model_name = self.infer_from_model(yaml_dataset)
+        evaluated_yaml_datset, model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
     def test_load_infer_and_save(self,num_shots:int, file:str):
@@ -171,8 +165,11 @@ class EvaluateIlab:
                                           loader_limit=self.num_test_samples)
         else:
             raise ValueError("must have either template or template card index")  # TODO error if both are not none
-        dataset = loaded_dataset['train']
-        return {'test': [dataset[i] for i in indices]}
+        llmaaj_metric =  'metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'
+        dataset = {'test': [loaded_dataset['train'][i] for i in indices]}
+        for instance in dataset['test']:
+            instance['metrics'].append(llmaaj_metric)
+        return dataset
 
 
 if __name__ == '__main__':
