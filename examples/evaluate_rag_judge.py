@@ -31,8 +31,8 @@ metrics_base_path = "metrics.rag.binary_judges"
 metrics_base_names = [
     "context_relevance_q_c",
     "answer_relevance_q_a",
-    "correctness_q_c_a_gt",
-    "correctness_q_a_gt",
+    "answer_correctness_q_c_a_gt",
+    "answer_correctness_q_a_gt",
     "correctness_holistic_q_c_a",
     "faithfulness_c_a",
     "faithfulness_q_c_a",
