@@ -185,8 +185,9 @@ def upload_to_lh(folder, namespace):
     import glob, pandas as pd, datetime,os
     from lh_eval_api import EvaluationResultsUploader, PredictionRecord,RunRecord
     from lh_eval_api.evaluation_data_services.evaluation_data_handlers.eval_uploader.evaluation_results_uploader import HandleExistingRuns
-    runs_files = glob.glob(os.path.join(folder,'*_run.csv'))
+    runs_files = glob.glob(os.path.join(folder,'*','*_run.csv'))
     runs = []
+    all_predictions = []
     for file in runs_files:
         run_df = pd.read_csv(file)
         prediction_file = file.replace('_run.csv','_predictions.csv')
@@ -203,20 +204,23 @@ def upload_to_lh(folder, namespace):
         predictions_df = pd.read_csv(prediction_file)
         predictions_df['run_id'] = run_record.run_id
         predictions_df['model_prediction'] = predictions_df['processed_model_prediction']
-    predictions = predictions_df.apply(
+        predictions_df['score'] = predictions_df['score'].apply(float)
+        predictions = predictions_df.apply(
         lambda row: PredictionRecord(
             **{col_name: row[col_name] for col_name in PredictionRecord.__dataclass_fields__ if col_name in predictions_df.columns}
         ),
         axis=1,
-    ).tolist()
+        ).tolist()
+        all_predictions.extend(predictions)
 
     uploader = EvaluationResultsUploader(
         runs=runs,
-        predictions=predictions,
+        predictions=all_predictions,
         predictions_namespace=namespace,
         handle_existing=HandleExistingRuns.IGNORE
     )
     uploader.upload()
+
 
 if __name__ == '__main__':
    
