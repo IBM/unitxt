@@ -27,15 +27,15 @@ test_examples = [
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
     },
 ]
-metrics_base_path = "metrics.rag.binary_judges"
+metrics_base_path = "metrics.rag"
 metrics_base_names = [
-    "context_relevance_q_c",
-    "answer_relevance_q_a",
-    "answer_correctness_q_c_a_gt",
-    "answer_correctness_q_a_gt",
-    "correctness_holistic_q_c_a",
-    "faithfulness_c_a",
-    "faithfulness_q_c_a",
+    "context_relevance.context_relevance_q_c",
+    "answer_relevance.answer_relevance_q_a",
+    "answer_correctness.answer_correctness_q_c_a_gt",
+    "answer_correctness.answer_correctness_q_a_gt",
+    "correctness_holistic.correctness_holistic_q_c_a",
+    "faithfulness.faithfulness_c_a",
+    "faithfulness.faithfulness_q_c_a",
 ]
 model_names = ["llama_3_1_70b_instruct", "mixtral_8x7b_instruct_v01", "gpt_4_turbo"]
 use_armorm = False
@@ -53,8 +53,8 @@ if __name__ == "__main__":
     if use_armorm:
         metric_names.extend(
             [
-                "metrics.rag.binary_judges.correctness_holistic_q_c_a_ArmoRM",
-                "metrics.rag.binary_judges.answer_relevance_q_a_ArmoRM",
+                "metrics.rag.correctness_holistic.correctness_holistic_q_c_a_ArmoRM",
+                "metrics.rag.answer_relevance.answer_relevance_q_a_ArmoRM",
             ]
         )
 

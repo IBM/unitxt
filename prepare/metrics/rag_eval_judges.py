@@ -75,7 +75,7 @@ def add_judge_metrics():
 
                 add_to_catalog(
                     metric_pipeline,
-                    name=f"metrics.rag.binary_judges.{metric_name}",
+                    name=f"metrics.rag.{metric_type}.{metric_name}",
                     overwrite=True,
                 )
 

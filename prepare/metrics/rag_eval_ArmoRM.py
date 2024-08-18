@@ -48,4 +48,4 @@ for metric_type, input_fields_to_template_name in metric_type_to_template.items(
             ],
         )
 
-        add_to_catalog(metric_pipeline, name=f"metrics.rag.binary_judges.{metric_name}")
+        add_to_catalog(metric_pipeline, name=f"metrics.rag.{metric_type}.{metric_name}")
