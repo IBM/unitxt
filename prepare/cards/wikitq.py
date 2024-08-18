@@ -20,7 +20,7 @@ card = TaskCard(
         # TruncateTableRows(field="table", rows_to_keep=50),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
     ],
-    task="tasks.qa.with_context.extractive[metrics=[metrics.unsorted_list_exact_match]]",
+    task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings]]",
     templates=TemplatesList(
         [
             MultiReferenceTemplate(

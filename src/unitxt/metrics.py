@@ -16,6 +16,7 @@ import evaluate
 import numpy
 import numpy as np
 import pandas as pd
+import spacy
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -4729,3 +4730,38 @@ class MetricsEnsemble(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         return {self.main_score: prediction}
+
+
+class F1Strings(InstanceMetric):
+    main_score = "f1_strings"
+    reduction_map = {"mean": ["f1_strings"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        nlp = spacy.load("en_core_web_sm")
+        doc = nlp(references[0])
+        set_ref = Counter([token.text.lower() for token in doc])
+        doc = nlp(prediction)
+        set_pred = Counter([token.text.lower() for token in doc])
+
+        true_positives = sum((set_ref & set_pred).values())
+        false_positives = sum((set_ref - set_pred).values())
+        false_negatives = sum((set_pred - set_ref).values())
+
+        if true_positives == 0:
+            f1 = 0.0
+        else:
+            precision = true_positives / (true_positives + false_positives)
+            recall = true_positives / (true_positives + false_negatives)
+            if precision + recall == 0:
+                f1 = 0.0
+            else:
+                f1 = 2 * (precision * recall) / (precision + recall)
+
+        return {self.main_score: [f1], "score_name": self.main_score}
