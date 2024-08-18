@@ -15,7 +15,7 @@ metric_type_to_template = {
     },
     "context_relevance": {"q_c": "judge_context_relevance_ares_logprobs"},
     "correctness_holistic": {"q_c_a": "judge_correctness_simple_logprobs"},  # qca
-    "correctness": {
+    "answer_correctness": {
         "q_c_a_gt": "judge_simplified_with_context_logprobs",
         "q_a_gt": "judge_simplified_no_context_logprobs",
     },

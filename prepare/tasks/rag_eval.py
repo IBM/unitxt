@@ -36,18 +36,6 @@ for binary_val in rag_classification_metrics:
     add_to_catalog(
         Task(
             inputs=convert_to_dict_of_type(
-                ["answer", "ground_truths", "question", "choices", "contexts"]
-            ),
-            outputs=convert_to_dict_of_type(["is_correct", "number_val"]),
-            metrics=rag_classification_metrics[binary_val],
-            prediction_type="float",
-        ),
-        f"tasks.rag_eval.correctness.{binary_val}",
-    )
-
-    add_to_catalog(
-        Task(
-            inputs=convert_to_dict_of_type(
                 ["answer", "contexts", "question", "choices"]
             ),
             outputs=convert_to_dict_of_type(["is_faithful", "number_val"]),
@@ -98,5 +86,5 @@ for binary_val in rag_classification_metrics:
             metrics=rag_classification_metrics[binary_val],
             prediction_type="float",
         ),
-        f"tasks.rag_eval.correctness_reference_based.{binary_val}",
+        f"tasks.rag_eval.answer_correctness.{binary_val}",
     )

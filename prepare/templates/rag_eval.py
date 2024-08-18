@@ -229,7 +229,7 @@ correctness_templates_dict = {
         "instruction": correctness_reference_based_no_context_instructions_simple,
     },
 }
-add_rag_templates(correctness_templates_dict, "correctness", "is_correct")
+add_rag_templates(correctness_templates_dict, "answer_correctness", "is_correct")
 
 ###################
 # Context Relevance
