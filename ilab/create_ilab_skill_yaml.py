@@ -206,7 +206,7 @@ watson_emotion_text_first_example = IlabParameters(
     template="templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think",
    )
 
-watson_emotion_classes_first_example = IlabParameters(
+watson_emotion = IlabParameters(
     template="templates.classification.multi_class.text_after_instruction_with_type_of_class",
     local_catalog=FM_EVAL_LOCAL_CATALOG,
     task_description="watson emotion",

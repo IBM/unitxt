@@ -29,6 +29,7 @@ class EvaluateIlab:
     owner:str
     llmaaj_metric:str
     eval_yaml_only:bool
+    lh_predictions_namespace:bool
     
 
     def __init__(
@@ -37,14 +38,15 @@ class EvaluateIlab:
             card:str,
             task_name:str, 
             yaml_file:str, 
-            is_trained:bool = None,
+            is_trained:bool = False,
             template: str = None,
             template_index: int = None,
             local_catalog:str = None,
             num_test_samples:int = 100,
             owner:str = 'ilab',
             llmaaj_metric:List[str] = ['metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'],
-            eval_yaml_only:bool = None
+            eval_yaml_only:bool = False,
+            lh_predictions_namespace:bool = False
             ):
         self.card = card
         self.host_machine = host_machine
@@ -60,6 +62,8 @@ class EvaluateIlab:
             register_local_catalog(self.local_catalog)
         self.llmaaj_metric = llmaaj_metric
         self.eval_yaml_only = eval_yaml_only
+        self.folder = 'ilab/ilab_results'
+        self.lh_predictions_namespace = lh_predictions_namespace
 
     def infer_from_model(self,dataset:DatasetDict) -> Tuple[List[Dict[str, Any]],str]:
         test_dataset = dataset['test']
@@ -77,6 +81,7 @@ class EvaluateIlab:
         dataset = load_dataset(
             card=self.card,
             template=self.template,
+            template_card_index = self.template_index,
             loader_limit=self.num_test_samples,
             num_demos = num_shots,
             demos_pool_size = num_shots*4
@@ -86,13 +91,15 @@ class EvaluateIlab:
     def run(self, csv_path = None):
         if not csv_path:
             trained = 'trained' if self.is_trained else 'base'
-            csv_path = f'ilab/ilab_results/{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}.csv'
+            csv_path = f'{self.folder}/{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}.csv'
         if not self.eval_yaml_only:
             for numshot in [0,5]:
                 if numshot == 5 and self.num_test_samples < 50:
                     continue
                 self.test_load_infer_and_save(num_shots=numshot,file=csv_path)
         self.yaml_load_infer_and_save(csv_path)
+        if self.lh_predictions_namespace:
+            upload_to_lh(self.folder, self.lh_predictions_namespace)
 
     def yaml_load_infer_and_save(self, file):
         yaml_dataset = self.create_dataset_from_yaml()
@@ -174,13 +181,42 @@ class EvaluateIlab:
         return dataset
 
 
-def upload_to_lh(folder):
-    import glob, os
+def upload_to_lh(folder, namespace):
+    import glob, pandas as pd, datetime,os
+    from lh_eval_api import EvaluationResultsUploader, PredictionRecord,RunRecord
+    from lh_eval_api.evaluation_data_services.evaluation_data_handlers.eval_uploader.evaluation_results_uploader import HandleExistingRuns
     runs_files = glob.glob(os.path.join(folder,'*_run.csv'))
-    runs_df = pd.concat([pd.read_csv(file) for file in runs_files])
-    predictions_files = glob.glob(os.path.join(folder,'*_predictions.csv'))
-    predictions_df = pd.concat([pd.read_csv(file) for file in predictions_files])
+    runs = []
+    for file in runs_files:
+        run_df = pd.read_csv(file)
+        prediction_file = file.replace('_run.csv','_predictions.csv')
+        run_df['inference_platform'] = 'ilab'
+        run_df['execution_env'] = 'ilab'
+        run_df['started_at'] = run_df['started_at'].apply(lambda x: datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S.%f'))
+        for dict_str in ['all_scores', 'run_params']:
+            run_df[dict_str] = run_df[dict_str].apply(lambda x: eval(x.replace("np.float64", "float").replace("nan", "float('nan')")))
+        row = run_df.iloc[0]
+        run_record = RunRecord(
+            **{col_name: row[col_name] for col_name in RunRecord.__dataclass_fields__ if col_name in run_df.columns}
+        )
+        runs.append(run_record)
+        predictions_df = pd.read_csv(prediction_file)
+        predictions_df['run_id'] = run_record.run_id
+        predictions_df['model_prediction'] = predictions_df['processed_model_prediction']
+    predictions = predictions_df.apply(
+        lambda row: PredictionRecord(
+            **{col_name: row[col_name] for col_name in PredictionRecord.__dataclass_fields__ if col_name in predictions_df.columns}
+        ),
+        axis=1,
+    ).tolist()
 
+    uploader = EvaluationResultsUploader(
+        runs=runs,
+        predictions=predictions,
+        predictions_namespace=namespace,
+        handle_existing=HandleExistingRuns.IGNORE
+    )
+    uploader.upload()
 
 if __name__ == '__main__':
    
@@ -199,6 +235,7 @@ if __name__ == '__main__':
     parser.add_argument('--card_config', type=str,
                         help='Optional: card_config name. It should be defined at create_ilab_skill_yaml.py')
     parser.add_argument('--only_yaml_flag', action='store_true', help='Optional: ran only yaml evaluation' )
+    parser.add_argument('--lh_upload_namespace',type='str', help='Optional: specify predictions namespace in order to upload to lakehouse')
     args = parser.parse_args()
 
     if args.card_config is not None:
@@ -227,7 +264,8 @@ if __name__ == '__main__':
         local_catalog=args.local_catalog,
         owner = args.owner,
         eval_yaml_only = args.only_yaml_flag,
-        template_index=template_index
+        template_index=template_index,
+        lh_predictions_namespace = args.lh_upload_namespace
     )
     evaluator.run()
     
