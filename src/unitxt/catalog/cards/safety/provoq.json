@@ -12,25 +12,18 @@
             "__type__": "set",
             "fields": {
                 "output": "",
-                "type_of_input": "str",
-                "type_of_output": "str"
+                "type_of_input": "",
+                "type_of_output": ""
             }
         },
         {
             "__type__": "rename_fields",
             "field_to_field": {
-                "question": "input",
-                "group": "minority_group"
-            }
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "minority_group": "group"
+                "question": "input"
             }
         }
     ],
-    "task": "tasks.generation[metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_genai_template_harm_rating],reference_fields=[minority_group, stigma, input, output]]",
+    "task": "tasks.generation[metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_genai_template_harm_rating],reference_fields=[group, stigma, input, output]]",
     "templates": {
         "__type__": "templates_list",
         "items": [
