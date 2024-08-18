@@ -235,7 +235,7 @@ if __name__ == '__main__':
     parser.add_argument('--card_config', type=str,
                         help='Optional: card_config name. It should be defined at create_ilab_skill_yaml.py')
     parser.add_argument('--only_yaml_flag', action='store_true', help='Optional: ran only yaml evaluation' )
-    parser.add_argument('--lh_upload_namespace',type='str', help='Optional: specify predictions namespace in order to upload to lakehouse')
+    parser.add_argument('--lh_upload_namespace',type=str, help='Optional: specify predictions namespace in order to upload to lakehouse')
     args = parser.parse_args()
 
     if args.card_config is not None:
