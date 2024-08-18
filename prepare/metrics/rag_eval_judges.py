@@ -23,7 +23,7 @@ metric_type_to_template = {
 }
 
 model_names = {
-    "meta-llama/llama-3-70b-instruct",
+    "meta-llama/llama-3-1-70b-instruct",
     "gpt-4-turbo",
     "mistralai/mixtral-8x7b-instruct-v01",
 }
