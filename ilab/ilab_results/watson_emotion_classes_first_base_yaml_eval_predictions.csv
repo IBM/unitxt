@@ -1,0 +1,16 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Photo: That’s why we get along so well…lmao #realrecognizereal #silly #laugh   #goofy #friday #friends... http://t.co/DsW1dTvYnL
+",['joy'],### 7,['joy'],0.0,f1_micro,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You know your life is over when u realize u can't have a teacup pig!  ness #struggleisreal #why
+",['sadness'],answer: sadness,['sadness'],0.0,f1_micro,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @mikki_kayla02 Sorry! I didn't mean to ruin the rest of your day
+",['fear'],emotion: sadness,['fear'],0.0,f1_micro,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+",['none'],option: fear,['none'],0.0,f1_micro,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: A guy with a girlfriend having the audacity to flirt is not something attractive or something to take pride in. 🙃 pigs
+",['disgust'],answer: anger,['disgust'],0.0,f1_micro,test

@@ -30,8 +30,7 @@ echo "Server ready on host: $host"
 
 cd $unitxt_repo
 
-$client_venv/bin/python  ilab/ilab_evaluate.py --card_config $card_config --host_machine $host --local_catalog ../fm-eval/fm_eval/catalogs/private --is_traine
-
+$client_venv/bin/python  ilab/ilab_evaluate.py --card_config $card_config --host_machine $host --local_catalog ../fm-eval/fm_eval/catalogs/private
 echo "done" | tee ${PIPE_FILE}_done
 
 

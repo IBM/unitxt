@@ -222,5 +222,5 @@ if __name__ == '__main__':
     evaluator.run()
     
     # Example:
-    # python ilab/ilab_evaluate.py --card cards.watson_emotion --template templates.classification.multi_class.text_after_instruction_with_type_of_class --task_name classification --host_machine cccxc430 --yaml_file ilab/sdg/watson_emotion_classes_first.yaml --local_catalog ../fm-eval/fm_eval/catalogs/private --num_test_samples 100
-    # add --is_trained if running on the trained model
+    # python ilab/ilab_evaluate.py --card_config watson_emotion_classes_first_example --host_machine cccxc408 --local_catalog ../fm-eval/fm_eval/catalogs/private --only_yaml_flag
+    
