@@ -6,14 +6,15 @@ set -e
 PIPE_FILE=$1
 repo=$2
 venv=$3
-
+model=$4
 
 echo "PIPE_FILE: $PIPE_FILE"
 cd $repo
 source /dccstor/fuse/anaconda3/etc/profile.d/conda.sh
 conda activate $venv
 echo "Starting server..."
-$venv/bin/python $venv/bin/ilab model serve &
+
+$venv/bin/python $venv/bin/ilab model serve --model-path $model &
 pid_server=$!
 
 echo "Forwording port..."

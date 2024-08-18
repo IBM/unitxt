@@ -3,11 +3,8 @@ import re
 
 import yaml
 from lh_eval_api import load_lh_dataset
-from unitxt.blocks import TaskCard, Task
-from unitxt.loaders import LoadFromDictionary
 from unitxt.api import load_dataset
 from typing import List
-from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt import evaluate, load_dataset
 from unitxt.inference import OpenAiInferenceEngineParams, \
      NonBatchedInstructLabInferenceEngine
@@ -20,14 +17,19 @@ import argparse
 import importlib
 
 class EvaluateIlab:
+    host_machine:str
     card:str
+    task_name:str
+    yaml_file:str
+    is_trained:bool
     template:str
     template_index: int
-    task_name:str
-    host_machine:str
-    yaml_file:str 
-    num_test_samples:int 
     local_catalog:str
+    num_test_samples:int 
+    owner:str
+    llmaaj_metric:str
+    eval_yaml_only:bool
+    
 
     def __init__(
             self, 
@@ -35,13 +37,14 @@ class EvaluateIlab:
             card:str,
             task_name:str, 
             yaml_file:str, 
-            is_trained:bool,
+            is_trained:bool = None,
             template: str = None,
             template_index: int = None,
             local_catalog:str = None,
             num_test_samples:int = 100,
             owner:str = 'ilab',
-            llmaaj_metric:List[str] = ['metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn']
+            llmaaj_metric:List[str] = ['metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'],
+            eval_yaml_only:bool = None
             ):
         self.card = card
         self.host_machine = host_machine
@@ -56,6 +59,7 @@ class EvaluateIlab:
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
         self.llmaaj_metric = llmaaj_metric
+        self.eval_yaml_only = eval_yaml_only
 
     def infer_from_model(self,dataset:DatasetDict) -> Tuple[List[Dict[str, Any]],str]:
         test_dataset = dataset['test']
@@ -83,16 +87,16 @@ class EvaluateIlab:
         if not csv_path:
             trained = 'trained' if self.is_trained else 'base'
             csv_path = f'ilab/ilab_results/{self.yaml_file.split("/")[-1].replace(".yaml","")}_{trained}.csv'
-        for numshot in [0,5]:
-            if numshot == 5 and self.num_test_samples < 50:
-                continue
-            metrics = self.test_load_infer_and_save(num_shots=numshot,file=csv_path)
-        self.yaml_infer_by_metrics(csv_path)
-        # self.yaml_infer_llmaaj(csv_path)
+        if not self.eval_yaml_only:
+            for numshot in [0,5]:
+                if numshot == 5 and self.num_test_samples < 50:
+                    continue
+                self.test_load_infer_and_save(num_shots=numshot,file=csv_path)
+        self.yaml_load_infer_and_save(csv_path)
 
-    def yaml_infer_by_metrics(self, file):
+    def yaml_load_infer_and_save(self, file):
         yaml_dataset = self.create_dataset_from_yaml()
-        csv_path = file.replace('.csv','_yaml_metrics.csv')
+        csv_path = file.replace('.csv','_yaml_eval.csv')
         evaluated_yaml_datset, model_name = self.infer_from_model(yaml_dataset)
         self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
 
@@ -107,9 +111,7 @@ class EvaluateIlab:
             model_name= model_name,
             run_params_dict=base_run_params
             )
-        metrics = evaluated_dataset[0]['metrics']
-        return metrics
-
+        
     def save_results(self, csv_path, evaluated_dataset, model_name,run_params_dict = {}):
         global_scores = evaluated_dataset[0]['score']['global']
         main_score_name = global_scores.pop('score_name')
@@ -180,13 +182,15 @@ if __name__ == '__main__':
     parser.add_argument('--template', type=str, help='Template name')
     parser.add_argument('--task_name', type=str,help='Task name, e.g. classification, translation etc.')
     parser.add_argument('--host_machine', type=str, required=True, help='Name of the host machine serving the model (e.g. cccxc450)')
-    parser.add_argument('--is_trained',action="store_true", help='Mark if evaluation is on trained model')
     parser.add_argument('--yaml_file', type=str, help='Path of yaml file containing examples')
+    
+    parser.add_argument('--trained_model_flag',action="store_true", help='Optional: Mark if evaluation is on trained model')
     parser.add_argument('--local_catalog', type=str, default=None, help='Optional: If using a non unitxt card, local Catalog path, None by default')    
     parser.add_argument('--num_test_samples', type=int, default=100, help='Optional: Num of assessed records, 100 by default')
     parser.add_argument('--owner',type=str,default='ilab',help='Optional: Name of run owner, to be saved in result files')
     parser.add_argument('--card_config', type=str,
                         help='Optional: card_config name. It should be defined at create_ilab_skill_yaml.py')
+    parser.add_argument('--only_yaml_flag', action='store_true', help='Optional: ran only yaml evaluation' )
     args = parser.parse_args()
 
     if args.card_config is not None:
@@ -209,10 +213,11 @@ if __name__ == '__main__':
         task_name=task_name,
         host_machine=args.host_machine,
         yaml_file=yaml_file,
-        is_trained=args.is_trained,
+        is_trained=args.trained_model_flag,
         num_test_samples=args.num_test_samples,
         local_catalog=args.local_catalog,
-        owner = args.owner
+        owner = args.owner,
+        eval_yaml_only = args.only_yaml_flag
     )
     evaluator.run()
     
