@@ -174,6 +174,14 @@ class EvaluateIlab:
         return dataset
 
 
+def upload_to_lh(folder):
+    import glob, os
+    runs_files = glob.glob(os.path.join(folder,'*_run.csv'))
+    runs_df = pd.concat([pd.read_csv(file) for file in runs_files])
+    predictions_files = glob.glob(os.path.join(folder,'*_predictions.csv'))
+    predictions_df = pd.concat([pd.read_csv(file) for file in predictions_files])
+
+
 if __name__ == '__main__':
    
     parser = argparse.ArgumentParser(description='evaluate dataset against ilab model and save results')
@@ -198,6 +206,7 @@ if __name__ == '__main__':
         config = getattr(module, args.card_config)
         card = config.card
         template = config.template
+        template_index = config.template_index
         task_name = config.task_description
         yaml_file = config.yaml_file
     else:
@@ -217,7 +226,8 @@ if __name__ == '__main__':
         num_test_samples=args.num_test_samples,
         local_catalog=args.local_catalog,
         owner = args.owner,
-        eval_yaml_only = args.only_yaml_flag
+        eval_yaml_only = args.only_yaml_flag,
+        template_index=template_index
     )
     evaluator.run()
     

@@ -11,7 +11,7 @@ job_id=$((RANDOM))
 PIPE_FILE=$repo/tmp/ilab_pipe_$job_id
 mkdir -p $repo/tmp/
 
-echo "available models: 
+echo "available models:" 
 echo "$(ls $repo/models/)"
 
 echo "Starting the server process. See log at server_${job_id}.log and errors at server_${job_id}.err"
