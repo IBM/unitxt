@@ -19,7 +19,7 @@ from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     FormTask(
-        inputs={"text": "List[str]", "relation_types": "List[str]"},
+        inputs={"text": "str", "relation_types": "List[str]"},
         outputs={
             "subject_mentions": "List[str]",
             "labels": "List[str]",
@@ -27,7 +27,7 @@ add_to_catalog(
         },
         prediction_type="List[Tuple[str,str,str]]",
         metrics=["metrics.specified_relation_extraction"],
-        augmentable_inputs=["text"],
+        # augmentable_inputs=["text"],
     ),
     "tasks.relation_extraction.all_relation_types",
     overwrite=True,
