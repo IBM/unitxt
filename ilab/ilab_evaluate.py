@@ -64,6 +64,7 @@ class EvaluateIlab:
         self.eval_yaml_only = eval_yaml_only
         self.folder = 'ilab/ilab_results'
         self.lh_predictions_namespace = lh_predictions_namespace
+        self.yaml_indices = self.get_yaml_indices() #reported in run details + used for evaluation
 
     def infer_from_model(self,dataset:DatasetDict) -> Tuple[List[Dict[str, Any]],str]:
         test_dataset = dataset['test']
@@ -111,7 +112,9 @@ class EvaluateIlab:
         csv_path = file.replace('.csv',f'_{num_shots}_shots_{self.num_test_samples}_samples.csv')
         dataset = self.load_test_data(num_shots)
         evaluated_dataset, model_name = self.infer_from_model(dataset=dataset)
-        base_run_params = {'loader_limit':str(self.num_test_samples),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots}
+        base_run_params = {'loader_limit':str(self.num_test_samples),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots, 
+                           'template':self.template if self.template else self.template_index,
+                           'yaml_indices':self.yaml_indices}
         self.save_results(
             csv_path=csv_path, 
             evaluated_dataset=evaluated_dataset,
@@ -152,8 +155,7 @@ class EvaluateIlab:
         pd.DataFrame(predictions_data).to_csv(csv_path.replace('.csv','_predictions.csv'),index=False)
         
 
-    
-    def create_dataset_from_yaml(self)-> DatasetDict:
+    def get_yaml_indices(self):
         with open(self.yaml_file, 'r') as f:
             yaml_content = yaml.safe_load(f)
             pattern = r"\(indices: (\[.*?\])\)"
@@ -161,9 +163,11 @@ class EvaluateIlab:
             assert match, f"yaml description should contain the chosen indices. " \
                           f"Description: {yaml_content['task_description']}"
 
-            indices = match.group(1)
-            indices = ast.literal_eval(indices)
+            yaml_indices = match.group(1)
+            yaml_indices = ast.literal_eval(yaml_indices)
+            return yaml_indices
 
+    def create_dataset_from_yaml(self)-> DatasetDict:
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
         if self.template is not None:
@@ -175,7 +179,7 @@ class EvaluateIlab:
         else:
             raise ValueError("must have either template or template card index")  # TODO error if both are not none
         llmaaj_metric =  'metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'
-        dataset = {'test': [loaded_dataset['train'][i] for i in indices]}
+        dataset = {'test': [loaded_dataset['train'][i] for i in self.yaml_indices]}
         for instance in dataset['test']:
             instance['metrics'].append(llmaaj_metric)
         return dataset
