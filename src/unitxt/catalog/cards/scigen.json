@@ -28,64 +28,36 @@
             "field_to_field": [
                 [
                     "table",
-                    "input"
+                    "input_a"
                 ]
             ]
         },
         {
-            "__type__": "set",
-            "fields": {
-                "type_of_input": "table"
-            }
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "type_of_output": "text"
-            }
-        },
-        {
             "__type__": "rename_fields",
             "field_to_field": {
-                "text": "output",
-                "table_caption": "caption"
+                "table_caption": "input_b",
+                "text": "output"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_input_a": "table",
+                "type_of_input_b": "caption",
+                "type_of_output": "text description"
             }
         }
     ],
-    "task": {
-        "__type__": "task",
-        "input_fields": {
-            "input": "str",
-            "type_of_input": "str",
-            "caption": "str",
-            "type_of_output": "str"
+    "task": "tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
+    "templates": "templates.generation.from_pair.all",
+    "__description__": "SciGen is a dataset for the task of reasoning-aware data-to-text generation. It consists of tables from scientific articles(mostly containing numerical values) and their corresponding text descriptions.",
+    "__tags__": {
+        "modality": "table",
+        "urls": {
+            "arxiv": "https://arxiv.org/pdf/2104.08296"
         },
-        "reference_fields": {
-            "output": "str"
-        },
-        "prediction_type": "str",
-        "metrics": [
-            "metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference"
-        ],
-        "augmentable_inputs": [
-            "input"
-        ],
-        "defaults": {
-            "type_of_output": "Text"
-        }
-    },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "Given the following {type_of_input} and caption, generate the corresponding {type_of_output}.\n{type_of_input}: \n{input} \ncaption: \n{caption} \n{type_of_output}:",
-                "output_format": "{output}",
-                "postprocessors": [
-                    "processors.take_first_non_empty_line",
-                    "processors.lower_case_till_punc"
-                ]
-            }
+        "languages": [
+            "english"
         ]
     }
 }
