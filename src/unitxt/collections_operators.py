@@ -1,8 +1,8 @@
-from copy import deepcopy
 from typing import Any, Generator, List, Optional
 
 from .operators import FieldOperator, StreamOperator
 from .stream import Stream
+from .utils import deepcopy
 
 
 class Dictify(FieldOperator):
@@ -100,3 +100,8 @@ class DuplicateBySubLists(StreamOperator):
                         to_field: elements[:i],
                     }
                 yield instance_copy
+
+
+class GetLength(FieldOperator):
+    def process_value(self, collection: Any) -> Any:
+        return len(collection)

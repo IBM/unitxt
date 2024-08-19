@@ -1,3 +1,4 @@
+import pandas as pd
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import IbmGenAiInferenceEngine
@@ -11,7 +12,8 @@ inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=
 card = "cards.boolq.classification"
 template = "templates.classification.multi_class.relation.default"
 
-all_scores = {}
+df = pd.DataFrame(columns=["format", "system_prompt", "f1_micro", "ci_low", "ci_high"])
+
 for format in [
     "formats.llama3_instruct",
     "formats.empty",
@@ -27,9 +29,9 @@ for format in [
             format=format,
             system_prompt=system_prompt,
             num_demos=2,
-            demos_pool_size=100,
-            loader_limit=1000,
-            max_test_instances=300,
+            demos_pool_size=50,
+            loader_limit=300,
+            max_test_instances=100,
         )
 
         test_dataset = dataset["test"]
@@ -48,54 +50,13 @@ for format in [
             ],
         )
         global_scores = evaluated_dataset[0]["score"]["global"]
-        print_dict(
-            global_scores,
-            keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
-        )
-        all_scores[(model_name, format, system_prompt)] = global_scores
+        df.loc[len(df)] = [
+            format,
+            system_prompt,
+            global_scores["score"],
+            global_scores["score_ci_low"],
+            global_scores["score_ci_high"],
+        ]
 
-model_name = "deepseek-ai/deepseek-coder-33b-instruct"
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-card = "cards.human_eval"
-
-for format in [
-    "formats.empty",
-    "formats.deepseek_coder",
-]:
-    for system_prompt in [
-        "system_prompts.empty",
-        "system_prompts.models.deepseek_coder",
-    ]:
-        dataset = load_dataset(
-            dataset_query=f"card={card},template_card_index=0,format={format},system_prompt={system_prompt},demos_taken_from=test,num_demos=2,demos_pool_size=20,max_test_instances=300"
-        )
-
-        test_dataset = dataset["test"]
-
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-        logger.info(
-            f"Sample input and output for format '{format}' and system prompt '{system_prompt}':"
-        )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=[
-                "source",
-                "prediction",
-            ],
-        )
-        global_scores = evaluated_dataset[0]["score"]["global"]
-        print_dict(
-            global_scores,
-            keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
-        )
-        all_scores[(model_name, format, system_prompt)] = global_scores
-
-for (model_name, format, system_prompt), global_scores in all_scores.items():
-    logger.info(
-        f"**** score for model {model_name} and format '{format}' and system prompt '{system_prompt}'"
-    )
-    logger.info(
-        f"**** {global_scores['score_name']} : {global_scores['score']} - 95% confidence internal [{global_scores['score_ci_low']},{global_scores['score_ci_high']}]"
-    )
+        df = df.round(decimals=2)
+        logger.info(df.to_markdown())

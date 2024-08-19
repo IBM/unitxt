@@ -1,5 +1,4 @@
 import json
-from copy import deepcopy
 from typing import Any, Dict, Generator, Iterable, List, Optional
 
 from datasets import Features, Value
@@ -27,6 +26,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
+from .utils import deepcopy
 
 
 class MultiStreamScoreMean(MultiStreamOperator):
