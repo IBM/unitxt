@@ -4766,7 +4766,7 @@ class F1Strings(InstanceMetric):
 
         return {self.main_score: [f1], "score_name": self.main_score}
 
-      
+
 class RandomForestMetricsEnsemble(MetricsEnsemble):
     """This class extends the `MetricsEnsemble` base class and leverages a pre-trained scikit-learn Random Forest classification model to combine and aggregate scores from multiple judges.
 
