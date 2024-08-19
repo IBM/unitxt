@@ -43,6 +43,7 @@ class TestExamples(UnitxtTestCase):
             "evaluate_llm_as_judge.py",
             "evaluate_using_metrics_ensemble.py",
             "evaluate_existing_dataset_by_llm_as_judge.py",
+            "evaluate_ensemble_judge.py",
         ]
         failed_examples_files = []
         for file in all_example_files:
