@@ -79,13 +79,13 @@ class SystemFormat(BaseFormat):
     Important: formats can use '\N' notations that means new-line if no new-line before and no empty string before.
 
     SystemFormat expects the input instance to contain:
-    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task independent opening text.
+    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task-independent opening text.
     2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     3. A field named "instruction" that contains a (non-None) string.
     4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
-    5. A field named "target_prefx" that contains a string to prefix the target in both each demo, and to end the whole generated prompt
+    5. A field named "target_prefix" that contains a string to prefix the target in each demo, and to end the whole generated prompt
 
     SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
@@ -200,16 +200,16 @@ class SystemFormat(BaseFormat):
 
 
 class HFSystemFormat(BaseFormat):
-    r"""Formats the complete input for the model using the Hugginface chat template of a given model.
+    r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
     HFSystemFormat expects the input instance to contain:
-    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task independent opening text.
+    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task-independent opening text.
     2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     3. A field named "instruction" that contains a (non-None) string.
     4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
-    5. A field named "target_prefx" that contains a string to prefix the target in both each demo, and to end the whole generated prompt
+    5. A field named "target_prefix" that contains a string to prefix the target in each demo, and to end the whole generated prompt.
 
     SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance.
