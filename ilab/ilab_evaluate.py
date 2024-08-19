@@ -145,7 +145,7 @@ class EvaluateIlab:
             base_model=is_base_model(model_name),
             is_yaml=False,
         ).to_dict()
-        
+
         self.save_results(
             csv_path=csv_path, 
             evaluated_dataset=evaluated_dataset,
@@ -221,6 +221,8 @@ def upload_to_lh(folder, namespace):
     from lh_eval_api import EvaluationResultsUploader, PredictionRecord,RunRecord
     from lh_eval_api.evaluation_data_services.evaluation_data_handlers.eval_uploader.evaluation_results_uploader import HandleExistingRuns
     runs_files = glob.glob(os.path.join(folder,'*','*_run.csv'))
+    if len(runs_files) == 0:
+        raise ValueError("no files found")
     runs = []
     all_predictions = []
     for file in runs_files:
