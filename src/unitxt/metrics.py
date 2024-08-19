@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
 from operator import itemgetter
-from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import evaluate
@@ -704,7 +703,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             if reduction == "mean":
                 for field_name in fields:
                     field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = mean(
+                    global_score[field_name_with_prefix] = nan_mean(
                         [
                             instance["score"]["instance"][field_name_with_prefix]
                             for instance in instances
@@ -1762,7 +1761,7 @@ class F1(GlobalMetric):
             average=self.average,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[f"{self.metric}_" + self.id_to_str[label]] = result[
                     self.metric
@@ -2067,7 +2066,7 @@ class F1MultiLabel(GlobalMetric):
             assert (
                 len(result[self.metric]) == len(labels)
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
@@ -2109,7 +2108,17 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(InstanceMetric):
+class NLTKMixin(Artifact):
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
+        self.nltk = nltk
+
+
+class Rouge(InstanceMetric, NLTKMixin):
     main_score = "rougeL"
     prediction_type = str
     single_reference_per_prediction = False  # multiple references allowed
@@ -2122,21 +2131,17 @@ class Rouge(InstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import nltk
         from rouge_score import rouge_scorer
 
         self.rouge_scorer = rouge_scorer
 
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
@@ -2152,7 +2157,7 @@ class Rouge(InstanceMetric):
         return score
 
 
-class RougeHF(HuggingfaceInstanceMetric):
+class RougeHF(HuggingfaceInstanceMetric, NLTKMixin):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -2178,18 +2183,13 @@ class RougeHF(HuggingfaceInstanceMetric):
             {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
-        import nltk
-
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references, prediction, task_data: List[Dict]):
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
@@ -3468,7 +3468,7 @@ class NDCG(GlobalMetric):
                     for pred in q_predictions
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
-        return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+        return {self.main_score: nan_mean(scores) if len(scores) > 0 else np.nan}
 
 
 class RetrievalMetric(InstanceMetric):
@@ -3803,8 +3803,8 @@ def performance_drop_rate(
     if any(len(scores) == 0 for scores in group_scores_list):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    control_mean = mean(group_scores_list[0])
-    comparison_mean = mean(group_scores_list[1])
+    control_mean = nan_mean(group_scores_list[0])
+    comparison_mean = nan_mean(group_scores_list[1])
     if control_mean == 0:
         # return 0 if comparison is also 0
         if comparison_mean == 0:
@@ -3917,8 +3917,8 @@ def normalized_cohens_h(
         # no comparison can be made since there is not at least one score per type
         h, norm_h = np.nan, np.nan
     else:
-        control_mean = mean(group_scores_list[0])
-        comparison_mean = mean(group_scores_list[1])
+        control_mean = nan_mean(group_scores_list[0])
+        comparison_mean = nan_mean(group_scores_list[1])
         h = 2 * (np.arcsin(np.sqrt(comparison_mean)) - np.arcsin(np.sqrt(control_mean)))
         norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
 
@@ -3971,7 +3971,7 @@ def normalized_hedges_g(
         g, norm_g = np.nan, np.nan
     else:
         # otherwise, calculate the variances
-        group_mean = [mean(scores) for scores in group_scores_list]
+        group_mean = [nan_mean(scores) for scores in group_scores_list]
         # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
         group_var = [
             0.0 if nn == 1 else np.var(scores, ddof=1)
@@ -4030,7 +4030,7 @@ def mean_subgroup_score(
     if len(score_list) == 0:
         # no scores to use
         return np.nan
-    return mean(score_list)
+    return nan_mean(score_list)
 
 
 # metrics using mean reduction

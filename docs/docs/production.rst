@@ -96,7 +96,7 @@ After obtaining predictions, they can be post-processed:
   prediction = model.generate(result["source"])
   processed_result = post_process(predictions=[prediction], data=[result])[0]
 
-End to End Inference Pipeline
+End-to-End Inference Pipeline
 -----------------------------
 
 You can also implement an end-to-end inference pipeline using your preferred data and an inference engine:
