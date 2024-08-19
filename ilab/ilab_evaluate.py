@@ -15,6 +15,21 @@ from datasets import DatasetDict
 from unitxt import register_local_catalog
 import argparse
 import importlib
+from dataclasses import dataclass,asdict
+
+@dataclass
+class IlabRunParams:
+    file:str
+    yaml_indices:List[int]
+    template:str
+    loader_limit:int
+    num_shots:int
+    base_model:bool
+    is_yaml:bool
+
+    def to_dict(self):
+        return asdict(self)
+
 
 class EvaluateIlab:
     host_machine:str
@@ -106,15 +121,31 @@ class EvaluateIlab:
         yaml_dataset = self.create_dataset_from_yaml()
         csv_path = file.replace('.csv','_yaml_eval.csv')
         evaluated_yaml_datset, model_name = self.infer_from_model(yaml_dataset)
-        self.save_results(csv_path=csv_path, evaluated_dataset=evaluated_yaml_datset, model_name=model_name)
+        self.save_results(
+            csv_path=csv_path, 
+            evaluated_dataset=evaluated_yaml_datset, 
+            model_name=model_name,
+            run_params_dict= IlabRunParams(
+                file=csv_path,yaml_indices=self.yaml_indices,
+                template=self.template if self.template else self.template_index,
+                base_model=is_base_model(model_name),
+                is_yaml=True   
+            ).to_dict()
+        )
 
     def test_load_infer_and_save(self,num_shots:int, file:str):
         csv_path = file.replace('.csv',f'_{num_shots}_shots_{self.num_test_samples}_samples.csv')
         dataset = self.load_test_data(num_shots)
         evaluated_dataset, model_name = self.infer_from_model(dataset=dataset)
-        base_run_params = {'loader_limit':str(self.num_test_samples),'host':self.host_machine,'folder':'instructlab','num_shots':num_shots, 
-                           'template':self.template if self.template else self.template_index,
-                           'yaml_indices':self.yaml_indices}
+        base_run_params = IlabRunParams(
+            file=csv_path, yaml_indices=self.yaml_indices,
+            template=self.template if self.template else self.template_index,
+            loader_limit=self.num_test_samples,
+            num_shots=num_shots,
+            base_model=is_base_model(model_name),
+            is_yaml=False,
+        ).to_dict()
+        
         self.save_results(
             csv_path=csv_path, 
             evaluated_dataset=evaluated_dataset,
@@ -225,6 +256,8 @@ def upload_to_lh(folder, namespace):
     )
     uploader.upload()
 
+def is_base_model(model_name:str)->bool:
+    return 'merlinite-7b-lab-Q4_K_M.gguf' in model_name
 
 if __name__ == '__main__':
    
