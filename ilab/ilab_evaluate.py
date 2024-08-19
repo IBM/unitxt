@@ -129,7 +129,7 @@ class EvaluateIlab:
                 file=csv_path,yaml_indices=self.yaml_indices,
                 template=self.template if self.template else self.template_index,
                 base_model=is_base_model(model_name),
-                is_yaml=True   
+                is_yaml=True, loader_limit=None, num_shots=None   
             ).to_dict()
         )
 
