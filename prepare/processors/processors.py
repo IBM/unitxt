@@ -369,3 +369,20 @@ add_to_catalog(
     "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
 )
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            CastFields(
+                fields={"prediction": "float"},
+                failure_defaults={"prediction": 0.5},
+            ),
+            CastFields(
+                fields={"references": "float"},
+                process_every_value=True,
+            ),
+        ]
+    ),
+    "processors.cast_to_float_return_0_5_if_failed",
+    overwrite=True,
+)

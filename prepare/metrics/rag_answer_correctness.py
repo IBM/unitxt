@@ -60,7 +60,66 @@ for new_catalog_name, base_catalog_name, main_score in [
     if new_catalog_name == default:
         add_to_catalog(metric, base, overwrite=True)
 
+
+def test_answer_correctness_sentence_bert():
+    task_data = [
+        {
+            # Similar sentences
+            "ground_truths": ["Here is a cat."],
+            "answer": "Here is a dog.",
+        },
+        {
+            # Not so similar
+            "ground_truths": ["Apples and Oranges."],
+            "answer": "Here is a dog.",
+        },
+    ]
+
+    test_answer_correctness(
+        task_data,
+        catalog_name="metrics.rag.answer_correctness.sentence_bert_bge",
+        global_target={
+            "score": 0.64,
+            "score_ci_high": 0.75,
+            "score_ci_low": 0.53,
+            "score_name": "score",
+        },
+        instance_targets=[
+            {
+                "score": 0.75,
+                "score_name": "score",
+            },
+            {
+                "score": 0.53,
+                "score_name": "score",
+            },
+        ],
+    )
+
+    test_answer_correctness(
+        task_data,
+        catalog_name="metrics.rag.answer_correctness.sentence_bert_mini_lm",
+        global_target={
+            "score": 0.17,
+            "score_ci_high": 0.42,
+            "score_ci_low": -0.08,
+            "score_name": "score",
+        },
+        instance_targets=[
+            {
+                "score": 0.42,
+                "score_name": "score",
+            },
+            {
+                "score": -0.08,
+                "score_name": "score",
+            },
+        ],
+    )
+
+
 if __name__ == "__main__":
+    test_answer_correctness_sentence_bert()
     # don't use "A" as a token because it is considered an article and removed by the token overlap
     # metric
     task_data = [

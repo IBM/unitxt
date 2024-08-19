@@ -11,18 +11,18 @@ from .templates import Template
 
 
 class LLMAsJudge(BulkInstanceMetric):
-    """LLM as judge based metric class for evaluating correctness.
+    """LLM-as-judge-based metric class for evaluating correctness.
 
     Attributes:
         main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn"]): The type of task the llm-as-judge runs. This defines the output and input
-         format of the jude model.
+        task (Literal["rating.single_turn"]): The type of task the llm as judge runs. This defines the output and input
+         format of the judge model.
         template (Template): The template used when generating inputs for the judge llm.
         format (Format): The format used when generating inputs for judge llm.
         system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
         strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
          inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
-        inference_model (InferenceEngine): the module that creates the inference of the judge llm.
+        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
         batch_size (int): The size of the bulk.
     """
