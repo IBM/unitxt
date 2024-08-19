@@ -108,8 +108,8 @@ For custom operators, refer to the :ref:`Operators Tutorial <adding_operator>`.
 The Template
 ----------------
 
-The responsibility of the template is to verbalize the task's input fields and references fields to the input of the model and the gold references.
-For example, taking the input fields `text`, `source_language`, and `target_language` and format them as a prompt.
+The responsibility of the template is to verbalize the task's input fields and reference fields to the input of the model and the gold references.
+For example, the template can take the input fields `text`, `source_language`, and `target_language` and format them as a prompt.
 
 `Translate this sentence from {source_language} to {target_language}: {text}.``
 
@@ -171,7 +171,7 @@ the Unitxt catalog.
 
 The `test_card` function generates the dataset using all templates defined in the card within context learning mode and one demonstration.
 It prints out three examples from the test fold and runs the metrics defined on the datasets on
-(1) randomly generated text
+(1) randomly generated text, and
 (2) text that is equal to one of the references.
 
 Most metrics should return a low score (near 0) on random data and a score of 1 when the data is equal to the references.
@@ -189,7 +189,7 @@ Once your card is ready and tested, you can add it to the catalog.
 
     add_to_catalog(card, 'cards.wmt.en_de')
 
-In the same way, you can save also your custom templates and tasks.
+In the same way, you can save your custom templates and tasks, too.
 
 .. note::
    By default, a new artifact is added to a local catalog stored
@@ -217,7 +217,7 @@ Now everything is ready to use the data! We can load the dataset with three in-c
         template_card_index=0 # Take the first template defined in the card
     )
 
-The dataset can also be loaded using HuggingFace dataset API:
+The dataset can also be loaded using the HuggingFace Datasets API:
 
 .. code-block:: python
 
