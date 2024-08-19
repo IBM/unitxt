@@ -3,7 +3,7 @@
 ==============
 Explore Unitxt
 ==============
-Explore the existing assets in Unitxt catalog and generate your prompt.
+Explore the existing assets in the Unitxt catalog and generate your prompt.
 
 .. raw:: html
 

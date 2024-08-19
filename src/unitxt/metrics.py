@@ -9,7 +9,6 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
 from operator import itemgetter
-from statistics import mean
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import evaluate
@@ -704,7 +703,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             if reduction == "mean":
                 for field_name in fields:
                     field_name_with_prefix = self._add_score_prefix(field_name)
-                    global_score[field_name_with_prefix] = mean(
+                    global_score[field_name_with_prefix] = nan_mean(
                         [
                             instance["score"]["instance"][field_name_with_prefix]
                             for instance in instances
@@ -1762,7 +1761,7 @@ class F1(GlobalMetric):
             average=self.average,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[f"{self.metric}_" + self.id_to_str[label]] = result[
                     self.metric
@@ -2067,7 +2066,7 @@ class F1MultiLabel(GlobalMetric):
             assert (
                 len(result[self.metric]) == len(labels)
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
-            final_result = {self.main_score: mean(result[self.metric])}
+            final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[self.metric + "_" + label] = result[self.metric][i]
         else:
@@ -2109,7 +2108,17 @@ class F1MacroMultiLabel(F1MultiLabel):
     average = None
 
 
-class Rouge(InstanceMetric):
+class NLTKMixin(Artifact):
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
+        self.nltk = nltk
+
+
+class Rouge(InstanceMetric, NLTKMixin):
     main_score = "rougeL"
     prediction_type = str
     single_reference_per_prediction = False  # multiple references allowed
@@ -2122,21 +2131,17 @@ class Rouge(InstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import nltk
         from rouge_score import rouge_scorer
 
         self.rouge_scorer = rouge_scorer
 
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
@@ -2152,7 +2157,7 @@ class Rouge(InstanceMetric):
         return score
 
 
-class RougeHF(HuggingfaceInstanceMetric):
+class RougeHF(HuggingfaceInstanceMetric, NLTKMixin):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0
@@ -2178,18 +2183,13 @@ class RougeHF(HuggingfaceInstanceMetric):
             {"use_aggregator": False, "rouge_types": self.rouge_types}
         )
 
-        import nltk
-
-        nltk.download("punkt_tab", quiet=True)
-        self.sent_tokenize = nltk.sent_tokenize
-
     def compute(self, references, prediction, task_data: List[Dict]):
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
-            prediction = "\n".join(self.sent_tokenize(prediction.strip()))
+            prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
 
             references = [
-                "\n".join(self.sent_tokenize(reference.strip()))
+                "\n".join(self.nltk.sent_tokenize(reference.strip()))
                 for reference in references
             ]
 
@@ -3468,7 +3468,7 @@ class NDCG(GlobalMetric):
                     for pred in q_predictions
                 ]
             scores.append(self.eval([q_references], [q_predictions]))
-        return {self.main_score: mean(scores) if len(scores) > 0 else np.nan}
+        return {self.main_score: nan_mean(scores) if len(scores) > 0 else np.nan}
 
 
 class RetrievalMetric(InstanceMetric):
@@ -3803,8 +3803,8 @@ def performance_drop_rate(
     if any(len(scores) == 0 for scores in group_scores_list):
         # no comparison can be made since there is not at least one score per type
         return np.nan
-    control_mean = mean(group_scores_list[0])
-    comparison_mean = mean(group_scores_list[1])
+    control_mean = nan_mean(group_scores_list[0])
+    comparison_mean = nan_mean(group_scores_list[1])
     if control_mean == 0:
         # return 0 if comparison is also 0
         if comparison_mean == 0:
@@ -3917,8 +3917,8 @@ def normalized_cohens_h(
         # no comparison can be made since there is not at least one score per type
         h, norm_h = np.nan, np.nan
     else:
-        control_mean = mean(group_scores_list[0])
-        comparison_mean = mean(group_scores_list[1])
+        control_mean = nan_mean(group_scores_list[0])
+        comparison_mean = nan_mean(group_scores_list[1])
         h = 2 * (np.arcsin(np.sqrt(comparison_mean)) - np.arcsin(np.sqrt(control_mean)))
         norm_h = np.clip(a=h / np.pi, a_min=-1, a_max=1)
 
@@ -3971,7 +3971,7 @@ def normalized_hedges_g(
         g, norm_g = np.nan, np.nan
     else:
         # otherwise, calculate the variances
-        group_mean = [mean(scores) for scores in group_scores_list]
+        group_mean = [nan_mean(scores) for scores in group_scores_list]
         # sample variance with 1 degree of freedom (denominator n-1); if n=1, return 0 since otherwise throws an error
         group_var = [
             0.0 if nn == 1 else np.var(scores, ddof=1)
@@ -4030,7 +4030,7 @@ def mean_subgroup_score(
     if len(score_list) == 0:
         # no scores to use
         return np.nan
-    return mean(score_list)
+    return nan_mean(score_list)
 
 
 # metrics using mean reduction
@@ -4729,3 +4729,121 @@ class MetricsEnsemble(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         return {self.main_score: prediction}
+
+
+class RandomForestMetricsEnsemble(MetricsEnsemble):
+    """This class extends the `MetricsEnsemble` base class and leverages a pre-trained scikit-learn Random Forest classification model to combine and aggregate scores from multiple judges.
+
+    `load_weights` method:
+         Loads model weights from dictionary representation of a random forest classifier.
+    `ensemble` method:
+         Decodes the RandomForestClassifier object and predict a score based on the given instance.
+    """
+
+    _requirements_list: List[str] = ["sklearn"]
+
+    def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
+        from sklearn.tree._tree import Tree
+
+        tree_dict["nodes"] = [tuple(lst) for lst in tree_dict["nodes"]]
+
+        tree_dict["values"] = np.array(tree_dict["values"])
+        names = [
+            "left_child",
+            "right_child",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "missing_go_to_left",
+        ]
+        tree_dict["nodes"] = np.array(
+            tree_dict["nodes"],
+            dtype=np.dtype({"names": names, "formats": tree_dict["nodes_dtype"]}),
+        )
+
+        tree = Tree(n_features, np.array([n_classes], dtype=np.intp), n_outputs)
+        tree.__setstate__(tree_dict)
+
+        return tree
+
+    def decode_decision_tree(self, model_dict):
+        from sklearn.tree import DecisionTreeClassifier
+
+        decoded_model = DecisionTreeClassifier(**model_dict["params"])
+
+        decoded_model.n_features_in_ = model_dict["n_features_in_"]
+        decoded_model.n_outputs_ = model_dict["n_outputs_"]
+        decoded_model.max_features_ = model_dict["max_features_"]
+        decoded_model.n_classes_ = model_dict["n_classes_"]
+        decoded_model.classes_ = np.array(model_dict["classes_"])
+
+        tree = self.decode_tree(
+            model_dict["tree_"],
+            model_dict["n_features_in_"],
+            model_dict["n_classes_"],
+            model_dict["n_outputs_"],
+        )
+        decoded_model.tree_ = tree
+
+        return decoded_model
+
+    def decode_forest(self, model_dict):
+        from sklearn.ensemble import RandomForestClassifier
+
+        model = RandomForestClassifier(**model_dict["params"])
+        estimators = [
+            self.decode_decision_tree(decision_tree)
+            for decision_tree in model_dict["estimators_"]
+        ]
+        model.estimators_ = np.array(estimators)
+
+        model.n_features_in_ = model_dict["n_features_in_"]
+        model.feature_names_in_ = np.array(model_dict["feature_names_in_"])
+
+        model.min_samples_split = model_dict["min_samples_split"]
+        model.max_depth = model_dict["max_depth"]
+        model.min_samples_leaf = model_dict["min_samples_leaf"]
+        model.min_weight_fraction_leaf = model_dict["min_weight_fraction_leaf"]
+        model.max_features = model_dict["max_features"]
+        model.classes_ = np.array(model_dict["classes_"])
+        model.max_leaf_nodes = model_dict["max_leaf_nodes"]
+        model.min_impurity_decrease = model_dict["min_impurity_decrease"]
+        model.n_outputs_ = model_dict["n_outputs_"]
+
+        if isinstance(model_dict["n_classes_"], list):
+            model.n_classes_ = np.array(model_dict["n_classes_"])
+        else:
+            model.n_classes_ = model_dict["n_classes_"]
+
+        if "oob_score_" in model_dict:
+            model.oob_score_ = model_dict["oob_score_"]
+        if "oob_decision_function_" in model_dict:
+            model.oob_decision_function_ = model_dict["oob_decision_function_"]
+
+        return model
+
+    def prepare(self):
+        super().prepare()
+
+    @staticmethod
+    def load_weights(json_file):
+        with open(json_file) as file:
+            return json.load(file)
+
+    def ensemble(self, instance):
+        assert (
+            self.weights is not None
+        ), "RandomForestMetricsEnsemble must set self.weights before it can be used"
+        ensemble_model = self.decode_forest(self.weights)
+
+        prediction_lst = []
+        for i, metric in enumerate(self.metrics):
+            prediction_lst.append(
+                instance["score"]["instance"][
+                    self.get_prefix_name(i) + metric.main_score
+                ]
+            )
+        score = ensemble_model.predict([prediction_lst])
+        return score.tolist()[0]
