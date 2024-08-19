@@ -9,9 +9,14 @@
         {
             "__type__": "rename_fields",
             "field_to_field": {
-                "text": "document",
-                "target": "summary"
+                "text": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "target",
+            "inside": "list",
+            "to_field": "summaries"
         }
     ],
     "task": "tasks.summarization.abstractive",
