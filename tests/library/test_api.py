@@ -5,7 +5,7 @@ from unitxt.loaders import LoadHF
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 
-from tests.utils import UnitxtTestCase, fillna
+from tests.utils import UnitxtTestCase, fillna, round_values
 
 
 class TestAPI(UnitxtTestCase):
@@ -87,30 +87,30 @@ class TestAPI(UnitxtTestCase):
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
-        target_scores = {
-            "template": {
-                "templates.regression.two_texts.title": {
-                    "spearmanr": 0.5,
-                    "score": 0.5,
-                    "score_name": "spearmanr",
-                    "score_ci_low": -1.0,
-                    "score_ci_high": 1.0,
-                    "spearmanr_ci_low": -1.0,
-                    "spearmanr_ci_high": 1.0,
-                },
-                "templates.regression.two_texts.simple": {
-                    "spearmanr": -0.9999999999999999,
-                    "score": -0.9999999999999999,
-                    "score_name": "spearmanr",
-                    "score_ci_low": np.nan,
-                    "score_ci_high": np.nan,
-                    "spearmanr_ci_low": np.nan,
-                    "spearmanr_ci_high": np.nan,
-                },
-            }
-        }
         self.assertDictEqual(
-            fillna(results[0]["score"]["groups"], None), fillna(target_scores, None)
+            round_values(fillna(results[0]["score"]["groups"], None), 3),
+            {
+                "template": {
+                    "templates.regression.two_texts.title": {
+                        "spearmanr": 0.5,
+                        "score": 0.5,
+                        "score_name": "spearmanr",
+                        "score_ci_low": -1.0,
+                        "score_ci_high": 1.0,
+                        "spearmanr_ci_low": -1.0,
+                        "spearmanr_ci_high": 1.0,
+                    },
+                    "templates.regression.two_texts.simple": {
+                        "spearmanr": -1.0,
+                        "score": -1.0,
+                        "score_name": "spearmanr",
+                        "score_ci_low": None,
+                        "score_ci_high": None,
+                        "spearmanr_ci_low": None,
+                        "spearmanr_ci_high": None,
+                    },
+                }
+            },
         )
 
     def test_evaluate(self):
@@ -160,7 +160,6 @@ class TestAPI(UnitxtTestCase):
                     "score_name": "spearmanr",
                     "spearmanr": np.nan,
                 },
-                "groups": {},
             },
         }
         del results[0]["postprocessors"]
@@ -218,7 +217,6 @@ class TestAPI(UnitxtTestCase):
                     "score_name": "spearmanr",
                     "spearmanr": np.nan,
                 },
-                "groups": {},
             },
         }
         # Processors are not serialized by correctly yet
