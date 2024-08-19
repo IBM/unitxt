@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+ilab,2024-08-18 12:57:17.773473,Unitxt,ilab,fin_qa,QA,models/merlinite-7b-lab-Q4_K_M.gguf,0.0,program_accuracy,"{'program_accuracy': np.float64(0.0), 'score': np.float64(0.0), 'execution_accuracy': np.float64(0.0)}","{'loader_limit': '100', 'host': 'cccxc445', 'folder': 'instructlab', 'num_shots': 0}"
