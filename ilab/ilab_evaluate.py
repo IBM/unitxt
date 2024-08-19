@@ -157,6 +157,7 @@ class EvaluateIlab:
         global_scores = evaluated_dataset[0]['score']['global']
         main_score_name = global_scores.pop('score_name')
         global_main_score = global_scores[main_score_name]
+        csv_path = csv_path.replace('.csv',f'_{model_name}.csv')
         run_data = {
             'owner':self.owner, 
             'started_at':datetime.now(), 
