@@ -4752,10 +4752,10 @@ class F1Strings(InstanceMetric):
         prediction: str,
         task_data: List[Dict],
     ) -> dict:
-        nlp = spacy.load("en_core_web_sm")
-        doc = nlp(references[0])
+
+        doc = self.nlp(references[0])
         set_ref = Counter([token.text.lower() for token in doc])
-        doc = nlp(prediction)
+        doc = self.nlp(prediction)
         set_pred = Counter([token.text.lower() for token in doc])
 
         true_positives = sum((set_ref & set_pred).values())
