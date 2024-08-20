@@ -1,2 +1,0 @@
-owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
-ilab,2024-08-18 06:27:34.747997,Unitxt,ilab,fin_qa,QA,./models/ggml-model-f16-finqa.gguf,0.0,program_accuracy,"{'program_accuracy': np.float64(0.0), 'score': np.float64(0.0), 'execution_accuracy': np.float64(0.0)}","{'loader_limit': '100', 'host': 'cccxc408', 'folder': 'instructlab', 'num_shots': 0}"
