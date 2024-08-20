@@ -30,6 +30,7 @@ from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
+    IbmGenAiInferenceEngine,
     InferenceEngine,
     OpenAiInferenceEngine,
     WMLInferenceEngine,
@@ -4960,6 +4961,12 @@ class GenerativeBinaryJudgeWML(GenerativeBinaryJudge):
     generation_kwargs = {"max_new_tokens": 5}
     _requirements_list: list[str] = ["ibm_watsonx_ai"]
     inference_engine_class = WMLInferenceEngine
+
+
+class GenerativeBinaryJudgeBAM(GenerativeBinaryJudge):
+    generation_kwargs = {"max_new_tokens": 5}
+    _requirements_list: list[str] = ["ibm-generative-ai"]
+    inference_engine_class = IbmGenAiInferenceEngine
 
 
 class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
