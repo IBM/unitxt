@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+ilab,2024-08-20 14:46:11.384891,Unitxt,ilab,fin_qa,QA,/dccstor/fme/users/michal/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf,0.0,program_accuracy,"{'program_accuracy': np.float64(0.0), 'score': np.float64(0.0), 'execution_accuracy': np.float64(0.0)}","{'file': 'ilab/ilab_results/fin_qa_base_yaml_eval.csv', 'yaml_indices': [83, 0, 1, 2, 3], 'template': 0, 'loader_limit': None, 'num_shots': None, 'base_model': True, 'is_yaml': True}"
