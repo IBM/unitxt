@@ -15,7 +15,6 @@ import evaluate
 import numpy
 import numpy as np
 import pandas as pd
-import spacy
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
