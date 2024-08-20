@@ -39,3 +39,29 @@ class UnitxtCatalogPreparationTestCase(unittest.TestCase):
                 warnings.simplefilter("ignore")
         register_local_catalog_for_tests()
         cls.maxDiff = None
+
+
+def apply_recursive(data, func):
+    if isinstance(data, dict):
+        return {k: apply_recursive(v, func) for k, v in data.items()}
+    if isinstance(data, list):
+        return [apply_recursive(item, func) for item in data]
+    return func(data)
+
+
+def fillna(data, fill_value):
+    import numpy as np
+
+    def fill_func(x):
+        return fill_value if isinstance(x, float) and np.isnan(x) else x
+
+    return apply_recursive(data, fill_func)
+
+
+def round_values(data, points=3):
+    def round_func(x):
+        if isinstance(x, (int, float)):
+            return round(x, points)
+        return x
+
+    return apply_recursive(data, round_func)

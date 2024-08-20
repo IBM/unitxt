@@ -18,7 +18,7 @@
             "to_split": "game_2"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -33,7 +33,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_b",

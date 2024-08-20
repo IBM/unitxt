@@ -474,23 +474,23 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
-class RenameFields(FieldOperator):
+class Rename(FieldOperator):
     """Renames fields.
 
     Move value from one field to another, potentially, if field name contains a /, from one branch into another.
     Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
-        RenameFields(field_to_field={"b": "c"})
+        Rename(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"})
+        Rename(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"})
+        Rename(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"})
+        Rename(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -509,6 +509,11 @@ class RenameFields(FieldOperator):
                 dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
+
+
+@deprecation(version="2.0.0", alternative=Rename)
+class RenameFields(Rename):
+    pass
 
 
 class AddConstant(FieldOperator):

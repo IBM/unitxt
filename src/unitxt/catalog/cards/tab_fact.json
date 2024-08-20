@@ -19,7 +19,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "table_serialized": "text_a",
                 "statement": "text_b"

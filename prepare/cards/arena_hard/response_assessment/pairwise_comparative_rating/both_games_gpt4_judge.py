@@ -6,7 +6,7 @@ from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     MapInstanceValues,
     MergeStreams,
-    RenameFields,
+    Rename,
 )
 from unitxt.stream_operators import DeleteSplits, DuplicateSplit
 from unitxt.test_utils.card import test_card
@@ -26,7 +26,7 @@ card = TaskCard(
     preprocess_steps=[
         "operators.arena_hard_hf_space_processing_steps",
         DuplicateSplit(split="test", to_split="game_2"),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -38,7 +38,7 @@ card = TaskCard(
             },
             apply_to_streams=["test"],
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_b",

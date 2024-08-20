@@ -1,7 +1,7 @@
 from datasets import get_dataset_config_names
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
@@ -20,7 +20,7 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="mlsum", name=lang),
         preprocess_steps=[
-            RenameFields(field_to_field={"text": "document"}),
+            Rename(field_to_field={"text": "document"}),
             Wrap(field="summary", inside="list", to_field="summaries"),
         ],
         task="tasks.summarization.abstractive",
