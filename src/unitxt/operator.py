@@ -29,8 +29,8 @@ class PackageRequirementsMixin(Artifact):
         default_factory=list
     )
 
-    def verify(self):
-        super().verify()
+    def prepare(self):
+        super().prepare()
         self.check_missing_requirements()
 
     def check_missing_requirements(self, requirements=None):

@@ -1,0 +1,25 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "question": "str",
+        "question_id": "Any",
+        "metadata_field": "str"
+    },
+    "reference_fields": {
+        "reference_answers": "List[str]",
+        "reference_contexts": "List[str]",
+        "reference_context_ids": "List[str]",
+        "is_answerable_label": "bool"
+    },
+    "metrics": [
+        "metrics.rag.end_to_end.answer_correctness",
+        "metrics.rag.end_to_end.answer_faithfulness",
+        "metrics.rag.end_to_end.answer_reward",
+        "metrics.rag.end_to_end.context_correctness",
+        "metrics.rag.end_to_end.context_relevance"
+    ],
+    "prediction_type": "Dict[str, Any]",
+    "augmentable_inputs": [
+        "question"
+    ]
+}

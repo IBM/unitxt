@@ -4,7 +4,22 @@ from typing import Any, List, Tuple
 from .text_utils import construct_dict_str
 
 indx = re.compile(r"^(\d+)$")
+
+
+def is_index(string):
+    return bool(indx.match(string))
+
+
 name = re.compile(r"^[\w. -]+$")
+
+
+def is_name(string):
+    return bool(name.match(string))
+
+
+def is_wildcard(string):
+    return string == "*"
+
 
 # formal definition of qpath syntax by which a query is specified:
 # qpath -> A (/A)*
@@ -51,7 +66,9 @@ name = re.compile(r"^[\w. -]+$")
 
 
 # validate and normalizes into components
-def validate_query_and_break_to_components(query: str) -> List[str]:
+def validate_query_and_break_to_components(
+    query: str, allow_int_index=True
+) -> List[str]:
     if not isinstance(query, str) or len(query) == 0:
         raise ValueError(
             f"invalid query: either not a string or an empty string: {query}"
@@ -69,9 +86,9 @@ def validate_query_and_break_to_components(query: str) -> List[str]:
     components = [component.strip() for component in components]
     for component in components:
         if not (
-            bool(name.match(component))
-            or component == "*"
-            or bool(indx.match(component))
+            is_name(component)
+            or is_wildcard(component)
+            or (is_index(component) and allow_int_index)
         ):
             raise ValueError(
                 f"Component {component} in input query is none of: valid field-name, non-neg-int, or '*'"
@@ -79,10 +96,14 @@ def validate_query_and_break_to_components(query: str) -> List[str]:
     return components
 
 
-def is_subpath(subpath, fullpath):
+def is_subpath(subpath, fullpath, allow_int_index=True):
     # Split the paths into individual components
-    subpath_components = validate_query_and_break_to_components(subpath)
-    fullpath_components = validate_query_and_break_to_components(fullpath)
+    subpath_components = validate_query_and_break_to_components(
+        subpath, allow_int_index=allow_int_index
+    )
+    fullpath_components = validate_query_and_break_to_components(
+        fullpath, allow_int_index=allow_int_index
+    )
 
     # Check if the full path starts with the subpath
     return fullpath_components[: len(subpath_components)] == subpath_components
@@ -100,16 +121,17 @@ def delete_values(
     query: List[str],
     index_into_query: int,
     remove_empty_ancestors=False,
+    allow_int_index=True,
 ) -> Tuple[bool, Any]:
     component = query[index_into_query]
     if index_into_query == -1:
-        if component == "*":
+        if is_wildcard(component):
             # delete all members of the list or dict
             current_element = [] if isinstance(current_element, list) else {}
             return (True, current_element)
         # component is a either a dictionary key or an index into a list,
         # pop the respective element from current_element
-        if indx.match(component):
+        if is_index(component) and allow_int_index:
             component = int(component)
         try:
             current_element.pop(component)
@@ -141,6 +163,7 @@ def delete_values(
                     query=query,
                     index_into_query=index_into_query + 1,
                     remove_empty_ancestors=remove_empty_ancestors,
+                    allow_int_index=allow_int_index,
                 )
                 if not success:
                     continue
@@ -155,7 +178,7 @@ def delete_values(
         return (any_success, current_element)
 
     # current component is index into a list or a key into a dictionary
-    if indx.match(component):
+    if is_index(component) and allow_int_index:
         component = int(component)
     try:
         success, new_val = delete_values(
@@ -163,6 +186,7 @@ def delete_values(
             query=query,
             index_into_query=index_into_query + 1,
             remove_empty_ancestors=remove_empty_ancestors,
+            allow_int_index=allow_int_index,
         )
         if not success:
             return (False, None)
@@ -176,7 +200,11 @@ def delete_values(
 
 
 def dict_delete(
-    dic: dict, query: str, not_exist_ok: bool = False, remove_empty_ancestors=False
+    dic: dict,
+    query: str,
+    not_exist_ok: bool = False,
+    remove_empty_ancestors=False,
+    allow_int_index=True,
 ):
     # We remove from dic the value from each and every element lead to by a path matching the query.
     # If remove_empty_ancestors=True, and the removal of any such value leaves its containing element (list or dict)
@@ -197,7 +225,9 @@ def dict_delete(
         dic.pop(query.strip())
         return
 
-    qpath = validate_query_and_break_to_components(query)
+    qpath = validate_query_and_break_to_components(
+        query, allow_int_index=allow_int_index
+    )
 
     try:
         success, new_val = delete_values(
@@ -205,6 +235,7 @@ def dict_delete(
             query=qpath,
             index_into_query=(-1) * len(qpath),
             remove_empty_ancestors=remove_empty_ancestors,
+            allow_int_index=allow_int_index,
         )
 
         if success:
@@ -225,7 +256,10 @@ def dict_delete(
 # if query includes * then return a list of values reached by all paths that match the query
 # flake8: noqa: C901
 def get_values(
-    current_element: Any, query: List[str], index_into_query: int
+    current_element: Any,
+    query: List[str],
+    index_into_query: int,
+    allow_int_index=True,
 ) -> Tuple[bool, Any]:
     # going down from current_element through query[index_into_query].
     if index_into_query == 0:
@@ -244,7 +278,12 @@ def get_values(
             sub_elements = current_element
         for sub_element in sub_elements:
             try:
-                success, val = get_values(sub_element, query, index_into_query + 1)
+                success, val = get_values(
+                    sub_element,
+                    query,
+                    index_into_query + 1,
+                    allow_int_index=allow_int_index,
+                )
                 if success:
                     to_ret.append(val)
             except:
@@ -253,11 +292,14 @@ def get_values(
         return (len(to_ret) > 0 or index_into_query == -1, to_ret)
         # when * is the last component, it refers to 'all the contents' of an empty list being current_element.
     # next_component is indx or name, current_element must be a list or a dict
-    if indx.match(component):
+    if is_index(component) and allow_int_index:
         component = int(component)
     try:
         success, new_val = get_values(
-            current_element[component], query, index_into_query + 1
+            current_element[component],
+            query,
+            index_into_query + 1,
+            allow_int_index=allow_int_index,
         )
         if success:
             return (True, new_val)
@@ -274,6 +316,7 @@ def set_values(
     index_into_query: int,
     fixed_parameters: dict,
     set_multiple: bool = False,
+    allow_int_index=True,
 ) -> Tuple[bool, Any]:
     if index_into_query == 0:
         return (True, value)  # matched query all along!
@@ -321,6 +364,7 @@ def set_values(
                     index_into_query=index_into_query + 1,
                     set_multiple=False,  # now used, not allowed again,
                     fixed_parameters=fixed_parameters,
+                    allow_int_index=allow_int_index,
                 )
                 if not success:
                     continue
@@ -335,7 +379,7 @@ def set_values(
         )
 
     # component is an index into a list or a key into a dictionary
-    if indx.match(component):
+    if is_index(component) and allow_int_index:
         if current_element is None or not isinstance(current_element, list):
             if not fixed_parameters["generate_if_not_exists"]:
                 return (False, None)
@@ -368,6 +412,7 @@ def set_values(
             index_into_query=index_into_query + 1,
             fixed_parameters=fixed_parameters,
             set_multiple=set_multiple,
+            allow_int_index=allow_int_index,
         )
         if success:
             current_element[component] = new_val
@@ -383,6 +428,7 @@ def dict_get(
     query: str,
     not_exist_ok: bool = False,
     default: Any = None,
+    allow_int_index=True,
 ):
     if len(query.strip()) == 0:
         return dic
@@ -393,7 +439,9 @@ def dict_get(
     if isinstance(dic, dict) and query.strip() in dic:
         return dic[query.strip()]
 
-    components = validate_query_and_break_to_components(query)
+    components = validate_query_and_break_to_components(
+        query, allow_int_index=allow_int_index
+    )
     if len(components) > 1:
         try:
             success, values = get_values(dic, components, -1 * len(components))
@@ -474,6 +522,7 @@ def dict_set(
     value: Any,
     not_exist_ok=True,
     set_multiple=False,
+    allow_int_index=True,
 ):  # sets dic to its new value
     if dic is None or not isinstance(dic, (list, dict)):
         raise ValueError(
@@ -510,7 +559,9 @@ def dict_set(
                 f"set_multiple=True, but value, {value}, can not be broken up, as either it is not a list or it is an empty list"
             )
 
-    components = validate_query_and_break_to_components(query)
+    components = validate_query_and_break_to_components(
+        query, allow_int_index=allow_int_index
+    )
     fixed_parameters = {
         "query": components,
         "generate_if_not_exists": not_exist_ok,
@@ -522,6 +573,7 @@ def dict_set(
             index_into_query=(-1) * len(components),
             fixed_parameters=fixed_parameters,
             set_multiple=set_multiple,
+            allow_int_index=allow_int_index,
         )
         if not success and not not_exist_ok:
             raise ValueError(f"No path in dic {dic} matches query {query}.")

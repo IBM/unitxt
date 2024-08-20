@@ -1,7 +1,7 @@
 {
     "__type__": "length_balancer",
     "fields": [
-        "outputs/labels"
+        "reference_fields/labels"
     ],
     "segments_boundaries": [
         1

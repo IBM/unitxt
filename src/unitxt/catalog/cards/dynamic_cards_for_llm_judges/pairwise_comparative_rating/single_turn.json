@@ -1,0 +1,6 @@
+{
+    "__type__": "task_card",
+    "loader": null,
+    "preprocess_steps": [],
+    "task": "tasks.response_assessment.pairwise_comparative_rating.single_turn"
+}

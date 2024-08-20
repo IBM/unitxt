@@ -7,35 +7,35 @@ Unitxt is all about readily preparing of any given data source for feeding into 
 post-processing the model's output, preparing it for any given evaluator.
 
 Through that journey, the data advances in the form of Unitxt Multistream, undergoing a sequential application
-of various off the shelf operators (i.e, picked from Unitxt catalog), or operators easily implemented by inheriting.
-The journey starts by a Unitxt Loeader bearing a Multistream from the given datasource.
+of various off-the-shelf operators (i.e., picked from Unitxt catalog), or operators easily implemented by inheriting.
+The journey starts by a Unitxt Loader bearing a Multistream from the given datasource.
 A loader, therefore, is the first item on any Unitxt Recipe.
 
 Unitxt catalog contains several loaders for the most popular datasource formats.
-All these loaders inherit from Loader, and hence, implementing a loader to expand over a new type of datasource, is
-straight forward.
+All these loaders inherit from Loader, and hence, implementing a loader to expand over a new type of datasource is
+straightforward.
 
 Available Loaders Overview:
-    - :ref:`LoadHF <unitxt.loaders.LoadHF>` - Loads data from Huggingface datasets.
+    - :ref:`LoadHF <unitxt.loaders.LoadHF>` - Loads data from HuggingFace Datasets.
     - :ref:`LoadCSV <unitxt.loaders.LoadCSV>` - Imports data from CSV (Comma-Separated Values) files.
     - :ref:`LoadFromKaggle <unitxt.loaders.LoadFromKaggle>` - Retrieves datasets from the Kaggle community site.
     - :ref:`LoadFromIBMCloud <unitxt.loaders.LoadFromIBMCloud>` - Fetches datasets hosted on IBM Cloud.
     - :ref:`LoadFromSklearn <unitxt.loaders.LoadFromSklearn>` - Loads datasets available through the sklearn library.
     - :ref:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
     - :ref:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
-    - :ref:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from Huggingface Spaces.
+    - :ref:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from HuggingFace Spaces.
 
 
 
 
 ------------------------
 """
+
 import fnmatch
 import itertools
 import os
 import tempfile
 from abc import abstractmethod
-from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
@@ -53,6 +53,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
+from .utils import deepcopy
 
 logger = get_logger()
 settings = get_settings()
@@ -63,7 +64,7 @@ class Loader(SourceOperator):
 
     A loader is the first component in the Unitxt Recipe,
     responsible for loading data from various sources and preparing it as a MultiStream for processing.
-    The loader_limit an optional parameter used to control the maximum number of instances to load from the data source.  It is applied for each split separately.
+    The loader_limit is an optional parameter used to control the maximum number of instances to load from the data source.  It is applied for each split separately.
     It is usually provided to the loader via the recipe (see standard.py)
     The loader can use this value to limit the amount of data downloaded from the source
     to reduce loading time.  However, this may not always be possible, so the
@@ -73,10 +74,12 @@ class Loader(SourceOperator):
     Args:
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
+        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading. Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
     """
 
     loader_limit: int = None
     streaming: bool = False
+    num_proc: int = None
 
     def get_limit(self):
         if settings.global_loader_limit is not None and self.loader_limit is not None:
@@ -137,19 +140,20 @@ class Loader(SourceOperator):
 
 
 class LoadHF(Loader):
-    """Loads datasets from the Huggingface Hub.
+    """Loads datasets from the HuggingFace Hub.
 
     It supports loading with or without streaming,
-    and can filter datasets upon loading.
+    and it can filter datasets upon loading.
 
     Args:
-        path: The path or identifier of the dataset on the Huggingface Hub.
+        path: The path or identifier of the dataset on the HuggingFace Hub.
         name: An optional dataset name.
         data_dir: Optional directory to store downloaded data.
         split: Optional specification of which split to load.
         data_files: Optional specification of particular data files to load.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
+        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset
@@ -168,6 +172,7 @@ class LoadHF(Loader):
     ] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
+    num_proc: Optional[int] = None
     _cache: dict = InternalField(default=None)
     requirements_list: List[str] = OptionalField(default_factory=list)
 
@@ -198,6 +203,7 @@ class LoadHF(Loader):
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
+                        num_proc=self.num_proc,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -233,6 +239,7 @@ class LoadHF(Loader):
                         cache_dir=dir_to_be_deleted,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
+                        num_proc=self.num_proc,
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -559,8 +566,9 @@ class LoadFromIBMCloud(Loader):
 
         if not os.path.exists(self.cache_dir):
             Path(self.cache_dir).mkdir(parents=True, exist_ok=True)
+        self.verified = False
 
-    def verify(self):
+    def lazy_verify(self):
         super().verify()
         assert (
             self.endpoint_url is not None
@@ -575,6 +583,9 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def load_data(self):
+        if not self.verified:
+            self.lazy_verify()
+            self.verified = True
         self.sef_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
@@ -641,7 +652,7 @@ class MultipleSourceLoader(Loader):
         sources: A list of loaders that will be combined to form a unified dataset.
 
     Examples:
-        1) Loading the train split from Huggingface hub and the test set from a local file:
+        1) Loading the train split from a HuggingFace Hub and the test set from a local file:
 
         .. code-block:: python
 
@@ -667,12 +678,12 @@ class MultipleSourceLoader(Loader):
 
     def load_data(self):
         return FixedFusion(
-            origins=self.sources, max_instances_per_origin_split=self.get_limit()
+            subsets=self.sources, max_instances_per_subset=self.get_limit()
         ).process()
 
 
 class LoadFromDictionary(Loader):
-    """Allows loading data from dictionary of constants.
+    """Allows loading data from a dictionary of constants.
 
     The loader can be used, for example, when debugging or working with small datasets.
 
@@ -722,29 +733,29 @@ class LoadFromDictionary(Loader):
 
 
 class LoadFromHFSpace(LoadHF):
-    """Used to load data from Huggingface spaces.
+    """Used to load data from HuggingFace Spaces.
 
     Loaders firstly tries to download all files specified in the 'data_files' parameter
-    from the given space and then reads them as a Huggingface dataset.
+    from the given space and then reads them as a HuggingFace Dataset.
 
     Args:
-        space_name (str): Name of the Huggingface space to be accessed to.
+        space_name (str): Name of the HuggingFace Space to be accessed.
         data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
             paths to files within a given repository. If given as a mapping, paths should
             be values, while keys should represent the type of respective files
             (training, testing etc.).
-        path (str, optional): Absolute path to a directory where data should be downloaded to.
+        path (str, optional): Absolute path to a directory where data should be downloaded.
         revision (str, optional): ID of a Git branch or commit to be used. By default, it is
             set to None, thus data is downloaded from the main branch of the accessed
             repository.
-        use_token (bool, optional): Whether token used for authentication when accessing
-            the Huggingface space - if necessary - should be read from the Huggingface
+        use_token (bool, optional): Whether a token is used for authentication when accessing
+            the HuggingFace Space. If necessary, the token is read from the HuggingFace
             config folder.
         token_env (str, optional): Key of an env variable which value will be used for
-            authentication when accessing the Huggingface space - if necessary.
+            authentication when accessing the HuggingFace Space - if necessary.
 
     Example:
-        Loading from Huggingface Space
+        Loading from a HuggingFace Space
 
         .. code-block:: python
 
@@ -847,7 +858,9 @@ class LoadFromHFSpace(LoadHF):
 
     def _map_wildcard_path_to_full_paths(self):
         api = HfApi()
-        repo_files = api.list_repo_files(self.space_name, repo_type="space")
+        repo_files = api.list_repo_files(
+            self.space_name, repo_type="space", revision=self.revision
+        )
         if isinstance(self.data_files, str):
             self.data_files = self._get_file_list_from_wildcard_path(
                 self.data_files, repo_files

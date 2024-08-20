@@ -1,6 +1,7 @@
 {
     "__type__": "metric_pipeline",
     "main_score": "sacrebleu",
+    "prediction_type": "str",
     "preprocess_steps": [
         {
             "__type__": "copy",

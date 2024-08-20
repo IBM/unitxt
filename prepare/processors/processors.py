@@ -73,7 +73,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     PostProcess(StringEquals(string="toxic")),
     "processors.toxic_or_not_toxic",
@@ -134,20 +133,17 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     PostProcess(MatchClosestOption()),
     "processors.match_closest_option",
     overwrite=True,
 )
 
-
 double_brackets_regex = r"\[\[(.*?)\]\]"
 parser = ExtractWithRegex(regex=double_brackets_regex, field="TBD")
 example = "A. and also B. And that is why my final answer is [[Yes]]"
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == "Yes"
-
 
 add_to_catalog(
     PostProcess(
@@ -168,6 +164,31 @@ add_to_catalog(
     "processors.cast_to_float_return_nan_if_failed",
     overwrite=True,
 )
+
+add_to_catalog(
+    PostProcess(ExtractMtBenchRatingJudgment()),
+    "processors.extract_mt_bench_rating_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(ExtractMtBenchLabelJudgment()),
+    "processors.extract_mt_bench_label_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(RegexParser(regex=".+"), process_references=False),
+    "processors.regex_parser_from_prediction",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(LiteralEval(), process_references=False),
+    "processors.literal_eval",
+    overwrite=True,
+)
+
 
 add_to_catalog(
     PostProcess(ExtractMtBenchRatingJudgment()),

@@ -1,6 +1,6 @@
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     SplitRandomMix,
     TaskCard,
 )
@@ -29,9 +29,7 @@ for subset in subsets:
                 SplitRandomMix(
                     {"train": "test[90%]", "validation": "test[5%]", "test": "test[5%]"}
                 ),
-                RenameFields(
-                    field_to_field={"inputs": "question", "targets": "answers"}
-                ),
+                Rename(field_to_field={"inputs": "question", "targets": "answers"}),
                 ListFieldValues(fields=["answers"], to_field="answers"),
             ],
             task="tasks.qa.open[metrics=[metrics.rag.correctness.llama_index_by_gpt_3_5_turbo]]",
@@ -173,5 +171,4 @@ for subset in subsets:
             card,
             f"cards.cohere_for_ai.{subset}.{lang}",
             overwrite=True,
-            catalog_path="src/unitxt/catalog",
         )

@@ -1,0 +1,10 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "You are given a text. In what language is this text written?",
+    "input_format": "Text: {text}",
+    "output_format": "{label}",
+    "target_prefix": "The text is in ",
+    "postprocessors": [
+        "processors.take_first_word"
+    ]
+}

@@ -1,4 +1,5 @@
 from math import isnan
+from typing import Dict, List
 
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
@@ -17,6 +18,7 @@ from unitxt.metrics import (
     F1Micro,
     F1MicroMultiLabel,
     F1Weighted,
+    FinQAEval,
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
     FixedGroupAbsvalNormCohensHParaphraseStringContainment,
     FixedGroupAbsvalNormHedgesGParaphraseAccuracy,
@@ -37,9 +39,12 @@ from unitxt.metrics import (
     GroupMeanAccuracy,
     GroupMeanStringContainment,
     GroupMeanTokenOverlap,
+    HuggingfaceMetric,
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MetricPipeline,
+    MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
     PrecisionBinary,
@@ -49,7 +54,13 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.test_utils.metrics import apply_metric
+from unitxt.operators import Rename
+from unitxt.test_utils.metrics import (
+    apply_metric,
+    check_scores,
+    test_evaluate,
+    test_metric,
+)
 
 from tests.utils import UnitxtTestCase
 
@@ -159,6 +170,18 @@ class TestMetrics(UnitxtTestCase):
         ]
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
+
+    def prediction_type_definition(self):
+        class TempAccuracy(Accuracy):
+            prediction_type = int
+
+        self.assertEqual(TempAccuracy().prediction_type, int)
+
+    def test_prediction_type_definition_deprecated(self):
+        class TempAccuracy2(Accuracy):
+            prediction_type = "int"
+
+        self.assertEqual(TempAccuracy2().prediction_type, int)
 
     def test_accuracy(self):
         metric = Accuracy()
@@ -798,19 +821,54 @@ class TestMetrics(UnitxtTestCase):
         global_target = 5 / 6
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
-    def test_rouge_l(self):
-        metric = Rouge(
-            n_resamples=None,  # disable confidence interval calculation which fails for this metric configuration
-            use_aggregator=False,
-            rouge_types=["rougeL"],
-        )
-        references = [["hello", "there"], ["general kenobi", "general yoda"]]
-        predictions = ["hello there", "general kenobi"]
+        # compare with the HF implementation
+        class OldRouge(HuggingfaceMetric):
+            hf_metric_name = "rouge"
+            main_score = "rougeL"
+            scale = 1.0
+
+            prediction_type = "str"
+            single_reference_per_prediction = False  # multiple references allowed
+
+            use_aggregator: bool = True
+            rouge_types: List[str] = ["rouge1", "rouge2", "rougeL", "rougeLsum"]
+
+            sent_split_newline: bool = True
+
+            _requirements_list: List[str] = ["nltk", "rouge_score"]
+
+            def prepare(self):
+                super().prepare()
+
+                self.hf_compute_args.update(
+                    {
+                        "use_aggregator": self.use_aggregator,
+                        "rouge_types": self.rouge_types,
+                    }
+                )
+
+                import nltk
+
+                nltk.download("punkt_tab", quiet=True)
+                self.sent_tokenize = nltk.sent_tokenize
+
+            def compute(self, references, predictions, task_data: List[Dict]):
+                if self.sent_split_newline:
+                    predictions = [
+                        "\n".join(self.sent_tokenize(prediction.strip()))
+                        for prediction in predictions
+                    ]
+                    references = [
+                        ["\n".join(self.sent_tokenize(r.strip())) for r in reference]
+                        for reference in references
+                    ]
+                return super().compute(references, predictions, task_data)
+
+        metric = OldRouge()
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        global_target = [2 / 3, 1.0]
-        self.assertListEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_token_overlap(self):
         metric = TokenOverlap()
@@ -1149,8 +1207,8 @@ class TestMetrics(UnitxtTestCase):
         )
 
         expected_global_result = {
-            "my_perplexity": 0.05986589565873146,
-            "score": 0.05986589565873146,
+            "my_perplexity": 0.06,
+            "score": 0.06,
             "score_name": "my_perplexity",
         }
 
@@ -1161,34 +1219,21 @@ class TestMetrics(UnitxtTestCase):
             for key, value in global_result.items()
             if key in expected_global_result
         }
-        output, target = global_result, expected_global_result
 
-        self.assertAlmostEqual(output["score"], target["score"], places=3)
-        self.assertAlmostEqual(
-            output["my_perplexity"], target["my_perplexity"], places=3
-        )
-        self.assertEqual(output["score_name"], target["score_name"])
-
-        instance_targets = [
+        expected_instance_results = [
             {
-                "my_perplexity": 0.05986589565873146,
-                "score": 0.05986589565873146,
+                "my_perplexity": 0.06,
+                "score": 0.06,
                 "score_name": "my_perplexity",
-                "my_reference_scores": [0.05986589565873146],
+                "my_reference_scores": [0.06],
             }
         ]
-        for output, target in zip(outputs, instance_targets):
-            output = output["score"]["instance"]
-            self.assertAlmostEqual(
-                output["my_perplexity"], target["my_perplexity"], places=3
-            )
-            self.assertAlmostEqual(output["score"], target["score"], places=3)
-            self.assertAlmostEqual(
-                output["my_reference_scores"][0],
-                target["my_reference_scores"][0],
-                places=3,
-            )
-            self.assertEqual(output["score_name"], target["score_name"])
+        check_scores(
+            expected_global_result,
+            expected_instance_results,
+            global_outputs=outputs[0]["score"]["global"],
+            instance_outputs=[outputs[0]["score"]["instance"]],
+        )
 
 
 class TestConfidenceIntervals(UnitxtTestCase):
@@ -1468,7 +1513,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
 
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"
-        format = "formats.llama3_chat"
+        format = "formats.llama3_instruct"
         task = "rating.single_turn"
         template = "templates.response_assessment.rating.mt_bench_single_turn"
 
@@ -1494,7 +1539,10 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "output": "output",
                 "type_of_output": "type",
                 "source": "<SYS_PROMPT>input</SYS_PROMPT>",
-                "metadata": {"template": "templates.generation.default"},
+                "metadata": {
+                    "template": "templates.generation.default",
+                    "data_classification_policy": ["public"],
+                },
             }
         ] * 3
 
@@ -1510,6 +1558,28 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 metric_label: 1.0,
                 "score_name": metric_label,
                 "score": 1.0,
+                "judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                "Please act as an impartial judge and "
+                "evaluate the quality of the response "
+                "provided by an AI assistant to the user "
+                "question displayed below. Your evaluation "
+                "should consider factors such as the "
+                "helpfulness, relevance, accuracy, depth, "
+                "creativity, and level of detail of the "
+                "response. Begin your evaluation by "
+                "providing a short explanation. Be as "
+                "objective as possible. After providing your "
+                "explanation, you must rate the response on "
+                "a scale of 1 to 10 by strictly following "
+                'this format: "[[rating]]", for example: '
+                '"Rating: [[5]]".\n\n'
+                "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+                "[Question]\n"
+                "Given the following type, generate the corresponding type. type: input\n\n\n"
+                "[The Start of Assistant's Answer]\n"
+                "[[10]]\n"
+                "[The End of Assistant's "
+                "Answer]<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
                 "judge_raw_output": "[[10]]",
             }
         ] * 3
@@ -1528,3 +1598,353 @@ class TestConfidenceIntervals(UnitxtTestCase):
         ]
 
         self.assertListEqual(actual_scores, expected_scores)
+
+    def test_fin_qa_eval(self):
+        table = """[
+            [
+                "",
+                "amount ( in millions )"
+            ],
+            [
+                "2014 net revenue",
+                "$ 5735"
+            ],
+            [
+                "retail electric price",
+                "187"
+            ],
+            [
+                "volume/weather",
+                "95"
+            ],
+            [
+                "waterford 3 replacement steam generator provision",
+                "-32 ( 32 )"
+            ],
+            [
+                "miso deferral",
+                "-35 ( 35 )"
+            ],
+            [
+                "louisiana business combination customer credits",
+                "-107 ( 107 )"
+            ],
+            [
+                "other",
+                "-14 ( 14 )"
+            ],
+            [
+                "2015 net revenue",
+                "$ 5829"
+            ]
+        ]"""
+
+        table2 = """[
+            [
+                "statement of income classification",
+                "statement of income loss on swaps",
+                "statement of income gain on note",
+                "statement of income net income effect",
+                "statement of income gain on swaps",
+                "loss on note",
+                "net income effect"
+            ],
+            [
+                "other income",
+                "$ -4614 ( 4614 )",
+                "$ 4614",
+                "$ 2014",
+                "$ 20692",
+                "$ -20692 ( 20692 )",
+                "$ 2014"
+            ]
+        ]"""
+
+        metric = FinQAEval()
+        references = [
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(5829, 5735)"],
+            ["subtract(153.7, 139.9), divide(#0, 139.9)"],
+        ]
+        task_data = [
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94%%"},
+            {"table": table, "program_re": "subtract(5829, 5735)", "answer": "94"},
+            {
+                "table": table2,
+                "program_re": "subtract(153.7, 139.9), divide(#0, 139.9)",
+                "answer": "9.9%",
+            },
+        ]
+        predictions = [
+            "subtract(5829, 5735)",  # right program, right accuracy
+            "subtract(5829, 5730)--",  # wrong program, wrong accuracy
+            "subtract(5829, 5735)   ",  # answer with special chars (in task data)
+            "subtract(5824, 5730), ",  # wrong program, right accuracy
+            "subtract(153.7, 139.9), divide(#0, 139.9), ,",  # 2 operations
+        ]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        actual_scores = [
+            (
+                output["score"]["instance"]["program_accuracy"]
+                + output["score"]["instance"]["execution_accuracy"]
+            )
+            / 2
+            for output in outputs
+        ]
+        target_scores = [1, 0, 1, 0.5, 1]
+
+        for i in range(len(actual_scores)):
+            self.assertAlmostEqual(actual_scores[i], target_scores[i])
+
+    def test_metrics_ensemble(self):
+        metric = MetricsEnsemble(
+            main_score="ensemble_score",
+            metrics=[
+                "metrics.precision_micro_multi_label",
+                "metrics.recall_macro_multi_label",
+            ],
+            weights=None,
+        )
+
+        predictions = [["A"], ["B"], [""], ["A"]]
+        references = [[["B", "A"]], [["B"]], [["A"]], [[""]]]
+
+        instance_targets = [
+            {
+                "ensemble_score": 0.75,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 0.5,
+                "score": 0.75,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 1.0,
+                "ensemble_0_precision_micro": 1.0,
+                "ensemble_1_recall_macro": 1.0,
+                "score": 1.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+            {
+                "ensemble_score": 0.0,
+                "ensemble_0_precision_micro": 0.0,
+                "ensemble_1_recall_macro": 0.0,
+                "score": 0.0,
+                "score_name": "ensemble_score",
+            },
+        ]
+
+        global_target = {
+            "ensemble_0_precision_micro": 0.5,
+            "ensemble_0_precision_micro_ci_high": 1.0,
+            "ensemble_0_precision_micro_ci_low": 0.0,
+            "ensemble_1_recall_macro": 0.33,
+            "ensemble_1_recall_macro_ci_high": 0.56,
+            "ensemble_1_recall_macro_ci_low": 0.0,
+            "ensemble_score": 0.44,
+            "score": 0.44,
+            "score_name": "ensemble_score",
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+    def test_context_correctness(self):
+        task_data = [
+            {  # MRR is 1, MAP is (1 + 2/3)/2 = 0.833
+                "context_ids": ["A", "B", "C"],
+                "ground_truths_context_ids": ["A", "C"],
+            },
+            {  # MRR and MAP are both 0.5
+                "context_ids": ["A", "B"],
+                "ground_truths_context_ids": ["B"],
+            },
+        ]
+
+        map_instance_targets = [
+            {"map": 0.83, "score": 0.83, "score_name": "map"},
+            {"map": 0.5, "score": 0.5, "score_name": "map"},
+        ]
+        mrr_instance_targets = [
+            {"mrr": 1.0, "score": 1.0, "score_name": "mrr"},
+            {"mrr": 0.5, "score": 0.5, "score_name": "mrr"},
+        ]
+        retrieval_at_k_instance_targets = [
+            {
+                "match_at_1": 1.0,
+                "match_at_3": 1.0,
+                "match_at_5": 1.0,
+                "match_at_10": 1.0,
+                "match_at_20": 1.0,
+                "match_at_40": 1.0,
+                "precision_at_1": 1.0,
+                "precision_at_3": 0.67,
+                "precision_at_5": 0.67,
+                "precision_at_10": 0.67,
+                "precision_at_20": 0.67,
+                "precision_at_40": 0.67,
+                "recall_at_1": 0.5,
+                "recall_at_3": 1.0,
+                "recall_at_5": 1.0,
+                "recall_at_10": 1.0,
+                "recall_at_20": 1.0,
+                "recall_at_40": 1.0,
+                "score": 1.0,
+                "score_name": "match_at_1",
+            },
+            {
+                "match_at_1": 0.0,
+                "match_at_10": 1.0,
+                "match_at_20": 1.0,
+                "match_at_3": 1.0,
+                "match_at_40": 1.0,
+                "match_at_5": 1.0,
+                "precision_at_1": 0.0,
+                "precision_at_10": 0.5,
+                "precision_at_20": 0.5,
+                "precision_at_3": 0.5,
+                "precision_at_40": 0.5,
+                "precision_at_5": 0.5,
+                "recall_at_1": 0.0,
+                "recall_at_10": 1.0,
+                "recall_at_20": 1.0,
+                "recall_at_3": 1.0,
+                "recall_at_40": 1.0,
+                "recall_at_5": 1.0,
+                "score": 0.0,
+                "score_name": "match_at_1",
+            },
+        ]
+        map_global_target = {
+            "map": 0.67,
+            "map_ci_high": 0.83,
+            "map_ci_low": 0.5,
+            "score": 0.67,
+            "score_ci_high": 0.83,
+            "score_ci_low": 0.5,
+            "score_name": "map",
+        }
+        mrr_global_target = {
+            "mrr": 0.75,
+            "mrr_ci_high": 1.0,
+            "mrr_ci_low": 0.5,
+            "score": 0.75,
+            "score_ci_high": 1.0,
+            "score_ci_low": 0.5,
+            "score_name": "mrr",
+        }
+        retrieval_at_k_global_target = {
+            "match_at_1": 0.5,
+            "match_at_1_ci_high": 1.0,
+            "match_at_1_ci_low": 0.0,
+            "match_at_3": 1.0,
+            "match_at_5": 1.0,
+            "match_at_10": 1.0,
+            "match_at_20": 1.0,
+            "match_at_40": 1.0,
+            "precision_at_1": 0.5,
+            "precision_at_1_ci_high": 1.0,
+            "precision_at_1_ci_low": 0.0,
+            "precision_at_3": 0.58,
+            "precision_at_3_ci_high": 0.67,
+            "precision_at_3_ci_low": 0.5,
+            "precision_at_5": 0.58,
+            "precision_at_5_ci_high": 0.67,
+            "precision_at_5_ci_low": 0.5,
+            "precision_at_10": 0.58,
+            "precision_at_10_ci_high": 0.67,
+            "precision_at_10_ci_low": 0.5,
+            "precision_at_20": 0.58,
+            "precision_at_20_ci_high": 0.67,
+            "precision_at_20_ci_low": 0.5,
+            "precision_at_40": 0.58,
+            "precision_at_40_ci_high": 0.67,
+            "precision_at_40_ci_low": 0.5,
+            "recall_at_1": 0.25,
+            "recall_at_1_ci_high": 0.5,
+            "recall_at_1_ci_low": 0.0,
+            "recall_at_3": 1.0,
+            "recall_at_5": 1.0,
+            "recall_at_10": 1.0,
+            "recall_at_20": 1.0,
+            "recall_at_40": 1.0,
+            "score": 0.5,
+            "score_ci_high": 1.0,
+            "score_ci_low": 0.0,
+            "score_name": "match_at_1",
+        }
+
+        for catalog_name, global_target, instance_targets in [
+            (
+                "metrics.rag.context_correctness.map",
+                map_global_target,
+                map_instance_targets,
+            ),
+            (
+                "metrics.rag.context_correctness.mrr",
+                mrr_global_target,
+                mrr_instance_targets,
+            ),
+            (
+                "metrics.rag.context_correctness",
+                mrr_global_target,
+                mrr_instance_targets,
+            ),
+            (
+                "metrics.rag.context_correctness.retrieval_at_k",
+                retrieval_at_k_global_target,
+                retrieval_at_k_instance_targets,
+            ),
+        ]:
+            # test the evaluate call
+            test_evaluate(
+                global_target,
+                instance_targets=[
+                    {"score": instance["score"]} for instance in instance_targets
+                ],
+                task_data=task_data,
+                metric_name=catalog_name,
+            )
+
+            # test using the usual metric pipeline
+            test_pipeline = MetricPipeline(
+                main_score="score",
+                preprocess_steps=[
+                    Rename(field_to_field={"task_data/context_ids": "context_ids"}),
+                    Rename(
+                        field_to_field={
+                            "task_data/ground_truths_context_ids": "ground_truths_context_ids"
+                        }
+                    ),
+                ],
+                metric=f"{catalog_name}",
+            )
+            test_metric(
+                metric=test_pipeline,
+                predictions=[None, None],
+                references=[[], []],
+                instance_targets=instance_targets,
+                global_target=global_target,
+                task_data=task_data,
+            )

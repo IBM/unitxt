@@ -8,7 +8,10 @@ from tests.utils import UnitxtTestCase
 
 class TestFormatAndTemplateInteraction(UnitxtTestCase):
     def test_interactions(self):
-        instance = {"inputs": {"question": "what?"}, "outputs": {"answer": "that!"}}
+        instance = {
+            "input_fields": {"question": "what?"},
+            "reference_fields": {"answer": "that!"},
+        }
         target = "that!"
 
         template_separated = InputOutputTemplate(
@@ -87,6 +90,7 @@ class TestFormatAndTemplateInteraction(UnitxtTestCase):
                             "source": required_input,
                             "target": target,
                             "references": [target],
+                            "postprocessors": ["processors.to_string_stripped"],
                         }
                     ],
                     tester=self,

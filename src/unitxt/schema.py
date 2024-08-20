@@ -1,9 +1,10 @@
 import json
-from dataclasses import field
 from typing import Any, Dict, List, Optional
 
 from datasets import Features, Sequence, Value
 
+from .artifact import Artifact
+from .dict_utils import dict_get
 from .operator import InstanceOperatorValidator
 from .settings_utils import get_constants
 
@@ -15,7 +16,8 @@ UNITXT_DATASET_SCHEMA = Features(
         "target": Value("string"),
         "references": Sequence(Value("string")),
         "metrics": Sequence(Value("string")),
-        "group": Value("string"),
+        "groups": Sequence(Value("string")),
+        "subset": Sequence(Value("string")),
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
         "data_classification_policy": Sequence(Value("string")),
@@ -27,7 +29,21 @@ UNITXT_INFERENCE_SCHEMA = Features(
     {
         "source": Value("string"),
         "metrics": Sequence(Value("string")),
-        "group": Value("string"),
+        "groups": Sequence(Value("string")),
+        "subset": Sequence(Value("string")),
+        "postprocessors": Sequence(Value("string")),
+        "task_data": Value(dtype="string"),
+        "data_classification_policy": Sequence(Value("string")),
+    }
+)
+
+
+UNITXT_INFERENCE_SCHEMA = Features(
+    {
+        "source": Value("string"),
+        "metrics": Sequence(Value("string")),
+        "groups": Sequence(Value("string")),
+        "subset": Sequence(Value("string")),
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
         "data_classification_policy": Sequence(Value("string")),
@@ -41,10 +57,8 @@ def get_schema(stream_name):
     return UNITXT_DATASET_SCHEMA
 
 
-class ToUnitxtGroup(InstanceOperatorValidator):
-    group: str
-    metrics: List[str] = None
-    postprocessors: List[str] = field(default_factory=lambda: ["to_string_stripped"])
+class Finalize(InstanceOperatorValidator):
+    group_by: List[List[str]]
     remove_unnecessary_fields: bool = True
 
     @staticmethod
@@ -56,17 +70,20 @@ class ToUnitxtGroup(InstanceOperatorValidator):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        metadata = {
+            "data_classification_policy": instance["data_classification_policy"],
+            "template": self.artifact_to_jsonable(
+                instance["recipe_metadata"]["template"]
+            ),
+            "num_demos": instance["recipe_metadata"]["num_demos"],
+        }
         task_data = {
-            **instance["inputs"],
-            "metadata": {
-                "template": self.artifact_to_jsonable(
-                    instance["recipe_metadata"]["template"]
-                )
-            },
+            **instance["input_fields"],
+            "metadata": metadata,
         }
 
         if stream_name != constants.inference_stream:
-            task_data = {**task_data, **instance["outputs"]}
+            task_data = {**task_data, **instance["reference_fields"]}
 
         instance["task_data"] = json.dumps(task_data)
 
@@ -79,11 +96,29 @@ class ToUnitxtGroup(InstanceOperatorValidator):
 
             for key in keys_to_delete:
                 del instance[key]
-        instance["group"] = self.group
-        if self.metrics is not None:
-            instance["metrics"] = self.metrics
-        if self.postprocessors is not None:
-            instance["postprocessors"] = self.postprocessors
+
+        data = {**task_data, **metadata}
+        groups = []
+        for group_attributes in self.group_by:
+            group = {}
+            if isinstance(group_attributes, str):
+                group_attributes = [group_attributes]
+            for attribute in group_attributes:
+                group[attribute] = dict_get(data, attribute)
+            groups.append(json.dumps(group))
+
+        instance["groups"] = groups
+        instance["subset"] = []
+
+        instance["metrics"] = [
+            metric.to_json() if isinstance(metric, Artifact) else metric
+            for metric in instance["metrics"]
+        ]
+        instance["postprocessors"] = [
+            processor.to_json() if isinstance(processor, Artifact) else processor
+            for processor in instance["postprocessors"]
+        ]
+
         return instance
 
     def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):

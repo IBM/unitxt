@@ -14,11 +14,7 @@
             }
         },
         {
-            "__type__": "shuffle",
-            "page_size": 9223372036854775807
-        },
-        {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "text": "document"
             }
@@ -28,6 +24,12 @@
             "fields": {
                 "document_type": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
         },
         {
             "__type__": "filter_by_expression",

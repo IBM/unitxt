@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "document": "str",
         "document_type": "str"
     },
-    "outputs": {
-        "summary": "str"
+    "reference_fields": {
+        "summaries": "List[str]"
     },
     "prediction_type": "str",
     "metrics": [
@@ -13,5 +13,8 @@
     ],
     "defaults": {
         "document_type": "document"
-    }
+    },
+    "augmentable_inputs": [
+        "document"
+    ]
 }

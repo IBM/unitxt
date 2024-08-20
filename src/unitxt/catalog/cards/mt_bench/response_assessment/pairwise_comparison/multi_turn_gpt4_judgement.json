@@ -48,7 +48,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "category": "group"
             }
@@ -68,6 +68,6 @@
     ],
     "task": "tasks.response_assessment.pairwise_comparison.multi_turn",
     "templates": [
-        "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_shuffle"
+        "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_shuffling"
     ]
 }

@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from .artifact import Artifact
 from .collections import ListCollection
 from .dataclass import NonPositionalField
+from .dict_utils import dict_set
+from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
 from .settings_utils import get_constants
@@ -14,12 +16,13 @@ from .type_utils import isoftype
 constants = get_constants()
 
 
-class TemplateFormatKeyError(KeyError):
+class TemplateFormatKeyError(UnitxtError):
     def __init__(self, template, data, data_type, format_str, format_name):
         keys = ", ".join(data.keys())
         super().__init__(
             f"Available {data_type}s are [{keys}] "
-            f"but {template.__class__.__name__}.{format_name} format requires a different ones: '{format_str}'"
+            f"but {template.__class__.__name__}.{format_name} format requires a different ones: '{format_str}'",
+            Documentation.ADDING_TEMPLATE,
         )
 
 
@@ -31,7 +34,7 @@ class Template(InstanceOperator):
     Args:
         skip_rendered_instance (bool): if "source", "target", and "references" are already defined fields in the instance, skip its processing
         postprocessors: a list of strings being artifact names of text processors, to be applied on the model output
-        instruction: a formatting string that yields an instruction with potential participation of values from the "inputs" part of the instance
+        instruction: a formatting string that yields an instruction with potential participation of values from the "input_fields" part of the instance
         target_prefix: a string to be used to format the prompt. Not a formatting string.
 
     """
@@ -44,19 +47,23 @@ class Template(InstanceOperator):
     target_prefix: str = NonPositionalField(default="")
     title_fields: List[str] = NonPositionalField(default_factory=list)
 
-    def inputs_to_instruction_and_target_prefix(self, inputs):
+    def input_fields_to_instruction_and_target_prefix(self, input_fields):
         instruction = self.apply_formatting(
-            inputs, "input", self.instruction, "instruction", serialize=True
+            input_fields, "input field", self.instruction, "instruction", serialize=True
         )
         target_prefix = self.apply_formatting(
-            inputs, "input", self.target_prefix, "target_prefix", serialize=True
+            input_fields,
+            "input field",
+            self.target_prefix,
+            "target_prefix",
+            serialize=True,
         )
         return instruction, target_prefix
 
-    def preprocess_inputs_and_outputs(
-        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    def preprocess_input_and_reference_fields(
+        self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        return inputs, outputs
+        return input_fields, reference_fields
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -69,14 +76,16 @@ class Template(InstanceOperator):
             ):
                 return instance
 
-        inputs = instance.get("inputs")
-        outputs = instance.get("outputs")
-        inputs, outputs = self.preprocess_inputs_and_outputs(inputs, outputs)
+        input_fields = instance.get("input_fields")
+        reference_fields = instance.get("reference_fields")
+        input_fields, reference_fields = self.preprocess_input_and_reference_fields(
+            input_fields, reference_fields
+        )
 
-        self.set_titles(inputs)
-        source = self.inputs_to_source(inputs)
-        instruction, target_prefix = self.inputs_to_instruction_and_target_prefix(
-            inputs
+        self.set_titles(input_fields)
+        source = self.input_fields_to_source(input_fields)
+        instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
+            input_fields
         )
 
         result = {
@@ -84,12 +93,18 @@ class Template(InstanceOperator):
             "source": source,
             "instruction": instruction,
             "target_prefix": target_prefix,
+            "postprocessors": self.postprocessors,
         }
 
         if stream_name == constants.inference_stream:
             return result
 
-        target, references = self.outputs_to_target_and_references(outputs)
+        if reference_fields is None:
+            raise ValueError("Should have reference_fields")
+
+        target, references = self.reference_fields_to_target_and_references(
+            reference_fields
+        )
 
         result["target"] = target
         result["references"] = references
@@ -97,7 +112,7 @@ class Template(InstanceOperator):
         return result
 
     @abstractmethod
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
         pass
 
     def set_titles(self, data):
@@ -105,13 +120,10 @@ class Template(InstanceOperator):
             data[field] = data[field].title()
 
     @abstractmethod
-    def outputs_to_target_and_references(
-        self, outputs: Dict[str, object]
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
     ) -> Tuple[str, List[str]]:
         pass
-
-    def get_postprocessors(self) -> List[str]:
-        return self.postprocessors
 
     def serialize_data(self, data):
         return {
@@ -125,6 +137,11 @@ class Template(InstanceOperator):
         if serialize:
             data = self.serialize_data(data)
         try:
+            if format_str is None:
+                raise UnitxtError(
+                    f"Required field 'output_format' of class {self.__class__.__name__} not set in {self.__class__.__name__}",
+                    Documentation.ADDING_TEMPLATE,
+                )
             return format_str.format(**data)
         except KeyError as e:
             raise TemplateFormatKeyError(
@@ -132,23 +149,83 @@ class Template(InstanceOperator):
             ) from e
 
 
+class ApplyTemplate(InstanceOperator):
+    demos_field: Optional[str] = None
+
+    @abstractmethod
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        pass
+
+    def apply(
+        self,
+        template: Template,
+        instance: Dict[str, Any],
+        stream_name: Optional[str] = None,
+    ):
+        return template.process_instance(instance, stream_name)
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        template = self.get_template(instance)
+
+        if self.demos_field is not None:
+            if self.demos_field not in instance:
+                raise ValueError("Demos field is missing.")
+            instance[self.demos_field] = [
+                self.apply(template, demo_instance, stream_name)
+                for demo_instance in instance[self.demos_field]
+            ]
+        dict_set(instance, "recipe_metadata/template", template)
+        return self.apply(template, instance, stream_name)
+
+
+class ApplySingleTemplate(ApplyTemplate):
+    template: Template
+
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        return self.template
+
+
+class ApplyRandomTemplate(ApplyTemplate):
+    templates: List[Template]
+
+    def get_template(self, instance: Dict[str, Any]) -> Template:
+        random_generator = new_random_generator(
+            {**instance["input_fields"], **instance["reference_fields"]}
+        )
+        return random_generator.choice(self.templates)
+
+
 class InputOutputTemplate(Template):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
-    Args specify the formatting strings with which to glue together the input and output designated fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
     """
 
-    input_format: str = None
+    input_format: str
     output_format: str = None
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+    def input_fields_to_source(
+        self, input_fields: Dict[str, object]
+    ) -> Tuple[str, str]:
         return self.apply_formatting(
-            inputs, "input", self.input_format, "input_format", serialize=True
+            input_fields,
+            "input field",
+            self.input_format,
+            "input_format",
+            serialize=True,
         )
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
         target = self.apply_formatting(
-            outputs, "output", self.output_format, "output_format", serialize=True
+            reference_fields,
+            "reference field",
+            self.output_format,
+            "output_format",
+            serialize=True,
         )
         references = [target]
         return target, references
@@ -157,12 +234,22 @@ class InputOutputTemplate(Template):
 class InputOutputTemplateWithCustomTarget(InputOutputTemplate):
     reference: str
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
         target = self.apply_formatting(
-            outputs, "output", self.output_format, "output_format", serialize=True
+            reference_fields,
+            "reference field",
+            self.output_format,
+            "output_format",
+            serialize=True,
         )
         reference = self.apply_formatting(
-            outputs, "output", self.reference, "reference", serialize=True
+            reference_fields,
+            "reference field",
+            self.reference,
+            "reference",
+            serialize=True,
         )
         return target, [reference]
 
@@ -202,46 +289,52 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
     def verify(self):
         super().verify()
 
-    def verbalize_answer_field(self, outputs: Dict[str, object]):
-        answer = outputs[self.answer_field]
+    def verbalize_answer_field(self, reference_fields: Dict[str, object]):
+        answer = reference_fields[self.answer_field]
         assert answer in ["choice_a", "choice_b", "tie"]
         if answer == "choice_a":
-            outputs[self.answer_field] = self.choice_a_label
+            reference_fields[self.answer_field] = self.choice_a_label
         elif answer == "choice_b":
-            outputs[self.answer_field] = self.choice_b_label
+            reference_fields[self.answer_field] = self.choice_b_label
         else:
-            outputs[self.answer_field] = self.choice_tie_label
+            reference_fields[self.answer_field] = self.choice_tie_label
 
-        return outputs
+        return reference_fields
 
-    def shuffle_values(self, inputs: Dict[str, object], outputs: Dict[str, object]):
+    def shuffle_values(
+        self, input_fields: Dict[str, object], reference_fields: Dict[str, object]
+    ):
+        if not self.shuffle:
+            return input_fields, reference_fields
         outcome = random()  # A float between 0 and 1
         if outcome <= 0.5:
-            choice_a_value = inputs[self.choice_a_field]
-            choice_b_value = inputs[self.choice_b_field]
+            choice_a_value = input_fields[self.choice_a_field]
+            choice_b_value = input_fields[self.choice_b_field]
 
-            inputs[self.choice_a_field] = choice_a_value
-            inputs[self.choice_b_field] = choice_b_value
+            input_fields[self.choice_a_field] = choice_b_value
+            input_fields[self.choice_b_field] = choice_a_value
 
-            answer = outputs[self.answer_field]
+            answer = reference_fields[self.answer_field]
             assert answer in [
                 self.choice_a_label,
                 self.choice_b_label,
                 self.choice_tie_label,
             ]
             if answer == self.choice_a_label:
-                outputs[self.answer_field] = self.choice_b_label
+                reference_fields[self.answer_field] = self.choice_b_label
             elif answer == self.choice_b_label:
-                outputs[self.answer_field] = self.choice_a_label
+                reference_fields[self.answer_field] = self.choice_a_label
 
-        return inputs, outputs
+        return input_fields, reference_fields
 
-    def preprocess_inputs_and_outputs(
-        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    def preprocess_input_and_reference_fields(
+        self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        outputs = self.verbalize_answer_field(outputs)
-        inputs, outputs = self.shuffle_values(inputs, outputs)
-        return inputs, outputs
+        reference_fields = self.verbalize_answer_field(reference_fields)
+        input_fields, reference_fields = self.shuffle_values(
+            input_fields, reference_fields
+        )
+        return input_fields, reference_fields
 
 
 class DialogFieldsData(Artifact):
@@ -256,9 +349,9 @@ class DialogTemplate(InputOutputTemplate):
     turns_separator: str = "\n\n"
     label_separator: str = " "
 
-    def process_dialog(self, inputs: Dict[str, object]):
+    def process_dialog(self, input_fields: Dict[str, object]):
         for dialog_fields in self.dialog_fields:
-            dialog = inputs[dialog_fields.dialog_field]
+            dialog = input_fields[dialog_fields.dialog_field]
             # TODO: update isoftype method to support Literal verification and check
             #  it's List[Tuple[Literal["user", "assistant", "system"], str]] (Issue #799)
             assert isoftype(dialog, List[Tuple[str, str]])
@@ -278,25 +371,81 @@ class DialogTemplate(InputOutputTemplate):
                 elif turn_type == "system":
                     dialog_str += f"{turns_separator}{system_role_label}{self.label_separator}{turn_text}"
 
-            inputs[dialog_fields.dialog_field] = dialog_str
-        return inputs
+            input_fields[dialog_fields.dialog_field] = dialog_str
+        return input_fields
 
-    def preprocess_inputs_and_outputs(
-        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    def preprocess_input_and_reference_fields(
+        self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        return self.process_dialog(inputs), outputs
+        return self.process_dialog(input_fields), reference_fields
 
 
 class DialogPairwiseChoiceTemplate(DialogTemplate, PairwiseChoiceTemplate):
-    def preprocess_inputs_and_outputs(
-        self, inputs: Dict[str, Any], outputs: Dict[str, Any]
+    def preprocess_input_and_reference_fields(
+        self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        inputs, outputs = DialogTemplate.preprocess_inputs_and_outputs(
-            self, inputs, outputs
+        inputs, reference_fields = DialogTemplate.preprocess_input_and_reference_fields(
+            self, input_fields, reference_fields
         )
-        return PairwiseChoiceTemplate.preprocess_inputs_and_outputs(
-            self, inputs, outputs
+        return PairwiseChoiceTemplate.preprocess_input_and_reference_fields(
+            self, input_fields, reference_fields
         )
+
+
+class PairwiseComparativeRatingTemplate(InputOutputTemplate):
+    """PairwiseChoiceTemplate.
+
+    Args:
+         choice_a_field (str): The field which contains choice_a value
+         choice_b_field (str): The field which contains choice_b value
+         answer_field (str): The field which contains the answer value. The value should be an int.
+          Positive for preferring choice_a, and negative for preferring choice_b
+         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+
+    shuffle: 50% of the time:
+     1) The values of choice_a_field and choice_b_field will be swapped.
+     2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
+
+    """
+
+    choice_a_field: str
+    choice_b_field: str
+    choice_a_id_field: str
+    choice_b_id_field: str
+    answer_field: str
+    shuffle: bool
+
+    def shuffle_values(
+        self, input_fields: Dict[str, object], reference_fields: Dict[str, object]
+    ):
+        if not self.shuffle:
+            return input_fields, reference_fields
+        outcome = random()  # A float between 0 and 1
+        if outcome <= 0.5:
+            choice_a_value = input_fields[self.choice_a_field]
+            choice_b_value = input_fields[self.choice_b_field]
+            input_fields[self.choice_a_field] = choice_b_value
+            input_fields[self.choice_b_field] = choice_a_value
+
+            choice_a_id_value = input_fields[self.choice_a_id_field]
+            choice_b_id_value = input_fields[self.choice_b_id_field]
+            input_fields[self.choice_a_id_field] = choice_b_id_value
+            input_fields[self.choice_b_id_field] = choice_a_id_value
+
+            assert isinstance(reference_fields[self.answer_field], int)
+            reference_fields[self.answer_field] = (
+                int(reference_fields[self.answer_field]) * -1
+            )
+
+        return input_fields, reference_fields
+
+    def preprocess_input_and_reference_fields(
+        self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        input_fields, reference_fields = self.shuffle_values(
+            input_fields, reference_fields
+        )
+        return input_fields, reference_fields
 
 
 class MultipleChoiceTemplate(Template):
@@ -356,85 +505,95 @@ class MultipleChoiceTemplate(Template):
             )
         return enumrated_choices
 
-    def inputs_to_numerals(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        return self.inputs_to_choices(inputs, "{choice_numeral}")
+    def inputs_to_numerals(self, input_fields: Dict[str, object]) -> Tuple[str, str]:
+        return self.inputs_to_choices(input_fields, "{choice_numeral}")
 
     def prepare_multiple_choice_inputs(
-        self, inputs: Dict[str, object]
+        self, input_fields: Dict[str, object]
     ) -> Dict[str, object]:
-        choices = self.inputs_to_choices(inputs, self.source_choice_format)
+        choices = self.inputs_to_choices(input_fields, self.source_choice_format)
         return {
-            "numerals": self.inputs_to_numerals(inputs),
-            **inputs,
+            "numerals": self.inputs_to_numerals(input_fields),
+            **input_fields,
             self.choices_field: self.choices_separator.join(choices),
         }
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
-        inputs = self.prepare_multiple_choice_inputs(inputs)
+    def input_fields_to_source(
+        self, input_fields: Dict[str, object]
+    ) -> Tuple[str, str]:
+        input_fields = self.prepare_multiple_choice_inputs(input_fields)
         return self.apply_formatting(
-            inputs, "input", self.input_format, "input_format", serialize=True
+            input_fields,
+            "input field",
+            self.input_format,
+            "input_format",
+            serialize=True,
         )
 
-    def inputs_to_instruction_and_target_prefix(self, inputs):
-        inputs = self.prepare_multiple_choice_inputs(inputs)
-        return super().inputs_to_instruction_and_target_prefix(inputs)
+    def input_fields_to_instruction_and_target_prefix(self, input_fields):
+        input_fields = self.prepare_multiple_choice_inputs(input_fields)
+        return super().input_fields_to_instruction_and_target_prefix(input_fields)
 
-    def outputs_to_target_index(self, outputs: Dict[str, object]) -> str:
-        target = outputs[self.target_field]
+    def outputs_to_target_index(self, reference_fields: Dict[str, object]) -> str:
+        target = reference_fields[self.target_field]
 
         if not isinstance(target, int):
             try:
-                return outputs[self.choices_field].index(target)
+                return reference_fields[self.choices_field].index(target)
             except ValueError as e:
-                raise ValueError(
-                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {outputs[self.choices_field]}"
+                raise UnitxtError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}",
+                    Documentation.ADDING_TEMPLATE,
                 ) from e
         return target
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        target = outputs[self.target_field]
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
+        target = reference_fields[self.target_field]
 
         if not isinstance(target, int):
             try:
-                target = outputs[self.choices_field].index(target)
+                target = reference_fields[self.choices_field].index(target)
             except ValueError as e:
-                raise ValueError(
-                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {outputs[self.choices_field]}"
+                raise UnitxtError(
+                    f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}",
+                    Documentation.ADDING_TEMPLATE,
                 ) from e
 
-        choices = self.inputs_to_choices(outputs, self.target_choice_format)
+        choices = self.inputs_to_choices(reference_fields, self.target_choice_format)
 
         try:
             target = choices[target]
         except IndexError as e:
-            raise IndexError(
-                f"MultipleChoiceTemplate cannot find index number {target} in choices: {choices}"
+            raise UnitxtError(
+                f"MultipleChoiceTemplate cannot find index number {target} in choices: {choices}",
+                Documentation.ADDING_TEMPLATE,
             ) from e
 
         return target, [target]
 
     def _shuffle_choices(self, instance, stream_name):
         if stream_name != constants.inference_stream:
-            target_index = self.outputs_to_target_index(instance["outputs"])
-            original_label_choice = instance["outputs"][self.choices_field][
+            target_index = self.outputs_to_target_index(instance["reference_fields"])
+            original_label_choice = instance["reference_fields"][self.choices_field][
                 target_index
             ]
-        choices = instance["inputs"][self.choices_field]
+        choices = instance["input_fields"][self.choices_field]
 
-        if stream_name == constants.inference_stream:
-            random_seed = {**instance["inputs"]}
-        else:
-            random_seed = {**instance["inputs"], **instance["outputs"]}
+        random_seed = {**instance["input_fields"]}
 
         random_generator = new_random_generator(random_seed)
         random_generator.shuffle(choices)
-        instance["inputs"][self.choices_field] = choices
+        instance["input_fields"][self.choices_field] = choices
 
         if stream_name == constants.inference_stream:
             return instance
 
-        instance["outputs"][self.choices_field] = choices
-        instance["outputs"][self.target_field] = choices.index(original_label_choice)
+        instance["reference_fields"][self.choices_field] = choices
+        instance["reference_fields"][self.target_field] = choices.index(
+            original_label_choice
+        )
 
         return instance
 
@@ -445,13 +604,13 @@ class MultipleChoiceTemplate(Template):
             instance = self._shuffle_choices(instance, stream_name)
         result = super().process(instance, stream_name)
         if stream_name == constants.inference_stream:
-            result["inputs"]["options"] = self.inputs_to_choices(
-                instance["inputs"], self.target_choice_format
+            result["input_fields"]["options"] = self.inputs_to_choices(
+                instance["input_fields"], self.target_choice_format
             )
         else:
-            if "options" not in result["outputs"]:
-                result["outputs"]["options"] = self.inputs_to_choices(
-                    instance["outputs"], self.target_choice_format
+            if "options" not in result["reference_fields"]:
+                result["reference_fields"]["options"] = self.inputs_to_choices(
+                    instance["reference_fields"], self.target_choice_format
                 )
         return result
 
@@ -482,30 +641,38 @@ class YesNoTemplate(Template):
     yes_answer: str = "Yes"
     no_answer: str = "No"
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+    def input_fields_to_source(
+        self, input_fields: Dict[str, object]
+    ) -> Tuple[str, str]:
         return self.apply_formatting(
-            inputs, "input", self.input_format, "input_format", serialize=True
+            input_fields,
+            "input field",
+            self.input_format,
+            "input_format",
+            serialize=True,
         )
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
         try:
-            gold_class_names = outputs[self.label_field]
+            gold_class_names = reference_fields[self.label_field]
         except KeyError as e:
-            raise RuntimeError(
-                f"Available outputs are {list(outputs.keys())}, missing required label field: '{self.label_field}'."
+            raise UnitxtError(
+                f"Available reference_fields are {list(reference_fields.keys())}, missing required label field: '{self.label_field}'."
             ) from e
         if not isinstance(gold_class_names, list):
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Unexpected value for gold_class_names: '{gold_class_names}'. Expecting a list."
             )
         try:
-            queried_class_name = outputs[self.class_field]
+            queried_class_name = reference_fields[self.class_field]
         except KeyError as e:
-            raise RuntimeError(
-                f"Available outputs are {list(outputs.keys())}, missing required class field: '{self.class_field}'."
+            raise UnitxtError(
+                f"Available reference_fields are {list(reference_fields.keys())}, missing required class field: '{self.class_field}'."
             ) from e
         if not queried_class_name or not isinstance(queried_class_name, str):
-            raise RuntimeError(
+            raise UnitxtError(
                 f"Unexpected value for queried_class_names: '{queried_class_name}'. Expected a string."
             )
         if queried_class_name in gold_class_names:
@@ -535,17 +702,21 @@ class KeyValTemplate(Template):
             pairs.append(key_val_sep.join(key_val))
         return pairs_sep.join(pairs)
 
-    def inputs_to_source(self, inputs: Dict[str, object]) -> Tuple[str, str]:
+    def input_fields_to_source(
+        self, input_fields: Dict[str, object]
+    ) -> Tuple[str, str]:
         return self.process_dict(
-            inputs,
+            input_fields,
             key_val_sep=self.key_val_separator,
             pairs_sep=self.pairs_separator,
             use_keys=self.use_keys_for_inputs,
         )
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
         target = self.process_dict(
-            outputs,
+            reference_fields,
             key_val_sep=self.key_val_separator,
             pairs_sep=self.pairs_separator,
             use_keys=self.use_keys_for_outputs,
@@ -556,59 +727,70 @@ class KeyValTemplate(Template):
 class OutputQuantizingTemplate(InputOutputTemplate):
     quantum: Union[float, int] = 0.1  # Now supports both int and float
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
         if isinstance(self.quantum, int):
             # When quantum is an int, format quantized values as ints
             quantized_outputs = {
                 key: f"{int(round(value / self.quantum) * self.quantum)}"
-                for key, value in outputs.items()
+                for key, value in reference_fields.items()
             }
         else:
             # When quantum is a float, format quantized values with precision based on quantum
             quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
             quantized_outputs = {
                 key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
-                for key, value in outputs.items()
+                for key, value in reference_fields.items()
             }
-        return super().outputs_to_target_and_references(quantized_outputs)
+        return super().reference_fields_to_target_and_references(quantized_outputs)
 
 
 class MultiLabelTemplate(InputOutputTemplate):
     labels_field: str = "labels"
     labels_separator: str = ", "
-    postprocessors: List[str] = ["processors.to_list_by_comma"]
+    postprocessors = ["processors.to_list_by_comma"]
     output_format: str = "{labels}"
     empty_label: str = "None"
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> str:
-        labels = outputs[self.labels_field]
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
+        labels = reference_fields[self.labels_field]
         if not isinstance(labels, list):
-            raise ValueError(
-                f"MultiLabelTemplate requires labels field '{self.labels_field}' to be a list. Got {self.labels_field}<{type(labels).__name__}>: {labels}"
+            raise UnitxtError(
+                f"MultiLabelTemplate requires labels field '{self.labels_field}' to be a list. Got {self.labels_field}<{type(labels).__name__}>: {labels}",
+                Documentation.ADDING_TEMPLATE,
             )
         if len(labels) == 0:
             labels = [self.empty_label]
         labels_str = self.labels_separator.join(labels)
-        return super().outputs_to_target_and_references({self.labels_field: labels_str})
+        return super().reference_fields_to_target_and_references(
+            {self.labels_field: labels_str}
+        )
 
 
 class MultiReferenceTemplate(InputOutputTemplate):
     references_field: str = "references"
     random_reference: bool = False
 
-    def outputs_to_target_and_references(self, outputs: Dict[str, object]) -> List[str]:
-        references = outputs[self.references_field]
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> List[str]:
+        references = reference_fields[self.references_field]
         if not isoftype(references, List[str]):
-            raise ValueError(
-                f"MultiReferenceTemplate requires references field '{self.references_field}' to be List[str]. Got {self.references_field}<{type(references).__name__}>: {references}"
+            raise UnitxtError(
+                f"MultiReferenceTemplate requires references field '{self.references_field}' to be List[str]. Got {self.references_field}<{type(references).__name__}>: {references}",
+                Documentation.ADDING_TEMPLATE,
             )
         if len(references) == 0:
-            raise ValueError(
-                "No references found. MultiReferenceTemplate requires at least one reference."
+            raise UnitxtError(
+                "No references found. MultiReferenceTemplate requires at least one reference.",
+                Documentation.ADDING_TEMPLATE,
             )
 
         if self.random_reference:
-            random_generator = new_random_generator(outputs)
+            random_generator = new_random_generator(reference_fields)
             target = random_generator.choice(references)
         else:
             target = references[0]
@@ -628,11 +810,11 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
     text_field: str = "text"
     labels_support: list = None
 
-    def extract_span_label_pairs(self, outputs):
-        spans_starts = outputs[self.spans_starts_field]
-        spans_ends = outputs[self.spans_ends_field]
-        text = outputs[self.text_field]
-        labels = outputs[self.labels_field]
+    def extract_span_label_pairs(self, reference_fields):
+        spans_starts = reference_fields[self.spans_starts_field]
+        spans_ends = reference_fields[self.spans_ends_field]
+        text = reference_fields[self.text_field]
+        labels = reference_fields[self.labels_field]
 
         spans = []
         for span_start, span_end, label in zip(spans_starts, spans_ends, labels):
@@ -643,12 +825,12 @@ class SpanLabelingBaseTemplate(MultiLabelTemplate):
             if self.labels_support is None or span[3] in self.labels_support:
                 yield span[2], span[3]
 
-    def outputs_to_target_and_references(
-        self, outputs: Dict[str, object]
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
     ) -> Dict[str, object]:
-        span_labels_pairs = self.extract_span_label_pairs(outputs)
+        span_labels_pairs = self.extract_span_label_pairs(reference_fields)
         targets = self.span_label_pairs_to_targets(span_labels_pairs)
-        return super().outputs_to_target_and_references({"labels": targets})
+        return super().reference_fields_to_target_and_references({"labels": targets})
 
     @abstractmethod
     def span_label_pairs_to_targets(self, pairs):

@@ -42,7 +42,8 @@ class TestRecipes(UnitxtTestCase):
                     "source": "classify\n\nUser:I stuck a pin through a carrot. When I pulled the pin out, it had a hole.\nAgent:",
                     "target": "not entailment",
                     "references": ["not entailment"],
-                    "group": "unitxt",
+                    "groups": [],
+                    "subset": [],
                     "postprocessors": ["processors.to_string_stripped"],
                     "data_classification_policy": ["public"],
                 },
@@ -86,7 +87,17 @@ class TestRecipes(UnitxtTestCase):
         target = {
             "metrics": ["metrics.accuracy"],
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
-            "group": "unitxt",
+            "target": " C",
+            "references": [" C"],
+            "task_data": '{"topic": "testing", '
+            '"question": "what?", '
+            '"choices": ["yes", "not", "maybe"], '
+            '"answer": "maybe", '
+            '"options": [" A", " B", " C"], '
+            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 0}'
+            "}",
+            "groups": [],
+            "subset": [],
             "postprocessors": ["processors.first_character"],
             "data_classification_policy": [],
         }
@@ -159,14 +170,64 @@ class TestRecipes(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.accuracy"],
-            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nThe single group within society that is most vulnerable to reference group influence is:\nA. The older consumer who feels somewhat left out of things.\nB. The married women, many of whom feel a need for stability in their lives.\nC. New immigrants who really want to assimilate into their new culture.\nD. Children, who base most of their buying decisions on outside influences.\nAnswer:\nAgent:  D\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\n Which of the following is an assumption in Maslow's hierarchy of needs?\nA. Needs are dependent on culture and also on social class.\nB. Lower-level needs must be at least partially satisfied before higher needs can affect behaviour.\nC. Needs are not prioritized or arranged in any particular order.\nD. Satisfied needs are motivators, and new needs emerge when current needs remain unmet.\nAnswer:\nAgent:  B\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nIn an organization, the group of people tasked with buying decisions is referred to as the _______________.\nA. Outsourcing unit.\nB. Procurement centre.\nC. Chief executive unit.\nD. Decision-making unit.\nAnswer:\nAgent:  D\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
+            "source": """<<SYS>>
+You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
+
+If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
+<</SYS>>
+
+
+
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:
+A. Care lines.
+B. Direct mail.
+C. Inserts.
+D. Door to door.
+Answer:
+Agent:  D
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+ _____________ is a natural outcome when combining demographic and geographic variables.
+A. Geodemographics
+B. Product differentiation.
+C. ANSOFF matrix.
+D. Brand management.
+Answer:
+Agent:  A
+
+User: The following are multiple choice questions (with answers) about marketing.
+
+In an organization, the group of people tasked with buying decisions is referred to as the _______________.
+A. Outsourcing unit.
+B. Procurement centre.
+C. Chief executive unit.
+D. Decision-making unit.
+Answer:
+Agent:  D
+
+
+User:The following are multiple choice questions (with answers) about testing.
+
+what?
+A. yes
+B. not
+C. maybe
+Answer:
+Agent:""",
+            "target": " C",
+            "references": [" C"],
             "task_data": '{"topic": "testing",'
             ' "question": "what?",'
             ' "choices": ["yes", "not", "maybe"],'
             ' "options": [" A", " B", " C"],'
-            ' "metadata": {"template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}'
+            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 3}'
             "}",
-            "group": "unitxt",
+            "groups": [],
+            "subset": [],
             "postprocessors": ["processors.first_character"],
             "data_classification_policy": [],
         }
@@ -229,10 +290,22 @@ class TestRecipes(UnitxtTestCase):
             num_demos=3,
         )
 
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: Emma did not pass the ball to Janie although she was open., premise, She saw that Janie was open., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: The foxes are getting in at night and attacking the chickens. I shall have to kill them., premise, I shall have to kill The foxes., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., premise, When Fred first saw my father, My father was twelve years old., hypothesis, entailment, not entailment, entailment\nAgent: entailment\n\n\nUser:Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., premise, The sweater looks dowdy on her., hypothesis, entailment, not entailment, entailment\nAgent:",
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.empty", "num_demos": 3}}',
+            "groups": [],
+            "subset": [],
+        }
+
         stream = recipe()
 
         for instance in stream["train"]:
-            print_dict(instance)
+            self.assertDictEqual(instance, target)
             break
 
     def test_key_val_template(self):
@@ -245,11 +318,76 @@ class TestRecipes(UnitxtTestCase):
             num_demos=3,
         )
 
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: text_a: Emma did not pass the ball to Janie although she was open., text_a_type: premise, text_b: She saw that Janie was open., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: The foxes are getting in at night and attacking the chickens. I shall have to kill them., text_a_type: premise, text_b: I shall have to kill The foxes., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., text_a_type: premise, text_b: When Fred first saw my father, My father was twelve years old., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: entailment\n\n\nUser:text_a: Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., text_a_type: premise, text_b: The sweater looks dowdy on her., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent:",
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 3}}',
+            "groups": [],
+            "subset": [],
+        }
+
         stream = recipe()
 
         for instance in stream["train"]:
-            print_dict(instance)
+            self.assertDictEqual(instance, target)
             break
+
+    def test_random_template(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template=[
+                "templates.key_val",
+                "templates.classification.multi_class.relation.truthfulness.flan_5",
+            ],
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": '<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\'t know the answer to a question, please don\'t share false information.\n<</SYS>>\n\n\n\n\nUser: Problem: Sentence: "Emma did not pass the ball to Janie although she was open.";\nAnother sentence: "She saw that Janie was open."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "The foxes are getting in at night and attacking the chickens. I shall have to kill them.";\nAnother sentence: "I shall have to kill The foxes."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.";\nAnother sentence: "When Fred first saw my father, My father was twelve years old."?\nAgent: A: entailment\n\n\nUser:Problem: Sentence: "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.";\nAnother sentence: "The sweater looks dowdy on her."?\nAgent:A: ',
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.truthfulness.flan_5", "num_demos": 3}}',
+            "groups": [],
+            "subset": [],
+        }
+
+        stream = recipe()
+
+        for instance in stream["train"]:
+            self.assertDictEqual(instance, target)
+            break
+
+    def test_random_num_demos(self):
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template="templates.key_val",
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=[0, 1, 3, 5],
+        )
+
+        stream = recipe()
+        lengths = set()
+        for i, instance in enumerate(stream["train"]):
+            if i > 30:
+                break
+            lengths.add(len(instance["source"].split("\nAgent:")))
+
+        self.assertEqual(len(lengths), 4)
 
     def test_standard_recipe_with_balancer(self):
         recipe = StandardRecipeWithIndexes(
@@ -531,30 +669,6 @@ class TestRecipes(UnitxtTestCase):
         iterator = iter(dataset["train"])
         first_inst = next(iterator)
         self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
-
-    def test_standard_recipe_with_a_sampler(self):
-        """Check that the sampler is re-initialized before processing a recipe.
-
-        To do so, save the random generator within the sampler before activating the recipe,
-        and compare it to the random generator within the sampler after the revipe was called.
-        The two generators should be different objects, indicating that the sampler was properly
-        re-initialized during the preparation of the recipe.
-        """
-        recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
-            template_card_index=0,
-            max_train_instances=0,
-            max_test_instances=2,
-            num_demos=1,
-            demos_pool_size=10,
-        )
-        sampler = recipe.card.sampler
-
-        random_generator1 = sampler.random_generator
-        recipe()
-        random_generator2 = sampler.random_generator
-
-        self.assertNotEqual(random_generator1, random_generator2)
 
     def test_standard_recipe_with_a_missing_sampler(self):
         """Check that initializing a recipe with a card that does not have a sampler raises an exception."""

@@ -1,0 +1,48 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "allenai/reward-bench",
+        "split": "filtered"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "filtered": "test"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "prompt": "question",
+                "chosen": "answer_a",
+                "rejected": "answer_b",
+                "subset": "group"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "winner": "choice_a"
+            }
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "group": [
+                    "alpacaeval-easy",
+                    "alpacaeval-length",
+                    "alpacaeval-hard",
+                    "mt-bench-easy",
+                    "mt-bench-med"
+                ]
+            },
+            "condition": "in"
+        }
+    ],
+    "task": "tasks.response_assessment.pairwise_comparison.single_turn",
+    "templates": [
+        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn"
+    ]
+}
