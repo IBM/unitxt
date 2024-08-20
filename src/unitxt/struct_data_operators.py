@@ -18,7 +18,6 @@ For key-value pairs, expected input format is:
 import json
 import random
 from abc import ABC, abstractmethod
-from copy import deepcopy
 from typing import (
     Any,
     Dict,
@@ -30,6 +29,7 @@ import pandas as pd
 
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
+from .utils import deepcopy
 
 
 class SerializeTable(ABC, FieldOperator):

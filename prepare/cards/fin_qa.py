@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import CopyFields
+from unitxt.operators import CopyFields, FilterByExpression
 from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
@@ -14,6 +14,7 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="ibm/finqa", streaming=False),
     preprocess_steps=[
+        FilterByExpression(expression="len(table) > 1"),
         CopyFields(field_to_field=[["pre_text/0", "pre_text"]]),
         CopyFields(field_to_field=[["post_text/0", "post_text"]]),
         MapTableListsToStdTableJSON(field_to_field=[["table", "stdtable"]]),
@@ -23,13 +24,13 @@ card = TaskCard(
     ],
     task=Task(
         inputs={
-            "pre_text": "str",
-            "serialized_table": "str",
-            "post_text": "str",
-            "question": "str",
+            "pre_text": str,
+            "serialized_table": str,
+            "post_text": str,
+            "question": str,
         },
-        outputs={"program_re": "str", "answer": "str"},
-        prediction_type="str",
+        outputs={"program_re": str, "answer": str},
+        prediction_type=str,
         metrics=["metrics.fin_qa_metric"],
         augmentable_inputs=["pre_text", "serialized_table", "post_text", "question"],
     ),

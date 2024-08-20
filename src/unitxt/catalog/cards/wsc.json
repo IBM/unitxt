@@ -28,13 +28,13 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "choices",
             "text",
             "span1_text",
             "span2_text"
         ],
-        "outputs": [
+        "reference_fields": [
             "label"
         ],
         "metrics": [

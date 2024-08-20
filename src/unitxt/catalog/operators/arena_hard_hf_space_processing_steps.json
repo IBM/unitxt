@@ -1,0 +1,229 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "cluster": "group"
+            },
+            "apply_to_streams": [
+                "questions"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "turns/0/content": "model_input"
+            },
+            "apply_to_streams": [
+                "questions"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "choices/0/turns/0/content": "model_output",
+                "choices/0/turns/0/token_len": "model_output_token_len"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_id",
+            "apply_to_streams": [
+                "model_answer"
+            ],
+            "_argv": [
+                "model_id"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "games/0/user_prompt": "judge_input_model_1_ordered_first",
+                "games/1/user_prompt": "judge_input_model_2_ordered_first",
+                "games/0/judgment": "judge_output_model_1_ordered_first",
+                "games/1/judgment": "judge_output_model_2_ordered_first",
+                "games/0/score": "score_model_1_ordered_first",
+                "games/1/score": "score_model_2_ordered_first"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model": "model_2",
+                "judge": "judge_model_id"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "model_1": "gpt-4-0314"
+            },
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str",
+            "to_field": "judge_input_model_1_ordered_first",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "judge_input_model_1_ordered_first"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str",
+            "to_field": "judge_input_model_2_ordered_first",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "judge_input_model_2_ordered_first"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_1",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "model_1"
+            ]
+        },
+        {
+            "__type__": "apply",
+            "function": "str.lower",
+            "to_field": "model_2",
+            "apply_to_streams": [
+                "judgment"
+            ],
+            "_argv": [
+                "model_2"
+            ]
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "score_model_1_ordered_first": [
+                    "A=B",
+                    "A>B",
+                    "A>>B",
+                    "B>A",
+                    "B>>A"
+                ],
+                "score_model_2_ordered_first": [
+                    "A=B",
+                    "A>B",
+                    "A>>B",
+                    "B>A",
+                    "B>>A"
+                ]
+            },
+            "condition": "in",
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "questions",
+            "right_stream": "judgment",
+            "how": "inner",
+            "on": [
+                "question_id"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model_id": "model_1",
+                "model_output": "model_1_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "merged_stream",
+            "right_stream": "model_answer",
+            "how": "inner",
+            "on": [
+                "question_id",
+                "model_1"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model_1": "model_2",
+                "model_1_output": "model_2_output"
+            },
+            "apply_to_streams": [
+                "model_answer"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "merged_stream",
+            "right_stream": "model_answer",
+            "how": "inner",
+            "on": [
+                "question_id",
+                "model_2"
+            ],
+            "new_stream_name": "merged_stream"
+        },
+        {
+            "__type__": "delete_splits",
+            "splits": [
+                "questions",
+                "model_answer",
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "merged_stream": "test"
+            }
+        },
+        {
+            "__type__": "select_fields",
+            "fields": [
+                "question_id",
+                "category",
+                "model_input",
+                "model_1",
+                "model_2",
+                "judge_model_id",
+                "model_1_output",
+                "model_2_output",
+                "score_model_1_ordered_first",
+                "score_model_2_ordered_first",
+                "judge_input_model_1_ordered_first",
+                "judge_input_model_2_ordered_first",
+                "judge_output_model_1_ordered_first",
+                "judge_output_model_2_ordered_first"
+            ]
+        }
+    ]
+}

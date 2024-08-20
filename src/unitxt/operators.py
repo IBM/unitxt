@@ -14,9 +14,9 @@ To enhance the functionality of Unitxt, users are encouraged to develop custom o
 This can be achieved by inheriting from any of the existing operators listed below or from one of the fundamental :class:`base operators<unitxt.operator>`.
 The primary task in any operator development is to implement the `process` function, which defines the unique manipulations the operator will perform.
 
-General or Specelized Operators
+General or Specialized Operators
 --------------------------------
-Some operators are specielized in specific data or specific operations such as:
+Some operators are specialized in specific data or specific operations such as:
 
 - :class:`loaders<unitxt.loaders>` for accessing data from various sources.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
@@ -28,12 +28,12 @@ Some operators are specielized in specific data or specific operations such as:
 - :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
 - :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
-Other specelized operators are used by unitxt internally:
+Other specialized operators are used by unitxt internally:
 
 - :class:`templates<unitxt.templates>` for verbalizing data examples.
 - :class:`formats<unitxt.formats>` for preparing data for models.
 
-The rest of this section is dedicated for general operators.
+The rest of this section is dedicated to general operators.
 
 General Operators List:
 ------------------------
@@ -45,7 +45,6 @@ import uuid
 import zipfile
 from abc import abstractmethod
 from collections import Counter, defaultdict
-from copy import deepcopy
 from dataclasses import field
 from itertools import zip_longest
 from random import Random
@@ -86,7 +85,7 @@ from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
-from .utils import flatten_dict
+from .utils import deepcopy, flatten_dict
 
 settings = get_settings()
 
@@ -303,6 +302,10 @@ class SelectFields(InstanceOperator):
 
     fields: List[str]
 
+    def prepare(self):
+        super().prepare()
+        self.fields.extend(["data_classification_policy", "recipe_metadata"])
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -471,23 +474,23 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
-class RenameFields(FieldOperator):
+class Rename(FieldOperator):
     """Renames fields.
 
     Move value from one field to another, potentially, if field name contains a /, from one branch into another.
     Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
-        RenameFields(field_to_field={"b": "c"})
+        Rename(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"})
+        Rename(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"})
+        Rename(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"})
+        Rename(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -506,6 +509,11 @@ class RenameFields(FieldOperator):
                 dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
+
+
+@deprecation(version="2.0.0", alternative=Rename)
+class RenameFields(Rename):
+    pass
 
 
 class AddConstant(FieldOperator):
@@ -552,7 +560,7 @@ class Augmentor(InstanceOperator):
 
     def set_task_input_fields(self, task_input_fields: List[str]):
         self._task_input_fields = [
-            "inputs/" + task_input_field for task_input_field in task_input_fields
+            "input_fields/" + task_input_field for task_input_field in task_input_fields
         ]
 
     def process(
@@ -774,7 +782,7 @@ class Apply(InstanceOperator):
     Args:
         function (str): name of function.
         to_field (str): the field to store the result
-        additional arguments are field names passed to the function
+        any additional arguments are field names whose values will be passed directly to the function specified
 
     Examples:
     Store in field  "b" the uppercase string of the value in field "a"

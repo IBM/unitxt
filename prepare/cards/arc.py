@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Copy, IndexOf, RenameFields
+from unitxt.operators import Copy, IndexOf, Rename
 from unitxt.test_utils.card import test_card
 
 subtasks = ["ARC-Challenge", "ARC-Easy"]
@@ -10,7 +10,7 @@ for subtask in subtasks:
         loader=LoadHF(path="ai2_arc", name=subtask),
         preprocess_steps=[
             Set({"topic": "science"}),
-            RenameFields(field_to_field={"answerKey": "label", "choices": "_choices"}),
+            Rename(field_to_field={"answerKey": "label", "choices": "_choices"}),
             Copy(
                 field_to_field={"_choices/text": "choices", "_choices/label": "labels"}
             ),

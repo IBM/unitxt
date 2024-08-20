@@ -5,7 +5,6 @@ import os
 import pkgutil
 import re
 from abc import abstractmethod
-from copy import deepcopy
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
@@ -23,7 +22,7 @@ from .parsing_utils import (
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import artifacts_json_cache, json_dump, save_to_file
+from .utils import artifacts_json_cache, deepcopy, json_dump, save_to_file
 
 logger = get_logger()
 settings = get_settings()
@@ -124,7 +123,7 @@ class UnrecognizedArtifactTypeError(ValueError):
 class MissingArtifactTypeError(ValueError):
     def __init__(self, dic) -> None:
         message = (
-            f"Missing 'type' parameter. Expected 'type' in artifact dict, got {dic}"
+            f"Missing '__type__' parameter. Expected 'type' in artifact dict, got {dic}"
         )
         super().__init__(message)
 
@@ -224,7 +223,9 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            return cls._class_register[obj.pop("__type__")](**obj)
+            artifact_class = cls._class_register[obj.pop("__type__")]
+            obj = artifact_class.process_data_after_load(obj)
+            return artifact_class(**obj)
 
         return obj
 
@@ -289,7 +290,17 @@ class Artifact(Dataclass):
             self.verify()
 
     def _to_raw_dict(self):
-        return {"__type__": self.__type__, **self._init_dict}
+        return {
+            "__type__": self.__type__,
+            **self.process_data_before_dump(self._init_dict),
+        }
+
+    def process_data_before_dump(self, data):
+        return data
+
+    @classmethod
+    def process_data_after_load(cls, data):
+        return data
 
     def to_json(self):
         data = self.to_dict()
@@ -428,10 +439,10 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     """Loads an artifict from one of possible representations.
 
     (1) If artifact representation is already an Artifact object, return it.
-    (2) If artifact representation is a string location of a local file, load the Artifact from local file.
-    (3) If artifact representation is a string name iin the catalog, load the Artifact from the catalog.
-    (4) If artifact representation is a json string, create dictionary representation from the string and build an Artifact object from it.
-    (5) Otherwise, check the artifact representation is a dictionary and build an Artifact object from it.
+    (2) If artifact representation is a string location of a local file, load the Artifact from the local file.
+    (3) If artifact representation is a string name in the catalog, load the Artifact from the catalog.
+    (4) If artifact representation is a json string, create a dictionary representation from the string and build an Artifact object from it.
+    (5) Otherwise, check that the artifact representation is a dictionary and build an Artifact object from it.
     """
     if isinstance(artifact_rep, Artifact):
         return artifact_rep, None
@@ -454,7 +465,6 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
-
     # Load from dictionary (fails if not valid dictionary)
     return Artifact.from_dict(artifact_rep), None
 

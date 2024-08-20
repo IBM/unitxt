@@ -1,0 +1,83 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_hf_space",
+        "space_name": "lmsys/arena-hard-browser",
+        "revision": "03b91ca",
+        "data_files": {
+            "questions": "data/arena-hard-v0.1/question.jsonl",
+            "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",
+            "judgment": "data/arena-hard-v0.1/model_judgment/gpt-4-1106-preview/*.jsonl"
+        }
+    },
+    "preprocess_steps": [
+        "operators.arena_hard_hf_space_processing_steps",
+        {
+            "__type__": "duplicate_split",
+            "split": "test",
+            "to_split": "game_2"
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "answer_a",
+                "model_2_output": "answer_b",
+                "score_model_1_ordered_first": "answer_a_preference",
+                "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b"
+            },
+            "apply_to_streams": [
+                "test"
+            ]
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "answer_b",
+                "model_2_output": "answer_a",
+                "score_model_2_ordered_first": "answer_a_preference",
+                "category": "group",
+                "model_1": "model_b",
+                "model_2": "model_a"
+            },
+            "apply_to_streams": [
+                "game_2"
+            ]
+        },
+        {
+            "__type__": "merge_streams",
+            "streams_to_merge": [
+                "test",
+                "game_2"
+            ],
+            "new_stream_name": "test",
+            "add_origin_stream_name": false
+        },
+        {
+            "__type__": "delete_splits",
+            "splits": [
+                "game_2"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "answer_a_preference": {
+                    "A=B": 0,
+                    "A>B": 1,
+                    "A>>B": 3,
+                    "B>A": -1,
+                    "B>>A": -3
+                }
+            }
+        }
+    ],
+    "task": "tasks.response_assessment.pairwise_comparative_rating.single_turn",
+    "templates": [
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling"
+    ]
+}

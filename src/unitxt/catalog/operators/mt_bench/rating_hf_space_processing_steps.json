@@ -2,7 +2,7 @@
     "__type__": "sequential_operator",
     "steps": [
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "turns": "model_input"
             },
@@ -11,10 +11,9 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model": "model_id",
-                "judge": "judge_model_id",
                 "user_prompt": "judge_input",
                 "judgment": "judge_output"
             },
@@ -23,7 +22,15 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "copy",
+            "field": "judge/0",
+            "to_field": "judge_model_id",
+            "apply_to_streams": [
+                "judgment"
+            ]
+        },
+        {
+            "__type__": "rename",
             "field_to_field": {
                 "choices": "model_output"
             },

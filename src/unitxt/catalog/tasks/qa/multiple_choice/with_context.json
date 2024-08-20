@@ -1,13 +1,13 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "context": "str",
         "context_type": "str",
         "question": "str",
         "choices": "List[str]"
     },
-    "outputs": {
-        "answer": "Union[int,str]",
+    "reference_fields": {
+        "answer": "Union[int, str]",
         "choices": "List[str]"
     },
     "prediction_type": "str",

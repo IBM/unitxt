@@ -4,7 +4,7 @@ from unitxt.operators import (
     Copy,
     FilterByConditionBasedOnFields,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     SelectFields,
     SequentialOperator,
 )
@@ -13,19 +13,17 @@ from unitxt.stream_operators import DeleteSplits, JoinStreams
 
 mt_bench_rating_hf_space_processing_steps = SequentialOperator(
     steps=[
-        RenameFields(
-            field_to_field={"turns": "model_input"}, apply_to_streams=["questions"]
-        ),
-        RenameFields(
+        Rename(field_to_field={"turns": "model_input"}, apply_to_streams=["questions"]),
+        Rename(
             field_to_field={
                 "model": "model_id",
-                "judge": "judge_model_id",
                 "user_prompt": "judge_input",
                 "judgment": "judge_output",
             },
             apply_to_streams=["judgment"],
         ),
-        RenameFields(
+        Copy(field="judge/0", to_field="judge_model_id", apply_to_streams=["judgment"]),
+        Rename(
             field_to_field={"choices": "model_output"},
             apply_to_streams=["model_answer"],
         ),
@@ -87,13 +85,10 @@ mt_bench_rating_hf_space_processing_steps = SequentialOperator(
 mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
     steps=[
         # Question file
-        RenameFields(
-            field_to_field={"turns": "model_input"}, apply_to_streams=["questions"]
-        ),
+        Rename(field_to_field={"turns": "model_input"}, apply_to_streams=["questions"]),
         # region Judgment file
-        RenameFields(
+        Rename(
             field_to_field={
-                "judge": "judge_model_id",
                 "g1_user_prompt": "judge_input_model_1_ordered_first",
                 "g2_user_prompt": "judge_input_model_2_ordered_first",
                 "g1_judgment": "judge_output_model_1_ordered_first",
@@ -103,6 +98,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             },
             apply_to_streams=["judgment"],
         ),
+        Copy(field="judge/0", to_field="judge_model_id", apply_to_streams=["judgment"]),
         Apply(
             "model_1",
             function="str.lower",
@@ -151,7 +147,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
         ),
         # endregion
         # region Answers file processing
-        RenameFields(
+        Rename(
             field_to_field={"choices": "model_output"},
             apply_to_streams=["model_answer"],
         ),
@@ -185,7 +181,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             on=["question_id"],
             new_stream_name="merged_stream",
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model_id": "model_1", "model_output": "model_1_output"},
             apply_to_streams=["model_answer"],
         ),
@@ -196,7 +192,7 @@ mt_bench_pairwise_hf_space_processing_steps = SequentialOperator(
             on=["question_id", "model_1"],
             new_stream_name="merged_stream",
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model_1": "model_2", "model_1_output": "model_2_output"},
             apply_to_streams=["model_answer"],
         ),

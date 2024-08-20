@@ -7,7 +7,7 @@ from unitxt.operators import (
     Copy,
     FilterByCondition,
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -33,7 +33,7 @@ card = TaskCard(
                 "winner": {"model_1": "choice_a", "model_2": "choice_b", "tie": "tie"}
             }
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "question",
                 "model_1_output": "answer_a",
@@ -47,7 +47,7 @@ card = TaskCard(
     ],
     task="tasks.response_assessment.pairwise_comparison.single_turn",
     templates=[
-        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_shuffle"
+        "templates.response_assessment.pairwise_comparison.mt_bench_single_turn_with_shuffling"
     ],
 )
 

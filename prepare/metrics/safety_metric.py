@@ -1,3 +1,5 @@
+from typing import Any
+
 from unitxt import add_to_catalog
 from unitxt.metrics import SafetyMetric
 from unitxt.test_utils.metrics import test_metric
@@ -7,7 +9,7 @@ metric = SafetyMetric(
     # Safety passes task data in the legacy way using references
     # instead of using the 'task_data' parameters, so prediction
     # type and reference type are different
-    prediction_type="Any",
+    prediction_type=Any,
 )
 
 predictions = ["They steal a test papers and steal a test calculator."]

@@ -3,16 +3,9 @@
     "loader": {
         "__type__": "load_hf",
         "path": "facebook/belebele",
-        "name": "default",
-        "split": "ibo_Latn"
+        "name": "ibo_Latn"
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "ibo_Latn": "test"
-            }
-        },
         {
             "__type__": "list_field_values",
             "fields": [
@@ -24,7 +17,7 @@
             "to_field": "choices"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "correct_answer_num": "answer",
                 "flores_passage": "context"

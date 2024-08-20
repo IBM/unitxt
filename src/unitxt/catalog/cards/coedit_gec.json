@@ -24,7 +24,7 @@
             "by": ": "
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "src": "original_text"
             }

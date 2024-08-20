@@ -1,9 +1,7 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
-)
+from unitxt.inference import HFPipelineBasedInferenceEngine
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
@@ -24,9 +22,9 @@ card = TaskCard(
     loader=LoadFromDictionary(data=data),
     # Define the QA task input and output and metrics.
     task=Task(
-        inputs={"question": "str"},
-        outputs={"answer": "str"},
-        prediction_type="str",
+        input_fields={"question": str},
+        reference_fields={"answer": str},
+        prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
     # Create a simple template that formats the input.
@@ -53,15 +51,21 @@ model_name = "google/flan-t5-base"
 inference_model = HFPipelineBasedInferenceEngine(
     model_name=model_name, max_new_tokens=32
 )
+
 # change to this to infer with IbmGenAI APIs:
 #
-# gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# from unitxt.inference import IbmGenAiInferenceEngine
+# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
+#
+# or this to infer using WML APIs:
+#
+# from unitxt.inference import WMLInferenceEngine
+# inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# gen_params = IOpenAiInferenceEngineParams(max_new_tokens=32)
-# inference_model = OpenAiInferenceEngine(model_name=model_name, parameters=gen_params)
+# from unitxt.inference import OpenAiInferenceEngine
+# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # Note that to run with OpenAI APIs you need to change the loader specification, to
 # define that your data can be sent to a public API:

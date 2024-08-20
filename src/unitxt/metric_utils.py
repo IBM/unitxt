@@ -1,12 +1,12 @@
 import json
-from copy import deepcopy
-from typing import Any, Dict, Generator, Iterable, List, Optional
+from collections import defaultdict
+from functools import lru_cache
+from statistics import mean
+from typing import Any, Dict, Iterable, List, Optional
 
 from datasets import Features, Value
-from numpy import nanmean
 
 from .dataclass import Dataclass
-from .dict_utils import dict_set
 from .operator import (
     MultiStreamOperator,
     SequentialOperator,
@@ -18,110 +18,18 @@ from .operators import (
     ApplyOperatorsField,
     Copy,
     FlattenInstances,
-    MergeStreams,
-    RenameFields,
-    SplitByNestedGroup,
+    Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
+from .utils import deepcopy
 
 
-class MultiStreamScoreMean(MultiStreamOperator):
-    """Given a multi-stream where each stream is already scored globally, generate a nested global score for the whole multi-stream.
-
-    The whole-ms-global-score is a nested structure, specifying (also) the individual global scores of the
-    individual streams participating in the input multi_stream.
-    The instances of all these individual streams are assumed to have the "group" field indicate the stream
-    they belong to.
-    Potentially, these individual streams were produced from a SplitByNestedGroup
-    operator that did not use the full length of the value in field "group" of the instances, but only the
-    first g components thereof, indicated by argument 'number_of_fusion_generations' of operator SplitByNestedGroup.
-    At any rate, a distinguishing prefix of the "group" value is recorded, by operator SplitByNestedGroup, in the stream_name.
-    The nested structure of the whole-ms-global-score is induced by these distinguishing prefixes,
-    by virtue of the global score of each individual stream sitting in the nested whole-ms-global-score,
-    deep in that dictionary, at the leaf lead to by a path being the distinguishing prefix indicated in the stream_name.
-    Thus, the global score of the stream becomes a leaf (though a dict by itself) of the whole-ms-global-score.
-
-    The ancestor nodes of the above leaves, in the whole-ms-global-score, contain each (in addition to dicts
-    leading down to leaves) a field named "score" whose value is set to be the mean of the values
-    sitting in field "score" of its immediate children nodes, and a field named "score_name" whose
-    value is set to be "group_mean".
-
-    When the input multistream consists of one single stream, it is returned as is, mainly for backward compatibility.
-    """
-
-    def update_intermediate_level_scores(self, level: dict) -> float:
-        if "score" in level:
-            return level["score"]
-            # the global score of the stream participating in this MultiStream
-        sub_scores = []
-        for key in level:
-            if isinstance(level[key], dict):
-                sub_scores.append(self.update_intermediate_level_scores(level[key]))
-        level.update({"score": nanmean(sub_scores), "score_name": "groups_mean"})
-        return level["score"]
-
-    def process(self, multi_stream: MultiStream) -> MultiStream:
-        # each stream went through Metric which is a single-stream-operator , and ended up with all
-        # its instance["score"]["global"] linking to the same single dict object.
-        # Here we first generate a new, nested version, for the whole-ms-global_score, and then update
-        # each stream's global score with the new version
-        # but if only one stream in the multistream - we return it as is
-        if len(multi_stream) == 1:
-            return multi_stream
-        global_score = {}
-        first_instances = {}
-        iterators = {}
-
-        for stream_name, stream in multi_stream.items():
-            iterators[stream_name] = iter(stream)
-            try:
-                first_instances[stream_name] = next(iterators[stream_name])
-            except StopIteration:
-                continue  # an empty stream, goto next stream
-            instance = first_instances[stream_name]
-            dict_set(
-                dic=global_score,
-                query=stream_name.split("~")[-1],
-                value=deepcopy(instance["score"]["global"]),
-                not_exist_ok=True,
-            )
-
-        self.update_intermediate_level_scores(global_score)
-        # update the global_score object for each stream. Recall that all instances
-        # in each stream link all to same python dict object
-        for stream_name in multi_stream.keys():
-            instance = first_instances[stream_name]
-            instance["score"]["global"].clear()
-            instance["score"]["global"].update(global_score)
-
-        def never_peek_twice_generator(
-            stream_name: str, first_instances: dict, iterators: dict
-        ) -> Generator:
-            while True:
-                if stream_name in first_instances:
-                    yield first_instances.pop(stream_name)
-                try:
-                    yield next(iterators[stream_name])
-                except StopIteration:
-                    return
-
-        return MultiStream(
-            {
-                stream_name: DynamicStream(
-                    never_peek_twice_generator,
-                    gen_kwargs={
-                        "stream_name": stream_name,
-                        "first_instances": first_instances,
-                        "iterators": iterators,
-                    },
-                )
-                for stream_name in multi_stream.keys()
-            }
-        )
+def nan_mean(scores):
+    return mean(score for score in scores if score == score)
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
@@ -141,11 +49,6 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
             }
         )
 
-
-# The task_data field in the schema is defined as
-# Sequence({"key": Value(dtype="string"), "value": Value("string")})
-# When receiving instances from this scheme, the keys and values are returned as two separate
-# lists, and are converted to a dictionary.
 
 _post_process_steps = SequentialOperator(
     steps=[
@@ -176,6 +79,171 @@ _post_process_steps = SequentialOperator(
 )
 
 
+@lru_cache(maxsize=None)
+def group_str(json_str):
+    data = json.loads(json_str)
+    return ",".join(f"{k}:{v}" for k, v in data.items())
+
+
+class SplitSubsetsAndGroups(MultiStreamOperator):
+    """Splits a MultiStream that is small - for metrics, hence: whole stream can sit in memory, split by the value of field 'group'.
+
+    Args:
+        number_of_fusion_generations: int
+
+    the value in field group is of the form "sourcen/sourcenminus1/..." describing the sources in which the instance sat
+    when these were fused, potentially several phases of fusion. the name of the most recent source sits first in this value.
+    (See BaseFusion and its extensions)
+    subsets_depth  specifies the depth of the prefix by which to split the stream.
+    """
+
+    subsets_field: str = "subset"
+    groups_field: str = "groups"
+    subset_depth: Optional[int] = None
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        result = defaultdict(list)
+
+        for stream_name, stream in multi_stream.items():
+            for i, instance in enumerate(stream):
+                instance["__idx__"] = i
+
+                for field in [self.subsets_field, self.groups_field]:
+                    if field not in instance:
+                        raise ValueError(
+                            f"Field {field} is missing from instance {instance}"
+                        )
+
+                subset_stream_name = (
+                    stream_name
+                    + "://"
+                    + "/".join(instance[self.subsets_field][: self.subset_depth])
+                )
+
+                result[subset_stream_name].append(instance)
+
+                for group in instance[self.groups_field]:
+                    result[subset_stream_name + "?" + group_str(group)].append(instance)
+
+        return MultiStream.from_iterables(result, copying=True)
+
+
+@lru_cache(maxsize=None)
+def group_str_to_key_value(group_str):
+    keys = []
+    values = []
+    for k_v in group_str.split(","):
+        k, v = k_v.split(":")
+        if v.isdigit():
+            v = int(v)
+        keys.append(k)
+        values.append(v)
+
+    if len(keys) == 1:
+        key = keys[0]
+    else:
+        key = tuple(keys)
+
+    if len(values) == 1:
+        value = values[0]
+    else:
+        value = tuple(values)
+
+    return key, value
+
+
+@lru_cache(maxsize=None)
+def stream_name_to_origin_subset_group(stream_name):
+    origin, subset_group = stream_name.split("://")
+    if "?" in subset_group:
+        subset, group = subset_group.split("?")
+    else:
+        subset, group = subset_group, None
+    return origin, subset, group
+
+
+class JoinSubsetsAndGroups(MultiStreamOperator):
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        instances = defaultdict(dict)
+        global_scores = defaultdict(dict)
+
+        for stream_name, stream in multi_stream.items():
+            origin, subset, group = stream_name_to_origin_subset_group(stream_name)
+
+            for i, instance in enumerate(stream):
+                global_score = instance["score"].pop("global")
+
+                idx = instance.pop("__idx__")
+                if idx not in instances[origin]:
+                    instances[origin][idx] = instance
+
+                # from here below setting the global scores from that stream
+                # can be done with first instance only
+                if i > 0:
+                    continue
+
+                if not group and not subset:
+                    global_scores[origin]["global"] = global_score
+                else:
+                    path = []
+
+                    if subset:
+                        path += ["subsets", *subset.split("/")]
+
+                    if group:
+                        key, value = group_str_to_key_value(group)
+                        path += ["groups", key, value]
+
+                    target = global_scores[origin]
+                    for part in path[:-1]:
+                        if part not in target:
+                            target[part] = {}
+                        target = target[part]
+                    target[path[-1]] = global_score
+
+        # the leafs always have score_name and score
+        def recursive_mean(dic):
+            if isinstance(dic, dict):
+                if "score" in dic and "score_name" in dic:
+                    return dic
+
+                result = {}
+                all_scores = []
+                for k, v in dic.items():
+                    score = recursive_mean(v)
+                    if score is not None:
+                        all_scores.append(score["score"])
+                        result[k] = score
+
+                result["score"] = nan_mean(all_scores)
+                result["score_name"] = "subsets_mean"
+
+                if result:
+                    return result
+
+            return None
+
+        result = {}
+        for stream_name, stream_instances in instances.items():
+            score = global_scores[stream_name]
+
+            if "subsets" in score:
+                score["subsets"] = recursive_mean(score["subsets"])
+                score["global"] = {
+                    "score": score["subsets"]["score"],
+                    "score_name": score["subsets"]["score_name"],
+                }
+
+            sorted_instances = []
+            for key in sorted(stream_instances.keys()):
+                instance = stream_instances[key]
+                instance["score"].update(deepcopy(score))
+                sorted_instances.append(instance)
+            result[stream_name] = sorted_instances
+
+        return MultiStream.from_iterables(result, copying=True)
+
+
 class PostProcessRecipe(SequentialOperatorInitializer):
     def prepare(self):
         register_all_artifacts()
@@ -203,7 +271,7 @@ def _post_process(
 
 class MetricRecipe(SequentialOperatorInitializer):
     calc_confidence_intervals: bool = True
-    number_of_fusion_generations: int = 2
+    subset_depth: int = 2
 
     def prepare(self):
         register_all_artifacts()
@@ -211,21 +279,19 @@ class MetricRecipe(SequentialOperatorInitializer):
             FromPredictionsAndOriginalData(),
             LoadJson(field="task_data"),
             _post_process_steps,
-            SplitByNestedGroup(
-                field_name_of_group="group",
-                number_of_fusion_generations=self.number_of_fusion_generations,
+            SplitSubsetsAndGroups(
+                subset_depth=self.subset_depth,
             ),
             ApplyMetric(
                 "metrics",
                 calc_confidence_intervals=self.calc_confidence_intervals,
             ),
-            MultiStreamScoreMean(),
-            MergeStreams(),
-            RenameFields(
+            JoinSubsetsAndGroups(),
+            Rename(
                 field="raw_prediction",
                 to_field="prediction",
             ),
-            RenameFields(
+            Rename(
                 field="raw_references",
                 to_field="references",
             ),

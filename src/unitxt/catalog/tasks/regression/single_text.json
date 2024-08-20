@@ -1,12 +1,12 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "text": "str",
         "attribute_name": "str",
         "min_value": "Optional[float]",
         "max_value": "Optional[float]"
     },
-    "outputs": {
+    "reference_fields": {
         "attribute_value": "float"
     },
     "prediction_type": "Any",

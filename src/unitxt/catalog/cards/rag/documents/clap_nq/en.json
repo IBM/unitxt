@@ -1,0 +1,40 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "sep": "\t",
+        "files": {
+            "train": "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "id": "document_id",
+                "title": "title"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "text"
+            ],
+            "to_field": "passages"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "metadata_field": ""
+            }
+        }
+    ],
+    "task": "tasks.rag.corpora",
+    "templates": {
+        "empty": {
+            "__type__": "input_output_template",
+            "input_format": "",
+            "output_format": ""
+        }
+    }
+}

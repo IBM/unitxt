@@ -24,7 +24,10 @@ def load(source: Union[SourceOperator, str]) -> DatasetDict:
 
 def _load_dataset_from_query(dataset_query: str) -> DatasetDict:
     dataset_query = dataset_query.replace("sys_prompt", "instruction")
-    dataset_stream = get_dataset_artifact(dataset_query)
+    try:
+        dataset_stream, _ = fetch_artifact(dataset_query)
+    except:
+        dataset_stream = get_dataset_artifact(dataset_query)
     return dataset_stream().to_dataset()
 
 
@@ -47,7 +50,7 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
     Alternatively, dataset is loaded from a provided card based on explicitly given parameters.
 
     Args:
-        dataset_query (str, optional): A string query which specifies dataset to load from local catalog.
+        dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
             For example:
             "card=cards.wnli,template=templates.classification.multi_class.relation.default".
         **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
