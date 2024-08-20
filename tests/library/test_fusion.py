@@ -99,7 +99,7 @@ class TestFusion(UnitxtTestCase):
                     {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
                 ),
             },
-            max_instances_per_origin_split=2,
+            max_instances_per_subset=2,
         )
         targets = [
             {"x": "x1", "subset": ["origin1"]},
@@ -120,7 +120,7 @@ class TestFusion(UnitxtTestCase):
                     {"test": [{"x": "y1"}, {"x": "y2"}, {"x": "y3"}]}
                 ),
             },
-            max_instances_per_origin_split=10,
+            max_instances_per_subset=10,
         )
 
         targets = [
@@ -201,7 +201,7 @@ class TestFusion(UnitxtTestCase):
                 ),
             },
             weights={"origin1": 1, "origin2": 2},
-            max_total_examples=3,
+            max_total_samples=3,
         )
 
         res = operator()
@@ -260,7 +260,7 @@ class TestFusion(UnitxtTestCase):
                 ),
             },
             weights={"origin1": 2, "origin2": 1},
-            max_total_examples=20,
+            max_total_samples=20,
         )
 
         res = operator()
@@ -337,7 +337,7 @@ class TestFusion(UnitxtTestCase):
                 ),
             },
             weights={"wnli": 1, "rte": 1, "stsb": 1},
-            max_total_examples=30,
+            max_total_samples=30,
         )().to_dataset()
         predictions = ["not entailment"] * 20 + ["2"] * 10
         result = evaluate(predictions=predictions, data=dataset["test"])
