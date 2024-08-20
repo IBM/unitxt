@@ -4737,7 +4737,16 @@ class F1Strings(InstanceMetric):
     reduction_map = {"mean": ["f1_strings"]}
     prediction_type = str
     single_reference_per_prediction = True
+    _requirements_list = {
+     "spacy": "Please pip install spacy",
+     "en_core_web_sm": "Please run: python -m spacy download en_core_web_sm"
 
+    } 
+
+    def prepare(self):
+        super().prepare()
+        import spacy
+        self.nlp = spacy.load("en_core_web_sm")
     def compute(
         self,
         references: List[str],
