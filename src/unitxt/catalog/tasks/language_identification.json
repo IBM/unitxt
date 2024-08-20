@@ -1,0 +1,13 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "text": "str"
+    },
+    "reference_fields": {
+        "label": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.accuracy"
+    ]
+}

@@ -1,5 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import Set, SplitRandomMix, TaskCard
+from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import FilterByExpression, RenameFields
 from unitxt.test_utils.card import test_card
@@ -9,9 +10,16 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
     card = TaskCard(
         loader=LoadHF(path="webis/tldr-17", streaming=True),
         preprocess_steps=[
-            SplitRandomMix({"train": "train[50%]", "test": "train[50%]"}),
+            SplitRandomMix(
+                {
+                    "train": "train[70%]",
+                    "validation": "train[15%]",
+                    "test": "train[15%]",
+                }
+            ),
             RenameFields(field_to_field={"content": "document"}),
             Set(fields={"document_type": "document"}),
+            Wrap(field="summary", inside="list", to_field="summaries"),
         ]
         + (
             [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}")]
@@ -46,6 +54,6 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
     )
     add_to_catalog(
         card,
-        f"cards.tldr{f'_document_filtered_to_{n_chars_to_filter_by}_chars' if n_chars_to_filter_by!='max' else ''}",
+        f"cards.tldr{f'_document_filtered_to_{n_chars_to_filter_by}_chars' if n_chars_to_filter_by != 'max' else ''}",
         overwrite=True,
     )

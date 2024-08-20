@@ -1,9 +1,9 @@
 {
     "__type__": "task",
-    "inputs": [
+    "input_fields": [
         "original_text"
     ],
-    "outputs": [
+    "reference_fields": [
         "corrected_texts"
     ],
     "metrics": [

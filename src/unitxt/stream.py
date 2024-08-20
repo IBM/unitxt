@@ -2,7 +2,6 @@ import tempfile
 import traceback
 import warnings
 from abc import abstractmethod
-from copy import deepcopy
 from typing import Any, Callable, Dict, Generator, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -11,6 +10,7 @@ from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
 from .settings_utils import get_settings
+from .utils import deepcopy
 
 settings = get_settings()
 logger = get_logger()
@@ -281,7 +281,10 @@ class MultiStream(dict):
 
     @classmethod
     def from_iterables(
-        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+        cls,
+        iterables: Dict[str, Iterable[Dict[str, Any]]],
+        caching=False,
+        copying=False,
     ):
         """Creates a MultiStream from a dictionary of iterables.
 

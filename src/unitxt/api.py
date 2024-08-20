@@ -6,7 +6,7 @@ from datasets import DatasetDict
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
-from .metric_utils import _compute
+from .metric_utils import _compute, _post_process
 from .operator import SourceOperator
 from .standard import StandardRecipe
 
@@ -24,7 +24,10 @@ def load(source: Union[SourceOperator, str]) -> DatasetDict:
 
 def _load_dataset_from_query(dataset_query: str) -> DatasetDict:
     dataset_query = dataset_query.replace("sys_prompt", "instruction")
-    dataset_stream = get_dataset_artifact(dataset_query)
+    try:
+        dataset_stream, _ = fetch_artifact(dataset_query)
+    except:
+        dataset_stream = get_dataset_artifact(dataset_query)
     return dataset_stream().to_dataset()
 
 
@@ -47,7 +50,7 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
     Alternatively, dataset is loaded from a provided card based on explicitly given parameters.
 
     Args:
-        dataset_query (str, optional): A string query which specifies dataset to load from local catalog.
+        dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
             For example:
             "card=cards.wnli,template=templates.classification.multi_class.relation.default".
         **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
@@ -91,6 +94,10 @@ def evaluate(predictions, data) -> List[Dict[str, Any]]:
     return _compute(predictions=predictions, references=data)
 
 
+def post_process(predictions, data) -> List[Dict[str, Any]]:
+    return _post_process(predictions=predictions, references=data)
+
+
 @lru_cache
 def _get_produce_with_cache(recipe_query):
     return get_dataset_artifact(recipe_query).produce
@@ -104,3 +111,10 @@ def produce(instance_or_instances, recipe_query):
     if not is_list:
         result = result[0]
     return result
+
+
+def infer(instance_or_instances, recipe, engine):
+    dataset = produce(instance_or_instances, recipe)
+    engine, _ = fetch_artifact(engine)
+    predictions = engine.infer(dataset)
+    return post_process(predictions, dataset)

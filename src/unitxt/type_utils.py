@@ -7,6 +7,58 @@ import typing
 
 from .utils import safe_eval
 
+_supported_types_strings = [
+    "Any",
+    "List[...]",
+    "Dict[...]",
+    "Tuple[...]",
+    "Union[...]",
+    "Optional[...]",
+    "int",
+    "float",
+    "dict",
+    "double",
+    "str",
+]
+
+Type = typing.Any
+
+
+class UnsupportedTypeError(ValueError):
+    def __init__(self, type_object):
+        supported_types = ", ".join(_supported_types_strings)
+        super().__init__(
+            f"Type: '{type_object!s}' is not supported type. Use one of {supported_types}"
+        )
+
+
+_generics = [
+    typing.List[typing.Any],
+    typing.Dict[typing.Any, typing.Any],
+    typing.Tuple[typing.Any],
+    typing.Union[typing.Any, typing.Any],
+    typing.Optional[typing.Any],
+    typing.Any,
+]
+
+_generics_types = [type(t) for t in _generics]
+
+
+def is_type(object):
+    return isinstance(object, (type, *_generics_types))
+
+
+def is_type_dict(object):
+    if not isinstance(object, dict):
+        raise ValueError("Should be dict.")
+    for value in object.values():
+        if isinstance(value, dict):
+            if not is_type_dict(value):
+                return False
+        elif not is_type(value):
+            return False
+    return True
+
 
 def convert_union_type(type_string: str) -> str:
     """Converts Python 3.10 union type hints into form compatible with Python 3.9 version.
@@ -182,6 +234,43 @@ def parse_type_string(type_string: str) -> typing.Any:
     return safe_eval(type_string, safe_context, safe_tokens)
 
 
+def to_type_string(typing_type):
+    if not is_type(typing_type):
+        raise UnsupportedTypeError(typing_type)
+    type_string = (
+        str(typing_type)
+        .replace("typing.", "")
+        .replace("<class '", "")
+        .replace("'>", "")
+    )
+    assert parse_type_string(type_string), "Is not parsed well"
+    return type_string
+
+
+def to_type_dict(dict_of_typing_types):
+    result = {}
+    for key, val in dict_of_typing_types.items():
+        if isinstance(val, dict):
+            result[key] = to_type_dict(val)
+        else:
+            result[key] = to_type_string(val)
+    return result
+
+
+def parse_type_dict(type_dict):
+    results = {}
+    for k, v in type_dict.items():
+        if isinstance(v, str):
+            results[k] = parse_type_string(v)
+        elif isinstance(v, dict):
+            results[k] = parse_type_dict(v)
+        else:
+            raise ValueError(
+                f"Can parse only nested dictionary with type strings, got {type(v)}"
+            )
+    return results
+
+
 def infer_type(obj) -> typing.Any:
     return parse_type_string(infer_type_string(obj))
 
@@ -355,7 +444,7 @@ def infer_type_string(obj: typing.Any) -> str:
     return "Any"
 
 
-def isoftype(object, type):
+def isoftype(object, typing_type):
     """Checks if an object is of a certain typing type, including nested types.
 
     This function supports simple types (like `int`, `str`), typing types
@@ -364,7 +453,7 @@ def isoftype(object, type):
 
     Args:
         object: The object to check.
-        type: The typing type to check against.
+        typing_type: The typing type to check against.
 
     Returns:
         bool: True if the object is of the specified type, False otherwise.
@@ -378,12 +467,15 @@ def isoftype(object, type):
         isoftype([1, 2, 3], typing.List[str]) # False
         isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]]) # True
     """
-    if type == typing.Any:
+    if not is_type(typing_type):
+        raise UnsupportedTypeError(typing_type)
+
+    if typing_type == typing.Any:
         return True
 
-    if hasattr(type, "__origin__"):
-        origin = type.__origin__
-        type_args = typing.get_args(type)
+    if hasattr(typing_type, "__origin__"):
+        origin = typing_type.__origin__
+        type_args = typing.get_args(typing_type)
 
         if origin is typing.Union:
             return any(isoftype(object, sub_type) for sub_type in type_args)
@@ -406,7 +498,7 @@ def isoftype(object, type):
             )
         return None
 
-    return isinstance(object, type)
+    return isinstance(object, typing_type)
 
 
 # copied from: https://github.com/bojiang/typing_utils/blob/main/typing_utils/__init__.py
@@ -476,12 +568,12 @@ get_type_hints = typing.get_type_hints
 GenericClass = type(typing.List)
 UnionClass = type(typing.Union)
 
-Type = typing.Union[None, type, "typing.TypeVar"]
+_Type = typing.Union[None, type, "typing.TypeVar"]
 OriginType = typing.Union[None, type]
 TypeArgs = typing.Union[type, typing.AbstractSet[type], typing.Sequence[type]]
 
 
-def _normalize_aliases(type_: Type) -> Type:
+def _normalize_aliases(type_: _Type) -> _Type:
     if isinstance(type_, typing.TypeVar):
         return type_
 
@@ -600,7 +692,7 @@ def eval_forward_ref(ref, forward_refs=None):
 class NormalizedType(typing.NamedTuple):
     """Normalized type, made it possible to compare, hash between types."""
 
-    origin: Type
+    origin: _Type
     args: typing.Union[tuple, frozenset] = ()
 
     def __eq__(self, other):
@@ -635,7 +727,7 @@ def _normalize_args(tps: TypeArgs):
     return normalize(tps)
 
 
-def normalize(type_: Type) -> NormalizedType:
+def normalize(type_: _Type) -> NormalizedType:
     """Convert types to NormalizedType instances."""
     args = get_args(type_)
     origin = get_origin(type_)
@@ -795,8 +887,8 @@ def _is_normal_subtype(
 
 
 def issubtype(
-    left: Type,
-    right: Type,
+    left: _Type,
+    right: _Type,
     forward_refs: typing.Optional[dict] = None,
 ) -> typing.Optional[bool]:
     """Check that the left argument is a subtype of the right.
@@ -844,7 +936,7 @@ def to_float_or_default(v, failure_default=0):
 
 
 def verify_required_schema(
-    required_schema_dict: typing.Dict[str, str],
+    required_schema_dict: typing.Dict[str, type],
     input_dict: typing.Dict[str, typing.Any],
 ) -> None:
     """Verifies if passed input_dict has all required fields, and they are of proper types according to required_schema_dict.
@@ -856,7 +948,7 @@ def verify_required_schema(
         input_dict (Dict[str, Any]):
             Dict with input fields and their respective values.
     """
-    for field_name, data_type_string in required_schema_dict.items():
+    for field_name, data_type in required_schema_dict.items():
         try:
             value = input_dict[field_name]
         except KeyError as e:
@@ -865,10 +957,8 @@ def verify_required_schema(
                 f"The available names: {list(input_dict.keys())}."
             ) from e
 
-        data_type = parse_type_string(data_type_string)
-
         if not isoftype(value, data_type):
             raise ValueError(
                 f"Passed value '{value}' of field '{field_name}' is not "
-                f"of required type: ({data_type_string})."
+                f"of required type: ({to_type_string(data_type)})."
             )

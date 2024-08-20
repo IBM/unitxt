@@ -1,13 +1,14 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "dialog": "List[Tuple[str, str]]",
         "reference_dialog": "List[Tuple[str, str]]"
     },
-    "outputs": {
+    "reference_fields": {
         "rating": "float"
     },
     "metrics": [
         "metrics.spearman"
-    ]
+    ],
+    "prediction_type": "float"
 }

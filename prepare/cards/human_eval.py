@@ -26,8 +26,8 @@ card = TaskCard(
         )
     ],
     task=Task(
-        inputs=["prompt"],
-        outputs=["prompt", "canonical_solution", "test_list"],
+        input_fields=["prompt"],
+        reference_fields=["prompt", "canonical_solution", "test_list"],
         metrics=["metrics.bleu"],
     ),
     templates=TemplatesList(

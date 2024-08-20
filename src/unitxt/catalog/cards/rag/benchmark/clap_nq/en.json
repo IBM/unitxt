@@ -1,0 +1,46 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "sep": "\t",
+        "files": {
+            "train": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/train/question_train_answerable.tsv",
+            "test": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "id": "question_id"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "reference_contexts": [],
+                "is_answerable_label": true,
+                "metadata_field": ""
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "doc-id-list"
+            ],
+            "to_field": "reference_context_ids"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "answers"
+            ],
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.end_to_end",
+    "templates": {
+        "default": "templates.rag.end_to_end.json_predictions"
+    }
+}

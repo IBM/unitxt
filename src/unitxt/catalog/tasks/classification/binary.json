@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "text": "str",
         "text_type": "str",
         "class": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "class": "str",
         "label": "List[str]"
     },

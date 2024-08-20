@@ -1,4 +1,5 @@
 from dataclasses import field
+from typing import Callable
 
 from unitxt.dataclass import (
     AbstractField,
@@ -16,6 +17,7 @@ from unitxt.dataclass import (
     fields,
     fields_names,
     is_abstract_field,
+    is_class_method,
     is_final_field,
 )
 
@@ -276,6 +278,30 @@ class TestDataclass(UnitxtTestCase):
         self.assertEqual(child.b, 2)
         self.assertEqual(child.c, 3)
 
+    def test_filling_requirement_with_mixin_and_funcs(self):
+        class GrandParent(Dataclass):
+            t: Callable = lambda: 2
+
+        class Parent1(GrandParent):
+            b: int = 2
+
+        class Mixin(Dataclass):
+            a: int = 2
+
+        class Child(Mixin, Parent1):
+            c: int
+            t = lambda: 5
+
+        class GrandChild(Child):
+            c = 7
+            pass
+
+        child = GrandChild(b=2, c=3)
+
+        self.assertEqual(child.t(), 5)
+        self.assertEqual(child.b, 2)
+        self.assertEqual(child.c, 3)
+
     def test_raising_unexpected_keyword_argument_error(self):
         class Dummy(Dataclass):
             b = 1  # not a field!!!
@@ -329,3 +355,52 @@ class TestDataclass(UnitxtTestCase):
         self.assertEqual(d.a, 1)
         self.assertTupleEqual(d._argv, (2,))
         self.assertDictEqual(d._kwargs, {"c": 3})
+
+    def test_to_dict(self):
+        class DataclassA(Dataclass):
+            a: int
+            b: str = None
+
+        class DataclassB(DataclassA):
+            b: str = ""
+            c: bool
+
+        dataclass_a = DataclassA(a=1)
+        dataclass_b = DataclassB(a=2, c=False)
+
+        self.assertDictEqual(
+            dataclass_a.to_dict(keep_empty=False),
+            {"a": 1},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(),
+            {"a": 2, "b": "", "c": False},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(classes=[DataclassA, DataclassB]),
+            {"a": 2, "b": "", "c": False},
+        )
+        self.assertDictEqual(
+            dataclass_b.to_dict(classes=[dataclass_b]),
+            {"b": "", "c": False},
+        )
+
+    def test_is_class_method(self):
+        def func(x):
+            return x
+
+        class MyClass:
+            my_lambda = lambda x: x
+            my_func = func
+
+            @classmethod
+            def my_class_method(cls):
+                pass
+
+            def my_instance_method(self):
+                pass
+
+        self.assertTrue(is_class_method(MyClass.my_class_method))
+        # self.assertTrue(is_class_method(MyClass.my_instance_method))
+        # self.assertFalse(is_class_method(MyClass.my_lambda))
+        # self.assertFalse(is_class_method(MyClass.my_func))

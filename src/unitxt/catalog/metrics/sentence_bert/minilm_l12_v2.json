@@ -1,0 +1,4 @@
+{
+    "__type__": "sentence_bert",
+    "model_name": "sentence-transformers/all-MiniLM-L12-v2"
+}

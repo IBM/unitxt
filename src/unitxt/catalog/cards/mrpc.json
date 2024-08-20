@@ -7,7 +7,6 @@
         "streaming": false
     },
     "preprocess_steps": [
-        "splitters.default",
         {
             "__type__": "map_instance_values",
             "mappers": {
@@ -18,39 +17,30 @@
             }
         },
         {
+            "__type__": "rename_fields",
+            "field": "sentence1",
+            "to_field": "text_a"
+        },
+        {
+            "__type__": "rename_fields",
+            "field": "sentence2",
+            "to_field": "text_b"
+        },
+        {
             "__type__": "set",
             "fields": {
-                "choices": [
+                "classes": [
                     "not equivalent",
                     "equivalent"
-                ]
+                ],
+                "text_a_type": "sentence",
+                "text_b_type": "sentence",
+                "type_of_relation": "semantic equivalence"
             }
         }
     ],
-    "task": {
-        "__type__": "task",
-        "inputs": [
-            "choices",
-            "sentence1",
-            "sentence2"
-        ],
-        "outputs": [
-            "label"
-        ],
-        "metrics": [
-            "metrics.accuracy"
-        ]
-    },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "Given this sentence: {sentence1}, classify if this sentence: {sentence2} is {choices}.",
-                "output_format": "{label}"
-            }
-        ]
-    },
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all",
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",

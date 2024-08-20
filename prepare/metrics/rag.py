@@ -30,6 +30,12 @@ metrics = {
     "metrics.sentence_bert.mpnet_base_v2": SentenceBert(
         model_name="sentence-transformers/all-mpnet-base-v2"
     ),
+    "metrics.sentence_bert.minilm_l12_v2": SentenceBert(
+        model_name="sentence-transformers/all-MiniLM-L12-v2"
+    ),
+    "metrics.sentence_bert.bge_large_en_1_5": SentenceBert(
+        model_name="BAAI/bge-large-en-v1.5"
+    ),
     "metrics.reward.deberta_v3_large_v2": Reward(
         model_name="OpenAssistant/reward-model-deberta-v3-large-v2"
     ),
@@ -69,7 +75,7 @@ metric = MetricPipeline(
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=metrics["metrics.token_overlap"],
-    postpreprocess_steps=[
+    postprocess_steps=[
         Copy(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
@@ -316,96 +322,6 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.correctness
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
-for metric_name, catalog_name in [
-    ("map", "metrics.rag.map"),
-    ("mrr", "metrics.rag.mrr"),
-    ("mrr", "metrics.rag.context_correctness"),
-]:
-    metric = MetricPipeline(
-        main_score="score",
-        preprocess_steps=[
-            Copy(field="context_ids", to_field="prediction"),
-            Copy(field="ground_truths_context_ids", to_field="references"),
-        ],
-        metric=f"metrics.{metric_name}",
-    )
-    add_to_catalog(metric, catalog_name, overwrite=True)
-context_relevance = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-)
-add_to_catalog(context_relevance, "metrics.rag.context_relevance", overwrite=True)
-context_perplexity = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="question", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_q.flan_t5_small",
-    postpreprocess_steps=[
-        Copy(field="score/instance/reference_scores", to_field="score/instance/score")
-    ],
-)
-add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
-for new_catalog_name, base_catalog_name in [
-    ("metrics.rag.faithfulness", "metrics.token_overlap"),
-    ("metrics.rag.k_precision", "metrics.token_overlap"),
-    ("metrics.rag.bert_k_precision", "metrics.bert_score.deberta_large_mnli"),
-    (
-        "metrics.rag.bert_k_precision_ml",
-        "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
-    ),
-]:
-    metric = MetricPipeline(
-        main_score="precision",
-        preprocess_steps=[
-            Copy(field="contexts", to_field="references"),
-            Copy(field="answer", to_field="prediction"),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, new_catalog_name, overwrite=True)
-for new_catalog_name, base_catalog_name in [
-    ("metrics.rag.answer_correctness", "metrics.token_overlap"),
-    ("metrics.rag.recall", "metrics.token_overlap"),
-    ("metrics.rag.bert_recall", "metrics.bert_score.deberta_large_mnli"),
-    ("metrics.rag.bert_recall_ml", "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"),
-]:
-    metric = MetricPipeline(
-        main_score="recall",
-        preprocess_steps=[
-            Copy(field="ground_truths", to_field="references"),
-            Copy(field="answer", to_field="prediction"),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, new_catalog_name, overwrite=True)
-answer_reward = MetricPipeline(
-    main_score="score",
-    preprocess_steps=[
-        Copy(field="question", to_field="references"),
-        Copy(field="answer", to_field="prediction"),
-        # This metric compares the answer (as the prediction) to the question (as the reference).
-        # We have to wrap the question by a list (otherwise it will be a string),
-        # because references are expected to be lists
-        ListFieldValues(fields=["references"], to_field="references"),
-    ],
-    metric="metrics.reward.deberta_v3_large_v2",
-)
-add_to_catalog(answer_reward, "metrics.rag.answer_reward", overwrite=True)
-answer_inference = MetricPipeline(
-    main_score="perplexity",
-    preprocess_steps=[
-        Copy(field="contexts", to_field="references"),
-        Copy(field="answer", to_field="prediction"),
-    ],
-    metric="metrics.perplexity_nli.t5_nli_mixture",
-)
-add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)
 
 for axis, base_metric, main_score in [
     ("correctness", "token_overlap", "f1"),
@@ -424,7 +340,7 @@ for axis, base_metric, main_score in [
     metric = MetricPipeline(
         main_score=main_score,
         preprocess_steps=preprocess_steps,
-        postpreprocess_steps=[
+        postprocess_steps=[
             Copy(
                 field_to_field={
                     "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",
@@ -438,9 +354,134 @@ for axis, base_metric, main_score in [
             ),
         ],
         metric=f"metrics.{base_metric}",
-        prediction_type="str",
+        prediction_type=str,
     )
 
     add_to_catalog(
         metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
     )
+
+# end to end
+
+end_to_end_artifact_name_to_main_score = {
+    "metrics.rag.end_to_end.answer_correctness": "recall",
+    "metrics.rag.end_to_end.answer_reward": "score",
+    "metrics.rag.end_to_end.answer_faithfulness": "precision",
+    "metrics.rag.end_to_end.context_correctness": "score",
+    "metrics.rag.end_to_end.context_relevance": "score",
+}
+
+end_to_end_artifact_names_to_main_metric = {
+    "metrics.rag.end_to_end.answer_correctness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.answer_reward": "metrics.reward.deberta_v3_large_v2",
+    "metrics.rag.end_to_end.answer_faithfulness": "metrics.token_overlap",
+    "metrics.rag.end_to_end.context_correctness": "metrics.mrr",
+    "metrics.rag.end_to_end.context_relevance": "metrics.perplexity_q.flan_t5_small",
+}
+
+assert len(end_to_end_artifact_name_to_main_score) == len(
+    end_to_end_artifact_names_to_main_metric
+)
+
+copy_field_prediction_answer_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/answer",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_answers_to_references = Copy(
+    field_to_field={"task_data/reference_answers": "references"},
+)
+
+copy_field_reference_contexts_to_references = Copy(
+    field_to_field={"task_data/reference_contexts": "references"}
+)
+
+copy_field_prediction_contexts_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_prediction_context_ids_to_prediction = Copy(
+    field_to_field=[
+        (
+            "prediction/context_ids",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_reference_context_ids_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/reference_context_ids"],
+    to_field="references",
+)
+
+copy_field_prediction_contexts_to_references = Copy(
+    field_to_field=[
+        (
+            "prediction/contexts",
+            "references",
+        )
+    ],
+)
+
+
+copy_field_question_to_prediction = Copy(
+    field_to_field=[
+        (
+            "task_data/question",
+            "prediction",
+        )
+    ],
+)
+
+copy_field_question_to_references_in_a_list = ListFieldValues(
+    fields=["task_data/question"],
+    to_field="references",
+)
+
+end_to_end_artifact_names_to_preprocess_steps = {
+    "metrics.rag.end_to_end.answer_correctness": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_reference_answers_to_references,
+    ],
+    "metrics.rag.end_to_end.answer_reward": [
+        copy_field_prediction_answer_to_prediction,
+        copy_field_question_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.answer_faithfulness": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_prediction_answer_to_prediction,
+    ],
+    "metrics.rag.end_to_end.context_correctness": [
+        copy_field_prediction_context_ids_to_prediction,
+        copy_field_reference_context_ids_to_references_in_a_list,
+    ],
+    "metrics.rag.end_to_end.context_relevance": [
+        copy_field_prediction_contexts_to_references,
+        copy_field_question_to_prediction,
+    ],
+}
+
+
+for artifact_name in end_to_end_artifact_names_to_preprocess_steps.keys():
+    metric_short_name = artifact_name.split(".")[-1]
+    if metric_short_name == "rouge":  # rouge does not need a prefix
+        score_prefix = ""
+    else:
+        score_prefix = f"[score_prefix={metric_short_name}_]"
+
+    metric = MetricPipeline(
+        main_score=end_to_end_artifact_name_to_main_score[artifact_name],
+        preprocess_steps=end_to_end_artifact_names_to_preprocess_steps[artifact_name],
+        metric=f"{end_to_end_artifact_names_to_main_metric[artifact_name]}{score_prefix}",
+    )
+
+    add_to_catalog(metric, artifact_name, overwrite=True)

@@ -17,10 +17,10 @@
     ],
     "task": {
         "__type__": "task",
-        "inputs": [
+        "input_fields": [
             "prompt"
         ],
-        "outputs": [
+        "reference_fields": [
             "prompt",
             "canonical_solution",
             "test_list"

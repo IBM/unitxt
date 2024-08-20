@@ -1,13 +1,14 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "question": "str",
         "answer": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "rating": "float"
     },
     "metrics": [
         "metrics.spearman"
-    ]
+    ],
+    "prediction_type": "float"
 }

@@ -1,11 +1,13 @@
+from typing import List
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
 add_to_catalog(
     Task(
-        inputs={"text": "str", "text_type": "str", "class": "str"},
-        outputs={"class": "str", "label": "List[str]"},
-        prediction_type="List[str]",
+        input_fields={"text": str, "text_type": str, "class": str},
+        reference_fields={"class": str, "label": List[str]},
+        prediction_type=List[str],
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.f1_macro_multi_label",
@@ -20,9 +22,9 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={"text": "str", "text_type": "str", "class": "str"},
-        outputs={"class": "str", "label": "int"},
-        prediction_type="float",
+        input_fields={"text": str, "text_type": str, "class": str},
+        reference_fields={"class": str, "label": int},
+        prediction_type=float,
         metrics=[
             "metrics.accuracy",
             "metrics.f1_binary",
@@ -36,14 +38,14 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text": "str",
-            "text_type": "str",
-            "classes": "List[str]",
-            "type_of_classes": "str",
+        input_fields={
+            "text": str,
+            "text_type": str,
+            "classes": List[str],
+            "type_of_classes": str,
         },
-        outputs={"labels": "List[str]"},
-        prediction_type="List[str]",
+        reference_fields={"labels": List[str]},
+        prediction_type=List[str],
         metrics=[
             "metrics.f1_micro_multi_label",
             "metrics.accuracy",
@@ -58,14 +60,14 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text": "str",
-            "text_type": "str",
-            "classes": "List[str]",
-            "type_of_class": "str",
+        input_fields={
+            "text": str,
+            "text_type": str,
+            "classes": List[str],
+            "type_of_class": str,
         },
-        outputs={"label": "str"},
-        prediction_type="str",
+        reference_fields={"label": str},
+        prediction_type=str,
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],
         defaults={"text_type": "text"},
@@ -76,16 +78,16 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text_a": "str",
-            "text_a_type": "str",
-            "text_b": "str",
-            "text_b_type": "str",
-            "classes": "List[str]",
-            "type_of_relation": "str",
+        input_fields={
+            "text_a": str,
+            "text_a_type": str,
+            "text_b": str,
+            "text_b_type": str,
+            "classes": List[str],
+            "type_of_relation": str,
         },
-        outputs={"label": "str"},
-        prediction_type="str",
+        reference_fields={"label": str},
+        prediction_type=str,
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text_a", "text_b"],
         defaults={"text_a_type": "first text", "text_b_type": "second text"},
@@ -97,15 +99,15 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text": "str",
-            "text_type": "str",
-            "classes": "List[str]",
-            "type_of_class": "str",
-            "classes_descriptions": "str",
+        input_fields={
+            "text": str,
+            "text_type": str,
+            "classes": List[str],
+            "type_of_class": str,
+            "classes_descriptions": str,
         },
-        outputs={"label": "str"},
-        prediction_type="str",
+        reference_fields={"label": str},
+        prediction_type=str,
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],
         defaults={"text_type": "text"},
@@ -116,14 +118,14 @@ add_to_catalog(
 
 add_to_catalog(
     Task(
-        inputs={
-            "text": "str",
-            "text_type": "str",
-            "classes": "List[str]",
-            "type_of_class": "str",
+        input_fields={
+            "text": str,
+            "text_type": str,
+            "classes": List[str],
+            "type_of_class": str,
         },
-        outputs={"label": "str"},
-        prediction_type="str",
+        reference_fields={"label": str},
+        prediction_type=str,
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text"],
         defaults={"text_type": "text", "type_of_class": "topic"},

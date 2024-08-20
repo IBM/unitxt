@@ -9,8 +9,9 @@
         {
             "__type__": "split_random_mix",
             "mix": {
-                "train": "train[50%]",
-                "test": "train[50%]"
+                "train": "train[70%]",
+                "validation": "train[15%]",
+                "test": "train[15%]"
             }
         },
         {
@@ -24,6 +25,12 @@
             "fields": {
                 "document_type": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
         }
     ],
     "task": "tasks.summarization.abstractive",

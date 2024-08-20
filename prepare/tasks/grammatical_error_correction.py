@@ -3,8 +3,8 @@ from unitxt.task import Task
 
 add_to_catalog(
     Task(
-        inputs=["original_text"],
-        outputs=["corrected_texts"],
+        input_fields=["original_text"],
+        reference_fields=["corrected_texts"],
         metrics=[
             "metrics.char_edit_dist_accuracy",
             "metrics.rouge",

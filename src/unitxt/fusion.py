@@ -12,13 +12,13 @@ class BaseFusion(SourceOperator):
     """BaseFusion operator that combines multiple multistreams into one.
 
     Args:
-        origins: a dict of named SourceOperator objects (each to yield a MultiStream) or a list thereof,
+        subsets: a dict of named SourceOperator objects (each to yield a MultiStream) or a list thereof,
           each is specified along with its input, so can generate a MultiStream
         include_splits: List of splits to include from each input MultiStream.
                 If None, all splits are included.
     """
 
-    origins: Union[List[SourceOperator], Dict[str, SourceOperator]]
+    subsets: Union[List[SourceOperator], Dict[str, SourceOperator]]
     include_splits: Optional[List[str]] = NonPositionalField(default=None)
 
     @abstractmethod
@@ -26,18 +26,18 @@ class BaseFusion(SourceOperator):
         pass
 
     def prepare(self):
-        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
-            self.origins, List[SourceOperator]
+        assert isoftype(self.subsets, Dict[str, SourceOperator]) or isoftype(
+            self.subsets, List[SourceOperator]
         )
-        self.named_origins = (
-            {i: self.origins[i]() for i in range(len(self.origins))}
-            if isinstance(self.origins, list)
-            else {name: origin() for name, origin in self.origins.items()}
+        self.named_subsets = (
+            {i: self.subsets[i]() for i in range(len(self.subsets))}
+            if isinstance(self.subsets, list)
+            else {name: origin() for name, origin in self.subsets.items()}
         )
 
     def splits(self) -> List[str]:
         splits = []
-        for _, origin in self.named_origins.items():
+        for _, origin in self.named_subsets.items():
             for s in origin.keys():
                 if s not in splits:
                     if self.include_splits is None or s in self.include_splits:
@@ -59,69 +59,69 @@ class FixedFusion(BaseFusion):
     """FixedFusion operator that combines multiple multistreams into one, limiting the number of instances taken from each split of each input multistream.
 
     Args:
-        origins: Dict of named SourceOperator objects (each to yield a MultiStream), or a list thereof
+        subsets: Dict of named SourceOperator objects (each to yield a MultiStream), or a list thereof
         splits: List of splits (stream_names) to include, over all input multistreams. If None, all splits are included.
-        max_instances_per_origin_split: Number of instances to take from each input split of each input multistream.
+        max_instances_per_subset: Number of instances to take from each input split of each input multistream.
             If None, all instances of each split (that is specified in include_splits) are included in the result.
 
     """
 
-    max_instances_per_origin_split: Optional[int] = None
+    max_instances_per_subset: Optional[int] = None
 
     def prepare(self):
         super().prepare()
 
     # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
-        for origin_name, origin in self.named_origins.items():
+        for origin_name, origin in self.named_subsets.items():
             if split not in origin:
                 continue
             emitted_from_this_split = 0
-            for instance in origin[split]:
-                if (
-                    self.max_instances_per_origin_split is not None
-                    and emitted_from_this_split >= self.max_instances_per_origin_split
-                ):
-                    break
-                if isinstance(origin_name, str):
-                    # named origins, not anonymous, record in instance
-                    if "group" in instance:
-                        instance["group"] = origin_name + "/" + instance["group"]
-                    else:
-                        instance["group"] = origin_name
-                emitted_from_this_split += 1
-                yield instance
+            try:
+                for instance in origin[split]:
+                    if (
+                        self.max_instances_per_subset is not None
+                        and emitted_from_this_split >= self.max_instances_per_subset
+                    ):
+                        break
+                    if isinstance(origin_name, str):
+                        if "subset" not in instance:
+                            instance["subset"] = []
+                        instance["subset"].insert(0, origin_name)
+                    emitted_from_this_split += 1
+                    yield instance
+            except Exception as e:
+                raise RuntimeError(f"Exception in subset: {origin_name}") from e
 
 
 class WeightedFusion(BaseFusion):
     """Fusion operator that combines multiple MultiStream-s.
 
     Args:
-        origins: Dict of named MultiStream objects, or a list thereof
+        subsets: Dict of named MultiStream objects, or a list thereof
         weights: Dict of named weights for each origin, or a list thereof
         max_total_examples: Total number of instances to return per returned split.
             If None, all instances are returned
     """
 
-    origins: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
+    subsets: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
     weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
-    max_total_examples: int = None
-    ignore_origin_groups: List[str] = ["unitxt"]
+    max_total_samples: int = None
 
     def verify(self):
         super().verify()
-        assert self.origins is not None, "origins must be specified"
+        assert self.subsets is not None, "subsets must be specified"
         assert self.weights is not None, "weights must be specified"
-        assert len(self.origins) == len(
+        assert len(self.subsets) == len(
             self.weights
-        ), "origins and weights must have the same length"
-        assert isoftype(self.origins, Dict[str, SourceOperator]) or isoftype(
-            self.origins, List[SourceOperator]
+        ), "subsets and weights must have the same length"
+        assert isoftype(self.subsets, Dict[str, SourceOperator]) or isoftype(
+            self.subsets, List[SourceOperator]
         )
         assert isoftype(self.weights, Dict[str, Union[int, float]]) or isoftype(
             self.weights, List[Union[int, float]]
         )
-        assert isinstance(self.origins, dict) == isinstance(self.weights, dict)
+        assert isinstance(self.subsets, dict) == isinstance(self.weights, dict)
 
     def prepare(self):
         super().prepare()
@@ -134,12 +134,12 @@ class WeightedFusion(BaseFusion):
     def fusion_generator(self, split) -> Generator:
         iterators = {
             named_origin: iter(origin[split])
-            for named_origin, origin in self.named_origins.items()
+            for named_origin, origin in self.named_subsets.items()
         }
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
-            self.max_total_examples is None or total_examples < self.max_total_examples
+            self.max_total_samples is None or total_examples < self.max_total_samples
         ) and len(iterators) > 0:
             population = list(iterators.keys())
             origin_name = random_generator.choices(
@@ -150,13 +150,9 @@ class WeightedFusion(BaseFusion):
             try:
                 instance = next(iterator)
                 if isinstance(origin_name, str):
-                    if (
-                        "group" in instance
-                        and instance["group"] not in self.ignore_origin_groups
-                    ):
-                        instance["group"] = origin_name + "/" + instance["group"]
-                    else:
-                        instance["group"] = origin_name
+                    if "subset" not in instance:
+                        instance["subset"] = []
+                    instance["subset"].insert(0, origin_name)
                 total_examples += 1
                 yield instance
 

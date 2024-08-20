@@ -1,0 +1,33 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "gsarti/flores_101",
+        "name": "all"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "validation": "dev",
+                "test": "devtest"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "sentence_por": "text",
+                "sentence_eng": "translation"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "source_language": "portuguese",
+                "target_language": "english"
+            }
+        }
+    ],
+    "task": "tasks.translation.directed",
+    "templates": "templates.translation.directed.all"
+}

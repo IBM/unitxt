@@ -33,6 +33,11 @@ class ToListByComma(SplitStrip):
     strip_every_element = True
 
 
+class ToListByCommaSpace(SplitStrip):
+    delimiter = ", "
+    strip_every_element = True
+
+
 class RegexParser(FieldOperator):
     """A processor that uses regex in order to parse a string."""
 
@@ -253,3 +258,22 @@ class ExtractSafeUnsafeJudgment(FieldOperator):
         if first_line == "safe":
             return 1.0
         return 0.0
+
+
+class ExtractArenaHardNumericalJudgment(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[\[([^\]]+)\]\]", text)
+        try:
+            res = str(match.group(1))
+            if res == "A>B":
+                return 1
+            if res == "A>>B":
+                return 3
+            if res == "B>A":
+                return -1
+            if res == "B>>A":
+                return -3
+            return 0
+
+        except:
+            return 0
