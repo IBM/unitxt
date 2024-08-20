@@ -4737,26 +4737,26 @@ class F1Strings(InstanceMetric):
     prediction_type = str
     single_reference_per_prediction = True
     _requirements_list = {
-     "spacy": "Please pip install spacy",
-     "en_core_web_sm": "Please run: python -m spacy download en_core_web_sm"
-
-    } 
+        "spacy": "Please pip install spacy",
+        "en_core_web_sm": "Please run: python -m spacy download en_core_web_sm",
+    }
 
     def prepare(self):
         super().prepare()
         import spacy
+
         self.nlp = spacy.load("en_core_web_sm")
+
     def compute(
         self,
         references: List[str],
         prediction: str,
         task_data: List[Dict],
     ) -> dict:
-
-        doc = self.nlp(references[0])
-        set_ref = Counter([token.text.lower() for token in doc])
-        doc = self.nlp(prediction)
-        set_pred = Counter([token.text.lower() for token in doc])
+        doc_ref = self.nlp(references[0])
+        set_ref = Counter([token.text.lower() for token in doc_ref])
+        doc_pred = self.nlp(prediction)
+        set_pred = Counter([token.text.lower() for token in doc_pred])
 
         true_positives = sum((set_ref & set_pred).values())
         false_positives = sum((set_ref - set_pred).values())
