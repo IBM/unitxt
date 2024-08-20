@@ -44,6 +44,8 @@ class TestExamples(UnitxtTestCase):
             "evaluate_using_metrics_ensemble.py",
             "evaluate_existing_dataset_by_llm_as_judge.py",
             "evaluate_ensemble_judge.py",
+            "evaluate_idk_judge.py",
+            "evaluate_grounded_ensemble_judge.py",
         ]
         failed_examples_files = []
         for file in all_example_files:
