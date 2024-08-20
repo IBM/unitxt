@@ -1,0 +1,21 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"text: 1.1 APAR means the completed form entitled ""Authorized Program Analysis Report"" that is used to report suspected code or documentation errors, and to request their correction.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['a. Warranties.'],[[]],,f1_micro,test
+1,"text: This Base Agreement (""Base Agreement"") dated as of 2005/08/01 (""Effective Date""), between IBM SA (Pty) Ltd (""Buyer"") and Intergrated Technologies Services and Ecomm (Pty)Ltd (""Supplier""), establishes the basis for a multinational procurement relationship under which Supplier will provide Buyer the Deliverables and Services described in SOWs and/or WAs issued under this Base Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],"['Term and Termination', 'Safety and Security', 'Communication', 'Warranties.']",[['term_and_termination']],0.0,f1_micro,test
+2,"text: 9. unless authorized by applicable government license or regulation, including but not limited to any U.S. authorization, Supplier will not directly or indirectly export or reexport, at any time, any technical information, technology, software, or other commodity furnished or developed under this, or any other, agreement between the parties, or any other product that is developed or produced from or using Buyer's technical information, technology, software, or other commodity provided under this Agreement to any prohibited country (including release of such technical information, technology, software, or other commodity to nationals, wherever they may be located, of any prohibited country) as specified in applicable export, embargo, and sanctions regulations;
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['warranties'],"['The contractual clause expressed in this text is term\\_and\\_termination. This is because the text outlines the conditions under which a party can terminate the agreement', 'such as if the other party fails to comply with government license or regulation', 'including U.S. authorization.']",[['warranties']],0.0,f1_micro,test
+3,"text: 17.2 If Buyer, or a third party through Buyer, violates any of the foregoing prohibitions, Supplier shall notify Buyer of such violation, and if such violation is not ceased within forteen (14) of the notice from Supplier identifying the violation, Supplier may immediately suspend the Services.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+","['communication, term_and_termination']","['Explanation: The contractual clause expressed in this text is term\\_and\\_termination. This is because the text discusses the conditions under which a contract between Supplier and Buyer can be terminated', 'specifically if Buyer or a third party through Buyer violates any of the prohibitions listed in the Services Agreement.']","[['communication', 'term_and_termination']]",0.0,f1_micro,test
+4,"text: 17.2 If Buyer, or a third party through Buyer, violates any of the foregoing prohibitions, Supplier shall notify Buyer of such violation, and if such violation is not ceased within forteen (14) of the notice from Supplier identifying the violation, Supplier may immediately suspend the Services.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+","['communication, term_and_termination']",['Solution:'],"[['communication', 'term_and_termination']]",0.0,f1_micro,test
