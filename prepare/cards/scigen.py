@@ -1,3 +1,4 @@
+from unitxt import add_to_catalog
 from unitxt.blocks import (
     ConstructTableFromRowsCols,
     LoadHF,
@@ -6,7 +7,6 @@ from unitxt.blocks import (
     Set,
     TaskCard,
 )
-from unitxt.catalog import add_to_catalog
 from unitxt.operators import FilterByCondition
 from unitxt.test_utils.card import test_card
 
