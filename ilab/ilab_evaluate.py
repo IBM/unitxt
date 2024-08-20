@@ -222,9 +222,10 @@ def upload_to_lh(folder, namespace):
     import glob, pandas as pd, datetime,os
     from lh_eval_api import EvaluationResultsUploader, PredictionRecord,RunRecord
     from lh_eval_api.evaluation_data_services.evaluation_data_handlers.eval_uploader.evaluation_results_uploader import HandleExistingRuns
-    runs_files = glob.glob(os.path.join(folder,'*','*_run.csv'))
+    runs_files = glob.glob(os.path.join(folder,'*_run.csv'))
     if len(runs_files) == 0:
         raise ValueError("no files found")
+    print(f"Uploading {len(runs_files)} runs")
     runs = []
     all_predictions = []
     for file in runs_files:
