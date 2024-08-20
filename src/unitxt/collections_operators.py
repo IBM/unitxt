@@ -80,6 +80,10 @@ class DuplicateByList(StreamOperator):
                 yield instance_copy
 
 
+class Explode(DuplicateByList):
+    pass
+
+
 class DuplicateBySubLists(StreamOperator):
     field: str
     to_field: Optional[str] = None

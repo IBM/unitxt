@@ -34,6 +34,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
 
+    group_by: List[Union[str, List[str]]] = []
+
     loader_limit: int = None
 
     max_train_instances: int = None
@@ -229,9 +231,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         multi_stream = self.inference(multi_stream)
         return list(multi_stream["__inference__"])
 
-    def prepare(self):
-        # To avoid the Python's mutable default list trap, we set the default value to None
-        # and then set it to an empty list if it is None.
+    def reset_pipeline(self):
         if self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
 
@@ -352,7 +352,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.metrics is not None:
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
-        self.finalize.steps.append(Finalize())
+        self.finalize.steps.append(Finalize(group_by=self.group_by))
+
+    def prepare(self):
+        self.reset_pipeline()
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
@@ -395,6 +398,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         metrics (List[str]): list of catalog metrics to use with this recipe.
         postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]): list of task_data or metadata keys to group global scores by.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.

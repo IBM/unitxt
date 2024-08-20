@@ -1,3 +1,4 @@
+import json
 import os
 from collections import Counter
 from functools import lru_cache
@@ -191,6 +192,46 @@ def summary():
         if local_catalog_path not in done:
             result += Counter(local_catalog_summary(local_catalog_path))
         done.add(local_catalog_path)
+    print_dict(result)
+    return result
+
+
+def _get_tags_from_file(file_path):
+    result = Counter()
+
+    with open(file_path) as f:
+        data = json.load(f)
+        if "__tags__" in data and isinstance(data["__tags__"], dict):
+            tags = data["__tags__"]
+            for key, value in tags.items():
+                if isinstance(value, list):
+                    for item in value:
+                        result[f"{key}:{item}"] += 1
+                else:
+                    result[f"{key}:{value}"] += 1
+
+    return result
+
+
+def count_tags():
+    result = Counter()
+    done = set()
+
+    for local_catalog_path in get_local_catalogs_paths():
+        if local_catalog_path not in done:
+            for root, _, files in os.walk(local_catalog_path):
+                for file in files:
+                    if file.endswith(".json"):
+                        file_path = os.path.join(root, file)
+                        try:
+                            result += _get_tags_from_file(file_path)
+                        except json.JSONDecodeError:
+                            logger.info(f"Error decoding JSON in file: {file_path}")
+                        except OSError:
+                            logger.info(f"Error reading file: {file_path}")
+
+            done.add(local_catalog_path)
+
     print_dict(result)
     return result
 
