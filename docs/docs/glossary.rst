@@ -9,7 +9,7 @@ Glossary
 Artifact
 ---------
 
-An artifact is a class that can be saved in human readable format in the Unitxt catalog.
+An **Artifact** is a class that can be saved in human readable format in the Unitxt catalog.
 Almost all Unitxt classes inherit from the Artifact class.
 
 .. _unitxt_catalog:
@@ -17,7 +17,7 @@ Almost all Unitxt classes inherit from the Artifact class.
 Catalog
 -------
 All Unitxt artifacts -- recipes, data-task cards, templates, pre-processing operators, formats and metrics --
-can be stored in the :ref:`Unitxt Catalog <catalog>`.
+can be stored in the **:ref:`Unitxt Catalog <catalog>`.**
 
 In addition to the open-source catalog, which can be found in the documentation, users can choose to define a private catalog.
 This enables teams and organizations to harness the open Unitxt Catalog while upholding organizational requirements for additional proprietary artifacts.
@@ -31,7 +31,7 @@ This enables teams and organizations to harness the open Unitxt Catalog while up
 
 Data Preparation Pipeline
 -------------------------
-The data preparation pipeline begins with standardizing the raw data into the :ref:`task <task>` interface,
+The **Data Preparation Pipeline** begins with standardizing the raw data into the :ref:`task <task>` interface,
 as defined in the :ref:`data-task card <data_task_card>`.
 The examples are then verbalized by the :ref:`template <template>`. The :ref:`format <format>` operator applies system prompts,
 special tokens and in-context learning examples.
@@ -50,7 +50,7 @@ The data preparation pipeline can be seen as the top flow in the following figur
 
 Data-Task Card
 --------------
-Data-task cards define how raw data is loaded from the dataset source and how it is standardized for a certain task.
+**Data-Task Cards** define how raw data is loaded from the dataset source and how it is standardized for a certain task.
 Typically, it includes data wrangling actions, e.g., renaming fields,
 filtering data instances, modifying values, train/test/val splitting etc.
 
@@ -60,20 +60,22 @@ The catalog contains predefined data-task cards for various datasets :ref:`here 
 
 Demos (Demonstrations)
 ----------------------
-Demonstrations are the examples added to the model prompt in in-context learning.
-In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a
-non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>`
-as seen in :ref:`this figure <prompt_structure>`.
-Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.
-Usually, the examples in the demo pool are taken from the train split,
-but this can be overridden by the ``demos_taken_from`` parameter.
-The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.
+
+**Demonstrations** are the examples added to the model prompt in in-context learning.  
+In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a 
+non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>` 
+as seen in :ref:`this figure <prompt_structure>`.  
+Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.  
+Usually, the examples in the demo pool are taken from the train split, 
+but this can be overridden by the ``demos_taken_from`` parameter.    
+The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.  
+
 
 
 Evaluation Pipeline
 -------------------
 
-The evaluation pipeline is responsible for producing a list of evaluation scores that reflect model performance on a give dataset.
+The **Evaluation Pipeline** is responsible for producing a list of evaluation scores that reflect model performance on a give dataset.
 It includes a de-verbalization of the model outputs (as defined in the :ref:`template <template>`) and a computation of performance
 by the metrics defined in the task.
 
@@ -114,8 +116,8 @@ The catalog contains predefined formats :ref:`here <catalog.formats>`.
 Inference Engine
 ----------------
 
-An inference engine in Unitxt is an object that performs model inference on Unitxt datasets.
-Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs.
+An **Inference Engine** in Unitxt is an object that performs model inference on Unitxt datasets.
+Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs. 
 Since Unitxt has separate data preparation and evaluation pipelines, you can use any external code or engine to generate
 model predictions. The built-in inference engines can make it more convenient.
 They also ensure that no sensitive data is passed to external services.
@@ -126,7 +128,7 @@ They also ensure that no sensitive data is passed to external services.
 Operator
 ---------
 
-An operator is a class that takes multiple streams as input and produces multiple streams as output.
+An **Operator** is a class that takes multiple streams as input and produces multiple streams as output.
 Every modification of the data in the stream is done by an operator.
 Every operator should perform a single task and its name should reflect its operation.
 
@@ -142,8 +144,8 @@ Examples: AddDictToEveryInstance, RenameField, etc.
 Post processors
 ----------------
 
-Post processors are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
-and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the
+**Post Processors** are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
+and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the 
 set of post processors that are appropriate for it.   For example, post processors in a binary classification
 template could remove trailing whitespace, take the first word, convert `Yes` to `1` , and all other values to `0`.
 
@@ -152,8 +154,8 @@ template could remove trailing whitespace, take the first word, convert `Yes` to
 Prediction and Processed Prediction
 ------------------------------------
 
-A prediction is the output of the model on the input provided to it.
-The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other
+A **Prediction** is the output of the model on the input provided to it.
+The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other 
 framework or code.  The predictions over all instances are  passed to the evaluation pipeline, together with the original dataset.
 
 The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
@@ -179,7 +181,7 @@ This includes :ref:`DataTask Card <data_task_card>`, :ref:`Template <template>`,
 References and Processed References
 ------------------------------------
 
-References are the "correct answers" for the task of a given instance.
+**References** are the "correct answers" for the task of a given instance.
 They are stored as a list of strings in the `references` field of the generated Unitxt dataset.
 For example, a reference for a binary classification task could be `Yes` or `No`.
 
@@ -199,7 +201,7 @@ contains an additional `processed_references` field with the references after po
 
 Target
 -------
-The target is one of the :ref:`references <references>`.
+The **Target** is one of the :ref:`references <references>`.
 It is used as the expected model output in in-context learning demonstrations.
 
 .. _stream:
@@ -207,7 +209,7 @@ It is used as the expected model output in in-context learning demonstrations.
 Stream
 -------
 
-A stream is a sequence of data. It can be finite or infinite. It can be synchronous or asynchronous.
+A **Stream** is a sequence of data. It can be finite or infinite. It can be synchronous or asynchronous.
 Every instance in the stream is a simple python dictionary.
 
 .. image:: ../../assets/flow_animation_1.gif
@@ -225,15 +227,15 @@ Every instance in the stream is a simple python dictionary.
 System Prompt
 -------
 
-The system prompt is the fixed text that is added to the model input by the :ref:`Format <format>` during
-the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>`
+The **System Prompt** is the fixed text that is added to the model input by the :ref:`Format <format>` during 
+the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>` 
 
 .. _task:
 
 Task
 ----
 
-A Unitxt **task** follows the formal definition of an NLP task, such as multi-label classification, named entity extraction, abstractive summarization or translation.
+A Unitxt **Task** follows the formal definition of an NLP task, such as multi-label classification, named entity extraction, abstractive summarization or translation.
 A task is defined by its standard interface -- namely, input and output fields -- and by its evaluation metrics.
 Given a dataset, its contents are standardized into the fields defined by an appropriate task by a :ref:`Data-Task Card <data_task_card>`.
 
@@ -268,7 +270,7 @@ The catalog contains predefined templates :ref:`here <catalog.templates>`. :ref:
 Verbalization
 ---------
 
-Verbalization is the process of taking the task fields and converting them into their
+**Verbalization** is the process of taking the task fields and converting them into their
 textual representation, which is provided as input to the model.
 
 The verbalization process involves multiple components. The :ref:`Template <template>`
