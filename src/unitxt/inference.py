@@ -1,5 +1,4 @@
 import abc
-import json
 import os
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -262,7 +261,7 @@ class IbmGenAiInferenceEngine(
                 ]
                 predict_result.append(res)
 
-            predict_results.append(json.dumps(predict_result))
+            predict_results.append(predict_result)
         return predict_results
 
 
