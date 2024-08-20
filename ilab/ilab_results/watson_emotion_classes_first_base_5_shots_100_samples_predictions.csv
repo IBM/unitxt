@@ -1,0 +1,2301 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Happiness is nt D absence of problems, its D ability 2 deal with them   #quotes   #Love #life
+",['joy'],joy,['joy'],1.0,f1_micro,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @ecommerce_company I did twice nothing is done. It is a lot of work. 200+ images / designs of my are there. You are peddling stolen goods.
+",['anger'],anger,['anger'],1.0,f1_micro,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I need to get away. I wish I had money to go travel for a bit. I miss my east coast friends.
+",['fear'],sadness,['fear'],0.0,f1_micro,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @RockChristopher: FREE Book! (Thur-Mon) 32 Transformational stories ""Finding   Around the World."" http://t.co/hBmngfwtWc Kari Joys MS…
+",['joy'],joy,['joy'],1.0,f1_micro,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @lift_behappy:  : Don't give up a lifetime of happiness for a few minutes of pleasure. via @DantsohoB
+",['joy'],joy,['joy'],1.0,f1_micro,test
+5,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @CMZart you should get your work everywhere.. Articles etc. Love it!
+",['joy'],happiness,['joy'],0.0,f1_micro,test
+6,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @banking_company oh y'all just being y'all fraudulent selfs. I'll call on Thursday
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+7,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I'm relieved that's not a sub.
+",['joy'],fear,['joy'],0.0,f1_micro,test
+8,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: No matter whats happening in Kenya I would give it all up here to be there in a moment best time of my life was in the motherland  
+",['joy'],joy,['joy'],1.0,f1_micro,test
+9,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: The ending made me tear up ;( 
+",['sadness'],sadness,['sadness'],1.0,f1_micro,test
+10,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @Milzyxx just hanging with my bestie
+",['joy'],joy,['joy'],1.0,f1_micro,test
+11,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company not working on any devices. Could you turn it off then on again?
+",['sadness'],none,['sadness'],0.0,f1_micro,test
+12,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You told me you found it on a dig down in Thebes! 
+",['anger'],disgust,['anger'],0.0,f1_micro,test
+13,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Heyy everyone! Kiss u k.a.denise 😘😘🙈😊   #beautiful #amazing #good #day #like4like #lfl #l4l… https://t.co/LfWE3TyMNb
+",['joy'],joy,['joy'],1.0,f1_micro,test
+14,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You know, Burke, I don't know which species is worse.  You don't see them screwing each other over for a fucking percentage. 
+",['anger'],anger,['anger'],1.0,f1_micro,test
+15,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @chuantsay I'm sorry for the experience! Without posting any account info, can you tell us a little bit about what's going on? ^DR
+",['none'],concern,['none'],0.0,f1_micro,test
+16,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: nicolas perony i am okay , thanks .
+",['joy'],sadness,['joy'],0.0,f1_micro,test
+17,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Sure it wasn't sleep paralysis? 
+",['sadness'],fear,['sadness'],0.0,f1_micro,test
+18,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hello Happy! Smart GlassVisit http://t.co/q5apyDnHNX#dog #pets #sunglasses   #smartglass… https://t.co/1MqryEnYwL
+",['joy'],joy,['joy'],1.0,f1_micro,test
+19,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Volunteer Day at CATHEDRAL KITCHEN!!! #giveback #helpyourfellowman #love #peace  
+",['joy'],joy,['joy'],1.0,f1_micro,test
+20,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Their steamed up windows excited George.
+",['joy'],fear,['joy'],0.0,f1_micro,test
+21,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Miss kay's face is creapy   #bbmmsansi
+",['fear'],disgust,['fear'],0.0,f1_micro,test
+22,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @playfulpixel That sounds good
+",['joy'],anger,['joy'],0.0,f1_micro,test
+23,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I've just spent &#163;80 in the past 2 days at @ecommerce_company &#128514;&#128514; I have a problem
+",['sadness'],none,['sadness'],0.0,f1_micro,test
+24,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Does Jozea really need to run around in his underwear...gross!!! #BB18 #eviction 
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+25,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I know this is a little late but im sure you would get mad if i bang your girlfriend. 
+",['anger'],anger,['anger'],1.0,f1_micro,test
+26,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if entertainment can be diverted to also increase positive emotion , meaning , eudaimonia , it will be good enough .
+",['joy'],joy,['joy'],1.0,f1_micro,test
+27,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @changemexs: ""@ProjetoJBFollow:hey @justinbieber if u see this,can u follow me?i've been trying SO hard 😔it's my dream😭  219  …
+",['joy'],sadness,['joy'],0.0,f1_micro,test
+28,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Even at a high state of life you still will have bitches fighting over niggas that ain't worth shit  
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+29,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: So if you're stuck on ways on how to be polite follow these rules. #blog #blogger #nice   #rules #society http://t.co/EXVvdfzDxH
+",['joy'],anger,['joy'],0.0,f1_micro,test
+30,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: it allows thousands of people to walk into a mom and pop store and in just five minutes activate the service that gives them two products an international bank account number and an international debit card .
+",['joy'],none,['joy'],0.0,f1_micro,test
+31,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: But shit .. I must have never had a bff because nobody knows when I'm sad or mad or have been crying  
+",['sadness'],sadness,['sadness'],1.0,f1_micro,test
+32,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @romeoeldaghl @JakMak88 Racing has welcomed worse than him back. #disgraceful   #whydowefollowit
+",['anger'],anger,['anger'],1.0,f1_micro,test
+33,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Im really trying to throw fear & frustration out the window with my business to grow & expand. Ideas? #smallbiz   #entrepreneur
+",['fear'],fear,['fear'],1.0,f1_micro,test
+34,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: People who cut their toenails in the bus deserve to accidentally cut their toes off when the bus suddenly breaks.  
+",['disgust'],anger,['disgust'],0.0,f1_micro,test
+35,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Congratulations on your b day KAITO😆😎🍰✨#Kaito   #birthday #party #20 #best #friends #thanks… http://t.co/EofUzOsrEJ
+",['joy'],joy,['joy'],1.0,f1_micro,test
+36,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @ShittyChemKid  Hello! Thank  you for reaching out and welcome in our family. What can we do for you today? we will love to help. ^Aicha
+",['none'],joy,['none'],0.0,f1_micro,test
+37,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Do what makes you HAPPY! #FWM     #KeepSmiling http://t.co/M4EyvrVle1
+",['joy'],joy,['joy'],1.0,f1_micro,test
+38,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I refuse to be one of those young moms who use their child as an accessory.  ToWatch #AllAboutBabyNotMe
+",['disgust'],anger,['disgust'],0.0,f1_micro,test
+39,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: they have seen their parents have struggled with diarrhea , they have struggled with diarrhea , they have seen lots of deaths .
+",['sadness'],disgust,['sadness'],0.0,f1_micro,test
+40,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @twebbstack =O you need to ask him something? Lmao I love him too
+",['joy'],joy,['joy'],1.0,f1_micro,test
+41,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Look what steph made me   #seductive #crafts http://t.co/5y87hQiq4V
+",['joy'],disgust,['joy'],0.0,f1_micro,test
+42,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @chrisdbaird I apologize. You may attempt to valid your identity through the questionnaire. ^SD
+",['none'],none,['none'],1.0,f1_micro,test
+43,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @angliacounsel: Anxiety in the workplace (and home) http://t.co/IkfBsfdrTT via @AnxietyUnited #LOU #bizitalk  
+",['fear'],fear,['fear'],1.0,f1_micro,test
+44,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: We have only one tea bag left in the house   #lowestoflows #studentproblems
+",['sadness'],sadness,['sadness'],1.0,f1_micro,test
+45,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I hate this chair so much. It's terrible and uncomfortable
+",['anger'],disgust,['anger'],0.0,f1_micro,test
+46,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RainingTiny is loving it :)  #joy
+",['joy'],joy,['joy'],1.0,f1_micro,test
+47,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I will never forgive you. 
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+48,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Tonight was like a dream. I sang jazz. I wore a magnolia in my hair. #ThanksJesus #Grateful   #Blessed... http://t.co/ppYFcdyb2L
+",['joy'],joy,['joy'],1.0,f1_micro,test
+49,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: In such a bad mood right now_ #annoyed  
+",['anger'],anger,['anger'],1.0,f1_micro,test
+50,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @winnelixi4542_2: ☯Gain Followers☯RT This☯MUST FOLLOW ME I FOLLOW BACK☯Follow everyone who rts☯Gain  #votadulcemaria   #follow…
+",['joy'],sadness,['joy'],0.0,f1_micro,test
+51,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: simple technologies , like wall mounted devices that display how much power your household is using , and what kind of results you will get if you turn off a few lights these can actually have a direct positive impact on your energy footprint .
+",['joy'],happiness,['joy'],0.0,f1_micro,test
+52,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I want to go hit the bags so bad #stressed #insecure    
+",['anger'],anger,['anger'],1.0,f1_micro,test
+53,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @jerryhorton: RT @paparoach: Face Everything And Rise going to break 3 million views soon! https://t.co/FsAlpfPg7D/s/EtvC  
+",['fear'],joy,['fear'],0.0,f1_micro,test
+54,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Another day, another blessing and another chance at life.💂🎯#vibe #beautiful #day   #hot #hothot… http://t.co/CObnQ4tEru
+",['joy'],joy,['joy'],1.0,f1_micro,test
+55,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: To learn some and teach their children the true love for such simple skills that make a better world
+",['joy'],happiness,['joy'],0.0,f1_micro,test
+56,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: It's nice to have a day of work so I can listen to @texastornado5 on @btsportmotogp #FP1 #MotoGP  
+",['joy'],joy,['joy'],1.0,f1_micro,test
+57,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Im glad to hear you moved away - i hope it gives you the space to find peace and equanimity.
+",['joy'],happiness,['joy'],0.0,f1_micro,test
+58,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @OliverManning1 So jealous. I write a check every year. A big one. The biggest one I write every year. #missthosedays  
+",['sadness'],jealousy,['sadness'],0.0,f1_micro,test
+59,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: acinetobacter is a nasty hospital bug , and carbapenem is pretty much the strongest class of antibiotics that we can throw at this bug .
+",['disgust'],sadness,['disgust'],0.0,f1_micro,test
+60,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: PLEASE don't make me feel like a fool, because I'm NOT. I'm not dumb!   just want our family. :/
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+61,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i was actually crying during his presentation .
+",['sadness'],sadness,['sadness'],1.0,f1_micro,test
+62,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: They would help I suppose but writing about it makes me think about it more.
+",['joy'],sadness,['joy'],0.0,f1_micro,test
+63,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: 'Angry' is just 'sad's' bodyguard. - Liza Palmer  #feelings #emotion #reality #truth #recovery #sobriety #inspirational #quote
+",['anger'],sadness,['anger'],0.0,f1_micro,test
+64,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: When's my dad coming home? #Maddie #puggle   #missmydad https://t.co/FdGmroZm2b
+",['sadness'],joy,['sadness'],0.0,f1_micro,test
+65,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @wittytag Thanks for the feedback. Feel free to submit your thoughts to https://t.co/balq3Eyso6. We improve with our clients input.
+",['none'],happiness,['none'],0.0,f1_micro,test
+66,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Tweeting from the tarmac at Cork Airport. Delayed
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+67,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: ""Occured while preparing for a midterm in Social Welfare that I thought was going to be very hard and felt unprepared for.""
+",['fear'],fear,['fear'],1.0,f1_micro,test
+68,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @rcrobjohn @ConservativeDom Only Muslims kill and maim in the name of religion. 
+",['disgust'],anger,['disgust'],0.0,f1_micro,test
+69,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: today at the micro and nanoscales , there an unprecedented revolution happening .
+",['joy'],none,['joy'],0.0,f1_micro,test
+70,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: My TweetDeck is languishing in API Hell. Again.
+",['anger'],disgust,['anger'],0.0,f1_micro,test
+71,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @MissxMarisa haha, yeah I think it's a bit of both
+",['joy'],none,['joy'],0.0,f1_micro,test
+72,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Too blessed to be insecure! :)   #EasterSunday #PerfectMorning #Selca #TagsForLike #like4likes… https://t.co/j88UYEu8Rm
+",['joy'],joy,['joy'],1.0,f1_micro,test
+73,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and i understand that the major role of parents is to stop kids putting their fingers in poo , because it always something nice to smell .
+",['fear'],sadness,['fear'],0.0,f1_micro,test
+74,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @redsoxgirl28 been there, sadly.  this isn't your first rodeo, my dear, I suspect you've learned your lesson?
+",['sadness'],sadness,['sadness'],1.0,f1_micro,test
+75,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Photo: That’s just who I am. #summer #caldura   #different #girl #new #look #friends #retrica... http://t.co/CTXqdiQAns
+",['joy'],none,['joy'],0.0,f1_micro,test
+76,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Also why the fuck hasn't she washed her hair yet????? Wash the toothpaste out  #cbb
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+77,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Such a natural genuine moment They never even knew I was I photographing them
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Won a free days holiday at my work #winning  
+",['joy'],joy,['joy'],1.0,f1_micro,test
+78,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: https://t.co/t1flDLIWdt Ummmm #WTF . HIV infected man is hired to sleep with teenage girls???  #tradition #wrong
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+79,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Women can be scandalous 😩   #notcool #nasty #scandalous https://t.co/fUvtQNxpUi
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+80,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Your a piece of shit I don't need you ___ #SoPissOff  #SoHurt
+",['anger'],anger,['anger'],1.0,f1_micro,test
+81,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: bruh, I cannot stand that one person in class that sniffs their snot up every 5 seconds, &amp; won't ever get up to blow their nose.  
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+82,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: These are ways that I try to cope. 
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+83,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I hate this stupid bot you are stupid help dental surgery coverage file a claim I got new spectacles I got new spectacles hi
+",['anger'],anger,['anger'],1.0,f1_micro,test
+84,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @financial_company no help so far.
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+85,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Y'all hoes the type to tell ya homegirls business cause y'all fell out 😷 
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+86,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Clean your toilet, yo 
+",['anger'],anger,['anger'],1.0,f1_micro,test
+87,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: listening to ryan adams and being sick
+",['fear'],none,['fear'],0.0,f1_micro,test
+88,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @telecommunication_company fix your slow ass internet and wifi
+",['sadness'],anger,['sadness'],0.0,f1_micro,test
+89,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and i went there i noticed that there was a male section , which was carefully separated from the female section .
+",['joy'],anger,['joy'],0.0,f1_micro,test
+90,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: So cool to see @gesmithmusic back at #SNL #40thAnniversary  
+",['joy'],joy,['joy'],1.0,f1_micro,test
+91,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I can not wash my hair👿 Look how much lint there is in the hotel hair dryer  #WouldNotLetMyCatStayHere https://t.co/5n5j6t740X
+",['disgust'],disgust,['disgust'],1.0,f1_micro,test
+92,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: PERFECT SHOW TO YOU! enjoy for me
+",['joy'],joy,['joy'],1.0,f1_micro,test
+93,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Took calculus exam today, I think that I did well. I messed up one derivative identity though  Well, I never miss that one again.
+",['fear'],joy,['fear'],0.0,f1_micro,test
+94,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: You stole it from a drunk at the local Casbah?! 
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @XxJETSxX Glad to hear that, Alex. Thanks for your patience and understanding this morning. Hope you have a good flight. ^TS
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text:   14th Birthday JuanKarlosHappy 14th Birthday JuanKarlosThis is your day JK -5
+",['joy'],joy,['joy'],1.0,f1_micro,test
+95,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I also have to make scenarios in which I slightly alter the details to make sure I understood it all. 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Dont know anything about me ... #fitforrivals #followme   #bad #bed #night #breakingbad #bithch #FollowBack
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @mmthompson99: Alex just told me I'm not a selfie person  ness
+",['sadness'],disgust,['sadness'],0.0,f1_micro,test
+96,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Are you a  wart? Your   might be a sign of #intelligence: http://t.co/D6x4hmSItk http://t.co/ggXhtiToz1
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: RT @HealGroundUp: We dont know our own pain until we project it onto others   #relationships 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @SassyHStyleZ Hi! Thanks for reaching out. Sorry to hear this, allow us to help. May we have the phone's model number and carrier? ^Steph
+",['none'],none,['none'],1.0,f1_micro,test
+97,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Rogers received reports from a near by farm that sheeps were dying.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @THE_BLACKPOLICE They communicate via e-mail only, pls check Spam folder in case routed there. If no joy, pls phone/chat in again. ^SJ
+",['none'],joy,['none'],0.0,f1_micro,test
+98,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Hеre our hоrny models get dоwn right dirty http://t.co/ruurWFdHXN!   #smarttech #atwt #drumrollplease #seminarium
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: if instead , we can bolster a human spirit to keep hope , to see beauty in themselves and others , to be curious and imaginative , then we are truly using our power well .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: and the reason that i do this , it because i have this fear that we are not feeling enough as a culture right now .
+fear
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @HPSupport no longer at computer, will have to try again tomorrow
+",['none'],none,['none'],1.0,f1_micro,test
+99,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @17MileDr - Cut mine in half this a.m. It's a trap that won't pay off til the BOYZ decide to pull the rug on the mrkts.  
+disgust
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: now , i have three options that i would like to show you .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Depressed brains are teeming with this protein - Futurity  http://t.co/40Mg0RKeLD    
+sadness
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+none
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: i just break off another bottleneck and play these steel guitar blues .
+joy
+
+Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: It's a great healthy snack to keep around It's crunchy and not too sweet Also if you keep them in a ziplock bag they retain its crunchiness very well
+",['joy'],joy,['joy'],1.0,f1_micro,test

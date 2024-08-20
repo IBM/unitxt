@@ -1,0 +1,401 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"text: Client Relationship Agreement - Attachment for Cloud Services
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is: safety_and_security'],[[]],,f1_micro,test
+1,"text: The parties agree to modify Client Relationship Agreement number ________________ as follows:
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What is the maximum time of a day that the data center should be closed for maintenance?'],[[]],,f1_micro,test
+2,"text: The term Products also includes Cloud Services.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['Answer: safety_and_security', 'warranty']",[[]],,f1_micro,test
+3,"text: Add as a new section:
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Please describe any other important information related to the clause you selected:'],[[]],,f1_micro,test
+4,"text: 1.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['contractual clauses expressed in this text are warranties'],[[]],,f1_micro,test
+5,"text: Cloud Services
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['1. term_and_termination (the contract begins on a certain date and lasts for a period of time or is open-ended)'],[[]],,f1_micro,test
+6,"text: a. A Cloud Service is an IBM branded offering provided by IBM and made available via a network.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['None'],[[]],,f1_micro,test
+7,"text: Each Cloud Service is described in an Attachment or TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['How to identify them? By looking at the title of each Attachment or TD and by checking the table of contents of the Cloud Service Agreement.'],[[]],,f1_micro,test
+8,"text: Cloud Services are designed to be available 24/7, subject to maintenance.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What are the payment methods stated in this text?'],[[]],,f1_micro,test
+9,"text: Client will be notified of scheduled maintenance.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['communication'],['Answer'],[['communication']],0.0,f1_micro,test
+10,"text: Technical support and service level commitments, if applicable, are specified in an Attachment or TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What is the duration of this contract?'],[[]],,f1_micro,test
+11,"text: b. When IBM accepts Client's order, IBM provides Client the entitlements specified in the TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is term_and_termination.'],[[]],,f1_micro,test
+12,"text: The term, including any renewal term, for a Cloud Service is described in an Attachment or TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The term and termination contract is expressed.'],[[]],,f1_micro,test
+13,"text: c. IBM will provide the facilities, personnel, equipment, software, and other resources necessary to provide the Cloud Services and generally available user guides and documentation to support Client's use of the Cloud Service.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Explain how you derived your answer.'],[[]],,f1_micro,test
+14,"text: Client will provide hardware, software and connectivity to access and use the Cloud Service, including any required Client-specific URL addresses and associated certificates.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: communication'],[[]],,f1_micro,test
+15,"text: An Attachment or TD may have additional Client responsibilities.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The correct answers are: warranty'],[[]],,f1_micro,test
+16,"text: d. Client may access a Cloud Service only to the extent of authorizations acquired by Client.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The correct answer is: safety_and_security'],[[]],,f1_micro,test
+17,"text: Client is responsible for use of Cloud Services by any user who accesses the Cloud Service with Client's account credentials.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: safety_and_security'],[[]],,f1_micro,test
+18,"text: A Cloud Service may not be used in any jurisdiction for unlawful, obscene, offensive or fraudulent Content or activity, such as advocating or causing harm, interfering with or violating the integrity or security of a network or system, evading filters, sending unsolicited, abusive or deceptive messages, viruses or harmful code, or violating third party rights.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['safety_and_security'],['None.'],[['safety_and_security']],0.0,f1_micro,test
+19,"text: If there is a complaint or notice of violation, use may be suspended until resolved, and terminated if not resolved promptly.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Why does the user need to maintain a secure environment when using this service?'],[['term_and_termination']],0.0,f1_micro,test
+20,"text: Client may not: i) resell direct access to a Cloud Service to a third party outside Client's Enterprise; or ii) combine Cloud Services with Client's value add to create a commercially available Client branded solution for which Client charges a fee.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['A. none'],[[]],,f1_micro,test
+21,"text: 1.2 Content and Data Protection for Cloud Services
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['### 10.5 The following is a sample of the data that might be included in the user profile for an individual who has used the service:'],[[]],,f1_micro,test
+22,"text: a. Content consists of all data, software, and information that Client or its authorized users provides, authorizes access to, or inputs to the Cloud Service.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: warranties'],[[]],,f1_micro,test
+23,"text: Use of the Cloud Service will not affect Client's existing ownership or license rights in such Content.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is : term_and_termination'],[[]],,f1_micro,test
+24,"text: IBM and its contractors, and subprocessors may access and use the Content solely for the purpose of providing and managing the Cloud Service, unless otherwise described in a TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['None'],[[]],,f1_micro,test
+25,"text: b. Upon request by either party, IBM, Client or their affiliates will enter into additional agreements as required by law in the prescribed form for the protection of personal or regulated personal data included in Content.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The contractual clause expressed in this text is: safety_and_security'],[[]],,f1_micro,test
+26,"text: The parties agree (and will ensure that their respective affiliates agree) that such additional agreements will be subject to the terms of the Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What is the legal basis for this text?'],[[]],,f1_micro,test
+27,"text: c. IBM will return or remove Content from IBM computing resources upon the expiration or cancellation of the Cloud Service, or earlier upon Client's request.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['### Answer'],[[]],,f1_micro,test
+28,"text: IBM may charge for certain activities performed at Client's request (such as delivering Content in a specific format).
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['```'],[[]],,f1_micro,test
+29,"text: IBM does not archive Content; however some Content may remain in Cloud Service backup files until expiration of such files as governed by IBM's backup retention practices.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is termination.'],[[]],,f1_micro,test
+30,"text: d. Each Cloud Service is designed to protect Content as described in the Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is: safety_and_security'],[[]],,f1_micro,test
+31,"text: IBM's Data Security and Privacy Principles for IBM Cloud Services (DSP), at http://www.ibm.com/cloud/data-secuirty, apply for generally available Cloud Service offerings or as described in the applicable TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['safety_and_security'],['Answer is d. warranty'],[['safety_and_security']],0.0,f1_micro,test
+32,"text: IBM will treat all Content as confidential by not disclosing Content except to IBM employees, contractors, and subprocessors, and only to the extent necessary to deliver the Cloud Service, unless otherwise specified in a TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is term_and_termination'],[[]],,f1_micro,test
+33,"text: Specific security features and functions of a Cloud Service may be provided in an Attachment and TDs.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['A) term\\_and\\_termination'],[[]],,f1_micro,test
+34,"text: Client is responsible to assess the suitability of each Cloud Service for Client's intended use and Content.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"[""What is an example of a 'legal' clause that can be found in this text?""]",[[]],,f1_micro,test
+35,"text: By using the Cloud Service, Client acknowledges that it meets Client's requirements and processing instructions.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['- The termination clause is not explicitly stated.'],[[]],,f1_micro,test
+36,"text: e. Client acknowledges that i) IBM may modify the DSP from time to time at IBM's sole discretion and ii) such modifications will supersede prior versions.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer'],[[]],,f1_micro,test
+37,"text: The intent of any modification to the DSP will be to i) improve or clarify existing commitments, ii) maintain alignment to current adopted standards and applicable laws, or iii) provide additional commitments.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer chosen in the quiz: term_and_termination'],[[]],,f1_micro,test
+38,"text: No modification to the DSP will materially degrade the security of a Cloud Service.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['safety_and_security'],['What is the purpose of the document?'],[['safety_and_security']],0.0,f1_micro,test
+39,"text: 1.3 Changes to Cloud Services
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is none'],[[]],,f1_micro,test
+40,"text: IBM may modify a Cloud Service, without degrading its functionality or security features.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['safety_and_security'],['What is the most fitting type for IBM to use when creating its terms of services for the Cloud Service?'],[['safety_and_security']],0.0,f1_micro,test
+41,"text: IBM may withdraw a Cloud Service on 12 months' notice, unless otherwise stated in a TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['communication'],['term_and_termination'],[['communication']],0.0,f1_micro,test
+42,"text: IBM will continue to provide the Cloud Service for the remainder of Client's unexpired term or work with Client to migrate to another IBM offering.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is b. safety_and_security'],[[]],,f1_micro,test
+43,"text: 1.4 Suspension and Termination of Cloud Services
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: term_and_termination'],[[]],,f1_micro,test
+44,"text: IBM may suspend, revoke or limit Client's use of a Cloud Service if IBM determines there is a material breach of Client's obligations, a security breach, or violation of law.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+","['safety_and_security, term_and_termination']",['Answer is term_and_termination'],"[['safety_and_security', 'term_and_termination']]",0.0,f1_micro,test
+45,"text: If the cause of the suspension can reasonably be remedied, IBM will provide notice of the actions Client must take to reinstate the Cloud Service.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['communication'],['Safety and security'],[['communication']],0.0,f1_micro,test
+46,"text: If Client fails to take such actions within a reasonable time, IBM may terminate the Cloud Service.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['term_and_termination'],[['term_and_termination']],1.0,f1_micro,test
+47,"text: Client may terminate a Cloud Service on one month's notice:
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+","['communication, term_and_termination']",['Answer: term_and_termination'],"[['communication', 'term_and_termination']]",0.0,f1_micro,test
+48,"text: (i) at the written recommendation of a government or regulatory agency following a change in either applicable law or the Cloud Services;
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Which of the following contractual terms is not stated in this document?'],[['term_and_termination']],0.0,f1_micro,test
+49,"text: (ii) if IBM's modification to the computing environment used to provide the Cloud Service causes Client to be noncompliant with applicable laws; or
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Answer is term_and_termination'],[['term_and_termination']],0.0,f1_micro,test
+50,"text: (iii) if IBM notifies Client of a modification that has a material adverse effect on Client's use of the Cloud Service, provided that IBM will have 90 days to work with Client to minimize such effect.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+","['communication, term_and_termination']",['Answer: warranty'],"[['communication', 'term_and_termination']]",0.0,f1_micro,test
+51,"text: In the event of such termination, IBM shall refund a portion of any prepaid amounts for the applicable Cloud Service for the period after the date of termination.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Answer: term_and_termintaion'],[['term_and_termination']],0.0,f1_micro,test
+52,"text: If the Agreement is terminated for any other reason, Client shall pay to IBM, on the date of termination, the total amounts due per the Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Answer is: term_and_termination'],[['term_and_termination']],0.0,f1_micro,test
+53,"text: Upon termination, IBM may assist Client in transitioning Client's Content to an alternative technology for an additional charge and under separately agreed terms.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],['Answer: term_and_termination'],[['term_and_termination']],0.0,f1_micro,test
+54,"text: 2.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['text: 3.'],[[]],,f1_micro,test
+55,"text: Warranties and Post Warranty Support
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['- What is the name of the company that provided the warranty for the product?'],[[]],,f1_micro,test
+56,"text: Add new paragraph:
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['2. What is the main purpose of this text?'],[[]],,f1_micro,test
+57,"text: a. IBM warrants that it provides Cloud Services using commercially reasonable care and skill in accordance with the applicable Attachment or TD.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['warranties'],['Answer: warranty'],[['warranties']],0.0,f1_micro,test
+58,"text: The warranty for a Cloud Service ends when the Cloud Service ends.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['warranties'],['What does termination of warranty by the Cloud Service provider mean?'],[['warranties']],0.0,f1_micro,test
+59,"text: Charges, Taxes and Payment or Charges, Taxes, Payment and Verification
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is: warranties'],[[]],,f1_micro,test
+60,"text: Add to end of paragraph a: Prepaid Cloud Services must be used within the applicable period.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What is the main idea of the contract?'],[[]],,f1_micro,test
+61,"text: 3.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['Terms and Termination', 'Safety and Security', 'Communication', 'Warranties.']",[[]],,f1_micro,test
+62,"text: Governing Laws and Geographic Scope
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is:'],[[]],,f1_micro,test
+63,"text: In paragraph b, add after first sentence: For Cloud Services, both parties agree to the application of the laws of the country of Client's business address.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is warranties.'],[[]],,f1_micro,test
+64,"text: 4.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer explained:'],[[]],,f1_micro,test
+65,"text: General
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['General'],[[]],,f1_micro,test
+66,"text: In paragraph b, replace third through fifth sentences with: Changes are not retroactive; they apply, as of the effective date, only to new orders, ongoing services that do not expire, and renewals.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The contractual clause is: term_and_termination'],[[]],,f1_micro,test
+67,"text: For transactions with a defined renewable contract period, Client may request that IBM defer the change effective date until the end of the current contract period.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['```'],[[]],,f1_micro,test
+68,"text: Client accepts changes by placing new orders or continuing use after the change effective date or allowing transactions to renew after receipt of the change notice.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['ANSWER'],[[]],,f1_micro,test
+69,"text: In paragraph f, add to end of first and at end of second sentences before the period: "", or Cloud Services"".
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is: term_and_termination.'],[[]],,f1_micro,test
+70,"text: International Passport Advantage Agreement
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is: term_and_termination'],[[]],,f1_micro,test
+71,"text: Under this Agreement, Client may order Eligible Products (EPs) from IBM.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer & Explanation...'],[[]],,f1_micro,test
+72,"text: Details regarding EPs are provided in Attachments, and Transaction Documents (TDs) such as Terms of Use, Service Descriptions, quotes, and Proofs of Entitlement (PoEs).
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Which of the following is not an example of a commercial off-the-shelf software license agreement (COTSSLA)?'],[[]],,f1_micro,test
+73,"text: This Agreement, Attachments, and applicable TDs are the complete agreement regarding transactions by which Client acquires EPs.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['- All of the above'],[[]],,f1_micro,test
+74,"text: Client Originating Company (also identified as the Originating Site in the Passport Advantage Enrollment Form) and the IBM Originating Company that accepts the Client Originating Company's orders agree to coordinate the administration of this Agreement within their respective Enterprises, which includes the set of legal entities that, by more than 50%, owns, are owned by, or are under common ownership with the Originating Company.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: none'],[[]],,f1_micro,test
+75,"text: The Client Originating Company is responsible for compliance with the terms for all Client sites assigned a Passport Advantage Site Number (Site(s)) under this Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The Client Originating Company is responsible for compliance with the terms for all Client sites assigned a Passport Advantage Site Number (Site(s)) under this Agreement.'],[[]],,f1_micro,test
+76,"text: In the event of conflict, an Attachment prevails over this Agreement and a TD prevails over both the Agreement and any Attachment.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The answer is none'],[[]],,f1_micro,test
+77,"text: 1.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['<pre><code>I\'ve been reading through our contract and I have a question about clause 20.5: ""The company shall provide all necessary tools and equipment for the employee to perform his or her duties."" Does this mean that I\'m required to use the provided tools and equipment? And if I need to use my own tools or equipment', 'will the company reimburse me?</code></pre>']",[[]],,f1_micro,test
+78,"text: General
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['contractual clauses: term_and_termination'],[[]],,f1_micro,test
+79,"text: 1.1 Acceptance of Terms
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: none'],[[]],,f1_micro,test
+80,"text: The Client Originating Company and thereafter each of its participating Enterprise companies accept this Agreement by submitting an IBM International Passport Advantage Enrollment Form to IBM or Client's chosen reseller(s).
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: none'],[[]],,f1_micro,test
+81,"text: This Agreement is effective on the date IBM accepts the initial order under this Agreement (the Effective Date) and remains in effect until the Client Originating Company or the IBM Originating Company terminates it under this Agreement.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['term_and_termination'],"['If a party fails to perform any of its obligations under this Agreement', 'the other party may terminate this Agreement upon written notice and receive a refund of amounts paid in advance for Services that were due to be performed after the effective date of termination.']",[['term_and_termination']],0.0,f1_micro,test
+82,"text: An EP is subject to this Agreement when IBM accepts Client's order by i) sending an invoice or a PoE including the level of authorized use, ii) making the Program or Cloud Service available, iii) shipping the Appliance, or iv) providing the support, service, or solution.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['Answer chosen this time: term_and_termination', 'safety_and_security', 'communication', 'warranties']",[[]],,f1_micro,test
+83,"text: 1.2 Changes to Agreement Terms
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The correct answer is term_and_termination'],[[]],,f1_micro,test
+84,"text: Because this Agreement may apply to many future orders, IBM reserves the right to modify it by providing Client at least three months' written notice.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['communication'],['Term and Termination Safety and Security Communication Warranties None'],[['communication']],0.0,f1_micro,test
+85,"text: Changes are not retroactive; they apply, as of the effective date, only to new orders and renewals.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Terms and Conditions'],[[]],,f1_micro,test
+86,"text: Client accepts changes by placing new orders after the change effective date or allowing transactions to renew after receipt of the change notice.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['### 2 Answer'],[[]],,f1_micro,test
+87,"text: Except as otherwise provided in this Agreement, all changes must be in writing, signed by both parties.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['The correct option is: warranty'],[[]],,f1_micro,test
+88,"text: 1.3 Payment and Taxes
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: warranties'],[[]],,f1_micro,test
+89,"text: Client agrees to pay all applicable charges specified by IBM, charges for use in excess of authorizations, and any late payment fees.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: none'],[[]],,f1_micro,test
+90,"text: Charges are exclusive of any customs or other duty, tax, and similar levies imposed by any authority resulting from Client's acquisitions under the Agreement and will be invoiced in addition to such charges.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer'],[[]],,f1_micro,test
+91,"text: Amounts are due upon receipt of the invoice and payable within 30 days of the invoice date to an account specified by IBM.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['Answer is term and termination', 'safety and security', 'communication', 'warranties']",[[]],,f1_micro,test
+92,"text: Prepaid services must be used within the applicable period.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['```'],[[]],,f1_micro,test
+93,"text: IBM does not give credits or refunds for any prepaid, one-time charges, or other charges already due or paid.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is: term_and_termination'],[[]],,f1_micro,test
+94,"text: If, as a result of Client moving, accessing, or using an EP across a border, any authority imposes a customs duty, tax, levy or fee (including withholding taxes for the import or export of any such EP), then Client agrees that it is responsible for, and will pay, any such customs duty, tax, levy or fee.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer: safety_and_security'],[[]],,f1_micro,test
+95,"text: This excludes those taxes based on IBM's net income.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Answer is: warranty'],[[]],,f1_micro,test
+96,"text: Client agrees to: i) pay withholding tax directly to the appropriate government entity where required by law; ii) furnish a tax certificate evidencing such payment to IBM; iii) pay IBM only the net proceeds after tax; and iv) fully cooperate with IBM in seeking a waiver or reduction of such taxes and promptly complete and file all relevant documents.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],"['Answer: payment', 'safety_and_security']",[[]],,f1_micro,test
+97,"text: 1.4 IBM Business Partners and Resellers
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['Terms of service'],[[]],,f1_micro,test
+98,"text: IBM Business Partners and resellers are independent from IBM and unilaterally determine their prices and terms.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['## Answer explanation:'],[[]],,f1_micro,test
+99,"text: IBM is not responsible for their actions, omissions, statements, or offerings.
+What are the contractual clauses expressed in this text?
+Select your answer from the options: term_and_termination, safety_and_security, communication, warranties. If no contractual clauses are expressed mark it as none.
+",['none'],['What is the main idea of the text?'],[[]],,f1_micro,test

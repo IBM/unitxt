@@ -1,0 +1,2 @@
+owner,started_at,framework,benchmark,dataset,task,model_name,score,score_name,all_scores,run_params
+ilab,2024-08-15 09:24:12.947092,Unitxt,ilab,pagerduty,summarization,models/merlinite-7b-lab-Q4_K_M.gguf,0.24001457551225142,rougeL,"{'rouge1': np.float64(0.334205573587557), 'rouge2': np.float64(0.12476363353224795), 'rougeL': np.float64(0.24001457551225142), 'rougeLsum': np.float64(0.2911112252491722), 'score': np.float64(0.24001457551225142)}","{'loader_limit': '100', 'host': 'cccxc426', 'folder': 'instructlab', 'num_shots': 0}"
