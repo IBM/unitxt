@@ -1,6 +1,6 @@
 import json
 from collections import defaultdict
-from functools import cache
+from functools import lru_cache
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -79,7 +79,7 @@ _post_process_steps = SequentialOperator(
 )
 
 
-@cache
+@lru_cache(maxsize=None)
 def group_str(json_str):
     data = json.loads(json_str)
     return ",".join(f"{k}:{v}" for k, v in data.items())
@@ -128,7 +128,7 @@ class SplitSubsetsAndGroups(MultiStreamOperator):
         return MultiStream.from_iterables(result, copying=True)
 
 
-@cache
+@lru_cache(maxsize=None)
 def group_str_to_key_value(group_str):
     keys = []
     values = []
@@ -152,7 +152,7 @@ def group_str_to_key_value(group_str):
     return key, value
 
 
-@cache
+@lru_cache(maxsize=None)
 def stream_name_to_origin_subset_group(stream_name):
     origin, subset_group = stream_name.split("://")
     if "?" in subset_group:
