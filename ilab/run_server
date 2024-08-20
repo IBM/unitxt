@@ -10,8 +10,8 @@ model=$4
 
 echo "PIPE_FILE: $PIPE_FILE"
 cd $repo
-source /dccstor/fuse/anaconda3/etc/profile.d/conda.sh
-conda activate $venv
+#source /dccstor/fuse/anaconda3/etc/profile.d/conda.sh
+#conda activate $venv
 echo "Starting server..."
 
 $venv/bin/python $venv/bin/ilab model serve --model-path $model &
