@@ -42,7 +42,7 @@ It's also possible to add artifacts to the library's default catalog:
 Using Catalog Assets
 --------------------
 
-To use catalog objects, simply specify their name in the Unitxt object that will use them. For example, `tasks.my_task` can now be utilized by the `StandardRecipe`:
+To use catalog objects, simply specify their name in the Unitxt object that will use them. 
 
 .. code-block:: python
 

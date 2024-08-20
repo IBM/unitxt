@@ -8,7 +8,6 @@ from unitxt.operators import (
     Rename,
     Set,
 )
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 language_codes = [
@@ -138,9 +137,8 @@ language_codes = [
 
 for lang in language_codes:
     card = TaskCard(
-        loader=LoadHF(path="facebook/belebele", name="default", split=lang),
+        loader=LoadHF(path="facebook/belebele", name=lang),
         preprocess_steps=[
-            RenameSplits(mapper={lang: "test"}),
             ListFieldValues(
                 fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"],
                 to_field="choices",

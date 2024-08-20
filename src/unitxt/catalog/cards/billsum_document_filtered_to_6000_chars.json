@@ -26,6 +26,12 @@
             }
         },
         {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
+        },
+        {
             "__type__": "filter_by_expression",
             "expression": "len(document) <= 6000"
         }

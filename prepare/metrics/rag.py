@@ -75,7 +75,7 @@ metric = MetricPipeline(
         ListFieldValues(fields=["references"], to_field="references"),
     ],
     metric=metrics["metrics.token_overlap"],
-    postpreprocess_steps=[
+    postprocess_steps=[
         Copy(
             field_to_field=[
                 ("score/global/f1", "score/global/f1_overlap_with_context"),
@@ -340,7 +340,7 @@ for axis, base_metric, main_score in [
     metric = MetricPipeline(
         main_score=main_score,
         preprocess_steps=preprocess_steps,
-        postpreprocess_steps=[
+        postprocess_steps=[
             Copy(
                 field_to_field={
                     "score/instance/f1": f"score/instance/{axis}_f1_{base_metric}",

@@ -3,16 +3,9 @@
     "loader": {
         "__type__": "load_hf",
         "path": "facebook/belebele",
-        "name": "default",
-        "split": "pan_Guru"
+        "name": "pan_Guru"
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "pan_Guru": "test"
-            }
-        },
         {
             "__type__": "list_field_values",
             "fields": [

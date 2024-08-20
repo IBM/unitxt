@@ -25,6 +25,12 @@
             "fields": {
                 "document_type": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
         }
     ],
     "task": "tasks.summarization.abstractive",

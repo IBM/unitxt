@@ -5,12 +5,14 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.collections_operators import Wrap
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="cnn_dailymail", name="3.0.0"),
     preprocess_steps=[
-        Rename(field_to_field={"article": "document", "highlights": "summary"}),
+        Rename(field_to_field={"article": "document"}),
+        Wrap(field="highlights", inside="list", to_field="summaries"),
         Set(fields={"document_type": "article"}),
     ],
     task="tasks.summarization.abstractive",

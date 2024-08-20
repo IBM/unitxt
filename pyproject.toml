@@ -46,6 +46,7 @@ target-version = "py38"
 "src/unitxt/validate.py" = ["B024"]
 "src/unitxt/standard.py" = ["C901"]
 "src/unitxt/type_utils.py" = ["C901"]
+"src/unitxt/metric_utils.py" = ["C901"]
 "src/unitxt/dataclass.py" = ["C901"]
 "src/unitxt/operators.py" = ["C901"]
 "docs/conf.py" = ["E402"]

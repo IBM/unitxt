@@ -5,6 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.collections_operators import Wrap
 from unitxt.settings_utils import get_settings
 from unitxt.test_utils.card import test_card
 
@@ -20,6 +21,7 @@ for lang in langs:
         loader=LoadHF(path="mlsum", name=lang),
         preprocess_steps=[
             Rename(field_to_field={"text": "document"}),
+            Wrap(field="summary", inside="list", to_field="summaries"),
         ],
         task="tasks.summarization.abstractive",
         templates="templates.summarization.abstractive.all",

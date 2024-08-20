@@ -3,16 +3,9 @@
     "loader": {
         "__type__": "load_hf",
         "path": "facebook/belebele",
-        "name": "default",
-        "split": "arz_Arab"
+        "name": "arz_Arab"
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "arz_Arab": "test"
-            }
-        },
         {
             "__type__": "list_field_values",
             "fields": [

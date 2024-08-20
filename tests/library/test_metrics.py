@@ -849,7 +849,7 @@ class TestMetrics(UnitxtTestCase):
 
                 import nltk
 
-                nltk.download("punkt")
+                nltk.download("punkt_tab", quiet=True)
                 self.sent_tokenize = nltk.sent_tokenize
 
             def compute(self, references, predictions, task_data: List[Dict]):
@@ -1770,7 +1770,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             global_target=global_target,
         )
 
-    def text_context_correctness(self):
+    def test_context_correctness(self):
         task_data = [
             {  # MRR is 1, MAP is (1 + 2/3)/2 = 0.833
                 "context_ids": ["A", "B", "C"],
@@ -1896,15 +1896,23 @@ class TestConfidenceIntervals(UnitxtTestCase):
         }
 
         for catalog_name, global_target, instance_targets in [
-            ("metrics.rag.map", map_global_target, map_instance_targets),
-            ("metrics.rag.mrr", mrr_global_target, mrr_instance_targets),
+            (
+                "metrics.rag.context_correctness.map",
+                map_global_target,
+                map_instance_targets,
+            ),
+            (
+                "metrics.rag.context_correctness.mrr",
+                mrr_global_target,
+                mrr_instance_targets,
+            ),
             (
                 "metrics.rag.context_correctness",
                 mrr_global_target,
                 mrr_instance_targets,
             ),
             (
-                "metrics.rag.retrieval_at_k",
+                "metrics.rag.context_correctness.retrieval_at_k",
                 retrieval_at_k_global_target,
                 retrieval_at_k_instance_targets,
             ),
