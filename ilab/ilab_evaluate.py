@@ -2,7 +2,7 @@ import ast
 import re
 
 import yaml
-from lh_eval_api import load_lh_dataset
+#from lh_eval_api import load_lh_dataset
 from unitxt.api import load_dataset
 from typing import List
 from unitxt import evaluate, load_dataset
@@ -211,10 +211,10 @@ class EvaluateIlab:
                                           loader_limit=self.num_test_samples)
         else:
             raise ValueError("must have either template or template card index")  # TODO error if both are not none
-        llmaaj_metric =  'metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'
+        #llmaaj_metric =  'metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn'
         dataset = {'test': [loaded_dataset['train'][i] for i in self.yaml_indices]}
-        for instance in dataset['test']:
-            instance['metrics'].append(llmaaj_metric)
+        #for instance in dataset['test']:
+        #    instance['metrics'].append(llmaaj_metric)
         return dataset
 
 
