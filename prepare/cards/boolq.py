@@ -7,7 +7,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     CastFields,
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -25,7 +25,7 @@ card = TaskCard(
         ),
         CastFields(fields={"answer": "str"}),
         MapInstanceValues(mappers={"answer": {"True": "yes", "False": "no"}}),
-        RenameFields(
+        Rename(
             field_to_field={
                 "passage": "text_a",
                 "question": "text_b",
@@ -68,7 +68,7 @@ card = TaskCard(
         ),
         CastFields(fields={"answer": "str"}),
         MapInstanceValues(mappers={"answer": {"True": "yes", "False": "no"}}),
-        RenameFields(
+        Rename(
             field_to_field={
                 "passage": "context",
             }

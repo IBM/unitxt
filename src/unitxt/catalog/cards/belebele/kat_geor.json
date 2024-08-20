@@ -17,7 +17,7 @@
             "to_field": "choices"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "correct_answer_num": "answer",
                 "flores_passage": "context"

@@ -5,7 +5,7 @@ from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import (
     Copy,
     GetItemByIndex,
-    RenameFields,
+    Rename,
     Set,
     Shuffle,
 )
@@ -53,7 +53,7 @@ for sub_task in sub_tasks:
         preprocess_steps=[
             # The dataset is sorted by classes
             Shuffle(page_size=sys.maxsize),
-            RenameFields(
+            Rename(
                 field_to_field={"ner_tags": "labels"},
             ),
             GetItemByIndex(

@@ -316,7 +316,7 @@ to the `references` field.  Then it runs the existing metric. Finally, it rename
             ],
             metric=metrics["metrics.token_overlap"],
             postprocess_steps=[
-                RenameFields(
+                Rename(
                     field_to_field=[
                         ("score/global/f1", "score/global/f1_overlap_with_context"),
                         ("score/global/recall", "score/global/recall_overlap_with_context"),
@@ -382,4 +382,4 @@ the `MetricPipeline` described in the previous section.
 
    Use HuggingfaceMetric to wrap metrics defined in Huggingface Hub. Do not use it to wrap Huggingface metrics implemented
    in local files.  This is because local metrics are accessed via relative or absolute file paths, and both
-   may not be relevant if running code on different machines or root directories.  
+   may not be relevant if running code on different machines or root directories.

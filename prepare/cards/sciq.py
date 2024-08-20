@@ -3,7 +3,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     IndexOf,
     ListFieldValues,
-    RenameFields,
+    Rename,
     Set,
     ShuffleFieldValues,
 )
@@ -18,7 +18,7 @@ card = TaskCard(
         ),
         ShuffleFieldValues(field="choices"),
         IndexOf(search_in="choices", index_of="correct_answer", to_field="answer"),
-        RenameFields(
+        Rename(
             field_to_field={"support": "context"},
         ),
         Set({"context_type": "paragraph"}),

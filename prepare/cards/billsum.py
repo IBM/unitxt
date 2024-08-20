@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import Set, SplitRandomMix, TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import FilterByExpression, RenameFields
+from unitxt.operators import FilterByExpression, Rename
 from unitxt.test_utils.card import test_card
 
 # https://huggingface.co/datasets/billsum
@@ -15,7 +15,7 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
             SplitRandomMix(
                 {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}
             ),
-            RenameFields(field_to_field={"text": "document"}),
+            Rename(field_to_field={"text": "document"}),
             Set(fields={"document_type": "document"}),
             Wrap(field="summary", inside="list", to_field="summaries"),
         ]

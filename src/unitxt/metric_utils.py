@@ -18,7 +18,7 @@ from .operators import (
     ApplyOperatorsField,
     Copy,
     FlattenInstances,
-    RenameFields,
+    Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
@@ -287,11 +287,11 @@ class MetricRecipe(SequentialOperatorInitializer):
                 calc_confidence_intervals=self.calc_confidence_intervals,
             ),
             JoinSubsetsAndGroups(),
-            RenameFields(
+            Rename(
                 field="raw_prediction",
                 to_field="prediction",
             ),
-            RenameFields(
+            Rename(
                 field="raw_references",
                 to_field="references",
             ),

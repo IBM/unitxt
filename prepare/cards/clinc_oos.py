@@ -5,7 +5,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -26,7 +26,7 @@ for subset in get_dataset_config_names(dataset_name):
         loader=LoadHF(path=dataset_name, name=subset),
         preprocess_steps=[
             Shuffle(page_size=sys.maxsize),
-            RenameFields(field_to_field={"intent": "label"}),
+            Rename(field_to_field={"intent": "label"}),
             MapInstanceValues(mappers={"label": map_label_to_text}),
             Set(
                 fields={

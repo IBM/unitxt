@@ -17,12 +17,12 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "sentence1",
             "to_field": "text_a"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "sentence2",
             "to_field": "text_b"
         },

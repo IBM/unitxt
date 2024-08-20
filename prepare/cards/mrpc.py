@@ -1,7 +1,7 @@
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadHF
-from unitxt.operators import MapInstanceValues, RenameFields, Set
+from unitxt.operators import MapInstanceValues, Rename, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -10,8 +10,8 @@ card = TaskCard(
         MapInstanceValues(
             mappers={"label": {"0": "not equivalent", "1": "equivalent"}}
         ),
-        RenameFields(field="sentence1", to_field="text_a"),
-        RenameFields(field="sentence2", to_field="text_b"),
+        Rename(field="sentence1", to_field="text_a"),
+        Rename(field="sentence2", to_field="text_b"),
         Set(
             fields={
                 "classes": ["not equivalent", "equivalent"],

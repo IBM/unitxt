@@ -22,7 +22,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "data": "text",
                 "target": "label"

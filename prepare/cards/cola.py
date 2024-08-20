@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -13,7 +13,7 @@ card = TaskCard(
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),
-        RenameFields(field_to_field={"sentence": "text"}),
+        Rename(field_to_field={"sentence": "text"}),
         Set(
             fields={
                 "classes": ["unacceptable", "acceptable"],

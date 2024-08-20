@@ -12,7 +12,7 @@ from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
-from unitxt.operators import RenameFields, Set
+from unitxt.operators import Rename, Set
 from unitxt.processors import StringOrNotString
 from unitxt.settings_utils import get_settings
 from unitxt.templates import YesNoTemplate
@@ -94,7 +94,7 @@ class TestArtifact(UnitxtTestCase):
                 catalog_path=catalog_path,
             )
             add_to_catalog(
-                RenameFields(field_to_field={"label_text": "label"}),
+                Rename(field_to_field={"label_text": "label"}),
                 "renamefields.for.test.dict",
                 catalog_path=catalog_path,
             )
