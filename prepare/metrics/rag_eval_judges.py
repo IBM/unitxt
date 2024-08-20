@@ -1,5 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import (
+    GenerativeBinaryJudgeBAM,
     GenerativeBinaryJudgeOpenAi,
     GenerativeBinaryJudgeWML,
     MetricPipeline,
@@ -22,20 +23,16 @@ metric_type_to_template = {
     "answer_relevance": {"q_a": "judge_answer_relevance_logprobs"},
 }
 
-model_names = {
-    "meta-llama/llama-3-1-70b-instruct",
-    "gpt-4-turbo",
-    "mistralai/mixtral-8x7b-instruct-v01",
+model_names_to_metric_class = {
+    "meta-llama/llama-3-1-70b-instruct": GenerativeBinaryJudgeWML,
+    "gpt-4-turbo": GenerativeBinaryJudgeOpenAi,
+    "mistralai/mixtral-8x7b-instruct-v01": GenerativeBinaryJudgeWML,
+    "meta-llama/llama-3-1-405b-instruct-fp8": GenerativeBinaryJudgeBAM,
 }
 
 
 def add_judge_metrics():
-    for judge_model_name in model_names:
-        metric_class = (
-            GenerativeBinaryJudgeOpenAi
-            if judge_model_name.startswith("gpt-")
-            else GenerativeBinaryJudgeWML
-        )
+    for judge_model_name, judge_metric_class in model_names_to_metric_class.items():
         for (
             metric_type,
             input_fields_to_template_name,
@@ -46,7 +43,7 @@ def add_judge_metrics():
             ) in input_fields_to_template_name.items():
                 metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
 
-                metric = metric_class(
+                metric = judge_metric_class(
                     main_score=metric_name,
                     model_name=judge_model_name,
                     task_name=f"tasks.rag_eval.{metric_type}.binary",
