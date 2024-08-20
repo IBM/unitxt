@@ -1,4 +1,5 @@
 import abc
+import json
 import os
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -180,7 +181,10 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 
 class IbmGenAiInferenceEngine(
-    InferenceEngine, IbmGenAiInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    IbmGenAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
+    LogProbInferenceEngine,
 ):
     label: str = "ibm_genai"
     model_name: str
@@ -219,6 +223,47 @@ class IbmGenAiInferenceEngine(
                 parameters=genai_params,
             )
         ]
+
+    def _infer_log_probs(self, dataset):
+        from genai.schema import TextGenerationParameters
+
+        logprobs_return_options = {
+            "generated_tokens": True,
+            "input_text": False,
+            "input_tokens": False,
+            "token_logprobs": True,
+            "token_ranks": True,
+            "top_n_tokens": 5,
+        }
+        genai_params = self.to_dict(
+            [IbmGenAiInferenceEngineParamsMixin], keep_empty=False
+        )
+        genai_params = {**genai_params, "return_options": logprobs_return_options}
+        genai_params = TextGenerationParameters(**genai_params)
+        predictions = self.client.text.generation.create(
+            model_id=self.model_name,
+            inputs=[instance["source"] for instance in dataset],
+            parameters=genai_params,
+        )
+
+        predict_results = []
+        for prediction in predictions:
+            result = prediction.results[0]
+            assert isinstance(
+                result.generated_tokens, list
+            ), "result.generated_tokens should be a list"
+
+            predict_result = []
+            for base_token in result.generated_tokens:
+                res = {**base_token.__dict__, **base_token.model_extra}
+                res["top_tokens"] = [
+                    {"logprob": top_token.logprob, "text": top_token.text}
+                    for top_token in res["top_tokens"]
+                ]
+                predict_result.append(res)
+
+            predict_results.append(json.dumps(predict_result))
+        return predict_results
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
