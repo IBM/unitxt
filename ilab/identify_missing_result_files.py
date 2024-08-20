@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 
 directory = 'ilab/ilab_results'
-names = ['cat', 'clapnq', 'finqa', 'entities_all', 'watson_emotion']
+names = ['cat', 'clapnq', 'finqa', 'entities_all', 'watson_emotion_classes_first']
 experiments = ['0_shots', '5_shots', 'yaml']
 models = ['base', 'train']
 
