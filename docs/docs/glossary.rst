@@ -60,14 +60,14 @@ The catalog contains predefined data-task cards for various datasets :ref:`here 
 
 Demos (Demonstrations)
 ----------------------
-Demonstrations are the examples added to the model prompt in in-context learning.  
-In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a 
-non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>` 
-as seen in :ref:`this figure <prompt_structure>`.  
-Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.  
-Usually, the examples in the demo pool are taken from the train split, 
-but this can be overridden by the ``demos_taken_from`` parameter.    
-The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.  
+Demonstrations are the examples added to the model prompt in in-context learning.
+In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a
+non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>`
+as seen in :ref:`this figure <prompt_structure>`.
+Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.
+Usually, the examples in the demo pool are taken from the train split,
+but this can be overridden by the ``demos_taken_from`` parameter.
+The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.
 
 
 Evaluation Pipeline
@@ -115,10 +115,10 @@ Inference Engine
 ----------------
 
 An inference engine in Unitxt is an object that performs model inference on Unitxt datasets.
-Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs. 
+Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs.
 Since Unitxt has separate data preparation and evaluation pipelines, you can use any external code or engine to generate
-model predictions. The built-in inference engines can make it more convenient.  
-They also ensure that no sensitive data is passed to external services. 
+model predictions. The built-in inference engines can make it more convenient.
+They also ensure that no sensitive data is passed to external services.
 (`See code example here. <https://github.com/IBM/unitxt/blob/main/examples/standalone_qa_evaluation.py>`_)
 
 .. _operator:
@@ -143,27 +143,28 @@ Post processors
 ----------------
 
 Post processors are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
-and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the 
+and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the
 set of post processors that are appropriate for it.   For example, post processors in a binary classification
 template could remove trailing whitespace, take the first word, convert `Yes` to `1` , and all other values to `0`.
 
-.. _recipe:
+.. _prediction_and_processed_prediction:
 
 Prediction and Processed Prediction
 ------------------------------------
 
 A prediction is the output of the model on the input provided to it.
-The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other 
+The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other
 framework or code.  The predictions over all instances are  passed to the evaluation pipeline, together with the original dataset.
 
-The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>` 
-before being passed to the :ref:`Metrics <metric>`.  The post processors convert the textual prediction to the 
-type required by the metrics. For example, `Yes` and `No` values could be first normalized to `yes` and `no` and then converted 
+The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
+before being passed to the :ref:`Metrics <metric>`.  The post processors convert the textual prediction to the
+type required by the metrics. For example, `Yes` and `No` values could be first normalized to `yes` and `no` and then converted
 into `0.0` and `1.0`.
 
-After evaluation, the `prediction` field of each instance in the resulting datasets contains the prediction returned by the model and 
+After evaluation, the `prediction` field of each instance in the resulting datasets contains the prediction returned by the model and
 the  `processed_prediction` field holds the prediction after post processing by the template.
 
+.. _recipe:
 
 Recipe
 ------
@@ -184,8 +185,8 @@ For example, a reference for a binary classification task could be `Yes` or `No`
 
 It is expect that the model will get a perfect score from the metrics if the model prediction
 is equal to one of the references.
- 
-The textual references are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>` 
+
+The textual references are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
 before being passed to the :ref:`Metrics <metric>`.  The post processor converts the textual representation
 of the references to the type required by the metrics. For example, `Yes` and `No`
 values could be converted into `0.0` and `1`.
@@ -224,8 +225,8 @@ Every instance in the stream is a simple python dictionary.
 System Prompt
 -------
 
-The system prompt is the fixed text that is added to the model input by the :ref:`Format <format>` during 
-the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>` 
+The system prompt is the fixed text that is added to the model input by the :ref:`Format <format>` during
+the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>`
 
 .. _task:
 
@@ -272,7 +273,7 @@ textual representation, which is provided as input to the model.
 
 The verbalization process involves multiple components. The :ref:`Template <template>`
 verbalizes the task-specific prompt, while the :ref:`Format <format>` and :ref:`System prompt <system_prompt>`
-verbalize any model specific requirements (e.g. system prompt, dialog prefixes) as well as in-context examples. 
+verbalize any model specific requirements (e.g. system prompt, dialog prefixes) as well as in-context examples.
 
 The verbalization involves verbalizing the task input fields for the input, and the task output fields for references.
 

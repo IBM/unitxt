@@ -586,7 +586,7 @@ class TestMetricUtils(UnitxtTestCase):
                                 },
                             },
                             "num_demos": {
-                                "1": {
+                                1: {
                                     "accuracy": 0.5,
                                     "exact_match": 1.0,
                                     "score": 0.5,
@@ -628,7 +628,7 @@ class TestMetricUtils(UnitxtTestCase):
                                 },
                             },
                             "num_demos": {
-                                "1": {
+                                1: {
                                     "accuracy": 0.5,
                                     "exact_match": 1.0,
                                     "score": 0.5,
@@ -670,7 +670,7 @@ class TestMetricUtils(UnitxtTestCase):
                                 },
                             },
                             "num_demos": {
-                                "1": {
+                                1: {
                                     "accuracy": 0.5,
                                     "exact_match": 1.0,
                                     "score": 0.5,
@@ -1237,7 +1237,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         },
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "accuracy": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,
@@ -1261,7 +1261,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         }
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "f1": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,
@@ -1308,7 +1308,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         },
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "accuracy": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,
@@ -1332,7 +1332,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         }
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "f1": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,
@@ -1379,7 +1379,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         },
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "accuracy": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,
@@ -1403,7 +1403,7 @@ class TestMetricUtils(UnitxtTestCase):
                                         }
                                     },
                                     "num_demos": {
-                                        "1": {
+                                        1: {
                                             "f1": 1.0,
                                             "exact_match": 1.0,
                                             "score": 1.0,

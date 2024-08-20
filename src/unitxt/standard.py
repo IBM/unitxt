@@ -231,9 +231,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         multi_stream = self.inference(multi_stream)
         return list(multi_stream["__inference__"])
 
-    def prepare(self):
-        # To avoid the Python's mutable default list trap, we set the default value to None
-        # and then set it to an empty list if it is None.
+    def reset_pipeline(self):
         if self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
 
@@ -355,6 +353,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
         self.finalize.steps.append(Finalize(group_by=self.group_by))
+
+    def prepare(self):
+        self.reset_pipeline()
 
 
 class StandardRecipeWithIndexes(BaseRecipe):

@@ -61,12 +61,12 @@ class FixedFusion(BaseFusion):
     Args:
         subsets: Dict of named SourceOperator objects (each to yield a MultiStream), or a list thereof
         splits: List of splits (stream_names) to include, over all input multistreams. If None, all splits are included.
-        max_instances_per_origin_split: Number of instances to take from each input split of each input multistream.
+        max_instances_per_subset: Number of instances to take from each input split of each input multistream.
             If None, all instances of each split (that is specified in include_splits) are included in the result.
 
     """
 
-    max_instances_per_origin_split: Optional[int] = None
+    max_instances_per_subset: Optional[int] = None
 
     def prepare(self):
         super().prepare()
@@ -77,18 +77,21 @@ class FixedFusion(BaseFusion):
             if split not in origin:
                 continue
             emitted_from_this_split = 0
-            for instance in origin[split]:
-                if (
-                    self.max_instances_per_origin_split is not None
-                    and emitted_from_this_split >= self.max_instances_per_origin_split
-                ):
-                    break
-                if isinstance(origin_name, str):
-                    if "subset" not in instance:
-                        instance["subset"] = []
-                    instance["subset"].insert(0, origin_name)
-                emitted_from_this_split += 1
-                yield instance
+            try:
+                for instance in origin[split]:
+                    if (
+                        self.max_instances_per_subset is not None
+                        and emitted_from_this_split >= self.max_instances_per_subset
+                    ):
+                        break
+                    if isinstance(origin_name, str):
+                        if "subset" not in instance:
+                            instance["subset"] = []
+                        instance["subset"].insert(0, origin_name)
+                    emitted_from_this_split += 1
+                    yield instance
+            except Exception as e:
+                raise RuntimeError(f"Exception in subset: {origin_name}") from e
 
 
 class WeightedFusion(BaseFusion):
@@ -103,7 +106,7 @@ class WeightedFusion(BaseFusion):
 
     subsets: Union[Dict[str, SourceOperator], List[SourceOperator]] = None
     weights: Union[Dict[str, Union[float, int]], List[Union[int, float]]] = None
-    max_total_examples: int = None
+    max_total_samples: int = None
 
     def verify(self):
         super().verify()
@@ -136,7 +139,7 @@ class WeightedFusion(BaseFusion):
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
-            self.max_total_examples is None or total_examples < self.max_total_examples
+            self.max_total_samples is None or total_examples < self.max_total_samples
         ) and len(iterators) > 0:
             population = list(iterators.keys())
             origin_name = random_generator.choices(

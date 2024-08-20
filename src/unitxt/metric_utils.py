@@ -7,7 +7,6 @@ from typing import Any, Dict, Iterable, List, Optional
 from datasets import Features, Value
 
 from .dataclass import Dataclass
-from .dict_utils import dict_set
 from .operator import (
     MultiStreamOperator,
     SequentialOperator,
@@ -27,6 +26,10 @@ from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
 from .utils import deepcopy
+
+
+def nan_mean(scores):
+    return mean(score for score in scores if score == score)
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
@@ -131,6 +134,8 @@ def group_str_to_key_value(group_str):
     values = []
     for k_v in group_str.split(","):
         k, v = k_v.split(":")
+        if v.isdigit():
+            v = int(v)
         keys.append(k)
         values.append(v)
 
@@ -183,18 +188,18 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                     path = []
 
                     if subset:
-                        path += ["subsets", subset]
+                        path += ["subsets", *subset.split("/")]
 
                     if group:
                         key, value = group_str_to_key_value(group)
                         path += ["groups", key, value]
 
-                    dict_set(
-                        global_scores[origin],
-                        "/".join(path),
-                        global_score,
-                        allow_int_index=False,
-                    )
+                    target = global_scores[origin]
+                    for part in path[:-1]:
+                        if part not in target:
+                            target[part] = {}
+                        target = target[part]
+                    target[path[-1]] = global_score
 
         # the leafs always have score_name and score
         def recursive_mean(dic):
@@ -210,7 +215,7 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                         all_scores.append(score["score"])
                         result[k] = score
 
-                result["score"] = mean(all_scores)
+                result["score"] = nan_mean(all_scores)
                 result["score_name"] = "subsets_mean"
 
                 if result:

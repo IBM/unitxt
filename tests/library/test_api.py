@@ -81,6 +81,45 @@ class TestAPI(UnitxtTestCase):
         self.assertEqual(len(dataset["train"]), 5)
         self.assertDictEqual(dataset["train"][0], instance)
 
+    def test_load_dataset_with_benchmark(self):
+        dataset = load_dataset(
+            "benchmarks.glue[max_samples_per_subset=1,loader_limit=300]"
+        )
+        self.assertEqual(
+            dataset["test"].to_list()[0],
+            {
+                "metrics": ["metrics.matthews_correlation"],
+                "data_classification_policy": ["public"],
+                "target": "acceptable",
+                "references": ["acceptable"],
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                ],
+                "source": "Classify the grammatical acceptability of the following text to one of these options: unacceptable, acceptable.\ntext: The sailors rode the breeze clear of the rocks.\nThe grammatical acceptability is ",
+                "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "num_demos": 0}}',
+                "groups": [],
+                "subset": ["cola"],
+            },
+        )
+        self.assertEqual(
+            dataset["test"].to_list()[-1],
+            {
+                "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+                "data_classification_policy": ["public"],
+                "target": "entailment",
+                "references": ["entailment"],
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                ],
+                "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: The drain is clogged with hair. It has to be cleaned.\nhypothesis: The hair has to be cleaned.\nThe entailment class is ",
+                "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
+                "groups": [],
+                "subset": ["wnli"],
+            },
+        )
+
     def test_evaluate_with_group_by(self):
         dataset = load_dataset(
             "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.regression.two_texts.title],max_train_instances=5,max_validation_instances=5,max_test_instances=5,group_by=[template]"
