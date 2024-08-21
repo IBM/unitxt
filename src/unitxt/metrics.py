@@ -4738,7 +4738,6 @@ class F1Strings(InstanceMetric):
     single_reference_per_prediction = True
     _requirements_list = {
         "spacy": "Please pip install spacy",
-        "en_core_web_sm": "Please run: python -m spacy download en_core_web_sm",
     }
 
     def prepare(self):
