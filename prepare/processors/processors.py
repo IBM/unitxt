@@ -223,6 +223,6 @@ add_to_catalog(
 
 add_to_catalog(
     PostProcess(ExtractArenaHardNumericalJudgment(), process_references=False),
-    "processors.literal_eval",
+    "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
 )
