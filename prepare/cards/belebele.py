@@ -5,7 +5,7 @@ from unitxt.operators import (
     AddConstant,
     CastFields,
     ListFieldValues,
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.test_utils.card import test_card
@@ -143,7 +143,7 @@ for lang in language_codes:
                 fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"],
                 to_field="choices",
             ),
-            RenameFields(
+            Rename(
                 field_to_field={
                     "correct_answer_num": "answer",
                     "flores_passage": "context",

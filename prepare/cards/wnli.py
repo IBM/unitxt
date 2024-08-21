@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -15,8 +15,8 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
         ),
-        RenameFields(field="sentence1", to_field="text_a"),
-        RenameFields(field="sentence2", to_field="text_b"),
+        Rename(field="sentence1", to_field="text_a"),
+        Rename(field="sentence2", to_field="text_b"),
         MapInstanceValues(
             mappers={"label": {"0": "entailment", "1": "not entailment"}}
         ),
@@ -62,8 +62,8 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}
         ),
-        RenameFields(field="sentence1", to_field="text_a"),
-        RenameFields(field="sentence2", to_field="text_b"),
+        Rename(field="sentence1", to_field="text_a"),
+        Rename(field="sentence2", to_field="text_b"),
         MapInstanceValues(mappers={"label": {"0": "yes", "1": "no"}}),
         Set(fields={"classes": ["yes", "no"]}),
         Set(fields={"type_of_relation": "truthfulness"}),

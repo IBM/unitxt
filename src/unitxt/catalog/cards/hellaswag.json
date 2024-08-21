@@ -7,7 +7,7 @@
     "preprocess_steps": [
         "splitters.large_no_test",
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "ctx": "context",
                 "activity_label": "topic",
@@ -15,7 +15,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "label": "answer"
             }

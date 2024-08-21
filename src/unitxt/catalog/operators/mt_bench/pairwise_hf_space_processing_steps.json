@@ -2,7 +2,7 @@
     "__type__": "sequential_operator",
     "steps": [
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "turns": "model_input"
             },
@@ -11,7 +11,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "g1_user_prompt": "judge_input_model_1_ordered_first",
                 "g2_user_prompt": "judge_input_model_2_ordered_first",
@@ -108,7 +108,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "choices": "model_output"
             },
@@ -159,7 +159,7 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_id": "model_1",
                 "model_output": "model_1_output"
@@ -180,7 +180,7 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "model_1": "model_2",
                 "model_1_output": "model_2_output"

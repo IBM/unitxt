@@ -7,7 +7,7 @@ from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary
-from unitxt.operators import RenameFields, Set
+from unitxt.operators import Rename, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 
@@ -35,7 +35,7 @@ card = TaskCard(
     # Map these fields to the fields of the task.rag.response_generation task.
     # See https://www.unitxt.ai/en/latest/catalog/catalog.tasks.rag.response_generation.html
     preprocess_steps=[
-        RenameFields(field_to_field={"query": "question"}),
+        Rename(field_to_field={"query": "question"}),
         Wrap(field="extracted_chunks", inside="list", to_field="contexts"),
         Wrap(field="expected_answer", inside="list", to_field="reference_answers"),
         Set(

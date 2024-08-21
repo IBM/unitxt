@@ -6,7 +6,7 @@ from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     Apply,
     Copy,
-    RenameFields,
+    Rename,
     SelectFields,
     Set,
 )
@@ -24,9 +24,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         # region Question file
-        RenameFields(
-            field_to_field={"cluster": "group"}, apply_to_streams=["questions"]
-        ),
+        Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),
         Copy(
             field_to_field={"turns/0/content": "model_input"},
             apply_to_streams=["questions"],
@@ -41,7 +39,7 @@ card = TaskCard(
             },
             apply_to_streams=["model_answer"],
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model_id": "reference_model"},
             apply_to_streams=["model_answer"],
         ),
@@ -70,7 +68,7 @@ card = TaskCard(
                 "reference_model_output",
             ]
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "model_input": "input",
                 "category": "group",

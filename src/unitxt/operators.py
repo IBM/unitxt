@@ -42,6 +42,7 @@ General Operators List:
 import copy
 import operator
 import uuid
+import warnings
 import zipfile
 from abc import abstractmethod
 from collections import Counter, defaultdict
@@ -63,7 +64,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
@@ -253,13 +254,14 @@ class Set(InstanceOperator):
     """
 
     fields: Dict[str, object]
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     use_deepcopy: bool = False
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -341,18 +343,16 @@ class InstanceFieldOperator(InstanceOperator):
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
 
     def verify(self):
         super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
         assert (
             self.field is not None or self.field_to_field is not None
@@ -474,23 +474,23 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
-class RenameFields(FieldOperator):
+class Rename(FieldOperator):
     """Renames fields.
 
     Move value from one field to another, potentially, if field name contains a /, from one branch into another.
     Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
-        RenameFields(field_to_field={"b": "c"})
+        Rename(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"})
+        Rename(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"})
+        Rename(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"})
+        Rename(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -509,6 +509,11 @@ class RenameFields(FieldOperator):
                 dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
+
+
+@deprecation(version="2.0.0", alternative=Rename)
+class RenameFields(Rename):
+    pass
 
 
 class AddConstant(FieldOperator):
@@ -846,12 +851,13 @@ class ListFieldValues(InstanceOperator):
 
     fields: List[str]
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -878,12 +884,13 @@ class ZipFieldValues(InstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -950,12 +957,13 @@ class IndexOf(InstanceOperator):
     search_in: str
     index_of: str
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -972,12 +980,13 @@ class TakeByField(InstanceOperator):
     field: str
     index: str
     to_field: str = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         if self.to_field is None:
