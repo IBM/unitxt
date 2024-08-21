@@ -14,7 +14,7 @@ class TestArtifactRecovery(UnitxtTestCase):
     def test_correct_artifact_recovery(self):
         args = {
             "__type__": "standard_recipe",
-            "card": "cards.sst2",
+            "card": "cards.tests.sst2",
             "template_card_index": 0,
             "demos_pool_size": 100,
             "num_demos": 0,
@@ -25,7 +25,7 @@ class TestArtifactRecovery(UnitxtTestCase):
     def test_correct_artifact_recovery_with_overwrite(self):
         args = {
             "__type__": "standard_recipe",
-            "card": "cards.sst2",
+            "card": "cards.tests.sst2",
             "template_card_index": 0,
             "demos_pool_size": 100,
             "num_demos": 0,
@@ -35,7 +35,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_bad_artifact_recovery_missing_type(self):
         args = {
-            "card": "cards.sst2",
+            "card": "cards.tests.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,
             "num_demos": 0,
@@ -46,7 +46,7 @@ class TestArtifactRecovery(UnitxtTestCase):
     def test_bad_artifact_recovery_bad_type(self):
         args = {
             "__type__": "standard_recipe",
-            "card": "cards.sst2",
+            "card": "cards.tests.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,
             "num_demos": 0,

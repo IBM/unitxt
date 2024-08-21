@@ -1,0 +1,794 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "train": [
+                {
+                    "sentence": "hide new secretions from the parental units ",
+                    "label": 0,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "contains no wit , only labored gags ",
+                    "label": 0,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "that loves its characters and communicates something rather beautiful about human nature ",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "remains utterly satisfied to remain the same throughout ",
+                    "label": 0,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "on the worst revenge-of-the-nerds clichés the filmmakers could dredge up ",
+                    "label": 0,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "that 's far too tragic to merit such superficial treatment ",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "demonstrates that the director of such hollywood blockbusters as patriot games can still turn out a small , personal film with an emotional wallop . ",
+                    "label": 1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "of saucy ",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a depressed fifteen-year-old 's suicidal poetry ",
+                    "label": 0,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "are more deeply thought through than in most ` right-thinking ' films ",
+                    "label": 1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "goes to absurd lengths ",
+                    "label": 0,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "for those moviegoers who complain that ` they do n't make movies like they used to anymore ",
+                    "label": 0,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the part where nothing 's happening , ",
+                    "label": 0,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "saw how bad this movie was ",
+                    "label": 0,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "lend some dignity to a dumb story ",
+                    "label": 0,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the greatest musicians ",
+                    "label": 1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "cold movie ",
+                    "label": 0,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "with his usual intelligence and subtlety ",
+                    "label": 1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "redundant concept ",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "swimming is above all about a young woman 's face , and by casting an actress whose face projects that woman 's doubts and yearnings , it succeeds . ",
+                    "label": 1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "equals the original and in some ways even betters it ",
+                    "label": 1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "if anything , see it for karen black , who camps up a storm as a fringe feminist conspiracy theorist named dirty dick . ",
+                    "label": 1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a smile on your face ",
+                    "label": 1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "comes from the brave , uninhibited performances ",
+                    "label": 1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "excruciatingly unfunny and pitifully unromantic ",
+                    "label": 0,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "enriched by an imaginatively mixed cast of antic spirits ",
+                    "label": 1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "which half of dragonfly is worse : the part where nothing 's happening , or the part where something 's happening ",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "in world cinema ",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "very good viewing alternative ",
+                    "label": 1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the plot is nothing but boilerplate clichés from start to finish , ",
+                    "label": 0,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "sentence": "it 's a charming and often affecting journey . ",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "unflinchingly bleak and desperate ",
+                    "label": 0,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "allows us to hope that nolan is poised to embark a major career as a commercial yet inventive filmmaker . ",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the acting , costumes , music , cinematography and sound are all astounding given the production 's austere locales . ",
+                    "label": 1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it 's slow -- very , very slow . ",
+                    "label": 0,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "although laced with humor and a few fanciful touches , the film is a refreshingly serious look at young women . ",
+                    "label": 1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a sometimes tedious film . ",
+                    "label": 0,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "or doing last year 's taxes with your ex-wife . ",
+                    "label": 0,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "you do n't have to know about music to appreciate the film 's easygoing blend of comedy and romance . ",
+                    "label": 1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "in exactly 89 minutes , most of which passed as slowly as if i 'd been sitting naked on an igloo , formula 51 sank from quirky to jerky to utter turkey . ",
+                    "label": 0,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the mesmerizing performances of the leads keep the film grounded and keep the audience riveted . ",
+                    "label": 1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it takes a strange kind of laziness to waste the talents of robert forster , anne meara , eugene levy , and reginald veljohnson all in the same movie . ",
+                    "label": 0,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "... the film suffers from a lack of humor ( something needed to balance out the violence ) ... ",
+                    "label": 0,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "we root for ( clara and paul ) , even like them , though perhaps it 's an emotion closer to pity . ",
+                    "label": 1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "even horror fans will most likely not find what they 're seeking with trouble every day ; the movie lacks both thrills and humor . ",
+                    "label": 0,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a gorgeous , high-spirited musical from india that exquisitely blends music , dance , song , and high drama . ",
+                    "label": 1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the emotions are raw and will strike a nerve with anyone who 's ever had family trauma . ",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "audrey tatou has a knack for picking roles that magnify her outrageous charm , and in this literate french comedy , she 's as morning-glory exuberant as she was in amélie . ",
+                    "label": 1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "... the movie is just a plain old monster . ",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "in its best moments , resembles a bad high school production of grease , without benefit of song . ",
+                    "label": 0,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "pumpkin takes an admirable look at the hypocrisy of political correctness , but it does so with such an uneven tone that you never know when humor ends and tragedy begins . ",
+                    "label": 0,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the iditarod lasts for days - this just felt like it did . ",
+                    "label": 0,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "holden caulfield did it better . ",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a delectable and intriguing thriller filled with surprises , read my lips is an original . ",
+                    "label": 1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "seldom has a movie so closely matched the spirit of a man and his work . ",
+                    "label": 1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "nicks , seemingly uncertain what 's going to make people laugh , runs the gamut from stale parody to raunchy sex gags to formula romantic comedy . ",
+                    "label": 0,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the action switches between past and present , but the material link is too tenuous to anchor the emotional connections that purport to span a 125-year divide . ",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it 's an offbeat treat that pokes fun at the democratic exercise while also examining its significance for those who take part . ",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it 's a cookie-cutter movie , a cut-and-paste job . ",
+                    "label": 0,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "i had to look away - this was god awful . ",
+                    "label": 0,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "test": [
+                {
+                    "sentence": "uneasy mishmash of styles and genres .",
+                    "label": -1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "this film 's relationship to actual tension is the same as what christmas-tree flocking in a spray can is to actual snow : a poor -- if durable -- imitation .",
+                    "label": -1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "by the end of no such thing the audience , like beatrice , has a watchful affection for the monster .",
+                    "label": -1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "director rob marshall went out gunning to make a great one .",
+                    "label": -1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "lathan and diggs have considerable personal charm , and their screen rapport makes the old story seem new .",
+                    "label": -1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a well-made and often lovely depiction of the mysteries of friendship .",
+                    "label": -1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "none of this violates the letter of behan 's book , but missing is its spirit , its ribald , full-throated humor .",
+                    "label": -1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "although it bangs a very cliched drum at times , this crowd-pleaser 's fresh dialogue , energetic music , and good-natured spunk are often infectious .",
+                    "label": -1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it is not a mass-market entertainment but an uncompromising attempt by one artist to think about another .",
+                    "label": -1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "this is junk food cinema at its greasiest .",
+                    "label": -1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it 's also heavy-handed and devotes too much time to bigoted views .",
+                    "label": -1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it helps that lil bow wow ... tones down his pint-sized gangsta act to play someone who resembles a real kid .",
+                    "label": -1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "watching the film is like reading a times portrait of grief that keeps shifting focus to the journalist who wrote it .",
+                    "label": -1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "moore 's performance impresses almost as much as her work with haynes in 1995 's safe .",
+                    "label": -1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "reinforces the talents of screenwriter charlie kaufman , creator of adaptation and being john malkovich .",
+                    "label": -1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "now trimmed by about 20 minutes , this lavish three-year-old production has enough grandeur and scale to satisfy as grown-up escapism .",
+                    "label": -1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a journey through memory , a celebration of living , and a sobering rumination on fatality , classism , and ignorance .",
+                    "label": -1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a remarkable 179-minute meditation on the nature of revolution .",
+                    "label": -1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "waydowntown is by no means a perfect film , but its boasts a huge charm factor and smacks of originality .",
+                    "label": -1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "it 's just incredibly dull .",
+                    "label": -1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "some , like ballistic , arrive stillborn ... looking like the beaten , well-worn video box cover of seven years into the future .",
+                    "label": -1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "a feel-good picture in the best sense of the term .",
+                    "label": -1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "mark me down as a non-believer in werewolf films that are not serious and rely on stupidity as a substitute for humor .",
+                    "label": -1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "good movie .",
+                    "label": -1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "with spy kids 2 : the island of lost dreams writer/director/producer robert rodriguez has cobbled together a film that feels like a sugar high gone awry .",
+                    "label": -1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "starts off with a bang , but then fizzles like a wet stick of dynamite at the very end .",
+                    "label": -1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the best way to hope for any chance of enjoying this film is by lowering your expectations .",
+                    "label": -1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "while the mystery surrounding the nature of the boat 's malediction remains intriguing enough to sustain mild interest , the picture refuses to offer much accompanying sustenance in the way of characterization , humor or plain old popcorn fun .",
+                    "label": -1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "this is a startling film that gives you a fascinating , albeit depressing view of iranian rural life close to the iraqi border .",
+                    "label": -1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "here 's a british flick gleefully unconcerned with plausibility , yet just as determined to entertain you .",
+                    "label": -1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "negative",
+                    "1": "positive"
+                }
+            }
+        },
+        {
+            "__type__": "rename",
+            "field": "sentence",
+            "to_field": "text"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "text_type": "sentence",
+                "type_of_class": "sentiment"
+            }
+        },
+        {
+            "__type__": "extract_field_values",
+            "field": "label",
+            "to_field": "classes",
+            "stream_name": "train"
+        }
+    ],
+    "task": "tasks.classification.multi_class",
+    "templates": "templates.classification.multi_class.all",
+    "__tags__": {
+        "annotations_creators": "other",
+        "arxiv": "1804.07461",
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": [
+            "acceptability-classification",
+            "natural-language-inference",
+            "semantic-similarity-scoring",
+            "sentiment-classification",
+            "text-scoring"
+        ]
+    },
+    "__description__": "The Stanford Sentiment Treebank consists of sentences from movie reviews and human annotations of their sentiment. The task is to predict the sentiment of a given sentence. It uses the two-way (positive/negative) class split, with only sentence-level labels… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+}

@@ -1,0 +1,885 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "train": [
+                {
+                    "sentence1": "No Weapons of Mass Destruction Found in Iraq Yet.",
+                    "sentence2": "Weapons of Mass Destruction Found in Iraq.",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A place of sorrow, after Pope John Paul II died, became a place of celebration, as Roman Catholic faithful gathered in downtown Chicago to mark the installation of new Pope Benedict XVI.",
+                    "sentence2": "Pope Benedict XVI is the new leader of the Roman Catholic Church.",
+                    "label": 0,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Herceptin was already approved to treat the sickest breast cancer patients, and the company said, Monday, it will discuss with federal regulators the possibility of prescribing the drug for more breast cancer patients.",
+                    "sentence2": "Herceptin can be used to treat breast cancer.",
+                    "label": 0,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Judie Vivian, chief executive at ProMedica, a medical service company that helps sustain the 2-year-old Vietnam Heart Institute in Ho Chi Minh City (formerly Saigon), said that so far about 1,500 children have received treatment.",
+                    "sentence2": "The previous name of Ho Chi Minh City was Saigon.",
+                    "label": 0,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A man is due in court later charged with the murder 26 years ago of a teenager whose case was the first to be featured on BBC One's Crimewatch. Colette Aram, 16, was walking to her boyfriend's house in Keyworth, Nottinghamshire, on 30 October 1983 when she disappeared. Her body was later found in a field close to her home. Paul Stewart Hutchinson, 50, has been charged with murder and is due before Nottingham magistrates later.",
+                    "sentence2": "Paul Stewart Hutchinson is accused of having stabbed a girl.",
+                    "label": 1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Britain said, Friday, that it has barred cleric, Omar Bakri, from returning to the country from Lebanon, where he was released by police after being detained for 24 hours.",
+                    "sentence2": "Bakri was briefly detained, but was released.",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Nearly 4 million children who have at least one parent who entered the U.S. illegally were born in the United States and are U.S. citizens as a result, according to the study conducted by the Pew Hispanic Center. That's about three quarters of the estimated 5.5 million children of illegal immigrants inside the United States, according to the study. About 1.8 million children of undocumented immigrants live in poverty, the study found.",
+                    "sentence2": "Three quarters of U.S. illegal immigrants have children.",
+                    "label": 1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Like the United States, U.N. officials are also dismayed that Aristide killed a conference called by Prime Minister Robert Malval in Port-au-Prince in hopes of bringing all the feuding parties together.",
+                    "sentence2": "Aristide had Prime Minister Robert Malval  murdered in Port-au-Prince.",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "WASHINGTON --  A newly declassified narrative of the Bush administration's advice to the CIA on harsh interrogations shows that the small group of Justice Department lawyers who wrote memos authorizing controversial interrogation techniques were operating not on their own but with direction from top administration officials, including then-Vice President Dick Cheney and national security adviser Condoleezza Rice. At the same time, the narrative suggests that then-Defense Secretary Donald H. Rumsfeld and then-Secretary of State Colin Powell were largely left out of the decision-making process.",
+                    "sentence2": "Dick Cheney was the Vice President of Bush.",
+                    "label": 0,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Only a week after it had no comment on upping the storage capacity of its Hotmail e-mail service, Microsoft early Thursday announced it was boosting the allowance to 250MB to follow similar moves by rivals such as Google, Yahoo, and Lycos.",
+                    "sentence2": "Microsoft's Hotmail has raised its storage capacity to 250MB.",
+                    "label": 0,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Lina Joy, 42, was born Azlina Jailani to Malay parents, and was raised as a Muslim. Malaysia's constitution guarantees freedom of religion, but by law, all ethnic Malays are Muslim. Joy converted to Christianity at age 26, and after some bureaucratic difficulties had her named legally changed in 1999. However, on her MyKad national ID, the National Registration Department retained her stated religion as Islam. In order to have her religion changed, the National Registration Department said Joy would have to obtain a certificate of apostasy from the Muslim Sharia Court.",
+                    "sentence2": "Lina Joy's parents are from Malaysia.",
+                    "label": 0,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "November 9, 1989 , the day the Berlin Wall fell and the world changed forever . Not even the most astute saw it coming . As Hungary's foreign minister in the late summer of 1989 , Gyula Horn gave the order to let visiting East Germans use his country to do a 400-mile end run around the Berlin Wall , a move now seen as the beginning of the end for hard-line communism in Europe .",
+                    "sentence2": "The Berlin Wall was torn down in 1989.",
+                    "label": 0,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Valero Energy Corp., on Monday, said it found \"extensive\" additional damage at its 250,000-barrel-per-day Port Arthur refinery.",
+                    "sentence2": "Valero Energy Corp. produces 250,000 barrels per day.",
+                    "label": 0,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Oil prices fall back as Yukos oil threat lifted",
+                    "sentence2": "Oil prices rise.",
+                    "label": 1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Brian Brohm, the Louisville quarterback, threw for 368 yards and five touchdowns as the Cardinals beat visiting Oregon State 63-27.",
+                    "sentence2": "The quarterback threw for 413 yards and three touchdowns, and then ran to the end zone two more times.",
+                    "label": 1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Greg Page, a former heavyweight boxing champion who suffered a severe brain injury in a 2001 fight, has died at 50. His wife Patricia said the one-time WBA champion had died at his home in Kentucky, USA, of complications related to injuries he suffered in the fight. Page was in a coma for a week after the 9 March 2001 fight against Dale Crowe which was stopped in the 10th round. Patricia Page said he was \"in a better place now\" after announcing on Monday he had died overnight in his sleep.",
+                    "sentence2": "Greg Page was a WBA champion.",
+                    "label": 0,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Sierra is likely to remain in jail at the Hillsborough County jail in her native Tampa until her next hearing on December 20, where she is being held without bail, which would prevent her attending the Washington event on Friday even if she still had permission to perform. Sierra has been in jail since the start of the month after an altercation with police officers outside a Tampa nightclub, which she had been ejected from. She is charged with disorderly intoxication and resisting arrest.",
+                    "sentence2": "Sierra once reached the finals of \"American Idol\".",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Since 1987, however, Brazil has taken steps to dramatically reduce the destruction, including stepped-up enforcement and the elimination of tax incentives that led to large-scale land clearing.",
+                    "sentence2": "In the early 1990s Brazil began to take action to save the rainforest.",
+                    "label": 1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "FIFA has received 11 bids to host the 2018 and 2022 FIFA World Cup tournaments, an international football competition contested by the men's national teams. The countries vying to host the tournament are Australia, England, Indonesia, Japan, Mexico, Qatar, Russia, South Korea and United States, who have individual bids and the joint bids are from Belgium-Netherlands and Spain-Portugal.  Select bids are for 2018 and 2022 tournaments and two bids are just for the 2022 tournament. Qatar and South Korea are vying just for the 2022 tournament. The two winning bids will be chosen on December 2010 by the 24-man executive committee of FIFA.  Said FIFA president Sepp Blatter: \"We are very pleased about the fantastic level of interest in our flagship competition, with all initial bidders confirming their candidature.\"",
+                    "sentence2": "Sepp Blatter is the president of FIFA.",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "U.S. crude settled $1.32 lower at $42.83 a barrel.",
+                    "sentence2": "Crude the light American lowered to the closing 1.32 dollars, to 42.83 dollars the barrel.",
+                    "label": 1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "WINNENDEN, Germany ―A teenage gunman killed 15 people, most of them female, on Wednesday in a rampage that began at a school near Stuttgart in southern Germany and ended in a nearby town, where he then killed himself after the police wounded him. The attack left Germany, which tightened tough gun controls after a similar attack at a school seven years ago, struggling to understand the carnage that had again befallen it, a country with relatively little violent crime. In 2002, a gunman killed 16 people before killing himself at a school in Erfurt, in eastern Germany.",
+                    "sentence2": "In 2002 near Stuttgart a boy shot 16 people.",
+                    "label": 1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Many hopes are riding on the sale of Talisman's holdings in Palm Beach and Hendry counties, which Vice President Al Gore announced with much fanfare last year at the 50th anniversary of Everglades National Park.",
+                    "sentence2": "Everglades National Park is located in Florida.",
+                    "label": 1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Rabies virus infects the central nervous system, causing encephalopathy and ultimately death. Early symptoms of rabies in humans are nonspecific, consisting of fever, headache, and general malaise.",
+                    "sentence2": "Rabies is fatal in humans.",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "American tobacco companies were showing a profit most quarters due to export sales of cigarettes and diversification of products sold including food.",
+                    "sentence2": "PM often entered markets with both cigarettes and food.",
+                    "label": 1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The development of agriculture by early humans, roughly 10,000 years ago, was also harmful to many natural ecosystems as they were systematically destroyed and replaced with artificial versions.",
+                    "sentence2": "Humans existed 10,000 years ago.",
+                    "label": 0,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The two young leaders of the coup, Pibul Songgram and Pridi Phanomyang, both educated in Europe and influenced by Western ideas, came to dominate Thai politics in the ensuing years.",
+                    "sentence2": "Pibul was a young leader.",
+                    "label": 0,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Lin Piao, after all, was the creator of Mao's \"Little Red Book\" of quotations.",
+                    "sentence2": "Lin Piao wrote the \"Little Red Book\".",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "When patients interrupt a course of antibiotics, the surviving bacteria return with a vengeance, often having rapidly mutated to resist the therapy.",
+                    "sentence2": "Bacteria is winning the war against antibiotics.",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Initially the Bundesbank opposed the introduction of the euro but was compelled to accept it in light of the political pressure of the capitalist politicians who supported its introduction.",
+                    "sentence2": "The introduction of the euro has been opposed.",
+                    "label": 0,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The Armed Forces Press Committee (COPREFA) admitted that the government troops sustained 11 casualties in these clashes, adding that they inflicted three casualties on the rebels.",
+                    "sentence2": "Three rebels were killed by government troops.",
+                    "label": 0,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "sentence1": "Dana Reeve, the widow of the actor Christopher Reeve, has died of lung cancer at age 44, according to the Christopher Reeve Foundation.",
+                    "sentence2": "Christopher Reeve had an accident.",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Yet, we now are discovering that antibiotics are losing their effectiveness against illness. Disease-causing bacteria are mutating faster than we can come up with new antibiotics to fight the new variations.",
+                    "sentence2": "Bacteria is winning the war against antibiotics.",
+                    "label": 0,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Cairo is now home to some 15 million people - a burgeoning population that produces approximately 10,000 tonnes of rubbish per day, putting an enormous strain on public services. In the past 10 years, the government has tried hard to encourage private investment in the refuse sector, but some estimate 4,000 tonnes of waste is left behind every day, festering in the heat as it waits for someone to clear it up. It is often the people in the poorest neighbourhoods that are worst affected. But in some areas they are fighting back. In Shubra, one of the northern districts of the city, the residents have taken to the streets armed with dustpans and brushes to clean up public areas which have been used as public dumps.",
+                    "sentence2": "15 million tonnes of rubbish are produced daily in Cairo.",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The Amish community in Pennsylvania, which numbers about 55,000, lives an agrarian lifestyle, shunning technological advances like electricity and automobiles. And many say their insular lifestyle gives them a sense that they are protected from the violence of American society. But as residents gathered near the school, some wearing traditional garb and arriving in horse-drawn buggies, they said that sense of safety had been shattered. \"If someone snaps and wants to do something stupid, there's no distance that's going to stop them,\" said Jake King, 56, an Amish lantern maker who knew several families whose children had been shot.",
+                    "sentence2": "Pennsylvania has the biggest Amish community in the U.S.",
+                    "label": 1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Security forces were on high alert after an election campaign in which more than 1,000 people, including seven election candidates, have been killed.",
+                    "sentence2": "Security forces were on high alert after a campaign marred by violence.",
+                    "label": 0,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "In 1979, the leaders signed the Egypt-Israel peace treaty on the White House lawn. Both President Begin and Sadat received the Nobel Peace Prize for their work. The two nations have enjoyed peaceful relations to this day.",
+                    "sentence2": "The Israel-Egypt Peace Agreement was signed in 1979.",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "singer and actress Britney Spears, 24, has filled papers in Los Angeles County Superior Court to divorce her husband Kevin Federline, 28. A spokeswoman for the court, Kathy Roberts stated that the papers cited irreconcilable differences\" as the reason for the divorce and have, according to the courts, been legally separated as of Monday, November 6, the same day that Spears appeared on Late Night with David Letterman.",
+                    "sentence2": "Spears is to divorce from Kevin Federline.",
+                    "label": 0,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Following the successful bid to bring the 2010 Ryder Cup to Wales, the Wales Tourist Board has wasted little time in commissioning work to ensure that the benefits accruing from the event are felt throughout the country.",
+                    "sentence2": "Wales to host 2010 Ryder Cup.",
+                    "label": 0,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Steve Jobs was attacked by Sculley and other Apple executives for not delivering enough hot new products and resigned from the company a few weeks later.",
+                    "sentence2": "Steve Jobs worked for Apple.",
+                    "label": 0,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Traditionally, the Brahui of the Raisani tribe are in charge of the law and order situation through the Pass area. This tribe is still living in present day Balochistan in Pakistan.",
+                    "sentence2": "The Raisani tribe resides in Pakistan.",
+                    "label": 0,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The international humanitarian aid organization, Doctors Without Borders/Medecins Sans Frontieres (MSF), continues to treat victims of violence in all locations where it is present in Darfur.",
+                    "sentence2": "Doctors Without Borders is an international aid organization.",
+                    "label": 0,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "In a bowl, whisk together the eggs and sugar until completely blended and frothy.",
+                    "sentence2": "In a bowl, whisk together the egg, sugar and vanilla until light in color.",
+                    "label": 1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "In Nigeria, by far the most populous country in sub-Saharan Africa, over 2.7 million people are infected with HIV.",
+                    "sentence2": "2.7 percent of the people infected with HIV live in Africa.",
+                    "label": 1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A jury is slated to decide for the first time whether Jack Kevorkian, famed as \"Dr. Death,\" has violated Michigan's assisted-suicide ban, while the state continues to grapple with the issue of what to allow when the ill want to end their pain by ending their lives.",
+                    "sentence2": "Jack Kevorkian is the real name of \"Dr. Death\".",
+                    "label": 0,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Take consumer products giant Procter and Gamble. Even with a $1.8 billion Research and Development budget, it still manages 500 active partnerships each year, many of them with small companies.",
+                    "sentence2": "Procter and Gamble spends $1.8 billion for Research and Development.",
+                    "label": 0,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Deceased U.S. soldiers and their effects were evacuated to Japan and then shipped home in refrigerated containers for interment in the U.S.",
+                    "sentence2": "The U.S. military evacuated U.S. citizens.",
+                    "label": 1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Mice given a substance found in red wine lived longer despite a fatty diet, a study shows.",
+                    "sentence2": "Mice fed with red wine lived longer despite a fatty diet.",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Charles de Gaulle died in 1970 at the age of eighty. He was thus fifty years old when, as an unknown officer recently promoted to the (temporary) rank of brigadier general, he made his famous broadcast from London rejecting the capitulation of France to the Nazis after the debacle of May-June 1940.",
+                    "sentence2": "Charles de Gaulle died in 1970.",
+                    "label": 0,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Teenage sensation Wayne Rooney powered England into the quarter-finals of Euro 2004 with two goals in Monday's 4-2 defeat of Croatia and they were joined in the last eight by champions France who beat Switzerland 3-1.",
+                    "sentence2": "France participates in Euro 2004.",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Fujimori charged that on January 26, 1995, Ecuador fired the first shot, an allegation denied by Ecuador's leader, Sixto Duran-Ballen. Predictably, each side blamed the other for starting the 1995 conflict, just as each pointed the finger of guilt to the other for provoking the border war of 1941, when Peru took most of the 120,000 square miles in contention between the two countries.",
+                    "sentence2": "President Fujimori was re-elected in 1995.",
+                    "label": 1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Hepburn's platinum, diamond and sapphire brooch had been estimated to fetch just $20,000, but sold for $120,000, six times its estimated price.",
+                    "sentence2": "Hepburn's diamond and sapphire brooch fetched $120,000.",
+                    "label": 0,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Huckaby voluntarily submitted herself to questioning Friday night at the Tracy police station, and was arrested less than six hours later. She now resides in the San Joaquin County Jail without bond, awaiting an arraignment hearing on Tuesday. On April 6, the body of Sandra Cantu was discovered stuffed inside the 28-year-old's suitcase at the bottom of a pond a few miles away from her home. The two were neighbors in the Orchard Estates Mobile Home Park and Huckaby's own 5-year-old daughter often played with Cantu. Autopsy results are still pending.",
+                    "sentence2": "Huckaby is accused of killing Sandra Cantu.",
+                    "label": 0,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "CAMDEN, N.J. (Reuters) — Three Muslim brothers from Albania were sentenced to life in prison on Tuesday for a plot to kill American soldiers at the Fort Dix military base, which prosecutors said was inspired by the idea of holy war against the United States. The men, Dritan Duka, 30, Shain Duka, 28, and Eljvir Duka, 25, all illegal immigrants, were each sentenced to life without the possibility of parole. The three, who operated a roofing business in Cherry Hill, N.J., were among five foreign-born Muslims convicted in December of planning an attack at the base, about 40 miles east of Philadelphia. The attack was never carried out.",
+                    "sentence2": "Eljvir Duka comes from Albania.",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A number of the items that he auctioned off over the two day period have been seen on his reality TV show The Osbournes, which featured home life with Sharon, Ozzy and their two children. Amongst some of the higher-priced items were a carved walnut Victorian-style custom built pool table which raised $11,250, a painting from Edourad Drouot which fetched $10,500, a pair of Ozzy's famous round glasses which raised $5,250 and a dog bed given to Sharon by Elton John which sold for $2,375.",
+                    "sentence2": "\"The Osbournes\" is the name of a reality show starring Ozzy Osbourne.",
+                    "label": 0,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "According to reports, a man protesting the G20 Summit in London, England has died after collapsing at a protester camp. Sky News says the man collapsed on the street inside a camp close to the Bank of England and when found he was still breathing, but efforts by paramedics to rescue him failed and he was pronounced dead at an area hospital. The name of the person and cause of death are not yet known, but several people were injured earlier in the day. It is also reported by Sky News that people threw bottles at him and authorities when they were taking him to a waiting ambulance.",
+                    "sentence2": "Sky News offices are close to the Bank of England.",
+                    "label": 1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The San Diego Padres ace, Jake Peavy, was hurt in an 8-5 loss to the St. Louis Cardinals.",
+                    "sentence2": "The San Diego Padres won the game against the St. Louis Cardinals.",
+                    "label": 1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Despite CNOOC's all-cash bid, Unocal said its recommendation to shareholders in favor of the $16.4 billion offer of cash and stock from Chevron remains in effect.",
+                    "sentence2": "Unocal said it would evaluate the CNOOC offer.",
+                    "label": 1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "U.S. forces have been engaged in intense fighting after insurgents launched simultaneous attacks in several Iraqi cities, including Fallujah and Baqubah.",
+                    "sentence2": "Fallujah and Baqubah are Iraqi cities.",
+                    "label": 0,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "But Huawei says that expansion has not been easy - obtaining visas for its Chinese engineers to work on long-term projects in India being a particular challenge.",
+                    "sentence2": "Chinese engineers working on long-term projects in India can easily obtain visas.",
+                    "label": 1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "According to Becky Gibbons of New York State Police and Chris Collins County Executive in Erie County, New York, the total number of fatalities is 50, including 45 passengers, four crew members and a person on the ground, while a woman and daughter on the ground were injured, near the edge of farmland, about seven miles from Buffalo Niagara International Airport.",
+                    "sentence2": "A daily commuter flight crashed in Buffalo.",
+                    "label": 1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "test": [
+                {
+                    "sentence1": "Mangla was summoned after Madhumita's sister Nidhi Shukla, who was the first witness in the case.",
+                    "sentence2": "Shukla is related to Mangla.",
+                    "label": -1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Authorities in Brazil say that more than 200 people are being held hostage in a prison in the country's remote, Amazonian-jungle state of Rondonia.",
+                    "sentence2": "Authorities in Brazil hold 200 people as hostage.",
+                    "label": -1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A mercenary group faithful to the warmongering policy of former Somozist colonel Enrique Bermudez attacked an IFA truck belonging to the interior ministry at 0900 on 26 March in El Jicote, wounded and killed an interior ministry worker and wounded five others.",
+                    "sentence2": "An interior ministry worker was killed by a mercenary group.",
+                    "label": -1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The British ambassador to Egypt, Derek Plumbly, told Reuters on Monday that authorities had compiled the list of 10 based on lists from tour companies and from families whose relatives have not been in contact since the bombings.",
+                    "sentence2": "Derek Plumbly resides in Egypt.",
+                    "label": -1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Tibone estimated diamond production at four mines operated by Debswana -- Botswana's 50-50 joint venture with De Beers -- could reach 33 million carats this year.",
+                    "sentence2": "Botswana is a business partner of De Beers.",
+                    "label": -1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "His wife Strida won a seat in parliament after forging an alliance with the main anti-Syrian coalition in the recent election.",
+                    "sentence2": "Strida elected to parliament.",
+                    "label": -1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Responding to Scheuer's comments in La Repubblica, the prime minister's office said the analysts' allegations, \"beyond being false, are also absolutely incompatible with the contents of the conversation between Prime Minister Silvio Berlusconi and U.S. Ambassador to Rome Mel Sembler.\"",
+                    "sentence2": "Mel Sembler represents the U.S.",
+                    "label": -1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The upper house of the Russian parliament has approved a controversial bill to tighten state control over non-governmental organisations (NGOs).",
+                    "sentence2": "Russian parliament closes NGOs.",
+                    "label": -1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Australia has repeatedly sought clemency for Tuong Van Nguyen, 25, who was convicted of smuggling 400 grams (0.9 lb) of heroin from Cambodia through Singapore's Changi airport in 2002. Attorney-General Philip Ruddock criticised the imposition of the death penalty, especially in Nguyen's case which he said had mitigating circumstances.",
+                    "sentence2": "Philip Ruddock has been condemned to the death penalty.",
+                    "label": -1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "At the other side of the country, Linden, N.J. is part of an industrial corridor of chemical plants and oil refineries that some federal officials refer to as \"the most dangerous two miles in America.\"",
+                    "sentence2": "Chemical plants and oil refineries are located in New Jersey.",
+                    "label": -1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "State police said Greater Johnstown-Cambria County Convention and Visitors Bureau kept $52,574.11 from Thunder in the Valley 2005 beer sales that should have gone to two volunteer fire companies.",
+                    "sentence2": "Greater Johnstown-Cambria County Convention and Visitors Bureau funded two volunteer fire companies.",
+                    "label": -1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Across the Atlantic, on July 13, a radical Islamic cleric named Ali Al-Timimi was sentenced to life in prison, in Virginia, for soliciting treason.",
+                    "sentence2": "Ali Al-Timimi is imprisoned in Virginia.",
+                    "label": -1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Robert Tuttle told the BBC there was no evidence of \"extraordinary renditions\" to Syria, which has been criticised by Washington for its human rights record.",
+                    "sentence2": "Robert Tuttle works for the BBC.",
+                    "label": -1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Saddam Hussein accepted an 11th-hour offer to flee into exile weeks ahead of the U.S.-led 2003 invasion, but Arab League officials scuttled the proposal, officials in this Gulf state claimed.",
+                    "sentence2": "Saddam Hussein accepted exile.",
+                    "label": -1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Nguyen's lawyer, Lex Lasry, told Australian television from Singapore that Nguyen, a Catholic whose family came from Vietnam, was \"ready to die\".",
+                    "sentence2": "Nguyen is a lawyer.",
+                    "label": -1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Both aftershocks had their epicentre around the Nicobar island group in the south of archipelago that lies close to Indonesia, India's Meteorological Department said.",
+                    "sentence2": "India's Meteorological Department operates from Indonesia.",
+                    "label": -1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "United failed to progress beyond the group stages of the Champions League and trail in the Premiership title race, sparking rumours over its future.",
+                    "sentence2": "United won the Champions League.",
+                    "label": -1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Mugabe arrived in Beijing on Saturday and toured the northeastern province of Jilin, visiting the headquarters of First Automotive Works Group, China's top vehicle maker.",
+                    "sentence2": "First Automotive Works Group is based in China.",
+                    "label": -1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Three days after PeopleSoft bought JD Edwards in June 2003, Oracle began its offer for PeopleSoft.",
+                    "sentence2": "JD Edwards belongs to PeopleSoft.",
+                    "label": -1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Earlier this year, 78 local, state and federal agencies took part in a chemical attack drill, called \"Rotunda Thunda,\" at the Las Vegas Convention Center and the Strip.",
+                    "sentence2": "State and federal agencies took part in a chemical attack.",
+                    "label": -1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Salvadoran reporter Mauricio Pineda, a sound technician for the local canal Doce television station, was shot and killed today in Morazan department in the eastern part of the country.",
+                    "sentence2": "Mauricio Pineda was killed in Morazan.",
+                    "label": -1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "At the same time, anti-virus firm Kaspersky Labs branded the XCP program spyware, because it hides itself, could compromise security and can slow machines down.",
+                    "sentence2": "Kaspersky Labs' anti-virus software could compromise security.",
+                    "label": -1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Booker T. and Sharmell, two African-American WWE superstars, were involved in the segment.",
+                    "sentence2": "Brooker T. and Sharmell are organizers of African-American WWE.",
+                    "label": -1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The LMI was set up by Mr. Torvalds with John Hall as non-profit organization to license the use of the word Linux.",
+                    "sentence2": "Mr. Torvalds is a partner of John Hall.",
+                    "label": -1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Baldwin has instructed at numerous baseball camps across the country, including Notre Dame, LSU, Mississippi State, Illinois, Army, Old Dominion, Butler, Dartmouth, Southern Maryland and the Best in Virginia camp.",
+                    "sentence2": "Butler has joined the Army.",
+                    "label": -1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Federal Education Minister Brendan Nelson has been criticised at a national conference in Perth for damaging the overseas reputation of Australian schools.",
+                    "sentence2": "Brendan Nelson criticised the Federal Education Minister.",
+                    "label": -1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Mr. Fitzgerald revealed he was one of several top officials who told Mr. Libby in June 2003 that Valerie Plame, wife of the former ambassador Joseph Wilson, worked for the CIA.",
+                    "sentence2": "Valerie Plame is married to Joseph Wilson.",
+                    "label": -1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "General Dynamics, the maker of land combat systems, warships and Gulfstream business jets, reported net earnings of $374m in the third quarter, or $1.84 per share, driven by a strong demand for communications and intelligence systems and a booming market in corporate jets.",
+                    "sentence2": "General Dynamics makes Gulfstream business jets.",
+                    "label": -1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "In the wake of the controversy surrounding the dual citizenship status of Liberian presidential candidate George Oppong Manneh Weah, a Daily Observer investigation has uncovered new developments that may rock the candidacies of three leading candidates, in the race for the Liberian presidency.",
+                    "sentence2": "George Oppong Manneh Weah is a politician of Liberia.",
+                    "label": -1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Three leaders of a premier Johnstown tourism event were charged with illegally diverting money to their organization, state police said Wednesday, sending shock waves through the region.",
+                    "sentence2": "Three leaders of a premier Johnstown tourism event are suspected of stealing money.",
+                    "label": -1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "entailment",
+                    "1": "not entailment"
+                }
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "classes": [
+                    "entailment",
+                    "not entailment"
+                ],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "sentence1": "text_a",
+                "sentence2": "text_b"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all",
+    "__tags__": {
+        "annotations_creators": "other",
+        "arxiv": "1804.07461",
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": [
+            "acceptability-classification",
+            "natural-language-inference",
+            "semantic-similarity-scoring",
+            "sentiment-classification",
+            "text-scoring"
+        ]
+    },
+    "__description__": "The Recognizing Textual Entailment (RTE) datasets come from a series of annual textual entailment challenges. The authors of the benchmark combined the data from RTE1 (Dagan et al., 2006), RTE2 (Bar Haim et al., 2006), RTE3 (Giampiccolo et al., 2007), and RTE5 (Bentivogli et al., 2009)… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+}

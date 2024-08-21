@@ -115,4 +115,4 @@ ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie'
 check-filenames = true
 check-hidden = false
 regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=[A-Z])|\\d+"
-skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*cards/attaq_500*,*cards/cohere_for_ai*,*egg-info*,*/logs/*'
+skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*cards/attaq_500*,*cards/tests*,*cards/cohere_for_ai*,*egg-info*,*/logs/*'

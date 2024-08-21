@@ -1,0 +1,910 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "train": [
+                {
+                    "sentence1": "I stuck a pin through a carrot. When I pulled the pin out, it had a hole.",
+                    "sentence2": "The carrot had a hole.",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "John couldn't see the stage with Billy in front of him because he is so short.",
+                    "sentence2": "John is so short.",
+                    "label": 1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The police arrested all of the gang members. They were trying to stop the drug trade in the neighborhood.",
+                    "sentence2": "The police were trying to stop the drug trade in the neighborhood.",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Steve follows Fred's example in everything. He influences him hugely.",
+                    "sentence2": "Steve influences him hugely.",
+                    "label": 0,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.",
+                    "sentence2": "mother was careful not to disturb her, undressing and climbing back into her berth.",
+                    "label": 0,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "George got free tickets to the play, but he gave them to Eric, because he was particularly eager to see it.",
+                    "sentence2": "George was particularly eager to see it.",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "John was jogging through the park when he saw a man juggling watermelons. He was very impressive.",
+                    "sentence2": "John was very impressive.",
+                    "label": 0,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I couldn't put the pot on the shelf because it was too tall.",
+                    "sentence2": "The pot was too tall.",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply not enough of them.",
+                    "sentence2": "There were simply not enough copies of the newsletter.",
+                    "label": 1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "At the Loebner competition the judges couldn't figure out which respondents were the chatbots because they were so advanced.",
+                    "sentence2": "The judges were so advanced.",
+                    "label": 0,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I took the water bottle out of the backpack so that it would be lighter.",
+                    "sentence2": "I took the water bottle out of the backpack so that the backpack would be lighter.",
+                    "label": 1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The table won't fit through the doorway because it is too narrow.",
+                    "sentence2": "The table is too narrow.",
+                    "label": 0,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I took the water bottle out of the backpack so that it would be handy.",
+                    "sentence2": "I took the water bottle out of the backpack so that the backpack would be handy.",
+                    "label": 0,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The firemen arrived after the police because they were coming from so far away.",
+                    "sentence2": "The police were coming from so far away.",
+                    "label": 0,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Always before, Larry had helped Dad with his work. But he could not help him now, for Dad said that his boss at the railroad company would not want anyone but him to work in the office.",
+                    "sentence2": "Dad could not help him now.",
+                    "label": 0,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I poured water from the bottle into the cup until it was empty.",
+                    "sentence2": "The cup was empty.",
+                    "label": 0,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I put the cake away in the refrigerator. It has a lot of butter in it.",
+                    "sentence2": "The cake has a lot of butter in it.",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Lionel is holding captive a scientist, Dr. Vardi, who has invented a device that turns animals invisible; Lionel plans to use it on Geoffrey and send him to steal nuclear material from an army vault.",
+                    "sentence2": "Lionel plans to use it on Geoffrey and send Lionel to steal nuclear material from an army vault.",
+                    "label": 0,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The foxes are getting in at night and attacking the chickens. They have gotten very bold.",
+                    "sentence2": "The foxes have gotten very bold.",
+                    "label": 1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Sam pulled up a chair to the piano, but it was broken, so he had to stand instead.",
+                    "sentence2": "The piano was broken, so he had to stand instead.",
+                    "label": 0,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Jane knocked on Susan's door but she did not get an answer.",
+                    "sentence2": "Susan did not get an answer.",
+                    "label": 0,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Bob was playing cards with Adam and was way ahead. If Adam hadn't had a sudden run of good luck, he would have won.",
+                    "sentence2": "Adam would have won.",
+                    "label": 0,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I put the butterfly wing on the table and it broke.",
+                    "sentence2": "The table broke.",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Paul tried to call George on the phone, but he wasn't successful.",
+                    "sentence2": "Paul wasn't successful.",
+                    "label": 1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Look! There is a shark swimming right below that duck! It had better get away to safety fast!",
+                    "sentence2": "The shark had better get away to safety fast!",
+                    "label": 0,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The trophy doesn't fit into the brown suitcase because it is too large.",
+                    "sentence2": "The suitcase is too large.",
+                    "label": 0,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Joe's uncle can still beat him at tennis, even though he is 30 years older.",
+                    "sentence2": "Joe is 30 years older.",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The large ball crashed right through the table because it was made of steel.",
+                    "sentence2": "The large ball was made of steel.",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Sam broke both his ankles and he's walking with crutches. But a month or so from now they should be better.",
+                    "sentence2": "The crutches should be better.",
+                    "label": 0,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Grant worked hard to harvest his beans so he and his family would have enough to eat that winter, His friend Henry let him stack them in his barn where they would dry. Later, he and Tatyana would shell them and cook them for their Sunday dinners.",
+                    "sentence2": "His friend Henry let him stack Grant and his family in his barn where they would dry.",
+                    "label": 0,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "sentence1": "The drain is clogged with hair. It has to be cleaned.",
+                    "sentence2": "The hair has to be cleaned.",
+                    "label": 0,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Jane knocked on Susan's door but she did not answer.",
+                    "sentence2": "Susan did not answer.",
+                    "label": 1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Beth didn't get angry with Sally, who had cut her off, because she stopped and counted to ten.",
+                    "sentence2": "Sally stopped and counted to ten.",
+                    "label": 0,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "No one joins Facebook to be sad and lonely. But a new study from the University of Wisconsin psychologist George Lincoln argues that that's exactly how it makes us feel.",
+                    "sentence2": "That's exactly how Facebook makes us feel.",
+                    "label": 1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The man couldn't lift his son because he was so heavy.",
+                    "sentence2": "The son was so heavy.",
+                    "label": 1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Susan knew that Ann's son had been in a car accident, so she told her about it.",
+                    "sentence2": "Ann told her about it.",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "When Tommy dropped his ice cream, Timmy giggled, so father gave him a stern look.",
+                    "sentence2": "Father gave Timmy a stern look.",
+                    "label": 1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "There is a pillar between me and the stage, and I can't see around it.",
+                    "sentence2": "I can't see around the pillar.",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Look! There is a minnow swimming right below that duck! It had better get away to safety fast!",
+                    "sentence2": "The duck had better get away to safety fast!",
+                    "label": 0,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Bernard, who had not told the government official that he was less than 21 when he filed for a homestead claim, did not consider that he had done anything dishonest. Still, anyone who knew that he was 19 years old could take his claim away from him.",
+                    "sentence2": "Anyone who knew that he was 19 years old could take his claim away from anyone.",
+                    "label": 0,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "When the sponsors of the bill got to the town hall, they were surprised to find that the room was full of opponents. They were very much in the majority.",
+                    "sentence2": "The sponsors were very much in the majority.",
+                    "label": 0,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I can't cut that tree down with that axe; it is too thick.",
+                    "sentence2": "The tree is too thick.",
+                    "label": 1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The large ball crashed right through the table because it was made of styrofoam.",
+                    "sentence2": "The large ball was made of styrofoam.",
+                    "label": 0,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "I tried to paint a picture of an orchard, with lemons in the lemon trees, but they came out looking more like light bulbs.",
+                    "sentence2": "The lemon trees came out looking more like light bulbs.",
+                    "label": 0,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Madonna fired her trainer because she slept with her boyfriend.",
+                    "sentence2": "Madonna slept with her boyfriend.",
+                    "label": 0,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "If the con artist has succeeded in fooling Sam, he would have gotten a lot of money.",
+                    "sentence2": "Sam would have gotten a lot of money.",
+                    "label": 0,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The lawyer asked the witness a question, but he was reluctant to repeat it.",
+                    "sentence2": "The lawyer was reluctant to repeat it.",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Everyone really loved the oatmeal cookies; only a few people liked the chocolate chip cookies. Next time, we should make fewer of them.",
+                    "sentence2": "We should make fewer of the oatmeal cookies.",
+                    "label": 0,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Bob collapsed on the sidewalk. Soon he saw Carl coming to help. He was very ill.",
+                    "sentence2": "Carl was very ill.",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Mr. Moncrieff visited Chester's luxurious New York apartment, thinking that it belonged to his son Edward. The result was that Mr. Moncrieff has decided to cancel Edward's allowance on the ground that he no longer requires his financial support.",
+                    "sentence2": "He no longer requires Chester's financial support.",
+                    "label": 0,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Tatyana knew that Grandma always enjoyed serving an abundance of food to her guests. Now Tatyana watched as Grandma gathered Tatyana's small mother into a wide, scrawny embrace and then propelled her to the table, lifting her shawl from her shoulders, seating her in the place of honor, and saying simply: \"There's plenty.\"",
+                    "sentence2": "Grandma gathered Tatyana's small mother into a wide, scrawny embrace and then propelled Tatyana to the table.",
+                    "label": 0,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Ann asked Mary what time the library closes, because she had forgotten.",
+                    "sentence2": "Mary had forgotten.",
+                    "label": 0,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "George got free tickets to the play, but he gave them to Eric, even though he was particularly eager to see it.",
+                    "sentence2": "Eric was particularly eager to see it.",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The delivery truck zoomed by the school bus because it was going so slow.",
+                    "sentence2": "The school bus was going so slow.",
+                    "label": 1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Jane gave Joan candy because she was hungry.",
+                    "sentence2": "Jane was hungry.",
+                    "label": 0,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Mark heard Steve's feet going down the ladder. The door of the shop closed after him. He ran to look out the window.",
+                    "sentence2": "Mark ran to look out the window.",
+                    "label": 1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Although they ran at about the same speed, Sue beat Sally because she had such a good start.",
+                    "sentence2": "Sally had such a good start.",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Fred is the only man still alive who remembers my great-grandfather. He is a remarkable man.",
+                    "sentence2": "Fred is a remarkable man.",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Always before, Larry had helped Dad with his work. But he could not help him now, for Dad said that his boss at the railroad company would not want anyone but him to work in the office.",
+                    "sentence2": "Larry could not help him now.",
+                    "label": 1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "George got free tickets to the play, but he gave them to Eric, because he was particularly eager to see it.",
+                    "sentence2": "Eric was particularly eager to see it.",
+                    "label": 1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "test": [
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when Maude and Dora came in sight.",
+                    "label": -1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when the trains came in sight.",
+                    "label": -1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when the puffs came in sight.",
+                    "label": -1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when the roars came in sight.",
+                    "label": -1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when the whistles came in sight.",
+                    "label": -1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they came in sight.",
+                    "sentence2": "Horses ran away when the horses came in sight.",
+                    "label": -1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "Maude and Dora saw a train coming.",
+                    "label": -1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "The trains saw a train coming.",
+                    "label": -1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "The puffs saw a train coming.",
+                    "label": -1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "The roars saw a train coming.",
+                    "label": -1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "The whistles saw a train coming.",
+                    "label": -1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Maude and Dora had seen the trains rushing across the prairie, with long, rolling puffs of black smoke streaming back from the engine. Their roars and their wild, clear whistles could be heard from far away. Horses ran away when they saw a train coming.",
+                    "sentence2": "The horses saw a train coming.",
+                    "label": -1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Always before, Larry had helped Dad with his work. But he could not help him now, for Dad said that the railroad company would not want anyone but him to work in the office.",
+                    "sentence2": "The railroad company would not want anyone but Larry to work in the office.",
+                    "label": -1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Always before, Larry had helped Dad with his work. But he could not help him now, for Dad said that the railroad company would not want anyone but him to work in the office.",
+                    "sentence2": "The railroad company would not want anyone but Dad to work in the office.",
+                    "label": -1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A number of times Henry had been present at interviews which his father had had with noted detectives who desired his aid in solving perplexing mysteries, and those occasions stood out as red-letter days for him.",
+                    "sentence2": "Noted detectives desired Henry's aid in solving perplexing mysteries.",
+                    "label": -1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "A number of times Henry had been present at interviews which his father had had with noted detectives who desired his aid in solving perplexing mysteries, and those occasions stood out as red-letter days for him.",
+                    "sentence2": "Noted detectives desired his father's aid in solving perplexing mysteries.",
+                    "label": -1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "After a somewhat lengthy conversation, Nancy convinced the housekeeper that there was no immediate cause for alarm. She did not mention the incident at the Hamilton bus station, knowing it would only add to Mrs. Gruen's uneasiness.",
+                    "sentence2": "The conversation would only add to Mrs. Gruen's uneasiness.",
+                    "label": -1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "After a somewhat lengthy conversation, Nancy convinced the housekeeper that there was no immediate cause for alarm. She did not mention the incident at the Hamilton bus station, knowing it would only add to Mrs. Gruen's uneasiness.",
+                    "sentence2": "The alarm would only add to Mrs. Gruen's uneasiness.",
+                    "label": -1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "After a somewhat lengthy conversation, Nancy convinced the housekeeper that there was no immediate cause for alarm. She did not mention the incident at the Hamilton bus station, knowing it would only add to Mrs. Gruen's uneasiness.",
+                    "sentence2": "The incident would only add to Mrs. Gruen's uneasiness.",
+                    "label": -1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "After a somewhat lengthy conversation, Nancy convinced the housekeeper that there was no immediate cause for alarm. She did not mention the incident at the Hamilton bus station, knowing it would only add to Mrs. Gruen's uneasiness.",
+                    "sentence2": "The bus station would only add to Mrs. Gruen's uneasiness.",
+                    "label": -1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Your life is yours and yours alone, and if the pain outweighs the benefit, you should have the option to end it.",
+                    "sentence2": "You should have the option to end your life.",
+                    "label": -1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Your life is yours and yours alone, and if the pain outweighs the benefit, you should have the option to end it.",
+                    "sentence2": "You should have the option to end the pain.",
+                    "label": -1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Your life is yours and yours alone, and if the pain outweighs the benefit, you should have the option to end it.",
+                    "sentence2": "You should have the option to end the benefit.",
+                    "label": -1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "\"Chameleon Street\" is an exuberantly comic drama that's adapted from the stories of two con men, and includes as actors some of the people involved in their lives.",
+                    "sentence2": "\"Chameleon Street\" is an exuberantly comic drama that's adapted from the stories of two con men, and includes as actors some of the people involved in the con men's lives.",
+                    "label": -1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "\"Chameleon Street\" is an exuberantly comic drama that's adapted from the stories of two con men, and includes as actors some of the people involved in their lives.",
+                    "sentence2": "\"Chameleon Street\" is an exuberantly comic drama that's adapted from the stories of two con men, and includes as actors some of the people involved in the people's lives.",
+                    "label": -1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Last week, the Jackson administration dropped its plans to limit the car-service app's growth while it studies the impact of ride-hailing apps on traffic.",
+                    "sentence2": "The administration studies the impact of ride-hailing apps on traffic.",
+                    "label": -1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Last week, the Jackson administration dropped its plans to limit the car-service app's growth while it studies the impact of ride-hailing apps on traffic.",
+                    "sentence2": "The app studies the impact of ride-hailing apps on traffic.",
+                    "label": -1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "Last week, the Jackson administration dropped its plans to limit the car-service app's growth while it studies the impact of ride-hailing apps on traffic.",
+                    "sentence2": "The growth studies the impact of ride-hailing apps on traffic.",
+                    "label": -1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The wheel was a blur and the needle was a streak of light. Mrs. Black's plump hands scrambled on the cloth, feeding it under the needle.",
+                    "sentence2": "Mrs. Black's plump hands scrambled on the cloth, feeding the wheel under the needle.",
+                    "label": -1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence1": "The wheel was a blur and the needle was a streak of light. Mrs. Black's plump hands scrambled on the cloth, feeding it under the needle.",
+                    "sentence2": "Mrs. Black's plump hands scrambled on the cloth, feeding the needle under the needle.",
+                    "label": -1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[95%]",
+                "validation": "train[5%]",
+                "test": "validation"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field": "sentence1",
+            "to_field": "text_a"
+        },
+        {
+            "__type__": "rename",
+            "field": "sentence2",
+            "to_field": "text_b"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "entailment",
+                    "1": "not entailment"
+                }
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "classes": [
+                    "entailment",
+                    "not entailment"
+                ]
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_relation": "entailment"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "text_a_type": "premise"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "text_b_type": "hypothesis"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class.relation",
+    "templates": "templates.classification.multi_class.relation.all",
+    "__tags__": {
+        "annotations_creators": "other",
+        "arxiv": "1804.07461",
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": [
+            "acceptability-classification",
+            "natural-language-inference",
+            "semantic-similarity-scoring",
+            "sentiment-classification",
+            "text-scoring"
+        ]
+    },
+    "__description__": "The Winograd Schema Challenge (Levesque et al., 2011) is a reading comprehension task in which a system must read a sentence with a pronoun and select the referent of that pronoun from a list of choices. The examples are manually constructed to foil simple statistical methods: Each one is contingent on contextual information provided by a single word or phrase in the sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+}

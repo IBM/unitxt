@@ -5,12 +5,10 @@ from tests.utils import UnitxtTestCase
 
 class TestQuery(UnitxtTestCase):
     def test_query_works(self):
-        query = (
-            "card=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
-        )
+        query = "card=cards.tests.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
         parsed = parse(query)
         target = {
-            "card": "cards.sst2",
+            "card": "cards.tests.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,
             "num_demos": 0,
@@ -26,15 +24,17 @@ class TestQuery(UnitxtTestCase):
     def test_missing_key_fail(self):
         with self.assertRaises(ValueError):
             parse(
-                "=cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
+                "=cards.tests.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
             )
         with self.assertRaises(ValueError):
-            parse("cards.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0")
+            parse(
+                "cards.tests.sst2,template_card_index=1000,demos_pool_size=100,num_demos=0"
+            )
 
     def test_missing_value_fail(self):
         with self.assertRaises(ValueError):
             parse(
-                "cards.sst2=,template_card_index=1000,demos_pool_size=100,num_demos=0"
+                "cards.tests.sst2=,template_card_index=1000,demos_pool_size=100,num_demos=0"
             )
         with self.assertRaises(ValueError):
             parse("=,template_card_index=1000,demos_pool_size=100,num_demos=0")

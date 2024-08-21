@@ -15,7 +15,7 @@ from tests.utils import UnitxtTestCase
 class TestRecipes(UnitxtTestCase):
     def test_standard_recipe(self):
         recipe = StandardRecipe(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             template=InputOutputTemplate(
                 input_format="{text_a}",
                 output_format="{label}",
@@ -52,7 +52,7 @@ class TestRecipes(UnitxtTestCase):
 
     def test_standard_recipe_with_catalog(self):
         recipe = StandardRecipe(
-            card="cards.mmlu.marketing",
+            card="cards.tests.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
@@ -68,7 +68,7 @@ class TestRecipes(UnitxtTestCase):
 
     def test_standard_recipe_production_without_demos(self):
         recipe = StandardRecipe(
-            card="cards.mmlu.marketing",
+            card="cards.tests.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
@@ -107,7 +107,7 @@ class TestRecipes(UnitxtTestCase):
 
     def test_standard_recipe_production_consistency(self):
         recipe = StandardRecipe(
-            card="cards.mmlu.marketing",
+            card="cards.tests.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
@@ -149,7 +149,7 @@ class TestRecipes(UnitxtTestCase):
 
     def test_standard_recipe_production_with_demos(self):
         recipe = StandardRecipe(
-            card="cards.mmlu.marketing",
+            card="cards.tests.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
             format="formats.user_agent",
@@ -237,11 +237,11 @@ Agent:""",
 
     def test_standard_recipe_with_indexes_with_catalog(self):
         recipe = StandardRecipe(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template_card_index=0,
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
         )
 
@@ -253,9 +253,9 @@ Agent:""",
 
     def test_standard_recipe_with_demos_not_removed_from_data(self):
         recipe = StandardRecipe(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             template_card_index=0,
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
             demos_removed_from_data=True,
         )
@@ -265,9 +265,9 @@ Agent:""",
         n_demos_remove_demos = len(list(stream["demos_pool"]))
 
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             template_card_index=0,
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
             demos_removed_from_data=False,
         )
@@ -283,102 +283,93 @@ Agent:""",
 
     def test_empty_template(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.empty",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
         )
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "data_classification_policy": ["public"],
-            "target": "not entailment",
-            "references": ["not entailment"],
+            "target": "entailment",
+            "references": ["entailment"],
             "postprocessors": ["processors.to_string_stripped"],
-            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: Emma did not pass the ball to Janie although she was open., premise, She saw that Janie was open., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: The foxes are getting in at night and attacking the chickens. I shall have to kill them., premise, I shall have to kill The foxes., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., premise, When Fred first saw my father, My father was twelve years old., hypothesis, entailment, not entailment, entailment\nAgent: entailment\n\n\nUser:Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., premise, The sweater looks dowdy on her., hypothesis, entailment, not entailment, entailment\nAgent:",
-            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.empty", "num_demos": 3}}',
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., premise, The carrot had a hole., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth., premise, mother was careful not to disturb her, undressing and climbing back into her berth., hypothesis, entailment, not entailment, entailment\nAgent: entailment\n\nUser: We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply not enough of them., premise, There were simply not enough copies of the newsletter., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\n\nUser:The table won't fit through the doorway because it is too narrow., premise, The table is too narrow., hypothesis, entailment, not entailment, entailment\nAgent:",
+            "task_data": '{"text_a": "The table won\'t fit through the doorway because it is too narrow.", "text_a_type": "premise", "text_b": "The table is too narrow.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.empty", "num_demos": 3}}',
             "groups": [],
             "subset": [],
         }
 
         stream = recipe()
-
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        result = stream["train"].peek()
+        self.assertDictEqual(result, target)
 
     def test_key_val_template(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
         )
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "data_classification_policy": ["public"],
-            "target": "not entailment",
-            "references": ["not entailment"],
+            "target": "entailment",
+            "references": ["entailment"],
             "postprocessors": ["processors.to_string_stripped"],
-            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: text_a: Emma did not pass the ball to Janie although she was open., text_a_type: premise, text_b: She saw that Janie was open., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: The foxes are getting in at night and attacking the chickens. I shall have to kill them., text_a_type: premise, text_b: I shall have to kill The foxes., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., text_a_type: premise, text_b: When Fred first saw my father, My father was twelve years old., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: entailment\n\n\nUser:text_a: Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., text_a_type: premise, text_b: The sweater looks dowdy on her., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent:",
-            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 3}}',
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: text_a: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., text_a_type: premise, text_b: The carrot had a hole., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth., text_a_type: premise, text_b: mother was careful not to disturb her, undressing and climbing back into her berth., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: entailment\n\nUser: text_a: We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply not enough of them., text_a_type: premise, text_b: There were simply not enough copies of the newsletter., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\n\nUser:text_a: The table won't fit through the doorway because it is too narrow., text_a_type: premise, text_b: The table is too narrow., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent:",
+            "task_data": '{"text_a": "The table won\'t fit through the doorway because it is too narrow.", "text_a_type": "premise", "text_b": "The table is too narrow.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 3}}',
             "groups": [],
             "subset": [],
         }
 
         stream = recipe()
-
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        result = stream["train"].peek()
+        self.assertDictEqual(result, target)
 
     def test_random_template(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template=[
                 "templates.key_val",
                 "templates.classification.multi_class.relation.truthfulness.flan_5",
             ],
             format="formats.user_agent",
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
         )
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "data_classification_policy": ["public"],
-            "target": "not entailment",
-            "references": ["not entailment"],
-            "postprocessors": [
-                "processors.take_first_non_empty_line",
-                "processors.lower_case_till_punc",
-            ],
-            "source": '<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\'t know the answer to a question, please don\'t share false information.\n<</SYS>>\n\n\n\n\nUser: Problem: Sentence: "Emma did not pass the ball to Janie although she was open.";\nAnother sentence: "She saw that Janie was open."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "The foxes are getting in at night and attacking the chickens. I shall have to kill them.";\nAnother sentence: "I shall have to kill The foxes."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.";\nAnother sentence: "When Fred first saw my father, My father was twelve years old."?\nAgent: A: entailment\n\n\nUser:Problem: Sentence: "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.";\nAnother sentence: "The sweater looks dowdy on her."?\nAgent:A: ',
-            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "not entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.truthfulness.flan_5", "num_demos": 3}}',
+            "target": "entailment",
+            "references": ["entailment"],
+            "postprocessors": ["processors.to_string_stripped"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: text_a: I stuck a pin through a carrot. When I pulled the pin out, it had a hole., text_a_type: premise, text_b: The carrot had a hole., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\nUser: text_a: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth., text_a_type: premise, text_b: mother was careful not to disturb her, undressing and climbing back into her berth., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: entailment\n\nUser: text_a: We had hoped to place copies of our newsletter on all the chairs in the auditorium, but there were simply not enough of them., text_a_type: premise, text_b: There were simply not enough copies of the newsletter., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent: not entailment\n\n\nUser:text_a: The table won't fit through the doorway because it is too narrow., text_a_type: premise, text_b: The table is too narrow., text_b_type: hypothesis, classes: entailment, not entailment, type_of_relation: entailment\nAgent:",
+            "task_data": '{"text_a": "The table won\'t fit through the doorway because it is too narrow.", "text_a_type": "premise", "text_b": "The table is too narrow.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 3}}',
             "groups": [],
             "subset": [],
         }
 
         stream = recipe()
-
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        result = stream["train"].peek()
+        self.assertDictEqual(result, target)
 
     def test_random_num_demos(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
-            demos_pool_size=100,
-            num_demos=[0, 1, 3, 5],
+            demos_pool_size=2,
+            num_demos=[0, 1, 2],
         )
 
         stream = recipe()
@@ -388,16 +379,16 @@ Agent:""",
                 break
             lengths.add(len(instance["source"].split("\nAgent:")))
 
-        self.assertEqual(len(lengths), 4)
+        self.assertEqual(len(lengths), 3)
 
     def test_standard_recipe_with_balancer(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
             train_refiner="operators.balancers.classification.by_label",
-            demos_pool_size=100,
+            demos_pool_size=10,
             num_demos=3,
         )
 
@@ -410,7 +401,7 @@ Agent:""",
 
     def test_standard_recipe_with_loader_limit(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
@@ -428,7 +419,7 @@ Agent:""",
     def test_standard_recipe_with_loader_limit_errors(self):
         with self.assertRaises(ValueError):
             StandardRecipeWithIndexes(
-                card="cards.wnli",
+                card="cards.tests.wnli",
                 template="templates.key_val",
                 max_test_instances=10,
                 loader_limit=9,
@@ -436,7 +427,7 @@ Agent:""",
 
         with self.assertRaises(ValueError):
             StandardRecipeWithIndexes(
-                card="cards.wnli",
+                card="cards.tests.wnli",
                 template="templates.key_val",
                 max_train_instances=10,
                 loader_limit=9,
@@ -444,7 +435,7 @@ Agent:""",
         with self.assertRaises(ValueError):
             StandardRecipeWithIndexes(
                 template="templates.key_val",
-                card="cards.wnli",
+                card="cards.tests.wnli",
                 max_validation_instances=10,
                 loader_limit=9,
             )
@@ -452,7 +443,7 @@ Agent:""",
         with self.assertRaises(ValueError):
             StandardRecipeWithIndexes(
                 template="templates.key_val",
-                card="cards.wnli",
+                card="cards.tests.wnli",
                 num_demos=3,
                 demos_pool_size=10,
                 loader_limit=9,
@@ -461,7 +452,7 @@ Agent:""",
     def test_standard_recipe_with_no_demos_to_take(self):
         recipe = StandardRecipeWithIndexes(
             template="templates.key_val",
-            card="cards.xwinogrande.pt",
+            card="cards.tests.xwinogrande.pt",
             num_demos=3,
             demos_pool_size=10,
         )
@@ -477,7 +468,7 @@ Agent:""",
         with self.assertRaises(Exception) as cm:
             recipe = StandardRecipeWithIndexes(
                 template="templates.key_val",
-                card="cards.xwinogrande.pt",
+                card="cards.tests.xwinogrande.pt",
                 num_demos=3,
                 demos_pool_size=0,
             )
@@ -490,7 +481,7 @@ Agent:""",
         with self.assertRaises(Exception) as cm:
             recipe = StandardRecipeWithIndexes(
                 template="templates.key_val",
-                card="cards.xwinogrande.pt",
+                card="cards.tests.xwinogrande.pt",
                 num_demos=30,
                 demos_pool_size=10,
             )
@@ -503,7 +494,7 @@ Agent:""",
     def test_standard_recipe_with_no_test(self):
         recipe = StandardRecipeWithIndexes(
             template="templates.key_val",
-            card="cards.xwinogrande.pt",
+            card="cards.tests.xwinogrande.pt",
             num_demos=3,
             demos_pool_size=10,
             demos_taken_from="test",
@@ -514,7 +505,7 @@ Agent:""",
     def test_standard_recipe_with_template_errors(self):
         # Check some template was specified
         with self.assertRaises(AssertionError) as cm:
-            StandardRecipeWithIndexes(card="cards.wnli")
+            StandardRecipeWithIndexes(card="cards.tests.wnli")
         self.assertEqual(
             str(cm.exception), "Specify either template or template_card_index in card"
         )
@@ -522,7 +513,9 @@ Agent:""",
         # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
             StandardRecipeWithIndexes(
-                card="cards.wnli", template="templates.key_val", template_card_index=100
+                card="cards.tests.wnli",
+                template="templates.key_val",
+                template_card_index=100,
             )
         self.assertTrue(
             re.match(
@@ -535,7 +528,7 @@ Agent:""",
         # Also check if string index is used
         with self.assertRaises(AssertionError) as cm:
             StandardRecipeWithIndexes(
-                card="cards.wnli",
+                card="cards.tests.wnli",
                 template="templates.key_val",
                 template_card_index="illegal_template",
             )
@@ -550,22 +543,22 @@ Agent:""",
         # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
             StandardRecipeWithIndexes(
-                card="cards.wnli", template_card_index="illegal_template"
+                card="cards.tests.wnli", template_card_index="illegal_template"
             )
         self.assertTrue("not defined in card." in str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
-            StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
+            StandardRecipeWithIndexes(card="cards.tests.wnli", template_card_index=100)
         self.assertTrue("not defined in card." in str(cm.exception))
 
     def test_standard_recipe_with_balancer_and_size_limit(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
             train_refiner="operators.balancers.classification.by_label",
-            demos_pool_size=100,
+            demos_pool_size=10,
             max_train_instances=20,
             num_demos=3,
         )
@@ -579,7 +572,7 @@ Agent:""",
 
     def test_standard_recipe_with_augmentor_on_task_input(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
+            card="cards.tests.sst2",
             augmentor="augmentors.augment_whitespace_task_input",
             template_card_index=0,
             max_train_instances=0,
@@ -604,7 +597,7 @@ Agent:""",
 
     def test_standard_recipe_with_augmentor_on_model_input(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
+            card="cards.tests.sst2",
             template_card_index=0,
             max_train_instances=0,
             max_test_instances=1,
@@ -612,7 +605,7 @@ Agent:""",
         original_source = next(iter(recipe()["test"]))["source"]
 
         recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
+            card="cards.tests.sst2",
             augmentor="augmentors.augment_whitespace_model_input",
             template_card_index=0,
             max_train_instances=0,
@@ -631,7 +624,7 @@ Agent:""",
 
     def test_standard_recipe_with_train_size_limit(self):
         recipe = StandardRecipeWithIndexes(
-            card="cards.wnli",
+            card="cards.tests.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
             format="formats.user_agent",
@@ -651,7 +644,7 @@ Agent:""",
 
         d = load_dataset(
             dataset_file,
-            "__type__=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
+            "__type__=standard_recipe_with_indexes,card=cards.tests.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
             streaming=True,
             trust_remote_code=True,
         )
@@ -664,7 +657,7 @@ Agent:""",
         from unitxt import load_dataset
 
         dataset = load_dataset(
-            "card=cards.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
+            "card=cards.tests.copa,template=templates.qa.multiple_choice.with_context.no_intro.helm[enumerator=[option 1, option 2]],num_demos=1,demos_pool_size=10,format=formats.user_agent,max_train_instances=5"
         )
 
         iterator = iter(dataset["train"])
@@ -673,7 +666,7 @@ Agent:""",
 
     def test_standard_recipe_with_a_missing_sampler(self):
         """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
-        task_card, _ = copy.deepcopy(fetch_artifact("cards.sst2"))
+        task_card, _ = copy.deepcopy(fetch_artifact("cards.tests.sst2"))
         task_card.sampler = None
         with self.assertRaises(ValueError) as e:
             StandardRecipeWithIndexes(

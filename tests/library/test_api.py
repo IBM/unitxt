@@ -13,7 +13,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         instance = {
             "metrics": ["metrics.spearman"],
@@ -40,7 +40,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_with_multi_num_demos(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2,group_by=[num_demos,template]"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2,group_by=[num_demos,template]"
         )
         instance = {
             "metrics": ["metrics.spearman"],
@@ -64,7 +64,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_load_dataset_with_multi_templates(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.tests.stsb,template=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         instance = {
             "metrics": ["metrics.spearman"],
@@ -122,7 +122,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_evaluate_with_group_by(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=[templates.regression.two_texts.simple,templates.regression.two_texts.title],max_train_instances=5,max_validation_instances=5,max_test_instances=5,group_by=[template]"
+            "card=cards.tests.stsb,template=[templates.regression.two_texts.simple,templates.regression.two_texts.title],max_train_instances=5,max_validation_instances=5,max_test_instances=5,group_by=[template]"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
@@ -154,7 +154,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_evaluate(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
@@ -208,7 +208,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_evaluate_with_groups(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         results = evaluate(predictions, dataset["train"])
@@ -265,7 +265,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_post_process(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
         predictions = ["2.5", "2.5", "2.2", "3", "4"]
         targets = [2.5, 2.5, 2.2, 3.0, 4.0]
@@ -274,7 +274,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_evaluate_with_metrics_external_setup(self):
         dataset = load_dataset(
-            "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,metrics=[metrics.accuracy],postprocessors=[processors.first_character]"
+            "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,metrics=[metrics.accuracy],postprocessors=[processors.first_character]"
         )
         self.assertEqual(dataset["train"][0]["metrics"], ["metrics.accuracy"])
         self.assertEqual(
@@ -295,7 +295,7 @@ class TestAPI(UnitxtTestCase):
                 "text_a_type": "premise",
                 "text_b_type": "hypothesis",
             },
-            "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
+            "card=cards.tests.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2",
         )
 
         target = {
@@ -342,7 +342,7 @@ class TestAPI(UnitxtTestCase):
                     "text_b_type": "hypothesis",
                 }
             ],
-            "card=cards.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2,loader_limit=10",
+            "card=cards.tests.wnli,template=templates.classification.multi_class.relation.default,demos_pool_size=5,num_demos=2,loader_limit=10",
         )[0]
 
         target = {
@@ -411,7 +411,7 @@ class TestAPI(UnitxtTestCase):
 
     def test_infer(self):
         engine = "engines.model.flan.t5_small.hf"
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
+        recipe = "card=cards.tests.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
             {"question": "How many days there are in a week", "answers": ["7"]},
             {

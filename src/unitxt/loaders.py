@@ -729,7 +729,7 @@ class LoadFromDictionary(Loader):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
-        return MultiStream.from_iterables(deepcopy(self.data))
+        return MultiStream.from_iterables(deepcopy(self.data), copying=True)
 
 
 class LoadFromHFSpace(LoadHF):
