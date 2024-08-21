@@ -5,6 +5,7 @@ from unitxt.operators import Cast, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
+    ExtractArenaHardNumericalJudgment,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
@@ -210,6 +211,18 @@ add_to_catalog(
 
 add_to_catalog(
     PostProcess(LiteralEval(), process_references=False),
+    "processors.literal_eval",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(Cast(to="float", failure_default={"float": 0.5})),
+    "processors.cast_to_float_return_0_5_if_failed",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(ExtractArenaHardNumericalJudgment(), process_references=False),
     "processors.literal_eval",
     overwrite=True,
 )
