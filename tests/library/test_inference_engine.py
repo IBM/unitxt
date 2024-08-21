@@ -11,7 +11,7 @@ class TestInferenceEngine(UnitxtTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
-        assert inference_model.is_pipeline_initialized()
+        assert inference_model._is_loaded()
 
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
@@ -32,7 +32,7 @@ class TestInferenceEngine(UnitxtTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
-        assert not inference_model.is_pipeline_initialized()
+        assert not inference_model._is_loaded()
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
             {"question": "How many days there are in a week", "answers": ["7"]},

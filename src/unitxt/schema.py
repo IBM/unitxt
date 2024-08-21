@@ -1,7 +1,7 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from datasets import Features, Sequence, Value
+from datasets import Audio, Features, Image, Sequence, Value
 
 from .artifact import Artifact
 from .dict_utils import dict_get
@@ -15,6 +15,10 @@ UNITXT_DATASET_SCHEMA = Features(
         "metrics": Sequence(Value("string")),
         "groups": Sequence(Value("string")),
         "subset": Sequence(Value("string")),
+        "media": {
+            "images": Sequence(Image()),
+            "audios": Sequence(Audio()),
+        },
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
         "data_classification_policy": Sequence(Value("string")),
@@ -31,6 +35,18 @@ class Finalize(InstanceOperatorValidator):
         if artifact.__id__ is None:
             return artifact.to_dict()
         return artifact.__id__
+
+    def _prepare_media(self, instance):
+        if "media" not in instance:
+            instance["media"] = {}
+
+        if "images" not in instance["media"]:
+            instance["media"]["images"] = []
+
+        if "audios" not in instance["media"]:
+            instance["media"]["audios"] = []
+
+        return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -71,6 +87,8 @@ class Finalize(InstanceOperatorValidator):
 
         instance["groups"] = groups
         instance["subset"] = []
+
+        instance = self._prepare_media(instance)
 
         instance["metrics"] = [
             metric.to_json() if isinstance(metric, Artifact) else metric

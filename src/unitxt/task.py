@@ -260,6 +260,7 @@ class Task(InstanceOperator):
             "reference_fields": reference_fields,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
+            "media": instance.get("media", {}),
         }
 
 

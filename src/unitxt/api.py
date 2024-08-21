@@ -8,6 +8,7 @@ from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
 from .metric_utils import _compute, _post_process
 from .operator import SourceOperator
+from .schema import UNITXT_DATASET_SCHEMA
 from .standard import StandardRecipe
 
 logger = get_logger()
@@ -28,7 +29,7 @@ def _load_dataset_from_query(dataset_query: str) -> DatasetDict:
         dataset_stream, _ = fetch_artifact(dataset_query)
     except:
         dataset_stream = get_dataset_artifact(dataset_query)
-    return dataset_stream().to_dataset()
+    return dataset_stream().to_dataset(features=UNITXT_DATASET_SCHEMA)
 
 
 def _load_dataset_from_dict(dataset_params: Dict[str, Any]) -> DatasetDict:
@@ -39,7 +40,7 @@ def _load_dataset_from_dict(dataset_params: Dict[str, Any]) -> DatasetDict:
             f"Please check if the name is correct. The available attributes are: '{recipe_attributes}'."
         )
     recipe = StandardRecipe(**dataset_params)
-    return recipe().to_dataset()
+    return recipe().to_dataset(features=UNITXT_DATASET_SCHEMA)
 
 
 def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
