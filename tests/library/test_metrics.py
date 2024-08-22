@@ -298,8 +298,8 @@ class TestMetrics(UnitxtTestCase):
 
     def test_f1_strings(self):
         metric = F1Strings()
-        references = [["cat dog"], ["dog"], ["cat"], ["cat"], ["cat"]]
-        predictions = ["cat", "dog", "dog", "dog cat.", "dog Cat mouse"]
+        references = [["cat dog"], ["dog"], ["cat"], ["cat"], ["cat"], ["gfjgfh"]]
+        predictions = ["cat", "dog", "dog", "dog cat.", "dog Cat mouse", "100,000"]
 
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
@@ -311,6 +311,7 @@ class TestMetrics(UnitxtTestCase):
             {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
             {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
             {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
+            {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
         ]
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
