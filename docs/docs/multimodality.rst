@@ -1,4 +1,4 @@
-.. _multi_modality_tutorial:
+.. _multi_modality:
 
 ==============
 Multi-Modality
