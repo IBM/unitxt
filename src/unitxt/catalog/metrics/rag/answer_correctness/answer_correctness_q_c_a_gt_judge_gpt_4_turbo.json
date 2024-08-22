@@ -14,11 +14,20 @@
             "field_to_field": {
                 "answer": "task_data/answer",
                 "contexts": "task_data/contexts",
-                "data_classification_policy": "task_data/data_classification_policy",
                 "ground_truths": "task_data/ground_truths",
                 "question": "task_data/question"
             },
             "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
         },
         {
             "__type__": "set",

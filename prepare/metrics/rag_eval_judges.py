@@ -8,7 +8,6 @@ from unitxt.metrics import (
 from unitxt.operators import Copy, Set
 
 rag_fields = {"ground_truths", "answer", "contexts", "question"}
-metadata_fields = {"data_classification_policy"}
 
 metric_type_to_template = {
     "faithfulness": {
@@ -58,9 +57,16 @@ def add_judge_metrics():
                         Copy(
                             field_to_field={
                                 field: f"task_data/{field}"
-                                for field in sorted(rag_fields | metadata_fields)
+                                for field in sorted(rag_fields)
                             },
                             not_exist_ok=True,
+                        ),
+                        Copy(
+                            field_to_field={
+                                "data_classification_policy": "task_data/data_classification_policy"
+                            },
+                            not_exist_ok=True,
+                            get_default=["public"],
                         ),
                         Set(
                             fields={
