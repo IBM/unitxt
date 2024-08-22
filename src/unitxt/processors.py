@@ -5,6 +5,7 @@ import re
 from difflib import get_close_matches
 from typing import Any, Dict
 
+from .deprecation_utils import deprecation
 from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
 from .settings_utils import get_constants
@@ -146,6 +147,11 @@ class Lower(FieldOperator):
         return text.lower()
 
 
+@deprecation("2.0.0", alternative=Lower)
+class LowerCase(Lower):
+    pass
+
+
 class Capitalize(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return text.capitalize()
@@ -248,6 +254,11 @@ class StringEquals(FieldOperator):
         if self.string.lower() in text.lower():
             return self.string.lower()
         return text
+
+
+@deprecation("2.0.0", alternative=StringEquals)
+class StringOrNotString(StringEquals):
+    pass
 
 
 class ExtractMtBenchRatingJudgment(FieldOperator):

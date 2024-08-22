@@ -24,20 +24,6 @@ UNITXT_DATASET_SCHEMA = Features(
     }
 )
 
-
-UNITXT_INFERENCE_SCHEMA = Features(
-    {
-        "source": Value("string"),
-        "metrics": Sequence(Value("string")),
-        "groups": Sequence(Value("string")),
-        "subset": Sequence(Value("string")),
-        "postprocessors": Sequence(Value("string")),
-        "task_data": Value(dtype="string"),
-        "data_classification_policy": Sequence(Value("string")),
-    }
-)
-
-
 UNITXT_INFERENCE_SCHEMA = Features(
     {
         "source": Value("string"),
