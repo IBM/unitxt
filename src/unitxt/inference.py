@@ -513,6 +513,7 @@ class WMLInferenceEngine(
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
+    lazy_load = True
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
