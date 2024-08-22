@@ -46,7 +46,7 @@ class TestExamples(UnitxtTestCase):
             "evaluate_existing_dataset_by_llm_as_judge.py",
             "evaluate_ensemble_judge.py",
             "evaluate_benchmark.py",
-            "examples/evaluate_image_text_to_text.py",
+            "evaluate_image_text_to_text.py",
         ]
 
         failed_examples_files = []
