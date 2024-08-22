@@ -15,8 +15,6 @@ from .utils import deepcopy
 settings = get_settings()
 logger = get_logger()
 
-Instance = Dict[str, Any]
-
 
 class Stream(Dataclass):
     @abstractmethod
@@ -37,7 +35,7 @@ class Stream(Dataclass):
 
 
 class ListStream(Stream):
-    instances_list: List[Instance]
+    instances_list: List[Dict[str, Any]]
     copying: bool = False
 
     def __iter__(self):
