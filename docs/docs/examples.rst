@@ -188,6 +188,7 @@ Groundedness: Every substantial claim in the response of the model is derivable 
 IDK: Does the model response say I don't know?
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_idk_judge.py>`
 
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
 RAG
 ---
