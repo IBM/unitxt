@@ -1,9 +1,13 @@
 import unittest
 
 from unitxt import produce
-from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.inference import HFLlavaInferenceEngine, HFPipelineBasedInferenceEngine
+from unitxt.settings_utils import get_settings
+from unitxt.standard import StandardRecipe
 
 from tests.utils import UnitxtTestCase
+
+settings = get_settings()
 
 
 class TestInferenceEngine(UnitxtTestCase):
@@ -11,7 +15,7 @@ class TestInferenceEngine(UnitxtTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
-        assert inference_model.is_pipeline_initialized()
+        assert inference_model._is_loaded()
 
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
@@ -32,7 +36,7 @@ class TestInferenceEngine(UnitxtTestCase):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
-        assert not inference_model.is_pipeline_initialized()
+        assert not inference_model._is_loaded()
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
             {"question": "How many days there are in a week", "answers": ["7"]},
@@ -67,6 +71,25 @@ class TestInferenceEngine(UnitxtTestCase):
             f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
             f"accordingly.",
         )
+
+    def test_llava_inference_engine(self):
+        inference_model = HFLlavaInferenceEngine(
+            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3
+        )
+
+        if not settings.use_eager_execution:
+            dataset = StandardRecipe(
+                card="cards.doc_vqa.en",
+                template="templates.qa.with_context.with_type",
+                format="formats.models.llava_interleave",
+                loader_limit=30,
+            )()
+
+            test_dataset = [dataset["test"].peek()]
+
+            predictions = inference_model.infer(test_dataset)
+
+            self.assertEqual(predictions[0], "The real image")
 
 
 if __name__ == "__main__":

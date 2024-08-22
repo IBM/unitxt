@@ -17,14 +17,17 @@ class TestMetricUtils(UnitxtTestCase):
                     {
                         "subset": [],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                     {
                         "subset": [],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                     {
                         "subset": [],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                 ]
             }
@@ -35,16 +38,19 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                 },
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                 },
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 2,
                 },
             ],
@@ -145,14 +151,17 @@ class TestMetricUtils(UnitxtTestCase):
                     {
                         "subset": ["mnli"],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                     {
                         "subset": ["mnli"],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                     {
                         "subset": ["squad"],
                         "groups": [],
+                        "media": {"audios": [], "images": []},
                     },
                 ]
             }
@@ -163,11 +172,13 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                 },
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                 },
             ],
@@ -175,6 +186,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["squad"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 2,
                 }
             ],
@@ -279,6 +291,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                     "score": {
                         "global": {
@@ -298,6 +311,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                     "score": {
                         "global": {
@@ -327,6 +341,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -345,6 +360,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": [],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -690,6 +706,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                     "score": {
                         "global": {
@@ -709,6 +726,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                     "score": {
                         "global": {
@@ -730,6 +748,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["squad"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 2,
                     "score": {
                         "global": {
@@ -759,6 +778,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -788,6 +808,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,
@@ -817,6 +838,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["squad"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "f1": 1.0,
@@ -853,6 +875,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "first"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                     "score": {
                         "global": {
@@ -872,6 +895,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "first"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                     "score": {
                         "global": {
@@ -893,6 +917,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "second"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 0,
                     "score": {
                         "global": {
@@ -912,6 +937,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "second"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "__idx__": 1,
                     "score": {
                         "global": {
@@ -941,6 +967,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "first"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 1.0,
@@ -974,6 +1001,7 @@ class TestMetricUtils(UnitxtTestCase):
                 {
                     "subset": ["mnli", "first"],
                     "groups": [],
+                    "media": {"audios": [], "images": []},
                     "score": {
                         "instance": {
                             "accuracy": 0.0,

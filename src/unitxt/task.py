@@ -5,7 +5,9 @@ from typing import Any, Dict, List, Optional, Union
 from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
+from .logging_utils import get_logger
 from .operator import InstanceOperator
+from .settings_utils import get_constants
 from .type_utils import (
     Type,
     get_args,
@@ -18,6 +20,9 @@ from .type_utils import (
     to_type_string,
     verify_required_schema,
 )
+
+constants = get_constants()
+logger = get_logger()
 
 
 @deprecation(
@@ -249,18 +254,25 @@ class Task(InstanceOperator):
         instance = self.set_default_values(instance)
 
         verify_required_schema(self.input_fields, instance)
-        verify_required_schema(self.reference_fields, instance)
-
         input_fields = {key: instance[key] for key in self.input_fields.keys()}
-        reference_fields = {key: instance[key] for key in self.reference_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
-        return {
+        result = {
             "input_fields": input_fields,
-            "reference_fields": reference_fields,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
+            "media": instance.get("media", {}),
         }
+
+        if stream_name == constants.inference_stream:
+            return result
+
+        verify_required_schema(self.reference_fields, instance)
+        result["reference_fields"] = {
+            key: instance[key] for key in self.reference_fields.keys()
+        }
+
+        return result
 
 
 @deprecation(version="2.0.0", alternative=Task)

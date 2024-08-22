@@ -4729,6 +4729,55 @@ class MetricsEnsemble(InstanceMetric):
         return {self.main_score: prediction}
 
 
+class F1Strings(InstanceMetric):
+    main_score = "f1_strings"
+    reduction_map = {"mean": ["f1_strings"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+    _requirements_list = {
+        "spacy": "Please pip install spacy",
+    }
+
+    def prepare(self):
+        super().prepare()
+        import spacy
+
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+        except OSError:
+            from spacy.cli import download
+
+            download("en_core_web_sm")
+            self.nlp = spacy.load("en_core_web_sm")
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        doc_ref = self.nlp(references[0])
+        set_ref = Counter([token.text.lower() for token in doc_ref])
+        doc_pred = self.nlp(prediction)
+        set_pred = Counter([token.text.lower() for token in doc_pred])
+
+        true_positives = sum((set_ref & set_pred).values())
+        false_positives = sum((set_ref - set_pred).values())
+        false_negatives = sum((set_pred - set_ref).values())
+
+        if true_positives == 0:
+            f1 = 0.0
+        else:
+            precision = true_positives / (true_positives + false_positives)
+            recall = true_positives / (true_positives + false_negatives)
+            if precision + recall == 0:
+                f1 = 0.0
+            else:
+                f1 = 2 * (precision * recall) / (precision + recall)
+
+        return {self.main_score: [f1], "score_name": self.main_score}
+
+
 class RandomForestMetricsEnsemble(MetricsEnsemble):
     """This class extends the `MetricsEnsemble` base class and leverages a pre-trained scikit-learn Random Forest classification model to combine and aggregate scores from multiple judges.
 
