@@ -21,7 +21,6 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
-    DeprecatedField,
     InternalField,
     NonPositionalField,
     OptionalField,
@@ -1425,11 +1424,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
-        }
-    )
+    postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1446,6 +1441,9 @@ class MetricPipeline(MultiStreamOperator, Metric):
         assert isinstance(
             self.metric, Metric
         ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
+        if self.postpreprocess_steps is not None:
+            depr_message = "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         super().prepare()

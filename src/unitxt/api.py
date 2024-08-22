@@ -6,7 +6,7 @@ from datasets import DatasetDict
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
-from .metric_utils import _compute, _post_process
+from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
 from .standard import StandardRecipe
 
@@ -22,24 +22,60 @@ def load(source: Union[SourceOperator, str]) -> DatasetDict:
     return source().to_dataset()
 
 
-def _load_dataset_from_query(dataset_query: str) -> DatasetDict:
+def _get_recipe_from_query(dataset_query: str) -> StandardRecipe:
     dataset_query = dataset_query.replace("sys_prompt", "instruction")
     try:
         dataset_stream, _ = fetch_artifact(dataset_query)
     except:
         dataset_stream = get_dataset_artifact(dataset_query)
-    return dataset_stream().to_dataset()
+    return dataset_stream
 
 
-def _load_dataset_from_dict(dataset_params: Dict[str, Any]) -> DatasetDict:
+def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> StandardRecipe:
     recipe_attributes = list(StandardRecipe.__dict__["__fields__"].keys())
     for param in dataset_params.keys():
         assert param in recipe_attributes, (
             f"The parameter '{param}' is not an attribute of the 'StandardRecipe' class. "
             f"Please check if the name is correct. The available attributes are: '{recipe_attributes}'."
         )
-    recipe = StandardRecipe(**dataset_params)
-    return recipe().to_dataset()
+    return StandardRecipe(**dataset_params)
+
+
+def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None):
+    if dataset_query and dataset_args:
+        raise ValueError(
+            "Cannot provide 'dataset_query' and key-worded arguments at the same time. "
+            "If you want to load dataset from a card in local catalog, use query only. "
+            "Otherwise, use key-worded arguments only to specify properties of dataset."
+        )
+
+    if dataset_query:
+        if not isinstance(dataset_query, str):
+            raise ValueError(
+                f"If specified, 'dataset_query' must be a string, however, "
+                f"'{dataset_query}' was provided instead, which is of type "
+                f"'{type(dataset_query)}'."
+            )
+
+    if not dataset_query and not dataset_args:
+        raise ValueError(
+            "Either 'dataset_query' or key-worded arguments must be provided."
+        )
+
+
+def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe:
+    if isinstance(dataset_query, StandardRecipe):
+        return dataset_query
+
+    _verify_dataset_args(dataset_query, kwargs)
+
+    if dataset_query:
+        recipe = _get_recipe_from_query(dataset_query)
+
+    if kwargs:
+        recipe = _get_recipe_from_dict(kwargs)
+
+    return recipe
 
 
 def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
@@ -68,26 +104,9 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
         loader_limit = 10
         dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
     """
-    if dataset_query and kwargs:
-        raise ValueError(
-            "Cannot provide 'dataset_query' and key-worded arguments at the same time. "
-            "If you want to load dataset from a card in local catalog, use query only. "
-            "Otherwise, use key-worded arguments only to specify properties of dataset."
-        )
+    recipe = load_recipe(dataset_query, **kwargs)
 
-    if dataset_query:
-        if not isinstance(dataset_query, str):
-            raise ValueError(
-                f"If specified, 'dataset_query' must be a string, however, "
-                f"'{dataset_query}' was provided instead, which is of type "
-                f"'{type(dataset_query)}'."
-            )
-        return _load_dataset_from_query(dataset_query)
-
-    if kwargs:
-        return _load_dataset_from_dict(kwargs)
-
-    raise ValueError("Either 'dataset_query' or key-worded arguments must be provided.")
+    return recipe().to_dataset()
 
 
 def evaluate(predictions, data) -> List[Dict[str, Any]]:
@@ -95,26 +114,40 @@ def evaluate(predictions, data) -> List[Dict[str, Any]]:
 
 
 def post_process(predictions, data) -> List[Dict[str, Any]]:
-    return _post_process(predictions=predictions, references=data)
+    return _inference_post_process(predictions=predictions, references=data)
 
 
 @lru_cache
-def _get_produce_with_cache(recipe_query):
-    return get_dataset_artifact(recipe_query).produce
+def _get_produce_with_cache(dataset_query: Optional[str] = None, **kwargs):
+    return load_recipe(dataset_query, **kwargs).produce
 
 
-def produce(instance_or_instances, recipe_query):
+def produce(instance_or_instances, dataset_query: Optional[str] = None, **kwargs):
     is_list = isinstance(instance_or_instances, list)
     if not is_list:
         instance_or_instances = [instance_or_instances]
-    result = _get_produce_with_cache(recipe_query)(instance_or_instances)
+    result = _get_produce_with_cache(dataset_query, **kwargs)(instance_or_instances)
     if not is_list:
         result = result[0]
     return result
 
 
-def infer(instance_or_instances, recipe, engine):
-    dataset = produce(instance_or_instances, recipe)
+def infer(
+    instance_or_instances,
+    engine,
+    dataset_query: Optional[str] = None,
+    return_data=False,
+    **kwargs,
+):
+    dataset = produce(instance_or_instances, dataset_query, **kwargs)
     engine, _ = fetch_artifact(engine)
-    predictions = engine.infer(dataset)
-    return post_process(predictions, dataset)
+    raw_predictions = engine.infer(dataset)
+    predictions = post_process(raw_predictions, dataset)
+    if return_data:
+        for prediction, raw_prediction, instance in zip(
+            predictions, raw_predictions, dataset
+        ):
+            instance["prediction"] = prediction
+            instance["raw_prediction"] = raw_prediction
+        return dataset
+    return predictions

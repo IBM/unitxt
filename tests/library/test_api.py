@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 from unitxt.api import evaluate, infer, load_dataset, post_process, produce
 from unitxt.card import TaskCard
@@ -15,42 +17,40 @@ class TestAPI(UnitxtTestCase):
         dataset = load_dataset(
             "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
-        instance = {
+        target = {
             "metrics": ["metrics.spearman"],
-            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
-            "target": "5.0",
-            "references": ["5.0"],
-            "task_data": '{"text1": "A plane is taking off.", '
-            '"text2": "An air plane is taking off.", '
-            '"attribute_name": "similarity", '
-            '"min_value": 1.0, '
-            '"max_value": 5.0, '
-            '"attribute_value": 5.0, '
-            '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
-            "groups": [],
-            "subset": [],
+            "data_classification_policy": ["public"],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
             ],
-            "data_classification_policy": ["public"],
+            "target": "5.0",
+            "references": ["5.0"],
+            "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
+            "groups": [],
+            "subset": [],
         }
         self.assertEqual(len(dataset["train"]), 5)
-        self.assertDictEqual(dataset["train"][0], instance)
+        result = dataset["train"][0]
+        result_task_data = json.loads(result.pop("task_data"))
+        target_task_data = json.loads(target.pop("task_data"))
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(result_task_data, target_task_data)
 
     def test_load_dataset_with_multi_num_demos(self):
         dataset = load_dataset(
             "card=cards.tests.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2,group_by=[num_demos,template]"
         )
-        instance = {
+        target = {
             "metrics": ["metrics.spearman"],
             "data_classification_policy": ["public"],
-            "target": "3.8",
-            "references": ["3.8"],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
             ],
+            "target": "3.8",
+            "references": ["3.8"],
             "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
             "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
             "groups": [
@@ -60,18 +60,22 @@ class TestAPI(UnitxtTestCase):
             "subset": [],
         }
         self.assertEqual(len(dataset["train"]), 5)
-        self.assertDictEqual(dataset["train"][0], instance)
+        result = dataset["train"][0]
+        result_task_data = json.loads(result.pop("task_data"))
+        target_task_data = json.loads(target.pop("task_data"))
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(result_task_data, target_task_data)
 
     def test_load_dataset_with_multi_templates(self):
         dataset = load_dataset(
             "card=cards.tests.stsb,template=[templates.regression.two_texts.simple,templates.key_val],max_train_instances=5,max_validation_instances=5,max_test_instances=5"
         )
-        instance = {
+        target = {
             "metrics": ["metrics.spearman"],
             "data_classification_policy": ["public"],
+            "postprocessors": ["processors.to_string_stripped"],
             "target": "5.0",
             "references": ["5.0"],
-            "postprocessors": ["processors.to_string_stripped"],
             "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
             "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 0}}',
             "groups": [],
@@ -79,46 +83,54 @@ class TestAPI(UnitxtTestCase):
         }
 
         self.assertEqual(len(dataset["train"]), 5)
-        self.assertDictEqual(dataset["train"][0], instance)
+        result = dataset["train"][0]
+        result_task_data = json.loads(result.pop("task_data"))
+        target_task_data = json.loads(target.pop("task_data"))
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(result_task_data, target_task_data)
 
     def test_load_dataset_with_benchmark(self):
         dataset = load_dataset(
             "benchmarks.glue[max_samples_per_subset=1,loader_limit=300]"
         )
-        self.assertEqual(
-            dataset["test"].to_list()[0],
-            {
-                "metrics": ["metrics.matthews_correlation"],
-                "data_classification_policy": ["public"],
-                "target": "acceptable",
-                "references": ["acceptable"],
-                "postprocessors": [
-                    "processors.take_first_non_empty_line",
-                    "processors.lower_case_till_punc",
-                ],
-                "source": "Classify the grammatical acceptability of the following text to one of these options: unacceptable, acceptable.\ntext: The sailors rode the breeze clear of the rocks.\nThe grammatical acceptability is ",
-                "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "num_demos": 0}}',
-                "groups": [],
-                "subset": ["cola"],
-            },
-        )
-        self.assertEqual(
-            dataset["test"].to_list()[-1],
-            {
-                "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-                "data_classification_policy": ["public"],
-                "target": "entailment",
-                "references": ["entailment"],
-                "postprocessors": [
-                    "processors.take_first_non_empty_line",
-                    "processors.lower_case_till_punc",
-                ],
-                "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: The drain is clogged with hair. It has to be cleaned.\nhypothesis: The hair has to be cleaned.\nThe entailment class is ",
-                "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
-                "groups": [],
-                "subset": ["wnli"],
-            },
-        )
+        first_result = dataset["test"].to_list()[0]
+        last_result = dataset["test"].to_list()[-1]
+        first_result_task_data = json.loads(first_result.pop("task_data"))
+        last_result_task_data = json.loads(last_result.pop("task_data"))
+        first_target = {
+            "metrics": ["metrics.matthews_correlation"],
+            "data_classification_policy": ["public"],
+            "target": "acceptable",
+            "references": ["acceptable"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": "Classify the grammatical acceptability of the following text to one of these options: unacceptable, acceptable.\ntext: The sailors rode the breeze clear of the rocks.\nThe grammatical acceptability is ",
+            "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "num_demos": 0}}',
+            "groups": [],
+            "subset": ["cola"],
+        }
+        last_target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "entailment",
+            "references": ["entailment"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: The drain is clogged with hair. It has to be cleaned.\nhypothesis: The hair has to be cleaned.\nThe entailment class is ",
+            "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
+            "groups": [],
+            "subset": ["wnli"],
+        }
+        first_target_task_data = json.loads(first_target.pop("task_data"))
+        last_target_task_data = json.loads(last_target.pop("task_data"))
+        self.assertDictEqual(first_result, first_target)
+        self.assertDictEqual(first_result_task_data, first_target_task_data)
+        self.assertDictEqual(last_result, last_target)
+        self.assertDictEqual(last_result_task_data, last_target_task_data)
 
     def test_evaluate_with_group_by(self):
         dataset = load_dataset(
@@ -287,7 +299,6 @@ class TestAPI(UnitxtTestCase):
     def test_produce_with_recipe(self):
         result = produce(
             {
-                "label": "?",
                 "text_a": "It works perfectly",
                 "text_b": "It works!",
                 "classes": ["entailment", "not entailment"],
@@ -300,31 +311,43 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\n"
-            "premise: When Tatyana reached the cabin, her mother was sleeping. "
-            "She was careful not to disturb her, undressing and climbing back "
-            "into her berth.\n"
-            "hypothesis: mother was careful not to disturb her, undressing and "
-            "climbing back into her berth.\n"
-            "The entailment class is entailment\n\n"
-            "premise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "target": "?",
-            "references": ["?"],
-            "task_data": '{"text_a": "It works perfectly", '
-            '"text_a_type": "premise", '
-            '"text_b": "It works!", '
-            '"text_b_type": "hypothesis", '
-            '"classes": ["entailment", "not entailment"], '
-            '"type_of_relation": "entailment", '
-            '"label": "?", '
-            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
-            "groups": [],
-            "subset": [],
+            "data_classification_policy": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
             ],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is \n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is \n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
+            "groups": [],
+            "subset": [],
+        }
+
+        self.assertDictEqual(target, result)
+
+    def test_produce_with_task(self):
+        result = produce(
+            {
+                "text_a": "It works perfectly",
+                "text_b": "It works!",
+                "classes": ["entailment", "not entailment"],
+                "type_of_relation": "entailment",
+                "text_a_type": "premise",
+                "text_b_type": "hypothesis",
+            },
+            "task=tasks.classification.multi_class.relation,template=templates.classification.multi_class.relation.default",
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
             "data_classification_policy": [],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
+            "groups": [],
+            "subset": [],
         }
 
         self.assertDictEqual(target, result)
@@ -333,7 +356,6 @@ class TestAPI(UnitxtTestCase):
         result = produce(
             [
                 {
-                    "label": "?",
                     "text_a": "It works perfectly",
                     "text_b": "It works!",
                     "classes": ["entailment", "not entailment"],
@@ -347,31 +369,15 @@ class TestAPI(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
-            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\n"
-            "premise: When Tatyana reached the cabin, her mother was sleeping. "
-            "She was careful not to disturb her, undressing and climbing back "
-            "into her berth.\n"
-            "hypothesis: mother was careful not to disturb her, undressing and "
-            "climbing back into her berth.\n"
-            "The entailment class is entailment\n\n"
-            "premise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "target": "?",
-            "references": ["?"],
-            "task_data": '{"text_a": "It works perfectly", '
-            '"text_a_type": "premise", '
-            '"text_b": "It works!", '
-            '"text_b_type": "hypothesis", '
-            '"classes": ["entailment", "not entailment"], '
-            '"type_of_relation": "entailment", '
-            '"label": "?", '
-            '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
-            "groups": [],
-            "subset": [],
+            "data_classification_policy": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
             ],
-            "data_classification_policy": [],
+            "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is \n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is \n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
+            "groups": [],
+            "subset": [],
         }
 
         self.assertDictEqual(target, result)
@@ -413,12 +419,24 @@ class TestAPI(UnitxtTestCase):
         engine = "engines.model.flan.t5_small.hf"
         recipe = "card=cards.tests.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
         instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
+            {"question": "How many days there are in a week"},
             {
                 "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
             },
         ]
-        predictions = infer(instances, recipe, engine)
+        predictions = infer(instances, engine, recipe)
+        targets = ["365", "1"]
+        self.assertListEqual(predictions, targets)
+
+    def test_infer_with_task(self):
+        engine = "engines.model.flan.t5_small.hf"
+        recipe = "task=tasks.qa.open,template=templates.qa.open.simple"
+        instances = [
+            {"question": "How many days there are in a week"},
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
+            },
+        ]
+        predictions = infer(instances, engine, recipe)
         targets = ["365", "1"]
         self.assertListEqual(predictions, targets)

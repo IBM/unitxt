@@ -1,5 +1,7 @@
 {
-    "__type__": "to_list_by_comma",
-    "field": "references",
-    "process_every_value": true
+    "__type__": "post_process",
+    "process_prediction": false,
+    "operator": {
+        "__type__": "to_list_by_comma"
+    }
 }
