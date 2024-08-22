@@ -1,9 +1,13 @@
 import unittest
 
 from unitxt import produce
-from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.inference import HFLlavaInferenceEngine, HFPipelineBasedInferenceEngine
+from unitxt.settings_utils import get_settings
+from unitxt.standard import StandardRecipe
 
 from tests.utils import UnitxtTestCase
+
+settings = get_settings()
 
 
 class TestInferenceEngine(UnitxtTestCase):
@@ -68,24 +72,24 @@ class TestInferenceEngine(UnitxtTestCase):
             f"accordingly.",
         )
 
-    # def test_llava_inference_engine(self):
+    def test_llava_inference_engine(self):
+        inference_model = HFLlavaInferenceEngine(
+            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3
+        )
 
-    #     inference_model = HFLlavaInferenceEngine(
-    #         model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3
-    #     )
+        if not settings.use_eager_execution:
+            dataset = StandardRecipe(
+                card="cards.doc_vqa.en",
+                template="templates.qa.with_context.with_type",
+                format="formats.models.llava_interleave",
+                loader_limit=30,
+            )()
 
-    #     dataset = StandardRecipe(
-    #         card="cards.doc_vqa.en",
-    #         template="templates.qa.with_context.with_type",
-    #         format="formats.models.llava_interleave",
-    #         loader_limit=30,
-    #     )()
+            test_dataset = [dataset["test"].peek()]
 
-    #     test_dataset = [dataset["test"].peek()]
+            predictions = inference_model.infer(test_dataset)
 
-    #     predictions = inference_model.infer(test_dataset)
-
-    #     self.assertEqual(predictions[0], "The real image")
+            self.assertEqual(predictions[0], "The real image")
 
 
 if __name__ == "__main__":

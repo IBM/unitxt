@@ -10,7 +10,8 @@ dataset = load_dataset(
     card="cards.doc_vqa.en",
     template="templates.qa.with_context.with_type",
     format="formats.models.llava_interleave",
-    loader_limit=30,
+    loader_limit=20,
+    agumentor="augmentors.white_space",
 )
 
 test_dataset = dataset["test"].select(range(5))
