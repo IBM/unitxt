@@ -5,7 +5,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from unitxt.logging_utils import get_logger
-from unitxt.settings_utils import get_constants
+from unitxt.settings_utils import get_constants, get_settings
 from unitxt.text_utils import print_dict
 from unitxt.utils import import_module_from_file
 
@@ -13,7 +13,7 @@ from tests.utils import UnitxtTestCase
 
 logger = get_logger()
 constants = get_constants()
-
+settings = get_settings()
 
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -46,6 +46,13 @@ class TestExamples(UnitxtTestCase):
             "evaluate_existing_dataset_by_llm_as_judge.py",
             "evaluate_ensemble_judge.py",
         ]
+
+        if settings.use_eager_execution:
+            excluded_files += [
+                "evaluate_benchmark.py",
+                "examples/evaluate_image_text_to_text.py",
+            ]
+
         failed_examples_files = []
         for file in all_example_files:
             logger.info(
