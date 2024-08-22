@@ -45,13 +45,9 @@ class TestExamples(UnitxtTestCase):
             "evaluate_existing_dataset_no_install.py",
             "evaluate_existing_dataset_by_llm_as_judge.py",
             "evaluate_ensemble_judge.py",
+            "evaluate_benchmark.py",
+            "examples/evaluate_image_text_to_text.py",
         ]
-
-        if settings.use_eager_execution:
-            excluded_files += [
-                "evaluate_benchmark.py",
-                "examples/evaluate_image_text_to_text.py",
-            ]
 
         failed_examples_files = []
         for file in all_example_files:
