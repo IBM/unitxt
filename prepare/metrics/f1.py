@@ -6,6 +6,7 @@ from unitxt.metrics import (
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
+    F1Strings,
     F1Weighted,
     PrecisionBinary,
     RecallBinary,
@@ -37,3 +38,6 @@ add_to_catalog(metric, "metrics.recall_binary", overwrite=True)
 
 metric = PrecisionBinary()
 add_to_catalog(metric, "metrics.precision_binary", overwrite=True)
+
+metric = F1Strings()
+add_to_catalog(metric, "metrics.f1_strings", overwrite=True)
