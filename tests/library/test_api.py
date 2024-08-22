@@ -355,6 +355,7 @@ class TestAPI(UnitxtTestCase):
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
             "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
         }
 
