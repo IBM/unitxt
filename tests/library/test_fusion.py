@@ -310,22 +310,22 @@ class TestFusion(UnitxtTestCase):
         dataset = WeightedFusion(
             subsets={
                 "wnli": StandardRecipe(
-                    card="cards.wnli",
+                    card="cards.tests.wnli",
                     template="templates.classification.multi_class.relation.default",
                     group_by=["template"],
                 ),
                 "rte": StandardRecipe(
-                    card="cards.rte",
+                    card="cards.tests.rte",
                     template="templates.classification.multi_class.relation.default",
                 ),
                 "stsb": WeightedFusion(
                     subsets={
                         "regression": StandardRecipe(
-                            card="cards.stsb",
+                            card="cards.tests.stsb",
                             template="templates.regression.two_texts.simple",
                         ),
                         "classification": StandardRecipe(
-                            card="cards.stsb",
+                            card="cards.tests.stsb",
                             template=[
                                 "templates.regression.two_texts.similarity.flan",
                                 "templates.regression.two_texts.title",

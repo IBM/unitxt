@@ -14,21 +14,21 @@ class TestExamples(UnitxtTestCase):
         logger.info("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
+            "card=cards.tests.wnli,template_card_index=0,num_demos=5,demos_pool_size=10",
             trust_remote_code=True,
             download_mode="force_redownload",
         )
         logger.info("Loading squad")
         load_dataset(
             unitxt.dataset_file,
-            "card=cards.rte,template_card_index=0,num_demos=5,demos_pool_size=100",
+            "card=cards.tests.rte,template_card_index=0,num_demos=5,demos_pool_size=10",
             trust_remote_code=True,
             download_mode="force_redownload",
         )
         logger.info("Loading wnli- second time")
         wnli_2_dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
+            "card=cards.tests.wnli,template_card_index=0,num_demos=5,demos_pool_size=10",
             trust_remote_code=True,
             download_mode="force_redownload",
         )
@@ -42,14 +42,14 @@ class TestExamples(UnitxtTestCase):
         logger.info("Loading wnli- first time")
         wnli_1_dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100",
+            "card=cards.tests.wnli,template_card_index=0,num_demos=5,demos_pool_size=10",
             trust_remote_code=True,
             download_mode="force_redownload",
         )
         logger.info("Loading wnli- second time with augmentation")
         wnli_2_dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmentor=augmentors.augment_whitespace_model_input",
+            "card=cards.tests.wnli,template_card_index=0,num_demos=5,demos_pool_size=10,augmentor=augmentors.augment_whitespace_model_input",
             trust_remote_code=True,
             download_mode="force_redownload",
         )

@@ -1,0 +1,329 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "test": [
+                {
+                    "sentence": "Os vereadores recusaram a autorização aos manifestantes porque _ temiam a violência.",
+                    "option1": "manifestantes",
+                    "option2": "vereadores",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Os vereadores recusaram a autorização aos manifestantes porque _ eram favoráveis à violência.",
+                    "option1": "manifestantes",
+                    "option2": "vereadores",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A medalha não cabe na maleta porque _ é muito grande.",
+                    "option1": "maleta",
+                    "option2": "medalha",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A medalha não cabe na maleta porque _ é muito pequena.",
+                    "option1": "medalha",
+                    "option2": "maleta",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Jéssica certificou-se de agradecer Vanessa por toda ajuda que _ havia recebido.",
+                    "option1": "Jéssica",
+                    "option2": "Vanessa",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Jéssica certificou-se de agradecer Vanessa por toda ajuda que _ havia oferecido.",
+                    "option1": "Jéssica",
+                    "option2": "Vanessa",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Paulo tentou ligar para o Gabriel, mas _ não foi bem sucedido.",
+                    "option1": "Gabriel",
+                    "option2": "Paulo",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Paulo tentou ligar para o Gabriel, mas _ não estava disponível.",
+                    "option1": "Paulo",
+                    "option2": "Gabriel",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O advogado fez uma pergunta ao acusado, mas _ estava relutante em repeti-la.",
+                    "option1": "acusado",
+                    "option2": "advogado",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O advogado fez uma pergunta ao acusado, mas _ estava relutante em respondê-la.",
+                    "option1": "acusado",
+                    "option2": "advogado",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O caminhão de entregas passou rapidamente pelo ônibus escolar porque _ estava indo muito depressa.",
+                    "option1": "caminhão de entregas",
+                    "option2": "ônibus escolar",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O caminhão de entregas passou rapidamente pelo ônibus escolar porque _ estava indo muito devagar.",
+                    "option1": "ônibus escolar",
+                    "option2": "caminhão de entregas",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Felipe sentiu-se vingado quando seu rival de longa data André revelou que _ era o vencedor da competição.",
+                    "option1": "Felipe",
+                    "option2": "André",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Felipe sentiu-se fracassado quando seu rival de longa data André revelou que _ era o vencedor da competição.",
+                    "option1": "André",
+                    "option2": "Felipe",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O homem não conseguia erguer seu filho porque _ era muito fraco.",
+                    "option1": "filho",
+                    "option2": "homem",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O homem não conseguia erguer seu filho porque _ era muito pesado.",
+                    "option1": "homem",
+                    "option2": "filho",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A grande bola atravessou a mesa pois _ era feita de aço.",
+                    "option1": "grande bola",
+                    "option2": "mesa",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A grande bola atravessou a mesa pois _ era feita de isopor.",
+                    "option1": "grande bola",
+                    "option2": "mesa",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "João não conseguia enxergar o palco com Arthur na sua frente porque _ é muito baixo.",
+                    "option1": "João",
+                    "option2": "Arthur",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "João não conseguia enxergar o palco com Arthur na sua frente porque _ é muito alto.",
+                    "option1": "João",
+                    "option2": "Arthur",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Vinícius jogou sua mochila lá embaixo para o Raimundo depois que _ atingiu o topo da escada.",
+                    "option1": "Vinícius",
+                    "option2": "Raimundo",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Vinícius jogou sua mochila lá embaixo para o Raimundo depois que _ atingiu a parte inferior da escada.",
+                    "option1": "Raimundo",
+                    "option2": "Vinícius",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Apesar de ambas correrem aproximadamente na mesma velocidade, Sandra derrotou Marcia porque _ começou muito bem.",
+                    "option1": "Sandra",
+                    "option2": "Marcia",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Apesar de ambas correrem aproximadamente na mesma velocidade, Sandra derrotou Marcia porque _ começou muito mal.",
+                    "option1": "Marcia",
+                    "option2": "Sandra",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A escultura caiu da prateleira porque _ não estava bem acomodada.",
+                    "option1": "escultura",
+                    "option2": "prateleira",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "A escultura caiu da prateleira porque _ não estava bem nivelada.",
+                    "option1": "escultura",
+                    "option2": "prateleira",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O desenho do Samuel estava pendurado imediatamente acima do da Tina e _ de fato ficava muito melhor com outro abaixo dele.",
+                    "option1": "da Tina",
+                    "option2": "desenho do Samuel",
+                    "answer": "2",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "O desenho do Samuel estava pendurado imediatamente acima do da Tina e _ de fato ficava muito melhor com outro acima dele.",
+                    "option1": "da Tina",
+                    "option2": "desenho do Samuel",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Ana foi muito melhor do que sua amiga Luciana na prova porque _ tinha estudado muito.",
+                    "option1": "Ana",
+                    "option2": "Luciana",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Ana foi muito pior do que sua amiga Luciana na prova porque _ tinha estudado muito.",
+                    "option1": "Luciana",
+                    "option2": "Ana",
+                    "answer": "1",
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "option1",
+                "option2"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "cast_fields",
+            "fields": {
+                "answer": "int"
+            }
+        },
+        {
+            "__type__": "add_constant",
+            "field": "answer",
+            "add": -1
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "sentence": "question"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.open",
+    "templates": "templates.qa.multiple_choice.open.all",
+    "__tags__": {
+        "arxiv": [
+            "2211.01786",
+            "2106.12066"
+        ],
+        "language": [
+            "en",
+            "fr",
+            "ja",
+            "pt",
+            "ru",
+            "zh"
+        ],
+        "license": "cc-by-4.0",
+        "region": "us"
+    },
+    "__description__": "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities… See the full description on the dataset page: https://huggingface.co/datasets/Muennighoff/xwinograd"
+}

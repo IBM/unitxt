@@ -1,0 +1,792 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "train": [
+                {
+                    "sentence": "Our friends won't buy this analysis, let alone the next one we propose.",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "One more pseudo generalization and I'm giving up.",
+                    "label": 1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "One more pseudo generalization or I'm giving up.",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more we study verbs, the crazier they get.",
+                    "label": 1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Day by day the facts are getting murkier.",
+                    "label": 1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "I'll fix you a drink.",
+                    "label": 1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Fred watered the plants flat.",
+                    "label": 1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill coughed his way out of the restaurant.",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We're dancing the night away.",
+                    "label": 1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Herman hammered the metal flat.",
+                    "label": 1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The critics laughed the play off the stage.",
+                    "label": 1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The pond froze solid.",
+                    "label": 1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill rolled out of the room.",
+                    "label": 1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The gardener watered the flowers flat.",
+                    "label": 1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The gardener watered the flowers.",
+                    "label": 1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill broke the bathtub into pieces.",
+                    "label": 1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill broke the bathtub.",
+                    "label": 1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "They drank the pub dry.",
+                    "label": 1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "They drank the pub.",
+                    "label": 0,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The professor talked us into a stupor.",
+                    "label": 1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The professor talked us.",
+                    "label": 0,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We yelled ourselves hoarse.",
+                    "label": 1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We yelled ourselves.",
+                    "label": 0,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We yelled Harry hoarse.",
+                    "label": 0,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Harry coughed himself into a fit.",
+                    "label": 1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Harry coughed himself.",
+                    "label": 0,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Harry coughed us into a fit.",
+                    "label": 0,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill followed the road into the forest.",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We drove Highway 5 from SD to SF.",
+                    "label": 1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Fred tracked the leak to its source.",
+                    "label": 1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "sentence": "The sailors rode the breeze clear of the rocks.",
+                    "label": 1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The weights made the rope stretch over the pulley.",
+                    "label": 1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The mechanical doll wriggled itself loose.",
+                    "label": 1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "If you had eaten more, you would want less.",
+                    "label": 1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "As you eat the most, you want the least.",
+                    "label": 0,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more you would want, the less you would eat.",
+                    "label": 0,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "I demand that the more John eat, the more he pays.",
+                    "label": 0,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Mary listens to the Grateful Dead, she gets depressed.",
+                    "label": 1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The angrier Mary got, the more she looked at pictures.",
+                    "label": 1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The higher the stakes, the lower his expectations are.",
+                    "label": 1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more Fred is obnoxious, the less attention you should pay to him.",
+                    "label": 1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John was lots more obnoxious than Fred.",
+                    "label": 1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more people you give beer to, the more people get sick.",
+                    "label": 1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more does Bill smoke, the more Susan hates him.",
+                    "label": 0,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more pictures of him that appear in the news, the more embarrassed John becomes.",
+                    "label": 1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Every senator seems to become more corrupt, as he talks to more lobbyists.",
+                    "label": 1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Who does John visit Sally because he likes?",
+                    "label": 0,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Marianne did not leave.",
+                    "label": 1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "He could not] have been working.",
+                    "label": 1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "He can not have been working.",
+                    "label": 1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "You will believe Bob.",
+                    "label": 1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John has not kissed Mary.",
+                    "label": 1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "I said that never in my life had I seen a place like Bangor.",
+                    "label": 1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Mickey looked up it.",
+                    "label": 0,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "There tended to be a lot of discussion.",
+                    "label": 1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John tried to be a good boy.",
+                    "label": 1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John is eager.",
+                    "label": 1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "We want John to win.",
+                    "label": 1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The box contained the ball from the tree.",
+                    "label": 0,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The tube was escaped by gas.",
+                    "label": 0,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "test": [
+                {
+                    "sentence": "Bill whistled past the house.",
+                    "label": -1,
+                    "idx": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The car honked its way down the road.",
+                    "label": -1,
+                    "idx": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill pushed Harry off the sofa.",
+                    "label": -1,
+                    "idx": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "the kittens yawned awake and played.",
+                    "label": -1,
+                    "idx": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "I demand that the more John eats, the more he pay.",
+                    "label": -1,
+                    "idx": 4,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "If John eats more, keep your mouth shut tighter, OK?",
+                    "label": -1,
+                    "idx": 5,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "His expectations are always lower than mine are.",
+                    "label": -1,
+                    "idx": 6,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The sooner you call, the more carefully I will word the letter.",
+                    "label": -1,
+                    "idx": 7,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more timid he feels, the more people he interviews without asking questions of.",
+                    "label": -1,
+                    "idx": 8,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Once Janet left, Fred became a lot crazier.",
+                    "label": -1,
+                    "idx": 9,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "If you give every senator enough opportunity, he will succumb to corruption.",
+                    "label": -1,
+                    "idx": 10,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "The more time that any senator spends with lobbyists, the more likely he is to succumb to corruption.",
+                    "label": -1,
+                    "idx": 11,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Which problem does the sooner you solve, the more easily you'll satisfy the folks up at corporate headquarters?",
+                    "label": -1,
+                    "idx": 12,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Which problem do you think that the sooner you solve, the quicker you'll be able to tell the folks up at corporate headquarters to buzz off?",
+                    "label": -1,
+                    "idx": 13,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Louise is not happy, is she?",
+                    "label": -1,
+                    "idx": 14,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "He can just not have been working.",
+                    "label": -1,
+                    "idx": 15,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Which problem do you wonder whether John said Mary solved?",
+                    "label": -1,
+                    "idx": 16,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "They could have left.",
+                    "label": -1,
+                    "idx": 17,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Have they could left?",
+                    "label": -1,
+                    "idx": 18,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John eats not chocolate.",
+                    "label": -1,
+                    "idx": 19,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Has John seen Mary?",
+                    "label": -1,
+                    "idx": 20,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Mickey looked it up.",
+                    "label": -1,
+                    "idx": 21,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Mickey looked up him and her.",
+                    "label": -1,
+                    "idx": 22,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "He taught the children.",
+                    "label": -1,
+                    "idx": 23,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John proved to be a great linguist.",
+                    "label": -1,
+                    "idx": 24,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "There is too likely to be a riot for there to be a serious discussion of the issues.",
+                    "label": -1,
+                    "idx": 25,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "John is willing.",
+                    "label": -1,
+                    "idx": 26,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill seems to be obnoxious, but I don't think that Sam seems.",
+                    "label": -1,
+                    "idx": 27,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "Bill seems to be obnoxious, but I don't think that Sam appears.",
+                    "label": -1,
+                    "idx": 28,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "sentence": "I believe John with all my heart is a fine person.",
+                    "label": -1,
+                    "idx": 29,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "label": {
+                    "0": "unacceptable",
+                    "1": "acceptable"
+                }
+            }
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "sentence": "text"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "classes": [
+                    "unacceptable",
+                    "acceptable"
+                ],
+                "type_of_class": "grammatical acceptability"
+            }
+        }
+    ],
+    "task": "tasks.classification.multi_class[metrics=[metrics.matthews_correlation]]",
+    "templates": "templates.classification.multi_class.all",
+    "__tags__": {
+        "annotations_creators": "other",
+        "arxiv": "1804.07461",
+        "flags": [
+            "coreference-nli",
+            "paraphrase-identification",
+            "qa-nli"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "text-classification",
+        "task_ids": [
+            "acceptability-classification",
+            "natural-language-inference",
+            "semantic-similarity-scoring",
+            "sentiment-classification",
+            "text-scoring"
+        ]
+    },
+    "__description__": "The Corpus of Linguistic Acceptability consists of English acceptability judgments drawn from books and journal articles on linguistic theory. Each example is a sequence of words annotated with whether it is a grammatical English sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue."
+}

@@ -1,0 +1,892 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "test": [
+                {
+                    "question": "This is a hierarchy of effects or sequential model used to explain how advertising works:",
+                    "subject": "marketing",
+                    "choices": [
+                        "ADD.",
+                        "AIDA.",
+                        "PESTLE.",
+                        "SWOT."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " _____________is an important element in the communication process. It recognizes that successful communications are more likely to be achieved if the source and the receiver understand each other.",
+                    "subject": "marketing",
+                    "choices": [
+                        "The realm of understanding.",
+                        "Personal selling.",
+                        "Noise.",
+                        "Feedback."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "In the history of marketing, when did the production period end?",
+                    "subject": "marketing",
+                    "choices": [
+                        "In the late 1800s.",
+                        "In the early 1900s.",
+                        "In the 1920s.",
+                        "After the end of the Second World War."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The extent to which a service envelops a product varies according to a number of factors. Which of the following is NOT one of the factors?",
+                    "subject": "marketing",
+                    "choices": [
+                        "The level of tangibility associated with the type of product.",
+                        "Performance-value.",
+                        "Variations in supply and demand.",
+                        "The way in which the service is delivered."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The owners of independent gasoline stations in a community meet secretly and agree to keep their prices high to protect their profitability. If their plan is discovered and they are charged with a crime, they could be",
+                    "subject": "marketing",
+                    "choices": [
+                        "found guilty under the Sherman Antitrust Act and face prison time",
+                        "found guilty under the Magnuson-Moss Warranty Act and face large fines",
+                        "found guilty under the Adamson Act and face prison time and fines",
+                        "found not guilty because retailers are allowed to set their own price levels"
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " The term 'marketing mix' describes:",
+                    "subject": "marketing",
+                    "choices": [
+                        "A composite analysis of all environmental factors inside and outside the firm.",
+                        "A series of business decisions that aid in selling a product.",
+                        "The relationship between a firm's marketing strengths and its business weaknesses.",
+                        "A blending of four strategic elements to satisfy specific target markets."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "__________ have the potential to control the type and flow of information to the organization and the members of the DMU.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Gatekeepers.",
+                        "Buyers.",
+                        "Users.",
+                        "Initiators."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " An imbalance between a consumer's actual and desired state in which recognition that a gap or problem needs resolving is called:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Motive development.",
+                        "An attitude.",
+                        "A self-concept.",
+                        "Product evaluation."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Which of the following is not an element of the marketing mix?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Promotion.",
+                        "Product.",
+                        "Target market.",
+                        "Pricing."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Providing free samples of perfumes (scent) in magazines is an example of which of the following?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Classical conditioning.",
+                        "Operant conditioning.",
+                        "Social learning.",
+                        "Behavioural learning."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Why is market segmentation carried out?",
+                    "subject": "marketing",
+                    "choices": [
+                        "To break down large markets into smaller markets.",
+                        "To provide an opportunity to surpass competitors.",
+                        "By grouping together customers with similar needs, it provides a commercially viable method of serving these customers.",
+                        "To allow the achievement of greater market share."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " There are three main types of buying situations in an organization, referred to by Robinson, Faris, and Wind (1967) as _____________.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Repeat purchases.",
+                        "Buyphases.",
+                        "Buyclasses.",
+                        "Tenders."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Where the winning bidder obtains an unprofitable contract that he/she is duty bound to deliver because their bid price was set so low, this is known as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Winner's curse.",
+                        "Winner's price.",
+                        "Winner's reward.",
+                        "Loss-leader pricing."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "This allows us to determine how the quantity of an offering relates to the price at which it is offered:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Price bundling.",
+                        "Price elasticity.",
+                        "Price inelasticity.",
+                        "Price inflation."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " ________________ occur(s) where there is no prior history of exchange and no future exchanges are expected between a buyer and seller.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Relationship marketing.",
+                        "Service mix.",
+                        "Market exchanges.",
+                        "Service failure."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "A method of marketing by electronic mail wherein the recipient of the message has consented to receive it is called:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Search marketing.",
+                        "Internet advertising.",
+                        "Permission-based email marketing.",
+                        "Social web marketing."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Collectively organizations that combine to enable offerings to reach end users quickly and efficiently constitute a marketing channel, are sometimes referred to as a:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Vehicle.",
+                        "Courier.",
+                        "Transportation.",
+                        "Distribution channel."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Which of the following are the three broad groups of organizational characteristics segmentation criteria?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Organizational size, industry type, and gender.",
+                        "Psychographics, purchaser, and behavioural criteria.",
+                        "Organizational size, industry type, and geographical location.",
+                        "None of the above."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following is the name for a coupon that is included in a package for later purchase?",
+                    "subject": "marketing",
+                    "choices": [
+                        "a free-standing coupon",
+                        "an instant-redemption coupon",
+                        "a bounce-back coupon",
+                        "a rebate coupon"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Advertising is employed as a defence, to retain customers, and to increase brand usage. Advertising is used to reinforce existing attitudes, not necessarily to drastically change them. This idea is based on:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Strong theory.",
+                        "Weak theory.",
+                        "ATR framework.",
+                        "DRIP model."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "_____________ is an assessment of a company's mix of products, services, investments, and other assets in order to optimize the use of resources and to assess its suitability, level of risk, and expected financial return.",
+                    "subject": "marketing",
+                    "choices": [
+                        "SWOT analysis.",
+                        "Political analysis.",
+                        "Portfolio analysis.",
+                        "Competitive analysis."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " These goods are low-priced products that are bought frequently, are used just once, and incur low levels of purchase risk:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Non-durable.",
+                        "Durable.",
+                        "Generic.",
+                        "Luxury."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following processes is not fundamental in explaining how consumers think and learn about products and brands?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Cognition.",
+                        "Perception.",
+                        "Learning.",
+                        "Personality."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " ________________is used to influence the way an organization is perceived by various groups of stakeholders.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Direct marketing.",
+                        "Public relations.",
+                        "Sale promotion.",
+                        "Advertising"
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Marketing that moves away from a transaction-based effort to a conversation (i.e. two-way dialogue) and can be described as a situation or mechanism through which marketers and a customer (e.g. stakeholders) interact usually in real-time is known as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Digital marketing.",
+                        "Interactive marketing.",
+                        "Direct marketing.",
+                        "Electronic marketing."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " The differentiation of a firm's products or services to promote environmental responsibility is referred to as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Social branding.",
+                        "Eco-branding.",
+                        "Me-too branding.",
+                        "Brand personality."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Which of the following is the rate at which a market adopts an innovation?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Process of diffusion.",
+                        "Process of differentiation.",
+                        "Adoption process.",
+                        "Adoption lifecycle."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Micromarketing is directed at potential buyers who",
+                    "subject": "marketing",
+                    "choices": [
+                        "have excess disposable income",
+                        "are between the ages of 8 and 14",
+                        "share similar attitudes and behaviors",
+                        "have opted out of customized marketing"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " This is a group of people in the process of diffusion who enjoy being at the leading edge of innovation and buy into new products at an early stage:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Late majority.",
+                        "Early adopter.",
+                        "Early majority.",
+                        "Laggards."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " What channel structure is it where the product goes directly from the producer to the final customer?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Direct.",
+                        "Indirect.",
+                        "Hybrid.",
+                        "None of the above."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "question": "___________ act as cues by indicating to a potential customer that there is a bargain to be had.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Odd-number pricing.",
+                        "Sale signs.",
+                        "Relative price.",
+                        "Price surplus."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Considering what the audiences' communications needs and engaging with them using one-way, two-way, or dialogic communications is referred to as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Engagement.",
+                        "Responses.",
+                        "Advertisement.",
+                        "Publicity."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " An electronic version of the spoken endorsement of an offering is known as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Viral marketing.",
+                        "Social media marketing.",
+                        "Electronic marketing.",
+                        "Digital marketing."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " _____________ is influenced by perceptions of the fairness of prices set, latitude of price acceptance (customers appear willing to accept a price within a range of prices suggesting a 'price zone of tolerance'), magnitude (absolute price) and frequency of purchase, price presentation (how prices are presented might produce different levels of willingness to pay), and advertising.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Brand awareness.",
+                        "Price perception.",
+                        "Willingness to pay.",
+                        "Price consciousness."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following terms best fits the activity of marketing communications?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Making products available.",
+                        "Convenience of location.",
+                        "High level of regulation.",
+                        "Developing messages that can be understood and acted on by target audiences."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The marketing communications strategy of the marketing mix deals exclusively with:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Engagement, audiences, and advertising.",
+                        "Advertising, audiences, and responses.",
+                        "Advertising, publicity, and responses",
+                        "Engagement, audiences, and responses."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following terms refers specifically to marketing goods directly to the consumer in the home?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Comparison shopping",
+                        "Consignment",
+                        "Direct selling",
+                        "Merchandising"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "_____________ often help set the technical specifications for the proposed purchase and assist the evaluation of alternative offerings by potential suppliers. These may be consultants hired to complete a particular project.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Users.",
+                        "Influencers.",
+                        "Initiators.",
+                        "Buyers."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "A marketing researcher is conducting a survey in a large selling area by contacting a small group of people that is representative of all people in that area. The small, representative group is known as the",
+                    "subject": "marketing",
+                    "choices": [
+                        "population",
+                        "sample",
+                        "stratification",
+                        "universe"
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " _______________ have become increasingly necessary as the incidence of crises has increased. This appears to be due to an increasing number of simple managerial mistakes, incorrect decision making, technology failures, and uncontrollable events in the external environment.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Crisis communications.",
+                        "Advertising.",
+                        "Public relations.",
+                        "Viral marketing."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Salespeople at a large consumer goods manufacturer are encouraged to ask probing questions of customers to identify their interests. Once their key desires have been uncovered, the salesperson should tailor a presentation so that the customers can see how the product will satisfy their wants. Which of the following presentation formats does the scenario best represent?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Hard selling format",
+                        "Formula selling format",
+                        "Need-satisfaction format",
+                        "Stimulus-response format"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " When customers assess prices, they estimate value using __________, because they do not always know the true cost and price of the item that they are purchasing. These pricing cues include: sale signs; odd-number pricing; the purchase context; and price bundling and rebates.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Pricing strategies.",
+                        "Sale price.",
+                        "Pricing cues.",
+                        "Pricing bundles."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "A more comprehensive set of data than that traditionally used to provide marketing information and customer insights is referred to as:_______________",
+                    "subject": "marketing",
+                    "choices": [
+                        "Management information system.",
+                        "Big data.",
+                        "Internet of things.",
+                        "Data analysis."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following are the three broad groups of consumer segmentation criteria?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Behavioural, psychological, and profile criteria.",
+                        "Behavioural-, gender-, and industry-type variables.",
+                        "Organizational size, demographic, and behavioural variables.",
+                        "Psychographic, sociological, and price variables."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "This is when customers visit the service facility so that they are personally involved throughout the service delivery process:",
+                    "subject": "marketing",
+                    "choices": [
+                        "High-contact services.",
+                        "Information processing services.",
+                        "Medium-contact services.",
+                        "Low-contact services."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " For a long time commercial media have been used to convey messages designed to develop consumers' attitudes and feelings towards brands. This is referred to as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Direct response.",
+                        "Behavioural response.",
+                        "Attitudinal response.",
+                        "Call-to-action response ."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The _________ model emphasizes that each phase occurs in a particular sequence, which, according to Theodorson and Theodorson (1969), enables the 'transmission of information, ideas, attitudes, or emotion from one person or group to another (or others), primarily through symbols'.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Circular",
+                        "Linear",
+                        "Two-way",
+                        "AIDA"
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " This is the unpaid peer-to-peer communication of often provocative content originating from an identified sponsor using the Internet to persuade or influence an audience to pass along the content to others:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Viral marketing.",
+                        "Word-of-mouth marketing.",
+                        "Direct-response advertising.",
+                        "Peer-to-peer marketing."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Bollywood cinema aimed at audiences in the Indian sub-continent and at diaspora around the world, using strong love and ethical themes, and a musical format, is an example of:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Group influence.",
+                        "Ethnic marketing.",
+                        "Social grade.",
+                        "Lifestyle."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Segmentation by benefits sought is a type of product-related segmentation:",
+                    "subject": "marketing",
+                    "choices": [
+                        "To determine the marketer's effectiveness in satisfying the consumer.",
+                        "Used to create a psychographic profile of the benefit of having the product as a common alternative.",
+                        "As a post-consumption evaluation tool.",
+                        "That focuses on the attributes that people seek in a product."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " _____________ are involved professionally in the topic of interest. Their defining characteristic is that they exert personal influence because of their profession, authority, education, or status associated with the object of the communication process.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Opinion aggregators.",
+                        "Opinion followers.",
+                        "Opinion formers.",
+                        "Opinion gatherers."
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "_________ is a strategic activity and is used to differentiate and distinguish a brand, so that a consumer understands the brand, not just remembers it.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Brand heritage.",
+                        "Brand anatomy.",
+                        "Brand extension.",
+                        "Brand positioning."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The ________________method is one of the main approaches to segmenting markets by adopting the view that the market consists of customers that are essentially the same, so the task is to identify groups which share particular differences.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Sample design.",
+                        "Breakdown.",
+                        "Build up.",
+                        "Profile identification."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Supply chain management (SCM) embraces four main activities. Which of the following is NOT one of the activities?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Fulfilment.",
+                        "Transportation",
+                        "Customer services.",
+                        "Stock management"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Which of the following refers to a listing of merchandise lines carried and the depth and breadth in which these products are stocked?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Basic stock list",
+                        "Buying plan",
+                        "Merchandise mix",
+                        "Price-line list"
+                    ],
+                    "answer": 2,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "dev": [
+                {
+                    "question": " _____________ is a natural outcome when combining demographic and geographic variables.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Geodemographics",
+                        "Product differentiation.",
+                        "ANSOFF matrix.",
+                        "Brand management."
+                    ],
+                    "answer": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "In an organization, the group of people tasked with buying decisions is referred to as the _______________.",
+                    "subject": "marketing",
+                    "choices": [
+                        "Outsourcing unit.",
+                        "Procurement centre.",
+                        "Chief executive unit.",
+                        "Decision-making unit."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": " Which of the following is an assumption in Maslow's hierarchy of needs?",
+                    "subject": "marketing",
+                    "choices": [
+                        "Needs are dependent on culture and also on social class.",
+                        "Lower-level needs must be at least partially satisfied before higher needs can affect behaviour.",
+                        "Needs are not prioritized or arranged in any particular order.",
+                        "Satisfied needs are motivators, and new needs emerge when current needs remain unmet."
+                    ],
+                    "answer": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "The single group within society that is most vulnerable to reference group influence is:",
+                    "subject": "marketing",
+                    "choices": [
+                        "The older consumer who feels somewhat left out of things.",
+                        "The married women, many of whom feel a need for stability in their lives.",
+                        "New immigrants who really want to assimilate into their new culture.",
+                        "Children, who base most of their buying decisions on outside influences."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "question": "Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:",
+                    "subject": "marketing",
+                    "choices": [
+                        "Care lines.",
+                        "Direct mail.",
+                        "Inserts.",
+                        "Door to door."
+                    ],
+                    "answer": 3,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "dev": "train"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "topic": "marketing"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.with_topic.all",
+    "__tags__": {
+        "annotations_creators": "no-annotation",
+        "arxiv": [
+            "2009.03300",
+            "2005.00700",
+            "2005.14165",
+            "2008.02275"
+        ],
+        "language": "en",
+        "language_creators": "expert-generated",
+        "license": "mit",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "multiple-choice-qa"
+    },
+    "__description__": "Measuring Massive Multitask Language Understanding by Dan Hendrycks, Collin Burns, Steven Basart, Andy Zou, Mantas Mazeika, Dawn Song, and Jacob Steinhardt (ICLR 2021). \nThis is a massive multitask test consisting of multiple-choice questions from various branches of knowledge. The test spans subjects in the humanities, social sciences, hard sciences, and other areas that are important for some people to learn. This covers 57… See the full description on the dataset page: https://huggingface.co/datasets/cais/mmlu."
+}

@@ -1,0 +1,1070 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_dictionary",
+        "data": {
+            "train": [
+                {
+                    "premise": "My body cast a shadow over the grass.",
+                    "choice1": "The sun was rising.",
+                    "choice2": "The grass was cut.",
+                    "question": "cause",
+                    "idx": 0,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman tolerated her friend's difficult behavior.",
+                    "choice1": "The woman knew her friend was going through a hard time.",
+                    "choice2": "The woman felt that her friend took advantage of her kindness.",
+                    "question": "cause",
+                    "idx": 1,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The women met for coffee.",
+                    "choice1": "The cafe reopened in a new location.",
+                    "choice2": "They wanted to catch up with each other.",
+                    "question": "cause",
+                    "idx": 2,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The runner wore shorts.",
+                    "choice1": "The forecast predicted high temperatures.",
+                    "choice2": "She planned to run along the beach.",
+                    "question": "cause",
+                    "idx": 3,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The guests of the party hid behind the couch.",
+                    "choice1": "It was a surprise party.",
+                    "choice2": "It was a birthday party.",
+                    "question": "cause",
+                    "idx": 4,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The politician lost the election.",
+                    "choice1": "He ran negative campaign ads.",
+                    "choice2": "No one voted for him.",
+                    "question": "cause",
+                    "idx": 5,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The stain came out of the shirt.",
+                    "choice1": "I patched the shirt.",
+                    "choice2": "I bleached the shirt.",
+                    "question": "cause",
+                    "idx": 6,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man got a discount on his groceries.",
+                    "choice1": "He greeted the cashier.",
+                    "choice2": "He used a coupon.",
+                    "question": "cause",
+                    "idx": 7,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The physician misdiagnosed the patient.",
+                    "choice1": "The patient filed a malpractice lawsuit against the physician.",
+                    "choice2": "The patient disclosed confidential information to the physician.",
+                    "question": "effect",
+                    "idx": 8,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The customer filed a complaint with the store manager.",
+                    "choice1": "The sales associate undercharged the customer.",
+                    "choice2": "The sales associate acted rude to the customer.",
+                    "question": "cause",
+                    "idx": 9,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman repaired her faucet.",
+                    "choice1": "The faucet was leaky.",
+                    "choice2": "The faucet was turned off.",
+                    "question": "cause",
+                    "idx": 10,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The elderly woman suffered a stroke.",
+                    "choice1": "The woman's daughter came over to clean her house.",
+                    "choice2": "The woman's daughter moved in to take care of her.",
+                    "question": "effect",
+                    "idx": 11,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The pond froze over for the winter.",
+                    "choice1": "People skated on the pond.",
+                    "choice2": "People brought boats to the pond.",
+                    "question": "effect",
+                    "idx": 12,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The offender violated parole.",
+                    "choice1": "She was sent back to jail.",
+                    "choice2": "She stole money from a church.",
+                    "question": "effect",
+                    "idx": 13,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I poured water on my sleeping friend.",
+                    "choice1": "My friend awoke.",
+                    "choice2": "My friend snored.",
+                    "question": "effect",
+                    "idx": 14,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl gasped.",
+                    "choice1": "Her friend stuck an ice cube down her back.",
+                    "choice2": "Her friend gave her a pat on the back.",
+                    "question": "cause",
+                    "idx": 15,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The shirt shrunk.",
+                    "choice1": "I poured bleach on it.",
+                    "choice2": "I put it in the dryer.",
+                    "question": "cause",
+                    "idx": 16,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "It got dark outside.",
+                    "choice1": "Snowflakes began to fall from the sky.",
+                    "choice2": "The moon became visible in the sky.",
+                    "question": "effect",
+                    "idx": 17,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I hung up the phone.",
+                    "choice1": "The caller said goodbye to me.",
+                    "choice2": "The caller identified himself to me.",
+                    "question": "cause",
+                    "idx": 18,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman's ring slipped off in the shower.",
+                    "choice1": "The woman polished the ring.",
+                    "choice2": "The ring went down the drain.",
+                    "question": "effect",
+                    "idx": 19,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl received a trophy.",
+                    "choice1": "She won a spelling bee.",
+                    "choice2": "She made a new friend.",
+                    "question": "cause",
+                    "idx": 20,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman's date wanted to look like a gentleman.",
+                    "choice1": "He opened the door for her.",
+                    "choice2": "He asked her if she liked sushi.",
+                    "question": "effect",
+                    "idx": 21,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The farmland needed irrigation.",
+                    "choice1": "A canal was constructed.",
+                    "choice2": "A flood occurred.",
+                    "question": "effect",
+                    "idx": 22,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The host cancelled the party.",
+                    "choice1": "She was certain she had the flu.",
+                    "choice2": "She worried she would catch the flu.",
+                    "question": "cause",
+                    "idx": 23,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman gave the man her phone number.",
+                    "choice1": "She was attracted to him.",
+                    "choice2": "She was repulsed by him.",
+                    "question": "cause",
+                    "idx": 24,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The skydiver glided safely to the ground.",
+                    "choice1": "She opened her parachute.",
+                    "choice2": "She jumped out of the plane.",
+                    "question": "cause",
+                    "idx": 25,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The toddler became cranky.",
+                    "choice1": "Her mother put her down for a nap.",
+                    "choice2": "Her mother fixed her hair into pigtails.",
+                    "question": "effect",
+                    "idx": 26,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The child became immune to the disease.",
+                    "choice1": "He avoided exposure to the disease.",
+                    "choice2": "He received the vaccine for the disease.",
+                    "question": "cause",
+                    "idx": 27,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The grape juice fermented.",
+                    "choice1": "The juice turned to wine.",
+                    "choice2": "The juice evaporated.",
+                    "question": "effect",
+                    "idx": 28,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The friends' debate dragged on interminably.",
+                    "choice1": "The friends saw eye to eye.",
+                    "choice2": "The friends were splitting hairs.",
+                    "question": "cause",
+                    "idx": 29,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "validation": [
+                {
+                    "premise": "The man turned on the faucet.",
+                    "choice1": "The toilet filled with water.",
+                    "choice2": "Water flowed from the spout.",
+                    "question": "effect",
+                    "idx": 0,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl found a bug in her cereal.",
+                    "choice1": "She poured milk in the bowl.",
+                    "choice2": "She lost her appetite.",
+                    "question": "effect",
+                    "idx": 1,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman retired.",
+                    "choice1": "She received her pension.",
+                    "choice2": "She paid off her mortgage.",
+                    "question": "effect",
+                    "idx": 2,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I wanted to conserve energy.",
+                    "choice1": "I swept the floor in the unoccupied room.",
+                    "choice2": "I shut off the light in the unoccupied room.",
+                    "question": "effect",
+                    "idx": 3,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The hamburger meat browned.",
+                    "choice1": "The cook froze it.",
+                    "choice2": "The cook grilled it.",
+                    "question": "cause",
+                    "idx": 4,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I doubted the salesman's pitch.",
+                    "choice1": "I turned his offer down.",
+                    "choice2": "He persuaded me to buy the product.",
+                    "question": "effect",
+                    "idx": 5,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I decided to stay home for the night.",
+                    "choice1": "The forecast called for storms.",
+                    "choice2": "My friends urged me to go out.",
+                    "question": "cause",
+                    "idx": 6,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "My eyes became red and puffy.",
+                    "choice1": "I was sobbing.",
+                    "choice2": "I was laughing.",
+                    "question": "cause",
+                    "idx": 7,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The flame on the candle went out.",
+                    "choice1": "I blew on the wick.",
+                    "choice2": "I put a match to the wick.",
+                    "question": "cause",
+                    "idx": 8,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man drank heavily at the party.",
+                    "choice1": "He had a headache the next day.",
+                    "choice2": "He had a runny nose the next day.",
+                    "question": "effect",
+                    "idx": 9,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The bowling ball knocked over the bowling pins.",
+                    "choice1": "The man rolled the bowling ball down the alley.",
+                    "choice2": "The man dropped the bowling ball on his foot.",
+                    "question": "cause",
+                    "idx": 10,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The community learned of the man's death.",
+                    "choice1": "His family buried him in the cemetery.",
+                    "choice2": "His obituary appeared in the newspaper.",
+                    "question": "cause",
+                    "idx": 11,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "My computer crashed.",
+                    "choice1": "I installed new speakers.",
+                    "choice2": "I lost all my data.",
+                    "question": "effect",
+                    "idx": 12,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman resigned from her job.",
+                    "choice1": "She aspired to hold an executive position in the firm.",
+                    "choice2": "She believed her superiors were acting unethically.",
+                    "question": "cause",
+                    "idx": 13,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The player caught the ball.",
+                    "choice1": "Her teammate threw it to her.",
+                    "choice2": "Her opponent tried to intercept it.",
+                    "question": "cause",
+                    "idx": 14,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The judge pounded the gavel.",
+                    "choice1": "The courtroom broke into uproar.",
+                    "choice2": "The jury announced its verdict.",
+                    "question": "cause",
+                    "idx": 15,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman banished the children from her property.",
+                    "choice1": "The children hit a ball into her yard.",
+                    "choice2": "The children trampled through her garden.",
+                    "question": "cause",
+                    "idx": 16,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The kidnappers released the hostage.",
+                    "choice1": "They accepted ransom money.",
+                    "choice2": "They escaped from jail.",
+                    "question": "cause",
+                    "idx": 17,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The cook's eyes watered.",
+                    "choice1": "He ran out of onions.",
+                    "choice2": "He cut an onion.",
+                    "question": "cause",
+                    "idx": 18,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman ran her finger under cold water.",
+                    "choice1": "She burned her finger on the toaster.",
+                    "choice2": "She put a diamond ring on her finger.",
+                    "question": "cause",
+                    "idx": 19,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The student misspelled the word.",
+                    "choice1": "The teacher corrected her.",
+                    "choice2": "The teacher dismissed her.",
+                    "question": "effect",
+                    "idx": 20,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I regained composure from my fit of anger.",
+                    "choice1": "My heart pounded.",
+                    "choice2": "I took deep breaths.",
+                    "question": "cause",
+                    "idx": 21,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I put my hands under the running faucet.",
+                    "choice1": "The soap rinsed off my hands.",
+                    "choice2": "The water splashed in my face.",
+                    "question": "effect",
+                    "idx": 22,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man dressed in his best suit.",
+                    "choice1": "He scheduled a meeting with an important client.",
+                    "choice2": "His wife bought him a new tie.",
+                    "question": "cause",
+                    "idx": 23,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man confessed his love for the woman.",
+                    "choice1": "The woman rejected him.",
+                    "choice2": "The woman envied him.",
+                    "question": "effect",
+                    "idx": 24,
+                    "label": 0,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The driver got a flat tire.",
+                    "choice1": "He went over the speed limit.",
+                    "choice2": "He ran over a nail.",
+                    "question": "cause",
+                    "idx": 25,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "My view of the movie screen was blocked.",
+                    "choice1": "The couple behind me was whispering.",
+                    "choice2": "A tall person was sitting in front of me.",
+                    "question": "cause",
+                    "idx": 26,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The driver turned on the car's headlights.",
+                    "choice1": "He heard thunder.",
+                    "choice2": "The sun went down.",
+                    "question": "cause",
+                    "idx": 27,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl refused to eat her vegetables.",
+                    "choice1": "Her father told her to drink her milk.",
+                    "choice2": "Her father took away her dessert.",
+                    "question": "effect",
+                    "idx": 28,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman covered her mouth with her hand.",
+                    "choice1": "She exhaled.",
+                    "choice2": "She sneezed.",
+                    "question": "cause",
+                    "idx": 29,
+                    "label": 1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ],
+            "test": [
+                {
+                    "premise": "The item was packaged in bubble wrap.",
+                    "choice1": "It was fragile.",
+                    "choice2": "It was small.",
+                    "question": "cause",
+                    "idx": 0,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I emptied my pockets.",
+                    "choice1": "I retrieved a ticket stub.",
+                    "choice2": "I found a weapon.",
+                    "question": "effect",
+                    "idx": 1,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "Termites invaded the house.",
+                    "choice1": "The termites disappeared from the house.",
+                    "choice2": "The termites ate through the wood in the house.",
+                    "question": "effect",
+                    "idx": 2,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The travelers reached the border.",
+                    "choice1": "The patrol agent checked their passports.",
+                    "choice2": "The patrol agent accused them of smuggling.",
+                    "question": "effect",
+                    "idx": 3,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The office was closed.",
+                    "choice1": "It was a holiday.",
+                    "choice2": "It was summer.",
+                    "question": "cause",
+                    "idx": 4,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl ran out of energy.",
+                    "choice1": "She played checkers.",
+                    "choice2": "She jumped rope.",
+                    "question": "cause",
+                    "idx": 5,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman lost her place in line.",
+                    "choice1": "More people entered the line.",
+                    "choice2": "She stepped out of the line.",
+                    "question": "cause",
+                    "idx": 6,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl pinched her nose.",
+                    "choice1": "The baby drooled on her bib.",
+                    "choice2": "The baby soiled her diaper.",
+                    "question": "cause",
+                    "idx": 7,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The band played their hit song.",
+                    "choice1": "The audience clapped along to the music.",
+                    "choice2": "The audience politely listened in silence.",
+                    "question": "effect",
+                    "idx": 8,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl wanted to thank her math teacher.",
+                    "choice1": "The girl stayed after school for detention.",
+                    "choice2": "The girl brought the teacher an apple.",
+                    "question": "effect",
+                    "idx": 9,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The young campers felt scared.",
+                    "choice1": "Their camp counselor told them a ghost story.",
+                    "choice2": "They toasted marshmallows on the campfire.",
+                    "question": "cause",
+                    "idx": 10,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man hit his head.",
+                    "choice1": "He got lost in thought.",
+                    "choice2": "He got a concussion.",
+                    "question": "effect",
+                    "idx": 11,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The check I wrote bounced.",
+                    "choice1": "My bank account was empty.",
+                    "choice2": "I earned a pay raise.",
+                    "question": "cause",
+                    "idx": 12,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man's email inbox was full of spam.",
+                    "choice1": "He deleted the spam.",
+                    "choice2": "He sent out a mass email.",
+                    "question": "effect",
+                    "idx": 13,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The sailor was quarantined.",
+                    "choice1": "He was exposed to the disease.",
+                    "choice2": "He recovered from the disease.",
+                    "question": "cause",
+                    "idx": 14,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The girl memorized the code.",
+                    "choice1": "She recited it to herself.",
+                    "choice2": "She forgot to write it down.",
+                    "question": "cause",
+                    "idx": 15,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I poured the water into the glass.",
+                    "choice1": "The water quenched my thirst.",
+                    "choice2": "The glass became full.",
+                    "question": "effect",
+                    "idx": 16,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man remained silent when his friend finishing speaking.",
+                    "choice1": "He wanted to offer his friend support.",
+                    "choice2": "He was thinking about his friend's words.",
+                    "question": "cause",
+                    "idx": 17,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The accident was my fault.",
+                    "choice1": "I felt guilty.",
+                    "choice2": "I pressed charges.",
+                    "question": "effect",
+                    "idx": 18,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The chain came apart.",
+                    "choice1": "The chain was wrapped around a tire.",
+                    "choice2": "There was a broken link in the chain.",
+                    "question": "cause",
+                    "idx": 19,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The couple decided to compromise.",
+                    "choice1": "They grew tired of arguing.",
+                    "choice2": "They avoided discussing the problem.",
+                    "question": "cause",
+                    "idx": 20,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The woman decided to run for public office.",
+                    "choice1": "She hired a campaign manager.",
+                    "choice2": "She testified in court.",
+                    "question": "effect",
+                    "idx": 21,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man anticipated cold weather on his trip.",
+                    "choice1": "He packed warm clothing in his suitcase.",
+                    "choice2": "He travelled with a big suitcase.",
+                    "question": "effect",
+                    "idx": 22,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The student knew the answer to the question.",
+                    "choice1": "He raised his hand.",
+                    "choice2": "He goofed off.",
+                    "question": "effect",
+                    "idx": 23,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The man's eyes watered.",
+                    "choice1": "Dust got into his eyes.",
+                    "choice2": "He put goggles over his eyes.",
+                    "question": "cause",
+                    "idx": 24,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The player won five games in a row.",
+                    "choice1": "Her opponent accused her of cheating.",
+                    "choice2": "Her opponent felt sorry for her.",
+                    "question": "effect",
+                    "idx": 25,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The teacher tore up the student's exam.",
+                    "choice1": "He caught the student cheating.",
+                    "choice2": "The student's answers were incorrect.",
+                    "question": "cause",
+                    "idx": 26,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "I paused to stop talking.",
+                    "choice1": "I lost my voice.",
+                    "choice2": "I ran out of breath.",
+                    "question": "cause",
+                    "idx": 27,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The frozen food thawed.",
+                    "choice1": "I put it in the microwave.",
+                    "choice2": "I covered it with plastic wrap.",
+                    "question": "cause",
+                    "idx": 28,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                },
+                {
+                    "premise": "The employee faked sick.",
+                    "choice1": "He had stomach cramps.",
+                    "choice2": "He wanted a day off.",
+                    "question": "cause",
+                    "idx": 29,
+                    "label": -1,
+                    "data_classification_policy": [
+                        "public"
+                    ]
+                }
+            ]
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "choice1",
+                "choice2"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "premise": "context",
+                "label": "answer"
+            }
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "question": {
+                    "cause": "What was the cause of this?",
+                    "effect": "What happened as a result?"
+                }
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "sentence"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all",
+    "__description__": "SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after GLUE with a new set of more difficult language understanding tasks, improved resources, and a new public leaderboard… See the full description on the dataset page: https://huggingface.co/datasets/super_glue",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "arxiv": "1905.00537",
+        "flags": [
+            "NLU",
+            "natural language understanding",
+            "superglue"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended|other",
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
+        ]
+    }
+}

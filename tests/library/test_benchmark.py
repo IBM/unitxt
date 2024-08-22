@@ -12,11 +12,11 @@ class TestBenchmark(UnitxtTestCase):
             loader_limit=300,
             subsets={
                 "cola": StandardRecipe(
-                    card="cards.cola",
+                    card="cards.tests.cola",
                     template="templates.classification.multi_class.instruction",
                 ),
                 "wnli": StandardRecipe(
-                    card="cards.wnli",
+                    card="cards.tests.wnli",
                     template="templates.classification.multi_class.relation.default",
                 ),
             },
