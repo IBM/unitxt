@@ -1,5 +1,6 @@
 import collections
 import copy
+import json
 import re
 
 from unitxt import dataset_file
@@ -79,7 +80,6 @@ class TestRecipes(UnitxtTestCase):
                 {
                     "question": "what?",
                     "choices": ["yes", "not", "maybe"],
-                    "answer": "maybe",
                     "topic": "testing",
                 }
             ]
@@ -87,21 +87,14 @@ class TestRecipes(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.accuracy"],
+            "data_classification_policy": [],
+            "postprocessors": ["processors.first_character"],
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
-            "target": " C",
-            "references": [" C"],
-            "task_data": '{"topic": "testing", '
-            '"question": "what?", '
-            '"choices": ["yes", "not", "maybe"], '
-            '"answer": "maybe", '
-            '"options": [" A", " B", " C"], '
-            '"metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 0}'
-            "}",
             "groups": [],
             "subset": [],
-            "postprocessors": ["processors.first_character"],
-            "data_classification_policy": [],
         }
+
+        del result["task_data"]
 
         self.assertDictEqual(result, target)
 
@@ -162,7 +155,6 @@ class TestRecipes(UnitxtTestCase):
                 {
                     "question": "what?",
                     "choices": ["yes", "not", "maybe"],
-                    "answer": "maybe",
                     "topic": "testing",
                 }
             ]
@@ -170,70 +162,19 @@ class TestRecipes(UnitxtTestCase):
 
         target = {
             "metrics": ["metrics.accuracy"],
-            "source": """<<SYS>>
-You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.
-
-If a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.
-<</SYS>>
-
-
-
-
-User: The following are multiple choice questions (with answers) about marketing.
-
-Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:
-A. Care lines.
-B. Direct mail.
-C. Inserts.
-D. Door to door.
-Answer:
-Agent:  D
-
-User: The following are multiple choice questions (with answers) about marketing.
-
- _____________ is a natural outcome when combining demographic and geographic variables.
-A. Geodemographics
-B. Product differentiation.
-C. ANSOFF matrix.
-D. Brand management.
-Answer:
-Agent:  A
-
-User: The following are multiple choice questions (with answers) about marketing.
-
-In an organization, the group of people tasked with buying decisions is referred to as the _______________.
-A. Outsourcing unit.
-B. Procurement centre.
-C. Chief executive unit.
-D. Decision-making unit.
-Answer:
-Agent:  D
-
-
-User:The following are multiple choice questions (with answers) about testing.
-
-what?
-A. yes
-B. not
-C. maybe
-Answer:
-Agent:""",
-            "target": " C",
-            "references": [" C"],
-            "task_data": '{"topic": "testing",'
-            ' "question": "what?",'
-            ' "choices": ["yes", "not", "maybe"],'
-            ' "answer": "maybe",'
-            ' "options": [" A", " B", " C"],'
-            ' "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 3}'
-            "}",
+            "data_classification_policy": [],
+            "postprocessors": ["processors.first_character"],
+            "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nAlthough the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:\nA. Care lines.\nB. Direct mail.\nC. Inserts.\nD. Door to door.\nAnswer:\nAgent: \n\nUser: The following are multiple choice questions (with answers) about marketing.\n\n _____________ is a natural outcome when combining demographic and geographic variables.\nA. Geodemographics\nB. Product differentiation.\nC. ANSOFF matrix.\nD. Brand management.\nAnswer:\nAgent: \n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nIn an organization, the group of people tasked with buying decisions is referred to as the _______________.\nA. Outsourcing unit.\nB. Procurement centre.\nC. Chief executive unit.\nD. Decision-making unit.\nAnswer:\nAgent: \n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
+            "task_data": '{"topic": "testing", "question": "what?", "choices": ["yes", "not", "maybe"], "options": [" A", " B", " C"], "metadata": {"data_classification_policy": [], "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness", "num_demos": 3}}',
             "groups": [],
             "subset": [],
-            "postprocessors": ["processors.first_character"],
-            "data_classification_policy": [],
         }
 
+        target_task_data = json.loads(target.pop("task_data"))
+        result_task_data = json.loads(result.pop("task_data"))
+
         self.assertDictEqual(result, target)
+        self.assertDictEqual(target_task_data, result_task_data)
 
     def test_standard_recipe_with_indexes_with_catalog(self):
         recipe = StandardRecipe(
@@ -304,10 +245,13 @@ Agent:""",
         }
 
         stream = recipe()
+        result = stream["train"].peek()
 
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        target_task_data = json.loads(target.pop("task_data"))
+        result_task_data = json.loads(result.pop("task_data"))
+
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(target_task_data, result_task_data)
 
     def test_key_val_template(self):
         recipe = StandardRecipeWithIndexes(
@@ -332,10 +276,13 @@ Agent:""",
         }
 
         stream = recipe()
+        result = stream["train"].peek()
 
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        target_task_data = json.loads(target.pop("task_data"))
+        result_task_data = json.loads(result.pop("task_data"))
+
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(target_task_data, result_task_data)
 
     def test_random_template(self):
         recipe = StandardRecipeWithIndexes(
@@ -366,10 +313,13 @@ Agent:""",
         }
 
         stream = recipe()
+        result = stream["train"].peek()
 
-        for instance in stream["train"]:
-            self.assertDictEqual(instance, target)
-            break
+        target_task_data = json.loads(target.pop("task_data"))
+        result_task_data = json.loads(result.pop("task_data"))
+
+        self.assertDictEqual(result, target)
+        self.assertDictEqual(target_task_data, result_task_data)
 
     def test_random_num_demos(self):
         recipe = StandardRecipeWithIndexes(

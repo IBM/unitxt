@@ -1,25 +1,18 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
 from unitxt.operators import RemoveValues
+from unitxt.processors import PostProcess
+from unitxt.settings_utils import get_constants
 from unitxt.string_operators import RegexSplit
 
+constants = get_constants()
 regex = "(?:^|\n)- "
 
 add_to_catalog(
     SequentialOperator(
         steps=[
-            RegexSplit(field="prediction", by=regex),
-            RemoveValues(
-                field="prediction",
-                unallowed_values=["", " "],
-                process_every_value=False,
-            ),
-            RegexSplit(field="references", by=regex, process_every_value=True),
-            RemoveValues(
-                field="references",
-                unallowed_values=["", " "],
-                process_every_value=True,
-            ),
+            PostProcess(RegexSplit(by=regex)),
+            PostProcess(RemoveValues(unallowed_values=["", " "])),
         ]
     ),
     "processors.to_list_by_hyphen_space",
@@ -28,11 +21,9 @@ add_to_catalog(
 add_to_catalog(
     SequentialOperator(
         steps=[
-            RegexSplit(field="references", by=regex, process_every_value=True),
-            RemoveValues(
-                field="references",
-                unallowed_values=["", " "],
-                process_every_value=True,
+            PostProcess(RegexSplit(by=regex), process_prediction=False),
+            PostProcess(
+                RemoveValues(unallowed_values=["", " "]), process_prediction=False
             ),
         ]
     ),

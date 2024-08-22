@@ -436,7 +436,7 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
         parser, _ = fetch_artifact(
-            "processors.literal_eval[process_every_value=true,field=references]"
+            "processors.literal_eval[process_references=True, process_prediction=False]"
         )
         check_operator(
             operator=parser,
