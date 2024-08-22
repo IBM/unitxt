@@ -8,6 +8,7 @@ from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
+from .schema import UNITXT_DATASET_SCHEMA
 from .standard import StandardRecipe
 
 logger = get_logger()
@@ -106,7 +107,7 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
     """
     recipe = load_recipe(dataset_query, **kwargs)
 
-    return recipe().to_dataset()
+    return recipe().to_dataset(features=UNITXT_DATASET_SCHEMA)
 
 
 def evaluate(predictions, data) -> List[Dict[str, Any]]:

@@ -1071,8 +1071,12 @@ class Copy(FieldOperator):
 
     """
 
+    use_deep_copy: bool = True
+
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        if self.use_deep_copy:
+            return copy.deepcopy(value)
+        return value
 
 
 @deprecation(version="2.0.0", alternative=Copy)

@@ -261,6 +261,7 @@ class Task(InstanceOperator):
             "input_fields": input_fields,
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
+            "media": instance.get("media", {}),
         }
 
         if stream_name == constants.inference_stream:

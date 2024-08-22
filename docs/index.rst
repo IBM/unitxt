@@ -175,6 +175,7 @@ Welcome!
    docs/examples
    docs/data_classification_policy
    docs/rag_support
+   docs/multimodality
    docs/operators
    docs/saving_and_loading_from_catalog
    docs/production
