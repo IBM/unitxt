@@ -103,7 +103,7 @@ Set up the inference and evaluation pipeline:
     # Load and prepare the dataset
     dataset = load_dataset(
         card="cards.doc_vqa.en",
-        template="templates.qa.with_context.with_type",
+        template="templates.qa.with_context.title",
         format="formats.models.llava_interleave",
         loader_limit=30,
     )
