@@ -1,8 +1,8 @@
+import warnings
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
-from .dataclass import DeprecatedField
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
@@ -62,18 +62,8 @@ class Task(InstanceOperator):
 
     input_fields: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
     reference_fields: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
-    inputs: Union[Dict[str, Type], Dict[str, str], List[str]] = DeprecatedField(
-        default=None,
-        metadata={
-            "deprecation_msg": "The 'inputs' field is deprecated. Please use 'input_fields' instead."
-        },
-    )
-    outputs: Union[Dict[str, Type], Dict[str, str], List[str]] = DeprecatedField(
-        default=None,
-        metadata={
-            "deprecation_msg": "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
-        },
-    )
+    inputs: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
+    outputs: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
     metrics: List[str]
     prediction_type: Optional[Union[Type, str]] = None
     augmentable_inputs: List[str] = []
@@ -113,6 +103,16 @@ class Task(InstanceOperator):
             )
 
     def verify(self):
+        if hasattr(self, "inputs") and self.inputs is not None:
+            depr_message = (
+                "The 'inputs' field is deprecated. Please use 'input_fields' instead."
+            )
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
+
+        if hasattr(self, "outputs") and self.outputs is not None:
+            depr_message = "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
+
         if self.input_fields is None:
             raise UnitxtError(
                 "Missing attribute in task: 'input_fields' not set.",
