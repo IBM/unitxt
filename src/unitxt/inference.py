@@ -559,16 +559,19 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
             images = extract_images(text, instance)
             # Regular expression to match all <img src="..."> tags
             regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
-            mode_input = re.sub(regex, "<image>", text)
+            model_input = re.sub(regex, "<image>", text)
             if len(images) == 1:
                 images = images[0]
             inputs = self.processor(
-                images=images, text=mode_input, return_tensors="pt"
+                images=images, text=model_input, return_tensors="pt"
             ).to(self.device, torch.float16)
+            input_len = len(inputs["input_ids"][0])
             output = self.model.generate(
                 **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
             )
-            result = self.processor.decode(output[0][2:], skip_special_tokens=True)
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
             results.append(result)
 
         return results

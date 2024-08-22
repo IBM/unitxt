@@ -28,6 +28,7 @@ class TestAPI(UnitxtTestCase):
             '"attribute_value": 5.0, '
             '"metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -57,6 +58,7 @@ class TestAPI(UnitxtTestCase):
                 '{"num_demos": 0}',
                 '{"template": "templates.regression.two_texts.simple"}',
             ],
+            "media": {"audios": [], "images": []},
             "subset": [],
         }
         self.assertEqual(len(dataset["train"]), 5)
@@ -75,6 +77,7 @@ class TestAPI(UnitxtTestCase):
             "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
             "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 0}}',
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
         }
 
@@ -99,6 +102,7 @@ class TestAPI(UnitxtTestCase):
                 "source": "Classify the grammatical acceptability of the following text to one of these options: unacceptable, acceptable.\ntext: The sailors rode the breeze clear of the rocks.\nThe grammatical acceptability is ",
                 "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "num_demos": 0}}',
                 "groups": [],
+                "media": {"audios": [], "images": []},
                 "subset": ["cola"],
             },
         )
@@ -116,6 +120,7 @@ class TestAPI(UnitxtTestCase):
                 "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: The drain is clogged with hair. It has to be cleaned.\nhypothesis: The hair has to be cleaned.\nThe entailment class is ",
                 "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
                 "groups": [],
+                "media": {"audios": [], "images": []},
                 "subset": ["wnli"],
             },
         )
@@ -180,6 +185,7 @@ class TestAPI(UnitxtTestCase):
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
             },
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
             "prediction": "2.5",
             "processed_prediction": 2.5,
@@ -238,6 +244,7 @@ class TestAPI(UnitxtTestCase):
             "data_classification_policy": ["public"],
             "prediction": "2.5",
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
             "processed_prediction": 2.5,
             "processed_references": [5.0],
@@ -319,6 +326,7 @@ class TestAPI(UnitxtTestCase):
             '"label": "?", '
             '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",
@@ -366,6 +374,7 @@ class TestAPI(UnitxtTestCase):
             '"label": "?", '
             '"metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
             "groups": [],
+            "media": {"audios": [], "images": []},
             "subset": [],
             "postprocessors": [
                 "processors.take_first_non_empty_line",

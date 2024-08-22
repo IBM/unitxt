@@ -9,7 +9,7 @@ inference_model = HFLlavaInferenceEngine(
 dataset = load_dataset(
     card="cards.doc_vqa.en",
     template="templates.qa.with_context.with_type",
-    format="formats.llamaguard2",
+    format="formats.models.llava_interleave",
     loader_limit=30,
 )
 
