@@ -3641,7 +3641,7 @@ class RetrievalAtK(RetrievalMetric):
             (recall_at_k, "recall"),
             (match_at_k, "match"),
         ]:
-            measure_array[0] = 0  # to support cases where the prediction is empty.
+            measure_array[0] = 0.0  # to support cases where the prediction is empty.
             max_k = max(measure_array.keys())
             for k in self.k_list:
                 result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
