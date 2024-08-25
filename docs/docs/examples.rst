@@ -174,6 +174,21 @@ The example shows how to ensemble two judges which uses different templates.
 
 Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
+Evaluate predictions of models using pre-trained ensemble of LLM as judges
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to use a pre-trained ensemble model or an off-the-shelf LLM as judge to assess multi-turn conversation quality of models on a set of pre-defined metrics.
+
+Topicality: Response of the model only contains information that is related to and helpful for the user inquiry.
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_ensemble_judge.py>`
+
+Groundedness: Every substantial claim in the response of the model is derivable from the content of the document
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_grounded_ensemble_judge.py>`
+
+IDK: Does the model response say I don't know?
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_idk_judge.py>`
+
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
 RAG
 ---
