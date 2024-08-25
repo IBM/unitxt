@@ -174,6 +174,12 @@ correctness_referenceless_instructions_explain_first = (
     '\n\nExample output: "Final verdict: [[Yes]]".\n'
 )
 
+correctness_reference_based_no_context_instructions_loose = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
+There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
+The prediction must contain all the important information presented in the ground truths, but doesn't have to fully match it.
+Answer with only yes/no.\n"""
+
+
 ####################
 # Faithfulness dicts
 ####################
@@ -227,6 +233,10 @@ correctness_templates_dict = {
     "judge_simplified_no_context": {
         "input": correctness_input_format,
         "instruction": correctness_reference_based_no_context_instructions_simple,
+    },
+    "judge_loose_match_no_context": {
+        "input": correctness_input_format,
+        "instruction": correctness_reference_based_no_context_instructions_loose,
     },
 }
 add_rag_templates(correctness_templates_dict, "answer_correctness", "is_correct")
