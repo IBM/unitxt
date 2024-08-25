@@ -6,7 +6,8 @@
         "main_score": "faithfulness_c_a_judge_mixtral_8x7b_instruct_v01",
         "model_name": "mistralai/mixtral-8x7b-instruct-v01",
         "task_name": "tasks.rag_eval.faithfulness.binary",
-        "template_name": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs"
+        "template_name": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+        "model_format_name": "formats.empty"
     },
     "preprocess_steps": [
         {

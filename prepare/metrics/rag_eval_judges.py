@@ -33,6 +33,11 @@ model_names_to_metric_class = {
 
 def add_judge_metrics():
     for judge_model_name, judge_metric_class in model_names_to_metric_class.items():
+        template_format = (
+            "formats.llama3_instruct"
+            if "llama" in judge_model_name
+            else "formats.empty"
+        )
         for (
             metric_type,
             input_fields_to_template_name,
@@ -48,6 +53,7 @@ def add_judge_metrics():
                     model_name=judge_model_name,
                     task_name=f"tasks.rag_eval.{metric_type}.binary",
                     template_name=f"templates.rag_eval.{metric_type}.{template_name}",
+                    model_format_name=template_format,
                 )
 
                 metric_pipeline = MetricPipeline(

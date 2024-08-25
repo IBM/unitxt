@@ -4761,7 +4761,7 @@ class TaskBasedJudgeMetric(BulkInstanceMetric):
     model_name: str = None
     task_name: str = None
     template_name: str = None
-    model_format_name = "formats.empty"
+    model_format_name: str = "formats.empty"
 
     def prepare(
         self,

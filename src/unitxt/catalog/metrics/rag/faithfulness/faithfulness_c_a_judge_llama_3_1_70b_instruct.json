@@ -6,7 +6,8 @@
         "main_score": "faithfulness_c_a_judge_llama_3_1_70b_instruct",
         "model_name": "meta-llama/llama-3-1-70b-instruct",
         "task_name": "tasks.rag_eval.faithfulness.binary",
-        "template_name": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs"
+        "template_name": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+        "model_format_name": "formats.llama3_instruct"
     },
     "preprocess_steps": [
         {

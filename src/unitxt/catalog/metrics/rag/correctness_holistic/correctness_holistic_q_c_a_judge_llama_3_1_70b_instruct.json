@@ -6,7 +6,8 @@
         "main_score": "correctness_holistic_q_c_a_judge_llama_3_1_70b_instruct",
         "model_name": "meta-llama/llama-3-1-70b-instruct",
         "task_name": "tasks.rag_eval.correctness_holistic.binary",
-        "template_name": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs"
+        "template_name": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
+        "model_format_name": "formats.llama3_instruct"
     },
     "preprocess_steps": [
         {
