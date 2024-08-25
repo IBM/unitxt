@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -23,7 +23,7 @@ card = TaskCard(
                 "text_b_type": "hypothesis",
             }
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "sentence1": "text_a",
                 "sentence2": "text_b",

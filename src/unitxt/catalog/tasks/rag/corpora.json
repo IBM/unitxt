@@ -1,0 +1,14 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "document_id": "str",
+        "title": "str",
+        "passages": "List[str]",
+        "metadata_field": "str"
+    },
+    "reference_fields": {},
+    "prediction_type": "Any",
+    "metrics": [
+        "metrics.rouge"
+    ]
+}

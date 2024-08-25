@@ -1,0 +1,7 @@
+{
+    "__type__": "post_process",
+    "process_references": false,
+    "operator": {
+        "__type__": "extract_arena_hard_numerical_judgment"
+    }
+}

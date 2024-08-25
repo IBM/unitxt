@@ -1,11 +1,11 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "context": "str",
         "context_type": "str",
         "question": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "answers": "List[str]"
     },
     "prediction_type": "str",

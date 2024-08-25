@@ -1,6 +1,6 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import AddConstant, CastFields, ListFieldValues, RenameFields
+from unitxt.operators import AddConstant, CastFields, ListFieldValues, Rename
 from unitxt.test_utils.card import test_card
 
 for lang in ["pt", "ru", "zh", "en", "jp"]:
@@ -10,7 +10,7 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),
             AddConstant(field="answer", add=-1),
-            RenameFields(
+            Rename(
                 field_to_field={"sentence": "question"},
             ),
         ],

@@ -1,5 +1,7 @@
 {
-    "__type__": "literal_eval",
-    "field": "prediction",
-    "process_every_value": false
+    "__type__": "post_process",
+    "process_references": false,
+    "operator": {
+        "__type__": "literal_eval"
+    }
 }

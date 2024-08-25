@@ -4,6 +4,7 @@ import evaluate
 
 from .api import __file__ as _
 from .artifact import __file__ as _
+from .benchmark import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
 from .catalog import __file__ as _
@@ -14,12 +15,14 @@ from .dataset_utils import __file__ as _
 from .deprecation_utils import __file__ as _
 from .dialog_operators import __file__ as _
 from .dict_utils import __file__ as _
+from .error_utils import __file__ as _
 from .eval_utils import __file__ as _
 from .file_utils import __file__ as _
 from .formats import __file__ as _
 from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .hf_utils import verify_versions_compatibility
+from .image_operators import __file__ as _
 from .inference import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _

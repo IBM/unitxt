@@ -1,8 +1,9 @@
-from copy import deepcopy
 from typing import Any, Generator, List, Optional
 
+from .dict_utils import dict_get, dict_set
 from .operators import FieldOperator, StreamOperator
 from .stream import Stream
+from .utils import deepcopy
 
 
 class Dictify(FieldOperator):
@@ -66,18 +67,19 @@ class DuplicateByList(StreamOperator):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         to_field = self.field if self.to_field is None else self.to_field
         for instance in stream:
-            elements = instance[self.field]
+            elements = dict_get(instance, self.field)
             for element in elements:
                 if self.use_deep_copy:
                     instance_copy = deepcopy(instance)
-                    instance_copy[to_field] = element
+
                 else:
-                    instance_copy = {
-                        **instance,
-                        self.field: elements,
-                        to_field: element,
-                    }
+                    instance_copy = {**instance}
+                dict_set(instance_copy, to_field, element)
                 yield instance_copy
+
+
+class Explode(DuplicateByList):
+    pass
 
 
 class DuplicateBySubLists(StreamOperator):
@@ -100,3 +102,8 @@ class DuplicateBySubLists(StreamOperator):
                         to_field: elements[:i],
                     }
                 yield instance_copy
+
+
+class GetLength(FieldOperator):
+    def process_value(self, collection: Any) -> Any:
+        return len(collection)

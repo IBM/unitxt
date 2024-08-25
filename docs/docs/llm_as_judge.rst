@@ -26,7 +26,7 @@ While LLMs as Judges are powerful and effective in many cases, they have some dr
     1. Good LLM as Judges are often large models with relatively high inference latency.
     2. Deploying large LLMs is difficult and may require API access to external services.
     3. Not all LLMs (including large ones) can serve as good judges - their assessment may not correlate with human judgements and can also be biased.
-       This means that unless you have a prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgements and see they match your expectations. 
+       This means that unless you have a prior indication that the LLM you use is a good judge for your task, you need to evaluate its judgements and see they match your expectations.
 
 
 Using LLMs
@@ -138,21 +138,21 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 1. **Selecting a Judge Model**: We will utilize the *mistralai/Mistral-7B-Instruct-v0.2* model from Huggingface as our judge model.
 2. **Selecting an Execution Platform**: We will opt to execute the model locally using Huggingface.
 
-    For this example, we will use the *HFPipelineInferenceEngine* class:
+    For this example, we will use the *HFPipelineBasedInferenceEngine* class:
 
     .. code-block:: python
 
-        from unitxt.inference import HFPipelineInferenceEngine
+        from unitxt.inference import HFPipelineBasedInferenceEngine
         from unitxt.llm_as_judge import LLMAsJudge
 
         model_id = "mistralai/Mistral-7B-Instruct-v0.2"
-        inference_model = HFPipelineInferenceEngine(model_name=model_id, max_generated_tokens=256)
+        inference_model = HFPipelineBasedInferenceEngine(model_name=model_id, max_generated_tokens=256)
 
 
     .. note::
 
         If you wish to use a different platform for running your judge model, you can implement
-        a new `InferenceEngine` class and substitute it with the `HFPipelineInferenceEngine`.
+        a new `InferenceEngine` class and substitute it with the `HFPipelineBasedInferenceEngine`.
         You can find the definition of the `InferenceEngine` abstract class and pre-built inference engines
         (e.g., `OpenAiInferenceEngine`) in `src/unitxt/inference.py`.
 
@@ -294,7 +294,7 @@ We will create a card, as we do for every other Unitxt scenario:
     from unitxt.operators import (
         Copy,
         FilterByCondition,
-        RenameFields,
+        Rename,
     )
     from unitxt.processors import LiteralEval
     from unitxt.splitters import RenameSplits
@@ -306,7 +306,7 @@ We will create a card, as we do for every other Unitxt scenario:
             RenameSplits({"train": "test"}),
             FilterByCondition(values={"turn": 1}, condition="eq"),
             FilterByCondition(values={"reference": "[]"}, condition="eq"),
-            RenameFields(
+            Rename(
                 field_to_field={
                     "model_input": "question",
                     "score": "rating",

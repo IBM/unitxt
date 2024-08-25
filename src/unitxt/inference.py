@@ -1,12 +1,16 @@
 import abc
 import os
 import requests
-from dataclasses import field
+import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
 from .artifact import Artifact
+from .dataclass import InternalField, NonPositionalField
+from .deprecation_utils import deprecation
+from .image_operators import extract_images
+from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 
 
@@ -22,6 +26,23 @@ class InferenceEngine(abc.ABC, Artifact):
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
         return self._infer(dataset)
+
+    @deprecation(version="2.0.0")
+    def _set_inference_parameters(self):
+        """Sets inference parameters of an instance based on 'parameters' attribute (if given)."""
+        if hasattr(self, "parameters") and self.parameters is not None:
+            get_logger().warning(
+                f"The 'parameters' attribute of '{self.get_pretty_print_name()}' "
+                f"is deprecated. Please pass inference parameters directly to the "
+                f"inference engine instance instead."
+            )
+
+            for param, param_dict_val in self.parameters.to_dict(
+                [self.parameters]
+            ).items():
+                param_inst_val = getattr(self, param)
+                if param_inst_val is None:
+                    setattr(self, param, param_dict_val)
 
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
@@ -43,11 +64,20 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         return self._infer_log_probs(dataset)
 
 
-class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class LazyLoadMixin(Artifact):
+    lazy_load: bool = NonPositionalField(default=False)
+
+    @abc.abstractmethod
+    def _is_loaded(self):
+        pass
+
+
+class HFPipelineBasedInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+):
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
-    lazy_load: bool = False
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -97,11 +127,11 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         if not self.lazy_load:
             self._prepare_pipeline()
 
-    def is_pipeline_initialized(self):
+    def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
     def _infer(self, dataset):
-        if not self.is_pipeline_initialized():
+        if not self._is_loaded():
             self._prepare_pipeline()
 
         outputs = []
@@ -122,29 +152,55 @@ class MockInferenceEngine(InferenceEngine):
         return ["[[10]]" for instance in dataset]
 
 
-class IbmGenAiInferenceEngineParams(Artifact):
+class IbmGenAiInferenceEngineParamsMixin(Artifact):
+    beam_width: Optional[int] = None
     decoding_method: Optional[Literal["greedy", "sample"]] = None
+    include_stop_sequence: Optional[bool] = None
+    length_penalty: Any = None
     max_new_tokens: Optional[int] = None
     min_new_tokens: Optional[int] = None
     random_seed: Optional[int] = None
     repetition_penalty: Optional[float] = None
+    return_options: Any = None
     stop_sequences: Optional[List[str]] = None
     temperature: Optional[float] = None
+    time_limit: Optional[int] = None
     top_k: Optional[int] = None
     top_p: Optional[float] = None
+    truncate_input_tokens: Optional[int] = None
     typical_p: Optional[float] = None
 
 
-class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+@deprecation(version="2.0.0", alternative=IbmGenAiInferenceEngineParamsMixin)
+class IbmGenAiInferenceEngineParams(Artifact):
+    beam_width: Optional[int] = None
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    include_stop_sequence: Optional[bool] = None
+    length_penalty: Any = None
+    max_new_tokens: Optional[int] = None
+    min_new_tokens: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    return_options: Any = None
+    stop_sequences: Optional[List[str]] = None
+    temperature: Optional[float] = None
+    time_limit: Optional[int] = None
+    top_k: Optional[int] = None
+    top_p: Optional[float] = None
+    truncate_input_tokens: Optional[int] = None
+    typical_p: Optional[float] = None
+
+
+class IbmGenAiInferenceEngine(
+    InferenceEngine, IbmGenAiInferenceEngineParamsMixin, PackageRequirementsMixin
+):
     label: str = "ibm_genai"
     model_name: str
-    parameters: IbmGenAiInferenceEngineParams = field(
-        default_factory=IbmGenAiInferenceEngineParams
-    )
     _requirements_list = {
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
     data_classification_policy = ["public", "proprietary"]
+    parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
     def prepare(self):
         from genai import Client, Credentials
@@ -158,20 +214,13 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         credentials = Credentials(api_key=api_key)
         self.client = Client(credentials=credentials)
 
+        self._set_inference_parameters()
+
     def _infer(self, dataset):
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
-            max_new_tokens=self.parameters.max_new_tokens,
-            min_new_tokens=self.parameters.min_new_tokens,
-            random_seed=self.parameters.random_seed,
-            repetition_penalty=self.parameters.repetition_penalty,
-            stop_sequences=self.parameters.stop_sequences,
-            temperature=self.parameters.temperature,
-            top_p=self.parameters.top_p,
-            top_k=self.parameters.top_k,
-            typical_p=self.parameters.typical_p,
-            decoding_method=self.parameters.decoding_method,
+            **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
         return [
@@ -184,6 +233,23 @@ class IbmGenAiInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         ]
 
 
+class OpenAiInferenceEngineParamsMixin(Artifact):
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: bool = None
+    service_tier: Optional[Literal["auto", "default"]] = None
+
+
+@deprecation(version="2.0.0", alternative=OpenAiInferenceEngineParamsMixin)
 class OpenAiInferenceEngineParams(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
@@ -193,87 +259,18 @@ class OpenAiInferenceEngineParams(Artifact):
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: bool = None
+    service_tier: Optional[Literal["auto", "default"]] = None
 
-class InstructLabInferenceEngine(
-    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
-):
-    base_url: str = 'http://127.0.0.1:8000/v1' #URL for local serving of the model
-    parameters: OpenAiInferenceEngineParams = field(
-        default_factory=OpenAiInferenceEngineParams
-    )
-    batch_size: int = 10
-    
-    def prepare(self):
-        try:
-            response = requests.get(f"{self.base_url}/models")
-            response.raise_for_status()  
-            self.model = response.json()['data'][0]['id']
-        except requests.exceptions.RequestException as e:
-            raise ValueError(f"Error fetching model ID: {e}")
-        except (KeyError, IndexError):
-            raise ValueError("Error: Failed to parse model ID from response JSON.")
-    
-    def extract_inferences(self,http_response):
-        data = http_response.json()
-        return [choice['text']  for choice in data['choices']]
-
-    def get_dataset_batch(self, dataset):
-        return [dataset[i:i + self.batch_size]['source'] for i in range(0, len(dataset), self.batch_size)]
-
-    def add_parametes_to_payload(self, payload):
-        params = {attr: getattr(self.parameters, attr) for attr in OpenAiInferenceEngineParams.__dict__.keys() if not attr.startswith("_") and getattr(self.parameters, attr) is not None}
-        payload.update(params)
-
-    def _infer(self,dataset):
-        outputs = []
-        for batch in tqdm(self.get_dataset_batch(dataset), desc=f"Inferring with InstructLab - model: {self.model}"):
-            payload = {
-                "prompt": batch,
-                'model': self.model
-            }
-            self.add_parametes_to_payload(payload)
-            try:
-                response = requests.post(self.base_url+"/completions", json=payload)
-                response.raise_for_status()  
-                batch_outputs = self.extract_inferences(response)
-            except requests.exceptions.RequestException as e:
-                raise ValueError(f"Error sending request: {e}")
-            except (KeyError, IndexError):
-                raise ValueError("Error: Failed to parse response JSON or access data.")
-
-            outputs.extend(batch_outputs)
-        return outputs
-    
-    def _infer_log_probs(self, dataset):
-        return None
-
-
-class NonBatchedInstructLabInferenceEngine(InstructLabInferenceEngine):
-    def extract_inference(self, http_response):
-        data = http_response.json()
-        return data['choices'][0]['text']
-
-    def _infer(self,dataset):
-        outputs = []
-        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"):
-            payload = {
-                "prompt": instance["source"],
-                'model': self.model
-            }
-            self.add_parametes_to_payload(payload)
-            try:
-                response = requests.post(self.base_url + "/completions", json=payload)
-                response.raise_for_status()
-                output = self.extract_inference(response)
-            except requests.exceptions.RequestException as e:
-                raise ValueError(f"Error sending request: {e}")
-            except (KeyError, IndexError):
-                raise ValueError("Error: Failed to parse response JSON or access data.")
-            outputs.append(output)
-        return outputs
 
 class OpenAiInferenceEngine(
-    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+    InferenceEngine,
+    LogProbInferenceEngine,
+    OpenAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     label: str = "openai"
     model_name: str
@@ -284,6 +281,7 @@ class OpenAiInferenceEngine(
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
     data_classification_policy = ["public"]
+    parameters: Optional[OpenAiInferenceEngineParams] = None
 
     def prepare(self):
         from openai import OpenAI
@@ -296,6 +294,8 @@ class OpenAiInferenceEngine(
         )
 
         self.client = OpenAI(api_key=api_key)
+
+        self._set_inference_parameters()
 
     def _infer(self, dataset):
         outputs = []
@@ -312,13 +312,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
+                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             output = response.choices[0].message.content
 
@@ -341,15 +335,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                frequency_penalty=self.parameters.frequency_penalty,
-                presence_penalty=self.parameters.presence_penalty,
-                max_tokens=self.parameters.max_tokens,
-                seed=self.parameters.seed,
-                stop=self.parameters.stop,
-                temperature=self.parameters.temperature,
-                top_p=self.parameters.top_p,
-                logprobs=True,
-                top_logprobs=self.parameters.top_logprobs,
+                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             top_logprobs_response = response.choices[0].logprobs.content
             output = [
@@ -365,6 +351,24 @@ class OpenAiInferenceEngine(
         return outputs
 
 
+class WMLInferenceEngineParamsMixin(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    length_penalty: Optional[Dict[str, Union[int, float]]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    min_new_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
+    stop_sequences: Optional[List[str]] = None
+    time_limit: Optional[int] = None
+    truncate_input_tokens: Optional[int] = None
+    prompt_variables: Optional[Dict[str, Any]] = None
+    return_options: Optional[Dict[str, bool]] = None
+
+
+@deprecation(version="2.0.0", alternative=WMLInferenceEngineParamsMixin)
 class WMLInferenceEngineParams(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     length_penalty: Optional[Dict[str, Union[int, float]]] = None
@@ -381,46 +385,39 @@ class WMLInferenceEngineParams(Artifact):
     prompt_variables: Optional[Dict[str, Any]] = None
     return_options: Optional[Dict[str, bool]] = None
 
-    def initialize_wml_parameters(self) -> Dict[str, Any]:
-        from ibm_watsonx_ai.metanames import GenTextParamsMetaNames
 
-        return {
-            param_name.upper(): param_value
-            for param_name, param_value in self.to_dict().items()
-            if param_value and param_name.upper() in GenTextParamsMetaNames().get()
-        }
-
-
-class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class WMLInferenceEngine(
+    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+):
     """Runs inference using ibm-watsonx-ai.
 
     Attributes:
-        client: By default, it is created by a class instance but can be directly
-            provided instead as an instance of 'ibm_watsonx_ai.client.APIClient'.
-        credentials: By default, it is created by a class instance which tries to retrieve
-            proper environment variables ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY").
-            However, either a dictionary with the following keys: "url", "apikey",
-            "project_id", or an instance of 'ibm_watsonx_ai.credentials.Credentials'
-            can be directly provided instead.
+        credentials (Dict[str, str], optional): By default, it is created by a class
+            instance which tries to retrieve proper environment variables
+            ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY"). However, a dictionary with
+            the following keys: "url", "apikey", "project_id" can be directly provided
+            instead.
         model_name (str, optional): ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
-        parameters (WMLInferenceEngineParams): An instance of 'WMLInferenceEngineParams'
-            which defines parameters used for inference. All the parameters are optional.
+        parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
+            which defines inference parameters and their values. Deprecated attribute, please
+            pass respective parameters directly to the WMLInferenceEngine class instead.
 
     Examples:
         from .api import load_dataset
 
-        wml_parameters = WMLInferenceEngineParams(top_p=0.5, random_seed=123)
         wml_credentials = {
             "url": "some_url", "project_id": "some_id", "api_key": "some_key"
         }
         model_name = "google/flan-t5-xxl"
         wml_inference = WMLInferenceEngine(
             credentials=wml_credentials,
-            parameters=wml_parameters,
             model_name=model_name,
+            data_classification_policy=["public"],
+            top_p=0.5,
+            random_seed=123,
         )
 
         dataset = load_dataset(
@@ -429,27 +426,49 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         results = wml_inference.infer(dataset["test"])
     """
 
-    client: Any = None
-    credentials: Any = None
+    credentials: Optional[Dict[Literal["url", "apikey", "project_id"], str]] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
-    parameters: WMLInferenceEngineParams = field(
-        default_factory=WMLInferenceEngineParams
-    )
-
-    _parameters: Dict[str, Any] = field(default_factory=dict)
-
     label: str = "wml"
     _requirements_list = {
         "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
     }
+    data_classification_policy = ["public", "proprietary"]
+    parameters: Optional[WMLInferenceEngineParams] = None
 
-    data_classification_policy = ["proprietary"]
+    _client: Any = InternalField(default=None, name="WML client")
+
+    def verify(self):
+        super().verify()
+
+        if self.credentials is not None:
+            for key in self.credentials:
+                if key not in ["url", "apikey", "project_id"]:
+                    raise ValueError(
+                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]'
+                    )
+
+        assert (
+            self.model_name
+            or self.deployment_id
+            and not (self.model_name and self.deployment_id)
+        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+
+    def process_data_before_dump(self, data):
+        if "credentials" in data:
+            for key, value in data["credentials"].items():
+                if key != "url":
+                    data["credentials"][key] = "<hidden>"
+                else:
+                    data["credentials"][key] = value
+        return data
 
     @staticmethod
-    def _read_wml_credentials_from_env() -> Dict[str, str]:
+    def _read_wml_credentials_from_env() -> (
+        Dict[Literal["url", "apikey", "project_id"], str]
+    ):
         credentials = {}
         for env_var_name in ["WML_URL", "WML_PROJECT_ID", "WML_APIKEY"]:
             env_var = os.environ.get(env_var_name)
@@ -476,17 +495,9 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         return client
 
     def prepare(self):
-        if self.client is None:
-            self.client = self._initialize_wml_client()
-        self._parameters = self.parameters.initialize_wml_parameters()
+        self._client = self._initialize_wml_client()
 
-    def verify(self):
-        assert (
-            self.model_name
-            or self.deployment_id
-            and not (self.model_name and self.deployment_id)
-        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
-        super().verify()
+        self._set_inference_parameters()
 
     def _infer(self, dataset):
         from ibm_watsonx_ai.foundation_models import ModelInference
@@ -494,13 +505,78 @@ class WMLInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         model = ModelInference(
             model_id=self.model_name,
             deployment_id=self.deployment_id,
-            api_client=self.client,
+            api_client=self._client,
         )
 
-        return [
-            model.generate_text(
-                prompt=instance["source"],
-                params=self._parameters,
+        return model.generate_text(
+            prompt=dataset["source"],
+            params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+        )
+
+
+class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_name: str
+    max_new_tokens: int
+    lazy_load = True
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def _prepare_engine(self):
+        import torch
+        from transformers import AutoProcessor, LlavaForConditionalGeneration
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def prepare(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(self, dataset):
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        import torch
+
+        results = []
+        for instance in dataset:
+            text = instance["source"]
+            images = extract_images(text, instance)
+            # Regular expression to match all <img src="..."> tags
+            regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+            model_input = re.sub(regex, "<image>", text)
+            if len(images) == 1:
+                images = images[0]
+            inputs = self.processor(
+                images=images, text=model_input, return_tensors="pt"
+            ).to(self.device, torch.float16)
+            input_len = len(inputs["input_ids"][0])
+            output = self.model.generate(
+                **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
             )
-            for instance in dataset
-        ]
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
+            results.append(result)
+
+        return results

@@ -1,0 +1,56 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_hf_space",
+        "space_name": "lmsys/arena-hard-browser",
+        "revision": "03b91ca",
+        "data_files": {
+            "questions": "data/arena-hard-v0.1/question.jsonl",
+            "model_answer": "data/arena-hard-v0.1/model_answer/*.jsonl",
+            "judgment": "data/arena-hard-v0.1/model_judgment/gpt-4-1106-preview/*.jsonl"
+        }
+    },
+    "preprocess_steps": [
+        "operators.arena_hard_hf_space_processing_steps",
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "score_model_1_ordered_first": {
+                    "A=B": 0,
+                    "A>B": 1,
+                    "A>>B": 3,
+                    "B>A": -1,
+                    "B>>A": -3
+                },
+                "score_model_2_ordered_first": {
+                    "A=B": 0,
+                    "A>B": -1,
+                    "A>>B": -3,
+                    "B>A": 1,
+                    "B>>A": 3
+                }
+            }
+        },
+        {
+            "__type__": "execute_expression",
+            "to_field": "answer_a_preference",
+            "expression": "int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))"
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "model_input": "question",
+                "model_1_output": "answer_a",
+                "model_2_output": "answer_b",
+                "category": "group",
+                "model_1": "model_a",
+                "model_2": "model_b"
+            }
+        }
+    ],
+    "task": "tasks.response_assessment.pairwise_comparative_rating.single_turn",
+    "templates": [
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        "templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling"
+    ]
+}

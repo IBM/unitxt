@@ -1,0 +1,8 @@
+{
+    "__type__": "input_output_template",
+    "input_format": "",
+    "output_format": "{{\"answer\": \"{reference_answers}\", \"contexts\" : [\"{reference_contexts}\"],  \"context_ids\" : [\"{reference_context_ids}\"]}}",
+    "postprocessors": [
+        "processors.load_json_predictions"
+    ]
+}

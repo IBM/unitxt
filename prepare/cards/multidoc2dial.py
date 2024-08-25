@@ -3,7 +3,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.operators import (
     ExecuteExpression,
     ListFieldValues,
-    RenameFields,
+    Rename,
     Set,
 )
 from unitxt.settings_utils import get_settings
@@ -16,7 +16,7 @@ settings.allow_unverified_code = True
 card_abstractive = TaskCard(
     loader=LoadHF(path="multidoc2dial"),
     preprocess_steps=[
-        RenameFields(
+        Rename(
             field_to_field={"answers/text/0": "relevant_context"},
         ),
         ListFieldValues(fields=["utterance"], to_field="answers"),
@@ -46,7 +46,7 @@ card_abstractive = TaskCard(
 card_extractive = TaskCard(
     loader=LoadHF(path="multidoc2dial"),
     preprocess_steps=[
-        RenameFields(
+        Rename(
             field_to_field={"answers/text/0": "relevant_context"},
         ),
         ListFieldValues(fields=["relevant_context"], to_field="answers"),

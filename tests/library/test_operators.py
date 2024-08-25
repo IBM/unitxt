@@ -41,7 +41,7 @@ from unitxt.operators import (
     Perturb,
     RemoveFields,
     RemoveValues,
-    RenameFields,
+    Rename,
     SelectFields,
     Set,
     Shuffle,
@@ -2073,7 +2073,7 @@ label (str):
             f"expected error message: {expected_error_message}, but received: {ve.exception!s}.",
         )
 
-    def test_rename_fields(self):
+    def test_rename(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -2086,7 +2086,7 @@ label (str):
 
         # the simplest case
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c"}),
+            operator=Rename(field_to_field={"b": "c"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2094,7 +2094,7 @@ label (str):
 
         # to field is structured:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c/d"}),
+            operator=Rename(field_to_field={"b": "c/d"}),
             inputs=inputs,
             targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
             tester=self,
@@ -2102,7 +2102,7 @@ label (str):
 
         # to field is structured, to stand in place of from field:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "b/d"}),
+            operator=Rename(field_to_field={"b": "b/d"}),
             inputs=inputs,
             targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
             tester=self,
@@ -2110,7 +2110,7 @@ label (str):
 
         # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "b/d"}),
+            operator=Rename(field_to_field={"b/c/e": "b/d"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2124,7 +2124,7 @@ label (str):
 
         # to field is structured, from field is structured too, different fields:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "g/h"}),
+            operator=Rename(field_to_field={"b/c/e": "g/h"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2138,7 +2138,7 @@ label (str):
 
         # both from and to field are structured, different only in the middle of the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/g/c/d"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/g/c/d"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2150,7 +2150,7 @@ label (str):
 
         # both from and to field are structured, different down the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/b/c/f"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2161,7 +2161,7 @@ label (str):
         )
 
         with self.assertWarns(DeprecationWarning) as dw:
-            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            Rename(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
             self.assertEqual(
                 "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
                 dw.warnings[0].message.args[0],
@@ -2190,7 +2190,7 @@ label (str):
         with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
-            ).process(instance={"a": [1, 2, 3], "b": [11]})
+            ).process_instance({"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
             str(ae.exception),
@@ -2505,7 +2505,7 @@ references (str):
 
     def test_augment_whitespace_task_input_with_error(self):
         text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["sentence"])
         with self.assertRaises(ValueError):
@@ -2513,11 +2513,11 @@ references (str):
 
     def test_augment_whitespace_task_input(self):
         text = "The dog ate my cat"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
         outputs = apply_operator(operator, inputs)
-        normalized_output_source = outputs[0]["inputs"]["text"].split()
+        normalized_output_source = outputs[0]["input_fields"]["text"].split()
         normalized_input_source = text.split()
         assert (
             normalized_output_source == normalized_input_source
@@ -2525,10 +2525,10 @@ references (str):
 
     def test_augment_whitespace_with_none_text_error(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
         check_operator_exception(
             operator,
             inputs,
@@ -2614,7 +2614,7 @@ references (str):
 
     def test_augment_prefix_suffix_task_input_with_error(self):
         text = "She is riding a black horse\t\t  "
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True, suffixes=suffixes, prefixes=None
@@ -2624,12 +2624,12 @@ references (str):
             apply_operator(operator, inputs)
         self.assertEqual(
             str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get inputs/sentence from {'inputs': {'text': 'She is riding a black horse\\t\\t  '}}",
+            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get input_fields/sentence from {'input_fields': {'text': 'She is riding a black horse\\t\\t  '}}",
         )
 
     def test_augment_prefix_suffix_task_input(self):
         text = "\n She is riding a black horse  \t\t  "
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True,
@@ -2639,13 +2639,13 @@ references (str):
         )
         operator.set_task_input_fields(["text"])
         outputs = apply_operator(operator, inputs)
-        output0 = str(outputs[0]["inputs"]["text"]).rstrip("".join(suffixes))
+        output0 = str(outputs[0]["input_fields"]["text"]).rstrip("".join(suffixes))
         assert (
             " \t\t " not in output0 and "\n" not in output0
         ), f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
         assert (
             output0 == text.strip()[: len(output0)]
-        ), f"The prefix of {outputs[0]['inputs']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
+        ), f"The prefix of {outputs[0]['input_fields']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
 
     def test_augment_prefix_suffix_with_non_string_suffixes_error(self):
         prefixes = [10, 20, "O", "P"]
@@ -2660,13 +2660,13 @@ references (str):
 
     def test_augment_prefix_suffix_with_none_input_error(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         suffixes = ["Q", "R", "S", "T"]
         operator = AugmentPrefixSuffix(
             augment_task_input=True, suffixes=suffixes, prefixes=None
         )
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
         check_operator_exception(
             operator,
             inputs,
@@ -2676,10 +2676,10 @@ references (str):
 
     def test_test_operator_without_tester_param(self):
         text = None
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
 
         check_operator_exception(
             operator,
@@ -2689,10 +2689,10 @@ references (str):
 
     def test_test_operator_unexpected_pass(self):
         text = "Should be ok"
-        inputs = [{"inputs": {"text": text}}]
+        inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace(augment_task_input=True)
         operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}"
+        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
 
         try:
             check_operator_exception(
@@ -2703,7 +2703,7 @@ references (str):
         except Exception as e:
             self.assertEqual(
                 str(e),
-                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'inputs/text' in instance: {'inputs': {'text': None}}",
+                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}",
             )
 
     def test_duplicate_instance(self):
@@ -2831,6 +2831,14 @@ class TestApplyMetric(UnitxtTestCase):
         # check that the second score is present too
         self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
 
+    def test_apply_metric_with_two_identical_metrics(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=["metrics.accuracy", "metrics.accuracy"],
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+        self.assertAlmostEqual(global_metric_result["accuracy"], 0.5, delta=2)
+
     def test_render_demonstrations(self):
         template = InputOutputTemplate(
             input_format='This is my sentence: "{text}"', output_format="{label}"
@@ -2839,10 +2847,13 @@ class TestApplyMetric(UnitxtTestCase):
         instance = {
             "demos": [
                 {
-                    "inputs": {"text": "was so not good"},
-                    "outputs": {"label": "negative"},
+                    "input_fields": {"text": "was so not good"},
+                    "reference_fields": {"label": "negative"},
                 },
-                {"inputs": {"text": "was so good"}, "outputs": {"label": "positive"}},
+                {
+                    "input_fields": {"text": "was so good"},
+                    "reference_fields": {"label": "positive"},
+                },
             ]
         }
 
@@ -2852,22 +2863,24 @@ class TestApplyMetric(UnitxtTestCase):
         target = {
             "demos": [
                 {
-                    "inputs": {"text": "was so not good"},
-                    "outputs": {"label": "negative"},
+                    "input_fields": {"text": "was so not good"},
+                    "reference_fields": {"label": "negative"},
                     "source": 'This is my sentence: "was so not good"',
                     "target": "negative",
                     "references": ["negative"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
-                    "inputs": {"text": "was so good"},
-                    "outputs": {"label": "positive"},
+                    "input_fields": {"text": "was so good"},
+                    "reference_fields": {"label": "positive"},
                     "source": 'This is my sentence: "was so good"',
                     "target": "positive",
                     "references": ["positive"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }
@@ -2882,12 +2895,12 @@ class TestApplyMetric(UnitxtTestCase):
         instance = {
             "demos": [
                 {
-                    "inputs": {"text": "who was he?"},
-                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "input_fields": {"text": "who was he?"},
+                    "reference_fields": {"answer": ["Dan", "Yossi"]},
                 },
                 {
-                    "inputs": {"text": "who was she?"},
-                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "input_fields": {"text": "who was she?"},
+                    "reference_fields": {"answer": ["Shira", "Yael"]},
                 },
             ]
         }
@@ -2898,22 +2911,24 @@ class TestApplyMetric(UnitxtTestCase):
         target = {
             "demos": [
                 {
-                    "inputs": {"text": "who was he?"},
-                    "outputs": {"answer": ["Dan", "Yossi"]},
+                    "input_fields": {"text": "who was he?"},
+                    "reference_fields": {"answer": ["Dan", "Yossi"]},
                     "source": "This is my sentence: who was he?",
                     "target": "Dan",
                     "references": ["Dan", "Yossi"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
-                    "inputs": {"text": "who was she?"},
-                    "outputs": {"answer": ["Shira", "Yael"]},
+                    "input_fields": {"text": "who was she?"},
+                    "reference_fields": {"answer": ["Shira", "Yael"]},
                     "source": "This is my sentence: who was she?",
                     "target": "Shira",
                     "references": ["Shira", "Yael"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }
@@ -2925,7 +2940,7 @@ class TestApplyMetric(UnitxtTestCase):
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
-            "inputs": {},
+            "input_fields": {},
         }
         demos_instances = [
             {"source": "1+2", "target": "3", "instruction": "solve the math exercises"},
@@ -2964,7 +2979,7 @@ Agent:"""
         instance = {
             "source": "1+1",
             "target": "2",
-            "inputs": {},
+            "input_fields": {},
             "instruction": "solve the math exercises",
             "demos": demo_instances,
         }
@@ -2993,7 +3008,7 @@ Agent:"""
             "source": "1+1",
             "target": "2",
             "instruction": "solve the math exercises",
-            "inputs": {},
+            "input_fields": {},
         }
 
         target = """Instruction:solve the math exercises
@@ -3011,7 +3026,7 @@ Agent:"""
         self.assertEqual(instance["source"], target)
 
     def test_model_input_formatter_without_demonstrations_or_instruction(self):
-        instance = {"source": "1+1", "target": "2", "inputs": {}}
+        instance = {"source": "1+1", "target": "2", "input_fields": {}}
         target = """User:1+1
 Agent:"""
 
@@ -3024,7 +3039,12 @@ Agent:"""
         self.assertEqual(instance_out["source"], target)
 
     def test_system_format_without_demonstrations_and_empty_instruction(self):
-        instance = {"source": "1+1", "target": "2", "instruction": "", "inputs": {}}
+        instance = {
+            "source": "1+1",
+            "target": "2",
+            "instruction": "",
+            "input_fields": {},
+        }
 
         target = """User:1+1
 Agent:"""
@@ -3084,12 +3104,32 @@ Agent:"""
         input_multi_stream = MultiStream(
             {
                 "questions": [
-                    {"question": "question_1", "id": "1"},
-                    {"question": "question_2", "id": "2"},
+                    {
+                        "question": "question_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                    {
+                        "question": "question_2",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
                 ],
                 "answers": [
-                    {"answer": "answer_1", "id": "1"},
-                    {"answer": "answer_2", "id": "2"},
+                    {
+                        "answer": "answer_1",
+                        "id": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
+                    {
+                        "answer": "answer_2",
+                        "id": "2",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
                 ],
                 "train": [{"field": "train1"}],
             }
@@ -3107,8 +3147,20 @@ Agent:"""
         )
         joined_stream = list(output_multi_stream["questions_and_answers"])
         expected_joined_stream = [
-            {"question": "question_1", "id": "1", "answer": "answer_1"},
-            {"question": "question_2", "id": "2", "answer": "answer_2"},
+            {
+                "question": "question_1",
+                "id": "1",
+                "answer": "answer_1",
+                "data_classification_policy": ["public"],
+                "recipe_metadata": [],
+            },
+            {
+                "question": "question_2",
+                "id": "2",
+                "answer": "answer_2",
+                "data_classification_policy": ["public"],
+                "recipe_metadata": [],
+            },
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
 
@@ -3139,7 +3191,13 @@ Agent:"""
         input_multi_stream = MultiStream(
             {
                 "questions": [
-                    {"question": "question_1", "id_1": "1", "id_2": "1"},
+                    {
+                        "question": "question_1",
+                        "id_1": "1",
+                        "id_2": "1",
+                        "data_classification_policy": ["public"],
+                        "recipe_metadata": [],
+                    },
                 ],
             }
         )
@@ -3148,5 +3206,12 @@ Agent:"""
         )
         self.assertListEqual(list(output_multi_stream.keys()), ["questions"])
         joined_stream = list(output_multi_stream["questions"])
-        expected_joined_stream = [{"question": "question_1", "id_1": "1"}]
+        expected_joined_stream = [
+            {
+                "question": "question_1",
+                "id_1": "1",
+                "data_classification_policy": ["public"],
+                "recipe_metadata": [],
+            }
+        ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)

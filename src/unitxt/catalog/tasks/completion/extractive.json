@@ -1,14 +1,14 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "context": "str",
         "context_type": "str",
         "completion_type": "str"
     },
-    "outputs": {
+    "reference_fields": {
         "completion": "str"
     },
-    "prediction_type": "Dict[str,Any]",
+    "prediction_type": "Dict[str, Any]",
     "metrics": [
         "metrics.squad"
     ]

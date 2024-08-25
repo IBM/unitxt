@@ -17,8 +17,8 @@ card = TaskCard(
         JoinStr(field_to_field={"test_list": "test_list_str"}, separator=os.linesep),
     ],
     task=Task(
-        inputs=["text", "test_list_str"],
-        outputs=["test_list", "code"],
+        input_fields=["text", "test_list_str"],
+        reference_fields=["test_list", "code"],
         metrics=["metrics.bleu"],
     ),
     templates=TemplatesList(

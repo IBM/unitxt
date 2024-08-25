@@ -1,6 +1,7 @@
 {
     "__type__": "metric_pipeline",
     "main_score": "sacrebleu",
+    "prediction_type": "str",
     "preprocess_steps": [
         {
             "__type__": "copy",
@@ -10,7 +11,7 @@
             "get_default": "en"
         },
         {
-            "__type__": "lower_case",
+            "__type__": "lower",
             "field": "task_data/tokenize"
         },
         {

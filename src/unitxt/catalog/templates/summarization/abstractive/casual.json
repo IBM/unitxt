@@ -1,5 +1,5 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "multi_reference_template",
     "input_format": "Sum up the text with a quick overview, pulling out the main ideas and important details.\nText: {document}",
-    "output_format": "{summary}"
+    "references_field": "summaries"
 }

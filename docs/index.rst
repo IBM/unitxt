@@ -48,16 +48,16 @@
       </style>
    </head>
    <body>
-      <a href="https://unitxt.readthedocs.io/en/latest/" class="custom-button">Video</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/docs/demo.html" class="custom-button">Demo</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://www.unitxt.ai/en/latest/" class="custom-button">Video</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/demo.html" class="custom-button">Demo</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/examples.html" class="custom-button">Examples</a>
       <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/modules.html" class="custom-button">Documentation</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/catalog/catalog.__dir__.html" class="custom-button">Catalog</a>
-      <a href="https://github.com/IBM/unitxt/blob/main/CONTRIBUTING.md" class="custom-button">Contributors</a>
+      <a href="https://www.unitxt.ai/en/latest/catalog/catalog.__dir__.html" class="custom-button">Catalog</a>
+      <a href="https://github.com/IBM/unitxt/blob/main/CONTRIBUTING.md" class="custom-button">Contributing</a>
       <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/search.html" class="custom-button">Search</a>
-      <a href="https://unitxt.readthedocs.io/en/latest/py-modindex.html" class="custom-button">Modules</a>
+      <a href="https://www.unitxt.ai/en/latest/search.html" class="custom-button">Search</a>
+      <a href="https://www.unitxt.ai/en/latest/modules.html" class="custom-button">Code Documentation</a>
       <br>
    </body>
    </html>
@@ -175,11 +175,13 @@ Welcome!
    docs/examples
    docs/data_classification_policy
    docs/rag_support
+   docs/multimodality
    docs/operators
    docs/saving_and_loading_from_catalog
    docs/production
    docs/debugging
    docs/helm
+   docs/lm_eval
    docs/glossary
    documentation
    catalog/catalog.__dir__

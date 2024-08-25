@@ -7,7 +7,7 @@ from unitxt.operators import (
     FilterByCondition,
     InterleaveListsToDialogOperator,
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -33,7 +33,7 @@ card = TaskCard(
                 "winner": {"model_1": "choice_a", "model_2": "choice_b", "tie": "tie"}
             }
         ),
-        RenameFields(
+        Rename(
             field_to_field={
                 "category": "group",
             }
@@ -51,7 +51,7 @@ card = TaskCard(
     ],
     task="tasks.response_assessment.pairwise_comparison.multi_turn",
     templates=[
-        "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_shuffle"
+        "templates.response_assessment.pairwise_comparison.mt_bench_multi_turn_with_shuffling"
     ],
 )
 

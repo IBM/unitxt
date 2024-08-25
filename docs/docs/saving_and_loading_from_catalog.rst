@@ -33,16 +33,16 @@ Once your catalog is registered, you can add artifacts to it:
 
     add_to_catalog(my_task, catalog_name, catalog_path="path/to/catalog/directory")
 
-It's also possible to save artifacts to the library's default catalog:
+It's also possible to add artifacts to the library's default catalog:
 
 .. code-block:: python
 
-    save_to_catalog(my_task, catalog_name)
+    add_to_catalog(my_task, catalog_name)
 
 Using Catalog Assets
 --------------------
 
-To use catalog objects, simply specify their name in the Unitxt object that will use them. For example, `tasks.my_task` can now be utilized by the `StandardRecipe`:
+To use catalog objects, simply specify their name in the Unitxt object that will use them. 
 
 .. code-block:: python
 

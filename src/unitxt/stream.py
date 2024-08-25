@@ -2,7 +2,6 @@ import tempfile
 import traceback
 import warnings
 from abc import abstractmethod
-from copy import deepcopy
 from typing import Any, Callable, Dict, Generator, Iterable, List
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
@@ -11,6 +10,7 @@ from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
 from .settings_utils import get_settings
+from .utils import deepcopy
 
 settings = get_settings()
 logger = get_logger()
@@ -222,7 +222,9 @@ class MultiStream(dict):
         for stream in self.values():
             stream.set_copying(copying)
 
-    def to_dataset(self, disable_cache=True, cache_dir=None) -> DatasetDict:
+    def to_dataset(
+        self, disable_cache=True, cache_dir=None, features=None
+    ) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
             return DatasetDict(
@@ -232,6 +234,7 @@ class MultiStream(dict):
                         keep_in_memory=disable_cache,
                         cache_dir=cache_dir,
                         gen_kwargs={"key": key},
+                        features=features,
                     )
                     for key in self.keys()
                 }
@@ -281,7 +284,10 @@ class MultiStream(dict):
 
     @classmethod
     def from_iterables(
-        cls, iterables: Dict[str, Iterable], caching=False, copying=False
+        cls,
+        iterables: Dict[str, Iterable[Dict[str, Any]]],
+        caching=False,
+        copying=False,
     ):
         """Creates a MultiStream from a dictionary of iterables.
 
