@@ -9,6 +9,8 @@
         "templates.rag_eval.answer_correctness.judge_simplified_with_context",
         "templates.rag_eval.answer_correctness.judge_simplified_with_context_logprobs",
         "templates.rag_eval.answer_correctness.judge_simplified_no_context",
-        "templates.rag_eval.answer_correctness.judge_simplified_no_context_logprobs"
+        "templates.rag_eval.answer_correctness.judge_simplified_no_context_logprobs",
+        "templates.rag_eval.answer_correctness.judge_loose_match_no_context",
+        "templates.rag_eval.answer_correctness.judge_loose_match_no_context_logprobs"
     ]
 }
