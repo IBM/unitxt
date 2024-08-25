@@ -6,7 +6,7 @@
         "main_score": "answer_correctness_q_a_gt_judge_llama_3_1_70b_instruct",
         "model_name": "meta-llama/llama-3-1-70b-instruct",
         "task_name": "tasks.rag_eval.answer_correctness.binary",
-        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_no_context_logprobs",
+        "template_name": "templates.rag_eval.answer_correctness.judge_loose_match_no_context_logprobs",
         "model_format_name": "formats.llama3_instruct"
     },
     "preprocess_steps": [
