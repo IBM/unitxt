@@ -16,11 +16,11 @@ Unitxt conforms to the HuggingFace Datasets and Metrics APIs, so it can be used 
   testset = dataset["test"]
   model_inputs = testset["source"]
   model = pipeline(model='google/flan-t5-base')
-  predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
-  
-  metric = evaluate.load("unitxt/metric",trust_remote_code=True)
-  dataset_with_scores = metric.compute(predictions=predictions,references=testset)
-  [print(item) for item in scores[0]['score']['global'].items()] 
+  predictions = [output['generated_text'] for output in model(model_inputs, max_new_tokens=30)]
+
+  metric = evaluate.load("unitxt/metric", trust_remote_code=True)
+  dataset_with_scores = metric.compute(predictions=predictions, references=testset)
+  [print(item) for item in dataset_with_scores[0]['score']['global'].items()]
 
 Note, the `trust_remote_code=True` flag is required because in the background the HuggingFace API downloads and installs the
 latest version of Unitxt from https://huggingface.co/datasets/unitxt/data/tree/main.
