@@ -4857,6 +4857,10 @@ class TaskBasedJudgeMetric(BulkInstanceMetric):
     def prepare(
         self,
     ):
+        from datasets.utils.logging import disable_progress_bar
+
+        disable_progress_bar()
+
         self.reduction_map = {"mean": [self.main_score]}
         # the processing steps for preparing the prompt (instruction, answer prefix etc.)
         # that we send to the generative judge model
