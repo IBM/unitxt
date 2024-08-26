@@ -1,0 +1,47 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "/Users/shir/PycharmProjects/unitxt/prepare/cards/quintd_load_script.py",
+        "streaming": false,
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "validation",
+                "validation": "validation",
+                "test": "test"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "type_of_input_a": "table",
+                "type_of_input_b": "metadata",
+                "type_of_output": "caption",
+                "output": "caption"
+            }
+        },
+        {
+            "__type__": "map_table_lists_to_std_table_json",
+            "field": "table",
+            "to_field": "table_json"
+        },
+        {
+            "__type__": "serialize_table_as_markdown",
+            "field": "table_json",
+            "to_field": "input_a"
+        },
+        {
+            "__type__": "rename_fields",
+            "field": "metadata",
+            "to_field": "input_b"
+        }
+    ],
+    "task": "tasks.generation.from_pair[metrics=[metrics.bleu]]",
+    "templates": "templates.generation.from_pair.all"
+}
