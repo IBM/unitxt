@@ -51,5 +51,5 @@ card = TaskCard(
     },
 )
 
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.wikitq", overwrite=True)

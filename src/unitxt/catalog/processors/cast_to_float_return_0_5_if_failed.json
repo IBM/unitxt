@@ -1,21 +1,10 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "cast_fields",
-            "fields": {
-                "prediction": "float"
-            },
-            "failure_defaults": {
-                "prediction": 0.5
-            }
-        },
-        {
-            "__type__": "cast_fields",
-            "fields": {
-                "references": "float"
-            },
-            "process_every_value": true
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "cast",
+        "to": "float",
+        "failure_default": {
+            "float": 0.5
         }
-    ]
+    }
 }

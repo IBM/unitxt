@@ -1,17 +1,8 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "dict_of_lists_to_pairs",
-            "position_key_before_value": false,
-            "field": "prediction",
-            "process_every_value": false
-        },
-        {
-            "__type__": "dict_of_lists_to_pairs",
-            "position_key_before_value": false,
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "dict_of_lists_to_pairs",
+        "position_key_before_value": false,
+        "process_every_value": false
+    }
 }

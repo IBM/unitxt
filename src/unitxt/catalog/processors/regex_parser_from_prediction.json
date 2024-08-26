@@ -1,6 +1,8 @@
 {
-    "__type__": "regex_parser",
-    "field": "prediction",
-    "regex": ".+",
-    "process_every_value": false
+    "__type__": "post_process",
+    "process_references": false,
+    "operator": {
+        "__type__": "regex_parser",
+        "regex": ".+"
+    }
 }

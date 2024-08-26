@@ -1,19 +1,8 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "load_json",
-            "field": "prediction",
-            "process_every_value": false,
-            "allow_failure": true,
-            "failure_value": []
-        },
-        {
-            "__type__": "load_json",
-            "field": "references",
-            "process_every_value": true,
-            "allow_failure": true,
-            "failure_value": []
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "load_json",
+        "allow_failure": true,
+        "failure_value": []
+    }
 }

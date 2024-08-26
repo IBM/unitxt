@@ -1,12 +1,14 @@
 import abc
 import os
+import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
 from .artifact import Artifact
-from .dataclass import InternalField
+from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
+from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 
@@ -61,11 +63,20 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         return self._infer_log_probs(dataset)
 
 
-class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class LazyLoadMixin(Artifact):
+    lazy_load: bool = NonPositionalField(default=False)
+
+    @abc.abstractmethod
+    def _is_loaded(self):
+        pass
+
+
+class HFPipelineBasedInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+):
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
-    lazy_load: bool = False
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -115,11 +126,11 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         if not self.lazy_load:
             self._prepare_pipeline()
 
-    def is_pipeline_initialized(self):
+    def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
     def _infer(self, dataset):
-        if not self.is_pipeline_initialized():
+        if not self._is_loaded():
             self._prepare_pipeline()
 
         outputs = []
@@ -497,3 +508,71 @@ class WMLInferenceEngine(
             prompt=dataset["source"],
             params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
         )
+
+
+class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_name: str
+    max_new_tokens: int
+    lazy_load = True
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def _prepare_engine(self):
+        import torch
+        from transformers import AutoProcessor, LlavaForConditionalGeneration
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def prepare(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(self, dataset):
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        import torch
+
+        results = []
+        for instance in dataset:
+            text = instance["source"]
+            images = extract_images(text, instance)
+            # Regular expression to match all <img src="..."> tags
+            regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+            model_input = re.sub(regex, "<image>", text)
+            if len(images) == 1:
+                images = images[0]
+            inputs = self.processor(
+                images=images, text=model_input, return_tensors="pt"
+            ).to(self.device, torch.float16)
+            input_len = len(inputs["input_ids"][0])
+            output = self.model.generate(
+                **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
+            )
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
+            results.append(result)
+
+        return results
