@@ -1,0 +1,10 @@
+{
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "cast",
+        "to": "float",
+        "failure_default": {
+            "float": 0.5
+        }
+    }
+}

@@ -1,15 +1,6 @@
 {
-    "__type__": "sequential_operator",
-    "steps": [
-        {
-            "__type__": "str_to_float_format",
-            "field": "prediction",
-            "process_every_value": false
-        },
-        {
-            "__type__": "str_to_float_format",
-            "field": "references",
-            "process_every_value": true
-        }
-    ]
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "str_to_float_format"
+    }
 }

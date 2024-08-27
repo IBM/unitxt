@@ -21,7 +21,6 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
-    DeprecatedField,
     InternalField,
     NonPositionalField,
     OptionalField,
@@ -1425,11 +1424,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
-        }
-    )
+    postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1446,6 +1441,9 @@ class MetricPipeline(MultiStreamOperator, Metric):
         assert isinstance(
             self.metric, Metric
         ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
+        if self.postpreprocess_steps is not None:
+            depr_message = "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         super().prepare()
@@ -4729,3 +4727,170 @@ class MetricsEnsemble(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         return {self.main_score: prediction}
+
+
+class F1Strings(InstanceMetric):
+    main_score = "f1_strings"
+    reduction_map = {"mean": ["f1_strings"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+    _requirements_list = {
+        "spacy": "Please pip install spacy",
+    }
+
+    def prepare(self):
+        super().prepare()
+        import spacy
+
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+        except OSError:
+            from spacy.cli import download
+
+            download("en_core_web_sm")
+            self.nlp = spacy.load("en_core_web_sm")
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        doc_ref = self.nlp(references[0])
+        set_ref = Counter([token.text.lower() for token in doc_ref])
+        doc_pred = self.nlp(prediction)
+        set_pred = Counter([token.text.lower() for token in doc_pred])
+
+        true_positives = sum((set_ref & set_pred).values())
+        false_positives = sum((set_ref - set_pred).values())
+        false_negatives = sum((set_pred - set_ref).values())
+
+        if true_positives == 0:
+            f1 = 0.0
+        else:
+            precision = true_positives / (true_positives + false_positives)
+            recall = true_positives / (true_positives + false_negatives)
+            if precision + recall == 0:
+                f1 = 0.0
+            else:
+                f1 = 2 * (precision * recall) / (precision + recall)
+
+        return {self.main_score: [f1], "score_name": self.main_score}
+
+
+class RandomForestMetricsEnsemble(MetricsEnsemble):
+    """This class extends the `MetricsEnsemble` base class and leverages a pre-trained scikit-learn Random Forest classification model to combine and aggregate scores from multiple judges.
+
+    `load_weights` method:
+         Loads model weights from dictionary representation of a random forest classifier.
+    `ensemble` method:
+         Decodes the RandomForestClassifier object and predict a score based on the given instance.
+    """
+
+    _requirements_list: List[str] = ["sklearn"]
+
+    def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
+        from sklearn.tree._tree import Tree
+
+        tree_dict["nodes"] = [tuple(lst) for lst in tree_dict["nodes"]]
+
+        tree_dict["values"] = np.array(tree_dict["values"])
+        names = [
+            "left_child",
+            "right_child",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "missing_go_to_left",
+        ]
+        tree_dict["nodes"] = np.array(
+            tree_dict["nodes"],
+            dtype=np.dtype({"names": names, "formats": tree_dict["nodes_dtype"]}),
+        )
+
+        tree = Tree(n_features, np.array([n_classes], dtype=np.intp), n_outputs)
+        tree.__setstate__(tree_dict)
+
+        return tree
+
+    def decode_decision_tree(self, model_dict):
+        from sklearn.tree import DecisionTreeClassifier
+
+        decoded_model = DecisionTreeClassifier(**model_dict["params"])
+
+        decoded_model.n_features_in_ = model_dict["n_features_in_"]
+        decoded_model.n_outputs_ = model_dict["n_outputs_"]
+        decoded_model.max_features_ = model_dict["max_features_"]
+        decoded_model.n_classes_ = model_dict["n_classes_"]
+        decoded_model.classes_ = np.array(model_dict["classes_"])
+
+        tree = self.decode_tree(
+            model_dict["tree_"],
+            model_dict["n_features_in_"],
+            model_dict["n_classes_"],
+            model_dict["n_outputs_"],
+        )
+        decoded_model.tree_ = tree
+
+        return decoded_model
+
+    def decode_forest(self, model_dict):
+        from sklearn.ensemble import RandomForestClassifier
+
+        model = RandomForestClassifier(**model_dict["params"])
+        estimators = [
+            self.decode_decision_tree(decision_tree)
+            for decision_tree in model_dict["estimators_"]
+        ]
+        model.estimators_ = np.array(estimators)
+
+        model.n_features_in_ = model_dict["n_features_in_"]
+        model.feature_names_in_ = np.array(model_dict["feature_names_in_"])
+
+        model.min_samples_split = model_dict["min_samples_split"]
+        model.max_depth = model_dict["max_depth"]
+        model.min_samples_leaf = model_dict["min_samples_leaf"]
+        model.min_weight_fraction_leaf = model_dict["min_weight_fraction_leaf"]
+        model.max_features = model_dict["max_features"]
+        model.classes_ = np.array(model_dict["classes_"])
+        model.max_leaf_nodes = model_dict["max_leaf_nodes"]
+        model.min_impurity_decrease = model_dict["min_impurity_decrease"]
+        model.n_outputs_ = model_dict["n_outputs_"]
+
+        if isinstance(model_dict["n_classes_"], list):
+            model.n_classes_ = np.array(model_dict["n_classes_"])
+        else:
+            model.n_classes_ = model_dict["n_classes_"]
+
+        if "oob_score_" in model_dict:
+            model.oob_score_ = model_dict["oob_score_"]
+        if "oob_decision_function_" in model_dict:
+            model.oob_decision_function_ = model_dict["oob_decision_function_"]
+
+        return model
+
+    def prepare(self):
+        super().prepare()
+
+    @staticmethod
+    def load_weights(json_file):
+        with open(json_file) as file:
+            return json.load(file)
+
+    def ensemble(self, instance):
+        assert (
+            self.weights is not None
+        ), "RandomForestMetricsEnsemble must set self.weights before it can be used"
+        ensemble_model = self.decode_forest(self.weights)
+
+        prediction_lst = []
+        for i, metric in enumerate(self.metrics):
+            prediction_lst.append(
+                instance["score"]["instance"][
+                    self.get_prefix_name(i) + metric.main_score
+                ]
+            )
+        score = ensemble_model.predict([prediction_lst])
+        return score.tolist()[0]

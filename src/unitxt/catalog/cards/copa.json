@@ -16,7 +16,7 @@
             "to_field": "choices"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "premise": "context",
                 "label": "answer"

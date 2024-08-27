@@ -51,7 +51,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "src",
             "to_field": "input"
         },

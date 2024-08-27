@@ -34,7 +34,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "passage": "text_a",
                 "question": "text_b",

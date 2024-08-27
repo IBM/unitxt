@@ -1,0 +1,45 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "cola": {
+            "__type__": "standard_recipe",
+            "card": "cards.cola",
+            "template": "templates.classification.multi_class.instruction"
+        },
+        "mnli": {
+            "__type__": "standard_recipe",
+            "card": "cards.mnli",
+            "template": "templates.classification.multi_class.relation.default"
+        },
+        "mrpc": {
+            "__type__": "standard_recipe",
+            "card": "cards.mrpc",
+            "template": "templates.classification.multi_class.relation.default"
+        },
+        "qnli": {
+            "__type__": "standard_recipe",
+            "card": "cards.qnli",
+            "template": "templates.classification.multi_class.relation.default"
+        },
+        "rte": {
+            "__type__": "standard_recipe",
+            "card": "cards.rte",
+            "template": "templates.classification.multi_class.relation.default"
+        },
+        "sst2": {
+            "__type__": "standard_recipe",
+            "card": "cards.sst2",
+            "template": "templates.classification.multi_class.title"
+        },
+        "stsb": {
+            "__type__": "standard_recipe",
+            "card": "cards.stsb",
+            "template": "templates.regression.two_texts.title"
+        },
+        "wnli": {
+            "__type__": "standard_recipe",
+            "card": "cards.wnli",
+            "template": "templates.classification.multi_class.relation.default"
+        }
+    }
+}

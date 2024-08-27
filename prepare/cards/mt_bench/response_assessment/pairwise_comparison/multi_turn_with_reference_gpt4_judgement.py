@@ -7,7 +7,7 @@ from unitxt.operators import (
     FilterByCondition,
     InterleaveListsToDialogOperator,
     MapInstanceValues,
-    RenameFields,
+    Rename,
 )
 from unitxt.test_utils.card import test_card
 
@@ -33,7 +33,7 @@ card = TaskCard(
                 "winner": {"model_1": "choice_a", "model_2": "choice_b", "tie": "tie"}
             }
         ),
-        RenameFields(field_to_field={"category": "group"}),
+        Rename(field_to_field={"category": "group"}),
         InterleaveListsToDialogOperator(
             user_turns_field="model_input",
             assistant_turns_field="model_1_output",

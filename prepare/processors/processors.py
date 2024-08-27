@@ -1,8 +1,7 @@
 import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
-from unitxt.operator import SequentialOperator
-from unitxt.operators import CastFields, RemoveValues
+from unitxt.operators import Cast, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
@@ -13,12 +12,13 @@ from unitxt.processors import (
     FirstCharacter,
     GetStringAfter,
     LiteralEval,
-    LowerCase,
+    Lower,
     LowerCaseTillPunc,
     MatchClosestOption,
+    PostProcess,
     RegexParser,
     StanceToProCon,
-    StringOrNotString,
+    StringEquals,
     StrToFloatFormat,
     Substring,
     TakeFirstNonEmptyLine,
@@ -27,234 +27,115 @@ from unitxt.processors import (
     YesNoToInt,
     YesToOneElseZero,
 )
+from unitxt.settings_utils import get_constants
 
+constants = get_constants()
 logger = get_logger()
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            TakeFirstNonEmptyLine(field="prediction", process_every_value=False),
-            TakeFirstNonEmptyLine(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(TakeFirstNonEmptyLine()),
     "processors.take_first_non_empty_line",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            LowerCaseTillPunc(field="prediction", process_every_value=False),
-            LowerCaseTillPunc(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(LowerCaseTillPunc()),
     "processors.lower_case_till_punc",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            StringOrNotString(
-                string="hate speech", field="prediction", process_every_value=False
-            ),
-            StringOrNotString(
-                string="hate speech", field="references", process_every_value=True
-            ),
-        ]
-    ),
+    PostProcess(StringEquals(string="hate speech")),
     "processors.hate_speech_or_not_hate_speech",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            LowerCase(field="prediction", process_every_value=False),
-            LowerCase(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(Lower()),
     "processors.lower_case",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            Capitalize(field="prediction", process_every_value=False),
-            Capitalize(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(Capitalize()),
     "processors.capitalize",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            Substring(field="prediction", process_every_value=False),
-            Substring(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(Substring()),
     "processors.substring",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            GetStringAfter(
-                substring=":", field="prediction", process_every_value=False
-            ),
-            GetStringAfter(substring=":", field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(GetStringAfter(substring=":")),
     "processors.get_string_after_colon",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            StringOrNotString(
-                string="toxic", field="prediction", process_every_value=False
-            ),
-            StringOrNotString(
-                string="toxic", field="references", process_every_value=True
-            ),
-        ]
-    ),
+    PostProcess(StringEquals(string="toxic")),
     "processors.toxic_or_not_toxic",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ConvertToBoolean(field="prediction", process_every_value=False),
-            ConvertToBoolean(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(ConvertToBoolean()),
     "processors.convert_to_boolean",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            TakeFirstWord(field="prediction", process_every_value=False),
-            TakeFirstWord(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(TakeFirstWord()),
     "processors.take_first_word",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            YesNoToInt(field="prediction", process_every_value=False),
-            YesNoToInt(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(YesNoToInt()),
     "processors.yes_no_to_int",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            StrToFloatFormat(field="prediction", process_every_value=False),
-            StrToFloatFormat(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(StrToFloatFormat()),
     "processors.str_to_float_format",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ToYesOrNone(field="prediction", process_every_value=False),
-            ToYesOrNone(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(ToYesOrNone()),
     "processors.to_yes_or_none",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            YesToOneElseZero(field="prediction", process_every_value=False),
-        ]
-    ),
+    PostProcess(YesToOneElseZero(), process_references=False),
     "processors.predictions_yes_1_else_0",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            StanceToProCon(field="prediction", process_every_value=False),
-            StanceToProCon(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(StanceToProCon()),
     "processors.stance_to_pro_con",
     overwrite=True,
 )
 
-parser = FirstCharacter(field="TBD")
-example = " A. This is the answer."
-logger.info(parser.process_value(example))
-assert parser.process_value(example) == "A"
-
-example = "   "
-logger.info(parser.process_value(example))
-assert parser.process_value(example) == ""
-
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            FirstCharacter(field="prediction", process_every_value=False),
-            FirstCharacter(field="references", process_every_value=True),
-        ]
-    ),
+    PostProcess(FirstCharacter()),
     "processors.first_character",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            RemoveValues(
-                field="prediction",
-                unallowed_values=["none"],
-                process_every_value=False,
-            ),
-            RemoveValues(
-                field="references/0",
-                unallowed_values=["none"],
-                process_every_value=False,
-            ),
-        ]
-    ),
+    PostProcess(RemoveValues(unallowed_values=["none"])),
     "processors.remove_none_from_list",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            MatchClosestOption(
-                field="prediction",
-            ),
-            MatchClosestOption(
-                field="references",
-                process_every_value=True,
-            ),
-        ]
-    ),
+    PostProcess(MatchClosestOption()),
     "processors.match_closest_option",
     overwrite=True,
 )
@@ -266,106 +147,82 @@ logger.info(parser.process_value(example))
 assert parser.process_value(example) == "Yes"
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ExtractWithRegex(
-                regex=double_brackets_regex,
-                field="prediction",
-                process_every_value=False,
-            ),
-        ]
+    PostProcess(
+        ExtractWithRegex(regex=double_brackets_regex), process_references=False
     ),
     "processors.extract_from_double_brackets",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            CastFields(
-                fields={"prediction": "float"},
-                failure_defaults={"prediction": 0.0},
-            ),
-            CastFields(
-                fields={"references": "float"},
-                process_every_value=True,
-            ),
-        ]
-    ),
+    PostProcess(Cast(to="float", failure_default=0.0)),
     "processors.cast_to_float_return_zero_if_failed",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            CastFields(
-                fields={"prediction": "float"},
-                failure_defaults={"prediction": np.nan},
-            ),
-            CastFields(
-                fields={"references": "float"},
-                process_every_value=True,
-            ),
-        ]
-    ),
+    PostProcess(Cast(to="float", failure_default=np.nan)),
     "processors.cast_to_float_return_nan_if_failed",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ExtractMtBenchRatingJudgment(
-                field="prediction",
-            ),
-            ExtractMtBenchRatingJudgment(
-                field="references",
-                process_every_value=True,
-            ),
-        ]
-    ),
+    PostProcess(ExtractMtBenchRatingJudgment()),
     "processors.extract_mt_bench_rating_judgment",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ExtractMtBenchLabelJudgment(
-                field="prediction",
-            ),
-            ExtractMtBenchLabelJudgment(
-                field="references",
-                process_every_value=True,
-            ),
-        ]
-    ),
+    PostProcess(ExtractMtBenchLabelJudgment()),
     "processors.extract_mt_bench_label_judgment",
     overwrite=True,
 )
 
 add_to_catalog(
-    RegexParser(field="prediction", regex=".+", process_every_value=False),
+    PostProcess(RegexParser(regex=".+"), process_references=False),
     "processors.regex_parser_from_prediction",
     overwrite=True,
 )
 
 add_to_catalog(
-    LiteralEval(field="prediction", process_every_value=False),
+    PostProcess(LiteralEval(), process_references=False),
     "processors.literal_eval",
     overwrite=True,
 )
 
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            ExtractArenaHardNumericalJudgment(
-                field="prediction",
-            ),
-        ]
-    ),
+    PostProcess(ExtractMtBenchRatingJudgment()),
+    "processors.extract_mt_bench_rating_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(ExtractMtBenchLabelJudgment()),
+    "processors.extract_mt_bench_label_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(RegexParser(regex=".+"), process_references=False),
+    "processors.regex_parser_from_prediction",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(LiteralEval(), process_references=False),
+    "processors.literal_eval",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(Cast(to="float", failure_default={"float": 0.5})),
+    "processors.cast_to_float_return_0_5_if_failed",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(ExtractArenaHardNumericalJudgment(), process_references=False),
     "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
 )

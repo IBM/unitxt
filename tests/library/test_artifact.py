@@ -12,8 +12,8 @@ from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
-from unitxt.operators import RenameFields, Set
-from unitxt.processors import StringOrNotString
+from unitxt.operators import Rename, Set
+from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
 from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
@@ -48,7 +48,7 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_loading_with_overwrite_args(self):
         with temp_catalog() as catalog_path:
             add_to_catalog(
-                StringOrNotString(string="yes", field="a_field"),
+                StringEquals(string="yes", field="a_field"),
                 "test1.test2",
                 catalog_path=catalog_path,
             )
@@ -60,7 +60,7 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_loading_with_overwrite_args_with_list_of_operators(self):
         with temp_catalog() as catalog_path:
             add_to_catalog(
-                StringOrNotString(string="yes", field="a_field"),
+                StringEquals(string="yes", field="a_field"),
                 "test2.processor",
                 catalog_path=catalog_path,
             )
@@ -94,7 +94,7 @@ class TestArtifact(UnitxtTestCase):
                 catalog_path=catalog_path,
             )
             add_to_catalog(
-                RenameFields(field_to_field={"label_text": "label"}),
+                Rename(field_to_field={"label_text": "label"}),
                 "renamefields.for.test.dict",
                 catalog_path=catalog_path,
             )

@@ -2,7 +2,7 @@ from datasets import get_dataset_config_names
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -148,7 +148,7 @@ for subset in get_dataset_config_names(
             SplitRandomMix(
                 {"train": "train[85%]", "validation": "train[15%]", "test": "test"}
             ),
-            RenameFields(field_to_field={"topics": "labels"}),
+            Rename(field_to_field={"topics": "labels"}),
             Set(fields={"classes": classlabels[subset], "type_of_classes": "topics"}),
         ],
         task="tasks.classification.multi_label",

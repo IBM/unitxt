@@ -1,5 +1,6 @@
 import importlib.util
 import os
+from contextlib import contextmanager
 
 from .version import version
 
@@ -87,6 +88,17 @@ class Settings:
             self.environment_variable_key_name(key) for key in self._settings.keys()
         ]
 
+    @contextmanager
+    def context(self, **kwargs):
+        old_values = {key: self._settings.get(key, None) for key in kwargs}
+        try:
+            for key, value in kwargs.items():
+                self.__setattr__(key, value)
+            yield
+        finally:
+            for key, value in old_values.items():
+                self.__setattr__(key, value)
+
 
 class Constants:
     _instance = None
@@ -163,6 +175,8 @@ if Constants.is_uninitilized():
     ]
     constants.codebase_url = "https://github.com/IBM/unitxt"
     constants.website_url = "https://www.unitxt.org"
+    constants.inference_stream = "__INFERENCE_STREAM__"
+    constants.instance_stream = "__INSTANCE_STREAM__"
 
 
 def get_settings():

@@ -82,13 +82,22 @@ and choosing the demonstration examples most (lexically) similar to each test in
 Related documentation: :ref:`Formatting tutorial <adding_format>`.
 
 Evaluate dataset with a pool of templates and some number of demonstrations
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 This example demonstrates how to evaluate a dataset using a pool of templates and a varying number of in-context learning demonstrations. It shows how to sample a template and specify the number of demonstrations for each instance from predefined lists.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_templates_num_demos.py>`_
 
 Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
+
+Construct a benchmark of multiple datasets and obtain the final score
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This example shows how to construct a benchmark that includes multiple datasets, each with a specific template. It demonstrates how to use these templates to evaluate the datasets and aggregate the results to obtain a final score. This approach provides a comprehensive evaluation across different tasks and datasets.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_benchmark.py>`_
+
+Related documentation: :ref:`Benchmarks tutorial <adding_benchmark>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
 
 LLM as Judges
 --------------
@@ -165,6 +174,21 @@ The example shows how to ensemble two judges which uses different templates.
 
 Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
+Evaluate predictions of models using pre-trained ensemble of LLM as judges
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to use a pre-trained ensemble model or an off-the-shelf LLM as judge to assess multi-turn conversation quality of models on a set of pre-defined metrics.
+
+Topicality: Response of the model only contains information that is related to and helpful for the user inquiry.
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_ensemble_judge.py>`
+
+Groundedness: Every substantial claim in the response of the model is derivable from the content of the document
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_grounded_ensemble_judge.py>`
+
+IDK: Does the model response say I don't know?
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_idk_judge.py>`
+
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
 
 RAG
 ---
@@ -182,3 +206,23 @@ and use the existing metrics to evaluate model results.
 
 Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <catalog.tasks.rag.response_generation>`.
 
+Multi-Modality
+--------------
+
+Evaluate Image-Text to Text Model
++++++++++++++++++++++++++++++++++
+This example demonstrates how to evaluate an image-text to text model using Unitxt.
+The task involves generating text responses based on both image and text inputs. This is particularly useful for tasks like visual question answering (VQA) where the model needs to understand and reason about visual content to answer questions.
+The example shows how to:
+
+    1. Load a pre-trained image-text model (LLaVA in this case)
+    2. Prepare a dataset with image-text inputs
+    3. Run inference on the model
+    4. Evaluate the model's predictions
+
+The code uses the document VQA dataset in English, applies a QA template with context, and formats it for the LLaVA model. It then selects a subset of the test data, generates predictions, and evaluates the results.
+This approach can be adapted for various image-text to text tasks, such as image captioning, visual reasoning, or multimodal dialogue systems.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text.py>`_
+
+Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.

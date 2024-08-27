@@ -678,7 +678,7 @@ class MultipleSourceLoader(Loader):
 
     def load_data(self):
         return FixedFusion(
-            origins=self.sources, max_instances_per_origin_split=self.get_limit()
+            subsets=self.sources, max_instances_per_subset=self.get_limit()
         ).process()
 
 

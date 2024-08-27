@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import (
     MetricPipeline,
 )
-from unitxt.operators import Copy, RenameFields
+from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 base = "metrics.rag.faithfulness"
@@ -47,8 +47,8 @@ def test_faithfulness(task_data, catalog_name, global_target, instance_targets):
     test_pipeline = MetricPipeline(
         main_score="score",
         preprocess_steps=[
-            RenameFields(field_to_field={"task_data/contexts": "contexts"}),
-            RenameFields(field_to_field={"task_data/answer": "answer"}),
+            Rename(field_to_field={"task_data/contexts": "contexts"}),
+            Rename(field_to_field={"task_data/answer": "answer"}),
         ],
         metric=f"{catalog_name}",
     )

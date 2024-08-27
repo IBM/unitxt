@@ -17,6 +17,7 @@ from unitxt.metrics import (
     F1MacroMultiLabel,
     F1Micro,
     F1MicroMultiLabel,
+    F1Strings,
     F1Weighted,
     FinQAEval,
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
@@ -54,7 +55,7 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.operators import RenameFields
+from unitxt.operators import Rename
 from unitxt.test_utils.metrics import (
     apply_metric,
     check_scores,
@@ -294,6 +295,26 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertEqual("f1_micro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_micro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_strings(self):
+        metric = F1Strings()
+        references = [["cat dog"], ["dog"], ["cat"], ["cat"], ["cat"], ["gfjgfh"]]
+        predictions = ["cat", "dog", "dog", "dog cat.", "dog Cat mouse", "100,000"]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        instance_targets = [
+            {"f1_strings": [2 / 3], "score": [2 / 3], "score_name": "f1_strings"},
+            {"f1_strings": [1.0], "score": [1.0], "score_name": "f1_strings"},
+            {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
+            {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
+            {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
+            {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
 
     def test_f1_micro_with_prefix(self):
         metric = F1Micro(score_prefix="my_")
@@ -1931,10 +1952,8 @@ class TestConfidenceIntervals(UnitxtTestCase):
             test_pipeline = MetricPipeline(
                 main_score="score",
                 preprocess_steps=[
-                    RenameFields(
-                        field_to_field={"task_data/context_ids": "context_ids"}
-                    ),
-                    RenameFields(
+                    Rename(field_to_field={"task_data/context_ids": "context_ids"}),
+                    Rename(
                         field_to_field={
                             "task_data/ground_truths_context_ids": "ground_truths_context_ids"
                         }
