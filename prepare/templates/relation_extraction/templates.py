@@ -1,11 +1,6 @@
-from unitxt.blocks import (
-    InputOutputTemplate,
-    MultiLabelTemplate,
-    SpanLabelingTemplate,
-    Template,
-    TemplatesList,
-)
-from unitxt.templates import TupleTemplate
+from unitxt.templates import InputOutputTemplate, MultiLabelTemplate, TemplatesList, TupleTemplate
+from unitxt.catalog import add_to_catalog
+
 
 import fm_eval.runnables.local_catalogs
 from fm_eval.runnables.local_catalogs import add_to_private_catalog

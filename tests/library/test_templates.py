@@ -17,6 +17,7 @@ from unitxt.templates import (
     TemplateFormatKeyError,
     TemplatesDict,
     YesNoTemplate,
+    TupleTemplate
 )
 from unitxt.test_utils.operators import (
     check_operator,
@@ -542,6 +543,63 @@ class TestTemplates(UnitxtTestCase):
 
         to_cover_templates_dict = ToCoverTemplatesDict()
         to_cover_templates_dict.verify()
+        
+        
+        
+    def test_tuple_template(self):
+        template = TupleTemplate(
+            input_format="{text}",
+            tuple_fields = ['subject','relation','object'],
+            
+        )
+        
+        inputs = [
+            {
+                "input_fields": {
+                    "text": "Maria is married to Alex."
+                    },
+                "reference_fields": {
+                    "subjects": ["Maria"],
+                    "relations": ['marriedTo'],
+                    'objects': ['Alex']
+                    },
+            },
+            {
+                "input_fields": {
+                    "text": "Jack is a manager of Thomas. Thomas is employed by IBM"
+                    },
+                "reference_fields": {
+                    "subjects": ['Jack','Thomas'],
+                    "relations": ['managerOf','employedBy'],
+                    'objects': ['Thomas','IBM']
+                    },
+            }
+        ]
+
+        targets = [
+            {
+                "input_fields": {
+                    "text": "Maria is married to Alex."
+                },
+                "reference_fields": {
+                    "subjects": ["Maria"],
+                    "relations": ['marriedTo'],
+                    'objects': ['Alex']
+                },
+                "source": "John,: Doe is from New York and works at Goo:gle.",
+                "target": '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}',
+                "references": [
+                    '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}'
+                ],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": [
+                    "processors.load_json",
+                    "processors.dict_of_lists_to_value_key_pairs",
+                ],
+            }
+
+        ]
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
@@ -736,7 +794,7 @@ class TestTemplates(UnitxtTestCase):
             },
         ]
 
-        check_operator(template, inputs, targets, tester=self)
+        check_operator(template, inputs, targets, tester=self)x
 
     def test_span_labeling_json_template(self):
         template = SpanLabelingJsonTemplate(input_format="{text}")
@@ -1056,3 +1114,6 @@ class TestTemplates(UnitxtTestCase):
             "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)
+        
+        
+    
