@@ -455,6 +455,7 @@ class MultipleChoiceTemplate(Template):
     target_prefix: str = ""
     choices_field: str = "choices"
     target_field: str = "label"
+    target_matching_mode: str = "choice_text"
     choices_separator: str = ", "
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
@@ -554,7 +555,10 @@ class MultipleChoiceTemplate(Template):
 
         if not isinstance(target, int):
             try:
-                target = reference_fields[self.choices_field].index(target)
+                if self.target_matching_mode == "enumeration":
+                    target = self.enumerator.index(target)
+                else:
+                    target = reference_fields[self.choices_field].index(target)
             except ValueError as e:
                 raise UnitxtError(
                     f"MultipleChoiceTemplate could not locate textual target '{target}' in choices list: {reference_fields[self.choices_field]}",
