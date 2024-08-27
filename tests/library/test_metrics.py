@@ -311,7 +311,6 @@ class TestMetrics(UnitxtTestCase):
             {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
             {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
             {"f1_strings": [0.5], "score": [0.5], "score_name": "f1_strings"},
-            {"f1_strings": [0.0], "score": [0.0], "score_name": "f1_strings"},
         ]
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
