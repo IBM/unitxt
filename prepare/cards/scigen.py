@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import (
     ConstructTableFromRowsCols,
     LoadHF,
-    RenameFields,
+    Rename,
     SerializeTableAsIndexedRowMajor,
     Set,
     TaskCard,
@@ -19,7 +19,7 @@ card = TaskCard(
             to_field="table",
         ),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "input_a"]]),
-        RenameFields(field_to_field={"table_caption": "input_b", "text": "output"}),
+        Rename(field_to_field={"table_caption": "input_b", "text": "output"}),
         Set(
             fields={
                 "type_of_input_a": "table",

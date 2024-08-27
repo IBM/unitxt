@@ -33,7 +33,7 @@
             ]
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "table_caption": "input_b",
                 "text": "output"
