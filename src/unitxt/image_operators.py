@@ -24,3 +24,6 @@ class ImageToText(InstanceFieldOperator):
         idx = len(instance["media"]["images"])
         instance["media"]["images"].append(value)
         return f'<img src="media/images/{idx}">'
+
+
+# class AlignImagesAndText(InstanceFieldOperator)

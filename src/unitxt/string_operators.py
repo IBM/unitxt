@@ -23,6 +23,13 @@ class RegexSplit(FieldOperator):
         return re.split(self.by, value)
 
 
+class FindAll(FieldOperator):
+    pattern: str
+
+    def process_value(self, value: str) -> List[str]:
+        return re.findall(self.pattern, value)
+
+
 class TokensSplit(FieldOperator):
     model: str
     _requirements_list = ["transformers"]
