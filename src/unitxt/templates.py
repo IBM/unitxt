@@ -10,7 +10,10 @@ from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
+from .settings_utils import get_constants
 from .type_utils import isoftype
+
+constants = get_constants()
 
 
 class TemplateFormatKeyError(UnitxtError):
@@ -84,19 +87,29 @@ class Template(InstanceOperator):
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
             input_fields
         )
-        target, references = self.reference_fields_to_target_and_references(
-            reference_fields
-        )
 
-        return {
+        result = {
             **instance,
             "source": source,
-            "target": target,
-            "references": references,
             "instruction": instruction,
             "target_prefix": target_prefix,
             "postprocessors": self.postprocessors,
         }
+
+        if stream_name == constants.inference_stream:
+            return result
+
+        if reference_fields is None:
+            raise ValueError("Should have reference_fields")
+
+        target, references = self.reference_fields_to_target_and_references(
+            reference_fields
+        )
+
+        result["target"] = target
+        result["references"] = references
+
+        return result
 
     @abstractmethod
     def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
@@ -143,8 +156,13 @@ class ApplyTemplate(InstanceOperator):
     def get_template(self, instance: Dict[str, Any]) -> Template:
         pass
 
-    def apply(self, template: Template, instance: Dict[str, Any]):
-        return template.process_instance(instance)
+    def apply(
+        self,
+        template: Template,
+        instance: Dict[str, Any],
+        stream_name: Optional[str] = None,
+    ):
+        return template.process_instance(instance, stream_name)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -155,11 +173,11 @@ class ApplyTemplate(InstanceOperator):
             if self.demos_field not in instance:
                 raise ValueError("Demos field is missing.")
             instance[self.demos_field] = [
-                self.apply(template, demo_instance)
+                self.apply(template, demo_instance, stream_name)
                 for demo_instance in instance[self.demos_field]
             ]
         dict_set(instance, "recipe_metadata/template", template)
-        return self.apply(template, instance)
+        return self.apply(template, instance, stream_name)
 
 
 class ApplySingleTemplate(ApplyTemplate):
@@ -267,6 +285,9 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
     choice_b_label: str
     choice_tie_label: str
     shuffle: bool
+
+    def verify(self):
+        super().verify()
 
     def verbalize_answer_field(self, reference_fields: Dict[str, object]):
         answer = reference_fields[self.answer_field]
@@ -552,34 +573,45 @@ class MultipleChoiceTemplate(Template):
 
         return target, [target]
 
-    def _shuffle_choices(self, instance):
-        target_index = self.outputs_to_target_index(instance["reference_fields"])
-        original_label_choice = instance["reference_fields"][self.choices_field][
-            target_index
-        ]
+    def _shuffle_choices(self, instance, stream_name):
+        if stream_name != constants.inference_stream:
+            target_index = self.outputs_to_target_index(instance["reference_fields"])
+            original_label_choice = instance["reference_fields"][self.choices_field][
+                target_index
+            ]
         choices = instance["input_fields"][self.choices_field]
-        random_generator = new_random_generator(
-            {**instance["input_fields"], **instance["reference_fields"]}
-        )
+
+        random_seed = {**instance["input_fields"]}
+
+        random_generator = new_random_generator(random_seed)
         random_generator.shuffle(choices)
         instance["input_fields"][self.choices_field] = choices
+
+        if stream_name == constants.inference_stream:
+            return instance
+
         instance["reference_fields"][self.choices_field] = choices
         instance["reference_fields"][self.target_field] = choices.index(
             original_label_choice
         )
+
         return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         if self.shuffle_choices:
-            instance = self._shuffle_choices(instance)
+            instance = self._shuffle_choices(instance, stream_name)
         result = super().process(instance, stream_name)
-
-        if "options" not in result["reference_fields"]:
-            result["reference_fields"]["options"] = self.inputs_to_choices(
-                instance["reference_fields"], self.target_choice_format
+        if stream_name == constants.inference_stream:
+            result["input_fields"]["options"] = self.inputs_to_choices(
+                instance["input_fields"], self.target_choice_format
             )
+        else:
+            if "options" not in result["reference_fields"]:
+                result["reference_fields"]["options"] = self.inputs_to_choices(
+                    instance["reference_fields"], self.target_choice_format
+                )
         return result
 
 

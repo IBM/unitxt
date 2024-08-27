@@ -1,13 +1,13 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import ListFieldValues, RenameFields
+from unitxt.operators import ListFieldValues, Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="piqa"),
     preprocess_steps=[
         ListFieldValues(fields=["sol1", "sol2"], to_field="choices"),
-        RenameFields(
+        Rename(
             field_to_field={"goal": "question", "label": "answer"},
         ),
     ],

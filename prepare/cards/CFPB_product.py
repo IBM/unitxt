@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -49,7 +49,7 @@ for subset, url in subset_and_urls.items():
                     "test": "train[20%]",
                 }
             ),
-            RenameFields(field_to_field=field_to_field[subset]),
+            Rename(field_to_field=field_to_field[subset]),
             MapInstanceValues(mappers={"label": mappers[subset]}),
             Set(fields={"classes": list(mappers[subset].values())}),
         ],

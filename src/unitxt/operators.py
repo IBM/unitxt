@@ -42,6 +42,7 @@ General Operators List:
 import copy
 import operator
 import uuid
+import warnings
 import zipfile
 from abc import abstractmethod
 from collections import Counter, defaultdict
@@ -63,7 +64,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
@@ -81,13 +82,14 @@ from .operator import (
     StreamOperator,
 )
 from .random_utils import new_random_generator
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import deepcopy, flatten_dict
 
 settings = get_settings()
+constants = get_constants()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -253,13 +255,14 @@ class Set(InstanceOperator):
     """
 
     fields: Dict[str, object]
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     use_deepcopy: bool = False
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -341,19 +344,37 @@ class InstanceFieldOperator(InstanceOperator):
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
 
     def verify(self):
         super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
+    def verify_field_definition(self):
+        if hasattr(self, "_field_to_field") and self._field_to_field is not None:
+            return
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
+
+        if self.field_to_field is None:
+            self._field_to_field = [
+                (self.field, self.to_field if self.to_field is not None else self.field)
+            ]
+        else:
+            self._field_to_field = (
+                list(self.field_to_field.items())
+                if isinstance(self.field_to_field, dict)
+                else self.field_to_field
+            )
         assert (
             self.field is not None or self.field_to_field is not None
         ), "Must supply a field to work on"
@@ -363,7 +384,9 @@ class InstanceFieldOperator(InstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
-        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            self._field_to_field is not None
+        ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         assert (
             len(self._field_to_field) > 0
         ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
@@ -402,31 +425,10 @@ class InstanceFieldOperator(InstanceOperator):
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
 
-    def prepare(self):
-        super().prepare()
-
-        # prepare is invoked before verify, hence must make some checks here, before the changes done here
-        assert (
-            (self.field is None) != (self.field_to_field is None)
-        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
-        assert (
-            self.to_field is None or self.field_to_field is None
-        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
-
-        if self.field_to_field is None:
-            self._field_to_field = [
-                (self.field, self.to_field if self.to_field is not None else self.field)
-            ]
-        else:
-            self._field_to_field = (
-                list(self.field_to_field.items())
-                if isinstance(self.field_to_field, dict)
-                else self.field_to_field
-            )
-
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        self.verify_field_definition()
         # Need to deep copy instance, because when assigning two dictionary fields,
         # dict_set() the target field dictionary fields.
         # This means that if this target field was assigned to another field before,
@@ -474,23 +476,23 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
-class RenameFields(FieldOperator):
+class Rename(FieldOperator):
     """Renames fields.
 
     Move value from one field to another, potentially, if field name contains a /, from one branch into another.
     Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
-        RenameFields(field_to_field={"b": "c"})
+        Rename(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"})
+        Rename(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"})
+        Rename(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"})
+        Rename(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -509,6 +511,11 @@ class RenameFields(FieldOperator):
                 dict_delete(res, from_field, remove_empty_ancestors=True)
 
         return res
+
+
+@deprecation(version="2.0.0", alternative=Rename)
+class RenameFields(Rename):
+    pass
 
 
 class AddConstant(FieldOperator):
@@ -846,12 +853,13 @@ class ListFieldValues(InstanceOperator):
 
     fields: List[str]
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -878,12 +886,13 @@ class ZipFieldValues(InstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -950,12 +959,13 @@ class IndexOf(InstanceOperator):
     search_in: str
     index_of: str
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -972,12 +982,13 @@ class TakeByField(InstanceOperator):
     field: str
     index: str
     to_field: str = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         if self.to_field is None:
@@ -1060,8 +1071,12 @@ class Copy(FieldOperator):
 
     """
 
+    use_deep_copy: bool = True
+
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        if self.use_deep_copy:
+            return copy.deepcopy(value)
+        return value
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1088,6 +1103,31 @@ class AddID(InstanceOperator):
     ) -> Dict[str, Any]:
         instance[self.id_field_name] = str(uuid.uuid4()).replace("-", "")
         return instance
+
+
+class Cast(FieldOperator):
+    """Casts specified fields to specified types.
+
+    Args:
+        default (object): A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+    """
+
+    to: str
+    failure_default: Optional[Any] = "__UNDEFINED__"
+
+    def prepare(self):
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
+
+    def process_value(self, value):
+        try:
+            return self.types[self.to](value)
+        except ValueError as e:
+            if self.failure_default == "__UNDEFINED__":
+                raise ValueError(
+                    f'Failed to cast value {value} to type "{self.to}", and no default value is provided.'
+                ) from e
+            return self.failure_default
 
 
 class CastFields(InstanceOperator):
@@ -1247,7 +1287,7 @@ class ApplyOperatorsField(InstanceOperator):
 
         # we now have a list of nanes of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
-        return operator.process_instance(instance)
+        return operator.process_instance(instance, stream_name=stream_name)
 
 
 class FilterByCondition(StreamOperator):
@@ -1767,7 +1807,7 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
                 operator, StreamingOperator
             ), f"Operator {operator_name} must be a StreamOperator"
 
-            stream = operator(MultiStream({"tmp": stream}))["tmp"]
+            stream = operator(MultiStream({stream_name: stream}))[stream_name]
 
         yield from stream
 
@@ -1808,7 +1848,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # Here we keep all the fields besides the score, and restore them after the metric finishes.
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
-        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = MultiStream({stream_name: stream})
         multi_stream = CopyFields(
             field_to_field={k: f"{k}_orig" for k in keys_to_restore}
         )(multi_stream)
@@ -1830,7 +1870,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
             multi_stream
         )
-        stream = multi_stream["tmp"]
+        stream = multi_stream[stream_name]
         yield from stream
 
 

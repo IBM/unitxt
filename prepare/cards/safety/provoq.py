@@ -3,7 +3,7 @@ from unitxt.blocks import (
     LoadHF,
     TaskCard,
 )
-from unitxt.operators import ListFieldValues, RenameFields, Set
+from unitxt.operators import ListFieldValues, Rename, Set
 from unitxt.string_operators import Join
 from unitxt.test_utils.card import test_card
 
@@ -17,7 +17,7 @@ card = TaskCard(
                 "type_of_output": "answer",
             }
         ),
-        RenameFields(field_to_field={"question": "input"}),
+        Rename(field_to_field={"question": "input"}),
         ListFieldValues(fields=["group", "stigma"], to_field="context"),
         Join(field="context", by=" # "),
     ],

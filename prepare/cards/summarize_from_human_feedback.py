@@ -1,7 +1,7 @@
 from unitxt.blocks import (
     Copy,
     LoadHF,
-    RenameFields,
+    Rename,
     Set,
     TaskCard,
 )
@@ -18,7 +18,7 @@ card = TaskCard(
                 "summaries/*/text": "choices",
             }
         ),
-        RenameFields(field_to_field={"choice": "output_choice"}),
+        Rename(field_to_field={"choice": "output_choice"}),
         Set(
             fields={
                 "input_type": "post",

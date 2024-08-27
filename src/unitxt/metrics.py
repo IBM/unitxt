@@ -21,7 +21,6 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 from .artifact import Artifact, fetch_artifact
 from .dataclass import (
     AbstractField,
-    DeprecatedField,
     InternalField,
     NonPositionalField,
     OptionalField,
@@ -1425,11 +1424,7 @@ class MetricPipeline(MultiStreamOperator, Metric):
     main_score: str = None
     preprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
     postprocess_steps: Optional[List[StreamingOperator]] = field(default_factory=list)
-    postpreprocess_steps: Optional[List[StreamingOperator]] = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
-        }
-    )
+    postpreprocess_steps: Optional[List[StreamingOperator]] = None
     metric: Metric = None
 
     def disable_confidence_interval_calculation(self):
@@ -1446,6 +1441,9 @@ class MetricPipeline(MultiStreamOperator, Metric):
         assert isinstance(
             self.metric, Metric
         ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
+        if self.postpreprocess_steps is not None:
+            depr_message = "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         super().prepare()
@@ -4736,6 +4734,55 @@ class MetricsEnsemble(InstanceMetric):
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         return {self.main_score: prediction}
+
+
+class F1Strings(InstanceMetric):
+    main_score = "f1_strings"
+    reduction_map = {"mean": ["f1_strings"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+    _requirements_list = {
+        "spacy": "Please pip install spacy",
+    }
+
+    def prepare(self):
+        super().prepare()
+        import spacy
+
+        try:
+            self.nlp = spacy.load("en_core_web_sm")
+        except OSError:
+            from spacy.cli import download
+
+            download("en_core_web_sm")
+            self.nlp = spacy.load("en_core_web_sm")
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        doc_ref = self.nlp(references[0])
+        set_ref = Counter([token.text.lower() for token in doc_ref])
+        doc_pred = self.nlp(prediction)
+        set_pred = Counter([token.text.lower() for token in doc_pred])
+
+        true_positives = sum((set_ref & set_pred).values())
+        false_positives = sum((set_ref - set_pred).values())
+        false_negatives = sum((set_pred - set_ref).values())
+
+        if true_positives == 0:
+            f1 = 0.0
+        else:
+            precision = true_positives / (true_positives + false_positives)
+            recall = true_positives / (true_positives + false_negatives)
+            if precision + recall == 0:
+                f1 = 0.0
+            else:
+                f1 = 2 * (precision * recall) / (precision + recall)
+
+        return {self.main_score: [f1], "score_name": self.main_score}
 
 
 class RandomForestMetricsEnsemble(MetricsEnsemble):

@@ -3,7 +3,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import MapInstanceValues, RenameFields
+from unitxt.operators import MapInstanceValues, Rename
 from unitxt.test_utils.card import test_card
 
 language_codes = {
@@ -32,7 +32,7 @@ language_codes = {
 card = TaskCard(
     loader=LoadHF(path="papluca/language-identification"),
     preprocess_steps=[
-        RenameFields(field_to_field={"labels": "label"}),
+        Rename(field_to_field={"labels": "label"}),
         MapInstanceValues(mappers={"label": language_codes}),
     ],
     task="tasks.language_identification",

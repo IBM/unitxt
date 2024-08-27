@@ -1,10 +1,38 @@
 import ast
+import copy
 import json
 import re
 from difflib import get_close_matches
 from typing import Any, Dict
 
+from .deprecation_utils import deprecation
+from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
+from .settings_utils import get_constants
+
+constants = get_constants()
+
+
+class PostProcess(MultiStreamOperator):
+    operator: InstanceFieldOperator
+    process_prediction: bool = True
+    process_references: bool = True
+
+    def prepare(self):
+        super().prepare()
+        self.prediction_operator = copy.deepcopy(self.operator)
+        self.prediction_operator.field = "prediction"
+        self.references_operator = copy.deepcopy(self.operator)
+        self.references_operator.field = "references"
+        self.references_operator.process_every_value = True
+        self.references_operator.dont_apply_to_streams = [constants.inference_stream]
+
+    def process(self, multi_stream):
+        if self.process_prediction:
+            multi_stream = self.prediction_operator(multi_stream)
+        if self.process_references:
+            multi_stream = self.references_operator(multi_stream)
+        return multi_stream
 
 
 class ToString(FieldOperator):
@@ -114,9 +142,14 @@ class LowerCaseTillPunc(FieldOperator):
         return non_empty_line
 
 
-class LowerCase(FieldOperator):
+class Lower(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return text.lower()
+
+
+@deprecation("2.0.0", alternative=Lower)
+class LowerCase(Lower):
+    pass
 
 
 class Capitalize(FieldOperator):
@@ -212,7 +245,7 @@ class StanceToProCon(FieldOperator):
         return "none"
 
 
-class StringOrNotString(FieldOperator):
+class StringEquals(FieldOperator):
     string: str
 
     def process_value(self, text: Any) -> Any:
@@ -221,6 +254,11 @@ class StringOrNotString(FieldOperator):
         if self.string.lower() in text.lower():
             return self.string.lower()
         return text
+
+
+@deprecation("2.0.0", alternative=StringEquals)
+class StringOrNotString(StringEquals):
+    pass
 
 
 class ExtractMtBenchRatingJudgment(FieldOperator):

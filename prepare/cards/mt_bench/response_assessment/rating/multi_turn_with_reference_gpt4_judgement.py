@@ -6,7 +6,7 @@ from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
     FilterByCondition,
     InterleaveListsToDialogOperator,
-    RenameFields,
+    Rename,
 )
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -26,7 +26,7 @@ card = TaskCard(
         RenameSplits({"train": "test"}),
         FilterByCondition(values={"turn": 2}, condition="eq"),
         FilterByCondition(values={"reference": None}, condition="ne"),
-        RenameFields(field_to_field={"score": "rating", "category": "group"}),
+        Rename(field_to_field={"score": "rating", "category": "group"}),
         InterleaveListsToDialogOperator(
             user_turns_field="model_input",
             assistant_turns_field="model_output",
