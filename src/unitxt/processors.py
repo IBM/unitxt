@@ -66,6 +66,7 @@ class ToListByCommaSpace(SplitStrip):
     strip_every_element = True
 
 
+
 class RegexParser(FieldOperator):
     """A processor that uses regex in order to parse a string."""
 
@@ -79,7 +80,13 @@ class RegexParser(FieldOperator):
             return []
         return re.findall(self.regex, text)
 
-
+class ToListOfTuplesFromStringByComma(RegexParser):
+    regex = r"\((.*?)\)"
+    
+    def process_value(self, text:Any) -> Any:
+        matches = super().process_value(text)
+        return [tuple(item.split(',')) for item in matches]
+    
 class ExtractWithRegex(RegexParser):
     def process_value(self, text: Any) -> Any:
         matches = super().process_value(text)
