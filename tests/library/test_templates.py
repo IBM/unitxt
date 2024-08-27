@@ -993,30 +993,41 @@ class TestTemplates(UnitxtTestCase):
 
     def test_multiple_choice_template_with_enumeration_target_mode(self):
         template = MultipleChoiceTemplate(
-            input_format="Text: {text}, Choices: {choices}.", enumerator="capitals", target_matching_mode="enumeration"
+            input_format="Text: {text}, Choices: {choices}.",
+            enumerator="capitals",
+            target_matching_mode="enumeration",
         )
 
         choices = ["Marry", "Bob", "Sam", "Alfred"]
         inputs = [
             {
-                "input_fields": {"choices": choices, "text": "Which name is the longest?"},
+                "input_fields": {
+                    "choices": choices,
+                    "text": "Which name is the longest?",
+                },
                 "reference_fields": {"choices": choices, "label": "D"},
             },
             {
-                "input_fields": {"choices": choices, "text": "Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?"},
+                "input_fields": {
+                    "choices": choices,
+                    "text": "Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?",
+                },
                 "reference_fields": {"choices": choices, "label": "A"},
-            }
+            },
         ]
 
         targets = [
             {
-                "input_fields": {"choices": choices, "text": "Which name is the longest?"},
+                "input_fields": {
+                    "choices": choices,
+                    "text": "Which name is the longest?",
+                },
                 "reference_fields": {
                     "choices": choices,
                     "label": "D",
                     "options": ["A", "B", "C", "D"],
                 },
-                "source": f"Text: Which name is the longest?, Choices: A. Marry, B. Bob, C. Sam, D. Alfred.",
+                "source": "Text: Which name is the longest?, Choices: A. Marry, B. Bob, C. Sam, D. Alfred.",
                 "target": "D",
                 "references": ["D"],
                 "instruction": "",
@@ -1024,23 +1035,25 @@ class TestTemplates(UnitxtTestCase):
                 "postprocessors": ["processors.to_string_stripped"],
             },
             {
-                "input_fields": {"choices": choices, "text": "Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?"},
+                "input_fields": {
+                    "choices": choices,
+                    "text": "Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?",
+                },
                 "reference_fields": {
                     "choices": choices,
                     "label": "A",
                     "options": ["A", "B", "C", "D"],
                 },
-                "source": f"Text: Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?, Choices: A. Marry, B. Bob, C. Sam, D. Alfred.",
+                "source": "Text: Sam is older than Bob and Alfred, Marry is the older than Sam, who is the oldest?, Choices: A. Marry, B. Bob, C. Sam, D. Alfred.",
                 "target": "A",
                 "references": ["A"],
                 "instruction": "",
                 "target_prefix": "",
                 "postprocessors": ["processors.to_string_stripped"],
-            }
+            },
         ]
 
         check_operator(template, inputs, targets, tester=self)
-
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
