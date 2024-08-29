@@ -4,15 +4,13 @@ import re
 import yaml
 #from lh_eval_api import load_lh_dataset
 from unitxt.api import load_dataset
-from typing import List
-from unitxt import evaluate, load_dataset
+from unitxt import evaluate, load_dataset, register_local_catalog
 from unitxt.inference import OpenAiInferenceEngineParams, \
      NonBatchedInstructLabInferenceEngine
 import pandas as pd
 from datetime import datetime
 from typing import List,Dict,Any, Tuple
 from datasets import DatasetDict
-from unitxt import register_local_catalog
 import argparse
 import importlib
 from dataclasses import dataclass,asdict
@@ -121,11 +119,13 @@ class EvaluateIlab:
         yaml_dataset = self.create_dataset_from_yaml()
         csv_path = file.replace('.csv','_yaml_eval.csv')
         evaluated_yaml_datset, model_name = self.infer_from_model(yaml_dataset)
-        self.save_results(
-            csv_path=csv_path, 
-            evaluated_dataset=evaluated_yaml_datset, 
-            model_name=model_name,
-            run_params_dict= IlabRunParams(
+        save_results(
+            csv_path = csv_path,
+            evaluated_dataset = evaluated_yaml_datset,
+            model_name = model_name,
+            card = self.card,
+            task_name = self.task_name,
+            run_params_dict = IlabRunParams(
                 file=csv_path,yaml_indices=self.yaml_indices,
                 template=self.template if self.template else self.template_index,
                 base_model=is_base_model(model_name),
@@ -146,48 +146,16 @@ class EvaluateIlab:
             is_yaml=False,
         ).to_dict()
 
-        self.save_results(
+        save_results(
             csv_path=csv_path, 
             evaluated_dataset=evaluated_dataset,
             model_name= model_name,
+            owner = self.owner,
+            card=self.card,
+            task_name=self.task_name,
             run_params_dict=base_run_params
             )
         
-    def save_results(self, csv_path, evaluated_dataset, model_name,run_params_dict = {}):
-        global_scores = evaluated_dataset[0]['score']['global']
-        main_score_name = global_scores.pop('score_name')
-        global_main_score = global_scores[main_score_name]
-        csv_path = csv_path.replace('.csv',f'_{model_name.split("/")[-1]}.csv')
-        print(f"saving to {csv_path}...")
-        run_data = {
-            'owner':self.owner, 
-            'started_at':datetime.now(), 
-            'framework':'Unitxt', 
-            'benchmark':'ilab', 
-            'dataset':self.card.replace('cards.',''),
-            'task': self.task_name,
-            'model_name': model_name,
-            'score': global_main_score,
-            'score_name':main_score_name,
-            'all_scores':global_scores,
-            'run_params':run_params_dict
-            }
-        pd.DataFrame([run_data]).to_csv(csv_path.replace('.csv','_run.csv'),index=False)
-        predictions_data = []
-        for i,item in enumerate(evaluated_dataset):
-            predictions_data.append({
-                'record_index':i,
-                'model_input':item["task_data"]["source"],
-                'references':str(item["references"]),
-                'processed_model_prediction': item["processed_prediction"],
-                'processed_references':str(item["processed_references"]),
-                'score':item["score"]["instance"]["score"],
-                'score_name':item["score"]["instance"]["score_name"],
-                'data_split':"test",
-            })
-        pd.DataFrame(predictions_data).to_csv(csv_path.replace('.csv','_predictions.csv'),index=False)
-        
-
     def get_yaml_indices(self):
         with open(self.yaml_file, 'r') as f:
             yaml_content = yaml.safe_load(f)
@@ -263,6 +231,52 @@ def upload_to_lh(folder, namespace):
 
 def is_base_model(model_name:str)->bool:
     return 'merlinite-7b-lab-Q4_K_M.gguf' in model_name
+    
+def save_results(
+        csv_path, 
+        evaluated_dataset, 
+        model_name,owner, 
+        card, 
+        task_name, 
+        run_params_dict = {},  
+        append_model_name:bool = True
+        ):
+        global_scores = evaluated_dataset[0]['score']['global']
+        main_score_name = global_scores.pop('score_name')
+        global_main_score = global_scores[main_score_name]
+        if append_model_name:
+            csv_path = csv_path.replace('.csv',f'_{model_name.split("/")[-1]}.csv')
+        print(f"saving to {csv_path}...")
+        run_data = {
+            'owner':owner, 
+            'started_at':datetime.now(), 
+            'framework':'Unitxt', 
+            'benchmark':'ilab', 
+            'dataset':card.replace('cards.',''),
+            'task': task_name,
+            'model_name': model_name,
+            'score': global_main_score,
+            'score_name':main_score_name,
+            'all_scores':global_scores,
+            'run_params':run_params_dict
+            }
+        pd.DataFrame([run_data]).to_csv(csv_path.replace('.csv','_run.csv'),index=False)
+        predictions_data = []
+        for i,item in enumerate(evaluated_dataset):
+            predictions_data.append({
+                'record_index':i,
+                'model_input':item["task_data"]["source"],
+                'references':str(item["references"]),
+                'model_prediction':item['prediction'],
+                'processed_model_prediction': item["processed_prediction"],
+                'processed_references':str(item["processed_references"]),
+                'score':item["score"]["instance"]["score"],
+                'score_name':item["score"]["instance"]["score_name"],
+                'data_split':"test",
+            })
+        pd.DataFrame(predictions_data).to_csv(csv_path.replace('.csv','_predictions.csv'),index=False)
+        
+
 
 if __name__ == '__main__':
    

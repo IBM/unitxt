@@ -1,0 +1,16 @@
+record_index,model_input,references,processed_model_prediction,processed_references,score,score_name,data_split
+0,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: I guess I'll never know, will I? 
+",['sadness'],select one out of the following options: fear,['sadness'],0.6,llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn,test
+1,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Because all we need is.... love!!!  #february #loraelen #floral #laces  #womenswear #valentinesday... http://t.co/pvdXgMVNWi
+",['joy'],the user has expressed a sense of loss and disappointment upon realizing that they cannot have a teacup pig,['joy'],0.1,llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn,test
+2,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: Yes I really like Sunflowers ! #flowers  #photography    https://t.co/LFpTCotMkm
+",['joy'],emotion: sadness,['joy'],0.2,llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn,test
+3,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: @transportation_company 504 King but it doesn't matter. They constantly get stuck behind cars turning left, while buses can maneuver around.
+",['sadness'],answer: concern,['sadness'],0.4,llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn,test
+4,"Select one out of the following options: fear, joy, anger, sadness, disgust, none.  What is the emotion in this text?
+text: can my daughter use tylenol
+",['none'],emotion: anger,['none'],0.2,llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn,test

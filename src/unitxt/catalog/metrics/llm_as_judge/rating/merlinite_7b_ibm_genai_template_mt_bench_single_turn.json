@@ -1,0 +1,14 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "ibm-mistralai/merlinite-7b",
+        "max_new_tokens": 256,
+        "random_seed": 42
+    },
+    "template": "templates.response_assessment.rating.mt_bench_single_turn",
+    "task": "rating.single_turn",
+    "format": "formats.models.mistral.instruction",
+    "main_score": "merlinite_7b_ibm_genai_template_mt_bench_single_turn",
+    "prediction_type": "str"
+}
