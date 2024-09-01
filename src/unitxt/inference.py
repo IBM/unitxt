@@ -428,14 +428,13 @@ class HFPipelineBasedInferenceEngine(
         return dataset
 
 
-class MockInferenceEngine(InferenceEngine):
+class MockInferenceEngine(TextGenerationInferenceEngine):
     model_name: str
 
-    def prepare(self):
-        return
-
-    def _infer(self, dataset):
-        return ["[[10]]" for instance in dataset]
+    def generate(self, dataset):
+        for instance in dataset:
+            instance["prediction"] = "[[10]]"
+        return dataset
 
 
 class IbmGenAiInferenceEngineParamsMixin(Artifact):
