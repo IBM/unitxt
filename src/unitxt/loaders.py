@@ -151,6 +151,7 @@ class LoadHF(Loader):
         data_dir: Optional directory to store downloaded data.
         split: Optional specification of which split to load.
         data_files: Optional specification of particular data files to load.
+        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
         num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
@@ -170,6 +171,7 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
+    revision: Optional[str] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
@@ -199,6 +201,7 @@ class LoadHF(Loader):
                         name=self.name,
                         data_dir=self.data_dir,
                         data_files=self.data_files,
+                        revision=self.revision,
                         streaming=self.streaming,
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
