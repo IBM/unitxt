@@ -1,7 +1,12 @@
 import unittest
 
 from unitxt import produce
-from unitxt.inference import HFLlavaInferenceEngine, HFPipelineBasedInferenceEngine
+from unitxt.inference import (
+    HFLlavaInferenceEngine,
+    HFLogProbScoringEngine,
+    HFPipelineBasedInferenceEngine,
+    SelectingByScoreInferenceEngine,
+)
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 
@@ -90,6 +95,34 @@ class TestInferenceEngine(UnitxtTestCase):
             predictions = inference_model.infer(test_dataset)
 
             self.assertEqual(predictions[0], "The real image")
+
+    def test_log_prob_scoring_inference_engine(self):
+        dataset = [
+            {"source": "hello world"},
+            {"source": "by universe"},
+        ]
+
+        engine = HFLogProbScoringEngine(model_name="gpt2", batch_size=1)
+
+        dataset = engine.score(dataset)
+
+        self.assertAlmostEqual(dataset[0]["prediction"], -8.58, places=2)
+        self.assertAlmostEqual(dataset[1]["prediction"], -10.98, places=2)
+
+    def test_option_selecting_inference_engine(self):
+        dataset = [
+            {"source": "hello ", "task_data": {"options": ["world", "truck"]}},
+            {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+        ]
+
+        engine = SelectingByScoreInferenceEngine(
+            scorer_engine=HFLogProbScoringEngine(model_name="gpt2", batch_size=1)
+        )
+
+        dataset = engine.select(dataset)
+
+        self.assertEqual(dataset[0]["prediction"], "world")
+        self.assertEqual(dataset[1]["prediction"], "the")
 
 
 if __name__ == "__main__":
