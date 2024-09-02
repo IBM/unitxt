@@ -467,3 +467,47 @@ class TestAssertTyping(UnitxtTestCase):
         for case in test_cases:
             with self.subTest(case=case):
                 self.assertEqual(replace_class_names(case["input"]), case["expected"])
+
+
+class TestToTypeString(UnitxtTestCase):
+    def test_basic_types(self):
+        self.assertEqual(to_type_string(int), "int")
+        self.assertEqual(to_type_string(str), "str")
+        self.assertEqual(to_type_string(float), "float")
+        self.assertEqual(to_type_string(typing.Any), "Any")
+
+    def test_union_type(self):
+        self.assertEqual(to_type_string(typing.Union[int, str]), "Union[int, str]")
+
+    def test_list_type(self):
+        self.assertEqual(to_type_string(typing.List[int]), "List[int]")
+
+    def test_dict_type(self):
+        self.assertEqual(to_type_string(typing.Dict[str, int]), "Dict[str, int]")
+
+    def test_tuple_type(self):
+        self.assertEqual(to_type_string(typing.Tuple[int, str]), "Tuple[int, str]")
+
+    def test_literal_type(self):
+        self.assertEqual(to_type_string(Literal[1, 2, 3]), "Literal[1, 2, 3]")
+
+    def test_newtype(self):
+        UserId = NewType("UserId", int)
+        register_type(UserId)
+        self.assertEqual(to_type_string(UserId), "UserId")
+        self.assertEqual(
+            to_type_string(typing.Tuple[int, typing.Tuple[int, UserId]]),
+            "Tuple[int, Tuple[int, UserId]]",
+        )
+
+    def test_typed_dict(self):
+        class Point(TypedDict):
+            x: int
+            y: int
+
+        register_type(Point)
+        self.assertEqual(to_type_string(Point), "Point")
+
+    def test_invalid_type(self):
+        with self.assertRaises(ValueError):
+            to_type_string(object)

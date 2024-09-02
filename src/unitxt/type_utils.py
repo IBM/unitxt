@@ -266,11 +266,7 @@ def replace_class_names(full_string: str) -> str:
 
 
 def to_type_string(typing_type):
-    if not is_type(typing_type):
-        raise UnsupportedTypeError(typing_type)
-    type_string = (
-        replace_class_names(str(typing_type)).replace("<class '", "").replace("'>", "")
-    )
+    type_string = strtype(typing_type)
     assert parse_type_string(type_string), "Is not parsed well"
     return type_string
 
@@ -529,6 +525,66 @@ def isoftype(object, typing_type):
             )
 
     return isinstance(object, typing_type)
+
+
+def strtype(typing_type) -> str:
+    """Converts a typing type to its string representation.
+
+    Args:
+        typing_type (Any): The typing type to be converted. This can include standard types,
+            custom types, or types from the `typing` module, such as `Literal`, `Union`,
+            `List`, `Dict`, `Tuple`, `TypedDict`, and `NewType`.
+
+    Returns:
+        str: The string representation of the provided typing type.
+
+    Raises:
+        UnsupportedTypeError: If the provided `typing_type` is not a recognized type.
+
+    Notes:
+        - If `typing_type` is `Literal`, `NewType`, or `TypedDict`, the function returns
+          the name of the type.
+        - If `typing_type` is `Any`, it returns the string `"Any"`.
+        - For other typing constructs like `Union`, `List`, `Dict`, and `Tuple`, the function
+          recursively converts each part of the type to its string representation.
+        - The function checks the `__origin__` attribute to determine the base type and formats
+          the type arguments accordingly.
+    """
+    if not is_type(typing_type):
+        raise UnsupportedTypeError(typing_type)
+
+    if is_new_type(typing_type) or is_typed_dict(typing_type):
+        return typing_type.__name__
+
+    if typing_type == typing.Any:
+        return "Any"
+
+    if hasattr(typing_type, "__origin__"):
+        origin = typing_type.__origin__
+        type_args = typing.get_args(typing_type)
+
+        if origin is Literal:
+            return str(typing_type).replace("typing.", "")
+        if origin is typing.Union:
+            return (
+                "Union["
+                + ", ".join([strtype(sub_type) for sub_type in type_args])
+                + "]"
+            )
+        if origin is list or origin is set:
+            return "List[" + strtype(type_args[0]) + "]"
+        if origin is set:
+            return "Set[" + strtype(type_args[0]) + "]"
+        if origin is dict:
+            return "Dict[" + strtype(type_args[0]) + ", " + strtype(type_args[1]) + "]"
+        if origin is tuple:
+            return (
+                "Tuple["
+                + ", ".join([strtype(sub_type) for sub_type in type_args])
+                + "]"
+            )
+
+    return typing_type.__name__
 
 
 # copied from: https://github.com/bojiang/typing_utils/blob/main/typing_utils/__init__.py
