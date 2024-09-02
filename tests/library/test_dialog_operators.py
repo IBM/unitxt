@@ -1,4 +1,4 @@
-from unitxt.dialog_operators import SerializeDialog
+from unitxt.dialog_operators import SerializeDialog, SerializeOpenAiFormatDialog
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -105,3 +105,92 @@ class TestDialogSerializer(UnitxtTestCase):
         ]
 
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+
+class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
+    def test_transform_dialog(self):
+        dialog = [
+            {"content": "What color was Cotton?", "role": "user"},
+            {"content": "white", "role": "assistant"},
+            {"content": "Where did she live?", "role": "user"},
+            {"content": "in a barn", "role": "assistant"},
+            {"content": "Did she live alone?", "role": "user"},
+            {"content": "No, with other animals", "role": "assistant"},
+        ]
+
+        expected = [
+            {"user": "What color was Cotton?", "assistant": "white"},
+            {"user": "Where did she live?", "assistant": "in a barn"},
+            {"user": "Did she live alone?", "assistant": "No, with other animals"},
+        ]
+
+        assert (
+            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+            == expected
+        )
+
+    def test_transform_dialog_with_turn_merging(self):
+        # Test 'user', 'assistant', 'assistant'
+        dialog = [
+            {"content": "User", "role": "user"},
+            {"content": "assistant1", "role": "assistant"},
+            {"content": "assistant2", "role": "assistant"},
+        ]
+
+        expected = [{"user": "User", "assistant": "assistant1 assistant2"}]
+
+        assert (
+            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+            == expected
+        )
+
+        # Test multiple 'user' entries
+        dialog = [
+            {"content": "User1", "role": "user"},
+            {"content": "User2", "role": "user"},
+            {"content": "assistant1", "role": "assistant"},
+            {"content": "assistant2", "role": "assistant"},
+            {"content": "User3", "role": "user"},
+            {"content": "assistant3", "role": "assistant"},
+        ]
+
+        expected = [
+            {"user": "User1 User2", "assistant": "assistant1 assistant2"},
+            {"user": "User3", "system": "assistant3"},
+        ]
+
+        assert (
+            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+            == expected
+        )
+
+    def test_transform_dialog_validation_first_turn_assistant(self):
+        # Test starting with 'system'
+        dialog = [
+            {"content": "assistant1", "role": "assistant"},
+            {"content": "assistant2", "role": "assistant"},
+            {"content": "user1", "role": "user"},
+            {"content": "assistant3", "role": "assistant"},
+        ]
+
+        try:
+            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+        except ValueError:
+            return
+        else:
+            raise AssertionError(
+                "Test failed: Exception not raised for invalid first role"
+            )
+
+    def test_transform_dialog_validation_invalid_role(self):
+        dialog = [
+            {"content": "User1", "role": "user"},
+            {"content": "system1", "role": "system"},
+        ]
+
+        try:
+            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+        except ValueError:
+            return
+        else:
+            raise AssertionError("Test failed: Exception not raised for invalid role")
