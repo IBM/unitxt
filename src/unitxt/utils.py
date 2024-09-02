@@ -2,6 +2,7 @@ import copy
 import importlib.util
 import json
 import os
+import re
 from functools import lru_cache
 from typing import Any, Dict
 
@@ -87,6 +88,23 @@ def is_module_available(module_name):
         return False
 
 
+def remove_numerics_and_quoted_texts(input_str):
+    # Remove floats first to avoid leaving stray periods
+    input_str = re.sub(r"\d+\.\d+", "", input_str)
+
+    # Remove integers
+    input_str = re.sub(r"\d+", "", input_str)
+
+    # Remove strings in single quotes
+    input_str = re.sub(r"'.*?'", "", input_str)
+
+    # Remove strings in double quotes
+    input_str = re.sub(r'".*?"', "", input_str)
+
+    # Remove strings in triple quotes
+    return re.sub(r'""".*?"""', "", input_str, flags=re.DOTALL)
+
+
 def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
     """Evaluates a given expression in a restricted environment, allowing only specified tokens and context variables.
 
@@ -109,7 +127,9 @@ def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
         by restricting the available tokens and not exposing built-in functions.
     """
     allowed_sub_strings = list(context.keys()) + allowed_tokens
-    if is_made_of_sub_strings(expression, allowed_sub_strings):
+    if is_made_of_sub_strings(
+        remove_numerics_and_quoted_texts(expression), allowed_sub_strings
+    ):
         return eval(expression, {"__builtins__": {}}, context)
     raise ValueError(
         f"The expression '{expression}' can not be evaluated because it contains tokens outside the allowed list of {allowed_sub_strings}."

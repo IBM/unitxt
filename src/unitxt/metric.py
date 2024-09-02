@@ -53,6 +53,7 @@ from .task import __file__ as _
 from .templates import __file__ as _
 from .text_utils import __file__ as _
 from .type_utils import __file__ as _
+from .types import __file__ as _
 from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
