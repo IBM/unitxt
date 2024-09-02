@@ -8,7 +8,7 @@ from unitxt.blocks import (
     TemplatesDict,
 )
 from unitxt.operators import (
-    CopyFields,
+    Copy,
     ListFieldValues,
     Shuffle,
 )
@@ -23,7 +23,7 @@ card = TaskCard(
             {"train": "train[0.5]", "validation": "train[0.2]", "test": "train[0.3]"}
         ),
         Shuffle(),
-        CopyFields(
+        Copy(
             field_to_field={
                 "source/text": "contexts",
                 "answer": "reference_answers",
@@ -35,7 +35,9 @@ card = TaskCard(
         ListFieldValues(fields=["contexts_ids"], to_field="contexts_ids"),
     ],
     task="tasks.rag.response_generation",
-    templates=TemplatesDict({"default": "templates.rag.response_generation.simple"}),
+    templates=TemplatesDict(
+        {"default": "templates.rag.response_generation.please_respond_chat"}
+    ),
 )
 
 # testing the card is too slow with the bert-score metric, so dropping it
@@ -48,5 +50,5 @@ test_card(
     demos_taken_from="test",
 )
 add_to_catalog(
-    card, "cards.rag.response_generation.open_australian_legal_qa", overwrite=True
+    card, "cards.rag.response_generation.train.open_australian_legal_qa", overwrite=True
 )
