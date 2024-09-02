@@ -1,7 +1,7 @@
 {
     "__type__": "task",
     "input_fields": {
-        "context": "Text",
+        "context": "str",
         "context_type": "str",
         "question": "str"
     },

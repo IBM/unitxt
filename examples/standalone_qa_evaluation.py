@@ -1,7 +1,7 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.inference_engine import HFPipelineBasedInferenceEngine
+from unitxt.inference_engines import HFPipelineBasedInferenceEngine
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
@@ -54,17 +54,17 @@ inference_model = HFPipelineBasedInferenceEngine(
 
 # change to this to infer with IbmGenAI APIs:
 #
-# from unitxt.inference import IbmGenAiInferenceEngine
+# from unitxt.inference_engines import IbmGenAiInferenceEngine
 # inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or this to infer using WML APIs:
 #
-# from unitxt.inference import WMLInferenceEngine
+# from unitxt.inference_engines import WMLInferenceEngine
 # inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# from unitxt.inference import OpenAiInferenceEngine
+# from unitxt.inference_engines import OpenAiInferenceEngine
 # inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # Note that to run with OpenAI APIs you need to change the loader specification, to

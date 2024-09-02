@@ -4,75 +4,48 @@ import io
 import itertools
 import re
 import typing
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
 
 from .utils import safe_eval
 
-_registered_types = {
-    "Any": typing.Any,
-    "List": typing.List,
-    "Dict": typing.Dict,
-    "Tuple": typing.Tuple,
-    "Union": typing.Union,
-    "Optional": typing.Optional,
-    "Literal": typing.Literal,
-    "int": int,
-    "str": str,
-    "float": float,
-    "bool": bool,
-}
-
-
-def register_type(new_type):
-    assert is_new_type(new_type) or is_typed_dict(
-        new_type
-    ), "Can register only typing.NewType or typing.TypedDict"
-    _registered_types[new_type.__name__] = new_type
-
+_supported_types_strings = [
+    "Any",
+    "List[...]",
+    "Dict[...]",
+    "Tuple[...]",
+    "Union[...]",
+    "Optional[...]",
+    "int",
+    "float",
+    "dict",
+    "double",
+    "str",
+]
 
 Type = typing.Any
 
 
 class UnsupportedTypeError(ValueError):
     def __init__(self, type_object):
-        supported_types = ", ".join(_registered_types.keys())
+        supported_types = ", ".join(_supported_types_strings)
         super().__init__(
             f"Type: '{type_object!s}' is not supported type. Use one of {supported_types}"
         )
 
 
-class GenericTypedDict(TypedDict):
-    pass
-
-
 _generics = [
-    List[Any],
-    Dict[Any, Any],
-    Tuple[Any],
-    Union[Any, Any],
-    Optional[Any],
-    Any,
-    Literal,
+    typing.List[typing.Any],
+    typing.Dict[typing.Any, typing.Any],
+    typing.Tuple[typing.Any],
+    typing.Union[typing.Any, typing.Any],
+    typing.Optional[typing.Any],
+    typing.Any,
 ]
 
 _generics_types = [type(t) for t in _generics]
 
 
-def is_new_type(object):
-    return callable(object) and hasattr(object, "__supertype__")
-
-
-def is_typed_dict(object):
-    return isinstance(object, type(GenericTypedDict))
-
-
 def is_type(object):
-    """Checks if the provided object is a type, including generics, Literal, TypedDict, and NewType."""
-    return (
-        isinstance(object, (type, *_generics_types))
-        or is_new_type(object)
-        or is_typed_dict(object)
-    )
+    return isinstance(object, (type, *_generics_types))
 
 
 def is_type_dict(object):
@@ -242,31 +215,34 @@ def parse_type_string(type_string: str) -> typing.Any:
     and basic Python data types. It also defines a list of safe tokens that are allowed
     in the type string.
     """
+    safe_context = {
+        "Any": typing.Any,
+        "List": typing.List,
+        "Dict": typing.Dict,
+        "Tuple": typing.Tuple,
+        "Union": typing.Union,
+        "int": int,
+        "str": str,
+        "float": float,
+        "bool": bool,
+        "Optional": typing.Optional,
+    }
+
     type_string = format_type_string(type_string)
 
-    return safe_eval(
-        type_string, context=_registered_types, allowed_tokens=["[", "]", ",", " "]
-    )
-
-
-def replace_class_names(full_string: str) -> str:
-    # Regular expression to match any fully qualified class name and extract the class name
-    pattern = r"(?:\w+\.)*<locals>\.(\w+)|(?:\w+\.)*(\w+)"
-
-    # Function to replace the matched pattern with just the class name
-    def replacement(match):
-        # If the match has a group for <locals>
-        if match.group(1):
-            return match.group(1)
-        # Otherwise, return the last group (class name)
-        return match.group(2)
-
-    # Use re.sub to replace all occurrences in the string
-    return re.sub(pattern, replacement, full_string)
+    safe_tokens = ["[", "]", ",", " "]
+    return safe_eval(type_string, safe_context, safe_tokens)
 
 
 def to_type_string(typing_type):
-    type_string = strtype(typing_type)
+    if not is_type(typing_type):
+        raise UnsupportedTypeError(typing_type)
+    type_string = (
+        str(typing_type)
+        .replace("typing.", "")
+        .replace("<class '", "")
+        .replace("'>", "")
+    )
     assert parse_type_string(type_string), "Is not parsed well"
     return type_string
 
@@ -471,9 +447,9 @@ def infer_type_string(obj: typing.Any) -> str:
 def isoftype(object, typing_type):
     """Checks if an object is of a certain typing type, including nested types.
 
-    This function supports simple types, typing types (List[int], Tuple[str, int]),
-    nested typing types (List[List[int]], Tuple[List[str], int]), Literal, TypedDict,
-    and NewType.
+    This function supports simple types (like `int`, `str`), typing types
+    (like `List[int]`, `Tuple[str, int]`, `Dict[str, int]`), and nested typing
+    types (like `List[List[int]]`, `Tuple[List[str], int]`, `Dict[str, List[int]]`).
 
     Args:
         object: The object to check.
@@ -481,20 +457,18 @@ def isoftype(object, typing_type):
 
     Returns:
         bool: True if the object is of the specified type, False otherwise.
+
+    Examples:
+    .. highlight:: python
+    .. code-block:: python
+
+        isoftype(1, int) # True
+        isoftype([1, 2, 3], typing.List[int]) # True
+        isoftype([1, 2, 3], typing.List[str]) # False
+        isoftype([[1, 2], [3, 4]], typing.List[typing.List[int]]) # True
     """
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
-
-    if is_new_type(typing_type):
-        typing_type = typing_type.__supertype__
-
-    if is_typed_dict(typing_type):
-        if not isinstance(object, dict):
-            return False
-        for key, expected_type in typing_type.__annotations__.items():
-            if key not in object or not isoftype(object[key], expected_type):
-                return False
-        return True
 
     if typing_type == typing.Any:
         return True
@@ -503,16 +477,15 @@ def isoftype(object, typing_type):
         origin = typing_type.__origin__
         type_args = typing.get_args(typing_type)
 
-        if origin is Literal:
-            return object in type_args
-
         if origin is typing.Union:
             return any(isoftype(object, sub_type) for sub_type in type_args)
 
         if not isinstance(object, origin):
             return False
+
         if origin is list or origin is set:
             return all(isoftype(element, type_args[0]) for element in object)
+
         if origin is dict:
             return all(
                 isoftype(key, type_args[0]) and isoftype(value, type_args[1])
@@ -523,75 +496,9 @@ def isoftype(object, typing_type):
                 isoftype(element, type_arg)
                 for element, type_arg in zip(object, type_args)
             )
+        return None
 
     return isinstance(object, typing_type)
-
-
-def strtype(typing_type) -> str:
-    """Converts a typing type to its string representation.
-
-    Args:
-        typing_type (Any): The typing type to be converted. This can include standard types,
-            custom types, or types from the `typing` module, such as `Literal`, `Union`,
-            `List`, `Dict`, `Tuple`, `TypedDict`, and `NewType`.
-
-    Returns:
-        str: The string representation of the provided typing type.
-
-    Raises:
-        UnsupportedTypeError: If the provided `typing_type` is not a recognized type.
-
-    Notes:
-        - If `typing_type` is `Literal`, `NewType`, or `TypedDict`, the function returns
-          the name of the type.
-        - If `typing_type` is `Any`, it returns the string `"Any"`.
-        - For other typing constructs like `Union`, `List`, `Dict`, and `Tuple`, the function
-          recursively converts each part of the type to its string representation.
-        - The function checks the `__origin__` attribute to determine the base type and formats
-          the type arguments accordingly.
-    """
-    if not is_type(typing_type):
-        raise UnsupportedTypeError(typing_type)
-
-    if is_new_type(typing_type) or is_typed_dict(typing_type):
-        return typing_type.__name__
-
-    if typing_type == typing.Any:
-        return "Any"
-
-    if hasattr(typing_type, "__origin__"):
-        origin = typing_type.__origin__
-        type_args = typing.get_args(typing_type)
-
-        if type_args[-1] is type(None):
-            return (
-                "Optional["
-                + ", ".join([strtype(sub_type) for sub_type in type_args[:-1]])
-                + "]"
-            )
-
-        if origin is Literal:
-            return str(typing_type).replace("typing.", "")
-        if origin is typing.Union:
-            return (
-                "Union["
-                + ", ".join([strtype(sub_type) for sub_type in type_args])
-                + "]"
-            )
-        if origin is list or origin is set:
-            return "List[" + strtype(type_args[0]) + "]"
-        if origin is set:
-            return "Set[" + strtype(type_args[0]) + "]"
-        if origin is dict:
-            return "Dict[" + strtype(type_args[0]) + ", " + strtype(type_args[1]) + "]"
-        if origin is tuple:
-            return (
-                "Tuple["
-                + ", ".join([strtype(sub_type) for sub_type in type_args])
-                + "]"
-            )
-
-    return typing_type.__name__
 
 
 # copied from: https://github.com/bojiang/typing_utils/blob/main/typing_utils/__init__.py

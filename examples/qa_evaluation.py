@@ -2,7 +2,7 @@ from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
-from unitxt.inference_engine import (
+from unitxt.inference_engines import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary

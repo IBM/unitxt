@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.inference_engine import IbmGenAiInferenceEngine
+from unitxt.inference_engines import IbmGenAiInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.random_utils import get_seed
 

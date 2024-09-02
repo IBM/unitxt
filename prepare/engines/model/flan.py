@@ -1,5 +1,5 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.inference_engine import HFPipelineBasedInferenceEngine
+from unitxt.inference_engines import HFPipelineBasedInferenceEngine
 
 engine = HFPipelineBasedInferenceEngine(
     model_name="google/flan-t5-small", max_new_tokens=32

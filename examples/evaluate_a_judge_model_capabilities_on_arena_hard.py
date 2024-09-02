@@ -19,12 +19,12 @@ inference_model = MockInferenceEngine(model_name=model_id)
 """
 We are using a mock inference engine (and model) in order for the example to finish quickly.
 In real scenarios you can use model from Huggingface, OpenAi, and IBM, using the following:
-from unitxt.inference import (HFPipelineBasedInferenceEngine, IbmGenAiInferenceEngine, OpenAiInferenceEngine)
+from unitxt.inference_engines import (HFPipelineBasedInferenceEngine, IbmGenAiInferenceEngine, OpenAiInferenceEngine)
 and switch them with the MockInferenceEngine class in the example.
 For the arguments these inference engines can receive, please refer to the classes documentation.
 
 Example of using an IBM model:
-from unitxt.inference import (IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParamsMixin)
+from unitxt.inference_engines import (IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParamsMixin)
 params = IbmGenAiInferenceEngineParamsMixin(max_new_tokens=1024, random_seed=42)
 inference_model = IbmGenAiInferenceEngine(model_name=model_id, parameters=params)
 """

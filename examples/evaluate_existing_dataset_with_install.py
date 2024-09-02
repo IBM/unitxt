@@ -1,5 +1,5 @@
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference_engine import HFPipelineBasedInferenceEngine
+from unitxt.inference_engines import HFPipelineBasedInferenceEngine
 from unitxt.text_utils import print_dict
 
 # Use the Unitxt APIs to load the wnli entailment dataset using the standard template in the catalog for relation task with 2-shot in-context learning.
@@ -19,17 +19,17 @@ test_dataset = dataset["test"]
 #
 # change to this to infer with IbmGenAI APIs:
 #
-# from unitxt.inference import IbmGenAiInferenceEngine
+# from unitxt.inference_engines import IbmGenAiInferenceEngine
 # inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or this to infer using WML APIs:
 #
-# from unitxt.inference import WMLInferenceEngine
+# from unitxt.inference_engines import WMLInferenceEngine
 # inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # or to this to infer using OpenAI APIs:
 #
-# from unitxt.inference import OpenAiInferenceEngine
+# from unitxt.inference_engines import OpenAiInferenceEngine
 # inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 #
 # Note that to run with OpenAI APIs you need to change the loader specification, to

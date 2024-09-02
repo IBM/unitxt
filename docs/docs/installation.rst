@@ -29,8 +29,8 @@ The core of Unitxt has minimal dependencies (none beyond HuggingFace evaluate).
 Note that specific metrics or other operators may required specific dependencies, which are checked before the first time they are used.
 An error message is printed if the there are missing installed dependencies.
 
-The benefit of using the HuggingFace API approach is that you can load a Unitxt dataset, just like every other HuggingFace dataset, 
-so it can be used in preexisting code without modifications.  
+The benefit of using the HuggingFace API approach is that you can load a Unitxt dataset, just like every other HuggingFace dataset,
+so it can be used in preexisting code without modifications.
 However, this incurs extra overhead when HuggingFace downloads the unitxt package and does not expose all unitxt capabilities
 (e.g., defining new datasets, metrics, templates, and more).
 
@@ -46,7 +46,7 @@ You can then use the API:
 .. code-block:: python
 
   from unitxt import load_dataset,evaluate
-  from unitxt.inference import HFPipelineBasedInferenceEngine
+  from unitxt.inference_engines import HFPipelineBasedInferenceEngine
 
   dataset = load_dataset('card=cards.wnli,template=templates.classification.multi_class.relation.default,max_test_instances=20')
   test_dataset = dataset["test"]
@@ -56,7 +56,7 @@ You can then use the API:
   predictions = inference_model.infer(test_dataset)
 
   dataset_with_scores = evaluate(predictions=predictions, data=test_dataset)
-  [print(item) for item in dataset_with_scores[0]['score']['global'].items()] 
+  [print(item) for item in dataset_with_scores[0]['score']['global'].items()]
 
 
 .. warning::
@@ -75,6 +75,6 @@ installed, and the versions are not compatible. To fix this issue, you should ch
 * Update the locally installed Unitxt
 to the Unitxt HuggingFace dataset version
 * Uninstall the local Unitxt package (in case you don't require the access to Unitxt
-direct APIs), or 
+direct APIs), or
 * Change the code to load the datasets using the direct Unitxt APIs without using the HuggingFace API.
 
