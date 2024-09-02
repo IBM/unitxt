@@ -1,8 +1,44 @@
+"""Inference Engines Module.
+
+This module defines a comprehensive framework for creating custom inference engines used in natural language processing (NLP) and machine learning tasks. These engines can be categorized based on their core functionality, including text generation, scoring, option selection, and log probability inference. The base classes provided in this module are designed to be extended, allowing developers to implement specific inference behaviors tailored to their needs.
+
+### Core Inference Engine Types
+
+1. **Text Generation Engines (`TextGenerationInferenceEngine`)**:
+   These engines are designed to generate text-based outputs from input datasets. They are ideal for tasks such as text completion, translation, or any other generative task where the output is a sequence of text.
+
+2. **Scoring Engines (`ScoringInferenceEngine`)**:
+   These engines assign scores to text inputs. They are used when the task requires evaluating or ranking inputs based on specific criteria, such as sentiment analysis, text quality scoring, or likelihood evaluation.
+
+3. **Option Selection Engines (`OptionSelectingInferenceEngine`)**:
+   These engines are used to select the best option from a set of provided options for each input instance. They are useful in scenarios where the model needs to choose between multiple choices, such as multiple-choice question answering.
+
+4. **Log Probability Inference Engines (`LogProbInferenceEngine`)**:
+   These engines perform inference to return log probabilities of the top tokens for each position in the text. They are often used in language modeling tasks where understanding the probability distribution over sequences of text is crucial.
+
+### List of Engines and Mixins
+
+#### **Text Generation Engines (`TextGenerationInferenceEngine`)**
+- **HFPipelineBasedInferenceEngine**: Generates text using HuggingFace's pipeline-based models.
+- **MockInferenceEngine**: A mock engine that generates fixed outputs for testing purposes.
+- **IbmGenAiInferenceEngine**: Uses IBM's GenAI for text generation.
+- **OpenAiInferenceEngine**: Uses OpenAI's API for text generation and log probability inference.
+- **WMLInferenceEngine**: Uses IBM Watson Machine Learning for text generation.
+- **HFLlavaInferenceEngine**: Generates text using the LLaVA model, with support for image-text generation tasks.
+
+#### **Scoring Engines (`ScoringInferenceEngine`)**
+- **HFLogProbScoringEngine**: Calculates log probabilities for text inputs using models from the HuggingFace Transformers library.
+
+#### **Option Selection Engines (`OptionSelectingInferenceEngine`)**
+- **SelectingByScoreInferenceEngine**: Selects options from a dataset based on scores provided by a scoring engine.
+
+#### **Log Probability Inference Engines (`LogProbInferenceEngine`)**
+- **HFLogProbInferenceEngine**: A HuggingFace-based engine for calculating log probabilities for text inputs.
+
+"""
 import abc
-import json
 import os
 import re
-from abc import abstractmethod
 from collections import Counter
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -12,140 +48,13 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .image_operators import extract_images
-from .logging_utils import get_logger
+from .inference_engine import (
+    LogProbInferenceEngine,
+    OptionSelectingInferenceEngine,
+    ScoringInferenceEngine,
+    TextGenerationInferenceEngine,
+)
 from .operator import PackageRequirementsMixin
-
-
-class InferenceEngine(Artifact):
-    """Base class for inference engines.
-
-    This class provides a framework for processing and inferring data from datasets.
-    Subclasses should implement the `_infer_dataset` method to define specific inference behavior.
-    """
-
-    def __call__(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Processes the dataset and applies the inference engine.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[Dict[str, Any]]: The processed dataset with inferred results.
-        """
-        processed_dataset = []
-        for instance in dataset:
-            self.verify_instance(instance)
-            if isinstance(instance["task_data"], str):
-                instance = {**instance, "task_data": json.loads(instance["task_data"])}
-            processed_dataset.append(instance)
-        return self._infer_dataset(processed_dataset)
-
-    def infer(self, dataset: List[Dict[str, Any]]) -> List[str]:
-        """Infers predictions from the dataset.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[str]: A list of predictions for each data instance.
-        """
-        dataset = self(dataset)
-        return [instance["prediction"] for instance in dataset]
-
-    @abstractmethod
-    def _infer_dataset(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Abstract method to perform inference on the dataset.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[Dict[str, Any]]: The dataset with inferred results.
-        """
-        pass
-
-
-class TextGenerationInferenceEngine(InferenceEngine):
-    """Abstract base class for text generation inference engines.
-
-    This class is designed for engines that generate text-based outputs from input datasets.
-    """
-
-    @abstractmethod
-    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Abstract method to perform text generation on the dataset.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[Dict[str, Any]]: The dataset with generated text results.
-        """
-        pass
-
-    def _infer_dataset(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return self.generate(dataset)
-
-    @deprecation(version="2.0.0")
-    def _set_inference_parameters(self):
-        """Sets inference parameters of an instance based on 'parameters' attribute (if given)."""
-        if hasattr(self, "parameters") and self.parameters is not None:
-            get_logger().warning(
-                f"The 'parameters' attribute of '{self.get_pretty_print_name()}' "
-                f"is deprecated. Please pass inference parameters directly to the "
-                f"inference engine instance instead."
-            )
-
-            for param, param_dict_val in self.parameters.to_dict(
-                [self.parameters]
-            ).items():
-                param_inst_val = getattr(self, param)
-                if param_inst_val is None:
-                    setattr(self, param, param_dict_val)
-
-
-class ScoringInferenceEngine(InferenceEngine):
-    """Abstract class for inference engines that assign scores to texts.
-
-    This class is designed for engines that produce a score for each input instance in the dataset.
-    """
-
-    def _infer_dataset(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Verifies instances of a dataset and performs inference."""
-        return self.score(dataset)
-
-    @abstractmethod
-    def score(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Abstract method to assign scores to the dataset.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[Dict[str, Any]]: The dataset with scores assigned to each instance.
-        """
-
-
-class OptionSelectingInferenceEngine(InferenceEngine):
-    """Abstract class for inference engines that select options based on inference results.
-
-    This class is designed for engines that select the best option from a set of options for each input instance.
-    """
-
-    def _infer_dataset(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        return self.select(dataset)
-
-    @abstractmethod
-    def select(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Abstract method to select options from the dataset.
-
-        Args:
-            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
-
-        Returns:
-            List[Dict[str, Any]]: The dataset with selected options for each instance.
-        """
-        pass
 
 
 class HFLogProbScoringEngine(ScoringInferenceEngine, PackageRequirementsMixin):
@@ -257,25 +166,6 @@ class SelectingByScoreInferenceEngine(OptionSelectingInferenceEngine):
             instance["prediction"] = options_scores.most_common(1)[0][0]
 
         return dataset
-
-
-class LogProbInferenceEngine(Artifact):
-    """Abstract base class for inference with log probs."""
-
-    @abstractmethod
-    def _infer_log_probs(self, dataset):
-        """Perform inference on the input dataset that returns log probs."""
-        pass
-
-    def infer_log_probs(self, dataset) -> List[Dict]:
-        """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
-
-        For each instance , returns a list of top tokens per position.
-        [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-
-        """
-        [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset)
 
 
 class HFLogProbInferenceEngine(LogProbInferenceEngine):

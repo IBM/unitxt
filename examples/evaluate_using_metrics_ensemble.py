@@ -1,6 +1,6 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import (
+from unitxt.inference_engine import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.metrics import MetricsEnsemble

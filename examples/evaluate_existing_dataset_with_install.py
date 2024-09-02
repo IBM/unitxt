@@ -1,5 +1,5 @@
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.inference_engine import HFPipelineBasedInferenceEngine
 from unitxt.text_utils import print_dict
 
 # Use the Unitxt APIs to load the wnli entailment dataset using the standard template in the catalog for relation task with 2-shot in-context learning.

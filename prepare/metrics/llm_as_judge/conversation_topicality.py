@@ -1,7 +1,7 @@
 import json
 
 from unitxt import add_to_catalog
-from unitxt.inference import (
+from unitxt.inference_engine import (
     IbmGenAiInferenceEngine,
     IbmGenAiInferenceEngineParams,
 )

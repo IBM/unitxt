@@ -1,7 +1,7 @@
 import unittest
 
 from unitxt import produce
-from unitxt.inference import (
+from unitxt.inference_engines import (
     HFLlavaInferenceEngine,
     HFLogProbScoringEngine,
     HFPipelineBasedInferenceEngine,

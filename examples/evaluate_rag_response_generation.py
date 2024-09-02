@@ -3,7 +3,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.collections_operators import Wrap
-from unitxt.inference import (
+from unitxt.inference_engine import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.loaders import LoadFromDictionary

@@ -1,7 +1,7 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.inference import (
+from unitxt.inference_engine import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.llm_as_judge import LLMAsJudge

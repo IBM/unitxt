@@ -1,6 +1,6 @@
 from unitxt.api import evaluate
 from unitxt.benchmark import Benchmark
-from unitxt.inference import (
+from unitxt.inference_engine import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.standard import StandardRecipe

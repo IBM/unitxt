@@ -23,7 +23,7 @@ from .fusion import __file__ as _
 from .generator_utils import __file__ as _
 from .hf_utils import verify_versions_compatibility
 from .image_operators import __file__ as _
-from .inference import __file__ as _
+from .inference_engine import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _
 from .loaders import __file__ as _

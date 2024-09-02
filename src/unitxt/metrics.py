@@ -27,7 +27,8 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
-from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
+from .inference_engine import InferenceEngine
+from .inference_engines import HFPipelineBasedInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (

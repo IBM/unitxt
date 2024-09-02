@@ -1,5 +1,8 @@
 from unitxt import infer
-from unitxt.inference import HFLogProbScoringEngine, SelectingByScoreInferenceEngine
+from unitxt.inference_engine import (
+    HFLogProbScoringEngine,
+    SelectingByScoreInferenceEngine,
+)
 from unitxt.text_utils import print_dict
 
 dataset = infer(

@@ -1,6 +1,6 @@
 from unitxt import get_logger, get_settings, load_dataset
 from unitxt.api import evaluate
-from unitxt.inference import (
+from unitxt.inference_engine import (
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.text_utils import print_dict

@@ -1,5 +1,5 @@
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine
+from unitxt.inference_engine import HFLlavaInferenceEngine
 from unitxt.text_utils import print_dict
 
 inference_model = HFLlavaInferenceEngine(

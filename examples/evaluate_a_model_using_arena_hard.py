@@ -1,5 +1,5 @@
 from unitxt import evaluate, load_dataset
-from unitxt.inference import MockInferenceEngine
+from unitxt.inference_engine import MockInferenceEngine
 from unitxt.text_utils import print_dict
 
 model_id = "meta-llama/llama-3-70b-instruct"

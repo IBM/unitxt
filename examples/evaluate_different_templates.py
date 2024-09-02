@@ -4,7 +4,7 @@ import tempfile
 import pandas as pd
 from unitxt import add_to_catalog, get_logger, register_local_catalog
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.inference_engine import IbmGenAiInferenceEngine
 from unitxt.templates import InputOutputTemplate
 from unitxt.text_utils import print_dict
 

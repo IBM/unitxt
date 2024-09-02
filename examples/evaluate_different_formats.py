@@ -1,7 +1,7 @@
 import pandas as pd
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.inference_engine import IbmGenAiInferenceEngine
 from unitxt.text_utils import print_dict
 
 logger = get_logger()

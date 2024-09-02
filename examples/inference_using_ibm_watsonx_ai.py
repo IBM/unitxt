@@ -1,7 +1,7 @@
 import os
 
 from unitxt.api import load_dataset
-from unitxt.inference import WMLInferenceEngine
+from unitxt.inference_engine import WMLInferenceEngine
 from unitxt.text_utils import print_dict
 
 if __name__ == "__main__":
