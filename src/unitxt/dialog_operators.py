@@ -11,7 +11,6 @@ dialog = [
     {"user": "kkk", "system": ""},
 ]
 """
-import copy
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat
@@ -163,40 +162,11 @@ class SerializeOpenAiFormatDialog(SerializeDialog):
                     f"Entry {i} has an invalid role: {entry['role']}. Allowed roles are 'user' and 'assistant'."
                 )
 
-    def validate_dialog_have_complete_pairs(self, dialog: List[Dict[str, str]]) -> None:
-        """Validates that the given dialog contains a list of complete pairs of user and assistant.
-
-        The function checks that:
-        1. The first role is 'user'.
-        2. The dialog contains complete pairs of 'user' and 'assistant', except the
-         last turn being 'user' only if "is_last_turn_user_only" is True.
-
-        If the dialog does not conform to the expected format, a descriptive
-        ValueError is raised indicating the issue.
-
-        Args:
-            dialog (List[Dict[str, str]]): The dialog to validate.
-
-        Raises:
-            ValueError: If the dialog does not meet the format requirements.
-        """
-        if self.is_last_turn_user_only:
-            dialog = copy.deepcopy(dialog)
-            last_turn = dialog.pop(-1)
-            if last_turn["role"] != "user":
-                raise ValueError("Last turn entry is not a 'user' turn.")
-
-        # Check for complete pairs
-        if len(dialog) % 2 != 0:
+        first_entry = dialog[0]
+        if first_entry["role"] != "user":
             raise ValueError(
-                "Dialog does not contain complete pairs of 'user' and 'assistant'."
+                f"First entry role is expected to be 'user' It is  {first_entry['role']}."
             )
-
-        for i in range(0, len(dialog), 2):
-            if dialog[i]["role"] != "user" or dialog[i + 1]["role"] != "assistant":
-                raise ValueError(
-                    f"Entries {i} and {i + 1} do not form a complete 'user' and 'assistant' pair."
-                )
 
     @staticmethod
     def merge_dialog_entries(dialog: List[Dict[str, str]]) -> List[Dict[str, str]]:

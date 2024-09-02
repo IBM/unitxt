@@ -108,6 +108,8 @@ class TestDialogSerializer(UnitxtTestCase):
 
 
 class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
+    dialog_operator = SerializeOpenAiFormatDialog(field="dummy_field")
+
     def test_transform_dialog(self):
         dialog = [
             {"content": "What color was Cotton?", "role": "user"},
@@ -119,14 +121,13 @@ class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
         ]
 
         expected = [
-            {"user": "What color was Cotton?", "assistant": "white"},
-            {"user": "Where did she live?", "assistant": "in a barn"},
-            {"user": "Did she live alone?", "assistant": "No, with other animals"},
+            {"user": "What color was Cotton?", "system": "white"},
+            {"user": "Where did she live?", "system": "in a barn"},
+            {"user": "Did she live alone?", "system": "No, with other animals"},
         ]
 
         assert (
-            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
-            == expected
+            self.dialog_operator.transform_dialog_to_standard_format(dialog) == expected
         )
 
     def test_transform_dialog_with_turn_merging(self):
@@ -137,11 +138,10 @@ class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
             {"content": "assistant2", "role": "assistant"},
         ]
 
-        expected = [{"user": "User", "assistant": "assistant1 assistant2"}]
+        expected = [{"user": "User", "system": "assistant1 assistant2"}]
 
         assert (
-            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
-            == expected
+            self.dialog_operator.transform_dialog_to_standard_format(dialog) == expected
         )
 
         # Test multiple 'user' entries
@@ -155,13 +155,12 @@ class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
         ]
 
         expected = [
-            {"user": "User1 User2", "assistant": "assistant1 assistant2"},
+            {"user": "User1 User2", "system": "assistant1 assistant2"},
             {"user": "User3", "system": "assistant3"},
         ]
 
         assert (
-            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
-            == expected
+            self.dialog_operator.transform_dialog_to_standard_format(dialog) == expected
         )
 
     def test_transform_dialog_validation_first_turn_assistant(self):
@@ -174,7 +173,7 @@ class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
         ]
 
         try:
-            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+            self.dialog_operator.transform_dialog_to_standard_format(dialog)
         except ValueError:
             return
         else:
@@ -189,7 +188,7 @@ class TestOpenAiFormatDialogSerialize(UnitxtTestCase):
         ]
 
         try:
-            SerializeOpenAiFormatDialog.transform_dialog_to_standard_format(dialog)
+            self.dialog_operator.transform_dialog_to_standard_format(dialog)
         except ValueError:
             return
         else:
