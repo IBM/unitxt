@@ -7,6 +7,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.templates import TemplatesList
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -25,8 +26,13 @@ card = TaskCard(
         Rename(field="caption", to_field="input_b"),
     ],
     task="tasks.generation.from_pair",
-    templates="templates.generation.from_pair.all",
-    __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
+    templates=TemplatesList(
+        [
+            "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
+        ]
+    ),
+    __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a "
+    "paragraph of a table description with richer inference from scientific papers.",
     __tags__={
         "modality": "table",
         "urls": {"arxiv": "https://aclanthology.org/2021.acl-long.115/"},
