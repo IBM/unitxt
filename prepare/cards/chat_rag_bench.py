@@ -59,6 +59,6 @@ for subset in subsets:
     )
     add_to_catalog(
         card,
-        f"cards.chat_rag_bench.train.user_assistant_format.{subset}",
+        f"cards.rag.response_generation.chat_rag_bench.train.user_assistant_format.{subset}",
         overwrite=True,
     )
