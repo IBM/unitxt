@@ -485,6 +485,9 @@ class TestToTypeString(UnitxtTestCase):
     def test_dict_type(self):
         self.assertEqual(to_type_string(typing.Dict[str, int]), "Dict[str, int]")
 
+    def test_optional_type(self):
+        self.assertEqual(to_type_string(typing.Optional[int]), "Optional[int]")
+
     def test_tuple_type(self):
         self.assertEqual(to_type_string(typing.Tuple[int, str]), "Tuple[int, str]")
 

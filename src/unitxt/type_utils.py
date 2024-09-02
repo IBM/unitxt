@@ -563,6 +563,13 @@ def strtype(typing_type) -> str:
         origin = typing_type.__origin__
         type_args = typing.get_args(typing_type)
 
+        if type_args[-1] is type(None):
+            return (
+                "Optional["
+                + ", ".join([strtype(sub_type) for sub_type in type_args[:-1]])
+                + "]"
+            )
+
         if origin is Literal:
             return str(typing_type).replace("typing.", "")
         if origin is typing.Union:
