@@ -1,7 +1,7 @@
 from unitxt.utils import (
     is_module_available,
     is_package_installed,
-    remove_numeric_and_strings,
+    remove_numerics_and_quoted_texts,
 )
 
 from tests.utils import UnitxtTestCase
@@ -20,7 +20,7 @@ class TestUtils(UnitxtTestCase):
     def test_is_module_available_false(self):
         self.assertFalse(is_module_available("some_non_existent_module"))
 
-    def test_remove_numeric_and_strings(self):
+    def test_remove_numerics_and_quoted_texts(self):
         test_cases = [
             ("This is a string with numbers 1234", "This is a string with numbers "),
             (
@@ -51,5 +51,5 @@ class TestUtils(UnitxtTestCase):
 
         for i, (input_str, expected_output) in enumerate(test_cases, 1):
             with self.subTest(i=i):
-                result = remove_numeric_and_strings(input_str)
+                result = remove_numerics_and_quoted_texts(input_str)
                 self.assertEqual(result, expected_output)

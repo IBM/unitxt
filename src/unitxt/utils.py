@@ -88,7 +88,7 @@ def is_module_available(module_name):
         return False
 
 
-def remove_numeric_and_strings(input_str):
+def remove_numerics_and_quoted_texts(input_str):
     # Remove floats first to avoid leaving stray periods
     input_str = re.sub(r"\d+\.\d+", "", input_str)
 
@@ -128,7 +128,7 @@ def safe_eval(expression: str, context: dict, allowed_tokens: list) -> any:
     """
     allowed_sub_strings = list(context.keys()) + allowed_tokens
     if is_made_of_sub_strings(
-        remove_numeric_and_strings(expression), allowed_sub_strings
+        remove_numerics_and_quoted_texts(expression), allowed_sub_strings
     ):
         return eval(expression, {"__builtins__": {}}, context)
     raise ValueError(
