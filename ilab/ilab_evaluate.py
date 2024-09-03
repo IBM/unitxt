@@ -14,6 +14,8 @@ from datasets import DatasetDict
 import argparse
 import importlib
 from dataclasses import dataclass,asdict
+from unitxt.artifact import fetch_artifact
+from unitxt.operator import SequentialOperator
 
 @dataclass
 class IlabRunParams:
@@ -187,9 +189,18 @@ class EvaluateIlab:
 
 
 def upload_to_lh(folder, namespace):
+    
+
     import glob, pandas as pd, datetime,os
     from lh_eval_api import EvaluationResultsUploader, PredictionRecord,RunRecord
     from lh_eval_api.evaluation_data_services.evaluation_data_handlers.eval_uploader.evaluation_results_uploader import HandleExistingRuns
+
+    def get_time(time_str):
+        try:
+            time = datetime.datetime.strptime(time_str,'%Y-%m-%d %H:%M:%S.%f')
+        except:
+            time = datetime.datetime.now()
+        return time
     runs_files = glob.glob(os.path.join(folder,'*_run.csv'))
     if len(runs_files) == 0:
         raise ValueError("no files found")
@@ -201,7 +212,7 @@ def upload_to_lh(folder, namespace):
         prediction_file = file.replace('_run.csv','_predictions.csv')
         run_df['inference_platform'] = 'ilab'
         run_df['execution_env'] = 'ilab'
-        run_df['started_at'] = run_df['started_at'].apply(lambda x: datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S.%f'))
+        run_df['started_at'] = run_df['started_at'].apply(get_time)
         for dict_str in ['all_scores', 'run_params']:
             run_df[dict_str] = run_df[dict_str].apply(lambda x: eval(x.replace("np.float64", "float").replace("nan", "float('nan')")))
         row = run_df.iloc[0]
@@ -211,7 +222,8 @@ def upload_to_lh(folder, namespace):
         runs.append(run_record)
         predictions_df = pd.read_csv(prediction_file)
         predictions_df['run_id'] = run_record.run_id
-        predictions_df['model_prediction'] = predictions_df['processed_model_prediction']
+        if 'model_prediction' not in list(predictions_df):
+            predictions_df['model_prediction'] = predictions_df['processed_model_prediction']
         predictions_df['score'] = predictions_df['score'].apply(float)
         predictions = predictions_df.apply(
         lambda row: PredictionRecord(
@@ -244,6 +256,8 @@ def save_results(
         global_scores = evaluated_dataset[0]['score']['global']
         main_score_name = global_scores.pop('score_name')
         global_main_score = global_scores[main_score_name]
+        if not csv_path.endswith('.csv'):
+            csv_path = csv_path+'.csv'
         if append_model_name:
             csv_path = csv_path.replace('.csv',f'_{model_name.split("/")[-1]}.csv')
         print(f"saving to {csv_path}...")
@@ -273,9 +287,25 @@ def save_results(
                 'score':item["score"]["instance"]["score"],
                 'score_name':item["score"]["instance"]["score_name"],
                 'data_split':"test",
+                'unformatted_input':get_unformatted_input(item)
             })
         pd.DataFrame(predictions_data).to_csv(csv_path.replace('.csv','_predictions.csv'),index=False)
         
+def get_unformatted_input(evaluated_dataset_instance):
+    task_data_instance = evaluated_dataset_instance['task_data']
+    template = task_data_instance["metadata"]["template"]
+    template, _ = fetch_artifact(template)
+    cleaned_instance = SequentialOperator(
+                steps=[template, "formats.empty"] #add nshot=0?
+            ).process_instance(
+                {
+                    "input_fields": task_data_instance,
+                    "reference_fields": task_data_instance,
+                }
+            )
+    return cleaned_instance['source']
+
+
 
 
 if __name__ == '__main__':

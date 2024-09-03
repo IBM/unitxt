@@ -1,21 +1,17 @@
-import pandas as pd
+import pandas as pd, numpy as np
 from unitxt import evaluate, load_dataset, register_local_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.blocks import (
     TaskCard,
 )
-from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadCSV
-from unitxt.operators import Copy, FilterByCondition, Rename
-from unitxt.processors import ExtractMtBenchRatingJudgment
-from unitxt.test_utils.card import test_card
+from unitxt.operators import Rename,Cast
 from unitxt.inference import IbmGenAiInferenceEngine
 
 from lh_eval_api import LakeHouseLoader 
 from typing import List,Tuple
 import os, ast
 from ilab_evaluate import save_results
-from scipy.stats import ttest_rel
 
 logger = get_logger()
 LOCAL_CATALOG = "../fm-eval/fm_eval/catalogs/private"
@@ -31,13 +27,11 @@ class PostEvaluate:
             judging_models:dict[dict] = {
                 'mistral': {
                     'model_id':"ibm-mistralai/merlinite-7b",
-                    'metric':'metrics.llm_as_judge.rating.merlinite_7b_ibm_genai_template_mt_bench_single_turn',
                     'template': "templates.response_assessment.rating.mt_bench_single_turn",
                     'format': "formats.models.mistral.instruction"
                     },
                 'llama' : {
                     'model_id':"meta-llama/llama-3-70b-instruct", 
-                    'metric':'metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_mt_bench_single_turn',
                     'template': "templates.response_assessment.rating.generic_single_turn",
                     'format': "formats.llama3_instruct"
                     },
@@ -63,19 +57,12 @@ class PostEvaluate:
         self.dataset_split = dataset_split
         logger.info("evaluator initiated")
 
-    def get_preds_from_file(self)->Tuple[List[int],List[str]]:
-        df = pd.read_csv(self.preds_file)
-        predictions = df[self.pred_column].tolist()
-        indices = df[self.index_column].astype(int).tolist()
-        scores = df[self.score_column].astype(float).tolist()
-        logger.info(f"{len(predictions)} predictions loaded")
-        return indices,predictions,scores
-
     def get_params_from_file(self)->Tuple[str,str,str,str,str, dict]:
         df = pd.read_csv(self.run_file)
         data = df.iloc[0].to_dict()
         model = data['model_name']
         card = f"cards.{data['dataset']}"
+        print(data['run_params'])
         run_params = ast.literal_eval(data['run_params'])
         try:
             template = run_params['template']
@@ -87,112 +74,70 @@ class PostEvaluate:
         return card,template, model, owner, task, run_params
 
 
-    def run(self):
-        loader_limit = 100
+    def run(self, overwrite = False):
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
         card,template, model, owner,task, run_params = self.get_params_from_file()
-        run_params['template']=template 
-        
-        # indices,predictions, orig_pred_scores = self.get_preds_from_file()
-        # if template.isdigit():
-        #     template = int(template)
-        #     full_dataset = load_dataset(
-        #         card = card,
-        #         template_card_index = template,
-        #         loader_limit = loader_limit
-        #     )
-        # else:
-        #     full_dataset = load_dataset(
-        #         card = card,
-        #         template= template,
-        #         loader_limit=loader_limit
-        #     )
-        # selected_dataset = [full_dataset[self.dataset_split][i] for i in indices]
+        run_params['template']=f"'{template}'" 
         for model in self.judging_models:
-            logger.info(f"Judging model: {model}")
-            model_run_params = run_params.copy()
-            model_csv_path = self.preds_file.replace('predictions',model)
-            model_run_params['file'] = model_csv_path
-            evaluated_dataset = self.evaluate_meta_task(model,orig_card=card)
-            save_results(
-                csv_path=model_csv_path,
-                evaluated_dataset=evaluated_dataset,
-                model_name=self.judging_models[model]['model_id'],
-                owner=owner,
-                card=card,
-                task_name=task,
-                run_params_dict=run_params,
-                append_model_name=False
-            )
+            for with_reference in [True,False]:
+                model_csv_path = self.preds_file.replace('predictions',f"{model}{'_w_ref' if with_reference else ''}")
+                if not overwrite:
+                    if os.path.exists(model_csv_path.replace('.csv','_predictions.csv')):
+                        logger.info(f"**** file already exists, skipping: {model_csv_path}")
+                        continue
+                model_id = self.judging_models[model]['model_id']
+                logger.info(f"Judging model: {model_id}")
+                model_run_params = run_params.copy()
+                model_run_params['file'] = model_csv_path
+                model_run_params['meta_eval']='True'
+                model_run_params['with_reference'] = with_reference
+                try:
+                    evaluated_dataset = self.evaluate_meta_task(model,with_reference=with_reference)
+                except Exception as e:
+                    logger.error(f"**** Error while inferring for: {model_csv_path}")
+                    raise e
+                save_results(
+                    csv_path=model_csv_path,
+                    evaluated_dataset=evaluated_dataset,
+                    model_name=model_id,
+                    owner=owner,
+                    card=card,
+                    task_name=task,
+                    run_params_dict=run_params,
+                    append_model_name=False
+                )
             
-        # for metric in self.metrics:
-        #     logger.info(f"Preparing {metric} evaluation")
-        #     metric_dataset = selected_dataset.copy()
-        #     for instance in metric_dataset:
-        #         instance['metrics']=[metric] 
-        #     metric_short_str = metric.split('.rating.')[-1][:30]
-        #     out_csv_prefix = self.preds_file.replace('predictions',metric_short_str)
-        #     evaluated_datset = evaluate(predictions=predictions,data=metric_dataset)
-        #     run_params['file'] = out_csv_prefix
-        #     new_pred_scores = [item['score']['instance']['score'] for item in evaluated_datset]
-        #     t_statistic, p_val = self.calc_correlation(orig_pred_scores,new_pred_scores)
-        #     scores = evaluated_datset[0]['score']['global']
-        #     scores['t_statistic_to_orig_metric'] = t_statistic
-        #     scores['p_val_to_orig_metric'] = p_val
-        #     save_results(
-        #         csv_path = out_csv_prefix,
-        #         evaluated_dataset = evaluated_datset,
-        #         model_name=model,
-        #         owner=owner,
-        #         card=card,
-        #         task_name=task,
-        #         run_params_dict=run_params,
-        #         append_model_name=False
-        #     )
-        #     logger.info(f"saving results: {out_csv_prefix}")
-
-       
-    # def calc_correlation(self, base_pred_scores, new_pred_scores):
-    #    t_statistic, p_value = ttest_rel(base_pred_scores, new_pred_scores)
-    #    return t_statistic, p_value
-    #    # log + add this to file + interprate already as significant or not?
     
-    def evaluate_meta_task(self, model, orig_card, with_reference:bool = False):
-        if with_reference:
-            task = "tasks.response_assessment.rating.single_turn_with_reference"
-        else:
-            task = "tasks.response_assessment.rating.single_turn"
+    def evaluate_meta_task(self, model, with_reference:bool = False):
+        task =  "tasks.response_assessment.rating.single_turn"
         template = self.judging_models[model]['template']
+        if with_reference:
+            add_str = "_with_reference"
+            task = task+add_str
+            template = template+add_str
+        
         meta_card = TaskCard(
             LoadCSV(files={'test':self.preds_file}),
             preprocess_steps=[
                 Rename(
                     field_to_field={
-                        "model_input": "question",
+                        "unformatted_input": "question", 
                         "score": "rating",
                         "processed_model_prediction": "answer",
+                        "references": "reference_answer",
                     }
                 ),
-               
-        # Copy(field="rating/0", to_field="rating"),
-        # Copy(field="answer/0", to_field="answer"),
+                Cast(to="float", failure_default=np.nan,field_to_field={"rating":"rating"}),
+                Cast(to="str", failure_default='None', field_to_field={"answer":"answer"})                
         ],
         task = task,
         templates = [template],
         )
-        logger.info('testing meta evaluation card...')
-        test_card(meta_card,strict=False,loader_limit=100)
-        card_name = f"{orig_card}.response_assessment.rating.single_turn_{model}_judgment"
-        logger.info('adding meta evaluation card to catalog...')
-        add_to_catalog(
-            meta_card,
-            card_name,
-            overwrite=True
-        )
+        
         logger.info('loading evaluation dataset...')
         dataset = load_dataset(
-            card = card_name,
+            card = meta_card,
             template = template,
             format = self.judging_models[model]['format'], 
         )
@@ -206,17 +151,10 @@ class PostEvaluate:
 
 
 if __name__ == '__main__':
-    files_to_post_evaluate = [
-    'entities_all_train_5_shots_100_samples_ggml-model-f16-ner.gguf_predictions',
-    'clapnq_base_0_shots_100_samples_predictions',
-    'cat_base_5_shots_100_samples_run',
-    'fin_qa_base_0_shots_100_samples_predictions',
-    'watson_emotion_classes_first_base_5_shots_100_samples_predictions'
-    ]
-    files_to_post_evaluate = [f"ilab/ilab_results/{file}.csv" for file in files_to_post_evaluate]
-    ev = PostEvaluate(
-        'ilab/ilab_results/watson_emotion_classes_first_train_yaml_eval_ggml-model-f16-watson-emotion-text-last.gguf_predictions.csv',
-        dataset_split='train')
-    ev.run()
-
-
+    from glob import glob
+    files_to_post_evaluate = glob('ilab/ilab_results/granite_ilab/*_shots_predictions.csv')
+    for file in files_to_post_evaluate:
+        ev = PostEvaluate(
+            file, dataset_split='test')
+        ev.run()
+   

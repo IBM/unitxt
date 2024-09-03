@@ -172,17 +172,7 @@ def create_yaml(parameters:IlabParameters,distribute=True):
             yaml_file_path=parameters.yaml_file
         )
 
-cat_example = IlabParameters(
-    local_catalog=FM_EVAL_LOCAL_CATALOG,
-    task_description="cat multi label",
-    creator = CREATOR,
-    yaml_file="cat_samples.yaml",
-    template="templates.classification.multi_label.text_before_instruction_with_type_of_classes_and_none",
-    card='cards.cat',
-    question_field = 'source',  
-    answer_field = 'references',
-    context_field = 'context',
-)
+
 
 cnn_example = IlabParameters(
     task_description="dailymail summarization with context simple",
@@ -196,15 +186,6 @@ cnn_example = IlabParameters(
     context_field = 'document',
 )
 
-watson_emotion_text_first_example = IlabParameters(
-    local_catalog=FM_EVAL_LOCAL_CATALOG,
-    task_description="watson emotion",
-    loader_limit=100,
-    creator=CREATOR,
-    yaml_file="ilab/sdg/watson_emotion.yaml",
-    card="cards.watson_emotion",
-    template="templates.classification.multi_class.text_before_instruction_with_type_of_class_i_think",
-   )
 
 watson_emotion = IlabParameters(
     template="templates.classification.multi_class.text_after_instruction_with_type_of_class",
@@ -234,23 +215,6 @@ clapnq = IlabParameters(
     template="templates.rag.response_generation.please_respond"
 )
 
-pagerduty = IlabParameters(
-    card='cards.pagerduty',
-    template='templates.summarization.dialogue.dialogue_here_instruction_dialogue_field_write_summary_instruction',
-    task_description='summarization',
-    yaml_file='ilab/sdg/pagerduty.yaml',
-    local_catalog=FM_EVAL_LOCAL_CATALOG,
-    creator=CREATOR
-)
-
-persado = IlabParameters(
-    card='cards.persado',
-    template="templates.generation.question_generation.given_input",
-    task_description='persado',
-    yaml_file='ilab/sdg/persado.yaml',
-    local_catalog=FM_EVAL_LOCAL_CATALOG,
-    creator=CREATOR
-)
 
 ner = IlabParameters(
     card='cards.entities_selected.all',
