@@ -242,9 +242,9 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[bool] = None
+    logprobs: Optional[bool] = True
     n: Optional[int] = None
-    parallel_tool_calls: bool = None
+    parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
@@ -259,9 +259,9 @@ class OpenAiInferenceEngineParams(Artifact):
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[bool] = None
+    logprobs: Optional[bool] = True
     n: Optional[int] = None
-    parallel_tool_calls: bool = None
+    parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
@@ -293,6 +293,13 @@ class OpenAiInferenceEngine(
 
         self._set_inference_parameters()
 
+    def _get_completion_kwargs(self):
+        return {
+            k: v
+            for k, v in self.to_dict([OpenAiInferenceEngineParamsMixin]).items()
+            if v is not None
+        }
+
     def _infer(self, dataset):
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
@@ -308,7 +315,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
+                **self._get_completion_kwargs(),
             )
             output = response.choices[0].message.content
 
@@ -331,7 +338,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
+                **self._get_completion_kwargs(),
             )
             top_logprobs_response = response.choices[0].logprobs.content
             output = [
