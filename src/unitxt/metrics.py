@@ -4565,8 +4565,7 @@ class NormalizedSacrebleu(HuggingfaceMetric):
     scaled_fields = ["sacrebleu", "precisions"]
     hf_additional_input_fields_pass_one_value = ["tokenize"]
     _requirements_list = {
-        "mecab_ko": KO_ERROR_MESSAGE,
-        "mecab_ko_dic": KO_ERROR_MESSAGE,
+        "sacrebleu": "Additional dependencies required. To install them, run: `pip install sacrebleu`."
     }
 
 
