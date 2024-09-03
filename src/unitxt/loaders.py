@@ -151,6 +151,7 @@ class LoadHF(Loader):
         data_dir: Optional directory to store downloaded data.
         split: Optional specification of which split to load.
         data_files: Optional specification of particular data files to load.
+        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
         num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
@@ -170,6 +171,7 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
+    revision: Optional[str] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
@@ -199,6 +201,7 @@ class LoadHF(Loader):
                         name=self.name,
                         data_dir=self.data_dir,
                         data_files=self.data_files,
+                        revision=self.revision,
                         streaming=self.streaming,
                         cache_dir=None if self.streaming else dir_to_be_deleted,
                         split=self.split,
@@ -488,6 +491,7 @@ class LoadFromIBMCloud(Loader):
         bucket_name: Name of the S3 bucket from which to load data.
         data_dir: Optional directory path within the bucket.
         data_files: Union type allowing either a list of file names or a mapping of splits to file names.
+        data_field: The dataset key for nested JSON file, i.e. when multiple datasets are nested in the same file
         caching: Bool indicating if caching is enabled to avoid re-downloading data.
 
     Example:
@@ -511,6 +515,7 @@ class LoadFromIBMCloud(Loader):
     data_dir: str = None
 
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
+    data_field: str = None
     caching: bool = True
     data_classification_policy = ["proprietary"]
 
@@ -636,10 +641,13 @@ class LoadFromIBMCloud(Loader):
                     )
 
         if isinstance(self.data_files, list):
-            dataset = hf_load_dataset(local_dir, streaming=False)
+            dataset = hf_load_dataset(local_dir, streaming=False, field=self.data_field)
         else:
             dataset = hf_load_dataset(
-                local_dir, streaming=False, data_files=self.data_files
+                local_dir,
+                streaming=False,
+                data_files=self.data_files,
+                field=self.data_field,
             )
 
         return MultiStream.from_iterables(dataset)
