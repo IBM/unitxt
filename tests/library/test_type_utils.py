@@ -1,5 +1,4 @@
 import typing
-from typing import Literal, NewType, TypedDict
 
 from unitxt.type_utils import (
     UnsupportedTypeError,
@@ -10,10 +9,7 @@ from unitxt.type_utils import (
     isoftype,
     issubtype,
     parse_type_string,
-    register_type,
-    replace_class_names,
     to_float_or_default,
-    to_type_string,
     verify_required_schema,
 )
 
@@ -21,36 +17,6 @@ from tests.utils import UnitxtTestCase
 
 
 class TestAssertTyping(UnitxtTestCase):
-    def test_new_type(self):
-        UserId = NewType("UserId", int)
-        self.assertEqual(isoftype(UserId(1), UserId), True)
-        self.assertEqual(isoftype(1, UserId), True)  # Since UserId is based on int
-        self.assertEqual(isoftype("1", UserId), False)
-
-    def test_typed_dict(self):
-        class Person(TypedDict):
-            name: str
-            age: int
-
-        person: Person = {"name": "Alice", "age": 30}
-        self.assertEqual(isoftype(person, Person), True)
-
-        invalid_person = {
-            "name": "Alice",
-            "age": "30",
-        }  # Age is a string, should be int
-        self.assertEqual(isoftype(invalid_person, Person), False)
-
-        incomplete_person = {"name": "Alice"}  # Missing age
-        self.assertEqual(isoftype(incomplete_person, Person), False)
-
-    def test_literal(self):
-        valid_literal: Literal[1, 2, 3] = 2
-        invalid_literal: Literal[1, 2, 3] = 4  # 4 is not part of the Literal
-
-        self.assertEqual(isoftype(valid_literal, Literal[1, 2, 3]), True)
-        self.assertEqual(isoftype(invalid_literal, Literal[1, 2, 3]), False)
-
     def test_simple_types(self):
         self.assertEqual(isoftype(1, int), True)
         self.assertEqual(isoftype("hello", str), True)
@@ -155,22 +121,6 @@ class TestAssertTyping(UnitxtTestCase):
         self.assertEqual(parse_type_string("float"), float)
         self.assertEqual(parse_type_string("bool"), bool)
 
-    def test_handling_registered_types(self):
-        UserId = NewType("UserId", int)
-        register_type(UserId)
-        self.assertEqual(parse_type_string("UserId"), UserId)
-        self.assertEqual(parse_type_string("List[UserId]"), typing.List[UserId])
-        self.assertEqual(to_type_string(typing.List[UserId]), "List[UserId]")
-
-        class Person(TypedDict):
-            name: str
-            age: int
-
-        register_type(Person)
-        self.assertEqual(parse_type_string("Person"), Person)
-        self.assertEqual(parse_type_string("Tuple[Person]"), typing.Tuple[Person])
-        self.assertEqual(to_type_string(typing.Tuple[Person]), "Tuple[Person]")
-
     def test_parse_generic_types(self):
         self.assertEqual(parse_type_string("List[int]"), typing.List[int])
         self.assertEqual(parse_type_string("List[int,]"), typing.List[int])
@@ -189,13 +139,6 @@ class TestAssertTyping(UnitxtTestCase):
         )
         self.assertEqual(
             parse_type_string("Optional[List[str]]"), typing.Optional[typing.List[str]]
-        )
-
-    def test_parse_type_string_with_literal(self):
-        self.assertEqual(parse_type_string("Literal['3', 3]"), typing.Literal["3", 3])
-        self.assertEqual(
-            parse_type_string("Union[List[str], List[Literal['3', 3]]]"),
-            typing.Union[typing.List[str], typing.List[typing.Literal["3", 3]]],
         )
 
     def test_infer_type_string_basics(self):
@@ -413,9 +356,7 @@ class TestAssertTyping(UnitxtTestCase):
         self.assertTrue(is_type(int))
         self.assertTrue(is_type(list))
         self.assertTrue(is_type(dict))
-        self.assertTrue(is_type(Literal[1, 2, 3]))
         self.assertFalse(is_type([1, 2]))
-        self.assertFalse(is_type(print))
 
         with self.assertRaises(UnsupportedTypeError):
             isoftype(4, (int, int))
@@ -425,92 +366,3 @@ class TestAssertTyping(UnitxtTestCase):
 
         with self.assertRaises(UnsupportedTypeError):
             isoftype(3, typing.List)
-
-    def test_replace_class_names(self):
-        test_cases = [
-            # Basic case with <locals>
-            {
-                "input": "library.test_type_utils.TestAssertTyping.test_parse_registered_types.<locals>.Person",
-                "expected": "Person",
-            },
-            # Basic case without <locals>
-            {
-                "input": "library.test_type_utils.TestAssertTyping.test_parse_registered_types.Person",
-                "expected": "Person",
-            },
-            # Tuple with <locals>
-            {
-                "input": "Tuple[library.test_type_utils.TestAssertTyping.test_parse_registered_types.<locals>.Person]",
-                "expected": "Tuple[Person]",
-            },
-            # Tuple without <locals>
-            {
-                "input": "Tuple[library.test_type_utils.TestAssertTyping.test_parse_registered_types.Person]",
-                "expected": "Tuple[Person]",
-            },
-            # Nested structure with <locals>
-            {
-                "input": "List[Dict[str, List[library.test_type_utils.<locals>.Person]]]",
-                "expected": "List[Dict[str, List[Person]]]",
-            },
-            # Multiple classes with <locals>
-            {
-                "input": "Tuple[library.test_type_utils.TestAssertTyping.Person, List[library.other_module.<locals>.Car]]",
-                "expected": "Tuple[Person, List[Car]]",
-            },
-            # No replacement needed
-            {"input": "Person", "expected": "Person"},
-            # No match
-            {"input": "Tuple[SomethingElse]", "expected": "Tuple[SomethingElse]"},
-        ]
-
-        for case in test_cases:
-            with self.subTest(case=case):
-                self.assertEqual(replace_class_names(case["input"]), case["expected"])
-
-
-class TestToTypeString(UnitxtTestCase):
-    def test_basic_types(self):
-        self.assertEqual(to_type_string(int), "int")
-        self.assertEqual(to_type_string(str), "str")
-        self.assertEqual(to_type_string(float), "float")
-        self.assertEqual(to_type_string(typing.Any), "Any")
-
-    def test_union_type(self):
-        self.assertEqual(to_type_string(typing.Union[int, str]), "Union[int, str]")
-
-    def test_list_type(self):
-        self.assertEqual(to_type_string(typing.List[int]), "List[int]")
-
-    def test_dict_type(self):
-        self.assertEqual(to_type_string(typing.Dict[str, int]), "Dict[str, int]")
-
-    def test_optional_type(self):
-        self.assertEqual(to_type_string(typing.Optional[int]), "Optional[int]")
-
-    def test_tuple_type(self):
-        self.assertEqual(to_type_string(typing.Tuple[int, str]), "Tuple[int, str]")
-
-    def test_literal_type(self):
-        self.assertEqual(to_type_string(Literal[1, 2, 3]), "Literal[1, 2, 3]")
-
-    def test_newtype(self):
-        UserId = NewType("UserId", int)
-        register_type(UserId)
-        self.assertEqual(to_type_string(UserId), "UserId")
-        self.assertEqual(
-            to_type_string(typing.Tuple[int, typing.Tuple[int, UserId]]),
-            "Tuple[int, Tuple[int, UserId]]",
-        )
-
-    def test_typed_dict(self):
-        class Point(TypedDict):
-            x: int
-            y: int
-
-        register_type(Point)
-        self.assertEqual(to_type_string(Point), "Point")
-
-    def test_invalid_type(self):
-        with self.assertRaises(ValueError):
-            to_type_string(object)

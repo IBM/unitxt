@@ -116,7 +116,7 @@ You can also implement an end-to-end inference pipeline using your preferred dat
 .. code-block:: python
 
   from unitxt import infer
-  from unitxt.inference import HFPipelineBasedInferenceEngine
+  from unitxt.inference_engines import HFPipelineBasedInferenceEngine
 
   engine = HFPipelineBasedInferenceEngine(
       model_name="google/flan-t5-small", max_new_tokens=32

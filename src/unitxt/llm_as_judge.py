@@ -4,7 +4,8 @@ from .api import infer
 from .artifact import fetch_artifact
 from .dataclass import Field
 from .formats import Format, SystemFormat
-from .inference import InferenceEngine, OpenAiInferenceEngine
+from .inference_engine import InferenceEngine
+from .inference_engines import OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 from .settings_utils import get_settings

@@ -97,7 +97,7 @@ The following code performs the desired evaluation:
 .. code-block:: python
 
     from datasets import load_dataset
-    from unitxt.inference import HFPipelineBasedInferenceEngine
+    from unitxt.inference_engines import HFPipelineBasedInferenceEngine
     from unitxt import evaluate
 
     # 1. Create the dataset
@@ -142,7 +142,7 @@ Let's walk through an example of creating a new LLM as a Judge metric, specifica
 
     .. code-block:: python
 
-        from unitxt.inference import HFPipelineBasedInferenceEngine
+        from unitxt.inference_engines import HFPipelineBasedInferenceEngine
         from unitxt.llm_as_judge import LLMAsJudge
 
         model_id = "mistralai/Mistral-7B-Instruct-v0.2"
@@ -219,7 +219,7 @@ With these components defined, creating a new LLM as a Judge metric is straightf
 .. code-block:: python
 
     from unitxt import add_to_catalog
-    from unitxt.inference import HFPipelineBasedInferenceEngine
+    from unitxt.inference_engines import HFPipelineBasedInferenceEngine
     from unitxt.llm_as_judge import LLMAsJudge
 
     model_id = "mistralai/Mistral-7B-Instruct-v0.2"
@@ -341,7 +341,7 @@ and run it.
 .. code-block:: python
 
     from datasets import load_dataset
-    from unitxt.inference import HFPipelineBasedInferenceEngine
+    from unitxt.inference_engines import HFPipelineBasedInferenceEngine
     from unitxt import evaluate
 
     # 1. Create the dataset

@@ -1,6 +1,45 @@
+"""Inference Engines Module.
+
+This module defines a comprehensive framework for creating custom inference engines used in natural language processing (NLP) and machine learning tasks. These engines can be categorized based on their core functionality, including text generation, scoring, option selection, and log probability inference. The base classes provided in this module are designed to be extended, allowing developers to implement specific inference behaviors tailored to their needs.
+
+### Core Inference Engine Types
+
+1. **Text Generation Engines (`TextGenerationInferenceEngine`)**:
+   These engines are designed to generate text-based outputs from input datasets. They are ideal for tasks such as text completion, translation, or any other generative task where the output is a sequence of text.
+
+2. **Scoring Engines (`ScoringInferenceEngine`)**:
+   These engines assign scores to text inputs. They are used when the task requires evaluating or ranking inputs based on specific criteria, such as sentiment analysis, text quality scoring, or likelihood evaluation.
+
+3. **Option Selection Engines (`OptionSelectingInferenceEngine`)**:
+   These engines are used to select the best option from a set of provided options for each input instance. They are useful in scenarios where the model needs to choose between multiple choices, such as multiple-choice question answering.
+
+4. **Log Probability Inference Engines (`LogProbInferenceEngine`)**:
+   These engines perform inference to return log probabilities of the top tokens for each position in the text. They are often used in language modeling tasks where understanding the probability distribution over sequences of text is crucial.
+
+### List of Engines and Mixins
+
+#### **Text Generation Engines (`TextGenerationInferenceEngine`)**
+- **HFPipelineBasedInferenceEngine**: Generates text using HuggingFace's pipeline-based models.
+- **MockInferenceEngine**: A mock engine that generates fixed outputs for testing purposes.
+- **IbmGenAiInferenceEngine**: Uses IBM's GenAI for text generation.
+- **OpenAiInferenceEngine**: Uses OpenAI's API for text generation and log probability inference.
+- **WMLInferenceEngine**: Uses IBM Watson Machine Learning for text generation.
+- **HFLlavaInferenceEngine**: Generates text using the LLaVA model, with support for image-text generation tasks.
+
+#### **Scoring Engines (`ScoringInferenceEngine`)**
+- **HFLogProbScoringEngine**: Calculates log probabilities for text inputs using models from the HuggingFace Transformers library.
+
+#### **Option Selection Engines (`OptionSelectingInferenceEngine`)**
+- **SelectingByScoreInferenceEngine**: Selects options from a dataset based on scores provided by a scoring engine.
+
+#### **Log Probability Inference Engines (`LogProbInferenceEngine`)**
+- **HFLogProbInferenceEngine**: A HuggingFace-based engine for calculating log probabilities for text inputs.
+
+"""
 import abc
 import os
 import re
+from collections import Counter
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
@@ -9,58 +48,194 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .image_operators import extract_images
-from .logging_utils import get_logger
+from .inference_engine import (
+    LogProbInferenceEngine,
+    OptionSelectingInferenceEngine,
+    ScoringInferenceEngine,
+    TextGenerationInferenceEngine,
+)
 from .operator import PackageRequirementsMixin
 
 
-class InferenceEngine(abc.ABC, Artifact):
-    """Abstract base class for inference."""
+class HFLogProbScoringEngine(ScoringInferenceEngine, PackageRequirementsMixin):
+    """HuggingFace based class for inference engines that calculate log probabilities.
 
-    @abc.abstractmethod
-    def _infer(self, dataset):
-        """Perform inference on the input dataset."""
-        pass
+    This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
+    """
 
-    def infer(self, dataset) -> str:
-        """Verifies instances of a dataset and performs inference."""
-        [self.verify_instance(instance) for instance in dataset]
-        return self._infer(dataset)
+    model_name: str
+    batch_size: int
 
-    @deprecation(version="2.0.0")
-    def _set_inference_parameters(self):
-        """Sets inference parameters of an instance based on 'parameters' attribute (if given)."""
-        if hasattr(self, "parameters") and self.parameters is not None:
-            get_logger().warning(
-                f"The 'parameters' attribute of '{self.get_pretty_print_name()}' "
-                f"is deprecated. Please pass inference parameters directly to the "
-                f"inference engine instance instead."
-            )
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers"
+    }
 
-            for param, param_dict_val in self.parameters.to_dict(
-                [self.parameters]
-            ).items():
-                param_inst_val = getattr(self, param)
-                if param_inst_val is None:
-                    setattr(self, param, param_dict_val)
+    def prepare(self):
+        super().prepare()
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else "cuda"
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        # Load model and tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(
+            self.device
+        )
+        # Set pad_token if it doesn't exist
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+    def get_log_probs(self, texts):
+        # Check available device
+        import torch
+        from tqdm import tqdm
+
+        log_probs = []
+
+        # Process texts in batches
+        for i in tqdm(range(0, len(texts), self.batch_size)):
+            batch = texts[i : i + self.batch_size]
+
+            # Tokenize batch
+            inputs = self.tokenizer(
+                batch, return_tensors="pt", padding=True, truncation=True
+            ).to(self.device)
+
+            # Compute log probabilities
+            with torch.no_grad():
+                predictions = self.model(**inputs)
+                logits = predictions.logits
+
+                for j in range(len(batch)):
+                    input_ids = inputs.input_ids[j]
+                    text_logits = logits[j, :-1, :]  # exclude last token
+                    text_log_probs = torch.log_softmax(text_logits, dim=-1)
+
+                    # Gather log probs for each token
+                    token_log_probs = text_log_probs[
+                        torch.arange(text_logits.shape[0]), input_ids[1:]
+                    ]
+
+                    # Sum log probs to get sequence log prob
+                    sequence_log_prob = token_log_probs.sum().item()
+                    log_probs.append(sequence_log_prob)
+
+        return log_probs
+
+    def score(self, dataset):
+        """Add to each instance in the data a "prediction" score field."""
+        texts = []
+        for instance in dataset:
+            text = instance["source"]
+            texts.append(text)
+
+        scores = self.get_log_probs(texts)
+
+        for instance, score in zip(dataset, scores):
+            instance["prediction"] = score
+
+        return dataset
 
 
-class LogProbInferenceEngine(abc.ABC, Artifact):
+class SelectingByScoreInferenceEngine(OptionSelectingInferenceEngine):
+    scorer_engine: ScoringInferenceEngine
+
+    def select(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        dataset_to_score = []
+
+        for instance in dataset:
+            for option in instance["task_data"]["options"]:
+                dataset_to_score.append({"source": instance["source"] + option})
+
+        scores = self.scorer_engine.score(dataset_to_score)
+
+        scores_iterator = iter(scores)
+
+        for instance in dataset:
+            options_scores = Counter()
+            for option in instance["task_data"]["options"]:
+                score = next(scores_iterator)["prediction"]
+                options_scores[option] = score
+            instance["prediction"] = options_scores.most_common(1)[0][0]
+
+        return dataset
+
+
+class HFLogProbInferenceEngine(LogProbInferenceEngine):
     """Abstract base class for inference with log probs."""
 
-    @abc.abstractmethod
+    model_name: str
+    batch_size: int
+
+    def prepare(self):
+        super().prepare()
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else "cuda"
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        # Load model and tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(
+            self.model_name, device=self.device
+        )
+        # Set pad_token if it doesn't exist
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+    def get_log_probs(self, texts):
+        # Check available device
+        import torch
+        from tqdm import tqdm
+
+        log_probs = []
+
+        # Process texts in batches
+        for i in tqdm(range(0, len(texts), self.batch_size)):
+            batch = texts[i : i + self.batch_size]
+
+            # Tokenize batch
+            inputs = self.tokenizer(
+                batch, return_tensors="pt", padding=True, truncation=True
+            ).to(self.device)
+
+            # Compute log probabilities
+            with torch.no_grad():
+                predictions = self.model(**inputs)
+                logits = predictions.logits
+
+                for j in range(len(batch)):
+                    input_ids = inputs.input_ids[j]
+                    text_logits = logits[j, :-1, :]  # exclude last token
+                    text_log_probs = torch.log_softmax(text_logits, dim=-1)
+
+                    # Gather log probs for each token
+                    token_log_probs = text_log_probs[
+                        torch.arange(text_logits.shape[0]), input_ids[1:]
+                    ]
+
+                    # Sum log probs to get sequence log prob
+                    sequence_log_prob = token_log_probs.sum().item()
+                    log_probs.append(sequence_log_prob)
+
+        return log_probs
+
     def _infer_log_probs(self, dataset):
         """Perform inference on the input dataset that returns log probs."""
         pass
-
-    def infer_log_probs(self, dataset) -> List[Dict]:
-        """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
-
-        For each instance , returns a list of top tokens per position.
-        [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-
-        """
-        [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset)
 
 
 class LazyLoadMixin(Artifact):
@@ -72,7 +247,7 @@ class LazyLoadMixin(Artifact):
 
 
 class HFPipelineBasedInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+    TextGenerationInferenceEngine, PackageRequirementsMixin, LazyLoadMixin
 ):
     model_name: str
     max_new_tokens: int
@@ -129,26 +304,27 @@ class HFPipelineBasedInferenceEngine(
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset):
+    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if not self._is_loaded():
             self._prepare_pipeline()
 
-        outputs = []
-        for output in self.model([instance["source"] for instance in dataset]):
-            if isinstance(output, list):
-                output = output[0]
-            outputs.append(output["generated_text"])
-        return outputs
+        predictions = self.model([instance["source"] for instance in dataset])
+
+        for prediction, instance in zip(predictions, dataset):
+            if isinstance(prediction, list):
+                prediction = prediction[0]
+            instance["prediction"] = prediction["generated_text"]
+
+        return dataset
 
 
-class MockInferenceEngine(InferenceEngine):
+class MockInferenceEngine(TextGenerationInferenceEngine):
     model_name: str
 
-    def prepare(self):
-        return
-
-    def _infer(self, dataset):
-        return ["[[10]]" for instance in dataset]
+    def generate(self, dataset):
+        for instance in dataset:
+            instance["prediction"] = "[[10]]"
+        return dataset
 
 
 class IbmGenAiInferenceEngineParamsMixin(Artifact):
@@ -191,7 +367,9 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 
 class IbmGenAiInferenceEngine(
-    InferenceEngine, IbmGenAiInferenceEngineParamsMixin, PackageRequirementsMixin
+    TextGenerationInferenceEngine,
+    IbmGenAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     label: str = "ibm_genai"
     model_name: str
@@ -215,14 +393,14 @@ class IbmGenAiInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
+    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
             **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
-        return [
+        predictions = [
             response.results[0].generated_text
             for response in self.client.text.generation.create(
                 model_id=self.model_name,
@@ -230,6 +408,11 @@ class IbmGenAiInferenceEngine(
                 parameters=genai_params,
             )
         ]
+
+        for instance, prediction in zip(dataset, predictions):
+            instance["prediction"] = prediction
+
+        return dataset
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
@@ -266,7 +449,7 @@ class OpenAiInferenceEngineParams(Artifact):
 
 
 class OpenAiInferenceEngine(
-    InferenceEngine,
+    TextGenerationInferenceEngine,
     LogProbInferenceEngine,
     OpenAiInferenceEngineParamsMixin,
     PackageRequirementsMixin,
@@ -293,15 +476,11 @@ class OpenAiInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
-        outputs = []
+    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        predictions = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
                 messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
                     {
                         "role": "user",
                         "content": instance["source"],
@@ -310,14 +489,17 @@ class OpenAiInferenceEngine(
                 model=self.model_name,
                 **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
-            output = response.choices[0].message.content
+            prediction = response.choices[0].message.content
 
-            outputs.append(output)
+            predictions.append(prediction)
 
-        return outputs
+        for instance, prediction in zip(dataset, predictions):
+            instance["prediction"] = prediction
+
+        return dataset
 
     def _infer_log_probs(self, dataset):
-        outputs = []
+        predictions = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
                 messages=[
@@ -334,7 +516,7 @@ class OpenAiInferenceEngine(
                 **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             top_logprobs_response = response.choices[0].logprobs.content
-            output = [
+            prediction = [
                 {
                     "top_tokens": [
                         {"text": obj.token, "logprob": obj.logprob}
@@ -343,8 +525,8 @@ class OpenAiInferenceEngine(
                 }
                 for generated_token in top_logprobs_response
             ]
-            outputs.append(output)
-        return outputs
+            predictions.append(prediction)
+        return predictions
 
 
 class WMLInferenceEngineParamsMixin(Artifact):
@@ -383,7 +565,9 @@ class WMLInferenceEngineParams(Artifact):
 
 
 class WMLInferenceEngine(
-    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+    TextGenerationInferenceEngine,
+    WMLInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
 ):
     """Runs inference using ibm-watsonx-ai.
 
@@ -495,7 +679,7 @@ class WMLInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
+    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         from ibm_watsonx_ai.foundation_models import ModelInference
 
         model = ModelInference(
@@ -504,13 +688,18 @@ class WMLInferenceEngine(
             api_client=self._client,
         )
 
-        return model.generate_text(
+        predictions = model.generate_text(
             prompt=dataset["source"],
             params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
         )
 
+        for instance, prediction in zip(dataset, predictions):
+            instance["prediction"] = prediction
 
-class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+        return dataset
+
+
+class HFLlavaInferenceEngine(TextGenerationInferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
     lazy_load = True
@@ -548,13 +737,13 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset):
+    def generate(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if not self._is_loaded():
             self._prepare_engine()
 
         import torch
 
-        results = []
+        predictions = []
         for instance in dataset:
             text = instance["source"]
             images = extract_images(text, instance)
@@ -567,12 +756,15 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
                 images=images, text=model_input, return_tensors="pt"
             ).to(self.device, torch.float16)
             input_len = len(inputs["input_ids"][0])
-            output = self.model.generate(
+            prediction = self.model.generate(
                 **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
             )
-            result = self.processor.decode(
-                output[0][input_len:], skip_special_tokens=True
+            prediction = self.processor.decode(
+                prediction[0][input_len:], skip_special_tokens=True
             )
-            results.append(result)
+            predictions.append(prediction)
 
-        return results
+        for instance, prediction in zip(dataset, predictions):
+            instance["prediction"] = prediction
+
+        return dataset

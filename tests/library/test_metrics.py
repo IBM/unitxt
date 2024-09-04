@@ -1,7 +1,7 @@
 from math import isnan
 from typing import Dict, List
 
-from unitxt.inference import MockInferenceEngine
+from unitxt.inference_engines import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (

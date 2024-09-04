@@ -634,16 +634,17 @@ class AugmentWhitespace(Augmentor):
 
 
 class AugmentPrefixSuffix(Augmentor):
-    r"""Augments the input by prepending and appending randomly selected (typically, whitespace) patterns.
+    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) patterns.
 
     Args:
      prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
-        The dictionary version allows the specification relative weights for the different patterns.
-     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of a certain length.
-     remove_existing_whitespaces : Clean any existing leading and trailing whitespaces.
+        The dictionary version allows to specify relative weights of the different patterns.
+     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of length
+        prefix_len of suffix_len, respectively, repetitions of the randomly selected patterns.
+     remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
         The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
         trimmed input.
-     If only either just prefixes or just suffixes are needed, set the other to None.
+     If only one of prefixes/suffixes is needed, set the other to None.
 
     Examples:
         To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
