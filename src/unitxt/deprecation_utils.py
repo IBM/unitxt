@@ -98,3 +98,14 @@ def deprecation(version, alternative=None, msg=None):
         return depraction_wrapper(func, version, alt_text)
 
     return decorator
+
+
+def init_warning(initiated_class):
+    # Decorator that raises warning when class is initialized
+    def decorator(*args, **kwargs):
+        warnings.warn(
+            f"Class {initiated_class.__name__} has been initialized!", stacklevel=2
+        )
+        return initiated_class(*args, **kwargs)
+
+    return decorator
