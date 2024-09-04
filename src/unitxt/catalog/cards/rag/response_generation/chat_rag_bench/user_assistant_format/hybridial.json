@@ -1,0 +1,46 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "nvidia/ChatRAG-Bench",
+        "name": "hybridial",
+        "split": "test"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "test": "test"
+            }
+        },
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "ctxs/*/text": "contexts",
+                "messages": "dialog",
+                "answers": "reference_answers"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "contexts_ids": []
+            }
+        },
+        {
+            "__type__": "serialize_open_ai_format_dialog",
+            "field": "dialog",
+            "to_field": "question",
+            "format": "formats.user_assistant",
+            "slice_first_and_last_turns_format": true,
+            "last_response_to_field": "dummy"
+        }
+    ],
+    "task": "tasks.rag.response_generation",
+    "templates": {
+        "default": "templates.rag.response_generation.please_respond_chat"
+    }
+}
