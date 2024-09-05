@@ -1,0 +1,53 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "umarbutler/open-australian-legal-qa"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[0.5]",
+                "validation": "train[0.2]",
+                "test": "train[0.3]"
+            }
+        },
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "source/text": "contexts",
+                "answer": "reference_answers",
+                "source/citation": "contexts_ids"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "reference_answers"
+            ],
+            "to_field": "reference_answers"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "contexts"
+            ],
+            "to_field": "contexts"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "contexts_ids"
+            ],
+            "to_field": "contexts_ids"
+        }
+    ],
+    "task": "tasks.rag.response_generation",
+    "templates": {
+        "default": "templates.rag.response_generation.please_respond_chat"
+    }
+}

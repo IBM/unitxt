@@ -16,6 +16,16 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
+        instruction="Please respond to the following question using the context",
+        input_format="Context: {contexts}\nQuestion: {question}.\n",
+        references_field="reference_answers",
+    ),
+    "templates.rag.response_generation.please_respond_chat",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
         instruction="Answer the question, basing your answer on the context",
         input_format="Context: {contexts}\nQuestion: {question}.\n",
         target_prefix="Answer:",
