@@ -1,6 +1,7 @@
 import functools
 import warnings
 
+from .error_utils import UnitxtWarning
 from .settings_utils import get_constants, get_settings
 
 constants = get_constants()
@@ -100,12 +101,10 @@ def deprecation(version, alternative=None, msg=None):
     return decorator
 
 
-def init_warning(initiated_class):
+def init_warning(msg=""):
     # Decorator that raises warning when class is initialized
-    def decorator(*args, **kwargs):
-        warnings.warn(
-            f"Class {initiated_class.__name__} has been initialized!", stacklevel=2
-        )
-        return initiated_class(*args, **kwargs)
+    def decorator(initiated_class):
+        UnitxtWarning(msg)
+        return initiated_class
 
     return decorator
