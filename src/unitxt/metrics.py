@@ -4818,6 +4818,7 @@ class GenerativeBinaryJudge(TaskBasedJudgeMetric):
     inference_engine_class = None
     inference_model: InferenceEngine = None
     generation_kwargs: dict = {}
+    host_name: str
 
     def prepare(self):
         super().prepare()
@@ -4842,10 +4843,15 @@ class GenerativeBinaryJudge(TaskBasedJudgeMetric):
         task_data: list[dict],
     ) -> dict:
         processed_data = self._prepare_instances_for_model(task_data)
-        preds = self.inference_model.infer_log_probs(processed_data)
+        results = self.inference_model.infer_log_probs(processed_data)
+        preds = [result["prediction"] for result in results]
         processed_preds = self._process_predictions(preds)
 
-        return [{self.main_score: s} for s in processed_preds]
+        for i, result in enumerate(results):
+            result[self.main_score] = processed_preds[i]
+            result["host"] = self.host_name
+            del result["prediction"]
+        return results
 
     def _prepare_instances_for_model(self, task_data: list[dict]):
         task_data = self.adjust_instances_to_task(task_data)
@@ -4874,18 +4880,21 @@ class GenerativeBinaryJudgeWML(GenerativeBinaryJudge):
     generation_kwargs = {"max_new_tokens": 5}
     _requirements_list: list[str] = ["ibm_watsonx_ai"]
     inference_engine_class = WMLInferenceEngine
+    host_name = "wml"
 
 
 class GenerativeBinaryJudgeBAM(GenerativeBinaryJudge):
     generation_kwargs = {"max_new_tokens": 5}
     _requirements_list: list[str] = ["ibm-generative-ai"]
     inference_engine_class = IbmGenAiInferenceEngine
+    host_name = "bam"
 
 
 class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
     generation_kwargs = {"logprobs": True, "max_tokens": 5}
     _requirements_list: list[str] = ["openai"]
     inference_engine_class = OpenAiInferenceEngine
+    host_name = "openai"
 
 
 class ArmoRMMetric(TaskBasedJudgeMetric):

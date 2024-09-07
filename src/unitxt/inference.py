@@ -260,8 +260,13 @@ class IbmGenAiInferenceEngine(
                     for top_token in res["top_tokens"]
                 ]
                 predict_result.append(res)
-
-            predict_results.append(predict_result)
+            final_results = {
+                "prediction": predict_result,
+                "input_tokens": result.input_token_count,
+                "output_tokens": result.generated_token_count,
+                "model_id": self.model_name,
+            }
+            predict_results.append(final_results)
         return predict_results
 
 
@@ -367,7 +372,7 @@ class OpenAiInferenceEngine(
                 **self.to_dict([OpenAiInferenceEngineParamsMixin]),
             )
             top_logprobs_response = response.choices[0].logprobs.content
-            output = [
+            pred_output = [
                 {
                     "top_tokens": [
                         {"text": obj.token, "logprob": obj.logprob}
@@ -376,6 +381,12 @@ class OpenAiInferenceEngine(
                 }
                 for generated_token in top_logprobs_response
             ]
+            output = {
+                "prediction": pred_output,
+                "input_tokens": response.usage.prompt_tokens,
+                "output_tokens": response.usage.completion_tokens,
+                "model_id": self.model_name,
+            }
             outputs.append(output)
         return outputs
 
@@ -586,5 +597,12 @@ class WMLInferenceEngine(
             prompt=dataset["source"],
             params=params,
         )
-
-        return [result["results"][0]["generated_tokens"] for result in results]
+        return [
+            {
+                "prediction": result["results"][0]["generated_tokens"],
+                "input_tokens": result["results"][0]["input_token_count"],
+                "output_tokens": result["results"][0]["generated_token_count"],
+                "model_id": self.model_name,
+            }
+            for result in results
+        ]
