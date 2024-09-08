@@ -1,4 +1,4 @@
-from unitxt import add_to_catalog
+from unitxt import add_to_catalog, get_from_catalog
 from unitxt.inference import (
     IbmGenAiInferenceEngine,
     OpenAiInferenceEngine,
@@ -21,8 +21,6 @@ metric_type_to_template = {
     "answer_correctness": "judge_loose_match_no_context_logprobs",
     "answer_relevance": "judge_answer_relevance_logprobs",
 }
-
-rag_fields = {"ground_truths", "answer", "contexts", "question"}
 
 
 def get_inference_engine(model_name, framework_name):
@@ -48,8 +46,6 @@ model_names_to_infer_framework = {
     # "meta-llama/llama-3-1-405b-instruct-fp8": "bam",
 }
 
-task_data_source = ""  # "task_data/" # ""
-
 for judge_model_name, infer_framework in model_names_to_infer_framework.items():
     template_format = (
         "formats.llama3_instruct" if "llama" in judge_model_name else "formats.empty"
@@ -58,6 +54,9 @@ for judge_model_name, infer_framework in model_names_to_infer_framework.items():
         metric_type,
         template_name,
     ) in metric_type_to_template.items():
+        task_name = f"tasks.rag_eval.{metric_type}.binary"
+        task_dict = get_from_catalog(task_name).input_fields
+
         inference_engine = get_inference_engine(judge_model_name, infer_framework)
 
         model_label = (
@@ -69,7 +68,7 @@ for judge_model_name, infer_framework in model_names_to_infer_framework.items():
         metric = LLMAsJudge(
             inference_model=inference_engine,
             template=f"templates.rag_eval.{metric_type}.{template_name}",
-            task="tasks.rag_eval.metric_name.binary",
+            task=task_name,
             format=template_format,
             main_score=metric_label,
             prediction_type=str,
@@ -80,12 +79,6 @@ for judge_model_name, infer_framework in model_names_to_infer_framework.items():
             main_score=metric_label,
             metric=metric,
             preprocess_steps=[
-                Copy(
-                    field_to_field={
-                        field: f"task_data/{field}" for field in sorted(rag_fields)
-                    },
-                    not_exist_ok=True,
-                ),
                 Copy(
                     field_to_field={
                         "data_classification_policy": "task_data/data_classification_policy"
@@ -103,10 +96,15 @@ for judge_model_name, infer_framework in model_names_to_infer_framework.items():
                 Copy(
                     field_to_field={
                         "references": "references",
-                        "choices": "task_data/choices",
+                        "choices": "choices",
                     },
                     not_exist_ok=True,
                     get_default=["0.0"],
+                ),
+                Copy(
+                    field_to_field={
+                        field: f"task_data/{field}" for field in task_dict.keys()
+                    },
                 ),
             ],
         )

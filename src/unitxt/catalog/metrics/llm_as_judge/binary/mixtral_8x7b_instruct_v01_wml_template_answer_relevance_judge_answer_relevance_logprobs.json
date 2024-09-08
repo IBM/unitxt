@@ -10,23 +10,13 @@
             "random_seed": 42
         },
         "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
-        "task": "tasks.rag_eval.metric_name.binary",
+        "task": "tasks.rag_eval.answer_relevance.binary",
         "format": "formats.empty",
         "main_score": "mixtral_8x7b_instruct_v01_wml_template_answer_relevance_judge_answer_relevance_logprobs",
         "prediction_type": "str",
         "strip_system_prompt_and_format_from_inputs": false
     },
     "preprocess_steps": [
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "answer": "task_data/answer",
-                "contexts": "task_data/contexts",
-                "ground_truths": "task_data/ground_truths",
-                "question": "task_data/question"
-            },
-            "not_exist_ok": true
-        },
         {
             "__type__": "copy",
             "field_to_field": {
@@ -49,12 +39,20 @@
             "__type__": "copy",
             "field_to_field": {
                 "references": "references",
-                "choices": "task_data/choices"
+                "choices": "choices"
             },
             "not_exist_ok": true,
             "get_default": [
                 "0.0"
             ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "answer": "task_data/answer",
+                "question": "task_data/question",
+                "choices": "task_data/choices"
+            }
         }
     ]
 }
