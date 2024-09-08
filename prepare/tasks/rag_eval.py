@@ -21,6 +21,7 @@ field_to_type = {
     "choices": "List[str]",
     "contexts": "List[str]",
     "number_val": "Union[float, int]",
+    "textual_label": "List[str]",
     "is_correct": "List[str]",
     "is_faithful": "List[str]",
     "is_context_relevant": "List[str]",
@@ -43,6 +44,7 @@ for binary_val in rag_classification_metrics:
             prediction_type="float",
         ),
         f"tasks.rag_eval.faithfulness.{binary_val}",
+        overwrite=True,
     )
 
     add_to_catalog(
@@ -53,6 +55,7 @@ for binary_val in rag_classification_metrics:
             prediction_type="float",
         ),
         f"tasks.rag_eval.context_relevance.{binary_val}",
+        overwrite=True,
     )
 
     add_to_catalog(
@@ -63,6 +66,7 @@ for binary_val in rag_classification_metrics:
             prediction_type="float",
         ),
         f"tasks.rag_eval.answer_relevance.{binary_val}",
+        overwrite=True,
     )
 
     add_to_catalog(
@@ -75,6 +79,7 @@ for binary_val in rag_classification_metrics:
             prediction_type="float",
         ),
         f"tasks.rag_eval.correctness_holistic.{binary_val}",
+        overwrite=True,
     )
 
     add_to_catalog(
@@ -87,4 +92,5 @@ for binary_val in rag_classification_metrics:
             prediction_type="float",
         ),
         f"tasks.rag_eval.answer_correctness.{binary_val}",
+        overwrite=True,
     )

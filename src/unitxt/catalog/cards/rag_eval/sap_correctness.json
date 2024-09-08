@@ -1,0 +1,125 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_ibm_cloud",
+        "endpoint_url_env": "FMEVAL_COS_URL",
+        "aws_access_key_id_env": "FMEVAL_COS_ACCESS_KEY_ID",
+        "aws_secret_access_key_env": "FMEVAL_COS_SECRET_ACCESS_KEY",
+        "bucket_name": "metrics-eval-data",
+        "data_dir": "SAP",
+        "data_files": {
+            "test": "SAP_Human_Evaluations_jan_march_2024_per_example_with_idk_fixed.csv"
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "category": [
+                    "Deviant"
+                ]
+            },
+            "condition": "not in"
+        },
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "model_scoring_1": [
+                    null
+                ]
+            },
+            "condition": "not in"
+        },
+        {
+            "__type__": "slice",
+            "field_to_field": {
+                "model_scoring_0": "model_scoring_0",
+                "model_scoring_1": "model_scoring_1"
+            },
+            "stop": -1
+        },
+        {
+            "__type__": "cast_fields",
+            "fields": {
+                "model_scoring_0": "int",
+                "model_scoring_1": "int"
+            }
+        },
+        {
+            "__type__": "filter_by_expression",
+            "expression": "(model_scoring_0 >= 75 and model_scoring_1 >= 75) or (model_scoring_0 < 75 and model_scoring_1 < 75)"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "model_scoring_0 >= 75 and model_scoring_1 >= 75",
+            "to_field": "is_correct"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "choices": [
+                    "no",
+                    "yes"
+                ]
+            }
+        },
+        {
+            "__type__": "cast_fields",
+            "fields": {
+                "is_correct": "int"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "is_correct": "number_val",
+                "input": "question",
+                "input_background": "contexts",
+                "model_prediction": "answer"
+            }
+        },
+        {
+            "__type__": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "contexts",
+            "_argv": [
+                "contexts"
+            ]
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "is_correct": {
+                    "0": [
+                        "no"
+                    ],
+                    "1": [
+                        "yes"
+                    ]
+                }
+            },
+            "strict": false
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "is_correct": "textual_label"
+            }
+        },
+        {
+            "__type__": "shuffle",
+            "page_size": 9223372036854775807
+        }
+    ],
+    "task": "tasks.rag_eval.correctness_holistic.binary",
+    "templates": "templates.rag_eval.correctness_holistic.all",
+    "sampler": {
+        "__type__": "diverse_labels_sampler",
+        "choices": "choices",
+        "labels": "textual_label",
+        "include_empty_label": false
+    }
+}

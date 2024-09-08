@@ -1,0 +1,14 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "open_ai_inference_engine",
+        "model_name": "gpt-4-turbo",
+        "logprobs": true,
+        "max_tokens": 5
+    },
+    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+    "task": "tasks.rag_eval.metric_name.binary",
+    "main_score": "gpt_4_turbo_openai_template_faithfulness_judge_with_question_simplified_logprobs",
+    "prediction_type": "str",
+    "strip_system_prompt_and_format_from_inputs": false
+}

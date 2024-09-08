@@ -2,7 +2,9 @@ from unitxt import add_to_catalog
 from unitxt.templates import InputOutputTemplateWithCustomTarget, TemplatesList
 
 
-def add_rag_templates(templates_dict, task, out_field, reference_field="number_val"):
+def add_rag_templates(
+    templates_dict, task, out_field="textual_label", reference_field="number_val"
+):
     rag_template_list = []
     for template_name, template_data in templates_dict.items():
         logprobs_suffixes = (
@@ -41,7 +43,7 @@ judge_yes_no_postprocessors = [
 
 judge_yes_no_logprob_postprocessors = [
     "processors.load_json_from_predictions",
-    "processors.bam_logprobs_to_yes_no_probs",
+    "processors.infer_logprobs_to_yes_no_probs",
     "processors.cast_to_float_return_zero_if_failed",
 ]
 
@@ -54,7 +56,7 @@ judge_extract_pred_yes_no_postprocessors = [
 
 judge_extract_pred_yes_no_logprob_postprocessors = [
     "processors.load_json_from_predictions",
-    "processors.bam_last_token_logprobs_to_yes_no_probs",
+    "processors.infer_last_token_logprobs_to_yes_no_probs",
     "processors.cast_to_float_return_zero_if_failed",
 ]
 

@@ -1,0 +1,100 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_ibm_cloud",
+        "endpoint_url_env": "FMEVAL_COS_URL",
+        "aws_access_key_id_env": "FMEVAL_COS_ACCESS_KEY_ID",
+        "aws_secret_access_key_env": "FMEVAL_COS_SECRET_ACCESS_KEY",
+        "bucket_name": "metrics-eval-data",
+        "data_dir": "RAGEval",
+        "data_files": {
+            "test": "rageval_annotated_data_with_idk.csv"
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "is_idk": [
+                    0,
+                    "0"
+                ]
+            },
+            "condition": "in"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "gold_answer"
+            ],
+            "to_field": "ground_truths"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "choices": [
+                    "no",
+                    "yes"
+                ]
+            }
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "appropriateness_score >= 3",
+            "to_field": "is_correct"
+        },
+        {
+            "__type__": "cast_fields",
+            "fields": {
+                "is_correct": "int"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "is_correct": "number_val",
+                "query": "question",
+                "ret_passages_text": "contexts",
+                "gen_answer": "answer"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "contexts"
+            ],
+            "to_field": "contexts"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "is_correct": {
+                    "0": [
+                        "no"
+                    ],
+                    "1": [
+                        "yes"
+                    ]
+                }
+            },
+            "strict": false
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "is_correct": "textual_label"
+            }
+        }
+    ],
+    "task": "tasks.rag_eval.answer_correctness.binary",
+    "templates": "templates.rag_eval.answer_correctness.all",
+    "sampler": {
+        "__type__": "diverse_labels_sampler",
+        "choices": "choices",
+        "labels": "textual_label",
+        "include_empty_label": false
+    }
+}

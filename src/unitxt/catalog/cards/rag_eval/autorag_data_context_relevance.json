@@ -1,0 +1,56 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_from_ibm_cloud",
+        "endpoint_url_env": "FMEVAL_COS_URL",
+        "aws_access_key_id_env": "FMEVAL_COS_ACCESS_KEY_ID",
+        "aws_secret_access_key_env": "FMEVAL_COS_SECRET_ACCESS_KEY",
+        "bucket_name": "metrics-eval-data",
+        "data_dir": "AutoRAG",
+        "data_files": {
+            "test": "autorag_data.csv"
+        }
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "apply",
+            "function": "ast.literal_eval",
+            "to_field": "contexts",
+            "_argv": [
+                "contexts"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "is_context_relevant": [
+                    "yes"
+                ],
+                "number_val": 1
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "choices": [
+                    "no",
+                    "yes"
+                ]
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "is_context_relevant": "textual_label"
+            }
+        }
+    ],
+    "task": "tasks.rag_eval.context_relevance.binary",
+    "templates": "templates.rag_eval.context_relevance.all",
+    "sampler": {
+        "__type__": "diverse_labels_sampler",
+        "choices": "choices",
+        "labels": "textual_label",
+        "include_empty_label": false
+    }
+}
