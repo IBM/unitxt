@@ -137,9 +137,13 @@ class LLMAsJudgeCompareTaskFormatter(LLMAsJudgeTaskFormatter):
 
 
 class LLMAsJudgeBinaryTaskFormatter(LLMAsJudgeTaskFormatter):
-    task = "tasks.rag_eval.answer_correctness.binary"
-    reduction_map_str = "mean"
-    infer_log_probs = True
+    task: str
+    reduction_map_str: str = "mean"
+    infer_log_probs: bool = True
+
+    def __init__(self, task):
+        super().__init__()
+        self.task = task
 
     def get_single_instance_for_judge_model(
         self, input_instance: str, prediction: str, reference: List
@@ -157,7 +161,7 @@ class LLMAsJudgeBinaryTaskFormatter(LLMAsJudgeTaskFormatter):
         return task_data
 
 
-def task_suffix_to_task_formatter(task):
+def get_task_suffix_to_task_formatter(task):
     task_suffix_to_task_formatter = {
         "rating.single_turn": LLMAsJudgeRatingTaskFormatter,
         "rating.single_turn_with_reference": LLMAsJudgeRatingWithReferenceTaskFormatter,
@@ -165,9 +169,9 @@ def task_suffix_to_task_formatter(task):
     }
     task_formatter_class = task_suffix_to_task_formatter.get(task)
     if task_formatter_class:
-        return task_formatter_class
+        return task_formatter_class()
     if "binary" in task:
-        return LLMAsJudgeBinaryTaskFormatter
+        return LLMAsJudgeBinaryTaskFormatter(task)
     raise ValueError(f"Unsupported task for LLMaJ : {task}")
 
 
@@ -218,8 +222,7 @@ class LLMAsJudge(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        task_formatter_class = task_suffix_to_task_formatter(self.task)
-        self.task_formatter = task_formatter_class()
+        self.task_formatter = get_task_suffix_to_task_formatter(self.task)
         self.reduction_map = {self.task_formatter.reduction_map_str: [self.main_score]}
 
     def verify(self):
