@@ -12,7 +12,6 @@ jobs:
      runs-on: ubuntu-latest
      env:
        OS: ubuntu-latest
-       GENAI_KEY: ${{ secrets.GENAI_KEY }}
        UNITXT_DEFAULT_VERBOSITY: error
        DATASETS_VERBOSITY: error
        HF_HUB_VERBOSITY: error
