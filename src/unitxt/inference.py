@@ -373,7 +373,7 @@ class TogetherAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[TogetherAiInferenceEngineParamsMixin] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from together import Together
         from together.types.models import ModelType
 
