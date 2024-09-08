@@ -11,6 +11,9 @@ from .deprecation_utils import deprecation
 from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
+from .settings_utils import get_settings
+
+settings = get_settings()
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -21,9 +24,20 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
+    @abc.abstractmethod
+    def prepare_engine(self):
+        """Perform inference on the input dataset."""
+        pass
+
+    def prepare(self):
+        if not settings.mock_inference_mode:
+            self.prepare_engine()
+
     def infer(self, dataset) -> str:
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
+        if settings.mock_inference_mode:
+            return [instance["source"] for instance in dataset]
         return self._infer(dataset)
 
     @deprecation(version="2.0.0")
@@ -122,7 +136,7 @@ class HFPipelineBasedInferenceEngine(
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
-    def prepare(self):
+    def prepare_engine(self):
         if not self.lazy_load:
             self._prepare_pipeline()
 
@@ -144,11 +158,15 @@ class HFPipelineBasedInferenceEngine(
 class MockInferenceEngine(InferenceEngine):
     model_name: str
 
-    def prepare(self):
+    def prepare_engine(self):
         return
 
     def _infer(self, dataset):
         return ["[[10]]" for instance in dataset]
+
+
+class MockModeMixin(Artifact):
+    mock_mode: bool = False
 
 
 class IbmGenAiInferenceEngineParamsMixin(Artifact):
@@ -201,11 +219,12 @@ class IbmGenAiInferenceEngine(
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from genai import Client, Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
+
         assert api_key is not None, (
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
@@ -279,7 +298,7 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from openai import OpenAI
 
         api_key_env_var_name = "OPENAI_API_KEY"
@@ -497,7 +516,7 @@ class WMLInferenceEngine(
         client.set.default_project(self.credentials["project_id"])
         return client
 
-    def prepare(self):
+    def prepare_engine(self):
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
@@ -548,7 +567,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
-    def prepare(self):
+    def prepare_engine(self):
         if not self.lazy_load:
             self._prepare_engine()
 
