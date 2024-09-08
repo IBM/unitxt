@@ -51,14 +51,22 @@ metric_type_to_template = {
 def get_inference_engine(model_name, framework_name):
     if framework_name == "wml":
         return WMLInferenceEngine(
-            model_name=model_name, max_new_tokens=5, random_seed=get_seed()
+            model_name=model_name,
+            max_new_tokens=5,
+            random_seed=get_seed(),
+            decoding_method="greedy",
         )
     if framework_name == "bam":
         return IbmGenAiInferenceEngine(
-            model_name=model_name, max_new_tokens=5, random_seed=get_seed()
+            model_name=model_name,
+            max_new_tokens=5,
+            random_seed=get_seed(),
+            decoding_method="greedy",
         )
     if framework_name == "openai":
-        return OpenAiInferenceEngine(model_name=model_name, logprobs=True, max_tokens=5)
+        return OpenAiInferenceEngine(
+            model_name=model_name, logprobs=True, max_tokens=5, temperature=0.0
+        )
 
     raise ValueError("Unsupported framework name " + framework_name)
 
@@ -66,7 +74,7 @@ def get_inference_engine(model_name, framework_name):
 model_names_to_infer_framework = {
     "meta-llama/llama-3-1-70b-instruct": "wml",
     "meta-llama/llama-3-70b-instruct": "bam",
-    # "gpt-4-turbo": "openai",
+    "gpt-4-turbo": "openai",
     "mistralai/mixtral-8x7b-instruct-v01": "wml",
     # "meta-llama/llama-3-1-405b-instruct-fp8": "bam",
 }

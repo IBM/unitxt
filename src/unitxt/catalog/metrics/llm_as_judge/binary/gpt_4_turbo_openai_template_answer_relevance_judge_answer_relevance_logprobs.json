@@ -1,6 +1,6 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "gpt_4_turbo_openai_template_faithfulness_judge_with_question_simplified_logprobs",
+    "main_score": "gpt_4_turbo_openai_template_answer_relevance_judge_answer_relevance_logprobs",
     "metric": {
         "__type__": "llm_as_judge",
         "inference_model": {
@@ -10,10 +10,10 @@
             "max_tokens": 5,
             "temperature": 0.0
         },
-        "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
-        "task": "tasks.rag_eval.faithfulness.binary",
+        "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
+        "task": "tasks.rag_eval.answer_relevance.binary",
         "format": "formats.empty",
-        "main_score": "gpt_4_turbo_openai_template_faithfulness_judge_with_question_simplified_logprobs",
+        "main_score": "gpt_4_turbo_openai_template_answer_relevance_judge_answer_relevance_logprobs",
         "prediction_type": "str",
         "strip_system_prompt_and_format_from_inputs": false
     },
@@ -51,7 +51,6 @@
             "__type__": "copy",
             "field_to_field": {
                 "answer": "task_data/answer",
-                "contexts": "task_data/contexts",
                 "question": "task_data/question",
                 "choices": "task_data/choices"
             }

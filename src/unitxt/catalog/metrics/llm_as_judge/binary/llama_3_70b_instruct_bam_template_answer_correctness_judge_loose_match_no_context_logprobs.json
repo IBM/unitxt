@@ -7,7 +7,8 @@
             "__type__": "ibm_gen_ai_inference_engine",
             "model_name": "meta-llama/llama-3-70b-instruct",
             "max_new_tokens": 5,
-            "random_seed": 42
+            "random_seed": 42,
+            "decoding_method": "greedy"
         },
         "template": "templates.rag_eval.answer_correctness.judge_loose_match_no_context_logprobs",
         "task": "tasks.rag_eval.answer_correctness.binary",

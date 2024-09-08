@@ -7,7 +7,8 @@
             "__type__": "wml_inference_engine",
             "model_name": "meta-llama/llama-3-1-70b-instruct",
             "max_new_tokens": 5,
-            "random_seed": 42
+            "random_seed": 42,
+            "decoding_method": "greedy"
         },
         "template": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
         "task": "tasks.rag_eval.correctness_holistic.binary",

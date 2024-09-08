@@ -7,7 +7,8 @@
             "__type__": "wml_inference_engine",
             "model_name": "mistralai/mixtral-8x7b-instruct-v01",
             "max_new_tokens": 5,
-            "random_seed": 42
+            "random_seed": 42,
+            "decoding_method": "greedy"
         },
         "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
         "task": "tasks.rag_eval.answer_relevance.binary",
