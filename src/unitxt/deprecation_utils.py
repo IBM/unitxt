@@ -1,6 +1,7 @@
 import functools
 import warnings
 
+from .error_utils import UnitxtWarning
 from .settings_utils import get_constants, get_settings
 
 constants = get_constants()
@@ -96,5 +97,14 @@ def deprecation(version, alternative=None, msg=None):
         else:
             raise ValueError("Unsupported object type for deprecation.")
         return depraction_wrapper(func, version, alt_text)
+
+    return decorator
+
+
+def init_warning(msg=""):
+    # Decorator that raises warning when class is initialized
+    def decorator(initiated_class):
+        UnitxtWarning(msg)
+        return initiated_class
 
     return decorator
