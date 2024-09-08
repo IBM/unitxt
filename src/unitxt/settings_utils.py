@@ -146,6 +146,7 @@ if Settings.is_uninitilized():
     settings.seed = (int, 42)
     settings.skip_artifacts_prepare_and_verify = (bool, False)
     settings.data_classification_policy = None
+    settings.mock_inference_mode = (bool, False)
 
 if Constants.is_uninitilized():
     constants = Constants()

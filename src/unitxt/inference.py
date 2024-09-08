@@ -11,6 +11,9 @@ from .deprecation_utils import deprecation
 from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
+from .settings_utils import get_settings
+
+settings = get_settings()
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -21,9 +24,20 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
+    @abc.abstractmethod
+    def prepare_engine(self):
+        """Perform inference on the input dataset."""
+        pass
+
+    def prepare(self):
+        if not settings.mock_inference_mode:
+            self.prepare_engine()
+
     def infer(self, dataset) -> str:
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
+        if settings.mock_inference_mode:
+            return [instance["source"] for instance in dataset]
         return self._infer(dataset)
 
     @deprecation(version="2.0.0")
@@ -122,7 +136,7 @@ class HFPipelineBasedInferenceEngine(
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
-    def prepare(self):
+    def prepare_engine(self):
         if not self.lazy_load:
             self._prepare_pipeline()
 
@@ -144,11 +158,15 @@ class HFPipelineBasedInferenceEngine(
 class MockInferenceEngine(InferenceEngine):
     model_name: str
 
-    def prepare(self):
+    def prepare_engine(self):
         return
 
     def _infer(self, dataset):
         return ["[[10]]" for instance in dataset]
+
+
+class MockModeMixin(Artifact):
+    mock_mode: bool = False
 
 
 class IbmGenAiInferenceEngineParamsMixin(Artifact):
@@ -201,11 +219,12 @@ class IbmGenAiInferenceEngine(
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from genai import Client, Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
+
         assert api_key is not None, (
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
@@ -279,7 +298,7 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from openai import OpenAI
 
         api_key_env_var_name = "OPENAI_API_KEY"
@@ -344,6 +363,96 @@ class OpenAiInferenceEngine(
                 for generated_token in top_logprobs_response
             ]
             outputs.append(output)
+        return outputs
+
+
+class TogetherAiInferenceEngineParamsMixin(Artifact):
+    max_tokens: Optional[int] = None
+    stop: Optional[List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    logprobs: Optional[int] = None
+    echo: Optional[bool] = None
+    n: Optional[int] = None
+    min_p: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+
+
+class TogetherAiInferenceEngine(
+    InferenceEngine, TogetherAiInferenceEngineParamsMixin, PackageRequirementsMixin
+):
+    label: str = "together"
+    model_name: str
+    _requirements_list = {
+        "together": "Install together package using 'pip install --upgrade together"
+    }
+    data_classification_policy = ["public"]
+    parameters: Optional[TogetherAiInferenceEngineParamsMixin] = None
+
+    def prepare_engine(self):
+        from together import Together
+        from together.types.models import ModelType
+
+        api_key_env_var_name = "TOGETHER_API_KEY"
+        api_key = os.environ.get(api_key_env_var_name)
+        assert api_key is not None, (
+            f"Error while trying to run TogetherAiInferenceEngine."
+            f" Please set the environment param '{api_key_env_var_name}'."
+        )
+        self.client = Together(api_key=api_key)
+        self._set_inference_parameters()
+
+        # Get model type from Together List Models API
+        together_models = self.client.models.list()
+        together_model_id_to_type = {
+            together_model.id: together_model.type for together_model in together_models
+        }
+        model_type = together_model_id_to_type.get(self.model_name)
+        assert model_type is not None, (
+            f"Could not find model {self.model_name} " "in Together AI model list"
+        )
+        assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
+            f"Together AI model type {model_type} is not supported; "
+            "supported types are 'chat', 'language' and 'code'."
+        )
+        self.model_type = model_type
+
+    def _get_infer_kwargs(self):
+        return {
+            k: v
+            for k, v in self.to_dict([TogetherAiInferenceEngineParamsMixin]).items()
+            if v is not None
+        }
+
+    def _infer_chat(self, prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+            **self._get_infer_kwargs(),
+        )
+        return response.choices[0].message.content
+
+    def _infer_text(self, prompt: str) -> str:
+        response = self.client.completions.create(
+            model=self.model_name,
+            prompt=prompt,
+            **self._get_infer_kwargs(),
+        )
+        return response.choices[0].text
+
+    def _infer(self, dataset):
+        from together.types.models import ModelType
+
+        outputs = []
+        if self.model_type == ModelType.CHAT:
+            for instance in tqdm(dataset, desc="Inferring with Together AI Chat API"):
+                outputs.append(self._infer_chat(instance["source"]))
+        else:
+            for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
+                outputs.append(self._infer_text(instance["source"]))
         return outputs
 
 
@@ -490,7 +599,7 @@ class WMLInferenceEngine(
         client.set.default_project(self.credentials["project_id"])
         return client
 
-    def prepare(self):
+    def prepare_engine(self):
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
@@ -541,7 +650,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         self.processor = AutoProcessor.from_pretrained(self.model_name)
 
-    def prepare(self):
+    def prepare_engine(self):
         if not self.lazy_load:
             self._prepare_engine()
 
