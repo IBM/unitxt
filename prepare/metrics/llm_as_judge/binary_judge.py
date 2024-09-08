@@ -15,11 +15,11 @@ from unitxt.stream import MultiStream
 from examples.evaluate_rag_judge import test_examples
 
 metric_type_to_template = {
-    # "faithfulness": "judge_with_question_simplified_logprobs",
-    # "context_relevance": "judge_context_relevance_ares_logprobs",
-    # "correctness_holistic": "judge_correctness_simple_logprobs",
+    "faithfulness": "judge_with_question_simplified_logprobs",
+    "context_relevance": "judge_context_relevance_ares_logprobs",
+    "correctness_holistic": "judge_correctness_simple_logprobs",
     "answer_correctness": "judge_loose_match_no_context_logprobs",
-    # "answer_relevance": "judge_answer_relevance_logprobs",
+    "answer_relevance": "judge_answer_relevance_logprobs",
 }
 
 rag_fields = {"ground_truths", "answer", "contexts", "question"}
@@ -42,6 +42,7 @@ def get_inference_engine(model_name, framework_name):
 
 model_names_to_infer_framework = {
     "meta-llama/llama-3-1-70b-instruct": "wml",
+    "meta-llama/llama-3-70b-instruct": "bam",
     # "gpt-4-turbo": "openai",
     "mistralai/mixtral-8x7b-instruct-v01": "wml",
     # "meta-llama/llama-3-1-405b-instruct-fp8": "bam",

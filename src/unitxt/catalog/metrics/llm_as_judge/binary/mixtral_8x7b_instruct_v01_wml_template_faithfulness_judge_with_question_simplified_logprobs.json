@@ -1,15 +1,60 @@
 {
-    "__type__": "llm_as_judge",
-    "inference_model": {
-        "__type__": "wml_inference_engine",
-        "model_name": "mistralai/mixtral-8x7b-instruct-v01",
-        "max_new_tokens": 5,
-        "random_seed": 42
-    },
-    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
-    "task": "tasks.rag_eval.metric_name.binary",
-    "format": "formats.empty",
+    "__type__": "metric_pipeline",
     "main_score": "mixtral_8x7b_instruct_v01_wml_template_faithfulness_judge_with_question_simplified_logprobs",
-    "prediction_type": "str",
-    "strip_system_prompt_and_format_from_inputs": false
+    "metric": {
+        "__type__": "llm_as_judge",
+        "inference_model": {
+            "__type__": "wml_inference_engine",
+            "model_name": "mistralai/mixtral-8x7b-instruct-v01",
+            "max_new_tokens": 5,
+            "random_seed": 42
+        },
+        "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+        "task": "tasks.rag_eval.metric_name.binary",
+        "format": "formats.empty",
+        "main_score": "mixtral_8x7b_instruct_v01_wml_template_faithfulness_judge_with_question_simplified_logprobs",
+        "prediction_type": "str",
+        "strip_system_prompt_and_format_from_inputs": false
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "answer": "task_data/answer",
+                "contexts": "task_data/contexts",
+                "ground_truths": "task_data/ground_truths",
+                "question": "task_data/question"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "prediction"
+            },
+            "not_exist_ok": true,
+            "get_default": "0.0"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "references": "references",
+                "choices": "task_data/choices"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "0.0"
+            ]
+        }
+    ]
 }

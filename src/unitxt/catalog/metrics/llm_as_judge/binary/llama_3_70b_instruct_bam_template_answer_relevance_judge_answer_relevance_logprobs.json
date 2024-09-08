@@ -1,18 +1,18 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "llama_3_1_70b_instruct_wml_template_correctness_holistic_judge_correctness_simple_logprobs",
+    "main_score": "llama_3_70b_instruct_bam_template_answer_relevance_judge_answer_relevance_logprobs",
     "metric": {
         "__type__": "llm_as_judge",
         "inference_model": {
-            "__type__": "wml_inference_engine",
-            "model_name": "meta-llama/llama-3-1-70b-instruct",
+            "__type__": "ibm_gen_ai_inference_engine",
+            "model_name": "meta-llama/llama-3-70b-instruct",
             "max_new_tokens": 5,
             "random_seed": 42
         },
-        "template": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
+        "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
         "task": "tasks.rag_eval.metric_name.binary",
         "format": "formats.llama3_instruct",
-        "main_score": "llama_3_1_70b_instruct_wml_template_correctness_holistic_judge_correctness_simple_logprobs",
+        "main_score": "llama_3_70b_instruct_bam_template_answer_relevance_judge_answer_relevance_logprobs",
         "prediction_type": "str",
         "strip_system_prompt_and_format_from_inputs": false
     },
