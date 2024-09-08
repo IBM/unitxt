@@ -29,7 +29,7 @@ class TestSerializers(UnitxtTestCase):
 
     def test_default_serializer_with_number_no_serialization(self):
         result = self.default_serializer.serialize(123, {})
-        self.assertEqual(result, 123)
+        self.assertEqual(result, "123")
 
     def test_default_serializer_with_number(self):
         result = self.custom_serializer_with_number.serialize(123, {})
@@ -38,7 +38,7 @@ class TestSerializers(UnitxtTestCase):
     def test_default_serializer_with_dict(self):
         test_dict = {"key": "value"}
         result = self.default_serializer.serialize(test_dict, {})
-        self.assertDictEqual(result, test_dict)
+        self.assertDictEqual(result, "{'key': 'value'}")
 
     def test_dialog_serializer(self):
         dialog_data = Dialog(
@@ -128,9 +128,11 @@ class TestSerializers(UnitxtTestCase):
     def test_custom_serializer_with_unrecognized_type(self):
         custom_object = {"key": "value"}
         result = self.custom_serializer.serialize(custom_object, {})
-        self.assertEqual(result, custom_object)  # Should fall back to str conversion
+        self.assertEqual(
+            result, "{'key': 'value'}"
+        )  # Should fall back to str conversion
 
     def test_custom_serializer_with_number(self):
         number_data = Number(42)
         result = self.custom_serializer.serialize(number_data, {})
-        self.assertEqual(result, 42)  # Should return the number as a string
+        self.assertEqual(result, "42")  # Should return the number as a string
