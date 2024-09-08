@@ -38,7 +38,7 @@ class TestSerializers(UnitxtTestCase):
     def test_default_serializer_with_dict(self):
         test_dict = {"key": "value"}
         result = self.default_serializer.serialize(test_dict, {})
-        self.assertDictEqual(result, "{'key': 'value'}")
+        self.assertEqual(result, "{'key': 'value'}")
 
     def test_dialog_serializer(self):
         dialog_data = Dialog(
