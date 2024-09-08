@@ -12,7 +12,32 @@ from unitxt.operators import Copy
 from unitxt.random_utils import get_seed
 from unitxt.stream import MultiStream
 
-from examples.evaluate_rag_judge import test_examples
+test_examples = [
+    {
+        "question": "What foundation models are available in watsonx.ai ?",
+        "answer": "Watsonx.ai supports a variety of foundation models",
+        "contexts": [
+            "Supported foundation models available with watsonx.ai. Watsonx.ai offers numerous foundation models."
+        ],
+        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+    },
+    {
+        "question": "What foundation models are available in watsonx.ai ?",
+        "answer": "Watsonx.ai supports no foundation models",
+        "contexts": [
+            "Supported foundation models available with watsonx.ai. Watsonx.ai offers numerous foundation models."
+        ],
+        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+    },
+    {
+        "question": "What foundation models are available in watsonx.ai ?",
+        "answer": "Watsonx.ai supports a variety of foundation models",
+        "contexts": [
+            "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
+        ],
+        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+    },
+]
 
 metric_type_to_template = {
     "faithfulness": "judge_with_question_simplified_logprobs",
