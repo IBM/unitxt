@@ -11,6 +11,7 @@ from unitxt.templates import (
     MultiLabelTemplate,
     MultipleChoiceTemplate,
     MultiReferenceTemplate,
+    OutputQuantizingTemplate,
     SpanLabelingJsonTemplate,
     SpanLabelingTemplate,
     Template,
@@ -127,6 +128,47 @@ class TestTemplates(UnitxtTestCase):
                 "instruction": "",
                 "target_prefix": "",
                 "postprocessors": ["processors.to_list_by_comma"],
+            },
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_output_quantizing_template(self):
+        template = OutputQuantizingTemplate(
+            input_format="{text}", output_format="{label}", quantum=0.5
+        )
+
+        inputs = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"label": 3.4},
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"label": 1},
+            },
+        ]
+
+        targets = [
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"label": 3.4},
+                "source": "hello world",
+                "target": "3.5",
+                "references": ["3.5"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
+            },
+            {
+                "input_fields": {"text": "hello world"},
+                "reference_fields": {"label": 1},
+                "source": "hello world",
+                "target": "1.0",
+                "references": ["1.0"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 

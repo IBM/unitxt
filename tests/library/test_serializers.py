@@ -2,6 +2,7 @@ from unitxt.serializers import (
     DefaultSerializer,
     DialogSerializer,
     DynamicSerializer,
+    NumberQuantizingSerializer,
     NumberSerializer,
     TableSerializer,
 )
@@ -20,6 +21,7 @@ class TestSerializers(UnitxtTestCase):
         self.custom_serializer_with_number = DynamicSerializer(
             number=NumberSerializer()
         )
+        self.number_quantizing_serializer = NumberQuantizingSerializer(quantum=0.2)
 
     def test_default_serializer_with_string(self):
         result = self.default_serializer.serialize("test", {})
@@ -55,6 +57,34 @@ class TestSerializers(UnitxtTestCase):
         number_data = Number(42.123)
         result = self.number_serializer.serialize(number_data, {})
         self.assertEqual(result, "42.1")
+
+    def test_number_quantizing_serializer_with_int_quantum(self):
+        serializer = NumberQuantizingSerializer(quantum=2)
+        result = serializer.serialize(31, {})
+        self.assertEqual(result, "32")
+        serializer = NumberQuantizingSerializer(quantum=1)
+        result = serializer.serialize(31, {})
+        self.assertEqual(result, "31")
+        serializer = NumberQuantizingSerializer(quantum=2)
+        result = serializer.serialize(31.1, {})
+        self.assertEqual(result, "32")
+        serializer = NumberQuantizingSerializer(quantum=1)
+        result = serializer.serialize(31.1, {})
+        self.assertEqual(result, "31")
+
+    def test_number_quantizing_serializer_with_float_quantum(self):
+        serializer = NumberQuantizingSerializer(quantum=0.2)
+        result = serializer.serialize(31, {})
+        self.assertEqual(result, "31.0")
+        serializer = NumberQuantizingSerializer(quantum=0.2)
+        result = serializer.serialize(31.5, {})
+        self.assertEqual(result, "31.6")
+        serializer = NumberQuantizingSerializer(quantum=0.2)
+        result = serializer.serialize(31.1, {})
+        self.assertEqual(result, "31.2")
+        serializer = NumberQuantizingSerializer(quantum=0.2)
+        result = serializer.serialize(29.999, {})
+        self.assertEqual(result, "30.0")
 
     def test_table_serializer(self):
         table_data = Table(header=["col1", "col2"], rows=[[1, 2], [3, 4]])

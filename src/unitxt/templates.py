@@ -13,6 +13,7 @@ from .random_utils import new_random_generator
 from .serializers import (
     DefaultListSerializer,
     DynamicSerializer,
+    NumberQuantizingSerializer,
     Serializer,
 )
 from .settings_utils import get_constants
@@ -701,25 +702,14 @@ class KeyValTemplate(Template):
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
-    quantum: Union[float, int] = 0.1  # Now supports both int and float
+    serializer: DynamicSerializer = NonPositionalField(
+        default_factory=DynamicSerializer
+    )
+    quantum: Union[float, int] = 0.1
 
-    def reference_fields_to_target_and_references(
-        self, reference_fields: Dict[str, object]
-    ) -> str:
-        if isinstance(self.quantum, int):
-            # When quantum is an int, format quantized values as ints
-            quantized_outputs = {
-                key: f"{int(round(value / self.quantum) * self.quantum)}"
-                for key, value in reference_fields.items()
-            }
-        else:
-            # When quantum is a float, format quantized values with precision based on quantum
-            quantum_str = f"{self.quantum:.10f}".rstrip("0").rstrip(".")
-            quantized_outputs = {
-                key: f"{round(value / self.quantum) * self.quantum:{quantum_str}}"
-                for key, value in reference_fields.items()
-            }
-        return super().reference_fields_to_target_and_references(quantized_outputs)
+    def prepare(self):
+        super().prepare()
+        self.serializer.number = NumberQuantizingSerializer(quantum=self.quantum)
 
 
 class MultiLabelTemplate(InputOutputTemplate):

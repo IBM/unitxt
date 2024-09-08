@@ -1,7 +1,7 @@
 import csv
 import io
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Union
 
 from .operators import InstanceFieldOperator
 from .type_utils import isoftype
@@ -43,6 +43,18 @@ class NumberSerializer(Serializer):
         # For floats, format to one decimal place
         if isinstance(value, float):
             return f"{value:.1f}"
+        raise ValueError("Unsupported type for NumberSerializer")
+
+
+class NumberQuantizingSerializer(NumberSerializer):
+    quantum: Union[float, int] = 0.1
+
+    def serialize(self, value: Number, instance: Dict[str, Any]) -> str:
+        if isoftype(value, Number):
+            quantized_value = round(value / self.quantum) / (1 / self.quantum)
+            if isinstance(self.quantum, int):
+                quantized_value = int(quantized_value)
+            return str(quantized_value)
         raise ValueError("Unsupported type for NumberSerializer")
 
 
