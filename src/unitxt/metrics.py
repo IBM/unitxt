@@ -4877,21 +4877,21 @@ class GenerativeBinaryJudge(TaskBasedJudgeMetric):
 
 
 class GenerativeBinaryJudgeWML(GenerativeBinaryJudge):
-    generation_kwargs = {"max_new_tokens": 5}
+    generation_kwargs = {"max_new_tokens": 5, "decoding_method": "greedy"}
     _requirements_list: list[str] = ["ibm_watsonx_ai"]
     inference_engine_class = WMLInferenceEngine
     host_name = "wml"
 
 
 class GenerativeBinaryJudgeBAM(GenerativeBinaryJudge):
-    generation_kwargs = {"max_new_tokens": 5}
+    generation_kwargs = {"max_new_tokens": 5, "decoding_method": "greedy"}
     _requirements_list: list[str] = ["ibm-generative-ai"]
     inference_engine_class = IbmGenAiInferenceEngine
     host_name = "bam"
 
 
 class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
-    generation_kwargs = {"logprobs": True, "max_tokens": 5}
+    generation_kwargs = {"logprobs": True, "max_tokens": 5, "temperature": 0.0}
     _requirements_list: list[str] = ["openai"]
     inference_engine_class = OpenAiInferenceEngine
     host_name = "openai"
