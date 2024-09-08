@@ -60,11 +60,13 @@ class TestFormats(UnitxtTestCase):
                 "target": "2",
                 "input_fields": {},
                 "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s>\n<|user|>\n1+2</s>\n<|assistant|>\nThe answer is 3</s>\n<|user|>\n4-2</s>\n<|assistant|>\nThe answer is 2</s>\n<|user|>\n1+1</s>\n<|assistant|>\nThe answer is ",
+                "demos": demo_instances,
             },
             {
                 "target": "5",
                 "input_fields": {},
                 "source": "<|system|>\nYou are a smart assistant.\nsolve the math exercises</s>\n<|user|>\n1+2</s>\n<|assistant|>\nThe answer is 3</s>\n<|user|>\n4-2</s>\n<|assistant|>\nThe answer is 2</s>\n<|user|>\n3+2</s>\n<|assistant|>\nThe answer is ",
+                "demos": demo_instances,
             },
         ]
 
@@ -136,21 +138,25 @@ class TestFormats(UnitxtTestCase):
                 "target": "2",
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
+                "demos": demo_instances,
             },
             {
                 "target": "5",
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
+                "demos": demo_instances,
             },
             {
                 "target": "3",
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
+                "demos": demo_instances,
             },
             {
                 "target": "9",
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
+                "demos": demo_instances,
             },
         ]
 
@@ -171,21 +177,25 @@ class TestFormats(UnitxtTestCase):
         targets = [
             {
                 "target": "2",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "target": "5",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "target": "3",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "target": "9",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "Instruction: solve the math exercises\n\nUser: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
@@ -213,21 +223,25 @@ class TestFormats(UnitxtTestCase):
         targets_no_instruction = [
             {
                 "target": "2",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 1+1\nAgent: ",
             },
             {
                 "target": "5",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 3+2\nAgent: ",
             },
             {
                 "target": "3",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 7-4\nAgent: ",
             },
             {
                 "target": "9",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: 12-3\nAgent: ",
             },
@@ -274,7 +288,22 @@ class TestFormats(UnitxtTestCase):
             "target": "negative",
             "references": ["negative"],
             "input_fields": {},
+            "demos": [
+                {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
         }
+
         self.assertDictEqual(result, target)
 
         # no demos
@@ -297,7 +326,6 @@ class TestFormats(UnitxtTestCase):
             "references": ["negative"],
         }
         self.assertDictEqual(result, target)
-
         # test_system_format_with_prefix_and_suffix(self):
         system_format_fix = SystemFormat(
             demos_field="demos",
@@ -334,6 +362,20 @@ class TestFormats(UnitxtTestCase):
             "target": "negative",
             "references": ["negative"],
             "input_fields": {},
+            "demos": [
+                {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+                    "source": 'This is my sentence: "was so not good"',
+                    "target": "negative",
+                    "references": ["negative"],
+                },
+                {
+                    "instruction": "classify user sentence by its sentiment to either positive, or negative.",
+                    "source": 'This is my sentence: "was so good"',
+                    "target": "positive",
+                    "references": ["positive"],
+                },
+            ],
         }
 
         self.assertDictEqual(result, target)
@@ -498,21 +540,25 @@ class TestFormats(UnitxtTestCase):
         targets = [
             {
                 "target": "2",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n1+1\nAgent: ",
             },
             {
                 "target": "5",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n3+2\nAgent: ",
             },
             {
                 "target": "3",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n7-4\nAgent: ",
             },
             {
                 "target": "9",
+                "demos": demo_instances,
                 "input_fields": {},
                 "source": "User: 1+2\nAgent: 3\n\nUser: 4-2\nAgent: 2\n\nUser: solve the math exercises\n\n12-3\nAgent: ",
             },
