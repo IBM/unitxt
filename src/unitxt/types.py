@@ -1,8 +1,9 @@
-from typing import Any, List, Literal, NewType, TypedDict
+from typing import Any, List, Literal, NewType, TypedDict, Union
 
 from .type_utils import register_type
 
 Text = NewType("Text", str)
+Number = NewType("Number", Union[float, int])
 
 
 class Turn(TypedDict):
@@ -27,6 +28,7 @@ class Table(TypedDict):
 
 
 register_type(Text)
+register_type(Number)
 register_type(Turn)
 register_type(Dialog)
 register_type(Table)

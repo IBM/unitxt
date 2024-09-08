@@ -40,6 +40,7 @@ from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
 from .schema import __file__ as _
+from .serializers import __file__ as _
 from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
