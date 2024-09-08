@@ -158,7 +158,7 @@ class HFPipelineBasedInferenceEngine(
 class MockInferenceEngine(InferenceEngine):
     model_name: str
 
-    def prepare(self):
+    def prepare_engine(self):
         return
 
     def _infer(self, dataset):
