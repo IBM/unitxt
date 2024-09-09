@@ -69,23 +69,36 @@ class Finalize(InstanceOperatorValidator):
 
         return instance
 
+    def _get_instance_task_data(
+        self, instance: Dict[str, Any], use_reference_fields=True
+    ) -> Dict[str, Any]:
+        task_data = {
+            **instance["input_fields"],
+            "metadata": {
+                "data_classification_policy": instance["data_classification_policy"],
+            },
+        }
+        if use_reference_fields:
+            task_data = {**task_data, **instance["reference_fields"]}
+        return task_data
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        metadata = {
-            "data_classification_policy": instance["data_classification_policy"],
-            "template": self.artifact_to_jsonable(
-                instance["recipe_metadata"]["template"]
-            ),
-            "num_demos": instance["recipe_metadata"]["num_demos"],
-        }
-        task_data = {
-            **instance["input_fields"],
-            "metadata": metadata,
-        }
+        task_data = self._get_instance_task_data(
+            instance,
+            use_reference_fields=stream_name != constants.inference_stream,
+        )
 
-        if stream_name != constants.inference_stream:
-            task_data = {**task_data, **instance["reference_fields"]}
+        task_data["metadata"]["num_demos"] = instance["recipe_metadata"]["num_demos"]
+        task_data["metadata"]["template"] = self.artifact_to_jsonable(
+            instance["recipe_metadata"]["template"]
+        )
+        if "demos" in instance:
+            task_data["demos"] = [
+                self._get_instance_task_data(instance)
+                for instance in instance.pop("demos")
+            ]
 
         instance["task_data"] = json.dumps(task_data)
 
@@ -99,7 +112,7 @@ class Finalize(InstanceOperatorValidator):
             for key in keys_to_delete:
                 del instance[key]
 
-        data = {**task_data, **metadata}
+        data = {**task_data, **task_data["metadata"]}
         groups = []
         for group_attributes in self.group_by:
             group = {}
