@@ -108,3 +108,18 @@ def init_warning(msg=""):
         return initiated_class
 
     return decorator
+
+
+def warn_on_call(warning_type=UserWarning, msg=""):
+    def decorator(cls):
+        original_init = cls.__init__
+
+        @functools.wraps(original_init)
+        def new_init(self, *args, **kwargs):
+            warnings.warn(msg, warning_type, stacklevel=2)
+            original_init(self, *args, **kwargs)
+
+        cls.__init__ = new_init
+        return cls
+
+    return decorator
