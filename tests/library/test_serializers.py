@@ -99,9 +99,7 @@ class TestSerializers(UnitxtTestCase):
         self.assertEqual(
             result, '<img src="media/images/0">'
         )  # Using default serialization
-        self.assertEqual(
-            instance, {"media": {"images": [{"image": "fake_image_data"}]}}
-        )
+        self.assertEqual(instance, {"media": {"images": ["fake_image_data"]}})
 
     def test_custom_serializer_with_table(self):
         table_data = Table(header=["col1", "col2"], rows=[[1, 2], [3, 4]])

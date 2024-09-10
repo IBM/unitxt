@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from unitxt.image_operators import NormalizeImage, extract_images
+from unitxt.image_operators import ToImage, extract_images
 
 
 class TestImageOperators(unittest.TestCase):
@@ -40,41 +40,40 @@ class TestImageOperators(unittest.TestCase):
 
 class TestImageToText(unittest.TestCase):
     def setUp(self):
-        self.operator = NormalizeImage(field="dummy")
+        self.operator = ToImage(field="dummy")
 
     def test_process_instance_value_new_media(self):
         instance = {}
         value = "image_data"
         result = self.operator.process_instance_value(value, instance)
-        self.assertEqual(result, '<img src="media/images/0">')
-        self.assertEqual(instance, {"media": {"images": ["image_data"]}})
+        self.assertEqual(result, {"image": value})
 
-    def test_process_instance_value_existing_media(self):
-        instance = {"media": {"images": ["existing_image"]}}
-        value = "new_image_data"
-        result = self.operator.process_instance_value(value, instance)
-        self.assertEqual(result, '<img src="media/images/1">')
-        self.assertEqual(
-            instance, {"media": {"images": ["existing_image", "new_image_data"]}}
-        )
+    # def test_process_instance_value_existing_media(self):
+    #     instance = {"media": {"images": ["existing_image"]}}
+    #     value = "new_image_data"
+    #     result = self.operator.process_instance_value(value, instance)
+    #     self.assertEqual(result, '<img src="media/images/1">')
+    #     self.assertEqual(
+    #         instance, {"media": {"images": ["existing_image", "new_image_data"]}}
+    #     )
 
-    def test_process_instance_value_multiple_calls(self):
-        instance = {}
-        values = ["image1", "image2", "image3"]
-        results = []
-        for value in values:
-            results.append(self.operator.process_instance_value(value, instance))
-        self.assertEqual(
-            results,
-            [
-                '<img src="media/images/0">',
-                '<img src="media/images/1">',
-                '<img src="media/images/2">',
-            ],
-        )
-        self.assertEqual(
-            instance, {"media": {"images": ["image1", "image2", "image3"]}}
-        )
+    # def test_process_instance_value_multiple_calls(self):
+    #     instance = {}
+    #     values = ["image1", "image2", "image3"]
+    #     results = []
+    #     for value in values:
+    #         results.append(self.operator.process_instance_value(value, instance))
+    #     self.assertEqual(
+    #         results,
+    #         [
+    #             '<img src="media/images/0">',
+    #             '<img src="media/images/1">',
+    #             '<img src="media/images/2">',
+    #         ],
+    #     )
+    #     self.assertEqual(
+    #         instance, {"media": {"images": ["image1", "image2", "image3"]}}
+    #     )
 
 
 if __name__ == "__main__":
