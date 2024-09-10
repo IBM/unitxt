@@ -10,7 +10,6 @@ from unitxt.llm_as_judge import (
 from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy
 from unitxt.random_utils import get_seed
-from unitxt.stream import MultiStream
 
 test_examples = [
     {
@@ -142,11 +141,11 @@ for judge_model_name, infer_framework in model_names_to_infer_framework.items():
             ],
         )
 
-        multi_stream = MultiStream.from_iterables({"test": test_examples}, copying=True)
-        output_stream = list(metric_pipeline(multi_stream)["test"])
-        metric_outputs = [
-            ex["score"]["instance"][metric_label] for ex in list(output_stream)
-        ]
+        # multi_stream = MultiStream.from_iterables({"test": test_examples}, copying=True)
+        # output_stream = list(metric_pipeline(multi_stream)["test"])
+        # metric_outputs = [
+        #     ex["score"]["instance"][metric_label] for ex in list(output_stream)
+        # ]
         # print(metric_label)
         # print(metric_outputs)
 
