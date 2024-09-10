@@ -27,7 +27,7 @@
             "inside": "list"
         },
         {
-            "__type__": "image_to_text",
+            "__type__": "to_image",
             "field": "image",
             "to_field": "context"
         },

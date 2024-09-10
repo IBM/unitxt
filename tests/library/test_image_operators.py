@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import patch
 
-from unitxt.image_operators import ImageToText, extract_images
+from unitxt.image_operators import NormalizeImage, extract_images
 
 
 class TestImageOperators(unittest.TestCase):
@@ -40,7 +40,7 @@ class TestImageOperators(unittest.TestCase):
 
 class TestImageToText(unittest.TestCase):
     def setUp(self):
-        self.operator = ImageToText(field="dummy")
+        self.operator = NormalizeImage(field="dummy")
 
     def test_process_instance_value_new_media(self):
         instance = {}

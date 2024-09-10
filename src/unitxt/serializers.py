@@ -78,8 +78,9 @@ class ImageSerializer(Serializer):
         if "images" not in instance["media"]:
             instance["media"]["images"] = []
         idx = len(instance["media"]["images"])
-        instance["media"]["images"].append(value)
-        return f'<img src="media/images/{idx}">'
+        instance["media"]["images"].append(value["image"])
+        value["image"] = f'<img src="media/images/{idx}">'
+        return value["image"]
 
 
 class DynamicSerializer(Serializer):
