@@ -1,0 +1,52 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "HuggingFaceM4/ChartQA"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "train",
+                "val": "validation",
+                "test": "test"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field": "label",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "rename",
+            "field": "query",
+            "to_field": "question"
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive",
+    "templates": "templates.qa.with_context.all",
+    "__tags__": {
+        "license": "GPL-3.0",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "ChartQA: A Benchmark for Question Answering about Charts with Visual and Logical Reasoning."
+}

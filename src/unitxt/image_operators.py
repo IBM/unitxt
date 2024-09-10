@@ -1,8 +1,10 @@
+import base64
+import io
 import re
 from typing import Any, Dict
 
 from .dict_utils import dict_get
-from .operators import InstanceFieldOperator
+from .operators import FieldOperator, InstanceFieldOperator
 
 
 def extract_images(text, instance):
@@ -15,12 +17,22 @@ def extract_images(text, instance):
     return images
 
 
-class ImageToText(InstanceFieldOperator):
+class DecodeImage(FieldOperator):
+    _requirements_list = {"PIL": "Please install pillow with `pip install pillow`."}
+
+    def prepare(self):
+        from PIL import Image
+
+        self.image = Image
+
+    def decode_base64_to_image(self, base64_string):
+        img_data = base64.b64decode(base64_string)
+        return self.image.open(io.BytesIO(img_data))
+
+    def process_value(self, value: Any) -> Any:
+        return {"image": self.decode_base64_to_image(value)}
+
+
+class ToImage(InstanceFieldOperator):
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
-        if "media" not in instance:
-            instance["media"] = {}
-        if "images" not in instance["media"]:
-            instance["media"]["images"] = []
-        idx = len(instance["media"]["images"])
-        instance["media"]["images"].append(value)
-        return f'<img src="media/images/{idx}">'
+        return {"image": value}
