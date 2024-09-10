@@ -1,6 +1,6 @@
 {
     "__type__": "task",
-    "inputs": {
+    "input_fields": {
         "contexts": "List[str]",
         "question": "str",
         "choices": "List[str]"
