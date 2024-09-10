@@ -75,7 +75,7 @@ model_names_to_infer_framework = {
     "meta-llama/llama-3-70b-instruct": "bam",
     "gpt-4-turbo": "openai",
     "mistralai/mixtral-8x7b-instruct-v01": "wml",
-    # "meta-llama/llama-3-1-405b-instruct-fp8": "bam",
+    "meta-llama/llama-3-1-405b-instruct-fp8": "bam",
 }
 
 for judge_model_name, infer_framework in model_names_to_infer_framework.items():
