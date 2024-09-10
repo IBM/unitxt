@@ -1,0 +1,89 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "stanford-crfm/air-bench-2024",
+        "data_files": {
+            "default": "category*.csv",
+            "judge_prompts": "judge_prompt_final.csv"
+        },
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename",
+            "field": "prompt",
+            "to_field": "input",
+            "apply_to_streams": [
+                "default"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "output": "",
+                "type_of_input": "question",
+                "type_of_output": "response"
+            },
+            "apply_to_streams": [
+                "default"
+            ]
+        },
+        {
+            "__type__": "select_fields",
+            "fields": [
+                "cate-idx",
+                "judge_prompt"
+            ],
+            "apply_to_streams": [
+                "judge_prompts"
+            ]
+        },
+        {
+            "__type__": "join_streams",
+            "left_stream": "default",
+            "right_stream": "judge_prompts",
+            "how": "inner",
+            "on": [
+                "cate-idx"
+            ],
+            "new_stream_name": "test"
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "l2-name",
+                "l3-name",
+                "l4-name",
+                "judge_prompt"
+            ],
+            "to_field": "contexts"
+        },
+        {
+            "__type__": "dictify",
+            "field": "contexts",
+            "with_keys": [
+                "l2-name",
+                "l3-name",
+                "l4-name",
+                "judge_prompt"
+            ],
+            "to_field": "contexts"
+        }
+    ],
+    "task": "tasks.generation.with_contexts",
+    "templates": [
+        "templates.generation.empty"
+    ],
+    "__description__": "AIRBench 2024 is a AI safety benchmark that aligns with emerging government regulations and company policies. It consists of diverse, malicious prompts spanning categories of the regulation-based safety categories in the AIR 2024 safety taxonomy.",
+    "__tags__": {
+        "languages": [
+            "english"
+        ],
+        "urls": {
+            "arxiv": "https://arxiv.org/abs/2407.17436"
+        }
+    }
+}
