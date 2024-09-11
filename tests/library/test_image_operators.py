@@ -74,7 +74,3 @@ class TestImageToText(unittest.TestCase):
     #     self.assertEqual(
     #         instance, {"media": {"images": ["image1", "image2", "image3"]}}
     #     )
-
-
-if __name__ == "__main__":
-    unittest.main()
