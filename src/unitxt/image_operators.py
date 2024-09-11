@@ -4,6 +4,8 @@ import re
 from abc import abstractmethod
 from typing import Any, Dict
 
+import numpy as np
+
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceFieldOperator, PackageRequirementsMixin
 
@@ -32,8 +34,8 @@ def extract_images(text, instance):
 
 class DecodeImage(FieldOperator, PillowMixin):
     def decode_base64_to_image(self, base64_string):
-        img_data = base64.b64decode(base64_string)
-        return self.image.open(io.BytesIO(img_data))
+        image_data = base64.b64decode(base64_string)
+        return self.image.open(io.BytesIO(image_data))
 
     def process_value(self, value: Any) -> Any:
         return {"image": self.decode_base64_to_image(value)}
@@ -57,4 +59,17 @@ class ImageFieldOperator(FieldOperator, PillowMixin):
 
 class GrayScale(ImageFieldOperator):
     def process_image(self, image):
-        return image.convert("L")
+        # Convert the image to grayscale
+        grayscale_image = image.convert("L")
+
+        # Convert the grayscale image to a NumPy array
+        grayscale_array = np.array(grayscale_image)
+
+        # Add a dummy channel dimension to make it (height, width, 1)
+        grayscale_array = np.expand_dims(grayscale_array, axis=-1)
+
+        # Repeat the channel to have (height, width, 3) if needed for compatibility
+        grayscale_array = np.repeat(grayscale_array, 3, axis=-1)
+
+        # Convert back to a PIL image with 3 channels
+        return self.image.fromarray(grayscale_array)
