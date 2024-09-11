@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.operators import AugmentPrefixSuffix
+from unitxt.augmentors import AugmentPrefixSuffix, TaskInputsAugmentor
 
 pattern_distribution = {
     " ": 20,
@@ -9,7 +9,6 @@ pattern_distribution = {
 }
 
 operator = AugmentPrefixSuffix(
-    augment_task_input=True,
     prefixes=pattern_distribution,
     suffixes=pattern_distribution,
     prefix_len=5,
@@ -17,13 +16,15 @@ operator = AugmentPrefixSuffix(
     remove_existing_whitespaces=True,
 )
 
+augmentor = TaskInputsAugmentor(operator=operator)
+
 # text = " She is riding a black horse\t\t  "
 # inputs = [{"inputs": {"text": text}}]
 # operator.set_task_input_fields(["text"])
 # outputs = apply_operator(operator, inputs)
 
 add_to_catalog(
-    operator,
+    augmentor,
     "augmentors.augment_whitespace_prefix_and_suffix_task_input",
     overwrite=True,
 )

@@ -1,10 +1,14 @@
 from unitxt import add_to_catalog
-from unitxt.operators import AugmentWhitespace
+from unitxt.augmentors import (
+    AugmentWhitespace,
+    ModelInputAugmentor,
+    TaskInputsAugmentor,
+)
 
-operator = AugmentWhitespace(augment_model_input=True)
+operator = ModelInputAugmentor(operator=AugmentWhitespace())
 
 add_to_catalog(operator, "augmentors.augment_whitespace_model_input", overwrite=True)
 
-operator = AugmentWhitespace(augment_task_input=True)
+operator = TaskInputsAugmentor(operator=AugmentWhitespace())
 
 add_to_catalog(operator, "augmentors.augment_whitespace_task_input", overwrite=True)
