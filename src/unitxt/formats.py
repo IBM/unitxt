@@ -164,7 +164,7 @@ class SystemFormat(BaseFormat):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            instance.pop(self.demos_field)
+            # instance.pop(self.demos_field)
 
         demos_string = ""
         for demo_instance in demo_instances:
@@ -267,7 +267,7 @@ class HFSystemFormat(BaseFormat):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            instance.pop(self.demos_field)
+            # instance.pop(self.demos_field)
 
         for demo_instance in demo_instances:
             messages.extend(

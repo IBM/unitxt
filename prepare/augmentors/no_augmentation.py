@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.operators import NullAugmentor
+from unitxt.augmentors import NullAugmentor
 
 operator = NullAugmentor()
 

@@ -1,4 +1,6 @@
 {
-    "__type__": "augment_whitespace",
-    "augment_task_input": true
+    "__type__": "task_inputs_augmentor",
+    "operator": {
+        "__type__": "augment_whitespace"
+    }
 }

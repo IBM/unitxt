@@ -1,12 +1,18 @@
 from typing import List, Optional, Union
 
+from .augmentors import (
+    Augmentor,
+    FinalStateInputsAugmentor,
+    NullAugmentor,
+    TaskInputsAugmentor,
+)
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
+from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import Finalize
 from .settings_utils import get_constants
@@ -281,8 +287,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if self.augmentor.augment_task_input:
-            self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
+        if isinstance(self.augmentor, TaskInputsAugmentor):
+            self.augmentor.set_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
         if self.has_custom_demos_pool:
@@ -362,7 +368,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-        if self.augmentor.augment_model_input:
+        if isinstance(self.augmentor, FinalStateInputsAugmentor):
             self.verbalization.steps.append(self.augmentor)
 
         if self.postprocessors is not None:

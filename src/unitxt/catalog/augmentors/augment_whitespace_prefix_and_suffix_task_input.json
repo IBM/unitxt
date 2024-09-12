@@ -1,19 +1,21 @@
 {
-    "__type__": "augment_prefix_suffix",
-    "augment_task_input": true,
-    "prefixes": {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30
-    },
-    "suffixes": {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30
-    },
-    "prefix_len": 5,
-    "suffix_len": 5,
-    "remove_existing_whitespaces": true
+    "__type__": "task_inputs_augmentor",
+    "operator": {
+        "__type__": "augment_prefix_suffix",
+        "prefixes": {
+            " ": 20,
+            "\\t": 10,
+            "\\n": 40,
+            "": 30
+        },
+        "suffixes": {
+            " ": 20,
+            "\\t": 10,
+            "\\n": 40,
+            "": 30
+        },
+        "prefix_len": 5,
+        "suffix_len": 5,
+        "remove_existing_whitespaces": true
+    }
 }

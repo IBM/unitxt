@@ -2,11 +2,12 @@ from typing import List, Union
 
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
+from unitxt.types import Audio, Dialog, Image, Table, Text
 
 add_to_catalog(
     Task(
         input_fields={
-            "context": str,
+            "context": Union[Text, Image, Audio, Table, Dialog],
             "context_type": str,
             "question": str,
             "choices": List[str],
@@ -46,7 +47,7 @@ add_to_catalog(
     Task(
         input_fields={
             "topic": str,
-            "context": str,
+            "context": Union[Text, Image, Audio, Table, Dialog],
             "context_type": str,
             "question": str,
             "choices": List[str],
