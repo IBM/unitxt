@@ -1,1 +1,1 @@
-src/unitxt/version.py
+version = "1.12.3"
