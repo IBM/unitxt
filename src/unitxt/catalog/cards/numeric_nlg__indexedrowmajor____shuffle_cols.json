@@ -19,7 +19,11 @@
             "to_field": "table_out"
         },
         {
-            "__type__": "serialize_table_as_json",
+            "__type__": "shuffle_table_columns",
+            "field": "table_out"
+        },
+        {
+            "__type__": "serialize_table_as_indexed_row_major",
             "field": "table_out",
             "to_field": "input_a"
         },

@@ -4733,7 +4733,7 @@ class F1Strings(InstanceMetric):
     main_score = "f1_strings"
     reduction_map = {"mean": ["f1_strings"]}
     prediction_type = str
-    single_reference_per_prediction = True
+    single_reference_per_prediction = False
     _requirements_list = {
         "spacy": "Please pip install spacy",
     }
@@ -4756,7 +4756,7 @@ class F1Strings(InstanceMetric):
         prediction: str,
         task_data: List[Dict],
     ) -> dict:
-        doc_ref = self.nlp(references[0])
+        doc_ref = self.nlp(" ".join(references))
         set_ref = Counter([token.text.lower() for token in doc_ref])
         doc_pred = self.nlp(prediction)
         set_pred = Counter([token.text.lower() for token in doc_pred])

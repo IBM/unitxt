@@ -6,7 +6,11 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Rename
-from unitxt.struct_data_operators import SerializeTableAsJson, ShuffleTableRows
+from unitxt.struct_data_operators import (
+    SerializeTableAsJson,
+    ShuffleTableColumns,
+    ShuffleTableRows,
+)
 from unitxt.templates import TemplatesList
 from unitxt.test_utils.card import test_card
 
@@ -22,6 +26,7 @@ card = TaskCard(
         ),
         MapHTMLTableToJSON(field="table_html_clean", to_field="table_out"),
         ShuffleTableRows(field="table_out"),
+        ShuffleTableColumns(field="table_out"),
         SerializeTableAsJson(field="table_out", to_field="input_a"),
         Rename(field="description", to_field="output"),
         Rename(field="caption", to_field="input_b"),
@@ -42,4 +47,4 @@ card = TaskCard(
 )
 
 test_card(card, num_demos=2, demos_pool_size=5, strict=False)
-add_to_catalog(card, "cards.numeric_nlg__json__shuffle_rows", overwrite=True)
+add_to_catalog(card, "cards.numeric_nlg__json__shuffle_rows_cols", overwrite=True)

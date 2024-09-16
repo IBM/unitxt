@@ -1,13 +1,11 @@
 from unitxt.blocks import (
     LoadHF,
-    MapHTMLTableToJSON,
+    Rename,
     Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Rename
-from unitxt.struct_data_operators import SerializeTableAsJson, ShuffleTableRows
-from unitxt.templates import TemplatesList
+from unitxt.struct_data_operators import GetJunkTable, SerializeTableAsDFLoader
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -20,20 +18,14 @@ card = TaskCard(
                 "type_of_output": "description",
             }
         ),
-        MapHTMLTableToJSON(field="table_html_clean", to_field="table_out"),
-        ShuffleTableRows(field="table_out"),
-        SerializeTableAsJson(field="table_out", to_field="input_a"),
+        GetJunkTable(field="table_html_clean", to_field="table_out"),
+        SerializeTableAsDFLoader(field="table_out", to_field="input_a"),
         Rename(field="description", to_field="output"),
         Rename(field="caption", to_field="input_b"),
     ],
     task="tasks.generation.from_pair",
-    templates=TemplatesList(
-        [
-            "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
-        ]
-    ),
-    __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a "
-    "paragraph of a table description with richer inference from scientific papers.",
+    templates="templates.generation.from_pair.all",
+    __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     __tags__={
         "modality": "table",
         "urls": {"arxiv": "https://aclanthology.org/2021.acl-long.115/"},
@@ -42,4 +34,4 @@ card = TaskCard(
 )
 
 test_card(card, num_demos=2, demos_pool_size=5, strict=False)
-add_to_catalog(card, "cards.numeric_nlg__json__shuffle_rows", overwrite=True)
+add_to_catalog(card, "cards.numeric_nlg__junk_table", overwrite=True)

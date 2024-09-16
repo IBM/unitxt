@@ -176,6 +176,10 @@ class SerializeTableAsDFLoader(SerializeTable):
         df = pd.DataFrame(rows, columns=header)
 
         # Generate output string in the desired format
+        df.columns = [
+            f"{col}_{i}" if df.columns.duplicated()[i] else col
+            for i, col in enumerate(df.columns)
+        ]
         data_dict = df.to_dict(orient="list")
 
         return (
@@ -185,6 +189,23 @@ class SerializeTableAsDFLoader(SerializeTable):
             + str(list(range(len(rows))))
             + ")"
         )
+
+
+class SerializeTableAsConcatenatedText(SerializeTable):
+    def process_value(self, table: Any) -> Any:
+        table_input = deepcopy(table)
+        return self.serialize_table(table_content=table_input)
+
+    # main method that serializes a table.
+    # table_content must be in the presribed input format.
+    def serialize_table(self, table_content: Dict) -> str:
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        return " ".join(header) + " ".join([" ".join(row) for row in rows])
 
 
 class SerializeTableAsJson(SerializeTable):
@@ -567,6 +588,14 @@ class LoadJson(FieldOperator):
 class DumpJson(FieldOperator):
     def process_value(self, value: str) -> str:
         return json.dumps(value)
+
+
+class GetJunkTable(FieldOperator):
+    def process_value(self, table: Any) -> Any:
+        return {
+            "header": ["gfdsgfd", "dog dog"],
+            "rows": [["mama", "row12"], ["yolo", "weight"], ["I", "I I"]],
+        }
 
 
 class MapHTMLTableToJSON(FieldOperator):

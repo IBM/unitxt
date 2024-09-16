@@ -1,0 +1,5 @@
+{
+    "__type__": "system_format",
+    "demo_format": "{source}\n\n{target_prefix}{target}\n\n",
+    "model_input_format": "[INST] {instruction}{demos}{source} [/INST]{target_prefix}"
+}

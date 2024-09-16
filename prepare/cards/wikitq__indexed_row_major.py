@@ -5,6 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.struct_data_operators import TruncateTableCells, TruncateTableRows
 from unitxt.templates import MultiReferenceTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
 
@@ -16,8 +17,8 @@ card = TaskCard(
     preprocess_steps=[
         Set({"context_type": "table"}),
         ## truncate only if needed as it can impact evaluation results.
-        # TruncateTableCells(max_length=15, table="table", text_output="answers"),
-        # TruncateTableRows(field="table", rows_to_keep=50),
+        TruncateTableCells(max_length=15, table="table", text_output="answers"),
+        TruncateTableRows(field="table", rows_to_keep=50),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
     ],
     task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
@@ -52,4 +53,4 @@ card = TaskCard(
 )
 
 test_card(card)
-add_to_catalog(card, "cards.wikitq", overwrite=True)
+add_to_catalog(card, "cards.wikitq__indexed_row_major", overwrite=True)

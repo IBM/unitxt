@@ -14,12 +14,12 @@
             }
         },
         {
-            "__type__": "map_html_table_to_json",
+            "__type__": "get_junk_table",
             "field": "table_html_clean",
             "to_field": "table_out"
         },
         {
-            "__type__": "serialize_table_as_json",
+            "__type__": "serialize_table_as_df_loader",
             "field": "table_out",
             "to_field": "input_a"
         },
@@ -35,12 +35,7 @@
         }
     ],
     "task": "tasks.generation.from_pair",
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
-        ]
-    },
+    "templates": "templates.generation.from_pair.all",
     "__description__": "NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     "__tags__": {
         "modality": "table",
