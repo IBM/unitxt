@@ -108,3 +108,30 @@ def init_warning(msg=""):
         return initiated_class
 
     return decorator
+
+
+def warn_on_call(warning_type=UserWarning, msg=""):
+    def decorator(obj):
+        if isinstance(obj, type):
+            original_init = obj.__init__
+
+            @functools.wraps(original_init)
+            def new_init(self, *args, **kwargs):
+                warnings.warn(msg, warning_type, stacklevel=2)
+                original_init(self, *args, **kwargs)
+
+            obj.__init__ = new_init
+            return obj
+
+        if callable(obj):
+
+            @functools.wraps(obj)
+            def wrapper(*args, **kwargs):
+                warnings.warn(msg, warning_type, stacklevel=2)
+                return obj(*args, **kwargs)
+
+            return wrapper
+
+        raise TypeError("This decorator can only be applied to classes or functions.")
+
+    return decorator
