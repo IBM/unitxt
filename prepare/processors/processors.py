@@ -8,6 +8,8 @@ from unitxt.processors import (
     ExtractArenaHardNumericalJudgment,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
+    ExtractPrometheusRatingJudgmentThree,
+    ExtractPrometheusRatingJudgmentFive,
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
@@ -170,6 +172,18 @@ add_to_catalog(
     PostProcess(ExtractMtBenchRatingJudgment()),
     "processors.extract_mt_bench_rating_judgment",
     overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(ExtractPrometheusRatingJudgmentFive()),
+    "processors.extract_prometheus_rating_judgment_5",
+    overwrite=True
+)
+
+add_to_catalog(
+    PostProcess(ExtractPrometheusRatingJudgmentThree()),
+    "processors.extract_prometheus_rating_judgment_3",
+    overwrite=True
 )
 
 add_to_catalog(

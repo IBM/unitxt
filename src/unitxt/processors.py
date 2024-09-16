@@ -265,10 +265,30 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([\d]+\.?[\d]*)\]\]", text)
         try:
-            return float(match.group(1)) / 10
+            return (float(match.group(1))-1) / 9
         except:
-            return 0.0
+            return -0.01
 
+class ExtractPrometheusRatingJudgmentFive(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[RESULT\] ([\d]+\.?[\d]*)", text)
+        if match is None: #for references processing    
+               match = re.search(r"\[([\d]+\.?[\d]*)\]", text)      
+        try:
+            return (float(match.group(1))-1) / 4
+        except:
+            return -0.01
+
+
+class ExtractPrometheusRatingJudgmentThree(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        match = re.search(r"\[RESULT\] ([\d]+\.?[\d]*)", text)    
+        if match is None: #for references processing
+               match = re.search(r"\[([\d]+\.?[\d]*)\]", text)       
+        try:
+            return (float(match.group(1))-1) / 2
+        except:
+            return -0.01
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:

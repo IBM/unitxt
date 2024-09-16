@@ -1,0 +1,9 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "###Task Description:\nAn instruction (might include an Input inside it), a response to evaluate, a reference answer that gets a score of 3, and a score rubric representing a evaluation criteria are given.\n1. Write a detailed feedback that assesses the quality of the response strictly based on the given score rubric, not evaluating in general.\n2. After writing a feedback, write a score that is an integer between 1 and 3 . You should refer to the score rubric.\n3. The output format should look as follows: \"Feedback: (write a feedback for criteria) [RESULT] (an integer number between 1 and 3)\n4. Please do not generate any other opening, closing, and explanations.\n\n",
+    "input_format": "###The instruction to evaluate:\n{question}\n\n###Response to evaluate:\n{answer}\n\n#Reference Answer (Score 3):\n{reference_answer}\n\n###Score Rubrics:\nDoes the response classify the text correctly, adhering to the instruction and outputting classes only?\n Score 1: The response does not classify the text correctly according to the instruction\n Score 2: The response classifies the text correctly but either not according to the instuction or it adds text other than the classification itself\n Score 3: The response classifies the text correctly according to the instruction, adhering strictly to instruction and and without any text other than the class itself\n\n###Feedback:",
+    "output_format": "[{rating}]",
+    "postprocessors": [
+        "processors.extract_prometheus_rating_judgment_3"
+    ]
+}

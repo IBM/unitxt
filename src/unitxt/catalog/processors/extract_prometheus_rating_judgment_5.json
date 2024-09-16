@@ -1,0 +1,6 @@
+{
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "extract_prometheus_rating_judgment_five"
+    }
+}

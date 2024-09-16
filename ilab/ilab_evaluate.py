@@ -131,7 +131,7 @@ class EvaluateIlab:
                 file=csv_path,yaml_indices=self.yaml_indices,
                 template=self.template if self.template else self.template_index,
                 base_model=is_base_model(model_name),
-                is_yaml=True, loader_limit=None, num_shots=None   
+                is_yaml='True', loader_limit=None, num_shots=None   
             ).to_dict()
         )
 
@@ -145,7 +145,7 @@ class EvaluateIlab:
             loader_limit=self.num_test_samples,
             num_shots=num_shots,
             base_model=is_base_model(model_name),
-            is_yaml=False,
+            is_yaml='False',
         ).to_dict()
 
         save_results(
@@ -251,9 +251,16 @@ def save_results(
         card, 
         task_name, 
         run_params_dict = {},  
-        append_model_name:bool = True
+        append_model_name:bool = True,
+        add_preds_score:bool = False,
         ):
         global_scores = evaluated_dataset[0]['score']['global']
+        num_instances = len(evaluated_dataset)
+        global_scores['invalid_refs_%'] = len([inst for inst in evaluated_dataset if inst['processed_references'][0]<0])/num_instances
+        global_scores['invalid_preds_%'] = len([inst for inst in evaluated_dataset if inst['processed_prediction']<0])/num_instances
+        if add_preds_score:
+            global_scores['refs_score'] = sum([inst["processed_references"][0] for inst in evaluated_dataset])/num_instances
+            global_scores['preds_score'] = sum([inst["processed_prediction"] for inst in evaluated_dataset])/num_instances
         main_score_name = global_scores.pop('score_name')
         global_main_score = global_scores[main_score_name]
         if not csv_path.endswith('.csv'):

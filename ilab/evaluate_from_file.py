@@ -1,4 +1,4 @@
-import pandas as pd, numpy as np
+import pandas as pd
 from unitxt import evaluate, load_dataset, register_local_catalog
 from unitxt.logging_utils import get_logger,get_settings
 from unitxt.blocks import (
@@ -7,6 +7,7 @@ from unitxt.blocks import (
 from unitxt.loaders import LoadCSV
 from unitxt.operators import Rename,Cast,ExecuteExpression
 from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.metrics import MetricsEnsemble
 
 from lh_eval_api import LakeHouseLoader 
 from typing import List,Tuple
@@ -27,19 +28,28 @@ class JudgeModelParams:
     model_id:str
     template:str
     format:str
-    ref_multiplier:int
+    norm_to_range:int
+
+STRICT_MODELS = [
+    JudgeModelParams(name='prometheus_3_classify', model_id= 'kaist-ai/prometheus-8x7b-v2', format="formats.models.mistral.instruction", norm_to_range=3,
+    template="templates.response_assessment.rating.prometheus_single_turn_inst_classify_3"),
+    JudgeModelParams(name='mixtral_strict', model_id="mistralai/mixtral-8x7b-instruct-v01", format="formats.models.mistral.instruction", norm_to_range=10, template="templates.response_assessment.rating.mt_bench_single_turn_strict"),
+    JudgeModelParams(name='llama_strict', model_id="meta-llama/llama-3-70b-instruct", template= "templates.response_assessment.rating.generic_single_turn_strict", format="formats.llama3_instruct", norm_to_range=10),
+
+]
 
 JUDGE_MODELS = [
-    JudgeModelParams(name='mixtral', model_id="mistralai/mixtral-8x7b-instruct-v01", format="formats.models.mistral.instruction", ref_multiplier=10, template="templates.response_assessment.rating.mt_bench_single_turn"),
-    JudgeModelParams(name='llama', model_id="meta-llama/llama-3-70b-instruct", template= "templates.response_assessment.rating.generic_single_turn", format="formats.llama3_instruct", ref_multiplier=10),
-    # JudgeModelParams(name='prometheus', model_id= 'kaist-ai/prometheus-8x7b-v2', format="formats.models.mistral.instruction", ref_multiplier=5)
-    # CREATE TEMPLATE
- #https://github.com/prometheus-eval/prometheus-eval?tab=readme-ov-file#-quick-start
-                        # https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0
-                        #build upon mt_bench_single_turn_with_reference.py
-                        #use dedicated word processor
-                        #NOTE uses 5 score and not 10
-]
+    JudgeModelParams(name='prometheus_5', model_id= 'kaist-ai/prometheus-8x7b-v2', format="formats.models.mistral.instruction", norm_to_range=5,
+    template="templates.response_assessment.rating.prometheus_single_turn_inst_comply_5"),
+    JudgeModelParams(name='mixtral', model_id="mistralai/mixtral-8x7b-instruct-v01", format="formats.models.mistral.instruction", norm_to_range=10, template="templates.response_assessment.rating.mt_bench_single_turn"),
+    JudgeModelParams(name='llama', model_id="meta-llama/llama-3-70b-instruct", template= "templates.response_assessment.rating.generic_single_turn", format="formats.llama3_instruct", norm_to_range=10),
+    ]
+
+def get_strict_val(template):
+        for substr in ['strict','format','classify']:
+            if substr in template:
+                return 'True'
+        return 'False'
 
 class PostEvaluate:
     def __init__(
@@ -86,11 +96,13 @@ class PostEvaluate:
         return card,template, model, owner, task, run_params
 
     
-    def run(self, overwrite = False):
+    def run(self, overwrite = False, loader_limit = 100):
         if self.local_catalog:
             register_local_catalog(self.local_catalog)
         card,template, model, owner,task, run_params = self.get_params_from_file()
         run_params['template']=f"'{template}'" 
+        loader_limit = min(loader_limit, int(run_params['loader_limit']))
+        run_params['loader_limit'] = loader_limit
         for modelparams in self.judging_models:
             model = modelparams.name
             for with_reference in [True,False]:
@@ -104,14 +116,17 @@ class PostEvaluate:
                 model_run_params = run_params.copy()
                 model_run_params['file'] = model_csv_path
                 model_run_params['meta_eval']='True'
-                model_run_params['with_reference'] = with_reference
+                model_run_params['with_reference'] = 'True' if with_reference else 'False'
                 model_run_params['judge_template'] = modelparams.template
                 model_run_params['judge_format'] = modelparams.format
+                model_run_params['strict'] = get_strict_val(modelparams.template)
                 try:
-                    evaluated_dataset = self.evaluate_meta_task(modelparams,with_reference=with_reference)
+                    evaluated_dataset = self.evaluate_meta_task(modelparams,with_reference=with_reference, loader_limit=loader_limit)
                 except Exception as e:
                     logger.error(f"**** Error while inferring for: {model_csv_path}")
-                    raise e
+                    logger.error(e)
+                    return
+                print(evaluated_dataset[0]['score']['global'])
                 save_results(
                     csv_path=model_csv_path,
                     evaluated_dataset=evaluated_dataset,
@@ -120,11 +135,13 @@ class PostEvaluate:
                     card=card,
                     task_name=task,
                     run_params_dict=model_run_params,
-                    append_model_name=False
+                    append_model_name=False,
+                    add_preds_score=True,
                 )
             
-    
-    def evaluate_meta_task(self, modelparams:JudgeModelParams, with_reference:bool = False):
+
+
+    def evaluate_meta_task(self, modelparams:JudgeModelParams, loader_limit:int, with_reference:bool = False):
         task =  "tasks.response_assessment.rating.single_turn"
         template = modelparams.template
         if with_reference:
@@ -132,6 +149,7 @@ class PostEvaluate:
             task = task+add_str
             template = template+add_str
         
+
         meta_card = TaskCard(
             LoadCSV(files={'test':self.preds_file}),
             preprocess_steps=[
@@ -143,7 +161,7 @@ class PostEvaluate:
                         "references": "reference_answer",
                     }
                 ),
-                ExecuteExpression(expression=f"float(score)*{modelparams.ref_multiplier}", to_field="rating"),
+                ExecuteExpression(expression=f"1+(float(score)*({modelparams.norm_to_range}-1))", to_field="rating"),
                 Cast(to="str", failure_default='None', field_to_field={"answer":"answer"})                
         ],
         task = task,
@@ -154,22 +172,50 @@ class PostEvaluate:
         dataset = load_dataset(
             card = meta_card,
             template = template,
-            format = modelparams.format, 
+            format = modelparams.format,
+            loader_limit = loader_limit
+            # metrics = [ensemble_metric]
         )
         model_id = modelparams.model_id
         logger.info(f'Inferring with {model_id}')
-        inference_model = IbmGenAiInferenceEngine(model_name=model_id)
-        predictions = inference_model.infer(dataset['test'])
+        multiseed_predictions = []
+        for seed in [4]:#,100, 213, 706, 900]:
+            inference_model = IbmGenAiInferenceEngine(model_name=model_id, random_seed = seed)
+            predictions = inference_model.infer(dataset['test'])
+            multiseed_predictions.append(predictions)
+        # chain all predictions in a single instance
+        # change processor to extract 5 numbers and avg them
+        # change evaluated dataset input to be new predictions set
         logger.info('Evaluating model judgments')
         evaluated_dataset = evaluate(predictions=predictions, data=dataset['test'])
         return evaluated_dataset
 
+def modify_params():
+    import json
+    from glob import glob
+    files_to_modify = glob('ilab/ilab_results/granite_ilab/base_*_shots_*_run.csv')
+    for file in files_to_modify:
+        df = pd.read_csv(file)
+        data = df.iloc[0].to_dict()
+        params = json.loads(data['run_params'])
+        # for val in params:
+        #     if params[val] == True:
+        #         params[val] = 'True'
+        #     if params[val] == False and val is not 'num_shots':
+        #         params[val] = 'False'
+        # # params['null_val'] = '-0.1'
+        # # params['process_func']= '(x-1)/(max-1)'
+        #     df.at[0, 'run_params'] = json.dumps(params)
+        #     df.to_csv(file, index=False)
 
 if __name__ == '__main__':
+    
     from glob import glob
     files_to_post_evaluate = glob('ilab/ilab_results/granite_ilab/base_*_shots_predictions.csv')
     for file in files_to_post_evaluate:
         ev = PostEvaluate(
             file, dataset_split='test')
-        ev.run(overwrite=False)
+        ev.run(overwrite=False, loader_limit=1000)
+
+
    
