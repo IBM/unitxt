@@ -20,7 +20,7 @@ from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSp
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
-from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template
+from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
 
 constants = get_constants()
 logger = get_logger()
@@ -35,7 +35,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     # Base parameters
     card: TaskCard = None
     task: Task = None
-    template: Union[Template, List[Template]] = None
+    template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
 
@@ -382,6 +382,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.finalize.steps.append(Finalize(group_by=self.group_by))
 
     def prepare(self):
+        if isinstance(self.template, TemplatesList):
+            items = self.template.items
+            if isinstance(items, dict):
+                items = list(items.values())
+            self.template = items
         self.reset_pipeline()
 
 
