@@ -7,7 +7,7 @@ from unitxt import dataset_file
 from unitxt.artifact import fetch_artifact
 from unitxt.formats import SystemFormat
 from unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
-from unitxt.templates import InputOutputTemplate
+from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.text_utils import print_dict
 
 from tests.utils import UnitxtTestCase
@@ -342,6 +342,44 @@ class TestRecipes(UnitxtTestCase):
                 "templates.key_val",
                 "templates.classification.multi_class.relation.truthfulness.flan_5",
             ],
+            format="formats.user_agent",
+            demos_pool_size=100,
+            num_demos=3,
+        )
+
+        target = {
+            "metrics": ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+            "data_classification_policy": ["public"],
+            "target": "not entailment",
+            "references": ["not entailment"],
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+            "source": '<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don\'t know the answer to a question, please don\'t share false information.\n<</SYS>>\n\n\n\n\nUser: Problem: Sentence: "Emma did not pass the ball to Janie although she was open.";\nAnother sentence: "She saw that Janie was open."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "The foxes are getting in at night and attacking the chickens. I shall have to kill them.";\nAnother sentence: "I shall have to kill The foxes."?\nAgent: A: not entailment\n\nUser: Problem: Sentence: "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.";\nAnother sentence: "When Fred first saw my father, My father was twelve years old."?\nAgent: A: entailment\n\n\nUser:Problem: Sentence: "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.";\nAnother sentence: "The sweater looks dowdy on her."?\nAgent:A: ',
+            "groups": [],
+            "media": {"audios": [], "images": []},
+            "subset": [],
+        }
+
+        stream = recipe()
+        result = stream["train"].peek()
+
+        result.pop("task_data")
+
+        self.assertDictEqual(result, target)
+
+    def test_random_template_with_templates_list(self):
+        templates = TemplatesList(
+            items=[
+                "templates.key_val",
+                "templates.classification.multi_class.relation.truthfulness.flan_5",
+            ]
+        )
+        recipe = StandardRecipeWithIndexes(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template=templates,
             format="formats.user_agent",
             demos_pool_size=100,
             num_demos=3,
