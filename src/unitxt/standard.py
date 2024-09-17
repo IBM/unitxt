@@ -383,10 +383,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def prepare(self):
         if isinstance(self.template, TemplatesList):
-            items = self.template.items
-            if isinstance(items, dict):
-                items = list(items.values())
-            self.template = items
+            self.template = self.template.items
         self.reset_pipeline()
 
 
