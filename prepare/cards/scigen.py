@@ -28,7 +28,7 @@ card = TaskCard(
             }
         ),
     ],
-    task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
+    task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_8b_chat_hf_together_ai_template_table2text_single_turn_with_reference]]",
     templates="templates.generation.from_pair.all",
     __description__="SciGen is a dataset for the task of reasoning-aware data-to-text generation. It consists of tables from scientific articles(mostly containing numerical values) and their corresponding text descriptions.",
     __tags__={
