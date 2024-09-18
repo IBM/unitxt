@@ -23,71 +23,78 @@ metric_type_to_template = {
     "answer_relevance": {"q_a": "judge_answer_relevance_logprobs"},
 }
 
-model_names_to_metric_class = {
-    "meta-llama/llama-3-1-70b-instruct": GenerativeBinaryJudgeWML,
-    "gpt-4-turbo": GenerativeBinaryJudgeOpenAi,
-    "mistralai/mixtral-8x7b-instruct-v01": GenerativeBinaryJudgeWML,
-    "meta-llama/llama-3-1-405b-instruct-fp8": GenerativeBinaryJudgeBAM,
+model_names_to_metric_classes = {
+    "meta-llama/llama-3-1-70b-instruct": [GenerativeBinaryJudgeWML],
+    "meta-llama/llama-3-70b-instruct": [GenerativeBinaryJudgeBAM],
+    "gpt-4-turbo": [GenerativeBinaryJudgeOpenAi],
+    "mistralai/mixtral-8x7b-instruct-v01": [
+        GenerativeBinaryJudgeWML,
+        GenerativeBinaryJudgeBAM,
+    ],
+    "meta-llama/llama-3-1-405b-instruct-fp8": [GenerativeBinaryJudgeBAM],
 }
 
 
 def add_judge_metrics():
-    for judge_model_name, judge_metric_class in model_names_to_metric_class.items():
-        template_format = (
-            "formats.llama3_instruct"
-            if "llama" in judge_model_name
-            else "formats.empty"
-        )
-        for (
-            metric_type,
-            input_fields_to_template_name,
-        ) in metric_type_to_template.items():
+    for judge_model_name, judge_metric_classes in model_names_to_metric_classes.items():
+        for judge_metric_class in judge_metric_classes:
+            template_format = (
+                "formats.llama3_instruct"
+                if "llama" in judge_model_name
+                else "formats.empty"
+            )
             for (
-                input_fields_str,
-                template_name,
-            ) in input_fields_to_template_name.items():
-                metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
+                metric_type,
+                input_fields_to_template_name,
+            ) in metric_type_to_template.items():
+                for (
+                    input_fields_str,
+                    template_name,
+                ) in input_fields_to_template_name.items():
+                    metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
 
-                metric = judge_metric_class(
-                    main_score=metric_name,
-                    model_name=judge_model_name,
-                    task_name=f"tasks.rag_eval.{metric_type}.binary",
-                    template_name=f"templates.rag_eval.{metric_type}.{template_name}",
-                    model_format_name=template_format,
-                )
+                    if judge_metric_class == GenerativeBinaryJudgeBAM:
+                        metric_name += "_bam"
+                    metric = judge_metric_class(
+                        main_score=metric_name,
+                        model_name=judge_model_name,
+                        task_name=f"tasks.rag_eval.{metric_type}.binary",
+                        template_name=f"templates.rag_eval.{metric_type}.{template_name}",
+                        model_format_name=template_format,
+                    )
 
-                metric_pipeline = MetricPipeline(
-                    main_score=metric_name,
-                    metric=metric,
-                    preprocess_steps=[
-                        Copy(
-                            field_to_field={
-                                field: f"task_data/{field}"
-                                for field in sorted(rag_fields)
-                            },
-                            not_exist_ok=True,
-                        ),
-                        Copy(
-                            field_to_field={
-                                "data_classification_policy": "task_data/data_classification_policy"
-                            },
-                            not_exist_ok=True,
-                            get_default=["public"],
-                        ),
-                        Set(
-                            fields={
-                                "prediction": 0.0,  # these are not used by the metric
-                                "references": [0.0],
-                            }
-                        ),
-                    ],
-                )
+                    metric_pipeline = MetricPipeline(
+                        main_score=metric_name,
+                        metric=metric,
+                        preprocess_steps=[
+                            Copy(
+                                field_to_field={
+                                    field: f"task_data/{field}"
+                                    for field in sorted(rag_fields)
+                                },
+                                not_exist_ok=True,
+                            ),
+                            Copy(
+                                field_to_field={
+                                    "data_classification_policy": "task_data/data_classification_policy"
+                                },
+                                not_exist_ok=True,
+                                get_default=["public"],
+                            ),
+                            Set(
+                                fields={
+                                    "prediction": 0.0,  # these are not used by the metric
+                                    "references": [0.0],
+                                }
+                            ),
+                        ],
+                    )
 
-                add_to_catalog(
-                    metric_pipeline,
-                    name=f"metrics.rag.{metric_type}.{metric_name}",
-                    overwrite=True,
-                )
+                    add_to_catalog(
+                        metric_pipeline,
+                        name=f"metrics.rag.{metric_type}.{metric_name}",
+                        overwrite=True,
+                    )
 
 
 add_judge_metrics()

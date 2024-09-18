@@ -1,0 +1,43 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "answer_correctness_q_c_a_gt_judge_llama_3_1_405b_instruct_fp8_bam",
+    "metric": {
+        "__type__": "generative_binary_judge_bam",
+        "main_score": "answer_correctness_q_c_a_gt_judge_llama_3_1_405b_instruct_fp8_bam",
+        "model_name": "meta-llama/llama-3-1-405b-instruct-fp8",
+        "task_name": "tasks.rag_eval.answer_correctness.binary",
+        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_with_context_logprobs",
+        "model_format_name": "formats.llama3_instruct"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "answer": "task_data/answer",
+                "contexts": "task_data/contexts",
+                "ground_truths": "task_data/ground_truths",
+                "question": "task_data/question"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}
