@@ -252,13 +252,13 @@ def save_results(
         task_name, 
         run_params_dict = {},  
         append_model_name:bool = True,
-        add_preds_score:bool = False,
+        pred_n_ref_are_scores:bool = False,
         ):
         global_scores = evaluated_dataset[0]['score']['global']
         num_instances = len(evaluated_dataset)
-        global_scores['invalid_refs_%'] = len([inst for inst in evaluated_dataset if inst['processed_references'][0]<0])/num_instances
-        global_scores['invalid_preds_%'] = len([inst for inst in evaluated_dataset if inst['processed_prediction']<0])/num_instances
-        if add_preds_score:
+        if pred_n_ref_are_scores:
+            global_scores['invalid_refs_%'] = len([inst for inst in evaluated_dataset if inst['processed_references'][0]<0])/num_instances
+            global_scores['invalid_preds_%'] = len([inst for inst in evaluated_dataset if inst['processed_prediction']<0])/num_instances
             global_scores['refs_score'] = sum([inst["processed_references"][0] for inst in evaluated_dataset])/num_instances
             global_scores['preds_score'] = sum([inst["processed_prediction"] for inst in evaluated_dataset])/num_instances
         main_score_name = global_scores.pop('score_name')

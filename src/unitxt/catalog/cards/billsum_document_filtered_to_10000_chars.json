@@ -33,6 +33,7 @@
         },
         {
             "__type__": "filter_by_expression",
+            "error_on_filtered_all": false,
             "expression": "len(document) <= 10000"
         }
     ],

@@ -4,7 +4,9 @@ from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import FilterByExpression, Rename
 from unitxt.test_utils.card import test_card
-
+from unitxt.settings_utils import get_settings
+settings = get_settings()
+settings.allow_unverified_code = True
 # https://huggingface.co/datasets/billsum
 
 n_chars_to_filter_by_list = ["max", 6000, 10000]
@@ -20,7 +22,7 @@ for n_chars_to_filter_by in n_chars_to_filter_by_list:
             Wrap(field="summary", inside="list", to_field="summaries"),
         ]
         + (
-            [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}")]
+            [FilterByExpression(f"len(document) <= {n_chars_to_filter_by}",error_on_filtered_all=False)]
             if n_chars_to_filter_by != "max"
             else []
         ),

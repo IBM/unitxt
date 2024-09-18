@@ -74,11 +74,51 @@ def run(csv_path_to_save, config:IlabParameters,num_shots,loader_limit=100, over
             append_model_name=False
         )
 
+
+universal_NER_pud = IlabParameters(
+    task_description='span_labeling',
+    card='cards.universal_ner.en.pud',
+    creator='',
+    yaml_file='',
+    template_index=0
+)
+
+BillSum = IlabParameters(
+    card='cards.billsum_document_filtered_to_6000_chars',
+    task_description='summarization',
+     creator='',
+    yaml_file='',
+    template_index=0
+
+)
+DoQA_travel = IlabParameters(
+    card = 'cards.rag.response_generation.chat_rag_bench.user_assistant_format.doqa_travel',
+    task_description='rag.response_generation',
+     creator='',
+    yaml_file='',
+    template_index=0
+)
+flores_101_spa_eng = IlabParameters(
+    card='cards.mt.flores_101.spa_eng',
+    task_description='translation',
+     creator='',
+    yaml_file='',
+    template_index=0
+)
+
 if __name__ == "__main__":
+    pass
+    # modify_params()
     # configs = [cat,clapnq,fin_qa,watson_emotion,ner]
-    configs = [watson_emotion,ner]
+    configs = [BillSum, DoQA_travel] #flores_101_spa_eng, universal_NER_pud
     for config in configs:
-        for numshots in [0,5]:
-            run(f'ilab/ilab_results/granite_ilab/base',config,numshots)
+        loader_limit = 1000
+        if 'clapnq' in config.card or 'fin_qa' in config.card:
+            numshots = [0]
+        if 'clapnq' in config.card:
+            loader_limit = 250
+        for numshots in [0]:
+            print(f"running {config.card}")
+            run(f'ilab/ilab_results/granite_ilab/base',config,numshots,loader_limit=loader_limit)
     
     

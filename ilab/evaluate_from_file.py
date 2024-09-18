@@ -136,7 +136,7 @@ class PostEvaluate:
                     task_name=task,
                     run_params_dict=model_run_params,
                     append_model_name=False,
-                    add_preds_score=True,
+                    pred_n_ref_are_scores=True,
                 )
             
 
