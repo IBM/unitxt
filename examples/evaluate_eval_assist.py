@@ -5,8 +5,11 @@ from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 # from unitxt.metric import EvalAssistLLMAsJudge
+import os
 
 logger = get_logger()
+
+os.environ["GENAI_KEY"] = "pak-cAcH7ExLy-3jXXCICeCr-jQD3xK8grc3B32vczLXa9E"
 
 data = {
     "test": [
@@ -46,7 +49,7 @@ card = TaskCard(
         input_fields={"question": str},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.direct"],
+        metrics=["metrics.llm_as_judge.eval_assist.direct.mixtral"],
     ),
     # Create a simple template that formats the input.
     # Add lowercase normalization as a post processor.
