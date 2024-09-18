@@ -190,3 +190,18 @@ add_to_catalog(
     "templates.summarization.abstractive.all",
     overwrite=True,
 )
+
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.summarization.abstractive.instruct_full",
+            "templates.summarization.abstractive.instruct_one_sentence",
+            "templates.summarization.abstractive.instruct_passive",
+            "templates.summarization.abstractive.instruct_write_succinct",
+            "templates.summarization.abstractive.instruct_tldr",
+        ]
+    ),
+    "templates.summarization.abstractive.instruct_full_one_sentence_passive_write_succinct_tldr",
+    overwrite=True,
+)
