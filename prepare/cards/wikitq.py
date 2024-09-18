@@ -27,7 +27,7 @@ card = TaskCard(
                 input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",
                 references_field="answers",
                 postprocessors=[
-                    "processors.to_list_by_comma_space",
+                    # "processors.to_list_by_comma_space",
                     "processors.str_to_float_format",
                 ],
             ),

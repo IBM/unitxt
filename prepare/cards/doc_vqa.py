@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Explode, Wrap
-from unitxt.image_operators import ImageToText
+from unitxt.image_operators import ToImage
 from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
@@ -14,7 +14,7 @@ for language in ["en", "fr"]:
             Copy(field="pair/question", to_field="question"),
             Copy(field="pair/answer", to_field="answers"),
             Wrap(field="answers", inside="list"),
-            ImageToText(field="image", to_field="context"),
+            ToImage(field="image", to_field="context"),
             Set(fields={"context_type": "image"}),
         ],
         task="tasks.qa.with_context.abstractive",

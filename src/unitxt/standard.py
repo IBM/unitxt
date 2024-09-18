@@ -1,12 +1,18 @@
 from typing import List, Optional, Union
 
+from .augmentors import (
+    Augmentor,
+    FinalStateInputsAugmentor,
+    NullAugmentor,
+    TaskInputsAugmentor,
+)
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
+from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import Finalize
 from .settings_utils import get_constants
@@ -14,7 +20,7 @@ from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSp
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
-from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template
+from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
 
 constants = get_constants()
 logger = get_logger()
@@ -29,7 +35,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     # Base parameters
     card: TaskCard = None
     task: Task = None
-    template: Union[Template, List[Template]] = None
+    template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
 
@@ -281,8 +287,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if self.augmentor.augment_task_input:
-            self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
+        if isinstance(self.augmentor, TaskInputsAugmentor):
+            self.augmentor.set_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
         if self.has_custom_demos_pool:
@@ -362,7 +368,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-        if self.augmentor.augment_model_input:
+        if isinstance(self.augmentor, FinalStateInputsAugmentor):
             self.verbalization.steps.append(self.augmentor)
 
         if self.postprocessors is not None:
@@ -376,6 +382,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.finalize.steps.append(Finalize(group_by=self.group_by))
 
     def prepare(self):
+        if isinstance(self.template, TemplatesList):
+            self.template = self.template.items
         self.reset_pipeline()
 
 
