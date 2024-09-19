@@ -88,6 +88,6 @@ add_to_catalog(
             # "templates.translation.directed.title",
         ]
     ),
-    "templates.translation.directed.simple_formal_casual",
+    "templates.translation.directed.blue_bench",
     overwrite=True,
 )
