@@ -82,6 +82,6 @@ add_to_catalog(
             # "templates.completion.multiple_choice.title",
         ]
     ),
-    "templates.completion.multiple_choice.simple_enumerated_standard",
+    "templates.completion.multiple_choice.blue_bench",
     overwrite=True,
 )
