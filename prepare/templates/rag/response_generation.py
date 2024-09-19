@@ -55,6 +55,6 @@ add_to_catalog(
             "templates.rag.response_generation.answer_based_on_context",
         ]
     ),
-    "templates.rag.response_generation.please_respond_please_respond_chat_answer_based_on_context",
+    "templates.rag.response_generation.blue_bench",
     overwrite=True,
 )
