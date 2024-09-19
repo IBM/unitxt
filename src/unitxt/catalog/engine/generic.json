@@ -1,0 +1,6 @@
+{
+    "__type__": "generic_inference_engine",
+    "kwargs": {
+        "model_name": "meta-llama/llama-3-70b-instruct"
+    }
+}

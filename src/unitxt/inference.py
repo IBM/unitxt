@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
-from .artifact import Artifact
+from .artifact import Artifact, fetch_artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .image_operators import extract_images
@@ -206,6 +206,49 @@ class IbmGenAiInferenceEngineParams(Artifact):
     top_p: Optional[float] = None
     truncate_input_tokens: Optional[int] = None
     typical_p: Optional[float] = None
+
+
+class GenericInferenceEngine(InferenceEngine):
+    default: str = None
+
+    def prepare_engine(self):
+        if "inference_engine" in os.environ:
+            engine_reference = os.environ["inference_engine"]
+        else:
+            engine_reference = self.default
+        self.engine, _ = fetch_artifact(engine_reference)
+
+    def _infer(self, dataset):
+        return self.engine._infer(dataset)
+
+
+class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+    label: str = "ollama"
+    model_name: str
+    _requirements_list = {
+        "ollama": "Install ollama package using 'pip install --upgrade ollama"
+    }
+    data_classification_policy = ["public", "proprietary"]
+
+    def prepare_engine(self):
+        pass
+
+    def _infer(self, dataset):
+        import ollama
+
+        result = [
+            ollama.chat(
+                model="llama2",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": instance["source"],
+                    },
+                ],
+            )
+            for instance in dataset
+        ]
+        return [element["message"]["content"] for element in result]
 
 
 class IbmGenAiInferenceEngine(
