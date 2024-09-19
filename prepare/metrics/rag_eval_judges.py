@@ -19,6 +19,7 @@ metric_type_to_template = {
     "answer_correctness": {
         "q_c_a_gt": "judge_simplified_with_context_logprobs",
         "q_a_gt": "judge_loose_match_no_context_logprobs",
+        "q_a_gt_strict": "judge_simplified_format_logprobs",
     },
     "answer_relevance": {"q_a": "judge_answer_relevance_logprobs"},
 }
