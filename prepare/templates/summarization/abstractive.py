@@ -202,6 +202,6 @@ add_to_catalog(
             "templates.summarization.abstractive.instruct_tldr",
         ]
     ),
-    "templates.summarization.abstractive.instruct_full_one_sentence_passive_write_succinct_tldr",
+    "templates.summarization.abstractive.blue_bench",
     overwrite=True,
 )
