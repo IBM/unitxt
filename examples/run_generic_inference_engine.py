@@ -2,8 +2,8 @@ from unitxt import get_logger, produce
 from unitxt.inference import GenericInferenceEngine
 
 if __name__ == "__main__":
-    generic_engine = GenericInferenceEngine(
-        default="engines.ibm_wml.llama_3_70b_instruct"
+    generic_engine_with_default = GenericInferenceEngine(
+        default="engines.ibm_gen_ai.llama_3_70b_instruct"
     )
     recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
     instances = [
@@ -18,6 +18,18 @@ if __name__ == "__main__":
     ]
     dataset = produce(instances, recipe)
 
-    predictions = generic_engine.infer(dataset)
-
+    # now, trying without a default, make sure you have something like
+    # export UNITXT_INFERENCE_ENGINE="engines.ibm_gen_ai.llama_3_70b_instruct"
+    # in your ~/.bashrc
+    predictions = generic_engine_with_default.infer(dataset)
     get_logger().info(predictions)
+
+    try:
+        generic_engine_without_default = GenericInferenceEngine()
+        predictions = generic_engine_without_default.infer(dataset)
+        get_logger().info(predictions)
+    except:
+        get_logger().error(
+            "GenericInferenceEngine could not be initialized without a default since "
+            "UNITXT_INFERENCE_ENGINE environmental variable is not set."
+        )
