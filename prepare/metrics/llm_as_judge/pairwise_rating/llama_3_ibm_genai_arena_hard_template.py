@@ -16,7 +16,7 @@ templates = [
 inference_engines = [
     ("ibm_wml", WMLInferenceEngine),
     ("ibm_genai", IbmGenAiInferenceEngine),
-    ("generic", GenericInferenceEngine),
+    ("generic_engine", GenericInferenceEngine),
 ]
 
 
@@ -32,7 +32,7 @@ for template in templates:
                 continue  # currently not supported
 
             # if inference engine is generic, these configurations will be defined when it is saved to the catalog
-            if inference_engine_name != "generic":
+            if inference_engine_name != "generic_engine":
                 inference_model = inference_engine(
                     model_name=model_id, max_new_tokens=2048, random_seed=42
                 )
