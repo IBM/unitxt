@@ -181,9 +181,17 @@ class LLMAsJudge(BulkInstanceMetric):
         results = []
         for instance in outputs:
             if self.task == "pairwise_comparative_rating.single_turn":
-                is_model_b_the_baseline = (
-                    instance["task_data"]["model_b"] == "baseline_model"
+                import json
+
+                # seems like the task data sometimes comes as a string, not a dict
+                # this fixes it
+                task_data = (
+                    json.loads(instance["task_data"])
+                    if isinstance(instance["task_data"], str)
+                    else instance["task_data"]
                 )
+
+                is_model_b_the_baseline = task_data["model_b"] == "baseline_model"
                 if is_model_b_the_baseline:
                     model_a_preference_score = instance["prediction"]
                 else:
