@@ -212,8 +212,8 @@ class GenericInferenceEngine(InferenceEngine):
     default: str = None
 
     def prepare_engine(self):
-        if "inference_engine" in os.environ:
-            engine_reference = os.environ["inference_engine"]
+        if "UNITXT_INFERENCE_ENGINE" in os.environ:
+            engine_reference = os.environ["UNITXT_INFERENCE_ENGINE"]
         else:
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
