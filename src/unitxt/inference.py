@@ -663,10 +663,19 @@ class WMLInferenceEngine(
             api_client=self._client,
         )
 
-        return model.generate_text(
-            prompt=dataset["source"],
-            params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
-        )
+        # the class was previously used with a dataset that is a single instance
+        dataset = dataset if isinstance(dataset, list) else [dataset]
+
+        result = [
+            model.generate_text(
+                prompt=instance["source"],
+                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+            )
+            for instance in dataset
+        ]
+
+        # the class was previously used with a dataset that is a single instance
+        return result[0] if isinstance(dataset, list) else result
 
 
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
