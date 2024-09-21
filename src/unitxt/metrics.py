@@ -421,7 +421,7 @@ class MetricWithConfidenceInterval(Metric):
             full_score_name = ci_score_prefix + score_name
             result[f"{full_score_name}_ci_low"] = ci.low
             result[f"{full_score_name}_ci_high"] = ci.high
-            if score_name == self.main_score:
+            if score_name == self.score_prefix + self.main_score:
                 result["score_ci_low"] = ci.low
                 result["score_ci_high"] = ci.high
         return result
@@ -1183,7 +1183,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         return instances
 
     def get_group_scores(
-        self, instances: List[dict], score_names: List[str], group_aggregation_func
+        self,
+        instances: List[dict],
+        score_names: List[str],
+        group_aggregation_func,
+        prepend_score_prefix: bool = True,
     ):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
@@ -1193,6 +1197,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
                 or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
                 callable function returns a single score for the group
+            prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
+                if down the stream such a prepending is expected.
 
         Returns:
             List of dicts, each corresponding to a group of instances (defined by 'group_id'),
@@ -1222,7 +1228,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             )
             for score_name in score_names:
                 group_to_instance_scores[group_key][score_name][subgroup_type].append(
-                    instance["score"]["instance"][score_name]
+                    instance["score"]["instance"][
+                        (self.score_prefix if prepend_score_prefix else "") + score_name
+                    ]
                 )
 
         # if group_aggregation_func expects a subgroup-types score dict, pass it; otherwise pass the default type list of scores
@@ -1230,7 +1238,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             {
                 "score": {
                     "instance": {
-                        score_name: group_aggregation_func(
+                        (self.score_prefix if prepend_score_prefix else "")
+                        + score_name: group_aggregation_func(
                             score_dict
                             if uses_subgroups
                             else score_dict[default_subgroup_name]
@@ -1268,7 +1277,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 group_aggregation_func=group_aggregation_func,
             ):
                 group_scores = self.get_group_scores(
-                    instances, [field_name], group_aggregation_func
+                    instances, [field_name], group_aggregation_func, False
                 )
                 return nan_mean(
                     [group["score"]["instance"][field_name] for group in group_scores]
