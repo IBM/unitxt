@@ -1,0 +1,8 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.translation.directed.simple",
+        "templates.translation.directed.formal",
+        "templates.translation.directed.casual"
+    ]
+}

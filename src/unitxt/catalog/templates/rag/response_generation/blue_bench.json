@@ -1,0 +1,8 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag.response_generation.please_respond",
+        "templates.rag.response_generation.please_respond_chat",
+        "templates.rag.response_generation.answer_based_on_context"
+    ]
+}
