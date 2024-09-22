@@ -7,7 +7,6 @@ from unitxt.blocks import (
 from unitxt.loaders import LoadCSV
 from unitxt.operators import Rename,Cast,ExecuteExpression
 from unitxt.inference import IbmGenAiInferenceEngine
-from unitxt.metrics import MetricsEnsemble
 
 from lh_eval_api import LakeHouseLoader 
 from typing import List,Tuple
@@ -105,29 +104,28 @@ class PostEvaluate:
         run_params['loader_limit'] = loader_limit
         for modelparams in self.judging_models:
             model = modelparams.name
-            for with_reference in [True,False]:
-                model_csv_path = self.preds_file.replace('predictions',f"{model}{'_w_ref' if with_reference else ''}")
-                if not overwrite:
-                    if os.path.exists(model_csv_path.replace('.csv','_predictions.csv')):
+            model_csv_path = self.preds_file.replace('predictions',f"{model}")
+            if not overwrite:
+                if os.path.exists(model_csv_path.replace('.csv','_predictions.csv')):
                         logger.info(f"**** file already exists, skipping: {model_csv_path}")
                         continue
-                model_id = modelparams.model_id
-                logger.info(f"Judging model: {model_id}")
-                model_run_params = run_params.copy()
-                model_run_params['file'] = model_csv_path
-                model_run_params['meta_eval']='True'
-                model_run_params['with_reference'] = 'True' if with_reference else 'False'
-                model_run_params['judge_template'] = modelparams.template
-                model_run_params['judge_format'] = modelparams.format
-                model_run_params['strict'] = get_strict_val(modelparams.template)
-                try:
-                    evaluated_dataset = self.evaluate_meta_task(modelparams,with_reference=with_reference, loader_limit=loader_limit)
-                except Exception as e:
+            model_id = modelparams.model_id
+            logger.info(f"Judging model: {model_id}")
+            model_run_params = run_params.copy()
+            model_run_params['file'] = model_csv_path
+            model_run_params['meta_eval']='True'
+            model_run_params['with_reference'] = 'False'
+            model_run_params['judge_template'] = modelparams.template
+            model_run_params['judge_format'] = modelparams.format
+            model_run_params['strict'] = get_strict_val(modelparams.template)
+            try:
+                    evaluated_dataset = self.evaluate_meta_task(modelparams,loader_limit=loader_limit)
+            except Exception as e:
                     logger.error(f"**** Error while inferring for: {model_csv_path}")
                     logger.error(e)
                     return
-                print(evaluated_dataset[0]['score']['global'])
-                save_results(
+            print(evaluated_dataset[0]['score']['global'])
+            save_results(
                     csv_path=model_csv_path,
                     evaluated_dataset=evaluated_dataset,
                     model_name=model_id,
@@ -141,15 +139,9 @@ class PostEvaluate:
             
 
 
-    def evaluate_meta_task(self, modelparams:JudgeModelParams, loader_limit:int, with_reference:bool = False):
+    def evaluate_meta_task(self, modelparams:JudgeModelParams, loader_limit:int):
         task =  "tasks.response_assessment.rating.single_turn"
         template = modelparams.template
-        if with_reference:
-            add_str = "_with_reference"
-            task = task+add_str
-            template = template+add_str
-        
-
         meta_card = TaskCard(
             LoadCSV(files={'test':self.preds_file}),
             preprocess_steps=[

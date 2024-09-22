@@ -96,7 +96,8 @@ DoQA_travel = IlabParameters(
     task_description='rag.response_generation',
      creator='',
     yaml_file='',
-    template_index=0
+    template="templates.rag.response_generation.please_respond_chat"
+    # template_index='default'
 )
 flores_101_spa_eng = IlabParameters(
     card='cards.mt.flores_101.spa_eng',
@@ -110,7 +111,7 @@ if __name__ == "__main__":
     pass
     # modify_params()
     # configs = [cat,clapnq,fin_qa,watson_emotion,ner]
-    configs = [BillSum, DoQA_travel] #flores_101_spa_eng, universal_NER_pud
+    configs = [ DoQA_travel] #flores_101_spa_eng, universal_NER_pud, BillSum,
     for config in configs:
         loader_limit = 1000
         if 'clapnq' in config.card or 'fin_qa' in config.card:
