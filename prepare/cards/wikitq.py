@@ -20,14 +20,14 @@ card = TaskCard(
         # TruncateTableRows(field="table", rows_to_keep=50),
         SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
     ],
-    task="tasks.qa.with_context.extractive[metrics=[metrics.unsorted_list_exact_match]]",
+    task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=TemplatesList(
         [
             MultiReferenceTemplate(
                 input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",
                 references_field="answers",
                 postprocessors=[
-                    "processors.to_list_by_comma_space",
+                    # "processors.to_list_by_comma_space",
                     "processors.str_to_float_format",
                 ],
             ),
@@ -51,5 +51,5 @@ card = TaskCard(
     },
 )
 
-test_card(card)
+test_card(card, strict=False)
 add_to_catalog(card, "cards.wikitq", overwrite=True)

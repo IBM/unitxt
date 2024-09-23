@@ -4,7 +4,7 @@ from unitxt.operators import (
     Apply,
     Copy,
     FilterByCondition,
-    RenameFields,
+    Rename,
     SelectFields,
     Set,
 )
@@ -16,9 +16,7 @@ arena_hard_scores = ["A=B", "A>B", "A>>B", "B>A", "B>>A"]
 arena_hard_hf_space_processing_steps = SequentialOperator(
     steps=[
         # region Question file
-        RenameFields(
-            field_to_field={"cluster": "group"}, apply_to_streams=["questions"]
-        ),
+        Rename(field_to_field={"cluster": "group"}, apply_to_streams=["questions"]),
         Copy(
             field_to_field={"turns/0/content": "model_input"},
             apply_to_streams=["questions"],
@@ -51,7 +49,7 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
             },
             apply_to_streams=["judgment"],
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model": "model_2", "judge": "judge_model_id"},
             apply_to_streams=["judgment"],
         ),
@@ -97,7 +95,7 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
             on=["question_id"],
             new_stream_name="merged_stream",
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model_id": "model_1", "model_output": "model_1_output"},
             apply_to_streams=["model_answer"],
         ),
@@ -108,7 +106,7 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
             on=["question_id", "model_1"],
             new_stream_name="merged_stream",
         ),
-        RenameFields(
+        Rename(
             field_to_field={"model_1": "model_2", "model_1_output": "model_2_output"},
             apply_to_streams=["model_answer"],
         ),

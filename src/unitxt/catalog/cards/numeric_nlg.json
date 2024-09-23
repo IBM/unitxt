@@ -24,18 +24,23 @@
             "to_field": "input_a"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "description",
             "to_field": "output"
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field": "caption",
             "to_field": "input_b"
         }
     ],
     "task": "tasks.generation.from_pair",
-    "templates": "templates.generation.from_pair.all",
+    "templates": {
+        "__type__": "templates_list",
+        "items": [
+            "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
+        ]
+    },
     "__description__": "NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.",
     "__tags__": {
         "modality": "table",

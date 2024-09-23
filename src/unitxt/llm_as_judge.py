@@ -1,28 +1,32 @@
 from typing import Any, Dict, List, Literal, Optional
 
-from .api import evaluate, produce
-from .artifact import Artifact, fetch_artifact, settings
-from .formats import Format
+from .api import infer
+from .artifact import fetch_artifact
+from .dataclass import Field
+from .formats import Format, SystemFormat
 from .inference import InferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
-from .system_prompts import SystemPrompt
+from .settings_utils import get_settings
+from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
+
+settings = get_settings()
 
 
 class LLMAsJudge(BulkInstanceMetric):
-    """LLM as judge based metric class for evaluating correctness.
+    """LLM-as-judge-based metric class for evaluating correctness.
 
     Attributes:
         main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn"]): The type of task the llm-as-judge runs. This defines the output and input
-         format of the jude model.
+        task (Literal["rating.single_turn"]): The type of task the llm as judge runs. This defines the output and input
+         format of the judge model.
         template (Template): The template used when generating inputs for the judge llm.
         format (Format): The format used when generating inputs for judge llm.
         system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
         strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
          inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
-        inference_model (InferenceEngine): the module that creates the inference of the judge llm.
+        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
         batch_size (int): The size of the bulk.
     """
@@ -34,8 +38,8 @@ class LLMAsJudge(BulkInstanceMetric):
         "pairwise_comparative_rating.single_turn",
     ]
     template: Template
-    format: Format = None
-    system_prompt: SystemPrompt = None
+    system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
+    format: Format = Field(default_factory=SystemFormat)
     strip_system_prompt_and_format_from_inputs: bool = True
     inference_model: InferenceEngine
     reduction_map: Optional[Dict[str, List[str]]] = None
@@ -72,7 +76,6 @@ class LLMAsJudge(BulkInstanceMetric):
                 {
                     "question": input_instance,
                     "answer": prediction,
-                    "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -84,7 +87,6 @@ class LLMAsJudge(BulkInstanceMetric):
                     "question": input_instance,
                     "answer": prediction,
                     "reference_answer": reference[0],
-                    "rating": 5.0,  # This is a dummy value that is not used in practice
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -98,7 +100,6 @@ class LLMAsJudge(BulkInstanceMetric):
                     "answer_b": reference[0],
                     "model_a": "input_model",
                     "model_b": "baseline_model",
-                    "answer_a_preference": 0,  # This is a dummy value that is not used in practice,
                 }
                 for input_instance, prediction, reference in zip(
                     input_instances, predictions, references
@@ -109,15 +110,6 @@ class LLMAsJudge(BulkInstanceMetric):
                 f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
             )
         return instances
-
-    @staticmethod
-    def _add_metadata_to_judge_instances(
-        instances: List[List[Any]], task_data: List[Dict]
-    ):
-        for instance, data in zip(instances, task_data):
-            instance["data_classification_policy"] = data["metadata"][
-                "data_classification_policy"
-            ]
 
     def prepare(self):
         super().prepare()
@@ -152,13 +144,13 @@ class LLMAsJudge(BulkInstanceMetric):
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if self.format:
+            if self.format and type(self.format) is not SystemFormat:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support formatting. Please remove the format definition from the recipe"
                     " (OpenAi Chat API take care of the formatting automatically)."
                 )
-            if self.system_prompt:
+            if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support system prompt. Please remove the system_prompt definition from the recipe"
@@ -176,47 +168,38 @@ class LLMAsJudge(BulkInstanceMetric):
         instances = self._get_instance_for_judge_model(
             input_instances, predictions, references
         )
-        self._add_metadata_to_judge_instances(instances, task_data)
+        outputs = infer(
+            instances,
+            engine=self.inference_model,
+            task=f"tasks.response_assessment.{self.task}",
+            template=self.template,
+            system_prompt=self.system_prompt,
+            format=self.format,
+            return_data=True,
+        )
 
-        card = f"cards.dynamic_cards_for_llm_judges.{self.task}"
-        recipe_args = {
-            "card": card,
-            "template": self.template,
-            "demos_pool_size": 0,
-            "num_demos": 0,
-            "__type__": settings.default_recipe,
-        }
-        if self.system_prompt:
-            recipe_args["system_prompt"] = self.system_prompt
-        if self.format:
-            recipe_args["format"] = self.format
-        recipe = Artifact.from_dict(recipe_args)
-        dataset = produce(instances, recipe)
-        verdicts = self.inference_model.infer(dataset)
-        meta_scores = evaluate(predictions=verdicts, data=dataset)
-
-        res_list = []
-        for instance, verdict in zip(meta_scores, verdicts):
+        results = []
+        for instance in outputs:
             if self.task == "pairwise_comparative_rating.single_turn":
                 is_model_b_the_baseline = (
                     instance["task_data"]["model_b"] == "baseline_model"
                 )
                 if is_model_b_the_baseline:
-                    model_a_preference_score = instance["processed_prediction"]
+                    model_a_preference_score = instance["prediction"]
                 else:
-                    model_a_preference_score = instance["processed_prediction"] * -1
+                    model_a_preference_score = instance["prediction"] * -1
 
-                res = {
+                result = {
                     self.main_score: model_a_preference_score,
-                    "judge_raw_output": verdict,
+                    "judge_raw_output": instance["raw_prediction"],
                     "judge_raw_input": instance["source"],
                 }
             else:
-                res = {
-                    self.main_score: instance["processed_prediction"],
-                    "judge_raw_output": verdict,
+                result = {
+                    self.main_score: instance["prediction"],
+                    "judge_raw_output": instance["raw_prediction"],
                     "judge_raw_input": instance["source"],
                 }
-            res_list.append(res)
+            results.append(result)
 
-        return res_list
+        return results

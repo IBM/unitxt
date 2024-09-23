@@ -14,9 +14,9 @@ To enhance the functionality of Unitxt, users are encouraged to develop custom o
 This can be achieved by inheriting from any of the existing operators listed below or from one of the fundamental :class:`base operators<unitxt.operator>`.
 The primary task in any operator development is to implement the `process` function, which defines the unique manipulations the operator will perform.
 
-General or Specelized Operators
+General or Specialized Operators
 --------------------------------
-Some operators are specielized in specific data or specific operations such as:
+Some operators are specialized in specific data or specific operations such as:
 
 - :class:`loaders<unitxt.loaders>` for accessing data from various sources.
 - :class:`splitters<unitxt.splitters>` for fixing data splits.
@@ -28,12 +28,12 @@ Some operators are specielized in specific data or specific operations such as:
 - :class:`span_labeling_operators<unitxt.span_labeling_operators>` for handling strings.
 - :class:`fusion<unitxt.fusion>` for fusing and mixing datasets.
 
-Other specelized operators are used by unitxt internally:
+Other specialized operators are used by unitxt internally:
 
 - :class:`templates<unitxt.templates>` for verbalizing data examples.
 - :class:`formats<unitxt.formats>` for preparing data for models.
 
-The rest of this section is dedicated for general operators.
+The rest of this section is dedicated to general operators.
 
 General Operators List:
 ------------------------
@@ -42,6 +42,7 @@ General Operators List:
 import copy
 import operator
 import uuid
+import warnings
 import zipfile
 from abc import abstractmethod
 from collections import Counter, defaultdict
@@ -63,7 +64,7 @@ from typing import (
 import requests
 
 from .artifact import Artifact, fetch_artifact
-from .dataclass import DeprecatedField, NonPositionalField, OptionalField
+from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .operator import (
@@ -81,13 +82,14 @@ from .operator import (
     StreamOperator,
 )
 from .random_utils import new_random_generator
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import deepcopy, flatten_dict
 
 settings = get_settings()
+constants = get_constants()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -253,13 +255,14 @@ class Set(InstanceOperator):
     """
 
     fields: Dict[str, object]
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     use_deepcopy: bool = False
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -341,19 +344,37 @@ class InstanceFieldOperator(InstanceOperator):
     field: Optional[str] = None
     to_field: Optional[str] = None
     field_to_field: Optional[Union[List[List[str]], Dict[str, str]]] = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
 
     def verify(self):
         super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
+    def verify_field_definition(self):
+        if hasattr(self, "_field_to_field") and self._field_to_field is not None:
+            return
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
+
+        if self.field_to_field is None:
+            self._field_to_field = [
+                (self.field, self.to_field if self.to_field is not None else self.field)
+            ]
+        else:
+            self._field_to_field = (
+                list(self.field_to_field.items())
+                if isinstance(self.field_to_field, dict)
+                else self.field_to_field
+            )
         assert (
             self.field is not None or self.field_to_field is not None
         ), "Must supply a field to work on"
@@ -363,7 +384,9 @@ class InstanceFieldOperator(InstanceOperator):
         assert (
             self.field is None or self.field_to_field is None
         ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
-        assert self._field_to_field, f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            self._field_to_field is not None
+        ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         assert (
             len(self._field_to_field) > 0
         ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
@@ -402,31 +425,10 @@ class InstanceFieldOperator(InstanceOperator):
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         pass
 
-    def prepare(self):
-        super().prepare()
-
-        # prepare is invoked before verify, hence must make some checks here, before the changes done here
-        assert (
-            (self.field is None) != (self.field_to_field is None)
-        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
-        assert (
-            self.to_field is None or self.field_to_field is None
-        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
-
-        if self.field_to_field is None:
-            self._field_to_field = [
-                (self.field, self.to_field if self.to_field is not None else self.field)
-            ]
-        else:
-            self._field_to_field = (
-                list(self.field_to_field.items())
-                if isinstance(self.field_to_field, dict)
-                else self.field_to_field
-            )
-
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
+        self.verify_field_definition()
         # Need to deep copy instance, because when assigning two dictionary fields,
         # dict_set() the target field dictionary fields.
         # This means that if this target field was assigned to another field before,
@@ -474,23 +476,23 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
-class RenameFields(FieldOperator):
+class Rename(FieldOperator):
     """Renames fields.
 
     Move value from one field to another, potentially, if field name contains a /, from one branch into another.
     Remove the from field, potentially part of it in case of / in from_field.
 
     Examples:
-        RenameFields(field_to_field={"b": "c"})
+        Rename(field_to_field={"b": "c"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": 2}, {"a": 2, "c": 3}]
 
-        RenameFields(field_to_field={"b": "c/d"})
+        Rename(field_to_field={"b": "c/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}]
 
-        RenameFields(field_to_field={"b": "b/d"})
+        Rename(field_to_field={"b": "b/d"})
         will change inputs [{"a": 1, "b": 2}, {"a": 2, "b": 3}] to [{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}]
 
-        RenameFields(field_to_field={"b/c/e": "b/d"})
+        Rename(field_to_field={"b/c/e": "b/d"})
         will change inputs [{"a": 1, "b": {"c": {"e": 2, "f": 20}}}] to [{"a": 1, "b": {"c": {"f": 20}, "d": 2}}]
 
     """
@@ -511,6 +513,11 @@ class RenameFields(FieldOperator):
         return res
 
 
+@deprecation(version="2.0.0", alternative=Rename)
+class RenameFields(Rename):
+    pass
+
+
 class AddConstant(FieldOperator):
     """Adds a constant, being argument 'add', to the processed value.
 
@@ -522,230 +529,6 @@ class AddConstant(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.add + value
-
-
-class Augmentor(InstanceOperator):
-    """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
-
-    Args:
-        augment_model_input: Whether to augment the input to the model.
-        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the Task operator.
-
-    """
-
-    augment_task_input: bool = False
-    augment_model_input: bool = False
-
-    def verify(self):
-        assert not (
-            self.augment_task_input and self.augment_model_input
-        ), "Augmentor must set either 'augment_task_input' and 'augment_model_input' but not both"
-        assert (
-            self.augment_task_input or self.augment_model_input
-        ), "Augmentor must set either 'augment_task_input' or 'augment_model_input'"
-
-        super().verify()
-
-    @abstractmethod
-    def process_value(self, value: Any) -> Any:
-        pass
-
-    def prepare(self):
-        pass
-
-    def set_task_input_fields(self, task_input_fields: List[str]):
-        self._task_input_fields = [
-            "input_fields/" + task_input_field for task_input_field in task_input_fields
-        ]
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.augment_task_input:
-            assert (
-                len(self._task_input_fields) > 0
-            ), "No augmentable input fields were defined in Task, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the Task."
-            fields = self._task_input_fields
-            assert not self.augment_model_input
-
-        if self.augment_model_input:
-            fields = ["source"]
-            assert not self.augment_task_input
-
-        for field_name in fields:
-            try:
-                old_value = dict_get(
-                    instance,
-                    field_name,
-                    default="",
-                    not_exist_ok=False,
-                )
-            except ValueError as e:
-                raise TypeError(f"Failed to get {field_name} from {instance}") from e
-
-            try:
-                new_value = self.process_value(old_value)
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
-                ) from e
-            dict_set(instance, field_name, new_value, not_exist_ok=True)
-        return instance
-
-
-class NullAugmentor(Augmentor):
-    """Does not change the input string."""
-
-    def verify(self):
-        pass
-
-    def process_value(self, value: Any) -> Any:
-        return value
-
-
-class AugmentWhitespace(Augmentor):
-    """Augments the inputs by replacing existing whitespaces with other whitespaces.
-
-    Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
-    """
-
-    def process_value(self, value: Any) -> Any:
-        import re
-
-        words = re.split(r"(\s+)", value)
-        new_value = ""
-
-        random_generator = new_random_generator(sub_seed=value)
-        for word in words:
-            if word.isspace():
-                new_value += random_generator.choice(
-                    ["\n", "\t", " "]
-                ) * random_generator.randint(1, 3)
-            else:
-                new_value += word
-        return new_value
-
-
-class AugmentPrefixSuffix(Augmentor):
-    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) patterns.
-
-    Args:
-     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
-        The dictionary version allows to specify relative weights of the different patterns.
-     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of length
-        prefix_len of suffix_len, respectively, repetitions of the randomly selected patterns.
-     remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
-        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
-        trimmed input.
-     If only one of prefixes/suffixes is needed, set the other to None.
-
-    Examples:
-        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
-        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
-        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
-        being preferred over triple '\t', at 2:1 ratio, employ
-        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
-        which will append '\n'-s twice as often as '\t'-s.
-
-    """
-
-    prefixes: Optional[Union[List[str], Dict[str, int]]] = {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30,
-    }
-    prefix_len: Optional[int] = 3
-    suffixes: Optional[Union[List[str], Dict[str, int]]] = {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30,
-    }
-    suffix_len: Optional[int] = 3
-    remove_existing_whitespaces: Optional[bool] = False
-
-    def verify(self):
-        assert (
-            self.prefixes or self.suffixes
-        ), "At least one of prefixes/suffixes should be not None."
-        for arg, arg_name in zip(
-            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
-        ):
-            assert (
-                arg is None or isoftype(arg, List[str]) or isoftype(arg, Dict[str, int])
-            ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
-        assert (
-            self.prefix_len > 0
-        ), f"prefix_len must be positive, got {self.prefix_len}"
-        assert (
-            self.suffix_len > 0
-        ), f"suffix_len must be positive, got {self.suffix_len}"
-        super().verify()
-
-    def _calculate_distributions(self, prefs_or_suffs):
-        if prefs_or_suffs is None:
-            return None, None
-        patterns = (
-            prefs_or_suffs
-            if isinstance(prefs_or_suffs, list)
-            else [k for k, v in prefs_or_suffs.items()]
-        )
-        total_weight = (
-            len(patterns)
-            if isinstance(prefs_or_suffs, list)
-            else sum([v for k, v in prefs_or_suffs.items()])
-        )
-        weights = (
-            [1.0 / total_weight] * len(patterns)
-            if isinstance(prefs_or_suffs, list)
-            else [float(prefs_or_suffs[p]) / total_weight for p in patterns]
-        )
-        return patterns, weights
-
-    def prepare(self):
-        # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
-        self.verify()
-        self._prefix_pattern_distribution = {"length": self.prefix_len}
-        self._suffix_pattern_distribution = {"length": self.suffix_len}
-
-        (
-            self._prefix_pattern_distribution["patterns"],
-            self._prefix_pattern_distribution["weights"],
-        ) = self._calculate_distributions(self.prefixes)
-        (
-            self._suffix_pattern_distribution["patterns"],
-            self._suffix_pattern_distribution["weights"],
-        ) = self._calculate_distributions(self.suffixes)
-        super().prepare()
-
-    def _get_random_pattern(
-        self, pattern_distribution, random_generator: Random
-    ) -> str:
-        string_to_add = ""
-        if pattern_distribution["patterns"]:
-            string_to_add = "".join(
-                random_generator.choices(
-                    pattern_distribution["patterns"],
-                    pattern_distribution["weights"],
-                    k=pattern_distribution["length"],
-                )
-            )
-        return string_to_add
-
-    def process_value(self, value: Any) -> Any:
-        assert value is not None, "input value should not be None"
-        new_value = str(value)
-        if self.remove_existing_whitespaces:
-            new_value = new_value.strip()
-        random_generator = new_random_generator(sub_seed=value)
-        prefix = self._get_random_pattern(
-            self._prefix_pattern_distribution, random_generator
-        )
-        suffix = self._get_random_pattern(
-            self._suffix_pattern_distribution, random_generator
-        )
-        return prefix + new_value + suffix
 
 
 class ShuffleFieldValues(FieldOperator):
@@ -777,7 +560,7 @@ class Apply(InstanceOperator):
     Args:
         function (str): name of function.
         to_field (str): the field to store the result
-        additional arguments are field names passed to the function
+        any additional arguments are field names whose values will be passed directly to the function specified
 
     Examples:
     Store in field  "b" the uppercase string of the value in field "a"
@@ -846,12 +629,13 @@ class ListFieldValues(InstanceOperator):
 
     fields: List[str]
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -878,12 +662,13 @@ class ZipFieldValues(InstanceOperator):
     fields: List[str]
     to_field: str
     longest: bool = False
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -950,12 +735,13 @@ class IndexOf(InstanceOperator):
     search_in: str
     index_of: str
     to_field: str
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -972,12 +758,13 @@ class TakeByField(InstanceOperator):
     field: str
     index: str
     to_field: str = None
-    use_query: bool = DeprecatedField(
-        metadata={
-            "deprecation_msg": "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. "
-            "Please remove this field from your code."
-        }
-    )
+    use_query: Optional[bool] = None
+
+    def verify(self):
+        super().verify()
+        if self.use_query is not None:
+            depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def prepare(self):
         if self.to_field is None:
@@ -1060,8 +847,12 @@ class Copy(FieldOperator):
 
     """
 
+    use_deep_copy: bool = True
+
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        if self.use_deep_copy:
+            return copy.deepcopy(value)
+        return value
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1088,6 +879,31 @@ class AddID(InstanceOperator):
     ) -> Dict[str, Any]:
         instance[self.id_field_name] = str(uuid.uuid4()).replace("-", "")
         return instance
+
+
+class Cast(FieldOperator):
+    """Casts specified fields to specified types.
+
+    Args:
+        default (object): A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+    """
+
+    to: str
+    failure_default: Optional[Any] = "__UNDEFINED__"
+
+    def prepare(self):
+        self.types = {"int": int, "float": float, "str": str, "bool": bool}
+
+    def process_value(self, value):
+        try:
+            return self.types[self.to](value)
+        except ValueError as e:
+            if self.failure_default == "__UNDEFINED__":
+                raise ValueError(
+                    f'Failed to cast value {value} to type "{self.to}", and no default value is provided.'
+                ) from e
+            return self.failure_default
 
 
 class CastFields(InstanceOperator):
@@ -1247,7 +1063,7 @@ class ApplyOperatorsField(InstanceOperator):
 
         # we now have a list of nanes of operators, each is equipped with process_instance method.
         operator = SequentialOperator(steps=operator_names)
-        return operator.process_instance(instance)
+        return operator.process_instance(instance, stream_name=stream_name)
 
 
 class FilterByCondition(StreamOperator):
@@ -1767,7 +1583,7 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
                 operator, StreamingOperator
             ), f"Operator {operator_name} must be a StreamOperator"
 
-            stream = operator(MultiStream({"tmp": stream}))["tmp"]
+            stream = operator(MultiStream({stream_name: stream}))[stream_name]
 
         yield from stream
 
@@ -1808,7 +1624,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # Here we keep all the fields besides the score, and restore them after the metric finishes.
         first_instance = stream.peek()
         keys_to_restore = set(first_instance.keys()).difference({"score"})
-        multi_stream = MultiStream({"tmp": stream})
+        multi_stream = MultiStream({stream_name: stream})
         multi_stream = CopyFields(
             field_to_field={k: f"{k}_orig" for k in keys_to_restore}
         )(multi_stream)
@@ -1830,7 +1646,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
             multi_stream
         )
-        stream = multi_stream["tmp"]
+        stream = multi_stream[stream_name]
         yield from stream
 
 

@@ -15,7 +15,7 @@
             }
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "content": "document"
             }
@@ -25,6 +25,12 @@
             "fields": {
                 "document_type": "document"
             }
+        },
+        {
+            "__type__": "wrap",
+            "field": "summary",
+            "inside": "list",
+            "to_field": "summaries"
         }
     ],
     "task": "tasks.summarization.abstractive",

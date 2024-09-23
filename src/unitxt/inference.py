@@ -1,14 +1,19 @@
 import abc
 import os
+import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from tqdm import tqdm
 
 from .artifact import Artifact
-from .dataclass import InternalField
+from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
+from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
+from .settings_utils import get_settings
+
+settings = get_settings()
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -19,9 +24,20 @@ class InferenceEngine(abc.ABC, Artifact):
         """Perform inference on the input dataset."""
         pass
 
+    @abc.abstractmethod
+    def prepare_engine(self):
+        """Perform inference on the input dataset."""
+        pass
+
+    def prepare(self):
+        if not settings.mock_inference_mode:
+            self.prepare_engine()
+
     def infer(self, dataset) -> str:
         """Verifies instances of a dataset and performs inference."""
         [self.verify_instance(instance) for instance in dataset]
+        if settings.mock_inference_mode:
+            return [instance["source"] for instance in dataset]
         return self._infer(dataset)
 
     @deprecation(version="2.0.0")
@@ -61,11 +77,20 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         return self._infer_log_probs(dataset)
 
 
-class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class LazyLoadMixin(Artifact):
+    lazy_load: bool = NonPositionalField(default=False)
+
+    @abc.abstractmethod
+    def _is_loaded(self):
+        pass
+
+
+class HFPipelineBasedInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+):
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
-    lazy_load: bool = False
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -111,15 +136,15 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             model=self.model_name, trust_remote_code=True, **model_args
         )
 
-    def prepare(self):
+    def prepare_engine(self):
         if not self.lazy_load:
             self._prepare_pipeline()
 
-    def is_pipeline_initialized(self):
+    def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
     def _infer(self, dataset):
-        if not self.is_pipeline_initialized():
+        if not self._is_loaded():
             self._prepare_pipeline()
 
         outputs = []
@@ -133,11 +158,15 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 class MockInferenceEngine(InferenceEngine):
     model_name: str
 
-    def prepare(self):
+    def prepare_engine(self):
         return
 
     def _infer(self, dataset):
         return ["[[10]]" for instance in dataset]
+
+
+class MockModeMixin(Artifact):
+    mock_mode: bool = False
 
 
 class IbmGenAiInferenceEngineParamsMixin(Artifact):
@@ -193,11 +222,12 @@ class IbmGenAiInferenceEngine(
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from genai import Client, Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
+
         assert api_key is not None, (
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
@@ -280,9 +310,9 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[bool] = None
+    logprobs: Optional[bool] = True
     n: Optional[int] = None
-    # parallel_tool_calls: bool = None
+    parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
@@ -297,9 +327,9 @@ class OpenAiInferenceEngineParams(Artifact):
     top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[bool] = None
+    logprobs: Optional[bool] = True
     n: Optional[int] = None
-    parallel_tool_calls: bool = None
+    parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
@@ -317,7 +347,7 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    def prepare_engine(self):
         from openai import OpenAI
 
         api_key_env_var_name = "OPENAI_API_KEY"
@@ -330,6 +360,13 @@ class OpenAiInferenceEngine(
         self.client = OpenAI(api_key=api_key)
 
         self._set_inference_parameters()
+
+    def _get_completion_kwargs(self):
+        return {
+            k: v
+            for k, v in self.to_dict([OpenAiInferenceEngineParamsMixin]).items()
+            if v is not None
+        }
 
     def _infer(self, dataset):
         outputs = []
@@ -346,7 +383,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
+                **self._get_completion_kwargs(),
             )
             output = response.choices[0].message.content
 
@@ -369,7 +406,7 @@ class OpenAiInferenceEngine(
                     }
                 ],
                 model=self.model_name,
-                **self.to_dict([OpenAiInferenceEngineParamsMixin]),
+                **self._get_completion_kwargs(),
             )
             top_logprobs_response = response.choices[0].logprobs.content
             pred_output = [
@@ -388,6 +425,96 @@ class OpenAiInferenceEngine(
                 "model_id": self.model_name,
             }
             outputs.append(output)
+        return outputs
+
+
+class TogetherAiInferenceEngineParamsMixin(Artifact):
+    max_tokens: Optional[int] = None
+    stop: Optional[List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    logprobs: Optional[int] = None
+    echo: Optional[bool] = None
+    n: Optional[int] = None
+    min_p: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = None
+
+
+class TogetherAiInferenceEngine(
+    InferenceEngine, TogetherAiInferenceEngineParamsMixin, PackageRequirementsMixin
+):
+    label: str = "together"
+    model_name: str
+    _requirements_list = {
+        "together": "Install together package using 'pip install --upgrade together"
+    }
+    data_classification_policy = ["public"]
+    parameters: Optional[TogetherAiInferenceEngineParamsMixin] = None
+
+    def prepare_engine(self):
+        from together import Together
+        from together.types.models import ModelType
+
+        api_key_env_var_name = "TOGETHER_API_KEY"
+        api_key = os.environ.get(api_key_env_var_name)
+        assert api_key is not None, (
+            f"Error while trying to run TogetherAiInferenceEngine."
+            f" Please set the environment param '{api_key_env_var_name}'."
+        )
+        self.client = Together(api_key=api_key)
+        self._set_inference_parameters()
+
+        # Get model type from Together List Models API
+        together_models = self.client.models.list()
+        together_model_id_to_type = {
+            together_model.id: together_model.type for together_model in together_models
+        }
+        model_type = together_model_id_to_type.get(self.model_name)
+        assert model_type is not None, (
+            f"Could not find model {self.model_name} " "in Together AI model list"
+        )
+        assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
+            f"Together AI model type {model_type} is not supported; "
+            "supported types are 'chat', 'language' and 'code'."
+        )
+        self.model_type = model_type
+
+    def _get_infer_kwargs(self):
+        return {
+            k: v
+            for k, v in self.to_dict([TogetherAiInferenceEngineParamsMixin]).items()
+            if v is not None
+        }
+
+    def _infer_chat(self, prompt: str) -> str:
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[{"role": "user", "content": prompt}],
+            **self._get_infer_kwargs(),
+        )
+        return response.choices[0].message.content
+
+    def _infer_text(self, prompt: str) -> str:
+        response = self.client.completions.create(
+            model=self.model_name,
+            prompt=prompt,
+            **self._get_infer_kwargs(),
+        )
+        return response.choices[0].text
+
+    def _infer(self, dataset):
+        from together.types.models import ModelType
+
+        outputs = []
+        if self.model_type == ModelType.CHAT:
+            for instance in tqdm(dataset, desc="Inferring with Together AI Chat API"):
+                outputs.append(self._infer_chat(instance["source"]))
+        else:
+            for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
+                outputs.append(self._infer_text(instance["source"]))
         return outputs
 
 
@@ -544,7 +671,7 @@ class WMLInferenceEngine(
             client.set.default_project(self.credentials["project_id"])
         return client
 
-    def prepare(self):
+    def prepare_engine(self):
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
@@ -597,6 +724,74 @@ class WMLInferenceEngine(
             prompt=dataset["source"],
             params=params,
         )
+
+
+class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_name: str
+    max_new_tokens: int
+    lazy_load = True
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def _prepare_engine(self):
+        import torch
+        from transformers import AutoProcessor, LlavaForConditionalGeneration
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(self, dataset):
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        import torch
+
+        results = []
+        for instance in dataset:
+            text = instance["source"]
+            images = extract_images(text, instance)
+            # Regular expression to match all <img src="..."> tags
+            regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+            model_input = re.sub(regex, "<image>", text)
+            if len(images) == 1:
+                images = images[0]
+            inputs = self.processor(
+                images=images, text=model_input, return_tensors="pt"
+            ).to(self.device, torch.float16)
+            input_len = len(inputs["input_ids"][0])
+            output = self.model.generate(
+                **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
+            )
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
+            results.append(result)
+
+        return results
         return [
             {
                 "prediction": result["results"][0]["generated_tokens"],

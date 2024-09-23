@@ -1,0 +1,55 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "cmarkea/doc-vqa"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_dev",
+        {
+            "__type__": "explode",
+            "field": "qa/en",
+            "to_field": "pair"
+        },
+        {
+            "__type__": "copy",
+            "field": "pair/question",
+            "to_field": "question"
+        },
+        {
+            "__type__": "copy",
+            "field": "pair/answer",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "wrap",
+            "field": "answers",
+            "inside": "list"
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive",
+    "templates": "templates.qa.with_context.all",
+    "__tags__": {
+        "license": "apache-2.0",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "The doc-vqa Dataset integrates images from the Infographic_vqa dataset sourced from HuggingFaceM4 The Cauldron dataset, as well as images from the dataset AFTDB (Arxiv Figure Table Database) curated by cmarkea. This dataset consists of pairs of images and corresponding text, with each image linked to an average of five questions and answers available in both English and French. These questions and answers were generated using Gemini 1.5 Pro, thereby rendering the dataset well-suited for multimodal tasks involving image-text pairing and multilingual question answering."
+}

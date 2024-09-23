@@ -13,14 +13,15 @@ from .operators import (
     Copy,
     DivideAllFieldsBy,
     MapInstanceValues,
-    RenameFields,
+    Rename,
     Set,
 )
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
-from .splitters import RandomSampler, SliceSplit, SplitRandomMix, SpreadSplit
+from .splitters import RandomSampler, Sample, SliceSplit, SplitRandomMix
 from .stream import MultiStream
 from .struct_data_operators import (
+    ConstructTableFromRowsCols,
     ListToKeyValPairs,
     MapHTMLTableToJSON,
     SerializeKeyValPairs,

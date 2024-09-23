@@ -1,0 +1,15 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "meta-llama/llama-3-70b-instruct",
+        "parameters": {
+            "__type__": "ibm_gen_ai_inference_engine_params",
+            "max_new_tokens": 256
+        }
+    },
+    "template": "templates.response_assessment.judges.idk.v1",
+    "task": "rating.single_turn",
+    "main_score": "metrics.llm_as_judge.rating.llama370binstruct_template_v1",
+    "prediction_type": "str"
+}

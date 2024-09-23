@@ -1,6 +1,6 @@
 import json
 from collections import Counter
-from typing import Any, Dict
+from typing import Any
 
 from unitxt.formats import SystemFormat
 from unitxt.operators import (
@@ -9,9 +9,6 @@ from unitxt.operators import (
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
-    Augmentor,
-    AugmentPrefixSuffix,
-    AugmentWhitespace,
     CastFields,
     Copy,
     DeterministicBalancer,
@@ -37,11 +34,10 @@ from unitxt.operators import (
     MapInstanceValues,
     MergeStreams,
     MinimumOneExamplePerLabelRefiner,
-    NullAugmentor,
     Perturb,
     RemoveFields,
     RemoveValues,
-    RenameFields,
+    Rename,
     SelectFields,
     Set,
     Shuffle,
@@ -2073,7 +2069,7 @@ label (str):
             f"expected error message: {expected_error_message}, but received: {ve.exception!s}.",
         )
 
-    def test_rename_fields(self):
+    def test_rename(self):
         inputs = [
             {"a": 1, "b": 2},
             {"a": 2, "b": 3},
@@ -2086,7 +2082,7 @@ label (str):
 
         # the simplest case
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c"}),
+            operator=Rename(field_to_field={"b": "c"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2094,7 +2090,7 @@ label (str):
 
         # to field is structured:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "c/d"}),
+            operator=Rename(field_to_field={"b": "c/d"}),
             inputs=inputs,
             targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
             tester=self,
@@ -2102,7 +2098,7 @@ label (str):
 
         # to field is structured, to stand in place of from field:
         check_operator(
-            operator=RenameFields(field_to_field={"b": "b/d"}),
+            operator=Rename(field_to_field={"b": "b/d"}),
             inputs=inputs,
             targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
             tester=self,
@@ -2110,7 +2106,7 @@ label (str):
 
         # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "b/d"}),
+            operator=Rename(field_to_field={"b/c/e": "b/d"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2124,7 +2120,7 @@ label (str):
 
         # to field is structured, from field is structured too, different fields:
         check_operator(
-            operator=RenameFields(field_to_field={"b/c/e": "g/h"}),
+            operator=Rename(field_to_field={"b/c/e": "g/h"}),
             inputs=[
                 {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
                 {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
@@ -2138,7 +2134,7 @@ label (str):
 
         # both from and to field are structured, different only in the middle of the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/g/c/d"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/g/c/d"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2150,7 +2146,7 @@ label (str):
 
         # both from and to field are structured, different down the path:
         check_operator(
-            operator=RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}),
+            operator=Rename(field_to_field={"a/b/c/d": "a/b/c/f"}),
             inputs=[
                 {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
             ],
@@ -2161,7 +2157,7 @@ label (str):
         )
 
         with self.assertWarns(DeprecationWarning) as dw:
-            RenameFields(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
+            Rename(field_to_field={"a/b/c/d": "a/b/c/f"}, use_query=True)
             self.assertEqual(
                 "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code.",
                 dw.warnings[0].message.args[0],
@@ -2190,7 +2186,7 @@ label (str):
         with self.assertRaises(AssertionError) as ae:
             AddConstant(
                 field_to_field={"a": "b", "b": "a"}, add=15, process_every_value=True
-            ).process(instance={"a": [1, 2, 3], "b": [11]})
+            ).process_instance({"a": [1, 2, 3], "b": [11]})
 
         self.assertEqual(
             str(ae.exception),
@@ -2488,224 +2484,6 @@ references (str):
             tester=self,
         )
 
-    def test_augment_whitespace_model_input(self):
-        source = "The dog ate my cat"
-        inputs = [{"source": source}]
-
-        operator = AugmentWhitespace(augment_model_input=True)
-        outputs = apply_operator(operator, inputs)
-        assert (
-            outputs[0]["source"] != source
-        ), f"Source of f{outputs} is equal to f{source} and was not augmented"
-        normalized_output_source = outputs[0]["source"].split()
-        normalized_input_source = source.split()
-        assert (
-            normalized_output_source == normalized_input_source
-        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
-
-    def test_augment_whitespace_task_input_with_error(self):
-        text = "The dog ate my cat"
-        inputs = [{"input_fields": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["sentence"])
-        with self.assertRaises(ValueError):
-            apply_operator(operator, inputs)
-
-    def test_augment_whitespace_task_input(self):
-        text = "The dog ate my cat"
-        inputs = [{"input_fields": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["text"])
-        outputs = apply_operator(operator, inputs)
-        normalized_output_source = outputs[0]["input_fields"]["text"].split()
-        normalized_input_source = text.split()
-        assert (
-            normalized_output_source == normalized_input_source
-        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
-
-    def test_augment_whitespace_with_none_text_error(self):
-        text = None
-        inputs = [{"input_fields": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
-        check_operator_exception(
-            operator,
-            inputs,
-            tester=self,
-            exception_text=exception_text,
-        )
-
-    def test_augment_prefix_suffix_model_input(self):
-        source = "\n He is riding a black horse\t\t  "
-        inputs = [{"source": source}]
-        prefixes = [
-            "M",
-            "N",
-            "O",
-            "P",
-        ]  # all distinct from source, to ease verification
-        suffixes = [
-            "Q",
-            "R",
-            "S",
-            "T",
-        ]  # all distinct from source, to ease verification
-
-        operator = AugmentPrefixSuffix(
-            augment_model_input=True, suffixes=suffixes, prefixes=prefixes
-        )
-        outputs = apply_operator(operator, inputs)
-        assert (
-            outputs[0]["source"] != source
-        ), f"Output remains equal to source, {source}, and was not augmented"
-        output0 = str(outputs[0]["source"]).strip("".join(prefixes + suffixes))
-        assert (
-            output0 == source
-        ), f"The inner part of the output, {outputs[0]['source']}, is not equal to the input {source}"
-        assert (
-            "\t\t " in output0
-        ), f"Trailing whitespaces wrongly removed, yielding {output0}, although 'remove_existing_whitespaces' is False,"
-        # weighted suffixes
-        suffixes_dict = {"Q": 2, "R": 2, "S": 2, "T": 10}
-        operator = AugmentPrefixSuffix(
-            augment_model_input=True,
-            suffixes=suffixes_dict,
-            suffix_len=8,
-            prefixes=None,
-        )
-        outputs = apply_operator(operator, [({"source": str(i)}) for i in range(500)])
-        assert (
-            len(outputs) == 500
-        ), f"outputs length {len(outputs)} is different from inputs length, which is 500."
-        actual_suffixes = [output["source"][-2:] for output in outputs]
-        counter = Counter(actual_suffixes)
-        assert (
-            counter["TT"] > counter["SS"]
-        ), f'In a population of size 500 , suffix "TT" ({counter["TT"]}) is expected to be more frequent than "SS" {counter["SS"]}'
-
-        # just for code coverage of Augmentor.process_value and Augmentor.process
-        class JustToCoverProcessValueOfAugmentor(Augmentor):
-            def process_value(self, value: Any) -> Any:
-                super().process_value(value)
-                return value
-
-            def process(self, instance: Dict[str, Any]) -> Dict[str, Any]:
-                return super().process(instance)
-
-        operator = JustToCoverProcessValueOfAugmentor(augment_model_input=True)
-        self.assertEqual(5, operator.process_value(5))
-        with self.assertRaises(TypeError):
-            operator.process({"not_source": "just to raise exception"})
-
-        class JustToCoverProcessValueVerifyOfNullAugmentor(NullAugmentor):
-            def process_value(self, value: Any) -> Any:
-                super().process_value(value)
-                return value
-
-            def verify(self):
-                super().verify()
-
-        operator = JustToCoverProcessValueVerifyOfNullAugmentor(
-            augment_model_input=True
-        )
-        self.assertEqual(5, operator.process_value(5))
-        operator.verify()
-
-    def test_augment_prefix_suffix_task_input_with_error(self):
-        text = "She is riding a black horse\t\t  "
-        inputs = [{"input_fields": {"text": text}}]
-        suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentPrefixSuffix(
-            augment_task_input=True, suffixes=suffixes, prefixes=None
-        )
-        operator.set_task_input_fields(["sentence"])
-        with self.assertRaises(ValueError) as ve:
-            apply_operator(operator, inputs)
-        self.assertEqual(
-            str(ve.exception),
-            "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Failed to get input_fields/sentence from {'input_fields': {'text': 'She is riding a black horse\\t\\t  '}}",
-        )
-
-    def test_augment_prefix_suffix_task_input(self):
-        text = "\n She is riding a black horse  \t\t  "
-        inputs = [{"input_fields": {"text": text}}]
-        suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentPrefixSuffix(
-            augment_task_input=True,
-            suffixes=suffixes,
-            prefixes=None,
-            remove_existing_whitespaces=True,
-        )
-        operator.set_task_input_fields(["text"])
-        outputs = apply_operator(operator, inputs)
-        output0 = str(outputs[0]["input_fields"]["text"]).rstrip("".join(suffixes))
-        assert (
-            " \t\t " not in output0 and "\n" not in output0
-        ), f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
-        assert (
-            output0 == text.strip()[: len(output0)]
-        ), f"The prefix of {outputs[0]['input_fields']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
-
-    def test_augment_prefix_suffix_with_non_string_suffixes_error(self):
-        prefixes = [10, 20, "O", "P"]
-        with self.assertRaises(AssertionError) as ae:
-            AugmentPrefixSuffix(
-                augment_task_input=True, prefixes=prefixes, suffixes=None
-            )
-        self.assertEqual(
-            str(ae.exception),
-            "Argument prefixes should be either None or a list of strings or a dictionary str->int. [10, 20, 'O', 'P'] is none of the above.",
-        )
-
-    def test_augment_prefix_suffix_with_none_input_error(self):
-        text = None
-        inputs = [{"input_fields": {"text": text}}]
-        suffixes = ["Q", "R", "S", "T"]
-        operator = AugmentPrefixSuffix(
-            augment_task_input=True, suffixes=suffixes, prefixes=None
-        )
-        operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentPrefixSuffix due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
-        check_operator_exception(
-            operator,
-            inputs,
-            tester=self,
-            exception_text=exception_text,
-        )
-
-    def test_test_operator_without_tester_param(self):
-        text = None
-        inputs = [{"input_fields": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
-
-        check_operator_exception(
-            operator,
-            inputs,
-            exception_text=exception_text,
-        )
-
-    def test_test_operator_unexpected_pass(self):
-        text = "Should be ok"
-        inputs = [{"input_fields": {"text": text}}]
-        operator = AugmentWhitespace(augment_task_input=True)
-        operator.set_task_input_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
-
-        try:
-            check_operator_exception(
-                operator,
-                inputs,
-                exception_text=exception_text,
-            )
-        except Exception as e:
-            self.assertEqual(
-                str(e),
-                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}",
-            )
-
     def test_duplicate_instance(self):
         inputs = [
             {"a": 1, "b": 2},
@@ -2870,6 +2648,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["negative"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"text": "was so good"},
@@ -2879,6 +2658,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["positive"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }
@@ -2916,6 +2696,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["Dan", "Yossi"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
                     "input_fields": {"text": "who was she?"},
@@ -2925,6 +2706,7 @@ class TestApplyMetric(UnitxtTestCase):
                     "references": ["Shira", "Yael"],
                     "instruction": "",
                     "target_prefix": "",
+                    "postprocessors": ["processors.to_string_stripped"],
                 },
             ]
         }

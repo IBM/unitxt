@@ -1,18 +1,28 @@
-from typing import List
+from typing import List, Optional, Union
 
+from .augmentors import (
+    Augmentor,
+    FinalStateInputsAugmentor,
+    NullAugmentor,
+    TaskInputsAugmentor,
+)
 from .card import TaskCard
+from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import Augmentor, NullAugmentor, Set, StreamRefiner
+from .operators import Set, StreamRefiner
 from .recipe import Recipe
-from .schema import ToUnitxtGroup
-from .splitters import Sampler, SeparateSplit, SpreadSplit
+from .schema import Finalize
+from .settings_utils import get_constants
+from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
-from .templates import Template
+from .task import Task
+from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
 
+constants = get_constants()
 logger = get_logger()
 
 
@@ -21,17 +31,20 @@ class CreateDemosPool(SeparateSplit):
     pass
 
 
-class AddDemosField(SpreadSplit):
-    pass
-
-
 class BaseRecipe(Recipe, SourceSequentialOperator):
-    card: TaskCard
-    template: Template = None
+    # Base parameters
+    card: TaskCard = None
+    task: Task = None
+    template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
+
+    # Additional parameters
+    template_card_index: int = NonPositionalField(default=None)
     metrics: List[str] = NonPositionalField(default=None)
     postprocessors: List[str] = NonPositionalField(default=None)
+
+    group_by: List[Union[str, List[str]]] = []
 
     loader_limit: int = None
 
@@ -44,7 +57,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
-    num_demos: int = 0
+    num_demos: Optional[Union[int, List[int]]] = 0
     demos_removed_from_data: bool = True
 
     demos_pool_name: str = "demos_pool"
@@ -59,16 +72,33 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
 
+    @property
+    def max_demos_size(self):
+        if isinstance(self.num_demos, list):
+            return max(self.num_demos)
+        return self.num_demos
+
     def verify(self):
         super().verify()
-        if self.num_demos > 0:
+
+        if self.task is None and self.card is None:
+            raise ValueError("Set card or task in the recipe")
+
+        if self.card is None and (
+            self.num_demos > 0 or self.demos_pool_size is not None
+        ):
+            raise ValueError(
+                "To use num_demos and demos_pool_size in recipe set a card."
+            )
+
+        if self.use_demos:
             if self.demos_pool_size is None or self.demos_pool_size < 1:
                 raise ValueError(
                     "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
-            if self.demos_pool_size < self.num_demos:
+            if self.demos_pool_size < self.max_demos_size:
                 raise ValueError(
-                    f"num_demos (got: {self.num_demos}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
+                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
                 )
             if self.loader_limit and self.demos_pool_size > self.loader_limit:
                 raise ValueError(
@@ -105,6 +135,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
             )
 
+        if self.template is None:
+            raise ValueError(
+                "You must set in the recipe either `template`, `template_card_index` or `templates`."
+            )
+
+        if isinstance(self.template, list):
+            for template in self.template:
+                self.verify_template(template)
+        else:
+            self.verify_template(self.template)
+
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances
         self.train_refiner.apply_to_streams = ["train"]
@@ -118,48 +159,28 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.test_refiner.apply_to_streams = ["test"]
         self.processing.steps.append(self.test_refiner)
 
-    def prepare_metrics_and_postprocessors(self):
-        # Check is done here to ensure get_postprocessor is called on
-        # a Template object
-        if self.template is not None and not isinstance(self.template, Template):
+    def verify_template(self, template):
+        if not isinstance(template, Template):
             raise ValueError(
-                f"template argument must be an object of type Template.  Got template = {self.template}"
+                f"template argument must be an object of type Template. Got template = {template}"
             )
 
-        if self.postprocessors is None:
-            postprocessors = self.template.get_postprocessors()
-        else:
-            postprocessors = self.postprocessors
-
-        if self.metrics is None:
-            metrics = self.card.task.metrics
-        else:
-            metrics = self.metrics
-
-        metrics = [
-            metric if isinstance(metric, str) else metric.to_json()
-            for metric in metrics
-        ]
-
-        return metrics, postprocessors
-
     def set_pipelines(self):
-        self.loading = SequentialOperator()
-        self.loading.__description__ = "Loading the data from the data source."
-        self.metadata = SequentialOperator()
-        self.metadata.__description__ = (
-            "Adding metadata (e.g. format, system prompt, template)  "
+        self.loading = SequentialOperator(
+            __description__="Loading the data from the data source."
         )
-        self.standardization = SequentialOperator()
-        self.standardization.__description__ = (
-            "Standardizing the raw dataset fields to task field definition."
+        self.metadata = SequentialOperator(
+            __description__="Adding metadata (e.g. format, system prompt, template)  "
         )
-        self.processing = SequentialOperator()
-        self.processing.__description__ = (
-            "Setting task fields (and selecting demos per sample if needed)."
+        self.standardization = SequentialOperator(
+            __description__="Standardizing the raw dataset fields to task field definition."
         )
-        self.verblization = SequentialOperator()
-        self.verblization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
+
+        self.processing = SequentialOperator(
+            __description__="Setting task fields (and selecting demos per sample if needed)."
+        )
+        self.verbalization = SequentialOperator()
+        self.verbalization.__description__ = "Verbalizing the input to the model and gold references to the 'source', 'target' and 'references' fields."
         self.finalize = SequentialOperator()
         self.finalize.__description__ = "Adding post processors. Removing intermediate fields. Creating the final output dataset."
 
@@ -169,7 +190,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.standardization,
             self.processing,
             self.metadata,
-            self.verblization,
+            self.verbalization,
             self.finalize,
         ]
 
@@ -193,16 +214,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.verblization, self.finalize]
+        self.inference.steps = [self.verbalization, self.finalize]
 
         self._demos_pool_cache = None
 
     def production_preprocess(self, task_instances):
-        ms = MultiStream.from_iterables({"__inference__": task_instances})
-        return list(self.inference_instance(ms)["__inference__"])
+        ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        return list(self.inference_instance(ms)[constants.inference_stream])
 
     def production_demos_pool(self):
-        if self.num_demos > 0:
+        if self.use_demos:
             if self._demos_pool_cache is None:
                 self._demos_pool_cache = list(
                     self.inference_demos()[self.demos_pool_name]
@@ -210,57 +231,67 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             return self._demos_pool_cache
         return []
 
+    @property
+    def has_custom_demos_pool(self):
+        return self.demos_pool_size is not None and self.demos_pool_size > 0
+
+    @property
+    def use_demos(self):
+        return self.num_demos is not None and self.max_demos_size > 0
+
     def produce(self, task_instances):
         """Use the recipe in production to produce model ready query from standard task instance."""
         self.before_process_multi_stream()
         multi_stream = MultiStream.from_iterables(
             {
-                "__inference__": self.production_preprocess(task_instances),
+                constants.inference_stream: self.production_preprocess(task_instances),
                 self.demos_pool_name: self.production_demos_pool(),
             }
         )
         multi_stream = self.inference(multi_stream)
-        return list(multi_stream["__inference__"])
+        return list(multi_stream[constants.inference_stream])
 
-    def prepare(self):
-        # To avoid the Python's mutable default list trap, we set the default value to None
-        # and then set it to an empty list if it is None.
-        if self.card.preprocess_steps is None:
+    def reset_pipeline(self):
+        if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
+
+        if self.task is None:
+            self.task = self.card.task
 
         self.set_pipelines()
 
-        loader = self.card.loader
-        if self.loader_limit:
-            loader.loader_limit = self.loader_limit
-            logger.info(f"Loader line limit was set to  {self.loader_limit}")
-        self.loading.steps.append(loader)
+        if self.card is not None:
+            loader = self.card.loader
+            if self.loader_limit:
+                loader.loader_limit = self.loader_limit
+                logger.info(f"Loader line limit was set to  {self.loader_limit}")
+            self.loading.steps.append(loader)
 
-        # This is required in case loader_limit is not enforced by the loader
-        if self.loader_limit:
-            self.loading.steps.append(StreamRefiner(max_instances=self.loader_limit))
+            # This is required in case loader_limit is not enforced by the loader
+            if self.loader_limit:
+                self.loading.steps.append(
+                    StreamRefiner(max_instances=self.loader_limit)
+                )
 
         self.metadata.steps.append(
             Set(
                 fields={
-                    "recipe_metadata": {
-                        "template": self.template,
-                        "system_prompt": self.system_prompt,
-                        "format": self.format,
-                    }
+                    "recipe_metadata/system_prompt": self.system_prompt,
+                    "recipe_metadata/format": self.format,
                 }
             )
         )
 
-        self.standardization.steps.extend(self.card.preprocess_steps)
+        if self.card:
+            self.standardization.steps.extend(self.card.preprocess_steps)
 
-        self.processing.steps.append(self.card.task)
+        self.processing.steps.append(self.task)
 
-        if self.augmentor.augment_task_input:
-            self.augmentor.set_task_input_fields(self.card.task.augmentable_inputs)
+        if isinstance(self.augmentor, TaskInputsAugmentor):
+            self.augmentor.set_fields(self.card.task.augmentable_inputs)
             self.processing.steps.append(self.augmentor)
 
-        if self.demos_pool_size is not None and self.demos_pool_size > 0:
+        if self.has_custom_demos_pool:
             self.processing.steps.append(
                 CreateDemosPool(
                     from_split=self.demos_taken_from,
@@ -270,7 +301,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             )
 
-        if self.num_demos > 0:
+        if self.use_demos:
             if self.sampler is None:
                 if self.card.sampler is None:
                     raise ValueError(
@@ -279,33 +310,81 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 self.sampler = self.card.sampler
 
-            self.sampler.set_size(self.num_demos)
-
         self.prepare_refiners()
 
-        self.verblization.steps.append(self.template)
-        if self.num_demos > 0:
-            self.verblization.steps.append(
-                AddDemosField(
-                    source_stream=self.demos_pool_name,
-                    target_field=self.demos_field,
-                    sampler=self.sampler,
+        if self.use_demos:
+            if isinstance(self.num_demos, int):
+                self.verbalization.steps.append(
+                    ConstantSizeSample(
+                        from_stream=self.demos_pool_name,
+                        to_field=self.demos_field,
+                        sampler=self.sampler,
+                        sample_size=self.num_demos,
+                    )
                 )
-            )
-        self.verblization.steps.append(self.system_prompt)
-        self.verblization.steps.append(self.format)
-        if self.augmentor.augment_model_input:
-            self.verblization.steps.append(self.augmentor)
+                self.verbalization.steps.append(
+                    Set(fields={"recipe_metadata/num_demos": self.num_demos})
+                )
 
-        metrics, postprocessors = self.prepare_metrics_and_postprocessors()
+            elif isinstance(self.num_demos, list):
+                self.verbalization.steps.append(
+                    RandomSizeSample(
+                        from_stream=self.demos_pool_name,
+                        to_field=self.demos_field,
+                        sampler=self.sampler,
+                        sample_sizes=self.num_demos,
+                    )
+                )
+                self.verbalization.steps.append(
+                    GetLength(field="demos", to_field="recipe_metadata/num_demos")
+                )
+            else:
+                raise ValueError("num_demos must be int or List[int]")
 
-        self.finalize.steps.append(
-            ToUnitxtGroup(
-                group="unitxt",
-                metrics=metrics,
-                postprocessors=postprocessors,
+            if isinstance(self.template, list):
+                self.verbalization.steps.append(
+                    ApplyRandomTemplate(
+                        templates=self.template, demos_field=self.demos_field
+                    )
+                )
+            else:
+                self.verbalization.steps.append(
+                    ApplySingleTemplate(
+                        template=self.template, demos_field=self.demos_field
+                    )
+                )
+        else:
+            self.verbalization.steps.append(
+                Set(fields={"recipe_metadata/num_demos": 0})
             )
-        )
+            if isinstance(self.template, list):
+                self.verbalization.steps.append(
+                    ApplyRandomTemplate(templates=self.template)
+                )
+            else:
+                self.verbalization.steps.append(
+                    ApplySingleTemplate(template=self.template)
+                )
+
+        self.verbalization.steps.append(self.system_prompt)
+        self.verbalization.steps.append(self.format)
+        if isinstance(self.augmentor, FinalStateInputsAugmentor):
+            self.verbalization.steps.append(self.augmentor)
+
+        if self.postprocessors is not None:
+            self.finalize.steps.append(
+                Set(fields={"postprocessors": self.postprocessors})
+            )
+
+        if self.metrics is not None:
+            self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
+
+        self.finalize.steps.append(Finalize(group_by=self.group_by))
+
+    def prepare(self):
+        if isinstance(self.template, TemplatesList):
+            self.template = self.template.items
+        self.reset_pipeline()
 
 
 class StandardRecipeWithIndexes(BaseRecipe):
@@ -348,6 +427,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         format (SystemFormat, optional): SystemFormat object to be used for the recipe.
         metrics (List[str]): list of catalog metrics to use with this recipe.
         postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]): list of task_data or metadata keys to group global scores by.
         train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
         max_train_instances (int, optional): Maximum training instances for the refiner.
         validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.

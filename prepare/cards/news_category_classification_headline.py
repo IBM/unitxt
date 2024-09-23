@@ -2,7 +2,7 @@ import sys
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
-    RenameFields,
+    Rename,
     Set,
     SplitRandomMix,
     TaskCard,
@@ -68,8 +68,8 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[70%]", "validation": "train[10%]", "test": "train[20%]"}
         ),
-        RenameFields(field_to_field={"headline": "text"}),
-        RenameFields(field_to_field={"category": "label"}),
+        Rename(field_to_field={"headline": "text"}),
+        Rename(field_to_field={"category": "label"}),
         Set(
             fields={
                 "classes": classlabels,

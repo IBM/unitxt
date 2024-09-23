@@ -1,4 +1,4 @@
-from unitxt.blocks import LoadHF, RenameFields, SplitRandomMix, TaskCard
+from unitxt.blocks import LoadHF, Rename, SplitRandomMix, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import ListFieldValues
 from unitxt.test_utils.card import test_card
@@ -9,7 +9,7 @@ card = TaskCard(
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
         ),
-        RenameFields(field_to_field={"INSTRUCTION": "question"}),
+        Rename(field_to_field={"INSTRUCTION": "question"}),
         ListFieldValues(fields=["RESPONSE"], to_field="answers"),
     ],
     task="tasks.qa.open",

@@ -27,7 +27,7 @@
             "add": -1
         },
         {
-            "__type__": "rename_fields",
+            "__type__": "rename",
             "field_to_field": {
                 "sentence": "question"
             }
