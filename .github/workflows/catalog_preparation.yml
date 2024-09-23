@@ -28,6 +28,7 @@ jobs:
 
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
      - run: uv pip install --system ".[tests]"
+     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
      - name: Run Tests
        run: python -m unittest discover -s tests/catalog -p "test_*.py"
