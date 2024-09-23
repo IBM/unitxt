@@ -10,7 +10,7 @@ from unitxt.standard import StandardRecipe
 debug = False if os.path.exists("/dccstor") else True
 
 benchmark = Benchmark(
-    max_samples_per_subset=100,
+    max_samples_per_subset=100 if not debug else 5,
     loader_limit=3000,
     subsets={
         # "fin_qa__concat_text": StandardRecipe(card="cards.fin_qa__concat_text", template_card_index=0),
@@ -59,9 +59,13 @@ else:
     models = ["google/flan-t5-base", "google/flan-t5-large"]
     out_path = "/Users/shir/Downloads/tables_wiki"
 
+if not os.path.exists(out_path):
+    os.makedirs(out_path)
+
 for model_name in models:
     inference_model = HFPipelineBasedInferenceEngine(
-        model_name=model_name, max_new_tokens=32
+        model_name=model_name,
+        max_new_tokens=32,
     )
     predictions = inference_model.infer(test_dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

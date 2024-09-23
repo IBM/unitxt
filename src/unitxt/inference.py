@@ -78,7 +78,7 @@ class HFPipelineBasedInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         model_args: Dict[str, Any] = (
             {"torch_dtype": torch.float16} if self.use_fp16 else {}
         )
-        model_args.update({"max_new_tokens": self.max_new_tokens})
+        model_args.update({"max_new_tokens": self.max_new_tokens, "temperature": 0})
 
         device = torch.device(
             "mps"
