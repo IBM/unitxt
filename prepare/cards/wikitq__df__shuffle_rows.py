@@ -22,7 +22,7 @@ card = TaskCard(
         Set({"context_type": "table"}),
         ## truncate only if needed as it can impact evaluation results.
         TruncateTableCells(max_length=15, table="table", text_output="answers"),
-        TruncateTableRows(field="table", rows_to_keep=50),
+        TruncateTableRows(field="table", rows_to_keep=20),
         ShuffleTableRows(field="table"),
         SerializeTableAsDFLoader(field_to_field=[["table", "context"]]),
     ],

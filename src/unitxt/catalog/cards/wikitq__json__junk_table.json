@@ -27,6 +27,10 @@
             "rows_to_keep": 20
         },
         {
+            "__type__": "get_junk_table",
+            "field": "table"
+        },
+        {
             "__type__": "serialize_table_as_json",
             "field_to_field": [
                 [

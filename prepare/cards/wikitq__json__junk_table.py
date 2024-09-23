@@ -5,7 +5,8 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.struct_data_operators import (
-    SerializeTableAsMarkdown,
+    GetJunkTable,
+    SerializeTableAsJson,
     TruncateTableCells,
     TruncateTableRows,
 )
@@ -22,7 +23,8 @@ card = TaskCard(
         ## truncate only if needed as it can impact evaluation results.
         TruncateTableCells(max_length=15, table="table", text_output="answers"),
         TruncateTableRows(field="table", rows_to_keep=20),
-        SerializeTableAsMarkdown(field_to_field=[["table", "context"]]),
+        GetJunkTable(field="table"),
+        SerializeTableAsJson(field_to_field=[["table", "context"]]),
     ],
     task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=TemplatesList(
@@ -56,4 +58,4 @@ card = TaskCard(
 )
 
 test_card(card)
-add_to_catalog(card, "cards.wikitq__markdown", overwrite=True)
+add_to_catalog(card, "cards.wikitq__json__junk_table", overwrite=True)

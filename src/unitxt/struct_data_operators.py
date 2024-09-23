@@ -598,6 +598,14 @@ class GetJunkTable(FieldOperator):
         }
 
 
+class GetEmptyTable(FieldOperator):
+    def process_value(self, table: Any) -> Any:
+        return {
+            "header": ["", ""],
+            "rows": [["", ""], ["", ""], ["", ""]],
+        }
+
+
 class MapHTMLTableToJSON(FieldOperator):
     """Converts HTML table format to the basic one (JSON).
 

@@ -21,7 +21,7 @@ card = TaskCard(
         Set({"context_type": "table"}),
         ## truncate only if needed as it can impact evaluation results.
         TruncateTableCells(max_length=15, table="table", text_output="answers"),
-        TruncateTableRows(field="table", rows_to_keep=50),
+        TruncateTableRows(field="table", rows_to_keep=20),
         SerializeTableAsJson(field_to_field=[["table", "context"]]),
     ],
     task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",

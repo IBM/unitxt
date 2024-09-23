@@ -24,7 +24,7 @@
         {
             "__type__": "truncate_table_rows",
             "field": "table",
-            "rows_to_keep": 50
+            "rows_to_keep": 20
         },
         {
             "__type__": "shuffle_table_rows",
