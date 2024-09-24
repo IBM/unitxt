@@ -37,7 +37,9 @@ for template in templates:
                     model_name=model_id, max_new_tokens=2048, random_seed=42
                 )
             else:
-                inference_model = inference_engine()
+                inference_model = inference_engine(
+                    default="engines.ibm_gen_ai.llama_3_70b_instruct"
+                )
 
             model_label = (
                 model_id.split("/")[1].replace("-", "_").replace(".", ",").lower()
