@@ -10,18 +10,9 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "serialize_table_as_indexed_row_major",
-            "field_to_field": [
-                [
-                    "table",
-                    "table_serialized"
-                ]
-            ]
-        },
-        {
             "__type__": "rename",
             "field_to_field": {
-                "table_serialized": "text_a",
+                "table": "text_a",
                 "statement": "text_b"
             }
         },

@@ -2,7 +2,6 @@ from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
     Rename,
-    SerializeTableAsIndexedRowMajor,
     Set,
     TaskCard,
 )
@@ -16,8 +15,7 @@ card = TaskCard(
         path="ibm/tab_fact", streaming=False, data_classification_policy=["public"]
     ),
     preprocess_steps=[
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "table_serialized"]]),
-        Rename(field_to_field={"table_serialized": "text_a", "statement": "text_b"}),
+        Rename(field_to_field={"table": "text_a", "statement": "text_b"}),
         MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
         Set(
             fields={

@@ -1,9 +1,9 @@
 {
     "__type__": "task",
     "input_fields": {
-        "input_a": "str",
+        "input_a": "Union[Text, Image, Audio, Table, Dialog]",
         "type_of_input_a": "str",
-        "input_b": "str",
+        "input_b": "Union[Text, Image, Audio, Table, Dialog]",
         "type_of_input_b": "str",
         "type_of_output": "str"
     },
