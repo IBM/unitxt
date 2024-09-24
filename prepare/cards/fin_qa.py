@@ -4,7 +4,7 @@ from unitxt.blocks import (
     TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import CopyFields, FilterByExpression
+from unitxt.operators import Copy, FilterByExpression
 from unitxt.struct_data_operators import MapTableListsToStdTableJSON
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
@@ -15,8 +15,8 @@ card = TaskCard(
     loader=LoadHF(path="ibm/finqa", streaming=False),
     preprocess_steps=[
         FilterByExpression(expression="len(table) > 1"),
-        CopyFields(field_to_field=[["pre_text/0", "pre_text"]]),
-        CopyFields(field_to_field=[["post_text/0", "post_text"]]),
+        Copy(field="pre_text/0", to_field="pre_text"),
+        Copy(field="post_text/0", to_field="post_text"),
         MapTableListsToStdTableJSON(field="table"),
     ],
     task=Task(
@@ -29,7 +29,7 @@ card = TaskCard(
         outputs={"program_re": str, "answer": str},
         prediction_type=str,
         metrics=["metrics.fin_qa_metric"],
-        augmentable_inputs=["pre_text", "serialized_table", "post_text", "question"],
+        augmentable_inputs=["pre_text", "table", "post_text", "question"],
     ),
     templates=TemplatesList(
         [
@@ -49,7 +49,7 @@ card = TaskCard(
                 ["table-min", "table header", "number", "the minimum number of one table row"]]
                 Answer with only the program, without any additional explanation.
                 Pre-table text: {pre_text}
-                Table: {serialized_table}
+                Table: {table}
                 Post-table text: {post_text}
                 Question: {question}
                 Program:
