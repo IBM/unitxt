@@ -1062,17 +1062,19 @@ class TestMetrics(UnitxtTestCase):
             0.08060156608173413,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
-            outputs = apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS,
-                references=GROUPED_INSTANCE_REFERENCES,
-                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-            self.assertAlmostEqual(
-                target,
-                outputs[0]["score"]["global"]["score"],
-                msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
-            )
+            for score_prefix in ["my_", ""]:
+                metric.score_prefix = score_prefix
+                outputs = apply_metric(
+                    metric=metric,
+                    predictions=GROUPED_INSTANCE_PREDICTIONS,
+                    references=GROUPED_INSTANCE_REFERENCES,
+                    task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+                )
+                self.assertAlmostEqual(
+                    target,
+                    outputs[0]["score"]["global"]["score"],
+                    msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
+                )
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
@@ -1457,24 +1459,26 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
 
         # pass global dict because there are additional fields other than the main score
-        self._test_grouped_instance_confidence_interval(
-            metric=GroupMeanTokenOverlap(),
-            expected_global_result={
-                "group_mean_recall": 0.525,
-                "group_mean_f1": 0.5083333333333333,
-                "score": 0.5083333333333333,
-                "score_name": "group_mean_f1",
-                "group_mean_precision": 0.5,
-                "group_mean_recall_ci_low": 0.25,
-                "group_mean_recall_ci_high": 0.7083333333333334,
-                "group_mean_f1_ci_low": 0.22302503471948287,
-                "group_mean_f1_ci_high": 0.6805555555555555,
-                "score_ci_low": 0.22302503471948287,
-                "score_ci_high": 0.6805555555555555,
-                "group_mean_precision_ci_low": 0.2095091529536007,
-                "group_mean_precision_ci_high": 0.6666666666666666,
-            },
-        )
+        for score_prefix in ["my_", ""]:
+            self._test_grouped_instance_confidence_interval(
+                metric=GroupMeanTokenOverlap(),
+                expected_global_result={
+                    f"group_mean_{score_prefix}recall": 0.525,
+                    f"group_mean_{score_prefix}f1": 0.5083333333333333,
+                    "score": 0.5083333333333333,
+                    "score_name": f"group_mean_{score_prefix}f1",
+                    f"group_mean_{score_prefix}precision": 0.5,
+                    f"group_mean_{score_prefix}recall_ci_low": 0.25,
+                    f"group_mean_{score_prefix}recall_ci_high": 0.7083333333333334,
+                    f"group_mean_{score_prefix}f1_ci_low": 0.22302503471948287,
+                    f"group_mean_{score_prefix}f1_ci_high": 0.6805555555555555,
+                    "score_ci_low": 0.22302503471948287,
+                    "score_ci_high": 0.6805555555555555,
+                    f"group_mean_{score_prefix}precision_ci_low": 0.2095091529536007,
+                    f"group_mean_{score_prefix}precision_ci_high": 0.6666666666666666,
+                },
+                input_score_prefixes=[score_prefix],
+            )
 
     def _test_grouped_instance_confidence_interval(
         self,
@@ -1482,32 +1486,41 @@ class TestConfidenceIntervals(UnitxtTestCase):
         expected_ci_low=0.0,
         expected_ci_high=1.0,
         expected_global_result=None,
+        input_score_prefixes=None,
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            task_data=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        # get first element of reduction_map values
-        reduction_params = next(iter(metric.reduction_map.values()))
-        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
-        group_score_name = "_".join(
-            [
-                prefix,
-                metric.reduction_map["group_mean"]["agg_func"][0],
-                metric.main_score,
-            ]
-        )
+        input_expected_global_result_is_none = expected_global_result is None
+        # to remember between score_prefixes
 
-        if expected_global_result is None:
-            expected_global_result = {
-                f"{group_score_name}_ci_low": expected_ci_low,
-                f"{group_score_name}_ci_high": expected_ci_high,
-                "score_ci_low": expected_ci_low,
-                "score_ci_high": expected_ci_high,
-            }
+        for score_prefix in (
+            ["my_", ""] if input_score_prefixes is None else input_score_prefixes
+        ):
+            metric.score_prefix = score_prefix
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            # get first element of reduction_map values
+            reduction_params = next(iter(metric.reduction_map.values()))
+            prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
+            group_score_name = "_".join(
+                [
+                    prefix,
+                    metric.reduction_map["group_mean"]["agg_func"][0],
+                    score_prefix,
+                    metric.main_score,
+                ]
+            ).replace("__", "_")  # for the case of empty score_prefix
+
+            if input_expected_global_result_is_none:
+                expected_global_result = {
+                    f"{group_score_name}_ci_low": expected_ci_low,
+                    f"{group_score_name}_ci_high": expected_ci_high,
+                    "score_ci_low": expected_ci_low,
+                    "score_ci_high": expected_ci_high,
+                }
 
         global_result = outputs[0]["score"]["global"].copy()
         logger.info(global_result)
