@@ -559,6 +559,7 @@ class WMLInferenceEngine(
         parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
             which defines inference parameters and their values. Deprecated attribute, please
             pass respective parameters directly to the WMLInferenceEngine class instead.
+        concurrency_limit (int): number of requests that will be sent in parallel, max is 10.
 
     Examples:
         from .api import load_dataset
@@ -592,7 +593,7 @@ class WMLInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[WMLInferenceEngineParams] = None
-
+    concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
 
     def verify(self):
@@ -676,8 +677,7 @@ class WMLInferenceEngine(
 
         # the class was previously used with a dataset that is a single instance
         return result[0] if isinstance(dataset, list) else result
-
-
+      
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
