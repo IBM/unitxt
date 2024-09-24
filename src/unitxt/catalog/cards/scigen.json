@@ -21,16 +21,7 @@
                 "table_column_names",
                 "table_content_values"
             ],
-            "to_field": "table"
-        },
-        {
-            "__type__": "serialize_table_as_indexed_row_major",
-            "field_to_field": [
-                [
-                    "table",
-                    "input_a"
-                ]
-            ]
+            "to_field": "input_a"
         },
         {
             "__type__": "rename",
