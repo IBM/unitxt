@@ -1,7 +1,7 @@
 from unitxt.serializers import (
     DefaultSerializer,
     DialogSerializer,
-    DynamicSerializer,
+    MultiTypeSerializer,
     NumberQuantizingSerializer,
     NumberSerializer,
     TableSerializer,
@@ -17,9 +17,9 @@ class TestSerializers(UnitxtTestCase):
         self.dialog_serializer = DialogSerializer()
         self.number_serializer = NumberSerializer()
         self.table_serializer = TableSerializer()
-        self.custom_serializer = DynamicSerializer()
-        self.custom_serializer_with_number = DynamicSerializer(
-            number=NumberSerializer()
+        self.custom_serializer = MultiTypeSerializer()
+        self.custom_serializer_with_number = MultiTypeSerializer(
+            serializers=[NumberSerializer()]
         )
         self.number_quantizing_serializer = NumberQuantizingSerializer(quantum=0.2)
 
