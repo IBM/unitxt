@@ -1288,7 +1288,13 @@ class ExecuteExpression(InstanceOperator, ComputeExpressionMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        instance[self.to_field] = self.compute_expression(instance)
+        new_value = self.compute_expression(instance)
+        dict_set(
+            instance,
+            self.to_field,
+            new_value,
+            not_exist_ok=True,
+        )
         return instance
 
 
