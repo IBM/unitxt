@@ -215,6 +215,12 @@ class GenericInferenceEngine(InferenceEngine):
         if "UNITXT_INFERENCE_ENGINE" in os.environ:
             engine_reference = os.environ["UNITXT_INFERENCE_ENGINE"]
         else:
+            assert self.default is not None, (
+                'GenericInferenceEngine could not be initialized without a default since "UNITXT_INFERENCE_ENGINE" environmental variable is not set.'
+                "\nFor example, you can set it by adding"
+                "\nexport UNITXT_INFERENCE_ENGINE=engines.ibm_gen_ai.llama_3_70b_instruct"
+                "\nto your ~/.bashrc"
+            )
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
 
