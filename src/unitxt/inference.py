@@ -592,7 +592,7 @@ class WMLInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[WMLInferenceEngineParams] = None
-
+    concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
 
     def verify(self):
@@ -666,6 +666,7 @@ class WMLInferenceEngine(
         return model.generate_text(
             prompt=dataset["source"],
             params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+            concurrency_limit=self.concurrency_limit,
         )
 
 
