@@ -127,7 +127,7 @@ add_to_catalog(
             # "templates.classification.multi_class.instruct_select_question",
         ]
     ),
-    "templates.classification.multi_class.blue_bench",
+    "templates.classification.multi_class.bluebench",
     overwrite=True,
 )
 
