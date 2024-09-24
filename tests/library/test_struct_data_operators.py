@@ -58,6 +58,40 @@ class TestStructDataOperators(UnitxtTestCase):
             tester=self,
         )
 
+    def test_serializetable_markdown_with_shuffle(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", "26"], ["Raj", "34"], ["Donald", "39"]],
+                }
+            }
+        ]
+
+        serialized_str = "|age|name|\n|---|---|\n|39|Donald|\n|34|Raj|\n|26|Alex|"
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", "26"], ["Raj", "34"], ["Donald", "39"]],
+                },
+                "serialized_table": serialized_str,
+            }
+        ]
+
+        check_operator(
+            operator=SerializeTableAsMarkdown(
+                field_to_field={"table": "serialized_table"},
+                shuffle_columns=True,
+                shuffle_rows=True,
+                seed=1,
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_serializetable_indexedrowmajor(self):
         inputs = [
             {
@@ -397,18 +431,10 @@ class TestStructDataOperators(UnitxtTestCase):
             {
                 "table": {
                     "header": ["name", "age"],
-                    "rows": [
-                        ["Donald", 39],
-                        ["Raj", 34],
-                        ["Alex", 21],
-                    ],
+                    "rows": [["Raj", 34], ["Alex", 21], ["Donald", 39]],
                 }
             }
         ]
-
-        import random
-
-        random.seed(123)
 
         check_operator(
             operator=ShuffleTableRows(field="table"),
