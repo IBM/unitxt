@@ -5,7 +5,7 @@ from unitxt.metrics import (
     GenerativeBinaryJudgeWML,
     MetricPipeline,
 )
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, ExecuteExpression, Set
 
 rag_fields = {"ground_truths", "answer", "contexts", "question"}
 
@@ -67,14 +67,26 @@ def add_judge_metrics():
                     metric_pipeline = MetricPipeline(
                         main_score=metric_name,
                         metric=metric,
+                        # We expect the rag fields either in the task_data dict(if generated from a card)
+                        # or in the instance dict (if given directly). Copy from outer dict only if
+                        # fields are not in task_Data.
                         preprocess_steps=[
                             Copy(
                                 field_to_field={
-                                    field: f"task_data/{field}"
+                                    f"task_data/{field}": f"task_data_{field}"
                                     for field in sorted(rag_fields)
                                 },
                                 not_exist_ok=True,
-                            ),
+                            )
+                        ]
+                        + [
+                            ExecuteExpression(
+                                expression=f"task_data_{field} or {field}",
+                                to_field=f"task_data/{field}",
+                            )
+                            for field in sorted(rag_fields)
+                        ]
+                        + [
                             Copy(
                                 field_to_field={
                                     "data_classification_policy": "task_data/data_classification_policy"

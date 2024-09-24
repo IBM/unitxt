@@ -13,12 +13,32 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "answer": "task_data/answer",
-                "contexts": "task_data/contexts",
-                "ground_truths": "task_data/ground_truths",
-                "question": "task_data/question"
+                "task_data/answer": "task_data_answer",
+                "task_data/contexts": "task_data_contexts",
+                "task_data/ground_truths": "task_data_ground_truths",
+                "task_data/question": "task_data_question"
             },
             "not_exist_ok": true
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "task_data_answer or answer",
+            "to_field": "task_data/answer"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "task_data_contexts or contexts",
+            "to_field": "task_data/contexts"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "task_data_ground_truths or ground_truths",
+            "to_field": "task_data/ground_truths"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "task_data_question or question",
+            "to_field": "task_data/question"
         },
         {
             "__type__": "copy",
