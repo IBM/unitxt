@@ -676,8 +676,9 @@ class WMLInferenceEngine(
         ]
 
         # the class was previously used with a dataset that is a single instance
-        return result[0] if isinstance(dataset, list) else result
-      
+        return result[0] if not isinstance(dataset, list) else result
+
+
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
