@@ -209,7 +209,7 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 
 class GenericInferenceEngine(InferenceEngine):
-    default: str = None
+    default: Optional[str] = None
 
     def prepare_engine(self):
         if "UNITXT_INFERENCE_ENGINE" in os.environ:
