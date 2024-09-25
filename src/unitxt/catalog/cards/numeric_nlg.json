@@ -19,7 +19,7 @@
             "to_field": "table_out"
         },
         {
-            "__type__": "serialize_table_as_markdown",
+            "__type__": "copy",
             "field": "table_out",
             "to_field": "input_a"
         },

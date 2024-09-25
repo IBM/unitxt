@@ -6,7 +6,11 @@ from unitxt.types import Audio, Dialog, Image, Table, Text
 
 add_to_catalog(
     Task(
-        input_fields={"context": Text, "context_type": str, "question": str},
+        input_fields={
+            "context": Union[Text, Table, Dialog],
+            "context_type": str,
+            "question": str,
+        },
         reference_fields={"answers": List[str]},
         prediction_type=str,
         metrics=["metrics.squad"],

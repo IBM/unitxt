@@ -1,0 +1,8 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.completion.multiple_choice.simple",
+        "templates.completion.multiple_choice.enumerated",
+        "templates.completion.multiple_choice.standard"
+    ]
+}
