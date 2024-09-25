@@ -1,10 +1,9 @@
 from unitxt.blocks import (
     LoadHF,
-    SerializeTableAsIndexedRowMajor,
-    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Copy, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
 
@@ -15,10 +14,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         Set({"context_type": "table"}),
-        ## truncate only if needed as it can impact evaluation results.
-        # TruncateTableCells(max_length=15, table="table", text_output="answers"),
-        # TruncateTableRows(field="table", rows_to_keep=50),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
+        Copy(field="table", to_field="context"),
     ],
     task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=TemplatesList(

@@ -15,6 +15,7 @@ from .operator import SequentialOperator, SourceSequentialOperator, StreamingOpe
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import Finalize
+from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
@@ -38,6 +39,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
     format: Format = Field(default_factory=SystemFormat)
+    serializer: Union[SingleTypeSerializer, List[SingleTypeSerializer]] = None
 
     # Additional parameters
     template_card_index: int = NonPositionalField(default=None)
@@ -145,6 +147,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 self.verify_template(template)
         else:
             self.verify_template(self.template)
+
+        if self.serializer is not None:
+            if not isinstance(self.serializer, list):
+                self.serializer = [self.serializer]
+            self.template.serializer.add_serializers(self.serializer)
 
     def prepare_refiners(self):
         self.train_refiner.max_instances = self.max_train_instances

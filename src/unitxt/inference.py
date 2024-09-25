@@ -210,12 +210,20 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 
 class GenericInferenceEngine(InferenceEngine):
-    default: str = None
+    default: Optional[str] = None
 
     def prepare_engine(self):
-        if "inference_engine" in os.environ:
-            engine_reference = os.environ["inference_engine"]
+        if "UNITXT_INFERENCE_ENGINE" in os.environ:
+            engine_reference = os.environ["UNITXT_INFERENCE_ENGINE"]
         else:
+            assert self.default is not None, (
+                "GenericInferenceEngine could not be initialized"
+                '\nThis is since both the "UNITXT_INFERENCE_ENGINE" environmental variable is not set and no default engine was not inputted.'
+                "\nFor example, you can fix it by setting"
+                "\nexport UNITXT_INFERENCE_ENGINE=engines.ibm_gen_ai.llama_3_70b_instruct"
+                "\nto your ~/.bashrc"
+                "\nor passing a similar required engine in the default argument"
+            )
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
 
@@ -560,6 +568,7 @@ class WMLInferenceEngine(
         parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
             which defines inference parameters and their values. Deprecated attribute, please
             pass respective parameters directly to the WMLInferenceEngine class instead.
+        concurrency_limit (int): number of requests that will be sent in parallel, max is 10.
 
     Examples:
         from .api import load_dataset
@@ -593,7 +602,7 @@ class WMLInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[WMLInferenceEngineParams] = None
-
+    concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
 
     def verify(self):
@@ -664,10 +673,19 @@ class WMLInferenceEngine(
             api_client=self._client,
         )
 
-        return model.generate_text(
-            prompt=dataset["source"],
-            params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
-        )
+        # the class was previously used with a dataset that is a single instance
+        dataset = dataset if isinstance(dataset, list) else [dataset]
+
+        result = [
+            model.generate_text(
+                prompt=instance["source"],
+                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
+            )
+            for instance in dataset
+        ]
+
+        # the class was previously used with a dataset that is a single instance
+        return result[0] if not isinstance(dataset, list) else result
 
 
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
