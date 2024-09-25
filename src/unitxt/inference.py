@@ -317,18 +317,26 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
-    def prepare(self):
+    @classmethod
+    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
+        api_key = os.environ.get(api_param_env_var_name)
+        assert api_key is not None, (
+            f"Error while trying to run {inference_engine}."
+            f" Please set the environment param '{api_param_env_var_name}'."
+        )
+        return api_key
+
+    def create_client(self):
         from openai import OpenAI
 
-        api_key_env_var_name = "OPENAI_API_KEY"
-        api_key = os.environ.get(api_key_env_var_name)
-        assert api_key is not None, (
-            f"Error while trying to run OpenAiInferenceEngine."
-            f" Please set the environment param '{api_key_env_var_name}'."
+        api_key = self.get_api_param(
+            inference_engine="OpenAiInferenceEngine",
+            api_param_env_var_name="OPENAI_API_KEY",
         )
+        return OpenAI(api_key=api_key)
 
-        self.client = OpenAI(api_key=api_key)
-
+    def prepare(self):
+        self.client = self.create_client()
         self._set_inference_parameters()
 
     def _infer(self, dataset):
@@ -389,6 +397,21 @@ class OpenAiInferenceEngine(
             }
             outputs.append(output)
         return outputs
+
+
+class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    def create_client(self):
+        from openai import OpenAI
+
+        api_key = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_KEY",
+        )
+        api_url = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_URL",
+        )
+        return OpenAI(api_key=api_key, base_url=api_url)
 
 
 class WMLInferenceEngineParamsMixin(Artifact):
