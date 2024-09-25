@@ -15,38 +15,38 @@ debug = False if os.path.exists("/dccstor") else True
 
 
 subsets = {
-    "fin_qa": Benchmark(
-        max_samples_per_subset=100 if not debug else 5,
-        subsets={
-            "json": StandardRecipe(
-                card="cards.fin_qa",
-                template_card_index=0,
-                serializer=SerializeTableAsJson(),
-            ),
-            # "markdown": StandardRecipe(card="cards.fin_qa", template_card_index=0,
-            #                            serializer=SerializeTableAsMarkdown()),
-            # "row_indexed_major": StandardRecipe(card="cards.fin_qa", template_card_index=0,
-            #                                     serializer=SerializeTableAsIndexedRowMajor()),
-            # "df": StandardRecipe(card="cards.fin_qa", template_card_index=0,
-            #                      serializer=SerializeTableAsDFLoader()),
-        },
-    ),
-    # "wikitq": Benchmark(
+    # "fin_qa": Benchmark(
     #     max_samples_per_subset=100 if not debug else 5,
     #     subsets={
     #         "json": StandardRecipe(
-    #             card="cards.wikitq",
+    #             card="cards.fin_qa",
     #             template_card_index=0,
     #             serializer=SerializeTableAsJson(),
     #         ),
-    #         "markdown": StandardRecipe(card="cards.wikitq", template_card_index=0,
-    #                                    serializer=SerializeTableAsMarkdown()),
-    #         "row_indexed_major": StandardRecipe(card="cards.wikitq", template_card_index=0,
-    #                                             serializer=SerializeTableAsIndexedRowMajor()),
-    #         "df": StandardRecipe(card="cards.wikitq", template_card_index=0,
-    #                              serializer=SerializeTableAsDFLoader()),
+    # "markdown": StandardRecipe(card="cards.fin_qa", template_card_index=0,
+    #                            serializer=SerializeTableAsMarkdown()),
+    # "row_indexed_major": StandardRecipe(card="cards.fin_qa", template_card_index=0,
+    #                                     serializer=SerializeTableAsIndexedRowMajor()),
+    # "df": StandardRecipe(card="cards.fin_qa", template_card_index=0,
+    #                      serializer=SerializeTableAsDFLoader()),
     #     },
-    # )
+    # ),
+    "wikitq": Benchmark(
+        max_samples_per_subset=100 if not debug else 5,
+        subsets={
+            "json": StandardRecipe(
+                card="cards.wikitq",
+                template_card_index=0,
+                serializer=SerializeTableAsJson(),
+            ),
+            #         "markdown": StandardRecipe(card="cards.wikitq", template_card_index=0,
+            #                                    serializer=SerializeTableAsMarkdown()),
+            #         "row_indexed_major": StandardRecipe(card="cards.wikitq", template_card_index=0,
+            #                                             serializer=SerializeTableAsIndexedRowMajor()),
+            #         "df": StandardRecipe(card="cards.wikitq", template_card_index=0,
+            #                              serializer=SerializeTableAsDFLoader()),
+        },
+    )
 }
 
 benchmark = Benchmark(
@@ -79,6 +79,7 @@ for model_name in models:
         inference_model = HFPipelineBasedInferenceEngine(
             model_name=model_name,
             max_new_tokens=32,
+            use_fp16=True,
         )
         predictions = inference_model.infer(test_dataset)
         evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
