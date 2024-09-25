@@ -63,7 +63,7 @@ benchmark = Benchmark(
 test_dataset = list(benchmark()["test"])
 
 if not debug:
-    models = ["Qwen/Qwen2.5-Math-72B-Instruct", "mistralai/Mixtral-8x22B-Instruct-v0.1"]
+    models = ["Qwen/Qwen2.5-72B-Instruct", "mistralai/Mixtral-8x22B-Instruct-v0.1"]
     out_path = "/dccstor/gmc/shir/data_comp/run_bench"
 else:
     models = ["google/flan-t5-base", "google/flan-t5-large"]
@@ -86,7 +86,10 @@ for model_name in models:
         out_file_name = (
             model_name.replace("/", "_") + "#" + str(datetime.datetime.now())
         )
-        with open(os.path.join(out_path, out_file_name) + ".pkl", "wb") as f:
+        curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
+        with open(curr_out_path, "wb") as f:
             pickle.dump(evaluated_dataset, f)
-    except:
+            # print("saved file path: ", curr_out_path)
+    except Exception:
+        # print(e)
         pass
