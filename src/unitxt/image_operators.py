@@ -47,6 +47,9 @@ class ToImage(InstanceFieldOperator):
 
 
 class ImageFieldOperator(FieldOperator, PillowMixin):
+    # Required here, because PillowMixin _requirements_list is not inherited
+    _requirements_list = {"PIL": "pip install pillow"}
+
     @abstractmethod
     def process_image(self, image):
         pass

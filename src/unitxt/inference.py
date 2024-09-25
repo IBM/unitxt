@@ -30,6 +30,7 @@ class InferenceEngine(abc.ABC, Artifact):
         pass
 
     def prepare(self):
+        super().prepare()
         if not settings.mock_inference_mode:
             self.prepare_engine()
 
