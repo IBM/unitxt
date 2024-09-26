@@ -1,4 +1,3 @@
-import copy
 import difflib
 import inspect
 import json
@@ -299,8 +298,7 @@ class Artifact(Dataclass):
     def __deepcopy__(self, memo):
         if id(self) in memo:
             return memo[id(self)]
-        init_dict = copy.deepcopy(self._init_dict, memo)
-        new_obj = self.__class__(**init_dict)
+        new_obj = Artifact.from_dict(self.to_dict())
         memo[id(self)] = new_obj
         return new_obj
 
