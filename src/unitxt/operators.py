@@ -1022,7 +1022,9 @@ class ArtifactFetcherMixin:
         if artifact_identifier not in cls.cache:
             artifact, artifactory = fetch_artifact(artifact_identifier)
             cls.cache[artifact_identifier] = artifact
-        return cls.cache[artifact_identifier]
+        # because artifacts are mutable, to maintain a relaible mapping from
+        # artifact_identifier to the returned artifact, deepcopy is used here
+        return copy.deepcopy(cls.cache[artifact_identifier])
 
 
 class ApplyOperatorsField(InstanceOperator):
