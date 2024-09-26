@@ -202,6 +202,6 @@ add_to_catalog(
             "templates.summarization.abstractive.instruct_tldr",
         ]
     ),
-    "templates.summarization.abstractive.blue_bench",
+    "templates.summarization.abstractive.bluebench",
     overwrite=True,
 )

@@ -2,13 +2,19 @@ import collections
 import copy
 import json
 import re
+from typing import Any, Dict
 
 from unitxt import dataset_file
 from unitxt.artifact import fetch_artifact
+from unitxt.card import TaskCard
 from unitxt.formats import SystemFormat
+from unitxt.loaders import LoadFromDictionary
+from unitxt.serializers import SingleTypeSerializer, TableSerializer
 from unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
+from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.text_utils import print_dict
+from unitxt.types import Table
 
 from tests.utils import UnitxtTestCase
 
@@ -724,3 +730,57 @@ class TestRecipes(UnitxtTestCase):
             str(e.exception),
             "Unexpected None value for card.sampler. To use num_demos > 0, please set a sampler on the TaskCard.",
         )
+
+    def test_set_serializer_from_recipe(self):
+        instances = [
+            {
+                "table": {
+                    "header": ["col1", "col2"],
+                    "rows": [["val1", "val2"], ["val3"], ["val4"]],
+                },
+                "answer": "2",
+            },
+        ]
+
+        class MyTableSerializer(SingleTypeSerializer):
+            serialized_type = Table
+
+            def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
+                return str(value)
+
+        task = Task(
+            input_fields={"table": Table},
+            reference_fields={"answer": str},
+            prediction_type=str,
+            metrics=["metrics.accuracy"],
+        )
+
+        template = InputOutputTemplate(
+            input_format="Solve: {table}\nAnswer: ",
+            output_format="{answer}",
+            postprocessors=[],
+        )
+
+        card = TaskCard(
+            loader=LoadFromDictionary(data={"train": instances}),
+            preprocess_steps=[],
+            task=task,
+        )
+
+        recipe = StandardRecipe(
+            card=card,
+            template=template,
+            serializer=TableSerializer(),
+        )
+        result = next(iter(recipe()["train"]))["source"]
+        target = "Solve: col1,col2\nval1,val2\nval3\nval4\nAnswer: \n"
+        self.assertEqual(result, target)
+
+        recipe = StandardRecipe(
+            card=card,
+            template=template,
+            serializer=MyTableSerializer(),
+        )
+        result = next(iter(recipe()["train"]))["source"]
+        target = "Solve: {'header': ['col1', 'col2'], 'rows': [['val1', 'val2'], ['val3'], ['val4']]}\nAnswer: \n"
+        self.assertEqual(result, target)
