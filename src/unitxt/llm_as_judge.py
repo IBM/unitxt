@@ -4,7 +4,7 @@ from .api import infer
 from .artifact import fetch_artifact
 from .dataclass import Field
 from .formats import Format, SystemFormat
-from .inference import InferenceEngine, OpenAiInferenceEngine
+from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 from .settings_utils import get_settings
@@ -255,6 +255,12 @@ class LLMAsJudge(BulkInstanceMetric):
                     " Support will be added in future updates)."
                 )
 
+        if self.task_formatter.infer_log_probs:
+            assert isinstance(self.inference_model, LogProbInferenceEngine), (
+                f"Error in LLMasJudge: infer_log_probs set to True but engine {self.inference_model.__class__.__name__} "
+                "does not support logprobs."
+            )
+
     def compute(
         self,
         references: List[List[Any]],
@@ -291,5 +297,5 @@ class LLMAsJudge(BulkInstanceMetric):
             system_prompt=self.system_prompt,
             format=self.format,
             return_data=True,
-            infer_log_probs=self.task_formatter.infer_log_probs,
+            return_log_probs=self.task_formatter.infer_log_probs,
         )
