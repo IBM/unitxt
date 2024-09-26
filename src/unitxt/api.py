@@ -143,12 +143,12 @@ def infer(
     engine,
     dataset_query: Optional[str] = None,
     return_data=False,
-    infer_log_probs=False,
+    return_log_probs=False,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
     engine, _ = fetch_artifact(engine)
-    if infer_log_probs:
+    if return_log_probs:
         raw_predictions = engine.infer_log_probs(dataset)
         raw_predictions = [
             json.dumps(raw_prediction) for raw_prediction in raw_predictions
