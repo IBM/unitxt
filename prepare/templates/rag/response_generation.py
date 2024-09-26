@@ -55,6 +55,6 @@ add_to_catalog(
             "templates.rag.response_generation.answer_based_on_context",
         ]
     ),
-    "templates.rag.response_generation.blue_bench",
+    "templates.rag.response_generation.bluebench",
     overwrite=True,
 )

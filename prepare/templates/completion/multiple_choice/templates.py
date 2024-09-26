@@ -82,6 +82,6 @@ add_to_catalog(
             # "templates.completion.multiple_choice.title",
         ]
     ),
-    "templates.completion.multiple_choice.blue_bench",
+    "templates.completion.multiple_choice.bluebench",
     overwrite=True,
 )

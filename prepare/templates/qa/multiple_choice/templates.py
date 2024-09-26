@@ -485,7 +485,7 @@ add_to_catalog(
             "templates.qa.multiple_choice.with_topic.lm_eval_harness",
         ]
     ),
-    "templates.qa.multiple_choice.with_topic.blue_bench",
+    "templates.qa.multiple_choice.with_topic.bluebench",
     overwrite=True,
 )
 
@@ -497,7 +497,7 @@ add_to_catalog(
             "templates.qa.multiple_choice.open.mmlu",
         ]
     ),
-    "templates.qa.multiple_choice.open.blue_bench",
+    "templates.qa.multiple_choice.open.bluebench",
     overwrite=True,
 )
 add_to_catalog(
@@ -508,6 +508,6 @@ add_to_catalog(
             "templates.qa.multiple_choice.with_context.no_intro.mmlu",
         ]
     ),
-    "templates.qa.multiple_choice.with_context.blue_bench",
+    "templates.qa.multiple_choice.with_context.bluebench",
     overwrite=True,
 )
