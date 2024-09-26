@@ -1,8 +1,9 @@
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine
 from unitxt.text_utils import print_dict
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.61.126.161', 55557)
+
+# from cvar_pyutils.debugging_tools import set_remote_debugger
+# set_remote_debugger('9.61.38.72', 55557)
 
 inference_model = HFLlavaInferenceEngine(
     model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
@@ -12,8 +13,10 @@ dataset = load_dataset(
     card="cards.doc_vqa.en",
     template="templates.qa.with_context.title",
     format="formats.models.llava_interleave",
-    loader_limit=20,
+    loader_limit=5,
     augmentor="augmentors.image.grey_scale",
+    metrics=["metrics.accuracy"]
+    # metrics=["metrics.anls"]
 )
 
 test_dataset = dataset["test"].select(range(5))

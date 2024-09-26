@@ -1301,6 +1301,51 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class ANLS(InstanceMetric):
+    main_score = "anls"
+    reduction_map = {"mean": ["anls"]}
+    prediction_type = Any  # string representation is compared
+
+    def compute(self, references: List[Any], prediction: Any, task_data: List[Dict], threshold=1.0) -> dict:
+        """ANLS image-text accuracy metric."""
+        values = []
+        for answer in references:
+            # preprocess both the answers - gt and prediction
+            gt_answer = " ".join(answer.strip().lower().split())
+            det_answer = " ".join(prediction.strip().lower().split())
+
+            # dist = levenshtein_distance(answer.lower(), detObject['answer'].lower())
+            dist = self.levenshtein_distance(gt_answer, det_answer)
+            length = max(len(answer.upper()), len(prediction.upper()))
+            values.append(0.0 if length == 0 else float(dist) / float(length))
+
+        question_result = 1.0 - min(values)
+
+        if question_result < threshold:
+            question_result = 0.0
+        result = {}
+        result["score"] = question_result
+        result[self.main_score] = question_result
+        result["score_name"] = self.main_score
+        return result
+
+    @staticmethod
+    def levenshtein_distance(s1, s2):
+        if len(s1) > len(s2):
+            s1, s2 = s2, s1
+
+        distances = range(len(s1) + 1)
+        for i2, c2 in enumerate(s2):
+            distances_ = [i2 + 1]
+            for i1, c1 in enumerate(s1):
+                if c1 == c2:
+                    distances_.append(distances[i1])
+                else:
+                    distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+            distances = distances_
+        return distances[-1]
+
+
 class JaccardIndex(InstanceMetric):
     reduction_map = {"mean": ["jaccard_index"]}
     main_score = "jaccard_index"
