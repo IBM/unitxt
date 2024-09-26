@@ -3,12 +3,14 @@ from collections import Counter
 from typing import Any
 
 from unitxt.formats import SystemFormat
+from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import (
     AddConstant,
     Apply,
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
+    ArtifactFetcherMixin,
     CastFields,
     Copy,
     DeterministicBalancer,
@@ -2525,6 +2527,41 @@ references (str):
             targets=targets,
             tester=self,
         )
+
+    def test_artifact_fetcher_mixin(self):
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+        data = {
+            "test": [
+                {"prediction": prediction, "references": reference}
+                for prediction, reference in zip(predictions, references)
+            ]
+        }
+        loader = LoadFromDictionary(data=data)
+        ms = loader.load_data()
+
+        metric = ArtifactFetcherMixin.get_artifact("metrics.accuracy")
+        # mute the fetched artifact:
+        metric.score_prefix = "my_"
+        metric.n_resamples = None
+
+        # and demonstrate the mutation is in effect (score prefix, and no CI)
+        global_score = next(iter(metric(ms)["test"]))["score"]["global"]
+        self.assertEqual("my_accuracy", global_score["score_name"])
+        for key in global_score:
+            self.assertNotIn("_ci_", key)
+
+        # run again on fresh stream, with fresh metric gotten from
+        # the cache, for same artifact_id as above, and demonstrate that the
+        # gotten metric is not muted
+        loader = LoadFromDictionary(data=data)
+        ms = loader.load_data()
+
+        metric = ArtifactFetcherMixin.get_artifact("metrics.accuracy")
+
+        global_score = next(iter(metric(ms)["test"]))["score"]["global"]
+        self.assertEqual("accuracy", global_score["score_name"])
+        self.assertIn("accuracy_ci_high", global_score)
 
 
 class TestApplyMetric(UnitxtTestCase):
