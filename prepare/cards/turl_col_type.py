@@ -3,29 +3,25 @@ from typing import List
 from unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
-    SerializeTableAsIndexedRowMajor,
     Task,
     TaskCard,
     TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
+from unitxt.types import Table
 
 card = TaskCard(
     loader=LoadHF(
         path="ibm/turl_table_col_type",
-        streaming=False,
         data_classification_policy=["public"],
     ),
-    preprocess_steps=[
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "table_lin"]])
-    ],
     task=Task(
         input_fields={
             "page_title": str,
             "section_title": str,
             "table_caption": str,
-            "table_lin": str,
+            "table": Table,
             "vocab": List[str],
             "colname": str,
         },
@@ -41,7 +37,7 @@ card = TaskCard(
         [
             InputOutputTemplate(
                 input_format="""
-                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table_lin} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
+                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
                 """.strip(),
                 output_format="{annotations}",
                 postprocessors=["processors.to_list_by_comma"],

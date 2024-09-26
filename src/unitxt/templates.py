@@ -11,10 +11,13 @@ from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import (
-    DefaultListSerializer,
-    DynamicSerializer,
+    DialogSerializer,
+    ImageSerializer,
+    ListSerializer,
+    MultiTypeSerializer,
     NumberQuantizingSerializer,
     Serializer,
+    TableSerializer,
 )
 from .settings_utils import get_constants
 from .type_utils import isoftype
@@ -53,7 +56,14 @@ class Template(InstanceOperator):
     target_prefix: str = NonPositionalField(default="")
     title_fields: List[str] = NonPositionalField(default_factory=list)
     serializer: Serializer = NonPositionalField(
-        default_factory=lambda: DynamicSerializer(list=DefaultListSerializer())
+        default_factory=lambda: MultiTypeSerializer(
+            serializers=[
+                ImageSerializer(),
+                TableSerializer(),
+                DialogSerializer(),
+                ListSerializer(),
+            ]
+        )
     )
 
     def input_fields_to_instruction_and_target_prefix(self, input_fields):
@@ -702,14 +712,16 @@ class KeyValTemplate(Template):
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
-    serializer: DynamicSerializer = NonPositionalField(
-        default_factory=DynamicSerializer
+    serializer: MultiTypeSerializer = NonPositionalField(
+        default_factory=MultiTypeSerializer
     )
     quantum: Union[float, int] = 0.1
 
     def prepare(self):
         super().prepare()
-        self.serializer.number = NumberQuantizingSerializer(quantum=self.quantum)
+        self.serializer.add_serializers(
+            [NumberQuantizingSerializer(quantum=self.quantum)]
+        )
 
 
 class MultiLabelTemplate(InputOutputTemplate):
@@ -737,7 +749,7 @@ class MultiLabelTemplate(InputOutputTemplate):
 class MultiReferenceTemplate(InputOutputTemplate):
     references_field: str = "references"
     random_reference: bool = False
-    serializer: Serializer = NonPositionalField(default_factory=DynamicSerializer)
+    serializer: Serializer = NonPositionalField(default_factory=MultiTypeSerializer)
 
     def serialize(
         self, data: Dict[str, Any], instance: Dict[str, Any]

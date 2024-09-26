@@ -1,6 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.templates import (
     MultiReferenceTemplate,
+    TemplatesList,
 )
 
 add_to_catalog(
@@ -43,5 +44,17 @@ add_to_catalog(
         references_field="reference_answers",
     ),
     "templates.rag.response_generation.answer_based_on_context_inverted",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.rag.response_generation.please_respond",
+            "templates.rag.response_generation.please_respond_chat",
+            "templates.rag.response_generation.answer_based_on_context",
+        ]
+    ),
+    "templates.rag.response_generation.blue_bench",
     overwrite=True,
 )

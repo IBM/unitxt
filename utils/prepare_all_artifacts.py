@@ -28,137 +28,158 @@ def import_module_from_file(file_path):
     return module
 
 
-def prepare_artifacts_for_prepare_files(prepare_files):
-    failed_prepare_files = []
-    prepare_exceptions = []
-    for i, file in enumerate(prepare_files):
-        logger.info("*" * 100)
-        logger.info(f"* {i}/{len(prepare_files)}: {file}")
-        logger.info("*")
-        try:
-            import_module_from_file(file)
-        except Exception as e:
-            logger.info(f"Failed to prepare: {file}")
-            failed_prepare_files.append(file)
-            prepare_exceptions.append(e)
-
-    return failed_prepare_files, prepare_exceptions
-
-
-def prepare_all_catalog_artifacts(catalog_dir):
-    os.environ["UNITXT_USE_ONLY_LOCAL_CATALOGS"] = "True"
-    os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
-    os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
-    os.environ["UNITXT_SKIP_ARTIFACTS_PREPARE_AND_VERIFY"] = "True"
-    logger.info("*" * 100)
-    logger.info("*" * 100)
-    logger.info("* DELETING OLD FM_EVAL CATALOG  *** ")
-    logger.info("deleting all files from 'src/unitxt/catalog'")
-    shutil.rmtree(catalog_dir, ignore_errors=True)
-    prepare_dir = os.path.join(Path(catalog_dir).parent.parent.parent, "prepare")
-    prepare_files = sorted(glob.glob(f"{prepare_dir}/**/*.py", recursive=True))
-    continue_preparing = True
-    iteration = 0
-    while continue_preparing:
-        iteration += 1
-        amount_of_prepare_files_before_iteration = len(prepare_files)
-        logger.info(
-            f"Iteration {iteration}: Preparing {amount_of_prepare_files_before_iteration} files"
-        )
-        prepare_files, prepare_exceptions = prepare_artifacts_for_prepare_files(
-            prepare_files
-        )
-        if (
-            len(prepare_files) == 0
-            or len(prepare_files) == amount_of_prepare_files_before_iteration
-            or iteration > 100
-        ):
-            continue_preparing = False
-            logger.info(
-                f"Done preparing files. Failed to prepare {len(prepare_files)} files:"
-            )
-            for file, exception in zip(prepare_files, prepare_exceptions):
-                logger.info(f"Failed to prepare {file}. Exception: {exception}")
-
-
-def compare_dirs(old, new):
-    dir_cmp = filecmp.dircmp(old, new)
-    diffs = []
-    if (
-        dir_cmp.diff_files
-        or dir_cmp.left_only
-        or dir_cmp.right_only
-        or dir_cmp.funny_files
-    ):
-        if dir_cmp.left_only:
-            diffs.extend(
-                [
-                    {"file": os.path.join(new, file), "diff": "old only"}
-                    for file in dir_cmp.left_only
-                ]
-            )
-        if dir_cmp.right_only:
-            diffs.extend(
-                [
-                    {"file": os.path.join(new, file), "diff": "new only"}
-                    for file in dir_cmp.right_only
-                ]
-            )
-        if dir_cmp.diff_files:
-            diffs.extend(
-                [
-                    {"file": os.path.join(new, file), "diff": "diff"}
-                    for file in dir_cmp.diff_files
-                ]
-            )
-        if dir_cmp.funny_files:
-            diffs.extend(
-                [
-                    {"file": os.path.join(new, file), "diff": "failed"}
-                    for file in dir_cmp.funny_files
-                ]
-            )
-
-    # Recursively compare subdirectories
-    for sub_dir, _ in dir_cmp.subdirs.items():
-        diffs.extend(
-            compare_dirs(os.path.join(old, sub_dir), os.path.join(new, sub_dir))
-        )
-
-    return diffs
-
-
-def filter_known_diffs(diffs):
-    return [
-        diff
-        for diff in diffs
-        if "news_category_classification_headline"
-        not in diff["file"]  # in order to create we need Kaggle credentials
-        and "tablerow_classify" not in diff["file"]
-    ]  # in order to create we need Kaggle credentials
-
-
+# flake8: noqa: C901
 def main():
     catalog_dir = constants.catalog_dir
     catalog_back_dir = catalog_dir + "_back"
-    logger.info("move old catalog:")
-    try:
-        shutil.rmtree(catalog_back_dir)
-    except:
-        pass
-    shutil.move(catalog_dir, catalog_back_dir)
-    logger.critical("Starting reprepare catalog...")
-    prepare_all_catalog_artifacts(catalog_dir)
-    logger.critical("Comparing generated and old catalog...")
-    diffs = compare_dirs(new=catalog_dir, old=catalog_back_dir)
-    diffs = filter_known_diffs(diffs)
-    if diffs:
-        logger.critical("***** Directories has differences ******")
-        diffs.sort(key=lambda d: d["file"])
-        for diff in diffs:
-            logger.critical(diff)
-        raise RuntimeError("Directories has differences")
-    logger.critical("Done. Catalog is consistent with prepare files")
+
+    os.environ["UNITXT_USE_ONLY_LOCAL_CATALOGS"] = "True"
+    os.environ["UNITXT_TEST_CARD_DISABLE"] = "True"
+    os.environ["UNITXT_TEST_METRIC_DISABLE"] = "True"
+    os.environ["UNITXT_ALLOW_UNVERIFIED_CODE"] = "True"
+    os.environ["UNITXT_SKIP_ARTIFACTS_PREPARE_AND_VERIFY"] = "True"
+    logger.info("*" * 100)
+    logger.info("*" * 100)
+    logger.info(
+        "Copying all files from 'src/unitxt/catalog' to a backup 'src/unitxt/catalog_back'"
+    )
+    shutil.rmtree(catalog_back_dir, ignore_errors=True)
+    shutil.copytree(catalog_dir, catalog_back_dir)
+
+    logger.critical("Starting to reprepare the catalog...")
+    prepare_dir = os.path.join(Path(catalog_dir).parent.parent.parent, "prepare")
+    prepare_files = sorted(glob.glob(f"{prepare_dir}/**/*.py", recursive=True))
+    failing_prepare_files = []
+    prepare_files_generating_entries_not_in_the_catalog = []
+    prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog = []
+    current_catalog_files = glob.glob(f"{catalog_dir}/**/*.json", recursive=True)
+    initial_time = os.path.getmtime(catalog_dir)
+    for current_catalog_file in current_catalog_files:
+        if os.path.getmtime(current_catalog_file) > initial_time:
+            initial_time = os.path.getmtime(current_catalog_file)
+    # initial_time is the most recent modification time of any catalog file
+    next_border_time = initial_time
+    for i, prepare_file in enumerate(prepare_files):
+        logger.info("*" * 100)
+        logger.info(f"* {i}/{len(prepare_files)}: {prepare_file}")
+        logger.info("*")
+        border_time = next_border_time
+        try:
+            import_module_from_file(prepare_file)
+            current_catalog_files = glob.glob(
+                f"{catalog_dir}/**/*.json", recursive=True
+            )
+            new_times = []  # modification times of catalog files changed by prepare_file
+            for current_catalog_file in current_catalog_files:
+                if (
+                    os.path.getmtime(current_catalog_file) > border_time
+                ):  # current_catalog_file was just generated by prepare_file
+                    new_times.append(os.path.getmtime(current_catalog_file))
+                    if not os.path.exists(
+                        current_catalog_file.replace(catalog_dir, catalog_back_dir)
+                    ):
+                        # prepare_file generates a catalog file that is not a member of branch's original catalog
+                        prepare_files_generating_entries_not_in_the_catalog.append(
+                            prepare_file
+                        )
+                        # return branch's catalog to its original state:
+                        os.remove(current_catalog_file)
+                    elif not filecmp.cmp(
+                        current_catalog_file,
+                        current_catalog_file.replace(catalog_dir, catalog_back_dir),
+                        shallow=False,
+                    ):
+                        # prepare_file generates a catalog file that is different from the existing branch's catalog file of same name
+                        prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog.append(
+                            prepare_file
+                        )
+                        # restore current_catalog_file from backup catalog.
+                        shutil.copy(
+                            current_catalog_file.replace(catalog_dir, catalog_back_dir),
+                            current_catalog_file,
+                        )
+                        # modification time of current_catalog_file is now - the time of copying
+                        new_times.append(os.path.getmtime(current_catalog_file))
+
+            if new_times:
+                # several prepare files are all commented out, waiting for a fix
+                next_border_time = max(new_times)
+
+        except Exception as e:
+            logger.info(f"Failed to run prepare file: {prepare_file}")
+            failing_prepare_files.append((prepare_file, e))
+
+    # report errors discovered thus far
+    if failing_prepare_files:
+        logger.critical(
+            "Execution of the following prepare files failed for the following causes:"
+        )
+        for prepare_file, e in failing_prepare_files:
+            logger.critical(
+                f"prepare file: '{prepare_file}' failed, throwing exception: '{e}'"
+            )
+
+    if prepare_files_generating_entries_not_in_the_catalog:
+        logger.critical(
+            "The following prepare files generated catalog files that are not included in the catalog. To fix: add the products of these prepare files to the catalog."
+        )
+        prepare_files_generating_entries_not_in_the_catalog = sorted(
+            set(prepare_files_generating_entries_not_in_the_catalog)
+        )
+        for prepare_file in prepare_files_generating_entries_not_in_the_catalog:
+            logger.critical(f"{prepare_file}")
+
+    if prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog:
+        prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog = sorted(
+            set(
+                prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog
+            )
+        )
+        logger.critical(
+            "The following prepare files generated catalog files of different contents from what is included in the (original branch's) catalog. To fix: update the branch's catalog files by the products of these prepare files."
+        )
+        for prepare_file in prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog:
+            logger.critical(f"{prepare_file}")
+
+    # see if the branch's catalog contains any file that none of the branch's prepare file generates:
+    catalog_files_not_generated_by_any_prepare_file = []
+    current_catalog_files = glob.glob(f"{catalog_dir}/**/*.json", recursive=True)
+    for current_catalog_file in current_catalog_files:
+        if (
+            os.path.getmtime(current_catalog_file) > initial_time
+        ):  # current_catalog_file was touched by a prepare file
+            continue
+        catalog_files_not_generated_by_any_prepare_file.append(current_catalog_file)
+
+    if catalog_files_not_generated_by_any_prepare_file:
+        logger.critical(
+            "The following branch's catalog files are not generated by any of the branch's prepare files. To fix: remove them from the branch's catalog."
+        )
+        for catalog_file in catalog_files_not_generated_by_any_prepare_file:
+            logger.critical(f"{catalog_file}")
+
+    # finally, restore branch's catalog, including modification times
+    shutil.rmtree(catalog_dir, ignore_errors=True)
+    shutil.copytree(catalog_back_dir, catalog_dir)
+    shutil.rmtree(catalog_back_dir, ignore_errors=True)
+
+    if failing_prepare_files:
+        raise RuntimeError(
+            "Checking consistency of branch's catalog against the total production of the branch's prepare files, we run each prepare file in turn, given the branch's catalog (which is needed as input by many of the prepare files). Some of the prepare files failed running. See details in the logs."
+        )
+
+    if (
+        catalog_files_not_generated_by_any_prepare_file
+        or prepare_files_generating_entries_not_in_the_catalog
+        or prepare_files_generating_entries_of_different_content_from_what_is_in_the_catalog
+    ):
+        raise RuntimeError(
+            "Branch's catalog is different from the total production of branch's prepare files. See details in the logs."
+        )
+
+    logger.critical(
+        "Done. Catalog is consistent with the total production of the prepare files."
+    )
 
 
 if __name__ == "__main__":
