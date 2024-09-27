@@ -6,21 +6,36 @@ from unitxt.blocks import Task, TaskCard
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
+from typing import Any
 
 logger = get_logger()
 
-# os.environ["GENAI_KEY"] = ""
+rubric_json = {
+    "name": "Temperature",
+    "criteria": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+    "options": [
+        {
+            "option": "Yes",
+            "description": "The temperature reading is provided in both Fahrenheit and Celsius."
+        },
+        {
+            "option": "No",
+            "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both."
+        },
+        {
+            "option": "Pass",
+            "description": "There is no numerical temperature reading in the response."
+        }
+    ]
+}
 
 data = {
     "test": [
-       {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
+       {"question": "How is the weather?", "rubric" : rubric_json},
+        {"question": "How is the weather?", "rubric" : rubric_json},
+        {"question": "How is the weather?", "rubric" : rubric_json},
     ],
 }
-
-rubric = "metrics.llm_as_judge.eval_assist.direct.rubrics.conciseness"
-metric = f"metrics.llm_as_judge.eval_assist.direct.mixtral[rubric={rubric}]"
 
 card = TaskCard(
     # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
@@ -28,10 +43,10 @@ card = TaskCard(
     loader=LoadFromDictionary(data=data),
     # Define the QA task input and output and metrics.
     task=Task(
-        input_fields={"question": str},
+        input_fields={"question": str, "rubric": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
-        metrics = [metric]
+        metrics = ["metrics.llm_as_judge.eval_assist.direct.prometheus"],
     ),
     # Create a simple template that formats the input.
     # Add lowercase normalization as a post processor.
