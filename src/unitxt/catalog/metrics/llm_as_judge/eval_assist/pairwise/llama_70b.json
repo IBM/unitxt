@@ -1,0 +1,24 @@
+{
+    "__type__": "eval_assist_llm_as_judge_pairwise",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "meta-llama/llama-3-70b-instruct",
+        "parameters": {
+            "__type__": "ibm_gen_ai_inference_engine_params_mixin",
+            "max_new_tokens": 1024,
+            "random_seed": 42
+        }
+    },
+    "assessment_template": {
+        "__type__": "input_output_template",
+        "input_format": "<|begin_of_text|>\n<|start_header_id|>system<|end_header_id|>\nYou are an fair and objective evaluator.<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\nYou are provided a pair of responses (Response {option_a} and Response {option_b}) generated subject to a context. \nYou will choose the better quality response subject to the quality criteria. \nThis is the context:\n{context_variables}\nThis is the quality criteria:\n{criteria_name}\n{criteria_description}\nResponse {option_a}:\n{response_a}\nResponse {option_b}:\n{response_b}\nKeeping the quality criteria in mind, breifly assess which response is better.\nFocus on the quality criteria during assessment, do not provide a general assessment.<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\nAssessment: \n"
+    },
+    "summ_template": {
+        "__type__": "input_output_template",
+        "input_format": "<|begin_of_text|>\n<|start_header_id|>system<|end_header_id|>\n<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\nSummarize the following assessment while maintaining the pertinent details.\nAssessment: {assessment}\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAssessment Summary:\n"
+    },
+    "answer_template": {
+        "__type__": "input_output_template",
+        "input_format": "<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\nNow considering the quality criteria, which response is better quality?\nValidate the answer against the assessment.\n{options}\n<|eot_id|><|start_header_id|>assistant<|end_header_id|>\nAnswer: "
+    }
+}
