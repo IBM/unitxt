@@ -1,0 +1,5 @@
+{
+    "__type__": "pairwise_criteria",
+    "name": "Factually Consistent",
+    "criteria": "A factually consistent response contains only statements that are entailed by the source document."
+}
