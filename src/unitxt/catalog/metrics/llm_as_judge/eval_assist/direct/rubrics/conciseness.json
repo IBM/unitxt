@@ -1,0 +1,15 @@
+{
+    "__type__": "rubric",
+    "name": "Conciseness",
+    "criteria": "Is the response concise and to the point?",
+    "options": [
+        {
+            "option": "Yes",
+            "description": "The response is short, succinct and directly addresses the point at hand."
+        },
+        {
+            "option": "No",
+            "description": "The response lacks brevity and clarity, failing to directly address the point at hand."
+        }
+    ]
+}

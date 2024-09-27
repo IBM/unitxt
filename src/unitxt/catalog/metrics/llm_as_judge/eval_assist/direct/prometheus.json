@@ -1,0 +1,18 @@
+{
+    "__type__": "eval_assist_llm_as_judge",
+    "inference_model": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "kaist-ai/prometheus-8x7b-v2",
+        "parameters": {
+            "__type__": "ibm_gen_ai_inference_engine_params_mixin",
+            "max_new_tokens": 1024,
+            "random_seed": 42
+        }
+    },
+    "assessment_template": {
+        "__type__": "input_output_template",
+        "input_format": "###Task Description:\nA context that includes information relevant to the nature or generation of the response, a response to evaluate, and a score rubric representing an evaluation criteria are given.\n1. Write a detailed feedback that assess the quality of the response strictly based on the given score rubric, not evaluating in general.\n2. After writing a feedback, choose a score from the score rubric. Choose one of: {score_instructions}.\n3. The output format should look as follows: \"Feedback: (write a feedback for criteria) [RESULT] (Choose one of: {score_instructions})\"\n4. Please do not generate any other opening, closing, or explanations.\n###Context:\n{context_variables}\n###Response to evaluate:\n{response}\n###Score Rubrics:\n[{criteria}]\n{score_rubric}\n###Feedback:\n"
+    },
+    "summ_template": null,
+    "answer_template": null
+}
