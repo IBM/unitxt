@@ -96,7 +96,26 @@ class LazyLoadMixin(Artifact):
 
 
 class InferenceEngineReturn:
-    prediction: Union[str, Dict[str, Any]]
+    """Contains the prediction results and metadata for the inference.
+
+    Args:
+    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+    for this position and their probabilities.
+    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': -1.42},  {"text": "b", 'logprob': -2.3} ....]},
+                   {.. "top_tokens": [ {"text": "c", 'logprob': -0.8},  {"text": "b", 'logprob': -3.3} ....]}
+                ]
+    means that for the first token in the output, the most probable token is "a" with logprob -1.42, followed by "b"
+    with 'logprob': -2.3}. For the second token in the response, the most probable token is "c" etc.
+
+    input_tokens (int) : number of input tokens to the model.
+    output_tokens (int) : number of output tokens to the model.
+    model_name (str): the model_name as kept in the InferenceEngine.
+    inference_type (str): The label stating the type of the InferenceEngine.
+    """
+
+    prediction: Union[str, List[Dict[str, Any]]]
     input_tokens: Optional[int]
     output_tokens: Optional[int]
     model_name: Optional[str]
