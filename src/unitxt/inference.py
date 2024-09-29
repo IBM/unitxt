@@ -876,7 +876,7 @@ class WMLInferenceEngine(
         }
 
         results = model.generate(
-            prompt=dataset["source"],
+            prompt=[instance["source"] for instance in dataset],
             params=params,
         )
         final_results = []
