@@ -29,16 +29,13 @@
             "metrics.bleu"
         ]
     },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "\"\"\"{text}\n\n{test_list_str}\"\"\"",
-                "output_format": "{code}"
-            }
-        ]
-    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "\"\"\"{text}\n\n{test_list_str}\"\"\"",
+            "output_format": "{code}"
+        }
+    ],
     "__tags__": {
         "annotations_creators": [
             "crowdsourced",

@@ -5,7 +5,6 @@ from unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    TemplatesDict,
 )
 from unitxt.dialog_operators import SerializeOpenAiFormatDialog
 from unitxt.operators import Copy, Set, Shuffle
@@ -47,9 +46,9 @@ for split in splits_random_mixes:
                 ),
             ],
             task="tasks.rag.response_generation",
-            templates=TemplatesDict(
-                {"default": "templates.rag.response_generation.please_respond_chat"}
-            ),
+            templates={
+                "default": "templates.rag.response_generation.please_respond_chat"
+            },
         )
 
         # testing the card is too slow with the bert-score metric, so dropping it

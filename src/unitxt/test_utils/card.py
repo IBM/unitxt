@@ -5,11 +5,11 @@ import tempfile
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
+from ..collections import Collection
 from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
 from ..standard import StandardRecipe
-from ..templates import TemplatesDict
 from ..text_utils import construct_dict_str
 
 logger = get_logger()
@@ -281,11 +281,11 @@ def test_card(
     test_metrics_exist(card)
     test_loading_from_catalog(card)
 
-    if type(card.templates) is TemplatesDict:
+    if isinstance(card.templates, (Collection, dict)):
         template_card_indices = card.templates.keys()
     else:
-        num_templates = len(card.templates)
-        template_card_indices = range(0, num_templates)
+        template_card_indices = range(len(card.templates))
+
     for template_card_index in template_card_indices:
         examples = load_examples_from_standard_recipe(
             card, template_card_index=template_card_index, debug=debug, **kwargs
