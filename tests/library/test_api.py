@@ -44,22 +44,22 @@ class TestAPI(UnitxtTestCase):
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5,num_demos=[0,1],demos_pool_size=2,group_by=[num_demos,template]"
         )
         target = {
-            "metrics": ["metrics.spearman"],
-            "data_classification_policy": ["public"],
-            "postprocessors": [
-                "processors.take_first_non_empty_line",
-                "processors.cast_to_float_return_zero_if_failed",
-            ],
+            "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
             "target": "3.8",
             "references": ["3.8"],
-            "source": "Given this sentence: 'A man is spreading shreded cheese on a pizza.', on a scale of 1.0 to 5.0, what is the similarity to this text 'A man is spreading shredded cheese on an uncooked pizza.'?\n",
-            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 3.799999952316284, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
+            "metrics": ["metrics.spearman"],
             "groups": [
                 '{"num_demos": 0}',
                 '{"template": "templates.regression.two_texts.simple"}',
             ],
-            "media": {"audios": [], "images": []},
             "subset": [],
+            "media": {"images": [], "audios": []},
+            "postprocessors": [
+                "processors.take_first_non_empty_line",
+                "processors.cast_to_float_return_zero_if_failed",
+            ],
+            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "metadata": {"data_classification_policy": ["public"], "num_demos": 0, "template": "templates.regression.two_texts.simple"}, "attribute_value": 3.799999952316284, "demos": []}',
+            "data_classification_policy": ["public"],
         }
         self.assertEqual(len(dataset["train"]), 5)
         result = dataset["train"][0]
@@ -324,10 +324,10 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is \n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is \n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
             "groups": [],
-            "media": {"audios": [], "images": []},
             "subset": [],
+            "media": {"images": [], "audios": []},
         }
 
         self.assertDictEqual(target, result)
@@ -353,10 +353,10 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 0, "template": "templates.classification.multi_class.relation.default"}}',
             "groups": [],
-            "media": {"audios": [], "images": []},
             "subset": [],
+            "media": {"images": [], "audios": []},
         }
 
         self.assertDictEqual(target, result)
@@ -384,10 +384,10 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is \n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is \n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "template": "templates.classification.multi_class.relation.default", "num_demos": 2}}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
             "groups": [],
-            "media": {"audios": [], "images": []},
             "subset": [],
+            "media": {"images": [], "audios": []},
         }
 
         self.assertDictEqual(target, result)

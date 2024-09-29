@@ -164,7 +164,7 @@ class SystemFormat(BaseFormat):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            instance.pop(self.demos_field)
+            # instance.pop(self.demos_field)
 
         demos_string = ""
         for demo_instance in demo_instances:
@@ -226,14 +226,16 @@ class HFSystemFormat(BaseFormat):
     """
 
     model_name: str
+    _requirements_list = ["transformers"]
+
+    def prepare(self):
+        from transformers import AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        from transformers import AutoTokenizer
-
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-
         assert (
             "source" in instance
         ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
@@ -267,7 +269,7 @@ class HFSystemFormat(BaseFormat):
                 demos is not None and isoftype(demos, List[Dict[str, Any]])
             ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             demo_instances = demos
-            instance.pop(self.demos_field)
+            # instance.pop(self.demos_field)
 
         for demo_instance in demo_instances:
             messages.extend(
@@ -280,7 +282,7 @@ class HFSystemFormat(BaseFormat):
                 ]
             )
         messages.extend([{"role": "user", "content": source}])
-        tokenized_chat = tokenizer.apply_chat_template(
+        tokenized_chat = self.tokenizer.apply_chat_template(
             messages, tokenize=False, add_generation_prompt=True
         )
 

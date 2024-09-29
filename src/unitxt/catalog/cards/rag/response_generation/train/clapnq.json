@@ -1,0 +1,57 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "PrimeQA/clapnq"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[0.5]",
+                "validation": "train[0.5]",
+                "test": "validation"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "passages/*/text": "contexts",
+                "input": "question",
+                "output/*/answer": "reference_answers"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "contexts_ids": []
+            }
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "reference_answers": {
+                    "['']": [
+                        "I'm sorry, I cannot answer this question based on the context.",
+                        "The answer is not in the text provided.",
+                        "Unanswerable.",
+                        "The provided context does not contain the information needed to answer this question.",
+                        "There is not enough information in the text to answer this question.",
+                        "The text does not provide an answer to this question.",
+                        "Based on the context, an answer cannot be determined.",
+                        "The answer to this question is not available in the provided context.",
+                        "This question cannot be answered with the given information.",
+                        "Insufficient context to provide an answer."
+                    ]
+                }
+            },
+            "strict": false
+        }
+    ],
+    "task": "tasks.rag.response_generation",
+    "templates": {
+        "please_respond": "templates.rag.response_generation.please_respond",
+        "answer_based_on_context": "templates.rag.response_generation.answer_based_on_context",
+        "answer_based_on_context_inverted": "templates.rag.response_generation.answer_based_on_context_inverted"
+    }
+}

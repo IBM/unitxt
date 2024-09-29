@@ -76,3 +76,18 @@ add_to_catalog(
     "templates.translation.directed.all",
     overwrite=True,
 )
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.translation.directed.simple",
+            "templates.translation.directed.formal",
+            "templates.translation.directed.casual",
+            # "templates.translation.directed.playful",
+            # "templates.translation.directed.instructional",
+            # "templates.translation.directed.title",
+        ]
+    ),
+    "templates.translation.directed.bluebench",
+    overwrite=True,
+)

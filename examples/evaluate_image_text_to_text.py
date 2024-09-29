@@ -11,7 +11,7 @@ dataset = load_dataset(
     template="templates.qa.with_context.title",
     format="formats.models.llava_interleave",
     loader_limit=20,
-    agumentor="augmentors.white_space",
+    augmentor="augmentors.image.grey_scale",
 )
 
 test_dataset = dataset["test"].select(range(5))

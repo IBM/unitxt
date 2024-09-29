@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Union
 
-from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
+from unitxt.task import Task
+from unitxt.types import Audio, Dialog, Image, Table, Text
 
 add_to_catalog(
     Task(
@@ -79,7 +80,7 @@ add_to_catalog(
 add_to_catalog(
     Task(
         input_fields={
-            "text_a": str,
+            "text_a": Union[Text, Image, Audio, Table, Dialog],
             "text_a_type": str,
             "text_b": str,
             "text_b_type": str,

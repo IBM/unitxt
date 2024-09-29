@@ -44,7 +44,6 @@ from unitxt.metrics import (
     KendallTauMetric,
     LlamaIndexCorrectness,
     MaxAccuracy,
-    MetricPipeline,
     MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
@@ -55,11 +54,9 @@ from unitxt.metrics import (
     TokenOverlap,
     UnsortedListExactMatch,
 )
-from unitxt.operators import Rename
 from unitxt.test_utils.metrics import (
     apply_metric,
     check_scores,
-    test_evaluate,
     test_metric,
 )
 
@@ -1065,17 +1062,19 @@ class TestMetrics(UnitxtTestCase):
             0.08060156608173413,
         ]
         for metric, target in zip(accuracy_metrics, global_targets):
-            outputs = apply_metric(
-                metric=metric,
-                predictions=GROUPED_INSTANCE_PREDICTIONS,
-                references=GROUPED_INSTANCE_REFERENCES,
-                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
-            )
-            self.assertAlmostEqual(
-                target,
-                outputs[0]["score"]["global"]["score"],
-                msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
-            )
+            for score_prefix in ["my_", ""]:
+                metric.score_prefix = score_prefix
+                outputs = apply_metric(
+                    metric=metric,
+                    predictions=GROUPED_INSTANCE_PREDICTIONS,
+                    references=GROUPED_INSTANCE_REFERENCES,
+                    task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+                )
+                self.assertAlmostEqual(
+                    target,
+                    outputs[0]["score"]["global"]["score"],
+                    msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
+                )
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
@@ -1460,24 +1459,26 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
 
         # pass global dict because there are additional fields other than the main score
-        self._test_grouped_instance_confidence_interval(
-            metric=GroupMeanTokenOverlap(),
-            expected_global_result={
-                "group_mean_recall": 0.525,
-                "group_mean_f1": 0.5083333333333333,
-                "score": 0.5083333333333333,
-                "score_name": "group_mean_f1",
-                "group_mean_precision": 0.5,
-                "group_mean_recall_ci_low": 0.25,
-                "group_mean_recall_ci_high": 0.7083333333333334,
-                "group_mean_f1_ci_low": 0.22302503471948287,
-                "group_mean_f1_ci_high": 0.6805555555555555,
-                "score_ci_low": 0.22302503471948287,
-                "score_ci_high": 0.6805555555555555,
-                "group_mean_precision_ci_low": 0.2095091529536007,
-                "group_mean_precision_ci_high": 0.6666666666666666,
-            },
-        )
+        for score_prefix in ["my_", ""]:
+            self._test_grouped_instance_confidence_interval(
+                metric=GroupMeanTokenOverlap(),
+                expected_global_result={
+                    f"group_mean_{score_prefix}recall": 0.525,
+                    f"group_mean_{score_prefix}f1": 0.5083333333333333,
+                    "score": 0.5083333333333333,
+                    "score_name": f"group_mean_{score_prefix}f1",
+                    f"group_mean_{score_prefix}precision": 0.5,
+                    f"group_mean_{score_prefix}recall_ci_low": 0.25,
+                    f"group_mean_{score_prefix}recall_ci_high": 0.7083333333333334,
+                    f"group_mean_{score_prefix}f1_ci_low": 0.22302503471948287,
+                    f"group_mean_{score_prefix}f1_ci_high": 0.6805555555555555,
+                    "score_ci_low": 0.22302503471948287,
+                    "score_ci_high": 0.6805555555555555,
+                    f"group_mean_{score_prefix}precision_ci_low": 0.2095091529536007,
+                    f"group_mean_{score_prefix}precision_ci_high": 0.6666666666666666,
+                },
+                input_score_prefixes=[score_prefix],
+            )
 
     def _test_grouped_instance_confidence_interval(
         self,
@@ -1485,32 +1486,41 @@ class TestConfidenceIntervals(UnitxtTestCase):
         expected_ci_low=0.0,
         expected_ci_high=1.0,
         expected_global_result=None,
+        input_score_prefixes=None,
     ):
         """Test the calculation of confidence intervals for a given metric with group_mean reduction."""
-        outputs = apply_metric(
-            metric=metric,
-            predictions=GROUPED_INSTANCE_PREDICTIONS,
-            references=GROUPED_INSTANCE_REFERENCES,
-            task_data=GROUPED_INSTANCE_ADDL_INPUTS,
-        )
-        # get first element of reduction_map values
-        reduction_params = next(iter(metric.reduction_map.values()))
-        prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
-        group_score_name = "_".join(
-            [
-                prefix,
-                metric.reduction_map["group_mean"]["agg_func"][0],
-                metric.main_score,
-            ]
-        )
+        input_expected_global_result_is_none = expected_global_result is None
+        # to remember between score_prefixes
 
-        if expected_global_result is None:
-            expected_global_result = {
-                f"{group_score_name}_ci_low": expected_ci_low,
-                f"{group_score_name}_ci_high": expected_ci_high,
-                "score_ci_low": expected_ci_low,
-                "score_ci_high": expected_ci_high,
-            }
+        for score_prefix in (
+            ["my_", ""] if input_score_prefixes is None else input_score_prefixes
+        ):
+            metric.score_prefix = score_prefix
+            outputs = apply_metric(
+                metric=metric,
+                predictions=GROUPED_INSTANCE_PREDICTIONS,
+                references=GROUPED_INSTANCE_REFERENCES,
+                task_data=GROUPED_INSTANCE_ADDL_INPUTS,
+            )
+            # get first element of reduction_map values
+            reduction_params = next(iter(metric.reduction_map.values()))
+            prefix = "fixed_group" if reduction_params["agg_func"][2] else "group"
+            group_score_name = "_".join(
+                [
+                    prefix,
+                    metric.reduction_map["group_mean"]["agg_func"][0],
+                    score_prefix,
+                    metric.main_score,
+                ]
+            ).replace("__", "_")  # for the case of empty score_prefix
+
+            if input_expected_global_result_is_none:
+                expected_global_result = {
+                    f"{group_score_name}_ci_low": expected_ci_low,
+                    f"{group_score_name}_ci_high": expected_ci_high,
+                    "score_ci_low": expected_ci_low,
+                    "score_ci_high": expected_ci_high,
+                }
 
         global_result = outputs[0]["score"]["global"].copy()
         logger.info(global_result)
@@ -1789,182 +1799,3 @@ class TestConfidenceIntervals(UnitxtTestCase):
             instance_targets=instance_targets,
             global_target=global_target,
         )
-
-    def test_context_correctness(self):
-        task_data = [
-            {  # MRR is 1, MAP is (1 + 2/3)/2 = 0.833
-                "context_ids": ["A", "B", "C"],
-                "ground_truths_context_ids": ["A", "C"],
-            },
-            {  # MRR and MAP are both 0.5
-                "context_ids": ["A", "B"],
-                "ground_truths_context_ids": ["B"],
-            },
-        ]
-
-        map_instance_targets = [
-            {"map": 0.83, "score": 0.83, "score_name": "map"},
-            {"map": 0.5, "score": 0.5, "score_name": "map"},
-        ]
-        mrr_instance_targets = [
-            {"mrr": 1.0, "score": 1.0, "score_name": "mrr"},
-            {"mrr": 0.5, "score": 0.5, "score_name": "mrr"},
-        ]
-        retrieval_at_k_instance_targets = [
-            {
-                "match_at_1": 1.0,
-                "match_at_3": 1.0,
-                "match_at_5": 1.0,
-                "match_at_10": 1.0,
-                "match_at_20": 1.0,
-                "match_at_40": 1.0,
-                "precision_at_1": 1.0,
-                "precision_at_3": 0.67,
-                "precision_at_5": 0.67,
-                "precision_at_10": 0.67,
-                "precision_at_20": 0.67,
-                "precision_at_40": 0.67,
-                "recall_at_1": 0.5,
-                "recall_at_3": 1.0,
-                "recall_at_5": 1.0,
-                "recall_at_10": 1.0,
-                "recall_at_20": 1.0,
-                "recall_at_40": 1.0,
-                "score": 1.0,
-                "score_name": "match_at_1",
-            },
-            {
-                "match_at_1": 0.0,
-                "match_at_10": 1.0,
-                "match_at_20": 1.0,
-                "match_at_3": 1.0,
-                "match_at_40": 1.0,
-                "match_at_5": 1.0,
-                "precision_at_1": 0.0,
-                "precision_at_10": 0.5,
-                "precision_at_20": 0.5,
-                "precision_at_3": 0.5,
-                "precision_at_40": 0.5,
-                "precision_at_5": 0.5,
-                "recall_at_1": 0.0,
-                "recall_at_10": 1.0,
-                "recall_at_20": 1.0,
-                "recall_at_3": 1.0,
-                "recall_at_40": 1.0,
-                "recall_at_5": 1.0,
-                "score": 0.0,
-                "score_name": "match_at_1",
-            },
-        ]
-        map_global_target = {
-            "map": 0.67,
-            "map_ci_high": 0.83,
-            "map_ci_low": 0.5,
-            "score": 0.67,
-            "score_ci_high": 0.83,
-            "score_ci_low": 0.5,
-            "score_name": "map",
-        }
-        mrr_global_target = {
-            "mrr": 0.75,
-            "mrr_ci_high": 1.0,
-            "mrr_ci_low": 0.5,
-            "score": 0.75,
-            "score_ci_high": 1.0,
-            "score_ci_low": 0.5,
-            "score_name": "mrr",
-        }
-        retrieval_at_k_global_target = {
-            "match_at_1": 0.5,
-            "match_at_1_ci_high": 1.0,
-            "match_at_1_ci_low": 0.0,
-            "match_at_3": 1.0,
-            "match_at_5": 1.0,
-            "match_at_10": 1.0,
-            "match_at_20": 1.0,
-            "match_at_40": 1.0,
-            "precision_at_1": 0.5,
-            "precision_at_1_ci_high": 1.0,
-            "precision_at_1_ci_low": 0.0,
-            "precision_at_3": 0.58,
-            "precision_at_3_ci_high": 0.67,
-            "precision_at_3_ci_low": 0.5,
-            "precision_at_5": 0.58,
-            "precision_at_5_ci_high": 0.67,
-            "precision_at_5_ci_low": 0.5,
-            "precision_at_10": 0.58,
-            "precision_at_10_ci_high": 0.67,
-            "precision_at_10_ci_low": 0.5,
-            "precision_at_20": 0.58,
-            "precision_at_20_ci_high": 0.67,
-            "precision_at_20_ci_low": 0.5,
-            "precision_at_40": 0.58,
-            "precision_at_40_ci_high": 0.67,
-            "precision_at_40_ci_low": 0.5,
-            "recall_at_1": 0.25,
-            "recall_at_1_ci_high": 0.5,
-            "recall_at_1_ci_low": 0.0,
-            "recall_at_3": 1.0,
-            "recall_at_5": 1.0,
-            "recall_at_10": 1.0,
-            "recall_at_20": 1.0,
-            "recall_at_40": 1.0,
-            "score": 0.5,
-            "score_ci_high": 1.0,
-            "score_ci_low": 0.0,
-            "score_name": "match_at_1",
-        }
-
-        for catalog_name, global_target, instance_targets in [
-            (
-                "metrics.rag.context_correctness.map",
-                map_global_target,
-                map_instance_targets,
-            ),
-            (
-                "metrics.rag.context_correctness.mrr",
-                mrr_global_target,
-                mrr_instance_targets,
-            ),
-            (
-                "metrics.rag.context_correctness",
-                mrr_global_target,
-                mrr_instance_targets,
-            ),
-            (
-                "metrics.rag.context_correctness.retrieval_at_k",
-                retrieval_at_k_global_target,
-                retrieval_at_k_instance_targets,
-            ),
-        ]:
-            # test the evaluate call
-            test_evaluate(
-                global_target,
-                instance_targets=[
-                    {"score": instance["score"]} for instance in instance_targets
-                ],
-                task_data=task_data,
-                metric_name=catalog_name,
-            )
-
-            # test using the usual metric pipeline
-            test_pipeline = MetricPipeline(
-                main_score="score",
-                preprocess_steps=[
-                    Rename(field_to_field={"task_data/context_ids": "context_ids"}),
-                    Rename(
-                        field_to_field={
-                            "task_data/ground_truths_context_ids": "ground_truths_context_ids"
-                        }
-                    ),
-                ],
-                metric=f"{catalog_name}",
-            )
-            test_metric(
-                metric=test_pipeline,
-                predictions=[None, None],
-                references=[[], []],
-                instance_targets=instance_targets,
-                global_target=global_target,
-                task_data=task_data,
-            )

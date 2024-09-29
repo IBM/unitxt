@@ -3,7 +3,6 @@ from unitxt.blocks import (
     ConstructTableFromRowsCols,
     LoadHF,
     Rename,
-    SerializeTableAsIndexedRowMajor,
     Set,
     TaskCard,
 )
@@ -16,9 +15,8 @@ card = TaskCard(
         FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
         ConstructTableFromRowsCols(
             fields=["table_column_names", "table_content_values"],
-            to_field="table",
+            to_field="input_a",
         ),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "input_a"]]),
         Rename(field_to_field={"table_caption": "input_b", "text": "output"}),
         Set(
             fields={
