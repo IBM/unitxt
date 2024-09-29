@@ -3,6 +3,7 @@ import os
 import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from datasets import DatasetDict
 from tqdm import tqdm
 
 from .artifact import Artifact, fetch_artifact
@@ -16,12 +17,60 @@ from .settings_utils import get_settings
 settings = get_settings()
 
 
+class InferenceEngineReturn:
+    """Contains the prediction results and metadata for the inference.
+
+    Args:
+    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+    for this position and their probabilities.
+    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
+                ]
+
+    input_tokens (int) : number of input tokens to the model.
+    output_tokens (int) : number of output tokens to the model.
+    model_name (str): the model_name as kept in the InferenceEngine.
+    inference_type (str): The label stating the type of the InferenceEngine.
+    """
+
+    prediction: Union[str, List[Dict[str, Any]]]
+    input_tokens: Optional[int]
+    output_tokens: Optional[int]
+    model_name: Optional[str]
+    inference_type: Optional[str]
+
+    def __init__(
+        self,
+        prediction: Union[str, Dict[str, Any]],
+        input_tokens: Optional[int] = None,
+        output_tokens: Optional[int] = None,
+        model_name: Optional[str] = None,
+        inference_type: Optional[str] = None,
+    ):
+        self.prediction = prediction
+        self.input_tokens = input_tokens
+        self.output_tokens = output_tokens
+        self.model_name = model_name
+        self.inference_type = inference_type
+
+
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
-    def _infer(self, dataset, return_meta_data=False):
-        """Perform inference on the input dataset."""
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
+        """Perform inference on the input dataset.
+
+        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the string.
+        return_meta_data is only supported for some InferenceEngines.
+        predictions.
+        """
         pass
 
     @abc.abstractmethod
@@ -33,8 +82,16 @@ class InferenceEngine(abc.ABC, Artifact):
         if not settings.mock_inference_mode:
             self.prepare_engine()
 
-    def infer(self, dataset, return_meta_data=False) -> str:
-        """Verifies instances of a dataset and performs inference."""
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
+        """Verifies instances of a dataset and perform inference on the input dataset.
+
+        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the string
+        predictions.
+        """
         assert return_meta_data is False or hasattr(self, "get_return_object"), (
             f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
             f"Please set return_meta_data=False"
@@ -67,16 +124,30 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference with log probs."""
 
     @abc.abstractmethod
-    def _infer_log_probs(self, dataset, return_meta_data=False):
-        """Perform inference on the input dataset that returns log probs."""
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+        """Perform inference on the input dataset  that returns log probs.
+
+        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the logprob dicts.
+        return_meta_data is only supported for some InferenceEngines.
+        predictions.
+        """
         pass
 
-    def infer_log_probs(self, dataset, return_meta_data=False) -> List[Dict]:
+    def infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
 
-        For each instance , returns a list of top tokens per position.
+        For each instance , generates a list of top tokens per position.
         [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-
+        If return_meta_data - returns a list of InferenceEngineReturn, else returns the list of the logprob dicts.
+        return_meta_data is only supported for some InferenceEngines.
         """
         assert return_meta_data is False or hasattr(self, "get_return_object"), (
             f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
@@ -194,7 +265,11 @@ class HFPipelineBasedInferenceEngine(
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         if not self._is_loaded():
             self._prepare_pipeline()
 
@@ -212,7 +287,11 @@ class MockInferenceEngine(InferenceEngine):
     def prepare_engine(self):
         return
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         return ["[[10]]" for instance in dataset]
 
 
@@ -277,7 +356,11 @@ class GenericInferenceEngine(InferenceEngine):
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         return self.engine._infer(dataset)
 
 
@@ -292,7 +375,11 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def prepare_engine(self):
         pass
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         import ollama
 
         result = [
@@ -339,7 +426,11 @@ class IbmGenAiInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
@@ -360,7 +451,11 @@ class IbmGenAiInferenceEngine(
             results.append(result)
         return results
 
-    def _infer_log_probs(self, dataset, return_meta_data=False):
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
         from genai.schema import TextGenerationParameters
 
         logprobs_return_options = {
@@ -491,7 +586,11 @@ class OpenAiInferenceEngine(
             if v is not None
         }
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -515,7 +614,11 @@ class OpenAiInferenceEngine(
 
         return outputs
 
-    def _infer_log_probs(self, dataset, return_meta_data=False):
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -635,7 +738,11 @@ class TogetherAiInferenceEngine(
         )
         return response.choices[0].text
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         from together.types.models import ModelType
 
         outputs = []
@@ -834,7 +941,11 @@ class WMLInferenceEngine(
 
         return model, params
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         model, params = self._load_model_and_params()
 
         result = []
@@ -851,7 +962,11 @@ class WMLInferenceEngine(
 
         return result
 
-    def _infer_log_probs(self, dataset, return_meta_data=False):
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
         model, params = self._load_model_and_params()
 
         user_return_options = params.pop("return_options", {})
@@ -937,7 +1052,11 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset, return_meta_data=False):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[InferenceEngineReturn]]:
         if not self._is_loaded():
             self._prepare_engine()
 
