@@ -295,6 +295,13 @@ class Artifact(Dataclass):
             **self.process_data_before_dump(self._init_dict),
         }
 
+    def __deepcopy__(self, memo):
+        if id(self) in memo:
+            return memo[id(self)]
+        new_obj = Artifact.from_dict(self.to_dict())
+        memo[id(self)] = new_obj
+        return new_obj
+
     def process_data_before_dump(self, data):
         return data
 
