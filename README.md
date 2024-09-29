@@ -54,7 +54,7 @@ This is a simple example of running end-to-end evaluation in self contained pyth
 
 See more examples in examples subdirectory.
 
-```
+```python
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
@@ -127,7 +127,7 @@ for instance in evaluated_dataset:
 # 🦄 Contributors
 
 Please install Unitxt from source by:
-```
+```bash
 git clone git@github.com:IBM/unitxt.git
 cd unitxt
 pip install -e ".[dev]"
@@ -138,7 +138,7 @@ pre-commit install
 
 If you use Unitxt in your research, please cite our paper:
 
-```
+```bib
 @inproceedings{bandel-etal-2024-unitxt,
     title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
     author = "Bandel, Elron  and
