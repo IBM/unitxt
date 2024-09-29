@@ -17,7 +17,7 @@ for language in ["en", "fr"]:
             ToImage(field="image", to_field="context"),
             Set(fields={"context_type": "image"}),
         ],
-        task="tasks.qa.with_context.abstractive",
+        task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
         templates="templates.qa.with_context.all",
         __tags__={
             "license": "apache-2.0",
