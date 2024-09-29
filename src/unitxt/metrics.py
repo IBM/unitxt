@@ -1315,7 +1315,13 @@ class ANLS(InstanceMetric):
     reduction_map = {"mean": ["anls"]}
     prediction_type = Any  # string representation is compared
 
-    def compute(self, references: List[Any], prediction: Any, task_data: List[Dict], threshold=1.0) -> dict:
+    def compute(
+        self,
+        references: List[Any],
+        prediction: Any,
+        task_data: List[Dict],
+        threshold=1.0,
+    ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
         for answer in references:
@@ -1350,7 +1356,9 @@ class ANLS(InstanceMetric):
                 if c1 == c2:
                     distances_.append(distances[i1])
                 else:
-                    distances_.append(1 + min((distances[i1], distances[i1 + 1], distances_[-1])))
+                    distances_.append(
+                        1 + min((distances[i1], distances[i1 + 1], distances_[-1]))
+                    )
             distances = distances_
         return distances[-1]
 

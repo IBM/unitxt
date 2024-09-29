@@ -32,4 +32,3 @@ outputs = test_metric(
 )
 
 add_to_catalog(metric, "metrics.anls", overwrite=True)
-
