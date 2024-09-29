@@ -1,12 +1,12 @@
-from typing import List
+from typing import Dict, List, Union
 
 from .artifact import Artifact
-from .collections import Collection
 from .dataclass import OptionalField
 from .loaders import Loader
 from .operator import StreamingOperator
 from .splitters import RandomSampler, Sampler
 from .task import Task
+from .templates import Template, TemplatesDict, TemplatesList
 
 
 class TaskCard(Artifact):
@@ -25,5 +25,7 @@ class TaskCard(Artifact):
     loader: Loader
     preprocess_steps: List[StreamingOperator] = None
     task: Task
-    templates: Collection = None
+    templates: Union[
+        TemplatesDict, TemplatesList, Dict[str, Template], List[Template]
+    ] = None
     sampler: Sampler = OptionalField(default_factory=RandomSampler)

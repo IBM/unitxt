@@ -4,7 +4,6 @@ from unitxt.blocks import (
     LoadHF,
     Task,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.operators import Copy, Set, Shuffle
 from unitxt.splitters import RenameSplits
@@ -27,14 +26,10 @@ card = TaskCard(
         reference_fields=["input_label"],
         metrics=["metrics.safety_metric"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="{input}\n", output_format="{input_label}"
-            ),
-            InputOutputTemplate(input_format="{input}", output_format="{input_label}"),
-        ]
-    ),
+    templates=[
+        InputOutputTemplate(input_format="{input}\n", output_format="{input_label}"),
+        InputOutputTemplate(input_format="{input}", output_format="{input_label}"),
+    ],
 )
 
 test_card(card, strict=False, demos_taken_from="test", num_demos=0)

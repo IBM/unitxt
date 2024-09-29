@@ -4,7 +4,6 @@ from unitxt.blocks import (
     LoadHF,
     Task,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.operators import (
     Copy,
@@ -39,13 +38,11 @@ card = TaskCard(
         reference_fields=["input_label"],
         metrics=["metrics.regard_metric"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="{first_prompt}\n", output_format="{input_label}"
-            ),
-        ]
-    ),
+    templates=[
+        InputOutputTemplate(
+            input_format="{first_prompt}\n", output_format="{input_label}"
+        ),
+    ],
     __tags__={
         "arxiv": "2101.11718",
         "language": "en",

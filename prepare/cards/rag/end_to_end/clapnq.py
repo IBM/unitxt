@@ -2,7 +2,7 @@ import json
 from dataclasses import dataclass
 
 from unitxt import add_to_catalog
-from unitxt.blocks import TaskCard, TemplatesDict
+from unitxt.blocks import TaskCard
 from unitxt.loaders import LoadCSV
 from unitxt.operators import Copy, ListFieldValues, Set
 from unitxt.templates import InputOutputTemplate
@@ -55,7 +55,7 @@ card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     # templates=["templates.empty"],
-    templates=TemplatesDict({"default": "templates.rag.end_to_end.json_predictions"}),
+    templates={"default": "templates.rag.end_to_end.json_predictions"},
 )
 
 wrong_answer = {
@@ -96,14 +96,12 @@ card = TaskCard(
         ),
     ],
     task="tasks.rag.corpora",
-    templates=TemplatesDict(
-        {
-            "empty": InputOutputTemplate(
-                input_format="",
-                output_format="",
-            ),
-        }
-    ),
+    templates={
+        "empty": InputOutputTemplate(
+            input_format="",
+            output_format="",
+        ),
+    },
 )
 
 # Not testing card, because documents are not evaluated.
