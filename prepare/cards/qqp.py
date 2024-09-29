@@ -5,7 +5,6 @@ from unitxt.blocks import (
     Set,
     Task,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
@@ -28,16 +27,14 @@ card = TaskCard(
         reference_fields=["label"],
         metrics=["metrics.accuracy"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="""
+    templates=[
+        InputOutputTemplate(
+            input_format="""
                     Given this question: {question1}, classify if this question: {question2} is {choices}.
                 """.strip(),
-                output_format="{label}",
-            ),
-        ]
-    ),
+            output_format="{label}",
+        ),
+    ],
     __tags__={
         "annotations_creators": "other",
         "arxiv": "1804.07461",

@@ -180,7 +180,7 @@ if Constants.is_uninitilized():
     constants.instance_stream = "__INSTANCE_STREAM__"
 
 
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
 
 

@@ -553,19 +553,16 @@
             "metrics.safety_metric"
         ]
     },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "{input}\n",
-                "output_format": "{input_label}"
-            },
-            {
-                "__type__": "input_output_template",
-                "input_format": "{input}",
-                "output_format": "{input_label}"
-            }
-        ]
-    }
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}\n",
+            "output_format": "{input_label}"
+        },
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}",
+            "output_format": "{input_label}"
+        }
+    ]
 }

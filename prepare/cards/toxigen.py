@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.operators import MapInstanceValues, Rename, Set, Shuffle
 from unitxt.splitters import SplitRandomMix
-from unitxt.templates import InputOutputTemplate, TemplatesList
+from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
 """ In order to use this card, you must have a HF login token.
@@ -26,19 +26,17 @@ card = TaskCard(
         ),
     ],
     task="tasks.classification.multi_class",
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {"
-                "classes}. I would classify this {text_type} as: ",
-                output_format="{label}",
-                postprocessors=[
-                    "processors.take_first_non_empty_line",
-                    "processors.toxic_or_not_toxic",
-                ],
-            ),
-        ]
-    ),
+    templates=[
+        InputOutputTemplate(
+            input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {"
+            "classes}. I would classify this {text_type} as: ",
+            output_format="{label}",
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.toxic_or_not_toxic",
+            ],
+        ),
+    ],
     __description__=(
         "This dataset is for implicit hate speech detection. All instances were generated using GPT-3 and the methods described in our paper. Languages All text is written in English. Dataset Structure Data Fields We release TOXIGEN as a dataframe with the following fields: prompt is the prompt used for… See the full description on the dataset page: https://huggingface.co/datasets/toxigen/toxigen-data."
     ),
