@@ -23,11 +23,13 @@ parser.add_argument("-model", "--model", type=str, required=True)
 parser.add_argument("-num_demos", "--num_demos", type=int, required=True)
 parser.add_argument("-debug", "--debug", type=bool, default=False)
 parser.add_argument("-out_path", "--out_path", type=str, required=True)
+parser.add_argument("-seed", "--seed", type=int, required=True)
 args = parser.parse_args()
 model_name = args.model
 num_demos = args.num_demos
 out_path = args.out_path
 debug = args.debug
+seed = args.seed
 
 # model_name = "google/flan-t5-large" #"gpt-4o-mini"
 # num_demos = 0
@@ -36,62 +38,61 @@ debug = args.debug
 # print("debug ", debug)
 
 DEMOS_POOL_SIZE = 10
-# seed = random.randint(0, 3000)
-seed = 564
+
 subsets = {
-    "fin_qa__json_shuffle-rows-564": StandardRecipe(
+    "fin_qa__json": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
         serializer=SerializeTableAsJson(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__markdown_shuffle-rows-564": StandardRecipe(
+    "fin_qa__markdown": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
         serializer=SerializeTableAsMarkdown(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__row_indexed_major_shuffle-rows-564": StandardRecipe(
+    "fin_qa__row_indexed_major": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
         serializer=SerializeTableAsIndexedRowMajor(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__df_shuffle-rows-564": StandardRecipe(
+    "fin_qa__df": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
         serializer=SerializeTableAsDFLoader(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "wikitq__json_shuffle-rows-564": StandardRecipe(
+    "wikitq__json": StandardRecipe(
         card="cards.wikitq",
         template_card_index=0,
         serializer=SerializeTableAsJson(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "wikitq__markdown_shuffle-rows-564": StandardRecipe(
+    "wikitq__markdown": StandardRecipe(
         card="cards.wikitq",
         template_card_index=0,
         serializer=SerializeTableAsMarkdown(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "wikitq__row_indexed_major_shuffle-rows-564": StandardRecipe(
+    "wikitq__row_indexed_major": StandardRecipe(
         card="cards.wikitq",
         template_card_index=0,
-        serializer=SerializeTableAsIndexedRowMajor(),
+        serializer=SerializeTableAsIndexedRowMajor(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "wikitq__df_shuffle-rows-564": StandardRecipe(
+    "wikitq__df": StandardRecipe(
         card="cards.wikitq",
         template_card_index=0,
-        serializer=SerializeTableAsDFLoader(),
+        serializer=SerializeTableAsDFLoader(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
@@ -132,6 +133,8 @@ for subset_name, subset in subsets.items():
             model_name.replace("/", "_")
             + "#"
             + subset_name
+            + "_"
+            + str(seed)
             + "#"
             + str(datetime.datetime.now())
         )
