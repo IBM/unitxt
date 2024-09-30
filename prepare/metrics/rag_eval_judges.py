@@ -12,7 +12,7 @@ rag_fields = {"ground_truths", "answer", "contexts", "question"}
 metric_type_to_template = {
     "faithfulness": {
         "q_c_a": "judge_with_question_simplified_logprobs",
-        "c_a": "judge_with_question_simplified_logprobs",
+        "c_a": "judge_no_question_simplified_logprobs",
     },
     "context_relevance": {"q_c": "judge_context_relevance_ares_logprobs"},
     "correctness_holistic": {"q_c_a": "judge_correctness_simple_logprobs"},  # qca
