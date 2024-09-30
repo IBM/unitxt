@@ -33,6 +33,10 @@ model_names_to_metric_classes = {
         GenerativeBinaryJudgeBAM,
     ],
     "meta-llama/llama-3-1-405b-instruct-fp8": [GenerativeBinaryJudgeBAM],
+    "google/flan-t5-xxl": [
+        GenerativeBinaryJudgeWML,
+        GenerativeBinaryJudgeBAM,
+    ],
 }
 
 

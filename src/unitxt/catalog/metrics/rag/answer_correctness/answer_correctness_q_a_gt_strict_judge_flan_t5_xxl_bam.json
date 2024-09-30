@@ -1,0 +1,41 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "answer_correctness_q_a_gt_strict_judge_flan_t5_xxl_bam",
+    "metric": {
+        "__type__": "generative_binary_judge_bam",
+        "main_score": "answer_correctness_q_a_gt_strict_judge_flan_t5_xxl_bam",
+        "model_name": "google/flan-t5-xxl",
+        "task_name": "tasks.rag_eval.answer_correctness.binary",
+        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_format_logprobs",
+        "model_format_name": "formats.empty"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer",
+                "task_data/reference_answers": "task_data/ground_truths"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}
