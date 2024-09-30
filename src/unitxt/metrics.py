@@ -4799,17 +4799,22 @@ class F1Strings(InstanceMetric):
         "spacy": "Please pip install spacy",
     }
 
-    def prepare(self):
-        super().prepare()
+    def load_spacy(self):
         import spacy
 
+        self.nlp = spacy.load(
+            "en_core_web_sm", disable=["tagger", "parser", "ner", "lemmatizer"]
+        )
+
+    def prepare(self):
+        super().prepare()
         try:
-            self.nlp = spacy.load("en_core_web_sm")
+            self.load_spacy()
         except OSError:
             from spacy.cli import download
 
             download("en_core_web_sm")
-            self.nlp = spacy.load("en_core_web_sm")
+            self.load_spacy()
 
     def compute(
         self,
