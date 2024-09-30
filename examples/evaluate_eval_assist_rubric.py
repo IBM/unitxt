@@ -7,6 +7,7 @@ from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 from typing import Any
+from unitxt.operators import Set
 
 logger = get_logger()
 
@@ -31,9 +32,9 @@ rubric_json = {
 
 data = {
     "test": [
-       {"question": "How is the weather?", "rubric" : rubric_json},
-        {"question": "How is the weather?", "rubric" : rubric_json},
-        {"question": "How is the weather?", "rubric" : rubric_json},
+       {"question": "How is the weather?"},
+        {"question": "How is the weather?"},
+        {"question": "How is the weather?"},
     ],
 }
 
@@ -41,6 +42,7 @@ card = TaskCard(
     # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
     # with different loaders.
     loader=LoadFromDictionary(data=data),
+    preprocessing_steps=[Set(fields={"rubric": rubric_json})],
     # Define the QA task input and output and metrics.
     task=Task(
         input_fields={"question": str, "rubric": dict[str, Any]},
