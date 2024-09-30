@@ -5,7 +5,6 @@ from unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    TemplatesDict,
 )
 from unitxt.operators import (
     Copy,
@@ -35,9 +34,7 @@ card = TaskCard(
         ListFieldValues(fields=["contexts_ids"], to_field="contexts_ids"),
     ],
     task="tasks.rag.response_generation",
-    templates=TemplatesDict(
-        {"default": "templates.rag.response_generation.please_respond_chat"}
-    ),
+    templates={"default": "templates.rag.response_generation.please_respond_chat"},
 )
 
 # testing the card is too slow with the bert-score metric, so dropping it
