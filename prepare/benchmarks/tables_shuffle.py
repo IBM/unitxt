@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import os.path
 import pickle
@@ -17,75 +18,77 @@ from unitxt.struct_data_operators import (
     SerializeTableAsMarkdown,
 )
 
-# parser = argparse.ArgumentParser()
-# parser.add_argument('-model', '--model', type=str, required=True)
-# parser.add_argument('-num_demos', '--num_demos', type=int, required=True)
-# parser.add_argument('-debug', '--debug', type=bool, required=True)
-# parser.add_argument('-out_path', '--out_path', type=str, required=True)
-# args = parser.parse_args()
-# model_name = args.model
-# num_demos = args.num_demos
-# out_path = args.out_path
+parser = argparse.ArgumentParser()
+parser.add_argument("-model", "--model", type=str, required=True)
+parser.add_argument("-num_demos", "--num_demos", type=int, required=True)
+parser.add_argument("-debug", "--debug", type=bool, default=False)
+parser.add_argument("-out_path", "--out_path", type=str, required=True)
+args = parser.parse_args()
+model_name = args.model
+num_demos = args.num_demos
+out_path = args.out_path
+debug = args.debug
 
-model_name = "gpt-4o-mini"
-num_demos = 5
-out_path = "/Users/shir/Downloads/run_bench_final"
-debug = False
-DEMOS_POOL_SIZE = 10
+# model_name = "google/flan-t5-large" #"gpt-4o-mini"
+# num_demos = 0
+# out_path = "/Users/shir/Downloads/run_bench"
+# debug = False
 # print("debug ", debug)
 
-
+DEMOS_POOL_SIZE = 10
+# seed = random.randint(0, 3000)
+seed = 564
 subsets = {
-    "fin_qa__json": StandardRecipe(
+    "fin_qa__json_shuffle-rows-564": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
-        serializer=SerializeTableAsJson(),
+        serializer=SerializeTableAsJson(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__markdown": StandardRecipe(
+    "fin_qa__markdown_shuffle-rows-564": StandardRecipe(
         card="cards.fin_qa",
         template_card_index=0,
-        serializer=SerializeTableAsMarkdown(),
+        serializer=SerializeTableAsMarkdown(shuffle_rows=True, seed=seed),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__row_indexed_major": StandardRecipe(
+    "fin_qa__row_indexed_major_shuffle-rows-564": StandardRecipe(
         card="cards.fin_qa",
+        template_card_index=0,
+        serializer=SerializeTableAsIndexedRowMajor(shuffle_rows=True, seed=seed),
+        num_demos=num_demos,
+        demos_pool_size=DEMOS_POOL_SIZE,
+    ),
+    "fin_qa__df_shuffle-rows-564": StandardRecipe(
+        card="cards.fin_qa",
+        template_card_index=0,
+        serializer=SerializeTableAsDFLoader(shuffle_rows=True, seed=seed),
+        num_demos=num_demos,
+        demos_pool_size=DEMOS_POOL_SIZE,
+    ),
+    "wikitq__json_shuffle-rows-564": StandardRecipe(
+        card="cards.wikitq",
+        template_card_index=0,
+        serializer=SerializeTableAsJson(shuffle_rows=True, seed=seed),
+        num_demos=num_demos,
+        demos_pool_size=DEMOS_POOL_SIZE,
+    ),
+    "wikitq__markdown_shuffle-rows-564": StandardRecipe(
+        card="cards.wikitq",
+        template_card_index=0,
+        serializer=SerializeTableAsMarkdown(shuffle_rows=True, seed=seed),
+        num_demos=num_demos,
+        demos_pool_size=DEMOS_POOL_SIZE,
+    ),
+    "wikitq__row_indexed_major_shuffle-rows-564": StandardRecipe(
+        card="cards.wikitq",
         template_card_index=0,
         serializer=SerializeTableAsIndexedRowMajor(),
         num_demos=num_demos,
         demos_pool_size=DEMOS_POOL_SIZE,
     ),
-    "fin_qa__df": StandardRecipe(
-        card="cards.fin_qa",
-        template_card_index=0,
-        serializer=SerializeTableAsDFLoader(),
-        num_demos=num_demos,
-        demos_pool_size=DEMOS_POOL_SIZE,
-    ),
-    "wikitq__json": StandardRecipe(
-        card="cards.wikitq",
-        template_card_index=0,
-        serializer=SerializeTableAsJson(),
-        num_demos=num_demos,
-        demos_pool_size=DEMOS_POOL_SIZE,
-    ),
-    "wikitq__markdown": StandardRecipe(
-        card="cards.wikitq",
-        template_card_index=0,
-        serializer=SerializeTableAsMarkdown(),
-        num_demos=num_demos,
-        demos_pool_size=DEMOS_POOL_SIZE,
-    ),
-    "wikitq__row_indexed_major": StandardRecipe(
-        card="cards.wikitq",
-        template_card_index=0,
-        serializer=SerializeTableAsIndexedRowMajor(),
-        num_demos=num_demos,
-        demos_pool_size=DEMOS_POOL_SIZE,
-    ),
-    "wikitq__df": StandardRecipe(
+    "wikitq__df_shuffle-rows-564": StandardRecipe(
         card="cards.wikitq",
         template_card_index=0,
         serializer=SerializeTableAsDFLoader(),

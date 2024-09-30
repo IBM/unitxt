@@ -218,6 +218,10 @@ class SerializeTableAsDFLoader(SerializeTable):
         df = pd.DataFrame(rows, columns=header)
 
         # Generate output string in the desired format
+        df.columns = [
+            f"{col}_{i}" if df.columns.duplicated()[i] else col
+            for i, col in enumerate(df.columns)
+        ]
         data_dict = df.to_dict(orient="list")
 
         return (
