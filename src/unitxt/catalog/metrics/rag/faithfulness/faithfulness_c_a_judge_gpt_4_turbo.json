@@ -6,7 +6,7 @@
         "main_score": "faithfulness_c_a_judge_gpt_4_turbo",
         "model_name": "gpt-4-turbo",
         "task_name": "tasks.rag_eval.faithfulness.binary",
-        "template_name": "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+        "template_name": "templates.rag_eval.faithfulness.judge_no_question_simplified_logprobs",
         "model_format_name": "formats.empty"
     },
     "preprocess_steps": [
