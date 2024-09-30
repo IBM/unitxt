@@ -195,6 +195,10 @@ class LoadHF(Loader):
     def stream_dataset(self):
         if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                if settings.disable_hf_datasets_cache and not self.streaming:
+                    cache_dir = dir_to_be_deleted
+                else:
+                    cache_dir = None
                 try:
                     dataset = hf_load_dataset(
                         self.path,
@@ -203,7 +207,7 @@ class LoadHF(Loader):
                         data_files=self.data_files,
                         revision=self.revision,
                         streaming=self.streaming,
-                        cache_dir=None if self.streaming else dir_to_be_deleted,
+                        cache_dir=cache_dir,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
@@ -231,6 +235,10 @@ class LoadHF(Loader):
     def load_dataset(self):
         if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                if settings.disable_hf_datasets_cache:
+                    cache_dir = dir_to_be_deleted
+                else:
+                    cache_dir = None
                 try:
                     dataset = hf_load_dataset(
                         self.path,
@@ -239,7 +247,7 @@ class LoadHF(Loader):
                         data_files=self.data_files,
                         streaming=False,
                         keep_in_memory=True,
-                        cache_dir=dir_to_be_deleted,
+                        cache_dir=cache_dir,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
