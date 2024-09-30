@@ -1,8 +1,10 @@
 import abc
+import dataclasses
 import os
 import re
 from typing import Any, Dict, List, Literal, Optional, Union
 
+from datasets import DatasetDict
 from tqdm import tqdm
 
 from .artifact import Artifact, fetch_artifact
@@ -16,12 +18,47 @@ from .settings_utils import get_settings
 settings = get_settings()
 
 
+@dataclasses.dataclass
+class TextGenerationInferenceOutput:
+    """Contains the prediction results and metadata for the inference.
+
+    Args:
+    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+    for this position and their probabilities.
+    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
+                ]
+
+    input_tokens (int) : number of input tokens to the model.
+    output_tokens (int) : number of output tokens to the model.
+    model_name (str): the model_name as kept in the InferenceEngine.
+    inference_type (str): The label stating the type of the InferenceEngine.
+    """
+
+    prediction: Union[str, List[Dict[str, Any]]]
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    model_name: Optional[str] = None
+    inference_type: Optional[str] = None
+
+
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
-    def _infer(self, dataset):
-        """Perform inference on the input dataset."""
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        """Perform inference on the input dataset.
+
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string.
+        return_meta_data is only supported for some InferenceEngines.
+        predictions.
+        """
         pass
 
     @abc.abstractmethod
@@ -33,12 +70,25 @@ class InferenceEngine(abc.ABC, Artifact):
         if not settings.mock_inference_mode:
             self.prepare_engine()
 
-    def infer(self, dataset) -> str:
-        """Verifies instances of a dataset and performs inference."""
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        """Verifies instances of a dataset and perform inference on the input dataset.
+
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
+        predictions.
+        """
+        assert return_meta_data is False or hasattr(self, "get_return_object"), (
+            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
+            f"Please set return_meta_data=False"
+        )
+
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
             return [instance["source"] for instance in dataset]
-        return self._infer(dataset)
+        return self._infer(dataset, return_meta_data)
 
     @deprecation(version="2.0.0")
     def _set_inference_parameters(self):
@@ -62,19 +112,38 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference with log probs."""
 
     @abc.abstractmethod
-    def _infer_log_probs(self, dataset):
-        """Perform inference on the input dataset that returns log probs."""
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        """Perform inference on the input dataset  that returns log probs.
+
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the logprob dicts.
+        return_meta_data is only supported for some InferenceEngines.
+        predictions.
+        """
         pass
 
-    def infer_log_probs(self, dataset) -> List[Dict]:
+    def infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
 
-        For each instance , returns a list of top tokens per position.
+        For each instance , generates a list of top tokens per position.
         [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns the list of the logprob dicts.
+        return_meta_data is only supported for some InferenceEngines.
         """
+        assert return_meta_data is False or hasattr(self, "get_return_object"), (
+            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
+            f"Please set return_meta_data=False"
+        )
+
         [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset)
+        return self._infer_log_probs(dataset, return_meta_data)
 
 
 class LazyLoadMixin(Artifact):
@@ -143,7 +212,11 @@ class HFPipelineBasedInferenceEngine(
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_pipeline()
 
@@ -161,7 +234,11 @@ class MockInferenceEngine(InferenceEngine):
     def prepare_engine(self):
         return
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return ["[[10]]" for instance in dataset]
 
 
@@ -226,7 +303,11 @@ class GenericInferenceEngine(InferenceEngine):
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset)
 
 
@@ -241,7 +322,11 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     def prepare_engine(self):
         pass
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
         result = [
@@ -260,7 +345,10 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
 
 
 class IbmGenAiInferenceEngine(
-    InferenceEngine, IbmGenAiInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    IbmGenAiInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
+    LogProbInferenceEngine,
 ):
     label: str = "ibm_genai"
     model_name: str
@@ -285,21 +373,88 @@ class IbmGenAiInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
             **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
-        return [
-            response.results[0].generated_text
-            for response in self.client.text.generation.create(
-                model_id=self.model_name,
-                inputs=[instance["source"] for instance in dataset],
-                parameters=genai_params,
+        results = []
+        responses = self.client.text.generation.create(
+            model_id=self.model_name,
+            inputs=[instance["source"] for instance in dataset],
+            parameters=genai_params,
+        )
+        for response in responses:
+            generated_text = response.results[0].generated_text
+            result = self.get_return_object(
+                generated_text, response.results[0], return_meta_data
             )
-        ]
+            results.append(result)
+        return results
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        from genai.schema import TextGenerationParameters
+
+        logprobs_return_options = {
+            "generated_tokens": True,
+            "input_text": False,
+            "input_tokens": False,
+            "token_logprobs": True,
+            "token_ranks": True,
+            "top_n_tokens": 5,
+        }
+        genai_params = self.to_dict(
+            [IbmGenAiInferenceEngineParamsMixin], keep_empty=False
+        )
+        genai_params = {**genai_params, "return_options": logprobs_return_options}
+        genai_params = TextGenerationParameters(**genai_params)
+        predictions = self.client.text.generation.create(
+            model_id=self.model_name,
+            inputs=[instance["source"] for instance in dataset],
+            parameters=genai_params,
+        )
+
+        predict_results = []
+        for prediction in predictions:
+            result = prediction.results[0]
+            assert isinstance(
+                result.generated_tokens, list
+            ), "result.generated_tokens should be a list"
+
+            predict_result = []
+            for base_token in result.generated_tokens:
+                res = {**base_token.__dict__, **base_token.model_extra}
+                res["top_tokens"] = [
+                    {"logprob": top_token.logprob, "text": top_token.text}
+                    for top_token in res["top_tokens"]
+                ]
+                predict_result.append(res)
+            final_results = self.get_return_object(
+                predict_result, result, return_meta_data
+            )
+            predict_results.append(final_results)
+        return predict_results
+
+    def get_return_object(self, predict_result, result, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=result.input_token_count,
+                output_tokens=result.generated_token_count,
+                model_name=self.model_name,
+                inference_type=self.label,
+            )
+        return predict_result
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
@@ -349,18 +504,26 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
-    def prepare_engine(self):
+    @classmethod
+    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
+        api_key = os.environ.get(api_param_env_var_name)
+        assert api_key is not None, (
+            f"Error while trying to run {inference_engine}."
+            f" Please set the environment param '{api_param_env_var_name}'."
+        )
+        return api_key
+
+    def create_client(self):
         from openai import OpenAI
 
-        api_key_env_var_name = "OPENAI_API_KEY"
-        api_key = os.environ.get(api_key_env_var_name)
-        assert api_key is not None, (
-            f"Error while trying to run OpenAiInferenceEngine."
-            f" Please set the environment param '{api_key_env_var_name}'."
+        api_key = self.get_api_param(
+            inference_engine="OpenAiInferenceEngine",
+            api_param_env_var_name="OPENAI_API_KEY",
         )
+        return OpenAI(api_key=api_key)
 
-        self.client = OpenAI(api_key=api_key)
-
+    def prepare_engine(self):
+        self.client = self.create_client()
         self._set_inference_parameters()
 
     def _get_completion_kwargs(self):
@@ -370,7 +533,11 @@ class OpenAiInferenceEngine(
             if v is not None
         }
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -387,13 +554,18 @@ class OpenAiInferenceEngine(
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
-            output = response.choices[0].message.content
+            prediction = response.choices[0].message.content
+            output = self.get_return_object(prediction, response, return_meta_data)
 
             outputs.append(output)
 
         return outputs
 
-    def _infer_log_probs(self, dataset):
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -411,7 +583,7 @@ class OpenAiInferenceEngine(
                 **self._get_completion_kwargs(),
             )
             top_logprobs_response = response.choices[0].logprobs.content
-            output = [
+            pred_output = [
                 {
                     "top_tokens": [
                         {"text": obj.token, "logprob": obj.logprob}
@@ -420,8 +592,20 @@ class OpenAiInferenceEngine(
                 }
                 for generated_token in top_logprobs_response
             ]
+            output = self.get_return_object(pred_output, response, return_meta_data)
             outputs.append(output)
         return outputs
+
+    def get_return_object(self, predict_result, response, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=response.usage.prompt_tokens,
+                output_tokens=response.usage.completion_tokens,
+                model_name=self.model_name,
+                inference_type=self.label,
+            )
+        return predict_result
 
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
@@ -501,7 +685,11 @@ class TogetherAiInferenceEngine(
         )
         return response.choices[0].text
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from together.types.models import ModelType
 
         outputs = []
@@ -512,6 +700,21 @@ class TogetherAiInferenceEngine(
             for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
                 outputs.append(self._infer_text(instance["source"]))
         return outputs
+
+
+class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    def create_client(self):
+        from openai import OpenAI
+
+        api_key = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_KEY",
+        )
+        api_url = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_URL",
+        )
+        return OpenAI(api_key=api_key, base_url=api_url)
 
 
 class WMLInferenceEngineParamsMixin(Artifact):
@@ -550,7 +753,10 @@ class WMLInferenceEngineParams(Artifact):
 
 
 class WMLInferenceEngine(
-    InferenceEngine, WMLInferenceEngineParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    WMLInferenceEngineParamsMixin,
+    PackageRequirementsMixin,
+    LogProbInferenceEngine,
 ):
     """Runs inference using ibm-watsonx-ai.
 
@@ -609,9 +815,9 @@ class WMLInferenceEngine(
 
         if self.credentials is not None:
             for key in self.credentials:
-                if key not in ["url", "apikey", "project_id"]:
+                if key not in ["url", "apikey", "project_id", "space_id"]:
                     raise ValueError(
-                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id"]'
+                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id", "space_id"]'
                     )
 
         assert (
@@ -631,10 +837,14 @@ class WMLInferenceEngine(
 
     @staticmethod
     def _read_wml_credentials_from_env() -> (
-        Dict[Literal["url", "apikey", "project_id"], str]
+        Dict[Literal["url", "apikey", "project_id", "space_id"], str]
     ):
         credentials = {}
-        for env_var_name in ["WML_URL", "WML_PROJECT_ID", "WML_APIKEY"]:
+        project_or_deployment_var_name = (
+            "WML_SPACE_ID" if "WML_SPACE_ID" in os.environ else "WML_PROJECT_ID"
+        )
+
+        for env_var_name in ["WML_URL", project_or_deployment_var_name, "WML_APIKEY"]:
             env_var = os.environ.get(env_var_name)
             assert env_var, (
                 f"Error while trying to run 'WMLInferenceEngine'. "
@@ -655,7 +865,10 @@ class WMLInferenceEngine(
             self.credentials = self._read_wml_credentials_from_env()
 
         client = APIClient(credentials=self.credentials)
-        client.set.default_project(self.credentials["project_id"])
+        if "space_id" in self.credentials:
+            client.set.default_space(self.credentials["space_id"])
+        else:
+            client.set.default_project(self.credentials["project_id"])
         return client
 
     def prepare_engine(self):
@@ -663,7 +876,7 @@ class WMLInferenceEngine(
 
         self._set_inference_parameters()
 
-    def _infer(self, dataset):
+    def _load_model_and_params(self):
         from ibm_watsonx_ai.foundation_models import ModelInference
 
         model = ModelInference(
@@ -671,20 +884,81 @@ class WMLInferenceEngine(
             deployment_id=self.deployment_id,
             api_client=self._client,
         )
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
 
-        # the class was previously used with a dataset that is a single instance
-        dataset = dataset if isinstance(dataset, list) else [dataset]
+        return model, params
 
-        result = [
-            model.generate_text(
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        model, params = self._load_model_and_params()
+
+        result = []
+        for instance in dataset:
+            instance_result = model.generate(
                 prompt=instance["source"],
                 params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
             )
-            for instance in dataset
-        ]
+            prediction = instance_result["results"][0]["generated_text"]
+            instance_final_results = self.get_return_object(
+                prediction, instance_result, return_meta_data
+            )
+            result.append(instance_final_results)
 
-        # the class was previously used with a dataset that is a single instance
-        return result[0] if not isinstance(dataset, list) else result
+        return result
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        model, params = self._load_model_and_params()
+
+        user_return_options = params.pop("return_options", {})
+        # currently this is the only configuration that returns generated logprobs and behaves as expected
+        logprobs_return_options = {
+            "input_tokens": True,
+            "generated_tokens": True,
+            "token_logprobs": True,
+            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
+        }
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
+
+        params = {
+            **params,
+            "return_options": logprobs_return_options,
+        }
+
+        results = model.generate(
+            prompt=[instance["source"] for instance in dataset],
+            params=params,
+        )
+        final_results = []
+        for result in results:
+            generated_tokens = result["results"][0]["generated_tokens"]
+            final_results.append(
+                self.get_return_object(generated_tokens, result, return_meta_data)
+            )
+        return final_results
+
+    def get_return_object(self, predict_result, result, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=result["results"][0]["input_token_count"],
+                output_tokens=result["results"][0]["generated_token_count"],
+                model_name=self.model_name,
+                inference_type=self.label,
+            )
+        return predict_result
 
 
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
@@ -725,7 +999,11 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
-    def _infer(self, dataset):
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_engine()
 
