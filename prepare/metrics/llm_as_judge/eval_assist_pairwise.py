@@ -35,10 +35,10 @@ for criteria_name, criteria_obj in {"temperature": temperature,
     )
 
 params = IbmGenAiInferenceEngineParamsMixin(max_new_tokens=1024, random_seed=42)
-for model_name, inference_engine in [("mixtral", IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01"
-                                                                         , parameters=params)),
+for model_name, inference_engine in [("mixtral", IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01", parameters=params)),
                     ("llama_8b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-8b-instruct", parameters=params)),
-                    ("llama_70b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", parameters=params))]:
+                    ("llama_70b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", parameters=params)),
+                    ("prometheus", IbmGenAiInferenceEngine(model_name="kaist-ai/prometheus-8x7b-v2", parameters=params))]:
     
     eval_assist_metric = EvalAssistLLMAsJudgePairwise(inference_model=inference_engine, 
                                             #   pairwise_criteria=temperature,

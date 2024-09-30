@@ -30,7 +30,7 @@ card = TaskCard(
         input_fields={"question": str, "pairwise_criteria": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.pairwise.mixtral"],
+        metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus"],
     ),
     # Create a simple template that formats the input.
     # Add lowercase normalization as a post processor.
