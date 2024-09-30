@@ -1,6 +1,7 @@
 import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
+from unitxt.operator import SequentialOperator
 from unitxt.operators import Cast, RemoveValues
 from unitxt.processors import (
     Capitalize,
@@ -11,6 +12,7 @@ from unitxt.processors import (
     ExtractWithRegex,
     FirstCharacter,
     GetStringAfter,
+    InferDictsToBinaryLogprobs,
     LiteralEval,
     Lower,
     LowerCaseTillPunc,
@@ -224,5 +226,38 @@ add_to_catalog(
 add_to_catalog(
     PostProcess(ExtractArenaHardNumericalJudgment(), process_references=False),
     "processors.extract_arena_hard_numerical_judgment",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            InferDictsToBinaryLogprobs(
+                neg_class_name="No",
+                pos_class_name="Yes",
+                num_logprobs_to_take=3,
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.infer_logprobs_to_yes_no_probs",
+    overwrite=True,
+)
+
+add_to_catalog(
+    SequentialOperator(
+        steps=[
+            InferDictsToBinaryLogprobs(
+                neg_class_name="No",
+                pos_class_name="Yes",
+                take_logprobs_from_end=True,
+                num_logprobs_to_take=3,
+                field="prediction",
+                process_every_value=False,
+            ),
+        ]
+    ),
+    "processors.infer_last_token_logprobs_to_yes_no_probs",
     overwrite=True,
 )
