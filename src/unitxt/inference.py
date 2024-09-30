@@ -725,6 +725,16 @@ class WMLInferenceEngine(
             params=params,
         )
 
+        return [
+            {
+                "prediction": result["results"][0]["generated_tokens"],
+                "input_tokens": result["results"][0]["input_token_count"],
+                "output_tokens": result["results"][0]["generated_token_count"],
+                "model_id": self.model_name,
+            }
+            for result in results
+        ]
+
 
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
@@ -792,12 +802,3 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
             results.append(result)
 
         return results
-        return [
-            {
-                "prediction": result["results"][0]["generated_tokens"],
-                "input_tokens": result["results"][0]["input_token_count"],
-                "output_tokens": result["results"][0]["generated_token_count"],
-                "model_id": self.model_name,
-            }
-            for result in results
-        ]
