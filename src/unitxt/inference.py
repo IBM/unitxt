@@ -1,4 +1,5 @@
 import abc
+import dataclasses
 import os
 import re
 from typing import Any, Dict, List, Literal, Optional, Union
@@ -17,7 +18,8 @@ from .settings_utils import get_settings
 settings = get_settings()
 
 
-class InferenceEngineReturn:
+@dataclasses.dataclass
+class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
 
     Args:
@@ -36,24 +38,10 @@ class InferenceEngineReturn:
     """
 
     prediction: Union[str, List[Dict[str, Any]]]
-    input_tokens: Optional[int]
-    output_tokens: Optional[int]
-    model_name: Optional[str]
-    inference_type: Optional[str]
-
-    def __init__(
-        self,
-        prediction: Union[str, Dict[str, Any]],
-        input_tokens: Optional[int] = None,
-        output_tokens: Optional[int] = None,
-        model_name: Optional[str] = None,
-        inference_type: Optional[str] = None,
-    ):
-        self.prediction = prediction
-        self.input_tokens = input_tokens
-        self.output_tokens = output_tokens
-        self.model_name = model_name
-        self.inference_type = inference_type
+    input_tokens: Optional[int] = None
+    output_tokens: Optional[int] = None
+    model_name: Optional[str] = None
+    inference_type: Optional[str] = None
 
 
 class InferenceEngine(abc.ABC, Artifact):
@@ -64,10 +52,10 @@ class InferenceEngine(abc.ABC, Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Perform inference on the input dataset.
 
-        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the string.
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string.
         return_meta_data is only supported for some InferenceEngines.
         predictions.
         """
@@ -86,10 +74,10 @@ class InferenceEngine(abc.ABC, Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and perform inference on the input dataset.
 
-        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the string
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
         assert return_meta_data is False or hasattr(self, "get_return_object"), (
@@ -128,10 +116,10 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         """Perform inference on the input dataset  that returns log probs.
 
-        If return_meta_data - returns a list of InferenceEngineReturn, else returns a list of the logprob dicts.
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the logprob dicts.
         return_meta_data is only supported for some InferenceEngines.
         predictions.
         """
@@ -141,12 +129,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
 
         For each instance , generates a list of top tokens per position.
         [ "top_tokens": [ { "text": ..., "logprob": ...} , ... ]
-        If return_meta_data - returns a list of InferenceEngineReturn, else returns the list of the logprob dicts.
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns the list of the logprob dicts.
         return_meta_data is only supported for some InferenceEngines.
         """
         assert return_meta_data is False or hasattr(self, "get_return_object"), (
@@ -228,7 +216,7 @@ class HFPipelineBasedInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_pipeline()
 
@@ -250,7 +238,7 @@ class MockInferenceEngine(InferenceEngine):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return ["[[10]]" for instance in dataset]
 
 
@@ -319,7 +307,7 @@ class GenericInferenceEngine(InferenceEngine):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset)
 
 
@@ -338,7 +326,7 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
         result = [
@@ -389,7 +377,7 @@ class IbmGenAiInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from genai.schema import TextGenerationParameters
 
         genai_params = TextGenerationParameters(
@@ -414,7 +402,7 @@ class IbmGenAiInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         from genai.schema import TextGenerationParameters
 
         logprobs_return_options = {
@@ -459,7 +447,7 @@ class IbmGenAiInferenceEngine(
 
     def get_return_object(self, predict_result, result, return_meta_data):
         if return_meta_data:
-            return InferenceEngineReturn(
+            return TextGenerationInferenceOutput(
                 prediction=predict_result,
                 input_tokens=result.input_token_count,
                 output_tokens=result.generated_token_count,
@@ -549,7 +537,7 @@ class OpenAiInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -577,7 +565,7 @@ class OpenAiInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
             response = self.client.chat.completions.create(
@@ -610,7 +598,7 @@ class OpenAiInferenceEngine(
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
-            return InferenceEngineReturn(
+            return TextGenerationInferenceOutput(
                 prediction=predict_result,
                 input_tokens=response.usage.prompt_tokens,
                 output_tokens=response.usage.completion_tokens,
@@ -701,7 +689,7 @@ class TogetherAiInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from together.types.models import ModelType
 
         outputs = []
@@ -904,7 +892,7 @@ class WMLInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         model, params = self._load_model_and_params()
 
         result = []
@@ -925,7 +913,7 @@ class WMLInferenceEngine(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[InferenceEngineReturn]]:
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         model, params = self._load_model_and_params()
 
         user_return_options = params.pop("return_options", {})
@@ -963,7 +951,7 @@ class WMLInferenceEngine(
 
     def get_return_object(self, predict_result, result, return_meta_data):
         if return_meta_data:
-            return InferenceEngineReturn(
+            return TextGenerationInferenceOutput(
                 prediction=predict_result,
                 input_tokens=result["results"][0]["input_token_count"],
                 output_tokens=result["results"][0]["generated_token_count"],
@@ -1015,7 +1003,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[InferenceEngineReturn]]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
             self._prepare_engine()
 
