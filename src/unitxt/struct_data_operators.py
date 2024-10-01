@@ -207,6 +207,12 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         assert header and rows, "Incorrect input table format"
 
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
+
         # Create a pandas DataFrame
         df = pd.DataFrame(rows, columns=header)
 
