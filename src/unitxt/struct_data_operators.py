@@ -217,6 +217,11 @@ class SerializeTableAsDFLoader(SerializeTable):
         # Create a pandas DataFrame
         df = pd.DataFrame(rows, columns=header)
 
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
         # Generate output string in the desired format
         df.columns = [
             f"{col}_{i}" if df.columns.duplicated()[i] else col

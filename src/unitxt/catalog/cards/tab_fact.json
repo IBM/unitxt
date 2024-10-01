@@ -10,6 +10,14 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[50%]",
+                "validation": "train[50%]",
+                "test": "test+validation"
+            }
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "table": "text_a",
