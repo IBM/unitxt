@@ -2684,6 +2684,18 @@ class TokenOverlap(InstanceMetric):
         return pr, rc, f1
 
 
+def get_device():
+    import torch
+
+    if torch.backends.mps.is_available():
+        return "mps"  # mac GPU
+
+    if torch.cuda.is_available():
+        return "cuda"
+
+    return "cpu"
+
+
 class BertScore(HuggingfaceBulkMetric):
     hf_metric_name = "bertscore"
     main_score = "f1"
@@ -2699,7 +2711,11 @@ class BertScore(HuggingfaceBulkMetric):
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 32}
+        self.hf_compute_args = {
+            "model_type": self.model_name,
+            "batch_size": 32,
+            "device": get_device(),
+        }
         if self.model_layer:
             self.hf_compute_args["num_layers"] = self.model_layer
 
@@ -2715,11 +2731,10 @@ class SentenceBert(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import torch
         from sentence_transformers import SentenceTransformer
         from sentence_transformers import util as sbert_util
 
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        self.device = get_device()
         self.model = SentenceTransformer(self.model_name, device=self.device)
         self.util = sbert_util
 
@@ -2752,7 +2767,7 @@ class SentenceBert(BulkInstanceMetric):
             refs_group_emb = refs_emb[ref_group_bounds[0] : ref_group_bounds[1]]
             scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
 
-        return [{"score": score} for score in scores]
+        return [{"score": score, "model_id": self.model_name} for score in scores]
 
 
 class Reward(BulkInstanceMetric):
