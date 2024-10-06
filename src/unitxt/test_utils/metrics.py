@@ -1,4 +1,5 @@
 import json
+from copy import deepcopy
 from typing import Any, List, Optional
 
 from ..eval_utils import evaluate
@@ -68,7 +69,12 @@ def apply_metric(
             {"prediction": prediction, "references": reference}
             for prediction, reference in zip(predictions, references)
         ]
-    multi_stream = MultiStream.from_iterables({"test": test_iterable}, copying=True)
+    # break any cross reference from one instance to another,
+    # imitating what's done at the entrance to operators.ApplyMetric
+    ti = []
+    for instance in test_iterable:
+        ti.append(deepcopy(instance))
+    multi_stream = MultiStream.from_iterables({"test": ti})
 
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
