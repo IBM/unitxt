@@ -119,5 +119,73 @@ def test_faithfulness_sentence_bert():
     )
 
 
+def test_faithfulness_token_k_precision():
+    # don't use "A" as a token because it is considered an article and removed by the token overlap
+    # metric
+
+    task_data = [
+        {  # precision is 1.0 for the first context, 0 for the second context.
+            # so overall its max(1.0, 0) = 1.0
+            "contexts": ["B C", "C"],
+            "answer": "B",
+        },
+        {  # precision is 1/3
+            "contexts": ["D"],
+            "answer": "B C D",
+        },
+    ]
+
+    precision_instance_targets = [
+        {
+            "f1": 0.67,
+            "precision": 1.0,
+            "recall": 0.5,
+            "score": 1.0,
+            "score_name": "f1",
+        },
+        {
+            "f1": 0.5,
+            "precision": 0.33,
+            "recall": 1.0,
+            "score": 0.33,
+            "score_name": "f1",
+        },
+    ]
+
+    precision_global_target = {
+        "f1": 0.58,
+        "f1_ci_high": 0.67,
+        "f1_ci_low": 0.5,
+        "precision": 0.67,
+        "precision_ci_high": 1.0,
+        "precision_ci_low": 0.33,
+        "recall": 0.75,
+        "recall_ci_high": 1.0,
+        "recall_ci_low": 0.5,
+        "score": 0.67,
+        "score_ci_high": 0.67,
+        "score_ci_low": 0.5,
+        "score_name": "f1",
+    }
+
+    for catalog_name, global_target, instance_targets in [
+        (
+            base,
+            precision_global_target,
+            precision_instance_targets,
+        ),
+        (
+            f"{base}.{default}",
+            precision_global_target,
+            precision_instance_targets,
+        ),
+    ]:
+        test_faithfulness(task_data, catalog_name, global_target, instance_targets)
+
+
+# This test is here since it does not involve any models
+test_faithfulness_token_k_precision()
+
 if __name__ == "__main__":
+    # Tests which involve models:
     test_faithfulness_sentence_bert()
