@@ -7,7 +7,8 @@
         "model_name": "google/flan-t5-xxl",
         "task_name": "tasks.rag_eval.answer_correctness.binary",
         "template_name": "templates.rag_eval.answer_correctness.judge_simplified_with_context_logprobs",
-        "model_format_name": "formats.empty"
+        "model_format_name": "formats.empty",
+        "binary_predictions": false
     },
     "preprocess_steps": [
         {

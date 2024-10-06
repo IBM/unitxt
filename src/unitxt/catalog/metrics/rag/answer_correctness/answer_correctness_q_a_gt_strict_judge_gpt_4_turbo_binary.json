@@ -1,14 +1,14 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "answer_correctness_q_c_a_gt_judge_flan_t5_xxl_bam",
+    "main_score": "answer_correctness_q_a_gt_strict_judge_gpt_4_turbo_binary",
     "metric": {
-        "__type__": "generative_binary_judge_bam",
-        "main_score": "answer_correctness_q_c_a_gt_judge_flan_t5_xxl_bam",
-        "model_name": "google/flan-t5-xxl",
+        "__type__": "generative_binary_judge_open_ai",
+        "main_score": "answer_correctness_q_a_gt_strict_judge_gpt_4_turbo_binary",
+        "model_name": "gpt-4-turbo",
         "task_name": "tasks.rag_eval.answer_correctness.binary",
-        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_with_context_logprobs",
+        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_format_logprobs",
         "model_format_name": "formats.empty",
-        "binary_predictions": false
+        "binary_predictions": true
     },
     "preprocess_steps": [
         {

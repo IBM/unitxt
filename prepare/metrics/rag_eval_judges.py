@@ -56,50 +56,56 @@ def add_judge_metrics():
                     input_fields_str,
                     template_name,
                 ) in input_fields_to_template_name.items():
-                    metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
+                    for do_binary_prediction in [False, True]:
+                        binary_suffix = "_binary" if do_binary_prediction else ""
+                        judge_model_short_name = judge_model_name.split("/")[
+                            -1
+                        ].replace("-", "_")
+                        metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_short_name}{binary_suffix}"""
 
-                    if judge_metric_class == GenerativeBinaryJudgeBAM:
-                        metric_name += "_bam"
-                    metric = judge_metric_class(
-                        main_score=metric_name,
-                        model_name=judge_model_name,
-                        task_name=f"tasks.rag_eval.{metric_type}.binary",
-                        template_name=f"templates.rag_eval.{metric_type}.{template_name}",
-                        model_format_name=template_format,
-                    )
+                        if judge_metric_class == GenerativeBinaryJudgeBAM:
+                            metric_name += "_bam"
+                        metric = judge_metric_class(
+                            main_score=metric_name,
+                            model_name=judge_model_name,
+                            task_name=f"tasks.rag_eval.{metric_type}.binary",
+                            template_name=f"templates.rag_eval.{metric_type}.{template_name}",
+                            model_format_name=template_format,
+                            binary_predictions=do_binary_prediction,
+                        )
 
-                    metric_pipeline = MetricPipeline(
-                        main_score=metric_name,
-                        metric=metric,
-                        preprocess_steps=[
-                            Copy(
-                                field_to_field={
-                                    "prediction": "task_data/answer",
-                                    "task_data/reference_answers": "task_data/ground_truths",
-                                },
-                                not_exist_ok=True,
-                            ),
-                            Copy(
-                                field_to_field={
-                                    "data_classification_policy": "task_data/data_classification_policy"
-                                },
-                                not_exist_ok=True,
-                                get_default=["public"],
-                            ),
-                            Set(
-                                fields={
-                                    "prediction": 0.0,  # these are not used by the metric
-                                    "references": [0.0],
-                                }
-                            ),
-                        ],
-                    )
+                        metric_pipeline = MetricPipeline(
+                            main_score=metric_name,
+                            metric=metric,
+                            preprocess_steps=[
+                                Copy(
+                                    field_to_field={
+                                        "prediction": "task_data/answer",
+                                        "task_data/reference_answers": "task_data/ground_truths",
+                                    },
+                                    not_exist_ok=True,
+                                ),
+                                Copy(
+                                    field_to_field={
+                                        "data_classification_policy": "task_data/data_classification_policy"
+                                    },
+                                    not_exist_ok=True,
+                                    get_default=["public"],
+                                ),
+                                Set(
+                                    fields={
+                                        "prediction": 0.0,  # these are not used by the metric
+                                        "references": [0.0],
+                                    }
+                                ),
+                            ],
+                        )
 
-                    add_to_catalog(
-                        metric_pipeline,
-                        name=f"metrics.rag.{metric_type}.{metric_name}",
-                        overwrite=True,
-                    )
+                        add_to_catalog(
+                            metric_pipeline,
+                            name=f"metrics.rag.{metric_type}.{metric_name}",
+                            overwrite=True,
+                        )
 
 
 add_judge_metrics()

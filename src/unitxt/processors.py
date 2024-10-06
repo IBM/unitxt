@@ -380,6 +380,6 @@ class FloatToOneOrZeroReturnZeroIfFails(FieldOperator):
 
     def process_value(self, text: Any) -> Any:
         try:
-            return int(float(text) > self.max_negative_val)
+            return int(float(text) > self.threshold)
         except ValueError:
             return 0
