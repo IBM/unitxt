@@ -1,0 +1,42 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "context_relevance_q_c_judge_gpt_4_turbo_binary",
+    "metric": {
+        "__type__": "generative_binary_judge_open_ai",
+        "main_score": "context_relevance_q_c_judge_gpt_4_turbo_binary",
+        "model_name": "gpt-4-turbo",
+        "task_name": "tasks.rag_eval.context_relevance.binary",
+        "template_name": "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs",
+        "model_format_name": "formats.empty",
+        "binary_predictions": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer",
+                "task_data/reference_answers": "task_data/ground_truths"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}

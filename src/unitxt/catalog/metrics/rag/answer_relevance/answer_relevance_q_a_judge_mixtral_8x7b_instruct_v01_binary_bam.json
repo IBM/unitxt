@@ -1,0 +1,42 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "answer_relevance_q_a_judge_mixtral_8x7b_instruct_v01_binary_bam",
+    "metric": {
+        "__type__": "generative_binary_judge_bam",
+        "main_score": "answer_relevance_q_a_judge_mixtral_8x7b_instruct_v01_binary_bam",
+        "model_name": "mistralai/mixtral-8x7b-instruct-v01",
+        "task_name": "tasks.rag_eval.answer_relevance.binary",
+        "template_name": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
+        "model_format_name": "formats.empty",
+        "binary_predictions": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer",
+                "task_data/reference_answers": "task_data/ground_truths"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "data_classification_policy": "task_data/data_classification_policy"
+            },
+            "not_exist_ok": true,
+            "get_default": [
+                "public"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}

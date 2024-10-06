@@ -7,7 +7,8 @@
         "model_name": "gpt-4-turbo",
         "task_name": "tasks.rag_eval.context_relevance.binary",
         "template_name": "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs",
-        "model_format_name": "formats.empty"
+        "model_format_name": "formats.empty",
+        "binary_predictions": false
     },
     "preprocess_steps": [
         {
