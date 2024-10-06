@@ -8,7 +8,6 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
-from operator import itemgetter
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
 import evaluate
@@ -664,24 +663,18 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
+
         instances = []
 
-        # consume the stream
-        references, predictions = map(
-            list,
-            zip(
-                *[
-                    itemgetter("references", "prediction")(
-                        self.verify_instance(instance)
-                    )
-                    for instance in stream
-                ]
-            ),
-        )
+        for instance in stream:
+            self.verify_instance(instance)
+            instances.append(instance)
 
+        predictions = [instance["prediction"] for instance in instances]
+        references = [instance["references"] for instance in instances]
         task_data = [
             instance["task_data"] if "task_data" in instance else {}
-            for instance in stream
+            for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
@@ -696,7 +689,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
 
-        for instance, score in zip(stream, instance_scores):
+        for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
 
@@ -705,7 +698,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
             assert (
@@ -4976,3 +4968,20 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
             )
         score = ensemble_model.predict([prediction_lst])
         return score.tolist()[0]
+
+
+class PredictionLength(InstanceMetric):
+    """Returns the length of the prediction."""
+
+    main_score = "prediction_length"
+    reduction_map = {"mean": ["prediction_length"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        return {self.main_score: [len(prediction)], "score_name": self.main_score}
