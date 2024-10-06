@@ -4968,3 +4968,20 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
             )
         score = ensemble_model.predict([prediction_lst])
         return score.tolist()[0]
+
+
+class PredictionLength(InstanceMetric):
+    """Returns the length of the prediction."""
+
+    main_score = "prediction_length"
+    reduction_map = {"mean": ["prediction_length"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        return {self.main_score: [len(prediction)], "score_name": self.main_score}
