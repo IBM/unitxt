@@ -8,7 +8,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.test_utils.card import test_card
 
-configs = get_dataset_config_names("GEM/xlsum")  # the languages
+configs = get_dataset_config_names("GEM/xlsum", trust_remote_code=True)  # the languages
 # now configs is the list of all languages showing in the dataset
 
 
