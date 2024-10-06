@@ -1,26 +1,36 @@
+import cProfile
+import pstats
+import sys
+from io import StringIO
+
 from unitxt.api import load_recipe
 from unitxt.artifact import fetch_artifact
 from unitxt.logging_utils import get_logger
+from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 from unitxt.stream import MultiStream
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
+settings = get_settings()
+settings.allow_unverified_code = True
 
 
 class CardProfiler:
     """Profiles the execution-time of api.load_dataset().
 
-    Usage: set parameters  card, template, format,   or any way you would invoke load_dateset() with,
+    Usage: set parameters: card, template, format, or any way you would invoke load_dateset() with,
 
     from unitxt root dir, run the following linux commands:
 
     (pip install snakeviz)
-    python -m cProfile -o profile/logs/name_reflecting_parameters.prof profile/card_profiler.py
-    snakeviz profile/logs/name_reflecting_parameters.prof
+    python profile/card_profiler.py
+    snakeviz profile/logs/benchmark_cards.prof
 
-    A browser window will open with all time-details. See here how to explore these details:
-    see https://jiffyclub.github.io/snakeviz/
+    An interactive browser window will open allowing to explore all time-details. See exporing options here:
+    https://jiffyclub.github.io/snakeviz/
+    (can also use the -s flag for snakeviz which will only set up a server and print out the url
+    to use from another computer in order to view results shown by that server)
 
     look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process
     """
@@ -81,14 +91,33 @@ def main_from_example():
     card_profiler.profiler_do_the_profiling(card=card, template=template, format=format)
 
 
-def main_from_card():
-    card = "cards.cola"
-    task_card, _ = fetch_artifact(card)
-    template = task_card.templates.items[0]
+def main_from_cards():
+    # cards = ["cards.cola", "cards.dart"]  # the benchmark
+    cards = ["cards.cola"]  # the benchmark
+    for card in cards:
+        task_card, _ = fetch_artifact(card)
+        template = task_card.templates.items[0]
 
-    card_profiler = CardProfiler()
-    card_profiler.profiler_do_the_profiling(card=task_card, template=template)
+        card_profiler = CardProfiler()
+        card_profiler.profiler_do_the_profiling(card=task_card, template=template)
 
 
 if __name__ == "__main__":
-    main_from_card()
+    cProfile.run(
+        "main_from_cards()", "profile/logs/benchmark_cards.prof"
+    )  # can change here to the other main_from_
+    f = StringIO()
+    pst = pstats.Stats("profile/logs/benchmark_cards.prof", stream=f)
+    pst.strip_dirs()
+    pst.sort_stats("name")  # sort by function name
+    pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
+    s = f.getvalue()
+    assert s.split("\n")[7].split()[3] == "cumtime"
+    assert "profiler_do_the_profiling" in s.split("\n")[8]
+    tot_time = round(float(s.split("\n")[8].split()[3]), 3)
+    assert "profiler_load_by_recipe" in s.split("\n")[9]
+    load_time = round(float(s.split("\n")[9].split()[3]), 3)
+    logger.info(
+        f"tot={tot_time}, load={load_time}, diff={round(tot_time-load_time, 3)}"
+    )
+    sys.exit(round(tot_time - load_time, 3))
