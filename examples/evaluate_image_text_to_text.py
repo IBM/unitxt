@@ -20,7 +20,7 @@ with settings.context(
         streaming=True,
     )
 
-    test_dataset = list(tqdm(dataset["test"]))
+    test_dataset = list(tqdm(dataset["test"], total=300))
 
     predictions = inference_model.infer(test_dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

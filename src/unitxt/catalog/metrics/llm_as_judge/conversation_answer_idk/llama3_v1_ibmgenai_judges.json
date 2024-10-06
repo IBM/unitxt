@@ -2,7 +2,7 @@
     "__type__": "llm_as_judge",
     "inference_model": {
         "__type__": "ibm_gen_ai_inference_engine",
-        "model_name": "ibm/granite-13b-instruct-v2",
+        "model_name": "meta-llama/llama-3-70b-instruct",
         "parameters": {
             "__type__": "ibm_gen_ai_inference_engine_params",
             "max_new_tokens": 256
