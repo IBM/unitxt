@@ -1,0 +1,7 @@
+{
+    "__type__": "post_process",
+    "process_references": false,
+    "operator": {
+        "__type__": "float_to_one_or_zero_return_zero_if_fails"
+    }
+}

@@ -376,7 +376,7 @@ class InferDictsToBinaryLogprobs(FieldOperator):
 
 
 class FloatToOneOrZeroReturnZeroIfFails(FieldOperator):
-    max_negative_val: float = 0.5
+    threshold: float = 0.5
 
     def process_value(self, text: Any) -> Any:
         try:
