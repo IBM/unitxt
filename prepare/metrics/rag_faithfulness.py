@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import (
     MetricPipeline,
 )
-from unitxt.operators import Copy, Rename
+from unitxt.operators import Copy, Rename, Set
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 base = "metrics.rag.faithfulness"
@@ -26,6 +26,22 @@ for new_catalog_name, base_catalog_name, main_score in [
             Copy(field="answer", to_field="prediction"),
         ],
         metric=base_catalog_name,
+        postprocess_steps=[
+            Set(fields={"score/instance/score_name": main_score}),
+            Set(fields={"score/global/score_name": main_score}),
+            Copy(
+                field_to_field=[
+                    [
+                        f"score/global/{main_score}_ci_low",
+                        "score/global/score_ci_low",
+                    ],
+                    [
+                        f"score/global/{main_score}_ci_high",
+                        "score/global/score_ci_high",
+                    ],
+                ],
+            ),
+        ],
     )
     add_to_catalog(metric, f"{base}.{new_catalog_name}", overwrite=True)
 
@@ -141,14 +157,14 @@ def test_faithfulness_token_k_precision():
             "precision": 1.0,
             "recall": 0.5,
             "score": 1.0,
-            "score_name": "f1",
+            "score_name": "precision",
         },
         {
             "f1": 0.5,
             "precision": 0.33,
             "recall": 1.0,
             "score": 0.33,
-            "score_name": "f1",
+            "score_name": "precision",
         },
     ]
 
@@ -163,9 +179,9 @@ def test_faithfulness_token_k_precision():
         "recall_ci_high": 1.0,
         "recall_ci_low": 0.5,
         "score": 0.67,
-        "score_ci_high": 0.67,
-        "score_ci_low": 0.5,
-        "score_name": "f1",
+        "score_ci_high": 1.0,
+        "score_ci_low": 0.33,
+        "score_name": "precision",
     }
 
     for catalog_name, global_target, instance_targets in [
