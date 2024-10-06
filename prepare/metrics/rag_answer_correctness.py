@@ -184,22 +184,24 @@ def test_answer_correctness_token_recall(task_data):
         )
 
 
-if __name__ == "__main__":
-    # don't use "A" as a token because it is considered an article and removed by the token overlap
-    # metric
-    task_data = [
-        {  # recall is 0.5 for the first ground_truth, 0 for the second ground_truth.
-            # so overall its max(0.5, 0) = 0.5
-            "ground_truths": ["B C", "C"],
-            "answer": "B",
-        },
-        {  # recall is 1/3
-            "ground_truths": ["D E F"],
-            "answer": "B C D",
-        },
-    ]
+# don't use "A" as a token because it is considered an article and removed by the token overlap
+# metric
+task_data = [
+    {  # recall is 0.5 for the first ground_truth, 0 for the second ground_truth.
+        # so overall its max(0.5, 0) = 0.5
+        "ground_truths": ["B C", "C"],
+        "answer": "B",
+    },
+    {  # recall is 1/3
+        "ground_truths": ["D E F"],
+        "answer": "B C D",
+    },
+]
+# This test is here since it does not involve any models
+test_answer_correctness_token_recall(task_data)
 
-    test_answer_correctness_token_recall(task_data)
+if __name__ == "__main__":
+    # Tests which involve models:
     test_answer_correctness_sentence_bert()
 
     test_answer_correctness(
