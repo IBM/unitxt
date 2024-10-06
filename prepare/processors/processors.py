@@ -259,6 +259,6 @@ add_to_catalog(
 
 add_to_catalog(
     PostProcess(FloatToOneOrZeroReturnZeroIfFails(), process_references=False),
-    "processors.float_to_one_zero_return_zero_if_fails",
+    "processors.float_to_one_or_zero_return_zero_if_fails",
     overwrite=True,
 )
