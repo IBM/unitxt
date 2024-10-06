@@ -7,8 +7,6 @@ from typing import Any, Dict
 
 import numpy as np
 
-import numpy as np
-
 from .deprecation_utils import deprecation
 from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
@@ -375,3 +373,13 @@ class InferDictsToBinaryLogprobs(FieldOperator):
         if self.take_logprobs_from_end:
             return range(-1, -(n_tokens + 1), -1)
         return range(n_tokens)
+
+
+class FloatToOneOrZeroReturnZeroIfFails(FieldOperator):
+    max_negative_val: float = 0.5
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            return int(float(text) > self.max_negative_val)
+        except ValueError:
+            return 0

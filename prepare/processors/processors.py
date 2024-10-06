@@ -10,6 +10,7 @@ from unitxt.processors import (
     ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
     FirstCharacter,
+    FloatToOneOrZeroReturnZeroIfFails,
     GetStringAfter,
     InferDictsToBinaryLogprobs,
     LiteralEval,
@@ -230,34 +231,34 @@ add_to_catalog(
 
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            InferDictsToBinaryLogprobs(
-                neg_class_name="No",
-                pos_class_name="Yes",
-                num_logprobs_to_take=3,
-                field="prediction",
-                process_every_value=False,
-            ),
-        ]
+    PostProcess(
+        InferDictsToBinaryLogprobs(
+            neg_class_name="No",
+            pos_class_name="Yes",
+            num_logprobs_to_take=3,
+        ),
+        process_references=False,
     ),
     "processors.infer_logprobs_to_yes_no_probs",
     overwrite=True,
 )
 
 add_to_catalog(
-    SequentialOperator(
-        steps=[
-            InferDictsToBinaryLogprobs(
-                neg_class_name="No",
-                pos_class_name="Yes",
-                take_logprobs_from_end=True,
-                num_logprobs_to_take=3,
-                field="prediction",
-                process_every_value=False,
-            ),
-        ]
+    PostProcess(
+        InferDictsToBinaryLogprobs(
+            neg_class_name="No",
+            pos_class_name="Yes",
+            take_logprobs_from_end=True,
+            num_logprobs_to_take=3,
+        ),
+        process_references=False,
     ),
     "processors.infer_last_token_logprobs_to_yes_no_probs",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(FloatToOneOrZeroReturnZeroIfFails(), process_references=False),
+    "processors.float_to_one_zero_return_zero_if_fails",
     overwrite=True,
 )
