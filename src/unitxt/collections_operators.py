@@ -3,7 +3,7 @@ from typing import Any, Generator, List, Optional
 from .dict_utils import dict_get, dict_set
 from .operators import FieldOperator, StreamOperator
 from .stream import Stream
-from .utils import deepcopy
+from .utils import recursive_shallow_copy
 
 
 class Dictify(FieldOperator):
@@ -70,10 +70,10 @@ class DuplicateByList(StreamOperator):
             elements = dict_get(instance, self.field)
             for element in elements:
                 if self.use_deep_copy:
-                    instance_copy = deepcopy(instance)
+                    instance_copy = recursive_shallow_copy(instance)
 
                 else:
-                    instance_copy = {**instance}
+                    instance_copy = instance.copy()
                 dict_set(instance_copy, to_field, element)
                 yield instance_copy
 
@@ -93,7 +93,7 @@ class DuplicateBySubLists(StreamOperator):
             elements = instance[self.field]
             for i in range(1, len(elements) + 1):
                 if self.use_deep_copy:
-                    instance_copy = deepcopy(instance)
+                    instance_copy = recursive_shallow_copy(instance)
                     instance_copy[to_field] = elements[:i]
                 else:
                     instance_copy = {

@@ -8,9 +8,9 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
+from functools import lru_cache
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
-import evaluate
 import numpy
 import numpy as np
 import pandas as pd
@@ -41,12 +41,10 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deepcopy
+from .utils import deep_copy
 
 logger = get_logger()
 settings = get_settings()
-
-warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
@@ -1320,6 +1318,19 @@ class ANLS(InstanceMetric):
     reduction_map = {"mean": ["anls"]}
     prediction_type = Any  # string representation is compared
 
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def preprocess_text(text):
+        return " ".join(text.strip().lower().split()), len(text.upper())
+
+    def distance(self, prediction, reference):
+        processed_reference, len_reference = self.preprocess_text(reference)
+        processed_prediction, len_prediction = self.preprocess_text(prediction)
+
+        dist = self.levenshtein_distance(processed_reference, processed_prediction)
+        length = max(len_reference, len_prediction)
+        return 0.0 if length == 0 else float(dist) / float(length)
+
     def compute(
         self,
         references: List[Any],
@@ -1329,20 +1340,14 @@ class ANLS(InstanceMetric):
     ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
-        for answer in references:
-            # preprocess both the answers - gt and prediction
-            gt_answer = " ".join(answer.strip().lower().split())
-            det_answer = " ".join(prediction.strip().lower().split())
-
-            # dist = levenshtein_distance(answer.lower(), detObject['answer'].lower())
-            dist = self.levenshtein_distance(gt_answer, det_answer)
-            length = max(len(answer.upper()), len(prediction.upper()))
-            values.append(0.0 if length == 0 else float(dist) / float(length))
+        for reference in references:
+            values.append(self.distance(prediction, reference))
 
         question_result = 1.0 - min(values)
 
         if question_result < threshold:
             question_result = 0.0
+
         result = {}
         result["score"] = question_result
         result[self.main_score] = question_result
@@ -1350,6 +1355,7 @@ class ANLS(InstanceMetric):
         return result
 
     @staticmethod
+    @lru_cache(maxsize=10000)
     def levenshtein_distance(s1, s2):
         if len(s1) > len(s2):
             s1, s2 = s2, s1
@@ -1594,6 +1600,8 @@ class HuggingfaceMetric(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=self.experiment_id
         )
@@ -1668,6 +1676,8 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
@@ -1714,6 +1724,8 @@ class HuggingfaceInstanceMetric(InstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
@@ -1793,6 +1805,8 @@ class F1(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
 
     def get_str_id(self, str):
@@ -2070,6 +2084,8 @@ class F1MultiLabel(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self._metric = evaluate.load(
             self.metric, "multilabel", experiment_id=str(uuid.uuid4())
         )
@@ -3732,7 +3748,7 @@ class RemoteMetric(StreamOperator, Metric):
         remotely (pre and post processing steps in the MetricPipeline will be computed locally).
         """
         local_inner_metric = metric_pipeline.metric
-        metric_pipeline = deepcopy(
+        metric_pipeline = deep_copy(
             metric_pipeline
         )  # To avoid unintentional changes to the catalog contents
         metric_pipeline.metric = RemoteMetric(
