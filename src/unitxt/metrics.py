@@ -4983,6 +4983,7 @@ class GenerativeBinaryJudge(TaskBasedJudgeMetric):
     inference_model: InferenceEngine = None
     generation_kwargs: dict = {}
     host_name: str
+    binary_predictions: bool = False
 
     def prepare(self):
         super().prepare()
@@ -4998,6 +4999,11 @@ class GenerativeBinaryJudge(TaskBasedJudgeMetric):
                 "processors.infer_logprobs_to_yes_no_probs",
                 "processors.cast_to_float_return_zero_if_failed",
             ]
+            + (
+                ["processors.float_to_one_or_zero_return_zero_if_fails"]
+                if self.binary_predictions
+                else []
+            )
         )
 
     def compute(
