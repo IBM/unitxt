@@ -21,6 +21,12 @@
             }
         },
         {
+            "__type__": "set",
+            "fields": {
+                "score/global/score_name": "recall"
+            }
+        },
+        {
             "__type__": "copy",
             "field_to_field": [
                 [

@@ -55,6 +55,7 @@ for new_catalog_name, base_catalog_name, main_score in [
         ],
         postprocess_steps=[
             Set(fields={"score/instance/score_name": main_score}),
+            Set(fields={"score/global/score_name": main_score}),
             Copy(
                 field_to_field=[
                     [
@@ -164,7 +165,7 @@ def test_answer_correctness_token_recall(task_data):
         "score": 0.42,
         "score_ci_high": 0.5,
         "score_ci_low": 0.33,
-        "score_name": "f1",
+        "score_name": "recall",
     }
 
     for catalog_name, global_target, instance_targets in [
@@ -220,7 +221,7 @@ if __name__ == "__main__":
             "score": 0.71,
             "score_ci_high": 0.71,
             "score_ci_low": 0.71,
-            "score_name": "f1",
+            "score_name": "recall",
         },
         instance_targets=[
             {
@@ -256,7 +257,7 @@ if __name__ == "__main__":
             "score": 0.86,
             "score_ci_high": 0.97,
             "score_ci_low": 0.74,
-            "score_name": "f1",
+            "score_name": "recall",
         },
         instance_targets=[
             {
