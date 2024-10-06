@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy, Rename
+from unitxt.operators import Copy, Rename, Set
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 
@@ -52,6 +52,21 @@ for new_catalog_name, base_catalog_name, main_score in [
         preprocess_steps=[
             Copy(field="ground_truths", to_field="references"),
             Copy(field="answer", to_field="prediction"),
+        ],
+        postprocess_steps=[
+            Set(fields={"score/instance/score_name": main_score}),
+            Copy(
+                field_to_field=[
+                    [
+                        f"score/global/{main_score}_ci_low",
+                        "score/global/score_ci_low",
+                    ],
+                    [
+                        f"score/global/{main_score}_ci_high",
+                        "score/global/score_ci_high",
+                    ],
+                ],
+            ),
         ],
         metric=base_catalog_name,
     )
@@ -118,30 +133,21 @@ def test_answer_correctness_sentence_bert():
     )
 
 
-if __name__ == "__main__":
-    test_answer_correctness_sentence_bert()
-    # don't use "A" as a token because it is considered an article and removed by the token overlap
-    # metric
-    task_data = [
-        {  # recall is 0.5 for the first ground_truth, 0 for the second ground_truth.
-            # so overall its max(0.5, 0) = 0.5
-            "ground_truths": ["B C", "C"],
-            "answer": "B",
-        },
-        {  # recall is 1/3
-            "ground_truths": ["D E F"],
-            "answer": "B C D",
-        },
-    ]
-
+def test_answer_correctness_token_recall(task_data):
     recall_instance_targets = [
-        {"f1": 0.67, "precision": 1.0, "recall": 0.5, "score": 0.5, "score_name": "f1"},
+        {
+            "f1": 0.67,
+            "precision": 1.0,
+            "recall": 0.5,
+            "score": 0.5,
+            "score_name": "recall",
+        },
         {
             "f1": 0.33,
             "precision": 0.33,
             "recall": 0.33,
             "score": 0.33,
-            "score_name": "f1",
+            "score_name": "recall",
         },
     ]
 
@@ -156,7 +162,7 @@ if __name__ == "__main__":
         "recall_ci_high": 0.5,
         "recall_ci_low": 0.33,
         "score": 0.42,
-        "score_ci_high": 0.67,
+        "score_ci_high": 0.5,
         "score_ci_low": 0.33,
         "score_name": "f1",
     }
@@ -167,15 +173,38 @@ if __name__ == "__main__":
             recall_global_target,
             recall_instance_targets,
         ),
-        ("metrics.rag.recall", recall_global_target, recall_instance_targets),
+        (
+            "metrics.rag.answer_correctness.token_recall",
+            recall_global_target,
+            recall_instance_targets,
+        ),
     ]:
         test_answer_correctness(
             task_data, catalog_name, global_target, instance_targets
         )
 
+
+if __name__ == "__main__":
+    # don't use "A" as a token because it is considered an article and removed by the token overlap
+    # metric
+    task_data = [
+        {  # recall is 0.5 for the first ground_truth, 0 for the second ground_truth.
+            # so overall its max(0.5, 0) = 0.5
+            "ground_truths": ["B C", "C"],
+            "answer": "B",
+        },
+        {  # recall is 1/3
+            "ground_truths": ["D E F"],
+            "answer": "B C D",
+        },
+    ]
+
+    test_answer_correctness_token_recall(task_data)
+    test_answer_correctness_sentence_bert()
+
     test_answer_correctness(
         task_data,
-        catalog_name="metrics.rag.bert_recall",
+        catalog_name="metrics.rag.answer_correctness.bert_score_recall",
         global_target={
             "f1": 0.71,
             "f1_ci_high": 0.71,
@@ -197,21 +226,21 @@ if __name__ == "__main__":
                 "precision": 0.77,
                 "recall": 0.71,
                 "score": 0.71,
-                "score_name": "f1",
+                "score_name": "recall",
             },
             {
                 "f1": 0.71,
                 "precision": 0.71,
                 "recall": 0.71,
                 "score": 0.71,
-                "score_name": "f1",
+                "score_name": "recall",
             },
         ],
     )
 
     test_answer_correctness(
         task_data,
-        catalog_name="metrics.rag.bert_recall_ml",
+        catalog_name="metrics.rag.answer_correctness.bert_score_recall_ml",
         global_target={
             "f1": 0.86,
             "f1_ci_high": 0.97,
@@ -233,14 +262,14 @@ if __name__ == "__main__":
                 "precision": 0.97,
                 "recall": 0.97,
                 "score": 0.97,
-                "score_name": "f1",
+                "score_name": "recall",
             },
             {
                 "f1": 0.74,
                 "precision": 0.74,
                 "recall": 0.74,
                 "score": 0.74,
-                "score_name": "f1",
+                "score_name": "recall",
             },
         ],
     )
