@@ -318,9 +318,11 @@ class OpenAiInferenceEngine(
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
     @classmethod
-    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
+    def get_api_param(
+        cls, inference_engine: str, api_param_env_var_name: str, none_ok: bool = False
+    ):
         api_key = os.environ.get(api_param_env_var_name)
-        assert api_key is not None, (
+        assert none_ok or api_key is not None, (
             f"Error while trying to run {inference_engine}."
             f" Please set the environment param '{api_param_env_var_name}'."
         )
@@ -406,6 +408,7 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
         api_key = self.get_api_param(
             inference_engine="VLLMRemoteInferenceEngine",
             api_param_env_var_name="VLLM_API_KEY",
+            none_ok=True,
         )
         api_url = self.get_api_param(
             inference_engine="VLLMRemoteInferenceEngine",

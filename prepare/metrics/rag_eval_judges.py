@@ -2,6 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import (
     GenerativeBinaryJudgeBAM,
     GenerativeBinaryJudgeOpenAi,
+    GenerativeBinaryJudgeVLLM,
     GenerativeBinaryJudgeWML,
     MetricPipeline,
 )
@@ -31,6 +32,7 @@ model_names_to_metric_classes = {
     "mistralai/mixtral-8x7b-instruct-v01": [
         GenerativeBinaryJudgeWML,
         GenerativeBinaryJudgeBAM,
+        GenerativeBinaryJudgeVLLM,
     ],
     "meta-llama/llama-3-1-405b-instruct-fp8": [GenerativeBinaryJudgeBAM],
 }
@@ -56,6 +58,9 @@ def add_judge_metrics():
 
                     if judge_metric_class == GenerativeBinaryJudgeBAM:
                         metric_name += "_bam"
+                    if judge_metric_class == GenerativeBinaryJudgeVLLM:
+                        metric_name += "_vllm"
+
                     metric = judge_metric_class(
                         main_score=metric_name,
                         model_name=judge_model_name,
