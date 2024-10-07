@@ -157,13 +157,13 @@ class SerializeOpenAiFormatDialog(SerializeDialog):
                     f"Entry {i} has a non-string 'content': {entry['content']}. The 'content' value must be a string."
                 )
 
-            if entry["role"] not in {"user", "assistant"}:
+            if entry["role"].lower() not in {"user", "assistant"}:
                 raise ValueError(
                     f"Entry {i} has an invalid role: {entry['role']}. Allowed roles are 'user' and 'assistant'."
                 )
 
         first_entry = dialog[0]
-        if first_entry["role"] != "user":
+        if first_entry["role"].lower() != "user":
             raise ValueError(
                 f"First entry role is expected to be 'user' It is  {first_entry['role']}."
             )
