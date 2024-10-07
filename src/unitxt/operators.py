@@ -1405,7 +1405,7 @@ class ComputeExpressionMixin(Artifact):
 
     def compute_expression(self, instance: dict) -> Any:
         if settings.allow_unverified_code:
-            return eval(self.expression, self.globals, instance)
+            return eval(self.expression, {**self.globals, **instance})
 
         raise ValueError(
             f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
