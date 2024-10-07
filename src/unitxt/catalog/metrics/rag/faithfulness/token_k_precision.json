@@ -13,5 +13,32 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.token_overlap"
+    "metric": "metrics.token_overlap",
+    "postprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "score/instance/score_name": "precision"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "score/global/score_name": "precision"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": [
+                [
+                    "score/global/precision_ci_low",
+                    "score/global/score_ci_low"
+                ],
+                [
+                    "score/global/precision_ci_high",
+                    "score/global/score_ci_high"
+                ]
+            ]
+        }
+    ]
 }

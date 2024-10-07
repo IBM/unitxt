@@ -22,7 +22,12 @@ from .parsing_utils import (
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import issubtype
-from .utils import artifacts_json_cache, deepcopy, json_dump, save_to_file
+from .utils import (
+    artifacts_json_cache,
+    json_dump,
+    save_to_file,
+    shallow_copy,
+)
 
 logger = get_logger()
 settings = get_settings()
@@ -405,7 +410,7 @@ def get_raw(obj):
     if isinstance(obj, dict):
         return type(obj)({get_raw(k): get_raw(v) for k, v in obj.items()})
 
-    return deepcopy(obj)
+    return shallow_copy(obj)
 
 
 class ArtifactList(list, Artifact):

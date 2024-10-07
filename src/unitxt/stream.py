@@ -10,7 +10,7 @@ from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
 from .settings_utils import get_settings
-from .utils import deepcopy
+from .utils import recursive_copy
 
 settings = get_settings()
 logger = get_logger()
@@ -40,7 +40,7 @@ class ListStream(Stream):
 
     def __iter__(self):
         if self.copying:
-            return iter(deepcopy(self.instances_list))
+            return iter(recursive_copy(self.instances_list))
         return iter(self.instances_list)
 
     def peek(self):

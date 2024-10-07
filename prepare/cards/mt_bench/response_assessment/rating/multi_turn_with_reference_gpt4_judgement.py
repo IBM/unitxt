@@ -8,7 +8,6 @@ from unitxt.operators import (
     InterleaveListsToDialogOperator,
     Rename,
 )
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -23,7 +22,6 @@ card = TaskCard(
     ),
     preprocess_steps=[
         "operators.mt_bench.rating_hf_space_processing_steps",
-        RenameSplits({"train": "test"}),
         FilterByCondition(values={"turn": 2}, condition="eq"),
         FilterByCondition(values={"reference": None}, condition="ne"),
         Rename(field_to_field={"score": "rating", "category": "group"}),

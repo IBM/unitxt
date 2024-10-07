@@ -1010,7 +1010,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
         import torch
 
         results = []
-        for instance in dataset:
+        for instance in tqdm(dataset):
             text = instance["source"]
             images = extract_images(text, instance)
             # Regular expression to match all <img src="..."> tags
@@ -1023,7 +1023,10 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
             ).to(self.device, torch.float16)
             input_len = len(inputs["input_ids"][0])
             output = self.model.generate(
-                **inputs, max_new_tokens=self.max_new_tokens, do_sample=False
+                **inputs,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False,
+                pad_token_id=self.processor.tokenizer.eos_token_id,
             )
             result = self.processor.decode(
                 output[0][input_len:], skip_special_tokens=True

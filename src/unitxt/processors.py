@@ -22,9 +22,9 @@ class PostProcess(MultiStreamOperator):
 
     def prepare(self):
         super().prepare()
-        self.prediction_operator = copy.deepcopy(self.operator)
+        self.prediction_operator = copy.copy(self.operator)
         self.prediction_operator.field = "prediction"
-        self.references_operator = copy.deepcopy(self.operator)
+        self.references_operator = copy.copy(self.operator)
         self.references_operator.field = "references"
         self.references_operator.process_every_value = True
         self.references_operator.dont_apply_to_streams = [constants.inference_stream]
