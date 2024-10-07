@@ -3,7 +3,10 @@ import os
 from unitxt.benchmark import Benchmark
 from unitxt.catalog import add_to_catalog
 
-BLUEBENCH_PATH = "src/unitxt/catalog/recipes/bluebench"
+BLUEBENCH_PATH = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)),
+    "../../src/unitxt/catalog/recipes/bluebench",
+)
 bluebench_scenarios = {}
 
 bluebench_directory = os.fsencode(BLUEBENCH_PATH)
