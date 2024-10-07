@@ -53,7 +53,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import deepcopy
+from .utils import recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -745,7 +745,7 @@ class LoadFromDictionary(Loader):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
-        return MultiStream.from_iterables(deepcopy(self.data))
+        return MultiStream.from_iterables(recursive_copy(self.data))
 
 
 class LoadFromHFSpace(LoadHF):

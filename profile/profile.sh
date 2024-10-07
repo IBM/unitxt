@@ -1,1 +1,1 @@
-python -m cProfile -s tottime examples/example5.py > profile/logs/example5_profile.log
+python -m cProfile -s tottime examples/evaluate_image_text_to_text.py > profile/logs/evaluate_image_text_to_text.log
