@@ -13,12 +13,6 @@
     "preprocess_steps": [
         "operators.mt_bench.rating_hf_space_processing_steps",
         {
-            "__type__": "rename_splits",
-            "mapper": {
-                "train": "test"
-            }
-        },
-        {
             "__type__": "filter_by_condition",
             "values": {
                 "turn": 2
