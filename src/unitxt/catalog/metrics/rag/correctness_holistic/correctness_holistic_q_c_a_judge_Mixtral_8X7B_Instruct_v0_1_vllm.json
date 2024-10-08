@@ -1,12 +1,12 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "answer_correctness_q_a_gt_strict_judge_mixtral_8x7b_instruct_v01_vllm",
+    "main_score": "correctness_holistic_q_c_a_judge_Mixtral_8X7B_Instruct_v0_1_vllm",
     "metric": {
         "__type__": "generative_binary_judge_vllm",
-        "main_score": "answer_correctness_q_a_gt_strict_judge_mixtral_8x7b_instruct_v01_vllm",
-        "model_name": "mistralai/mixtral-8x7b-instruct-v01",
-        "task_name": "tasks.rag_eval.answer_correctness.binary",
-        "template_name": "templates.rag_eval.answer_correctness.judge_simplified_format_logprobs",
+        "main_score": "correctness_holistic_q_c_a_judge_Mixtral_8X7B_Instruct_v0_1_vllm",
+        "model_name": "mistralai/Mixtral-8X7B-Instruct-v0.1",
+        "task_name": "tasks.rag_eval.correctness_holistic.binary",
+        "template_name": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
         "model_format_name": "formats.empty"
     },
     "preprocess_steps": [

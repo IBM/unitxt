@@ -1,3 +1,5 @@
+import re
+
 from unitxt import add_to_catalog
 from unitxt.metrics import (
     GenerativeBinaryJudgeBAM,
@@ -32,10 +34,14 @@ model_names_to_metric_classes = {
     "mistralai/mixtral-8x7b-instruct-v01": [
         GenerativeBinaryJudgeWML,
         GenerativeBinaryJudgeBAM,
+    ],
+    "mistralai/Mixtral-8X7B-Instruct-v0.1": [
         GenerativeBinaryJudgeVLLM,
     ],
     "meta-llama/llama-3-1-405b-instruct-fp8": [GenerativeBinaryJudgeBAM],
 }
+
+replacement_regex = re.compile(r"[.\-]")
 
 
 def add_judge_metrics():
@@ -54,7 +60,12 @@ def add_judge_metrics():
                     input_fields_str,
                     template_name,
                 ) in input_fields_to_template_name.items():
-                    metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
+                    model_name = replacement_regex.sub(
+                        "_", judge_model_name.split("/")[-1]
+                    )
+                    metric_name = (
+                        f"""{metric_type}_{input_fields_str}_judge_{model_name}"""
+                    )
 
                     if judge_metric_class == GenerativeBinaryJudgeBAM:
                         metric_name += "_bam"
