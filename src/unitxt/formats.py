@@ -229,6 +229,7 @@ class HFSystemFormat(BaseFormat):
     _requirements_list = ["transformers"]
 
     def prepare(self):
+        super().prepare()
         from transformers import AutoTokenizer
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
