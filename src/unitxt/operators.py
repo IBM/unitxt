@@ -209,7 +209,7 @@ class MapInstanceValues(InstanceOperator):
         val_as_str = str(val)  # make sure the value is a string
         if (
             val_as_str in mapper
-        ):  # must deep copy value to avoide external modification to the mapped value (e.g. if it is a list)
+        ):  # must deep copy value to avoid external modification to the mapped value (e.g. if it is a list)
             return copy.deepcopy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
