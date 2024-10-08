@@ -1550,12 +1550,12 @@ class MetricPipeline(MultiStreamOperator, Metric):
                 Copy(
                     field=f"score/global/{self.metric._add_score_prefix(self.main_score)}_ci_low",
                     to_field="score/global/score_ci_low",
-                    not_exist_ok=True,
+                    not_exist_do_nothing=True,
                 ),
                 Copy(
                     field=f"score/global/{self.metric._add_score_prefix(self.main_score)}_ci_high",
                     to_field="score/global/score_ci_high",
-                    not_exist_ok=True,
+                    not_exist_do_nothing=True,
                 ),
                 Set(
                     fields={
