@@ -36,6 +36,7 @@ from .inference import (
     IbmGenAiInferenceEngine,
     InferenceEngine,
     OpenAiInferenceEngine,
+    VLLMRemoteInferenceEngine,
     WMLInferenceEngine,
 )
 from .logging_utils import get_logger
@@ -4895,6 +4896,13 @@ class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
     _requirements_list: list[str] = ["openai"]
     inference_engine_class = OpenAiInferenceEngine
     host_name = "openai"
+
+
+class GenerativeBinaryJudgeVLLM(GenerativeBinaryJudge):
+    generation_kwargs = {"logprobs": True, "max_tokens": 5, "temperature": 0.0}
+    _requirements_list: list[str] = ["openai"]
+    inference_engine_class = VLLMRemoteInferenceEngine
+    host_name = "vllm"
 
 
 class ArmoRMMetric(TaskBasedJudgeMetric):
