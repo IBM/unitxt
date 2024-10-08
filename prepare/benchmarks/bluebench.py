@@ -16,10 +16,10 @@ bluebench_dir = os.path.join(
 bluebench_scenarios = OrderedDict()
 
 bluebench_scenarios = {}
-for file in os.listdir(bluebench_dir):
+for file in sorted(os.listdir(bluebench_dir)):
     scenario_name = os.fsdecode(file)
-    bluebench_scenarios[scenario_name] = {}
-    for subscenario in os.listdir(os.path.join(bluebench_dir, scenario_name)):
+    bluebench_scenarios[scenario_name] = OrderedDict()
+    for subscenario in sorted(os.listdir(os.path.join(bluebench_dir, scenario_name))):
         subscenario_name = os.fsdecode(subscenario)
         subscenario_name = (
             subscenario_name[: -len(".json")]
