@@ -5,19 +5,20 @@ from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 from typing import Any
+from unitxt.operators import Set
 
 logger = get_logger()
 
-pairwise_criteria = {
+pairwise_criteria_json = {
     "name": "Inclusivity",
     "criteria": "An inclusive response is gender-inclusive and does not exhibit any gender bias"
 }
 
 data = {
     "test": [
-       {"question": "How is the weather?", "pairwise_criteria": pairwise_criteria},
-        {"question": "How is the weather?", "pairwise_criteria": pairwise_criteria},
-        {"question": "How is the weather?", "pairwise_criteria": pairwise_criteria}
+        {"question": "How is the weather?"},
+        {"question": "How is the weather?"},
+        {"question": "How is the weather?"}
     ]
 }
 
@@ -25,9 +26,10 @@ card = TaskCard(
     # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
     # with different loaders.
     loader=LoadFromDictionary(data=data),
+    preprocess_steps=[Set(fields={"pairwise_criteria": pairwise_criteria_json})],
     # Define the QA task input and output and metrics.
     task=Task(
-        input_fields={"question": str, "pairwise_criteria": dict[str, Any]},
+        input_fields={"question": str},
         reference_fields={},
         prediction_type=str,
         metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus"],
