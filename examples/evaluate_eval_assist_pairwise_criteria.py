@@ -29,7 +29,7 @@ card = TaskCard(
     preprocess_steps=[Set(fields={"pairwise_criteria": pairwise_criteria_json})],
     # Define the QA task input and output and metrics.
     task=Task(
-        input_fields={"question": str},
+        input_fields={"question": str, "pairwise_criteria": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
         metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus"],
