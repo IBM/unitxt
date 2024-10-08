@@ -18,36 +18,37 @@ settings = get_settings()
 settings.allow_unverified_code = True
 
 
+"""Profiles the execution-time of api.load_dataset(), over a benchmark of cards, comparing two branches.
+
+Usage: set values for variables cards (the benchmark) and base_branch (typically, main) against which to compare runtime
+
+from unitxt root dir, run the following linux commands:
+
+(pip install GitPython)
+python profile/card_profiler.py
+
+The script computes and prints out the net runtime (total runtime minus loading time) of the benchmark cards in
+the current branch, in the base_branch, and then divide the former by the latter and prints out the ratio of new to base.
+
+Also, employing cPrifile, the script generates in profile/logs both performance profiles:
+current_branch_benchmark_cards.prof  and  base_branch_benchmark_cards.prof
+These profiles can be viewed and explored via:
+(pip install snakeviz)
+snakeviz profile/logs/current_branch_benchmark_cards.prof
+and/or
+snakeviz profile/logs/base_branch_benchmark_cards.prof
+
+snakeviz opens an interactive internet browser window allowing to explore all time-details.
+See exporing options here: https://jiffyclub.github.io/snakeviz/
+(can also use the -s flag for snakeviz which will only set up a server and print out the url
+to use from another computer in order to view results shown by that server)
+
+In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
+You will find the total time of each step, accumulated along all cards in the benchmark.
+"""
+
+
 class CardProfiler:
-    """Profiles the execution-time of api.load_dataset(), over a benchmark of cards, comparing two branches.
-
-    Usage: set values for variables cards (the benchmark) and base_branch (typically, main) against which to compare runtime
-
-    from unitxt root dir, run the following linux commands:
-
-    (pip install GitPython)
-    python profile/card_profiler.py
-
-    The script computes and prints out the net runtime (total runtime minus loading time) of the benchmark cards in
-    the current branch, in the base_branch, and then divide the former by the latter and prints out the ratio of new to base.
-
-    Also, employing cPrifile, the script generates in profile/logs both performance profiles:
-    current_branch_benchmark_cards.prof  and  base_branch_benchmark_cards.prof
-    These profiles can be viewed and explored via:
-    (pip install snakeviz)
-    snakeviz profile/logs/current_branch_benchmark_cards.prof
-    and/or
-    snakeviz profile/logs/base_branch_benchmark_cards.prof
-
-    snakeviz opens an interactive internet browser window allowing to explore all time-details.
-    See exporing options here: https://jiffyclub.github.io/snakeviz/
-    (can also use the -s flag for snakeviz which will only set up a server and print out the url
-    to use from another computer in order to view results shown by that server)
-
-    In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
-    You will find the total time of each step, accumulated along all cards in the benchmark.
-    """
-
     def profiler_instantiate_recipe(self, **kwargs) -> StandardRecipe:
         return load_recipe(**kwargs)
 
