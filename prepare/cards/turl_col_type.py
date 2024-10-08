@@ -38,7 +38,11 @@ card = TaskCard(
                     This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
                 """.strip(),
             output_format="{annotations}",
-            postprocessors=["processors.to_list_by_comma"],
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.lower_case",
+                "processors.to_list_by_comma",
+            ],
         ),
     ],
     __description__=(
