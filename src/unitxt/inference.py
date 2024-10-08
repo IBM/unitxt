@@ -271,17 +271,17 @@ class IbmGenAiInferenceEngine(
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
-    frequency_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
+    frequency_penalty: Optional[float] = 0
+    presence_penalty: Optional[float] = 0
     max_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
-    top_p: Optional[float] = None
+    top_p: Optional[float] = 1
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = None
-    n: Optional[int] = None
+    n: Optional[int] = 1
     # parallel_tool_calls: bool = None
     service_tier: Optional[Literal["auto", "default"]] = None
 
