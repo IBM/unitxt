@@ -207,8 +207,10 @@ class MapInstanceValues(InstanceOperator):
 
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
-        if val_as_str in mapper:
-            return mapper[val_as_str]
+        if (
+            val_as_str in mapper
+        ):  # must deep copy value to avoide external modification to the mapped value (e.g. if it is a list)
+            return copy.deepcopy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
