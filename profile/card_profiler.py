@@ -27,10 +27,10 @@ class CardProfiler:
     python profile/card_profiler.py
     snakeviz profile/logs/benchmark_cards.prof
 
-    A browser window will open with all time-details. See here how to explore these details:
-    see https://jiffyclub.github.io/snakeviz/
+    An interactive browser window will open allowing to explore all time-details. See exporing options here:
+    https://jiffyclub.github.io/snakeviz/
     (can also use the -s flag for snakeviz which will only set up a server and print out the url
-    to use in order to view results from another computer)
+    to use from another computer in order to view results shown by that server)
 
     look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process
     """
