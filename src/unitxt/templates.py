@@ -210,7 +210,7 @@ class ApplyTemplate(InstanceOperator):
             if self.demos_field not in instance:
                 raise ValueError("Demos field is missing.")
             instance[self.demos_field] = [
-                self.apply(template, demo_instance, stream_name)
+                self.apply(template, demo_instance)
                 for demo_instance in instance[self.demos_field]
             ]
         dict_set(instance, "recipe_metadata/template", template)
