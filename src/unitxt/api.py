@@ -1,8 +1,6 @@
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
-from datasets import DatasetDict
-
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .logging_utils import get_logger
@@ -14,7 +12,7 @@ from .standard import StandardRecipe
 logger = get_logger()
 
 
-def load(source: Union[SourceOperator, str]) -> DatasetDict:
+def load(source: Union[SourceOperator, str]):
     assert isinstance(
         source, (SourceOperator, str)
     ), "source must be a SourceOperator or a string"
@@ -79,7 +77,9 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
     return recipe
 
 
-def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
+def load_dataset(
+    dataset_query: Optional[str] = None, streaming: bool = False, **kwargs
+):
     """Loads dataset.
 
     If the 'dataset_query' argument is provided, then dataset is loaded from a card in local
@@ -90,6 +90,7 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
         dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
             For example:
             "card=cards.wnli,template=templates.classification.multi_class.relation.default".
+        streaming (bool, False): When True yields the data as Unitxt streams dictionary
         **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
 
     Returns:
@@ -106,6 +107,9 @@ def load_dataset(dataset_query: Optional[str] = None, **kwargs) -> DatasetDict:
         dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
     """
     recipe = load_recipe(dataset_query, **kwargs)
+
+    if streaming:
+        return recipe()
 
     return recipe().to_dataset(features=UNITXT_DATASET_SCHEMA)
 

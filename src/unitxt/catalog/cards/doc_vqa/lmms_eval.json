@@ -2,32 +2,18 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "cmarkea/doc-vqa",
+        "path": "lmms-lab/DocVQA",
+        "name": "DocVQA",
         "data_classification_policy": [
             "public"
         ]
     },
     "preprocess_steps": [
-        "splitters.small_no_dev",
         {
-            "__type__": "explode",
-            "field": "qa/fr",
-            "to_field": "pair"
-        },
-        {
-            "__type__": "copy",
-            "field": "pair/question",
-            "to_field": "question"
-        },
-        {
-            "__type__": "copy",
-            "field": "pair/answer",
-            "to_field": "answers"
-        },
-        {
-            "__type__": "wrap",
-            "field": "answers",
-            "inside": "list"
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "test"
+            }
         },
         {
             "__type__": "to_image",

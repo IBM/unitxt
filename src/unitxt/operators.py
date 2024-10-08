@@ -39,7 +39,6 @@ General Operators List:
 ------------------------
 """
 
-import copy
 import operator
 import uuid
 import warnings
@@ -86,7 +85,13 @@ from .settings_utils import get_settings
 from .stream import DynamicStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
-from .utils import deepcopy, flatten_dict
+from .utils import (
+    deep_copy,
+    flatten_dict,
+    recursive_copy,
+    recursive_shallow_copy,
+    shallow_copy,
+)
 
 settings = get_settings()
 
@@ -267,7 +272,7 @@ class Set(InstanceOperator):
     ) -> Dict[str, Any]:
         for key, value in self.fields.items():
             if self.use_deepcopy:
-                value = deepcopy(value)
+                value = deep_copy(value)
             dict_set(instance, key, value)
         return instance
 
@@ -846,7 +851,7 @@ class Copy(FieldOperator):
 
 class DeepCopy(FieldOperator):
     def process_value(self, value: Any) -> Any:
-        return copy.deepcopy(value)
+        return deep_copy(value)
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1016,7 +1021,7 @@ class ArtifactFetcherMixin:
         if artifact_identifier not in cls.cache:
             artifact, artifactory = fetch_artifact(artifact_identifier)
             cls.cache[artifact_identifier] = artifact
-        return copy.deepcopy(cls.cache[artifact_identifier])
+        return shallow_copy(cls.cache[artifact_identifier])
 
 
 class ApplyOperatorsField(InstanceOperator):
@@ -1608,7 +1613,9 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
         instances_upon_entrance_to_metrics_evaluations = []
         for instance in stream:
-            instances_upon_entrance_to_metrics_evaluations.append(deepcopy(instance))
+            instances_upon_entrance_to_metrics_evaluations.append(
+                recursive_copy(instance)
+            )
 
         first_instance = instances_upon_entrance_to_metrics_evaluations[0]
 
@@ -1647,7 +1654,9 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
             for evaluated_instance, freezed_instance in zip(
                 multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
             ):
-                freezed_instance["score"] = deepcopy(evaluated_instance["score"])
+                freezed_instance["score"] = recursive_shallow_copy(
+                    evaluated_instance["score"]
+                )
 
         yield from instances_upon_entrance_to_metrics_evaluations
 
@@ -2068,7 +2077,7 @@ class DuplicateInstances(StreamOperator):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         for instance in stream:
             for idx in range(self.num_duplications):
-                duplicate = deepcopy(instance)
+                duplicate = recursive_shallow_copy(instance)
                 if self.duplication_index_field:
                     duplicate.update({self.duplication_index_field: idx})
                 yield duplicate
