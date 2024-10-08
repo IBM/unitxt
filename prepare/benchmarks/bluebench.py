@@ -2,18 +2,21 @@ import os
 
 from unitxt.benchmark import Benchmark
 from unitxt.catalog import add_to_catalog
+from unitxt.settings_utils import get_constants
 
-BLUEBENCH_PATH = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)),
-    "../../src/unitxt/catalog/recipes/bluebench",
+constants = get_constants()
+
+bluebench_dir = os.path.join(
+    constants.catalog_dir,
+    "recipes",
+    "bluebench",
 )
-bluebench_scenarios = {}
 
-bluebench_directory = os.fsencode(BLUEBENCH_PATH)
-for file in os.listdir(bluebench_directory):
+bluebench_scenarios = {}
+for file in os.listdir(bluebench_dir):
     scenario_name = os.fsdecode(file)
     bluebench_scenarios[scenario_name] = {}
-    for subscenario in os.listdir(f"{BLUEBENCH_PATH}/{scenario_name}"):
+    for subscenario in os.listdir(os.path.join(bluebench_dir, scenario_name)):
         subscenario_name = os.fsdecode(subscenario)
         subscenario_name = (
             subscenario_name[: -len(".json")]
