@@ -13,5 +13,15 @@
         "metrics.spearman",
         "metrics.kendalltau_b"
     ],
-    "prediction_type": "float"
+    "prediction_type": "float",
+    "defaults": {
+        "choices": [
+            "yes",
+            "no"
+        ],
+        "is_context_relevant": [
+            "-"
+        ],
+        "number_val": -1
+    }
 }

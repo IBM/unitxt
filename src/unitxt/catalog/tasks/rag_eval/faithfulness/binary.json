@@ -19,5 +19,15 @@
         "metrics.max_f1_binary",
         "metrics.max_accuracy_binary"
     ],
-    "prediction_type": "float"
+    "prediction_type": "float",
+    "defaults": {
+        "choices": [
+            "yes",
+            "no"
+        ],
+        "is_faithful": [
+            "-"
+        ],
+        "number_val": -1
+    }
 }
