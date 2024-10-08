@@ -1,4 +1,5 @@
 import os
+from collections import OrderedDict
 
 from unitxt.benchmark import Benchmark
 from unitxt.catalog import add_to_catalog
@@ -11,6 +12,8 @@ bluebench_dir = os.path.join(
     "recipes",
     "bluebench",
 )
+
+bluebench_scenarios = OrderedDict()
 
 bluebench_scenarios = {}
 for file in os.listdir(bluebench_dir):
