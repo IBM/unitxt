@@ -5,38 +5,9 @@ from unitxt.inference import (
     WMLInferenceEngine,
 )
 from unitxt.llm_as_judge import (
-    LLMAsJudge,
+    TaskBasedLLMasJudge,
 )
-from unitxt.metrics import MetricPipeline
-from unitxt.operators import Copy
 from unitxt.random_utils import get_seed
-
-test_examples = [
-    {
-        "question": "What foundation models are available in watsonx.ai ?",
-        "answer": "Watsonx.ai supports a variety of foundation models",
-        "contexts": [
-            "Supported foundation models available with watsonx.ai. Watsonx.ai offers numerous foundation models."
-        ],
-        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
-    },
-    {
-        "question": "What foundation models are available in watsonx.ai ?",
-        "answer": "Watsonx.ai supports no foundation models",
-        "contexts": [
-            "Supported foundation models available with watsonx.ai. Watsonx.ai offers numerous foundation models."
-        ],
-        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
-    },
-    {
-        "question": "What foundation models are available in watsonx.ai ?",
-        "answer": "Watsonx.ai supports a variety of foundation models",
-        "contexts": [
-            "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
-        ],
-        "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
-    },
-]
 
 metric_type_to_template = {
     "faithfulness": "judge_with_question_simplified_logprobs",
@@ -45,6 +16,10 @@ metric_type_to_template = {
     "answer_correctness": "judge_loose_match_no_context_logprobs",
     "answer_relevance": "judge_answer_relevance_logprobs",
 }
+
+
+def get_prediction_field(metric_type):
+    return None if metric_type == "context_relevance" else "answer"
 
 
 def get_inference_engine(model_name, framework_name):
@@ -100,60 +75,17 @@ for judge_model_name, infer_frameworks in model_names_to_infer_framework.items()
             model_label = f"{model_label}_{infer_framework}"
             template_label = f'{metric_type}_{template_name.split(".")[-1]}'
             metric_label = f"{model_label}_template_{template_label}"
-            metric = LLMAsJudge(
+            metric = TaskBasedLLMasJudge(
                 inference_model=inference_engine,
                 template=f"templates.rag_eval.{metric_type}.{template_name}",
                 task=task_name,
                 format=template_format,
                 main_score=metric_label,
-                prediction_type=str,
-                strip_system_prompt_and_format_from_inputs=False,
+                prediction_field=get_prediction_field(metric_type),
             )
-
-            metric_pipeline = MetricPipeline(
-                main_score=metric_label,
-                metric=metric,
-                preprocess_steps=[
-                    Copy(
-                        field_to_field={
-                            "data_classification_policy": "task_data/data_classification_policy"
-                        },
-                        not_exist_ok=True,
-                        get_default=["public"],
-                    ),
-                    Copy(
-                        field_to_field={
-                            "prediction": "prediction",
-                        },
-                        not_exist_ok=True,
-                        get_default="0.0",
-                    ),
-                    Copy(
-                        field_to_field={
-                            "references": "references",
-                            "choices": "choices",
-                        },
-                        not_exist_ok=True,
-                        get_default=["0.0"],
-                    ),
-                    Copy(
-                        field_to_field={
-                            field: f"task_data/{field}" for field in task_dict.keys()
-                        },
-                    ),
-                ],
-            )
-
-            # multi_stream = MultiStream.from_iterables({"test": test_examples}, copying=True)
-            # output_stream = list(metric_pipeline(multi_stream)["test"])
-            # metric_outputs = [
-            #     ex["score"]["instance"][metric_label] for ex in list(output_stream)
-            # ]
-            # print(metric_label)
-            # print(metric_outputs)
 
             add_to_catalog(
-                metric_pipeline,
+                metric,
                 f"metrics.llm_as_judge.binary.{metric_label}",
                 overwrite=True,
             )

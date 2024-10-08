@@ -1,59 +1,15 @@
 {
-    "__type__": "metric_pipeline",
-    "main_score": "llama_3_1_70b_instruct_wml_template_answer_relevance_judge_answer_relevance_logprobs",
-    "metric": {
-        "__type__": "llm_as_judge",
-        "inference_model": {
-            "__type__": "wml_inference_engine",
-            "model_name": "meta-llama/llama-3-1-70b-instruct",
-            "max_new_tokens": 5,
-            "random_seed": 42,
-            "decoding_method": "greedy"
-        },
-        "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
-        "task": "tasks.rag_eval.answer_relevance.binary",
-        "format": "formats.llama3_instruct",
-        "main_score": "llama_3_1_70b_instruct_wml_template_answer_relevance_judge_answer_relevance_logprobs",
-        "prediction_type": "str",
-        "strip_system_prompt_and_format_from_inputs": false
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": {
+        "__type__": "wml_inference_engine",
+        "model_name": "meta-llama/llama-3-1-70b-instruct",
+        "max_new_tokens": 5,
+        "random_seed": 42,
+        "decoding_method": "greedy"
     },
-    "preprocess_steps": [
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "data_classification_policy": "task_data/data_classification_policy"
-            },
-            "not_exist_ok": true,
-            "get_default": [
-                "public"
-            ]
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "prediction": "prediction"
-            },
-            "not_exist_ok": true,
-            "get_default": "0.0"
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "references": "references",
-                "choices": "choices"
-            },
-            "not_exist_ok": true,
-            "get_default": [
-                "0.0"
-            ]
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "answer": "task_data/answer",
-                "question": "task_data/question",
-                "choices": "task_data/choices"
-            }
-        }
-    ]
+    "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_logprobs",
+    "task": "tasks.rag_eval.answer_relevance.binary",
+    "format": "formats.llama3_instruct",
+    "main_score": "llama_3_1_70b_instruct_wml_template_answer_relevance_judge_answer_relevance_logprobs",
+    "prediction_field": "answer"
 }
