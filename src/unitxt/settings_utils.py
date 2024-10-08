@@ -147,6 +147,7 @@ if Settings.is_uninitilized():
     settings.skip_artifacts_prepare_and_verify = (bool, False)
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
+    settings.disable_hf_datasets_cache = (bool, True)
 
 if Constants.is_uninitilized():
     constants = Constants()
@@ -180,7 +181,7 @@ if Constants.is_uninitilized():
     constants.instance_stream = "__INSTANCE_STREAM__"
 
 
-def get_settings():
+def get_settings() -> Settings:
     return Settings()
 
 

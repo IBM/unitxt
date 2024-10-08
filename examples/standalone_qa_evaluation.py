@@ -3,7 +3,7 @@ from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import HFPipelineBasedInferenceEngine
 from unitxt.loaders import LoadFromDictionary
-from unitxt.templates import InputOutputTemplate, TemplatesDict
+from unitxt.templates import InputOutputTemplate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -27,22 +27,19 @@ card = TaskCard(
         prediction_type=str,
         metrics=["metrics.accuracy"],
     ),
-    # Create a simple template that formats the input.
-    # Add lowercase normalization as a post processor.
-    templates=TemplatesDict(
-        {
-            "simple": InputOutputTemplate(
-                instruction="Answer the following question.",
-                input_format="{question}",
-                output_format="{answer}",
-                postprocessors=["processors.lower_case"],
-            )
-        }
-    ),
 )
 
+# Create a simple template that formats the input.
+# Add lowercase normalization as a post processor.
+
+template = InputOutputTemplate(
+    instruction="Answer the following question.",
+    input_format="{question}",
+    output_format="{answer}",
+    postprocessors=["processors.lower_case"],
+)
 # Verbalize the dataset using the template
-dataset = load_dataset(card=card, template_card_index="simple")
+dataset = load_dataset(card=card, template=template)
 test_dataset = dataset["test"]
 
 

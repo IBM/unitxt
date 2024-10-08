@@ -48,10 +48,86 @@ Then launch the ui by running:
 unitxt-explore
 ```
 
+# 🦄 Example 
+
+This is a simple example of running end-to-end evaluation in self contained python code over user data.
+
+See more examples in examples subdirectory.
+
+```python
+from unitxt import get_logger
+from unitxt.api import evaluate, load_dataset
+from unitxt.blocks import Task, TaskCard
+from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.loaders import LoadFromDictionary
+from unitxt.templates import InputOutputTemplate, TemplatesDict
+from unitxt.text_utils import print_dict
+
+logger = get_logger()
+
+# Set up question answer pairs in a dictionary
+data = {
+    "test": [
+        {"question": "What is the capital of Texas?", "answer": "Austin"},
+        {"question": "What is the color of the sky?", "answer": "Blue"},
+    ]
+}
+
+card = TaskCard(
+    # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources using different loaders.
+    loader=LoadFromDictionary(data=data),
+    # Define the QA task input and output and metrics.
+    task=Task(
+        input_fields={"question": str},
+        reference_fields={"answer": str},
+        prediction_type=str,
+        metrics=["metrics.accuracy"],
+    ),
+)
+
+# Create a simple template that formats the input.
+# Add lowercase normalization as a post processor on the model prediction.
+
+template = InputOutputTemplate(
+    instruction="Answer the following question.",
+    input_format="{question}",
+    output_format="{answer}",
+    postprocessors=["processors.lower_case"],
+)
+# Verbalize the dataset using the template
+dataset = load_dataset(card=card, template=template)
+test_dataset = dataset["test"]
+
+
+# Infer using flan t5 base using HF API
+# can be replaced with any prediction code, 
+# including the built in WMLInferenceEngine and OpenAiInferenceEngine.
+model_name = "google/flan-t5-base"
+inference_model = HFPipelineBasedInferenceEngine(
+    model_name=model_name, max_new_tokens=32
+)
+predictions = inference_model.infer(test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+# Print results
+for instance in evaluated_dataset:
+    print_dict(
+        instance,
+        keys_to_print=[
+            "source", # input to the model
+            "prediction", # model prediction 
+            "processed_prediction", # model prediction after post processing
+            "references", # reference answer
+            "score", # scores (per instance and global)
+        ],
+    )
+
+```
+
 # 🦄 Contributors
 
 Please install Unitxt from source by:
-```
+```bash
 git clone git@github.com:IBM/unitxt.git
 cd unitxt
 pip install -e ".[dev]"
@@ -62,7 +138,7 @@ pre-commit install
 
 If you use Unitxt in your research, please cite our paper:
 
-```
+```bib
 @inproceedings{bandel-etal-2024-unitxt,
     title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
     author = "Bandel, Elron  and

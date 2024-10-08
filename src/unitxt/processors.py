@@ -5,6 +5,8 @@ import re
 from difflib import get_close_matches
 from typing import Any, Dict
 
+import numpy as np
+
 from .deprecation_utils import deprecation
 from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
@@ -20,9 +22,9 @@ class PostProcess(MultiStreamOperator):
 
     def prepare(self):
         super().prepare()
-        self.prediction_operator = copy.deepcopy(self.operator)
+        self.prediction_operator = copy.copy(self.operator)
         self.prediction_operator.field = "prediction"
-        self.references_operator = copy.deepcopy(self.operator)
+        self.references_operator = copy.copy(self.operator)
         self.references_operator.field = "references"
         self.references_operator.process_every_value = True
         self.references_operator.dont_apply_to_streams = [constants.inference_stream]
@@ -315,3 +317,59 @@ class ExtractArenaHardNumericalJudgment(FieldOperator):
 
         except:
             return 0
+
+
+class InferDictsToBinaryLogprobs(FieldOperator):
+    neg_class_name: str
+    pos_class_name: str
+
+    take_logprobs_from_end: bool = False
+    num_logprobs_to_take: int = 3
+    min_probability_mass = 0.0001
+
+    def verify(self):
+        super().verify()
+        if (
+            self.neg_class_name.lower() in self.pos_class_name.lower()
+            or self.pos_class_name.lower() in self.neg_class_name.lower()
+        ):
+            raise ValueError(
+                f"""Class names in {self.__class__.__name__} should not overlap, got "{self.pos_class_name}" and "{self.neg_class_name}"""
+            )
+
+    def process_value(self, obj: Any) -> Any:
+        for i in self.get_token_range(obj):
+            try:
+                pos_probs, neg_probs = self.get_pos_neg_probs(pred_dict=obj[i])
+                if pos_probs or neg_probs:
+                    sum_probs = sum(pos_probs) + sum(neg_probs)
+                    if sum_probs > self.min_probability_mass:
+                        return sum(pos_probs) / sum_probs
+            except:
+                pass
+        return 0
+
+    def get_pos_neg_probs(self, pred_dict):
+        token_logprobs = pred_dict["top_tokens"]
+
+        pos_and_neg_probs = []
+        for class_name in [self.pos_class_name, self.neg_class_name]:
+            # We need to capture different variants of model behavior and tokenizers, for example with opening space,
+            # punctuation etc. but avoid longer words that contain the class name.
+            # For example, for class "yes" we would capture "YES," and " Yes" but not "yesterday".
+            name_regex = re.compile(
+                rf"(\W|Ġ|_)*{class_name}(\W|Ġ|_)*", flags=re.IGNORECASE
+            )
+            class_probs = [
+                np.exp(d["logprob"])
+                for d in token_logprobs
+                if name_regex.fullmatch(d["text"])
+            ]
+            pos_and_neg_probs.append(class_probs)
+        return pos_and_neg_probs
+
+    def get_token_range(self, obj: Any) -> range:
+        n_tokens = min([self.num_logprobs_to_take, len(obj)])
+        if self.take_logprobs_from_end:
+            return range(-1, -(n_tokens + 1), -1)
+        return range(n_tokens)

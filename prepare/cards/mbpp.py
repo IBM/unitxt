@@ -6,7 +6,6 @@ from unitxt.blocks import (
     LoadHF,
     Task,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.operators import JoinStr
 from unitxt.test_utils.card import test_card
@@ -21,14 +20,12 @@ card = TaskCard(
         reference_fields=["test_list", "code"],
         metrics=["metrics.bleu"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format='"""{text}\n\n{test_list_str}"""',
-                output_format="{code}",
-            ),
-        ]
-    ),
+    templates=[
+        InputOutputTemplate(
+            input_format='"""{text}\n\n{test_list_str}"""',
+            output_format="{code}",
+        ),
+    ],
     __tags__={
         "annotations_creators": ["crowdsourced", "expert-generated"],
         "arxiv": "2108.07732",

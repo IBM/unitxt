@@ -4,7 +4,7 @@ from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from .artifact import Artifact
-from .collections import ListCollection
+from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
 from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
@@ -210,7 +210,7 @@ class ApplyTemplate(InstanceOperator):
             if self.demos_field not in instance:
                 raise ValueError("Demos field is missing.")
             instance[self.demos_field] = [
-                self.apply(template, demo_instance, stream_name)
+                self.apply(template, demo_instance)
                 for demo_instance in instance[self.demos_field]
             ]
         dict_set(instance, "recipe_metadata/template", template)
@@ -866,7 +866,7 @@ class TemplatesList(ListCollection):
             assert isinstance(template, Template)
 
 
-class TemplatesDict(Dict):
+class TemplatesDict(DictCollection):
     def verify(self):
-        for _key, template in self.items():
+        for template in self.items.values():
             assert isinstance(template, Template)

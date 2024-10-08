@@ -148,5 +148,88 @@ def import_module_from_file(file_path):
     return module
 
 
-def deepcopy(obj):
+def deep_copy(obj):
+    """Creates a deep copy of the given object.
+
+    Args:
+        obj: The object to be deep copied.
+
+    Returns:
+        A deep copy of the original object.
+    """
     return copy.deepcopy(obj)
+
+
+def shallow_copy(obj):
+    """Creates a shallow copy of the given object.
+
+    Args:
+        obj: The object to be shallow copied.
+
+    Returns:
+        A shallow copy of the original object.
+    """
+    return copy.copy(obj)
+
+
+def recursive_copy(obj, internal_copy=None):
+    """Recursively copies an object with a selective copy method.
+
+    For `list`, `dict`, and `tuple` types, it recursively copies their contents.
+    For other types, it uses the provided `internal_copy` function if available.
+    Objects without a `copy` method are returned as is.
+
+    Args:
+        obj: The object to be copied.
+        internal_copy (callable, optional): The copy function to use for non-container objects.
+            If `None`, objects without a `copy` method are returned as is.
+
+    Returns:
+        The recursively copied object.
+    """
+    # Handle dictionaries
+    if isinstance(obj, dict):
+        return type(obj)(
+            {key: recursive_copy(value, internal_copy) for key, value in obj.items()}
+        )
+
+    # Handle named tuples
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):
+        return type(obj)(*(recursive_copy(item, internal_copy) for item in obj))
+
+    # Handle tuples and lists
+    if isinstance(obj, (tuple, list)):
+        return type(obj)(recursive_copy(item, internal_copy) for item in obj)
+
+    if internal_copy is None:
+        return obj
+
+    return internal_copy(obj)
+
+
+def recursive_deep_copy(obj):
+    """Performs a recursive deep copy of the given object.
+
+    This function uses `deep_copy` as the internal copy method for non-container objects.
+
+    Args:
+        obj: The object to be deep copied.
+
+    Returns:
+        A recursively deep-copied version of the original object.
+    """
+    return recursive_copy(obj, deep_copy)
+
+
+def recursive_shallow_copy(obj):
+    """Performs a recursive shallow copy of the given object.
+
+    This function uses `shallow_copy` as the internal copy method for non-container objects.
+
+    Args:
+        obj: The object to be shallow copied.
+
+    Returns:
+        A recursively shallow-copied version of the original object.
+    """
+    return recursive_copy(obj, shallow_copy)

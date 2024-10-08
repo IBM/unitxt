@@ -4,6 +4,7 @@ import io
 import itertools
 import re
 import typing
+from functools import lru_cache
 from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union
 
 from .utils import safe_eval
@@ -810,6 +811,7 @@ class NormalizedType(typing.NamedTuple):
         return f"{self.origin}[{self.args}])"
 
 
+@lru_cache(maxsize=None)
 def _normalize_args(tps: TypeArgs):
     if isinstance(tps, str):
         return tps
@@ -918,6 +920,7 @@ def _is_origin_subtype_args(
     return _is_normal_subtype(left, right, forward_refs)
 
 
+@lru_cache(maxsize=None)
 def _is_normal_subtype(
     left: NormalizedType,
     right: NormalizedType,

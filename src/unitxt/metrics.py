@@ -8,10 +8,9 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
-from operator import itemgetter
+from functools import lru_cache
 from typing import Any, Dict, Generator, List, Optional, Tuple, Union
 
-import evaluate
 import numpy
 import numpy as np
 import pandas as pd
@@ -42,12 +41,10 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deepcopy
+from .utils import deep_copy
 
 logger = get_logger()
 settings = get_settings()
-
-warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
@@ -469,11 +466,17 @@ class MetricWithConfidenceInterval(Metric):
             # iterate over the rows and compute the metric on each resampling
             def metric(sample_refs, sample_preds, sample_task_data):
                 try:
-                    return self._compute(
+                    results = self._compute(
                         references=sample_refs,
                         predictions=sample_preds,
                         task_data=sample_task_data,
-                    )["score"]
+                    )
+                    results.update(
+                        self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
+                            results, {}
+                        )
+                    )
+                    return results[score_name]
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
@@ -596,11 +599,18 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 result, global_score
             )
         )
-        score_name = global_score["score_name"]
-        confidence_interval = self.compute_global_confidence_intervals(
-            references, predictions, task_data, score_name
-        )
-        global_score.update(confidence_interval)
+        if self.ci_scores:
+            score_names = [
+                self._add_score_prefix(score_name) for score_name in self.ci_scores
+            ]
+        else:
+            score_names = [global_score["score_name"]]
+
+        for score_name in score_names:
+            confidence_interval = self.compute_global_confidence_intervals(
+                references, predictions, task_data, score_name
+            )
+            global_score.update(confidence_interval)
 
         for instance in instances:
             self.update_and_adjust_global_score(instance, global_score)
@@ -651,24 +661,18 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
+
         instances = []
 
-        # consume the stream
-        references, predictions = map(
-            list,
-            zip(
-                *[
-                    itemgetter("references", "prediction")(
-                        self.verify_instance(instance)
-                    )
-                    for instance in stream
-                ]
-            ),
-        )
+        for instance in stream:
+            self.verify_instance(instance)
+            instances.append(instance)
 
+        predictions = [instance["prediction"] for instance in instances]
+        references = [instance["references"] for instance in instances]
         task_data = [
             instance["task_data"] if "task_data" in instance else {}
-            for instance in stream
+            for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
         # compute the metric over all refs and preds
@@ -683,7 +687,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score"] = instance_score[self.main_score]
             instance_score["score_name"] = self.main_score
 
-        for instance, score in zip(stream, instance_scores):
+        for instance, score in zip(instances, instance_scores):
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
 
@@ -692,7 +696,6 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
 
         for reduction, fields in self.reduction_map.items():
             assert (
@@ -1310,6 +1313,67 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class ANLS(InstanceMetric):
+    main_score = "anls"
+    reduction_map = {"mean": ["anls"]}
+    prediction_type = Any  # string representation is compared
+
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def preprocess_text(text):
+        return " ".join(text.strip().lower().split()), len(text.upper())
+
+    def distance(self, prediction, reference):
+        processed_reference, len_reference = self.preprocess_text(reference)
+        processed_prediction, len_prediction = self.preprocess_text(prediction)
+
+        dist = self.levenshtein_distance(processed_reference, processed_prediction)
+        length = max(len_reference, len_prediction)
+        return 0.0 if length == 0 else float(dist) / float(length)
+
+    def compute(
+        self,
+        references: List[Any],
+        prediction: Any,
+        task_data: List[Dict],
+        threshold=1.0,
+    ) -> dict:
+        """ANLS image-text accuracy metric."""
+        values = []
+        for reference in references:
+            values.append(self.distance(prediction, reference))
+
+        question_result = 1.0 - min(values)
+
+        if question_result < threshold:
+            question_result = 0.0
+
+        result = {}
+        result["score"] = question_result
+        result[self.main_score] = question_result
+        result["score_name"] = self.main_score
+        return result
+
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def levenshtein_distance(s1, s2):
+        if len(s1) > len(s2):
+            s1, s2 = s2, s1
+
+        distances = range(len(s1) + 1)
+        for i2, c2 in enumerate(s2):
+            distances_ = [i2 + 1]
+            for i1, c1 in enumerate(s1):
+                if c1 == c2:
+                    distances_.append(distances[i1])
+                else:
+                    distances_.append(
+                        1 + min((distances[i1], distances[i1 + 1], distances_[-1]))
+                    )
+            distances = distances_
+        return distances[-1]
+
+
 class JaccardIndex(InstanceMetric):
     reduction_map = {"mean": ["jaccard_index"]}
     main_score = "jaccard_index"
@@ -1536,6 +1600,8 @@ class HuggingfaceMetric(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=self.experiment_id
         )
@@ -1610,6 +1676,8 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
@@ -1656,6 +1724,8 @@ class HuggingfaceInstanceMetric(InstanceMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
@@ -1735,6 +1805,8 @@ class F1(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
 
     def get_str_id(self, str):
@@ -1794,6 +1866,7 @@ class F1Binary(GlobalMetric):
     _metric = None
     metric = "f1"
     single_reference_per_prediction = True
+    ci_scores = [main_score, "f1_binary_neg"]
     _requirements_list: List[str] = ["sklearn"]
 
     def prepare(self):
@@ -2011,6 +2084,8 @@ class F1MultiLabel(GlobalMetric):
 
     def prepare(self):
         super().prepare()
+        import evaluate
+
         self._metric = evaluate.load(
             self.metric, "multilabel", experiment_id=str(uuid.uuid4())
         )
@@ -3626,6 +3701,7 @@ class RetrievalAtK(RetrievalMetric):
             (recall_at_k, "recall"),
             (match_at_k, "match"),
         ]:
+            measure_array[0] = 0.0  # to support cases where the prediction is empty.
             max_k = max(measure_array.keys())
             for k in self.k_list:
                 result[self.score_name(measure_name, k)] = measure_array[min(k, max_k)]
@@ -3672,7 +3748,7 @@ class RemoteMetric(StreamOperator, Metric):
         remotely (pre and post processing steps in the MetricPipeline will be computed locally).
         """
         local_inner_metric = metric_pipeline.metric
-        metric_pipeline = deepcopy(
+        metric_pipeline = deep_copy(
             metric_pipeline
         )  # To avoid unintentional changes to the catalog contents
         metric_pipeline.metric = RemoteMetric(
@@ -4323,6 +4399,7 @@ class BinaryMaxF1(F1Binary):
     main_score = "max_f1_binary"
     single_reference_per_prediction = True
     average = None
+    ci_scores = [main_score, "max_f1_binary_neg"]
 
     def compute(
         self,
@@ -4741,22 +4818,27 @@ class F1Strings(InstanceMetric):
     main_score = "f1_strings"
     reduction_map = {"mean": ["f1_strings"]}
     prediction_type = str
-    single_reference_per_prediction = True
+    single_reference_per_prediction = False
     _requirements_list = {
         "spacy": "Please pip install spacy",
     }
 
-    def prepare(self):
-        super().prepare()
+    def load_spacy(self):
         import spacy
 
+        self.nlp = spacy.load(
+            "en_core_web_sm", disable=["tagger", "parser", "ner", "lemmatizer"]
+        )
+
+    def prepare(self):
+        super().prepare()
         try:
-            self.nlp = spacy.load("en_core_web_sm")
+            self.load_spacy()
         except OSError:
             from spacy.cli import download
 
             download("en_core_web_sm")
-            self.nlp = spacy.load("en_core_web_sm")
+            self.load_spacy()
 
     def compute(
         self,
@@ -4764,7 +4846,7 @@ class F1Strings(InstanceMetric):
         prediction: str,
         task_data: List[Dict],
     ) -> dict:
-        doc_ref = self.nlp(references[0])
+        doc_ref = self.nlp(" ".join(references))
         set_ref = Counter([token.text.lower() for token in doc_ref])
         doc_pred = self.nlp(prediction)
         set_pred = Counter([token.text.lower() for token in doc_pred])
@@ -4902,3 +4984,20 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
             )
         score = ensemble_model.predict([prediction_lst])
         return score.tolist()[0]
+
+
+class PredictionLength(InstanceMetric):
+    """Returns the length of the prediction."""
+
+    main_score = "prediction_length"
+    reduction_map = {"mean": ["prediction_length"]}
+    prediction_type = str
+    single_reference_per_prediction = True
+
+    def compute(
+        self,
+        references: List[str],
+        prediction: str,
+        task_data: List[Dict],
+    ) -> dict:
+        return {self.main_score: [len(prediction)], "score_name": self.main_score}

@@ -5,7 +5,6 @@ from unitxt.blocks import (
     Set,
     SplitRandomMix,
     TaskCard,
-    TemplatesList,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Shuffle
@@ -28,36 +27,34 @@ card = TaskCard(
         ),
     ],
     task="tasks.classification.multi_class",
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}.",
-                output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line"],
-            ),
-            InputOutputTemplate(
-                input_format="Does the following {text_type} contains {type_of_class}? Answer only by choosing one of the options {classes}. {text_type}: {text}.",
-                output_format="{label}",
-                postprocessors=["processors.take_first_non_empty_line"],
-            ),
-            InputOutputTemplate(
-                input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
-                output_format="{label}",
-                postprocessors=[
-                    "processors.take_first_non_empty_line",
-                    "processors.lower_case_till_punc",
-                ],
-            ),
-            InputOutputTemplate(
-                input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
-                output_format="{label}",
-                postprocessors=[
-                    "processors.take_first_non_empty_line",
-                    "processors.hate_speech_or_not_hate_speech",
-                ],
-            ),
-        ]
-    ),
+    templates=[
+        InputOutputTemplate(
+            input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}.",
+            output_format="{label}",
+            postprocessors=["processors.take_first_non_empty_line"],
+        ),
+        InputOutputTemplate(
+            input_format="Does the following {text_type} contains {type_of_class}? Answer only by choosing one of the options {classes}. {text_type}: {text}.",
+            output_format="{label}",
+            postprocessors=["processors.take_first_non_empty_line"],
+        ),
+        InputOutputTemplate(
+            input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
+            output_format="{label}",
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.lower_case_till_punc",
+            ],
+        ),
+        InputOutputTemplate(
+            input_format="Given this {text_type}: {text}. Classify if it contains {type_of_class}. classes: {classes}. I would classify this {text_type} as: ",
+            output_format="{label}",
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.hate_speech_or_not_hate_speech",
+            ],
+        ),
+    ],
     __tags__={
         "annotations_creators": ["crowdsourced", "expert-generated"],
         "arxiv": "2006.08328",

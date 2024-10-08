@@ -32,7 +32,7 @@ from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import TableSerializer
 from .types import Table
-from .utils import deepcopy
+from .utils import recursive_copy
 
 
 def shuffle_columns(table: Table, seed=0) -> Table:
@@ -76,7 +76,7 @@ class SerializeTable(ABC, TableSerializer):
     shuffle_columns: bool = False
 
     def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
-        value = deepcopy(value)
+        value = recursive_copy(value)
         if self.shuffle_columns:
             value = shuffle_columns(table=value, seed=self.seed)
 
@@ -206,6 +206,12 @@ class SerializeTableAsDFLoader(SerializeTable):
         rows = table_content.get("rows", [])
 
         assert header and rows, "Incorrect input table format"
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
 
         # Create a pandas DataFrame
         df = pd.DataFrame(rows, columns=header)
@@ -490,7 +496,7 @@ class ConvertTableColNamesToSequential(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
+        table_input = recursive_copy(table)
         return self.replace_header(table_content=table_input)
 
     # replaces header with sequential column names
@@ -523,7 +529,7 @@ class ShuffleTableRows(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
+        table_input = recursive_copy(table)
         return shuffle_rows(table_input)
 
 
@@ -544,7 +550,7 @@ class ShuffleTableColumns(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
+        table_input = recursive_copy(table)
         return shuffle_columns(table_input)
 
 

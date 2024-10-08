@@ -1,7 +1,8 @@
 import random
 import typing
+from abc import abstractmethod
 from dataclasses import field
-from typing import Dict, List
+from typing import Any, Dict, Hashable, List
 
 from .artifact import Artifact
 from .dataclass import AbstractField
@@ -11,11 +12,15 @@ from .random_utils import new_random_generator
 class Collection(Artifact):
     items: typing.Collection = AbstractField()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Hashable) -> Any:
         try:
             return self.items[key]
         except LookupError as e:
             raise LookupError(f"Cannot find item {key!r} in {self!r}") from e
+
+    @abstractmethod
+    def keys(self) -> List[Hashable]:
+        pass
 
 
 class ListCollection(Collection):
@@ -33,9 +38,15 @@ class ListCollection(Collection):
     def __add__(self, other):
         return ListCollection(self.items.__add__(other.items))
 
+    def keys(self) -> List[int]:
+        return list(range(len(self)))
+
 
 class DictCollection(Collection):
     items: Dict[str, Artifact] = field(default_factory=dict)
+
+    def keys(self) -> List[Hashable]:
+        return list(self.items.keys())
 
 
 class ItemPicker(Artifact):
