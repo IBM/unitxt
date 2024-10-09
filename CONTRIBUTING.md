@@ -86,7 +86,6 @@ To run all the tests:
 ```bash
 python -m unittest
 ```
-Bef
 
 # Repo principles:
 
