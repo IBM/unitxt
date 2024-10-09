@@ -18,10 +18,8 @@ card = TaskCard(
     preprocess_steps=[
         # consider samples with DP(Direct Prompting) as instruction type
         FilterByCondition(values={"instruction_type": "DP"}, condition="eq"),
-        # filter by question type if needed
-        # FilterByCondition(values={"qtype": ["FactChecking", "NumericalReasoning"]}, condition="in"),
-        # parse table json
-        Apply("table", function="json.loads", to_field="table"),
+        # FilterByCondition(values={"qtype": ["FactChecking", "NumericalReasoning"]}, condition="in"), # filter by question type if needed
+        Apply("table", function="json.loads", to_field="table"),  # parse table json
         # rename table fields to match with standard table format
         Rename(
             field_to_field={"table/columns": "table/header", "table/data": "table/rows"}
