@@ -8,9 +8,9 @@ base = "metrics.rag.context_correctness"
 default = "mrr"
 
 for new_catalog_name, base_catalog_name, main_score in [
-    ("mrr", "metrics.mrr", "score"),
-    ("map", "metrics.map", "score"),
-    ("retrieval_at_k", "metrics.retrieval_at_k", "score"),
+    ("mrr", "metrics.mrr", "mrr"),
+    ("map", "metrics.map", "map"),
+    ("retrieval_at_k", "metrics.retrieval_at_k", "match_at_1"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,
@@ -41,12 +41,12 @@ def test_context_correctness():
     ]
 
     map_instance_targets = [
-        {"map": 0.83, "score": 0.83, "score_name": "score"},
-        {"map": 0.5, "score": 0.5, "score_name": "score"},
+        {"map": 0.83, "score": 0.83, "score_name": "map"},
+        {"map": 0.5, "score": 0.5, "score_name": "map"},
     ]
     mrr_instance_targets = [
-        {"mrr": 1.0, "score": 1.0, "score_name": "score"},
-        {"mrr": 0.5, "score": 0.5, "score_name": "score"},
+        {"mrr": 1.0, "score": 1.0, "score_name": "mrr"},
+        {"mrr": 0.5, "score": 0.5, "score_name": "mrr"},
     ]
     retrieval_at_k_instance_targets = [
         {
@@ -69,7 +69,7 @@ def test_context_correctness():
             "recall_at_20": 1.0,
             "recall_at_40": 1.0,
             "score": 1.0,
-            "score_name": "score",
+            "score_name": "match_at_1",
         },
         {
             "match_at_1": 0.0,
@@ -91,7 +91,7 @@ def test_context_correctness():
             "recall_at_40": 1.0,
             "recall_at_5": 1.0,
             "score": 0.0,
-            "score_name": "score",
+            "score_name": "match_at_1",
         },
     ]
     map_global_target = {
@@ -101,7 +101,7 @@ def test_context_correctness():
         "score": 0.67,
         "score_ci_high": 0.83,
         "score_ci_low": 0.5,
-        "score_name": "score",
+        "score_name": "map",
     }
     mrr_global_target = {
         "mrr": 0.75,
@@ -110,7 +110,7 @@ def test_context_correctness():
         "score": 0.75,
         "score_ci_high": 1.0,
         "score_ci_low": 0.5,
-        "score_name": "score",
+        "score_name": "mrr",
     }
     retrieval_at_k_global_target = {
         "match_at_1": 0.5,
@@ -150,29 +150,33 @@ def test_context_correctness():
         "score": 0.5,
         "score_ci_high": 1.0,
         "score_ci_low": 0.0,
-        "score_name": "score",
+        "score_name": "match_at_1",
     }
 
-    for catalog_name, global_target, instance_targets in [
+    for catalog_name, global_target, instance_targets, main_score in [
         (
             "metrics.rag.context_correctness.map",
             map_global_target,
             map_instance_targets,
+            "map",
         ),
         (
             "metrics.rag.context_correctness.mrr",
             mrr_global_target,
             mrr_instance_targets,
+            "mrr",
         ),
         (
             "metrics.rag.context_correctness",
             mrr_global_target,
             mrr_instance_targets,
+            "mrr",
         ),
         (
             "metrics.rag.context_correctness.retrieval_at_k",
             retrieval_at_k_global_target,
             retrieval_at_k_instance_targets,
+            "match_at_1",
         ),
     ]:
         # test the evaluate call
@@ -187,7 +191,7 @@ def test_context_correctness():
 
         # test using the usual metric pipeline
         test_pipeline = MetricPipeline(
-            main_score="score",
+            main_score=main_score,
             preprocess_steps=[
                 Rename(field_to_field={"task_data/context_ids": "context_ids"}),
                 Rename(
