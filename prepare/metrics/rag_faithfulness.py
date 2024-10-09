@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import (
     MetricPipeline,
 )
-from unitxt.operators import Copy, Rename, Set
+from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 base = "metrics.rag.faithfulness"
@@ -26,22 +26,6 @@ for new_catalog_name, base_catalog_name, main_score in [
             Copy(field="answer", to_field="prediction"),
         ],
         metric=base_catalog_name,
-        postprocess_steps=[
-            Set(fields={"score/instance/score_name": main_score}),
-            Set(fields={"score/global/score_name": main_score}),
-            Copy(
-                field_to_field=[
-                    [
-                        f"score/global/{main_score}_ci_low",
-                        "score/global/score_ci_low",
-                    ],
-                    [
-                        f"score/global/{main_score}_ci_high",
-                        "score/global/score_ci_high",
-                    ],
-                ],
-            ),
-        ],
     )
     add_to_catalog(metric, f"{base}.{new_catalog_name}", overwrite=True)
 
