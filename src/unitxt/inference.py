@@ -283,7 +283,7 @@ class OpenAiInferenceEngineParamsMixin(Artifact):
     logprobs: Optional[bool] = None
     n: Optional[int] = 1
     # parallel_tool_calls: bool = None
-    service_tier: Optional[Literal["auto", "default"]] = None
+    # service_tier: Optional[Literal["auto", "default"]] = None
 
 
 @deprecation(version="2.0.0", alternative=OpenAiInferenceEngineParamsMixin)
