@@ -168,6 +168,41 @@ class TestOperators(UnitxtTestCase):
             targets=targets,
         )
 
+    def test_map_instance_values_with_non_str_returned_value(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
+        targets = [
+            {"a": {"word": 4, "words": [5, 6, 7]}, "b": 2},
+            {"a": ["bye", "ciao", [0, 1, 2]], "b": 3},
+        ]
+
+        operator = MapInstanceValues(
+            mappers={
+                "a": {
+                    "1": {"word": 4, "words": [5, 6, 7]},
+                    "2": ["bye", "ciao", [0, 1, 2]],
+                }
+            }
+        )
+        outputs = check_operator(
+            operator=operator,
+            inputs=inputs,
+            targets=targets,
+        )
+
+        # tweak the returned values in outputs:
+        outputs[0]["a"]["words"][0] = 5000
+        outputs[1]["a"][2] = []
+        # and run operator again, to verify that its mapper have not changed
+        check_operator(
+            operator=operator,
+            inputs=inputs,
+            targets=targets,
+        )
+
     def test_from_iterables_and_iterable_source(self):
         input_ms = {
             "train": [{"a": "1"}, {"b": "2"}, {"a": "3"}],
