@@ -1,9 +1,8 @@
 import cProfile
+import json
 import pstats
-import shutil
 from io import StringIO
 
-import git
 from unitxt.api import load_recipe
 from unitxt.artifact import fetch_artifact
 from unitxt.logging_utils import get_logger
@@ -18,25 +17,22 @@ settings = get_settings()
 settings.allow_unverified_code = True
 
 
-"""Profiles the execution-time of api.load_dataset(), over a benchmark of cards, comparing two branches.
+"""Profiles the execution-time of api.load_dataset(), over a benchmark of cards.
 
-Usage: set values for variables cards (the benchmark) and base_branch (typically, main) against which to compare runtime
+Usage: set values for variables cards (the benchmark)
 
 from unitxt root dir, run the following linux commands:
 
-(pip install GitPython)
 python profile/card_profiler.py
 
-The script computes and prints out the net runtime (total runtime minus loading time) of the benchmark cards in
-the current branch, in the base_branch, and then divide the former by the latter and prints out the ratio of new to base.
+The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
+accumulated across the cards in the benchmark, and wraps both results into a json file named cards_benchmark.json
 
-Also, employing cPrifile, the script generates in profile/logs both performance profiles:
-current_branch_benchmark_cards.prof  and  base_branch_benchmark_cards.prof
-These profiles can be viewed and explored via:
+In addition, the script generates a binary file named profile/logs/cards_benchmark.prof,
+which can be nicely and interactively visualized via snakeviz:
+
 (pip install snakeviz)
-snakeviz profile/logs/current_branch_benchmark_cards.prof
-and/or
-snakeviz profile/logs/base_branch_benchmark_cards.prof
+snakeviz profile/logs/cards_benchmark.prof
 
 snakeviz opens an interactive internet browser window allowing to explore all time-details.
 See exporing options here: https://jiffyclub.github.io/snakeviz/
@@ -119,66 +115,28 @@ def profile_from_cards():
         )
 
 
-def benchmark_net_time_per_branch() -> float:
-    cProfile.run("profile_from_cards()", "profile/logs/benchmark_cards.prof")
-    f = StringIO()
-    pst = pstats.Stats("profile/logs/benchmark_cards.prof", stream=f)
-    pst.strip_dirs()
-    pst.sort_stats("name")  # sort by function name
-    pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
-    s = f.getvalue()
-    assert s.split("\n")[7].split()[3] == "cumtime"
-    assert "profiler_do_the_profiling" in s.split("\n")[8]
-    tot_time = round(float(s.split("\n")[8].split()[3]), 3)
-    assert "profiler_load_by_recipe" in s.split("\n")[9]
-    load_time = round(float(s.split("\n")[9].split()[3]), 3)
-    diff = round(tot_time - load_time, 3)
-    logger.info(f"tot={tot_time}, load={load_time}, diff={diff}")
-    return diff
-
-
 cards = ["cards.cola", "cards.dart"]  # the benchmark
-base_branch_name = "main"
-
 logger.info(f"benchmark cards are: {cards}")
 
-repo = git.Repo(".")
-current_branch = repo.active_branch
-logger.info(
-    f"Starting benchmark performance profiling in current branch, branch '{current_branch}'"
-)
-current_branch_net_runtime = benchmark_net_time_per_branch()
-# copy the generated cprofile from profile/logs/benchmark_cards.prof to profile/logs/current_branch_benchmark_cards.prof
-# so that it is not overwritten by the profiling info of the base_branch
-shutil.copy(
-    "profile/logs/benchmark_cards.prof",
-    f"profile/logs/{current_branch}_benchmark_cards.prof",
-)
+cProfile.run("profile_from_cards()", "profile/logs/cards_benchmark.prof")
+f = StringIO()
+pst = pstats.Stats("profile/logs/cards_benchmark.prof", stream=f)
+pst.strip_dirs()
+pst.sort_stats("name")  # sort by function name
+pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
+s = f.getvalue()
+assert s.split("\n")[7].split()[3] == "cumtime"
+assert "profiler_do_the_profiling" in s.split("\n")[8]
+tot_time = round(float(s.split("\n")[8].split()[3]), 3)
+assert "profiler_load_by_recipe" in s.split("\n")[9]
+load_time = round(float(s.split("\n")[9].split()[3]), 3)
+diff = round(tot_time - load_time, 3)
 
-base_branch = repo.heads[base_branch_name]
-base_branch.checkout()
-logger.info(
-    f"Changed branch to '{repo.active_branch}', now start benchmark performance profiling in this branch"
-)
-base_branch_net_runtime = benchmark_net_time_per_branch()
-# copy the generated cprofile from profile/logs/benchmark_cards.prof to profile/logs/current_branch_benchmark_cards.prof
-# so that it is not overwritten by further branch profilings
-shutil.copy(
-    "profile/logs/benchmark_cards.prof",
-    f"profile/logs/{base_branch}_benchmark_cards.prof",
-)
-
-logger.info(
-    f"net run time (total minus loading) of benchmark in branch '{current_branch}' is {current_branch_net_runtime}"
-)
-logger.info(
-    f"net run time (total minus loading) of benchmark in branch '{base_branch}' is {base_branch_net_runtime}"
-)
-
-ratio = round(current_branch_net_runtime / base_branch_net_runtime, 3)
-logger.info(
-    f"ratio of net runtimes of branches: '{current_branch}'/'{base_branch}' is {ratio}"
-)
-
-logger.info(f"Return to initial branch '{current_branch}'")
-current_branch.checkout()
+# Data to be written
+dictionary = {
+    "total_time": tot_time,
+    "load_time": load_time,
+    "net_time": diff,
+}
+with open("cards_benchmark.json", "w") as outfile:
+    json.dump(dictionary, outfile)
