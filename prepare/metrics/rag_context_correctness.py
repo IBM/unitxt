@@ -41,12 +41,12 @@ def test_context_correctness():
     ]
 
     map_instance_targets = [
-        {"map": 0.83, "score": 0.83, "score_name": "map"},
-        {"map": 0.5, "score": 0.5, "score_name": "map"},
+        {"map": 0.83, "score": 0.83, "score_name": "score"},
+        {"map": 0.5, "score": 0.5, "score_name": "score"},
     ]
     mrr_instance_targets = [
-        {"mrr": 1.0, "score": 1.0, "score_name": "mrr"},
-        {"mrr": 0.5, "score": 0.5, "score_name": "mrr"},
+        {"mrr": 1.0, "score": 1.0, "score_name": "score"},
+        {"mrr": 0.5, "score": 0.5, "score_name": "score"},
     ]
     retrieval_at_k_instance_targets = [
         {
@@ -69,7 +69,7 @@ def test_context_correctness():
             "recall_at_20": 1.0,
             "recall_at_40": 1.0,
             "score": 1.0,
-            "score_name": "match_at_1",
+            "score_name": "score",
         },
         {
             "match_at_1": 0.0,
@@ -91,7 +91,7 @@ def test_context_correctness():
             "recall_at_40": 1.0,
             "recall_at_5": 1.0,
             "score": 0.0,
-            "score_name": "match_at_1",
+            "score_name": "score",
         },
     ]
     map_global_target = {
@@ -101,7 +101,7 @@ def test_context_correctness():
         "score": 0.67,
         "score_ci_high": 0.83,
         "score_ci_low": 0.5,
-        "score_name": "map",
+        "score_name": "score",
     }
     mrr_global_target = {
         "mrr": 0.75,
@@ -110,7 +110,7 @@ def test_context_correctness():
         "score": 0.75,
         "score_ci_high": 1.0,
         "score_ci_low": 0.5,
-        "score_name": "mrr",
+        "score_name": "score",
     }
     retrieval_at_k_global_target = {
         "match_at_1": 0.5,
@@ -150,7 +150,7 @@ def test_context_correctness():
         "score": 0.5,
         "score_ci_high": 1.0,
         "score_ci_low": 0.0,
-        "score_name": "match_at_1",
+        "score_name": "score",
     }
 
     for catalog_name, global_target, instance_targets in [
