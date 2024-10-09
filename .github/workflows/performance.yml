@@ -1,0 +1,45 @@
+name: Test Performance
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  run-performance:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout main branch
+      uses: actions/checkout@v3
+      with:
+        ref: main
+
+    - name: Run performance on main branch
+      run: |
+        python profile/card_profiler.py
+
+    - name: Save main performance result
+      uses: actions/upload-artifact@v3
+      with:
+        name: main_score
+        path: cards_benchmark.json
+
+    - name: Checkout PR branch
+      uses: actions/checkout@v3
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Run performance on PR branch
+      run: |
+        python profile/card_profiler.py
+        cp cards_benchmark.json pr_cards_benchmark.json
+
+    - name: Download main performance result
+      uses: actions/download-artifact@v3
+      with:
+        name: main_score
+        path: ./main_cards_benchmark.json
+
+    - name: Compare main and PR performance
+      run: |
+        python profile/compare_performance_results.py
