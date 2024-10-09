@@ -39,7 +39,6 @@ General Operators List:
 ------------------------
 """
 
-import ast
 import operator
 import uuid
 import warnings
@@ -174,21 +173,14 @@ class MapInstanceValues(InstanceOperator):
 
     def verify(self):
         # make sure the mappers are valid
-        # add hints for the case of non-str value in inner dicts
-        self._cast_returned_value = {}
         for key, mapper in self.mappers.items():
-            self._cast_returned_value[key] = {}
             assert isinstance(
                 mapper, dict
             ), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            for k, v in mapper.items():
+            for k in mapper.keys():
                 assert isinstance(
                     k, str
                 ), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
-                if isinstance(v, str):
-                    self._cast_returned_value[key][k] = (False, v)
-                else:
-                    self._cast_returned_value[key][k] = (True, str(v))
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -215,13 +207,8 @@ class MapInstanceValues(InstanceOperator):
 
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
-        if (
-            val_as_str in mapper
-        ):  # carefully check what to return, to avoid external modification to the mapped value (e.g. if it is a list)
-            do_cast, cast_what = self._cast_returned_value[key][val_as_str]
-            if do_cast:
-                return ast.literal_eval(cast_what)
-            return mapper[val_as_str]
+        if val_as_str in mapper:
+            return recursive_copy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
