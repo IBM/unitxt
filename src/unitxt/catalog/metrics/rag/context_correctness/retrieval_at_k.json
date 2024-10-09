@@ -1,6 +1,6 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "score",
+    "main_score": "match_at_1",
     "preprocess_steps": [
         {
             "__type__": "copy",

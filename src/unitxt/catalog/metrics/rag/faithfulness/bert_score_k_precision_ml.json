@@ -13,32 +13,5 @@
             "to_field": "prediction"
         }
     ],
-    "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
-    "postprocess_steps": [
-        {
-            "__type__": "set",
-            "fields": {
-                "score/instance/score_name": "precision"
-            }
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "score/global/score_name": "precision"
-            }
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": [
-                [
-                    "score/global/precision_ci_low",
-                    "score/global/score_ci_low"
-                ],
-                [
-                    "score/global/precision_ci_high",
-                    "score/global/score_ci_high"
-                ]
-            ]
-        }
-    ]
+    "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml"
 }

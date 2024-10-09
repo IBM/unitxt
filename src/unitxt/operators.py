@@ -321,6 +321,13 @@ class SelectFields(InstanceOperator):
         return new_instance
 
 
+class DefaultPlaceHolder:
+    pass
+
+
+default_place_holder = DefaultPlaceHolder()
+
+
 class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
@@ -351,6 +358,7 @@ class InstanceFieldOperator(InstanceOperator):
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
+    not_exist_do_nothing: bool = False
 
     def verify(self):
         super().verify()
@@ -437,9 +445,13 @@ class InstanceFieldOperator(InstanceOperator):
                 old_value = dict_get(
                     instance,
                     from_field,
-                    default=self.get_default,
-                    not_exist_ok=self.not_exist_ok,
+                    default=default_place_holder,
+                    not_exist_ok=self.not_exist_ok or self.not_exist_do_nothing,
                 )
+                if old_value is default_place_holder:
+                    if self.not_exist_do_nothing:
+                        return instance
+                    old_value = self.get_default
             except Exception as e:
                 raise ValueError(
                     f"Failed to get '{from_field}' from {instance} due to : {e}"
