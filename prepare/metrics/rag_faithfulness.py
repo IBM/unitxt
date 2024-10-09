@@ -49,7 +49,9 @@ for new_catalog_name, base_catalog_name, main_score in [
         add_to_catalog(metric, base, overwrite=True)
 
 
-def test_faithfulness(task_data, catalog_name, global_target, instance_targets):
+def test_faithfulness(
+    task_data, catalog_name, global_target, instance_targets, main_score
+):
     # test the evaluate call
     test_evaluate(
         global_target,
@@ -61,7 +63,7 @@ def test_faithfulness(task_data, catalog_name, global_target, instance_targets):
     )
     # test using the usual metric pipeline
     test_pipeline = MetricPipeline(
-        main_score="score",
+        main_score=main_score,
         preprocess_steps=[
             Rename(field_to_field={"task_data/contexts": "contexts"}),
             Rename(field_to_field={"task_data/answer": "answer"}),
@@ -111,6 +113,7 @@ def test_faithfulness_sentence_bert():
                 "score_name": "score",
             },
         ],
+        main_score="score",
     )
 
     test_faithfulness(
@@ -132,6 +135,7 @@ def test_faithfulness_sentence_bert():
                 "score_name": "score",
             },
         ],
+        main_score="score",
     )
 
 
@@ -196,7 +200,13 @@ def test_faithfulness_token_k_precision():
             precision_instance_targets,
         ),
     ]:
-        test_faithfulness(task_data, catalog_name, global_target, instance_targets)
+        test_faithfulness(
+            task_data,
+            catalog_name,
+            global_target,
+            instance_targets,
+            main_score="precision",
+        )
 
 
 # This test is here since it does not involve any models
