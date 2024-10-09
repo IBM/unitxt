@@ -672,7 +672,7 @@ class MultipleSourceLoader(Loader):
 
         .. code-block:: python
 
-            MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
+            MultipleSourceLoader(sources = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
 
 
 
@@ -680,7 +680,7 @@ class MultipleSourceLoader(Loader):
 
         .. code-block:: python
 
-            MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
+            MultipleSourceLoader(sources = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
     """
 
     sources: List[Loader]

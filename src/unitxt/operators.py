@@ -486,6 +486,13 @@ class FieldOperator(InstanceFieldOperator):
         pass
 
 
+class MapValues(FieldOperator):
+    mapping: Dict[str, str]
+
+    def process_value(self, value: Any) -> Any:
+        return self.mapping[str(value)]
+
+
 class Rename(FieldOperator):
     """Renames fields.
 
@@ -653,7 +660,9 @@ class ListFieldValues(InstanceOperator):
         values = []
         for field_name in self.fields:
             values.append(dict_get(instance, field_name))
-        instance[self.to_field] = values
+
+        dict_set(instance, self.to_field, values)
+
         return instance
 
 
@@ -690,7 +699,7 @@ class ZipFieldValues(InstanceOperator):
             zipped = zip_longest(*values)
         else:
             zipped = zip(*values)
-        instance[self.to_field] = list(zipped)
+        dict_set(instance, self.to_field, list(zipped))
         return instance
 
 
