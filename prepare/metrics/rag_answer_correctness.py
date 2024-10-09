@@ -4,7 +4,9 @@ from unitxt.operators import Copy, Rename, Set
 from unitxt.test_utils.metrics import test_evaluate, test_metric
 
 
-def test_answer_correctness(task_data, catalog_name, global_target, instance_targets):
+def test_answer_correctness(
+    task_data, catalog_name, global_target, instance_targets, main_score
+):
     # test the evaluate call
     test_evaluate(
         global_target,
@@ -16,7 +18,7 @@ def test_answer_correctness(task_data, catalog_name, global_target, instance_tar
     )
     # test using the usual metric pipeline
     test_pipeline = MetricPipeline(
-        main_score="score",
+        main_score=main_score,
         preprocess_steps=[
             Rename(field_to_field={"task_data/ground_truths": "ground_truths"}),
             Rename(field_to_field={"task_data/answer": "answer"}),
@@ -110,6 +112,7 @@ def test_answer_correctness_sentence_bert():
                 "score_name": "score",
             },
         ],
+        main_score="score",
     )
 
     test_answer_correctness(
@@ -131,6 +134,7 @@ def test_answer_correctness_sentence_bert():
                 "score_name": "score",
             },
         ],
+        main_score="score",
     )
 
 
@@ -181,7 +185,11 @@ def test_answer_correctness_token_recall(task_data):
         ),
     ]:
         test_answer_correctness(
-            task_data, catalog_name, global_target, instance_targets
+            task_data,
+            catalog_name,
+            global_target,
+            instance_targets,
+            main_score="recall",
         )
 
 
@@ -239,6 +247,7 @@ if __name__ == "__main__":
                 "score_name": "recall",
             },
         ],
+        main_score="recall",
     )
 
     test_answer_correctness(
@@ -275,4 +284,5 @@ if __name__ == "__main__":
                 "score_name": "recall",
             },
         ],
+        main_score="recall",
     )
