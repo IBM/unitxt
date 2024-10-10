@@ -1,7 +1,0 @@
-{
-    "__type__": "post_process",
-    "process_prediction": false,
-    "operator": {
-        "__type__": "to_list_by_comma"
-    }
-}

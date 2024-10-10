@@ -1,8 +1,0 @@
-{
-    "__type__": "templates_list",
-    "items": [
-        "templates.qa.multiple_choice.open.es.helm",
-        "templates.qa.multiple_choice.open.es.lm_eval_harness",
-        "templates.qa.multiple_choice.open.es.mmlu"
-    ]
-}

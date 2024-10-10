@@ -1,6 +1,0 @@
-{
-    "__type__": "post_process",
-    "operator": {
-        "__type__": "to_list_by_comma_space"
-    }
-}

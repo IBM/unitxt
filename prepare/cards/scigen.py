@@ -3,7 +3,6 @@ from unitxt.blocks import (
     ConstructTableFromRowsCols,
     LoadHF,
     Rename,
-    SerializeTableAsIndexedRowMajor,
     Set,
     TaskCard,
 )
@@ -16,9 +15,8 @@ card = TaskCard(
         FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
         ConstructTableFromRowsCols(
             fields=["table_column_names", "table_content_values"],
-            to_field="table",
+            to_field="input_a",
         ),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "input_a"]]),
         Rename(field_to_field={"table_caption": "input_b", "text": "output"}),
         Set(
             fields={
@@ -29,7 +27,9 @@ card = TaskCard(
         ),
     ],
     task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
-    templates="templates.generation.from_pair.all",
+    templates=[
+        "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
+    ],
     __description__="SciGen is a dataset for the task of reasoning-aware data-to-text generation. It consists of tables from scientific articles(mostly containing numerical values) and their corresponding text descriptions.",
     __tags__={
         "modality": "table",

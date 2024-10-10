@@ -1,7 +1,0 @@
-{
-    "__type__": "span_labeling_template",
-    "input_format": "{text}",
-    "postprocessors": [
-        "processors.to_span_label_pairs"
-    ]
-}

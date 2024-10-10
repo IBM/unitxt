@@ -39,7 +39,6 @@ General Operators List:
 ------------------------
 """
 
-import copy
 import operator
 import uuid
 import warnings
@@ -82,14 +81,19 @@ from .operator import (
     StreamOperator,
 )
 from .random_utils import new_random_generator
-from .settings_utils import get_constants, get_settings
-from .stream import DynamicStream, Stream
+from .settings_utils import get_settings
+from .stream import DynamicStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
-from .utils import deepcopy, flatten_dict
+from .utils import (
+    deep_copy,
+    flatten_dict,
+    recursive_copy,
+    recursive_shallow_copy,
+    shallow_copy,
+)
 
 settings = get_settings()
-constants = get_constants()
 
 
 class FromIterables(StreamInitializerOperator):
@@ -132,8 +136,8 @@ class MapInstanceValues(InstanceOperator):
     it maps values of instances in a stream using predefined mappers.
 
     Attributes:
-        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
-            Keys are the names of the fields to be mapped, and values are dictionaries
+        mappers (Dict[str, Dict[str, Any]]): The mappers to use for mapping instance values.
+            Keys are the names of the fields to undergo mapping, and values are dictionaries
             that define the mapping from old values to new values.
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
@@ -203,13 +207,12 @@ class MapInstanceValues(InstanceOperator):
 
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
-        if self.strict and (val_as_str not in mapper):
+        if val_as_str in mapper:
+            return recursive_copy(mapper[val_as_str])
+        if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
             )
-        # By default deep copy the value in mapper to avoid shared modifications
-        if val_as_str in mapper:
-            return deepcopy(mapper[val_as_str])
         return val
 
 
@@ -269,7 +272,7 @@ class Set(InstanceOperator):
     ) -> Dict[str, Any]:
         for key, value in self.fields.items():
             if self.use_deepcopy:
-                value = deepcopy(value)
+                value = deep_copy(value)
             dict_set(instance, key, value)
         return instance
 
@@ -318,6 +321,13 @@ class SelectFields(InstanceOperator):
         return new_instance
 
 
+class DefaultPlaceHolder:
+    pass
+
+
+default_place_holder = DefaultPlaceHolder()
+
+
 class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
@@ -348,6 +358,7 @@ class InstanceFieldOperator(InstanceOperator):
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
+    not_exist_do_nothing: bool = False
 
     def verify(self):
         super().verify()
@@ -429,19 +440,18 @@ class InstanceFieldOperator(InstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         self.verify_field_definition()
-        # Need to deep copy instance, because when assigning two dictionary fields,
-        # dict_set() the target field dictionary fields.
-        # This means that if this target field was assigned to another field before,
-        # the field is updated as well.
-        instance = deepcopy(instance)
         for from_field, to_field in self._field_to_field:
             try:
                 old_value = dict_get(
                     instance,
                     from_field,
-                    default=self.get_default,
-                    not_exist_ok=self.not_exist_ok,
+                    default=default_place_holder,
+                    not_exist_ok=self.not_exist_ok or self.not_exist_do_nothing,
                 )
+                if old_value is default_place_holder:
+                    if self.not_exist_do_nothing:
+                        return instance
+                    old_value = self.get_default
             except Exception as e:
                 raise ValueError(
                     f"Failed to get '{from_field}' from {instance} due to : {e}"
@@ -474,6 +484,13 @@ class FieldOperator(InstanceFieldOperator):
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
+
+
+class MapValues(FieldOperator):
+    mapping: Dict[str, str]
+
+    def process_value(self, value: Any) -> Any:
+        return self.mapping[str(value)]
 
 
 class Rename(FieldOperator):
@@ -529,230 +546,6 @@ class AddConstant(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.add + value
-
-
-class Augmentor(InstanceOperator):
-    """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template.
-
-    Args:
-        augment_model_input: Whether to augment the input to the model.
-        augment_task_input:  Whether to augment the task input fields.  The specific fields are defined in the Task operator.
-
-    """
-
-    augment_task_input: bool = False
-    augment_model_input: bool = False
-
-    def verify(self):
-        assert not (
-            self.augment_task_input and self.augment_model_input
-        ), "Augmentor must set either 'augment_task_input' and 'augment_model_input' but not both"
-        assert (
-            self.augment_task_input or self.augment_model_input
-        ), "Augmentor must set either 'augment_task_input' or 'augment_model_input'"
-
-        super().verify()
-
-    @abstractmethod
-    def process_value(self, value: Any) -> Any:
-        pass
-
-    def prepare(self):
-        pass
-
-    def set_task_input_fields(self, task_input_fields: List[str]):
-        self._task_input_fields = [
-            "input_fields/" + task_input_field for task_input_field in task_input_fields
-        ]
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.augment_task_input:
-            assert (
-                len(self._task_input_fields) > 0
-            ), "No augmentable input fields were defined in Task, and augmentation was requested. Specify the fields to augment in 'argumentable_inputs' attribute of the Task."
-            fields = self._task_input_fields
-            assert not self.augment_model_input
-
-        if self.augment_model_input:
-            fields = ["source"]
-            assert not self.augment_task_input
-
-        for field_name in fields:
-            try:
-                old_value = dict_get(
-                    instance,
-                    field_name,
-                    default="",
-                    not_exist_ok=False,
-                )
-            except ValueError as e:
-                raise TypeError(f"Failed to get {field_name} from {instance}") from e
-
-            try:
-                new_value = self.process_value(old_value)
-            except Exception as e:
-                raise RuntimeError(
-                    f"Error augmenting value '{old_value}' from '{field_name}' in instance: {instance}"
-                ) from e
-            dict_set(instance, field_name, new_value, not_exist_ok=True)
-        return instance
-
-
-class NullAugmentor(Augmentor):
-    """Does not change the input string."""
-
-    def verify(self):
-        pass
-
-    def process_value(self, value: Any) -> Any:
-        return value
-
-
-class AugmentWhitespace(Augmentor):
-    """Augments the inputs by replacing existing whitespaces with other whitespaces.
-
-    Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
-    """
-
-    def process_value(self, value: Any) -> Any:
-        import re
-
-        words = re.split(r"(\s+)", value)
-        new_value = ""
-
-        random_generator = new_random_generator(sub_seed=value)
-        for word in words:
-            if word.isspace():
-                new_value += random_generator.choice(
-                    ["\n", "\t", " "]
-                ) * random_generator.randint(1, 3)
-            else:
-                new_value += word
-        return new_value
-
-
-class AugmentPrefixSuffix(Augmentor):
-    r"""Augments the input by prepending and appending to it a randomly selected (typically, whitespace) patterns.
-
-    Args:
-     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
-        The dictionary version allows to specify relative weights of the different patterns.
-     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of length
-        prefix_len of suffix_len, respectively, repetitions of the randomly selected patterns.
-     remove_existing_whitespaces : allows to first clean any existing leading and trailing whitespaces.
-        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
-        trimmed input.
-     If only one of prefixes/suffixes is needed, set the other to None.
-
-    Examples:
-        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
-        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
-        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
-        being preferred over triple '\t', at 2:1 ratio, employ
-        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
-        which will append '\n'-s twice as often as '\t'-s.
-
-    """
-
-    prefixes: Optional[Union[List[str], Dict[str, int]]] = {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30,
-    }
-    prefix_len: Optional[int] = 3
-    suffixes: Optional[Union[List[str], Dict[str, int]]] = {
-        " ": 20,
-        "\\t": 10,
-        "\\n": 40,
-        "": 30,
-    }
-    suffix_len: Optional[int] = 3
-    remove_existing_whitespaces: Optional[bool] = False
-
-    def verify(self):
-        assert (
-            self.prefixes or self.suffixes
-        ), "At least one of prefixes/suffixes should be not None."
-        for arg, arg_name in zip(
-            [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
-        ):
-            assert (
-                arg is None or isoftype(arg, List[str]) or isoftype(arg, Dict[str, int])
-            ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
-        assert (
-            self.prefix_len > 0
-        ), f"prefix_len must be positive, got {self.prefix_len}"
-        assert (
-            self.suffix_len > 0
-        ), f"suffix_len must be positive, got {self.suffix_len}"
-        super().verify()
-
-    def _calculate_distributions(self, prefs_or_suffs):
-        if prefs_or_suffs is None:
-            return None, None
-        patterns = (
-            prefs_or_suffs
-            if isinstance(prefs_or_suffs, list)
-            else [k for k, v in prefs_or_suffs.items()]
-        )
-        total_weight = (
-            len(patterns)
-            if isinstance(prefs_or_suffs, list)
-            else sum([v for k, v in prefs_or_suffs.items()])
-        )
-        weights = (
-            [1.0 / total_weight] * len(patterns)
-            if isinstance(prefs_or_suffs, list)
-            else [float(prefs_or_suffs[p]) / total_weight for p in patterns]
-        )
-        return patterns, weights
-
-    def prepare(self):
-        # Being an artifact, prepare is invoked before verify. Here we need verify before the actions
-        self.verify()
-        self._prefix_pattern_distribution = {"length": self.prefix_len}
-        self._suffix_pattern_distribution = {"length": self.suffix_len}
-
-        (
-            self._prefix_pattern_distribution["patterns"],
-            self._prefix_pattern_distribution["weights"],
-        ) = self._calculate_distributions(self.prefixes)
-        (
-            self._suffix_pattern_distribution["patterns"],
-            self._suffix_pattern_distribution["weights"],
-        ) = self._calculate_distributions(self.suffixes)
-        super().prepare()
-
-    def _get_random_pattern(
-        self, pattern_distribution, random_generator: Random
-    ) -> str:
-        string_to_add = ""
-        if pattern_distribution["patterns"]:
-            string_to_add = "".join(
-                random_generator.choices(
-                    pattern_distribution["patterns"],
-                    pattern_distribution["weights"],
-                    k=pattern_distribution["length"],
-                )
-            )
-        return string_to_add
-
-    def process_value(self, value: Any) -> Any:
-        assert value is not None, "input value should not be None"
-        new_value = str(value)
-        if self.remove_existing_whitespaces:
-            new_value = new_value.strip()
-        random_generator = new_random_generator(sub_seed=value)
-        prefix = self._get_random_pattern(
-            self._prefix_pattern_distribution, random_generator
-        )
-        suffix = self._get_random_pattern(
-            self._suffix_pattern_distribution, random_generator
-        )
-        return prefix + new_value + suffix
 
 
 class ShuffleFieldValues(FieldOperator):
@@ -867,7 +660,9 @@ class ListFieldValues(InstanceOperator):
         values = []
         for field_name in self.fields:
             values.append(dict_get(instance, field_name))
-        instance[self.to_field] = values
+
+        dict_set(instance, self.to_field, values)
+
         return instance
 
 
@@ -904,7 +699,7 @@ class ZipFieldValues(InstanceOperator):
             zipped = zip_longest(*values)
         else:
             zipped = zip(*values)
-        instance[self.to_field] = list(zipped)
+        dict_set(instance, self.to_field, list(zipped))
         return instance
 
 
@@ -1071,12 +866,13 @@ class Copy(FieldOperator):
 
     """
 
-    use_deep_copy: bool = True
-
     def process_value(self, value: Any) -> Any:
-        if self.use_deep_copy:
-            return copy.deepcopy(value)
         return value
+
+
+class DeepCopy(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        return deep_copy(value)
 
 
 @deprecation(version="2.0.0", alternative=Copy)
@@ -1246,7 +1042,7 @@ class ArtifactFetcherMixin:
         if artifact_identifier not in cls.cache:
             artifact, artifactory = fetch_artifact(artifact_identifier)
             cls.cache[artifact_identifier] = artifact
-        return cls.cache[artifact_identifier]
+        return shallow_copy(cls.cache[artifact_identifier])
 
 
 class ApplyOperatorsField(InstanceOperator):
@@ -1445,7 +1241,7 @@ class ComputeExpressionMixin(Artifact):
 
     def compute_expression(self, instance: dict) -> Any:
         if settings.allow_unverified_code:
-            return eval(self.expression, self.globals, instance)
+            return eval(self.expression, {**self.globals, **instance})
 
         raise ValueError(
             f"Cannot evaluate expression in {self} when unitxt.settings.allow_unverified_code=False - either set it to True or set {settings.allow_unverified_code_key} environment variable."
@@ -1826,7 +1622,23 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric
 
-        first_instance = stream.peek()
+        # Number of instances in input stream is assumed to be small. This is why
+        # each metric consumes all of them and lays them in its main memory, and even generates
+        # some 1000 copies thereof for the sake of CI.
+        # So we start with deep copying here, to make a 'frozen' status of the stream, having
+        # passed the preprocess_steps of the task, and inference, and now getting to be evaluated,
+        # a frozen status to be fed into each of the metrics listed in metric_field,
+        # so that the evaluation of one does not affect the evaluation of another
+        # (typically, affecting via change of instance as part of
+        # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
+
+        instances_upon_entrance_to_metrics_evaluations = []
+        for instance in stream:
+            instances_upon_entrance_to_metrics_evaluations.append(
+                recursive_copy(instance)
+            )
+
+        first_instance = instances_upon_entrance_to_metrics_evaluations[0]
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1843,16 +1655,6 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metric_names = list(reversed(metric_names))
 
-        # Workaround: The metric/MetricPipeline modifies the stream itself, sometimes making it incompatible
-        # for further metrics' processing, instead of just modifying the score field.
-        # Here we keep all the fields besides the score, and restore them after the metric finishes.
-        first_instance = stream.peek()
-        keys_to_restore = set(first_instance.keys()).difference({"score"})
-        multi_stream = MultiStream({stream_name: stream})
-        multi_stream = CopyFields(
-            field_to_field={k: f"{k}_orig" for k in keys_to_restore}
-        )(multi_stream)
-
         for metric_name in metric_names:
             metric = self.get_artifact(metric_name)
             assert isinstance(
@@ -1861,17 +1663,23 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
-
+            multi_stream = MultiStream(
+                {
+                    "tmp": ListStream(
+                        instances_list=instances_upon_entrance_to_metrics_evaluations,
+                        copying=True,  # ensures deep copy when iterating over instances
+                    )
+                }
+            )
             multi_stream = metric(multi_stream)
-            multi_stream = CopyFields(
-                field_to_field={f"{k}_orig": k for k in keys_to_restore}
-            )(multi_stream)
+            for evaluated_instance, freezed_instance in zip(
+                multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
+            ):
+                freezed_instance["score"] = recursive_shallow_copy(
+                    evaluated_instance["score"]
+                )
 
-        multi_stream = RemoveFields(fields=[f"{k}_orig" for k in keys_to_restore])(
-            multi_stream
-        )
-        stream = multi_stream[stream_name]
-        yield from stream
+        yield from instances_upon_entrance_to_metrics_evaluations
 
 
 class MergeStreams(MultiStreamOperator):
@@ -2290,7 +2098,7 @@ class DuplicateInstances(StreamOperator):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         for instance in stream:
             for idx in range(self.num_duplications):
-                duplicate = deepcopy(instance)
+                duplicate = recursive_shallow_copy(instance)
                 if self.duplication_index_field:
                     duplicate.update({self.duplication_index_field: idx})
                 yield duplicate

@@ -53,7 +53,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import deepcopy
+from .utils import recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -151,6 +151,7 @@ class LoadHF(Loader):
         data_dir: Optional directory to store downloaded data.
         split: Optional specification of which split to load.
         data_files: Optional specification of particular data files to load.
+        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
         streaming: Bool indicating if streaming should be used.
         filtering_lambda: A lambda function for filtering the data after loading.
         num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
@@ -170,6 +171,7 @@ class LoadHF(Loader):
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
+    revision: Optional[str] = None
     streaming: bool = True
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
@@ -193,14 +195,19 @@ class LoadHF(Loader):
     def stream_dataset(self):
         if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                if settings.disable_hf_datasets_cache and not self.streaming:
+                    cache_dir = dir_to_be_deleted
+                else:
+                    cache_dir = None
                 try:
                     dataset = hf_load_dataset(
                         self.path,
                         name=self.name,
                         data_dir=self.data_dir,
                         data_files=self.data_files,
+                        revision=self.revision,
                         streaming=self.streaming,
-                        cache_dir=None if self.streaming else dir_to_be_deleted,
+                        cache_dir=cache_dir,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
@@ -228,6 +235,10 @@ class LoadHF(Loader):
     def load_dataset(self):
         if self._cache is None:
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                if settings.disable_hf_datasets_cache:
+                    cache_dir = dir_to_be_deleted
+                else:
+                    cache_dir = None
                 try:
                     dataset = hf_load_dataset(
                         self.path,
@@ -236,7 +247,7 @@ class LoadHF(Loader):
                         data_files=self.data_files,
                         streaming=False,
                         keep_in_memory=True,
-                        cache_dir=dir_to_be_deleted,
+                        cache_dir=cache_dir,
                         split=self.split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
@@ -488,6 +499,7 @@ class LoadFromIBMCloud(Loader):
         bucket_name: Name of the S3 bucket from which to load data.
         data_dir: Optional directory path within the bucket.
         data_files: Union type allowing either a list of file names or a mapping of splits to file names.
+        data_field: The dataset key for nested JSON file, i.e. when multiple datasets are nested in the same file
         caching: Bool indicating if caching is enabled to avoid re-downloading data.
 
     Example:
@@ -511,6 +523,7 @@ class LoadFromIBMCloud(Loader):
     data_dir: str = None
 
     data_files: Union[Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
+    data_field: str = None
     caching: bool = True
     data_classification_policy = ["proprietary"]
 
@@ -636,10 +649,13 @@ class LoadFromIBMCloud(Loader):
                     )
 
         if isinstance(self.data_files, list):
-            dataset = hf_load_dataset(local_dir, streaming=False)
+            dataset = hf_load_dataset(local_dir, streaming=False, field=self.data_field)
         else:
             dataset = hf_load_dataset(
-                local_dir, streaming=False, data_files=self.data_files
+                local_dir,
+                streaming=False,
+                data_files=self.data_files,
+                field=self.data_field,
             )
 
         return MultiStream.from_iterables(dataset)
@@ -656,7 +672,7 @@ class MultipleSourceLoader(Loader):
 
         .. code-block:: python
 
-            MultipleSourceLoader(loaders = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
+            MultipleSourceLoader(sources = [ LoadHF(path="public/data",split="train"), LoadCSV({"test": "mytest.csv"}) ])
 
 
 
@@ -664,7 +680,7 @@ class MultipleSourceLoader(Loader):
 
         .. code-block:: python
 
-            MultipleSourceLoader(loaders = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
+            MultipleSourceLoader(sources = [ LoadCSV({"test": "mytest1.csv"}, LoadCSV({"test": "mytest2.csv"}) ])
     """
 
     sources: List[Loader]
@@ -729,7 +745,7 @@ class LoadFromDictionary(Loader):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
-        return MultiStream.from_iterables(deepcopy(self.data))
+        return MultiStream.from_iterables(recursive_copy(self.data))
 
 
 class LoadFromHFSpace(LoadHF):

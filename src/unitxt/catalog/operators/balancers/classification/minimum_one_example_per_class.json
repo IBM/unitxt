@@ -1,6 +1,0 @@
-{
-    "__type__": "minimum_one_example_per_label_refiner",
-    "fields": [
-        "reference_fields/label"
-    ]
-}

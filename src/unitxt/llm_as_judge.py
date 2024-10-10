@@ -144,13 +144,13 @@ class LLMAsJudge(BulkInstanceMetric):
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if self.format:
+            if self.format and type(self.format) is not SystemFormat:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support formatting. Please remove the format definition from the recipe"
                     " (OpenAi Chat API take care of the formatting automatically)."
                 )
-            if self.system_prompt:
+            if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
                     "not support system prompt. Please remove the system_prompt definition from the recipe"
@@ -181,9 +181,17 @@ class LLMAsJudge(BulkInstanceMetric):
         results = []
         for instance in outputs:
             if self.task == "pairwise_comparative_rating.single_turn":
-                is_model_b_the_baseline = (
-                    instance["task_data"]["model_b"] == "baseline_model"
+                import json
+
+                # seems like the task data sometimes comes as a string, not a dict
+                # this fixes it
+                task_data = (
+                    json.loads(instance["task_data"])
+                    if isinstance(instance["task_data"], str)
+                    else instance["task_data"]
                 )
+
+                is_model_b_the_baseline = task_data["model_b"] == "baseline_model"
                 if is_model_b_the_baseline:
                     model_a_preference_score = instance["prediction"]
                 else:

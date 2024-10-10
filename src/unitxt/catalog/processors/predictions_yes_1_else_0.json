@@ -1,7 +1,0 @@
-{
-    "__type__": "post_process",
-    "process_references": false,
-    "operator": {
-        "__type__": "yes_to_one_else_zero"
-    }
-}

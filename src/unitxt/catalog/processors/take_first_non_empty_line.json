@@ -1,6 +1,0 @@
-{
-    "__type__": "post_process",
-    "operator": {
-        "__type__": "take_first_non_empty_line"
-    }
-}

@@ -1,5 +1,0 @@
-{
-    "__type__": "input_output_template",
-    "input_format": "{question}",
-    "output_format": "{answers}"
-}

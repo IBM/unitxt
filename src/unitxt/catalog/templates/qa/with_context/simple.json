@@ -1,5 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "input_format": "Context: {context}\nQuestion: {question}",
-    "references_field": "answers"
-}

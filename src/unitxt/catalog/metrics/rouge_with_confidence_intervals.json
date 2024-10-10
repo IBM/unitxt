@@ -1,4 +1,0 @@
-{
-    "__type__": "rouge",
-    "__description__": "This is deprecated. Use 'metrics.rouge' which also generate confidence intervals"
-}

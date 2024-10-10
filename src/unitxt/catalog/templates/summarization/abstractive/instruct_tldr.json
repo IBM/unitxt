@@ -1,6 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "instruction": "TL;DR:",
-    "input_format": "{document}\nSummary:",
-    "references_field": "summaries"
-}

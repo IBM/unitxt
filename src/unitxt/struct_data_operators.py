@@ -29,14 +29,61 @@ import pandas as pd
 
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
-from .utils import deepcopy
+from .random_utils import new_random_generator
+from .serializers import TableSerializer
+from .types import Table
+from .utils import recursive_copy
 
 
-class SerializeTable(ABC, FieldOperator):
+def shuffle_columns(table: Table, seed=0) -> Table:
+    # extract header & rows from the dictionary
+    header = table.get("header", [])
+    rows = table.get("rows", [])
+    # shuffle the indices first
+    indices = list(range(len(header)))
+    random_generator = new_random_generator({"table": table, "seed": seed})
+    random_generator.shuffle(indices)
+
+    # shuffle the header & rows based on that indices
+    shuffled_header = [header[i] for i in indices]
+    shuffled_rows = [[row[i] for i in indices] for row in rows]
+
+    table["header"] = shuffled_header
+    table["rows"] = shuffled_rows
+
+    return table
+
+
+def shuffle_rows(table: Table, seed=0) -> Table:
+    # extract header & rows from the dictionary
+    rows = table.get("rows", [])
+    # shuffle rows
+    random_generator = new_random_generator({"table": table, "seed": seed})
+    random_generator.shuffle(rows)
+    table["rows"] = rows
+
+    return table
+
+
+class SerializeTable(ABC, TableSerializer):
     """TableSerializer converts a given table into a flat sequence with special symbols.
 
     Output format varies depending on the chosen serializer. This abstract class defines structure of a typical table serializer that any concrete implementation should follow.
     """
+
+    seed: int = 0
+    shuffle_rows: bool = False
+    shuffle_columns: bool = False
+
+    def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
+        value = recursive_copy(value)
+        if self.shuffle_columns:
+            value = shuffle_columns(table=value, seed=self.seed)
+
+        if self.shuffle_rows:
+            value = shuffle_rows(table=value, seed=self.seed)
+
+        return self.serialize_table(value)
 
     # main method to serialize a table
     @abstractmethod
@@ -59,10 +106,6 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
     Commonly used row major serialization format.
     Format:  col : col1 | col2 | col 3 row 1 : val1 | val2 | val3 | val4 row 2 : val1 | ...
     """
-
-    def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.serialize_table(table_content=table_input)
 
     # main method that processes a table
     # table_content must be in the presribed input format
@@ -111,10 +154,6 @@ class SerializeTableAsMarkdown(SerializeTable):
     ...
     """
 
-    def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.serialize_table(table_content=table_input)
-
     # main method that serializes a table.
     # table_content must be in the presribed input format.
     def serialize_table(self, table_content: Dict) -> str:
@@ -159,10 +198,6 @@ class SerializeTableAsDFLoader(SerializeTable):
     index=[0,1,2])
     """
 
-    def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.serialize_table(table_content=table_input)
-
     # main method that serializes a table.
     # table_content must be in the presribed input format.
     def serialize_table(self, table_content: Dict) -> str:
@@ -171,6 +206,12 @@ class SerializeTableAsDFLoader(SerializeTable):
         rows = table_content.get("rows", [])
 
         assert header and rows, "Incorrect input table format"
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
 
         # Create a pandas DataFrame
         df = pd.DataFrame(rows, columns=header)
@@ -198,10 +239,6 @@ class SerializeTableAsJson(SerializeTable):
         "2":{"name":"Donald","age":39}
     }
     """
-
-    def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.serialize_table(table_content=table_input)
 
     # main method that serializes a table.
     # table_content must be in the presribed input format.
@@ -459,7 +496,7 @@ class ConvertTableColNamesToSequential(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
+        table_input = recursive_copy(table)
         return self.replace_header(table_content=table_input)
 
     # replaces header with sequential column names
@@ -492,21 +529,8 @@ class ShuffleTableRows(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.shuffle_rows(table_content=table_input)
-
-    # shuffles table rows randomly
-    def shuffle_rows(self, table_content: Dict) -> str:
-        # extract header & rows from the dictionary
-        header = table_content.get("header", [])
-        rows = table_content.get("rows", [])
-        assert header and rows, "Incorrect input table format"
-
-        # shuffle rows
-        random.shuffle(rows)
-        table_content["rows"] = rows
-
-        return table_content
+        table_input = recursive_copy(table)
+        return shuffle_rows(table_input)
 
 
 class ShuffleTableColumns(FieldOperator):
@@ -526,28 +550,8 @@ class ShuffleTableColumns(FieldOperator):
     """
 
     def process_value(self, table: Any) -> Any:
-        table_input = deepcopy(table)
-        return self.shuffle_columns(table_content=table_input)
-
-    # shuffles table columns randomly
-    def shuffle_columns(self, table_content: Dict) -> str:
-        # extract header & rows from the dictionary
-        header = table_content.get("header", [])
-        rows = table_content.get("rows", [])
-        assert header and rows, "Incorrect input table format"
-
-        # shuffle the indices first
-        indices = list(range(len(header)))
-        random.shuffle(indices)  #
-
-        # shuffle the header & rows based on that indices
-        shuffled_header = [header[i] for i in indices]
-        shuffled_rows = [[row[i] for i in indices] for row in rows]
-
-        table_content["header"] = shuffled_header
-        table_content["rows"] = shuffled_rows
-
-        return table_content
+        table_input = recursive_copy(table)
+        return shuffle_columns(table_input)
 
 
 class LoadJson(FieldOperator):

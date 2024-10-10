@@ -1,5 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "input_format": "Write a succinct summary of the following {document_type}: {document}.",
-    "references_field": "summaries"
-}

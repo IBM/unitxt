@@ -1,6 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.templates import (
     MultiReferenceTemplate,
+    TemplatesList,
 )
 
 add_to_catalog(
@@ -11,6 +12,16 @@ add_to_catalog(
         references_field="reference_answers",
     ),
     "templates.rag.response_generation.please_respond",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Please respond to the following question using the context",
+        input_format="Context: {contexts}\nQuestion: {question}.\n",
+        references_field="reference_answers",
+    ),
+    "templates.rag.response_generation.please_respond_chat",
     overwrite=True,
 )
 
@@ -33,5 +44,17 @@ add_to_catalog(
         references_field="reference_answers",
     ),
     "templates.rag.response_generation.answer_based_on_context_inverted",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.rag.response_generation.please_respond",
+            "templates.rag.response_generation.please_respond_chat",
+            "templates.rag.response_generation.answer_based_on_context",
+        ]
+    ),
+    "templates.rag.response_generation.bluebench",
     overwrite=True,
 )
