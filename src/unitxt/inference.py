@@ -1,8 +1,10 @@
 import abc
 import dataclasses
 import os
+import requests
 import re
 from typing import Any, Dict, List, Literal, Optional, Union
+from dataclasses import field
 
 from datasets import DatasetDict
 from tqdm import tqdm
@@ -498,6 +500,9 @@ class OpenAiInferenceEngine(
 ):
     label: str = "openai"
     model_name: str
+    parameters: OpenAiInferenceEngineParams = field(
+        default_factory=OpenAiInferenceEngineParams
+    )
     _requirements_list = {
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
@@ -606,7 +611,83 @@ class OpenAiInferenceEngine(
                 inference_type=self.label,
             )
         return predict_result
+    
+class InstructLabInferenceEngine(
+    InferenceEngine, LogProbInferenceEngine, PackageRequirementsMixin
+):
+    base_url: str = 'http://127.0.0.1:8000/v1' #URL for local serving of the model
+    parameters: OpenAiInferenceEngineParams = field(
+        default_factory=OpenAiInferenceEngineParams
+    )
+    batch_size: int = 10
+    
+    def prepare(self):
+        try:
+            response = requests.get(f"{self.base_url}/models")
+            response.raise_for_status()  
+            self.model = response.json()['data'][0]['id']
+        except requests.exceptions.RequestException as e:
+            raise ValueError(f"Error fetching model ID: {e}")
+        except (KeyError, IndexError):
+            raise ValueError("Error: Failed to parse model ID from response JSON.")
+    
+    def extract_inferences(self,http_response):
+        data = http_response.json()
+        return [choice['text']  for choice in data['choices']]
 
+    def get_dataset_batch(self, dataset):
+        return [dataset[i:i + self.batch_size]['source'] for i in range(0, len(dataset), self.batch_size)]
+
+    def add_parametes_to_payload(self, payload):
+        params = {attr: getattr(self.parameters, attr) for attr in OpenAiInferenceEngineParams.__dict__.keys() if not attr.startswith("_") and getattr(self.parameters, attr) is not None}
+        payload.update(params)
+
+    def _infer(self,dataset):
+        outputs = []
+        for batch in tqdm(self.get_dataset_batch(dataset), desc=f"Inferring with InstructLab - model: {self.model}"):
+            payload = {
+                "prompt": batch,
+                'model': self.model
+            }
+            self.add_parametes_to_payload(payload)
+            try:
+                response = requests.post(self.base_url+"/completions", json=payload)
+                response.raise_for_status()  
+                batch_outputs = self.extract_inferences(response)
+            except requests.exceptions.RequestException as e:
+                raise ValueError(f"Error sending request: {e}")
+            except (KeyError, IndexError):
+                raise ValueError("Error: Failed to parse response JSON or access data.")
+
+            outputs.extend(batch_outputs)
+        return outputs
+    
+    def _infer_log_probs(self, dataset):
+        return None
+
+class NonBatchedInstructLabInferenceEngine(InstructLabInferenceEngine):
+    def extract_inference(self, http_response):
+        data = http_response.json()
+        return data['choices'][0]['text']
+
+    def _infer(self,dataset):
+        outputs = []
+        for instance in tqdm(dataset, desc=f"Inferring with InstructLab - model: {self.model}"):
+            payload = {
+                "prompt": instance["source"],
+                'model': self.model
+            }
+            self.add_parametes_to_payload(payload)
+            try:
+                response = requests.post(self.base_url + "/completions", json=payload)
+                response.raise_for_status()
+                output = self.extract_inference(response)
+            except requests.exceptions.RequestException as e:
+                raise ValueError(f"Error sending request: {e}")
+            except (KeyError, IndexError):
+                raise ValueError("Error: Failed to parse response JSON or access data.")
+            outputs.append(output)
+        return outputs
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
     max_tokens: Optional[int] = None
