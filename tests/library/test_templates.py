@@ -586,8 +586,8 @@ class TestTemplates(UnitxtTestCase):
                     "relations": ['marriedTo'],
                     'objects': ['Alex']
                 },
-                "source": "John,: Doe is from New York and works at Goo:gle.",
-                "target": '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}',
+                "source": "Maria is married to Alex.",
+                "target": {'subjects': [], 'relations': [], },
                 "references": [
                     '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}'
                 ],
@@ -991,29 +991,29 @@ class TestTemplates(UnitxtTestCase):
 
             targets = [
                 {
-                    "input_fields": {"choices": ["False", "True"], "text": "example A"},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
                     "reference_fields": {
-                        "choices": ["False", "True"],
-                        "label": 1,
+                        "choices": ["True", "False"],
+                        "label": 0,
                         "options": [f"{first}", f"{second}"],
                     },
-                    "source": f"Text: example A, Choices: {first}. False, {second}. True.",
-                    "target": f"{second}",
-                    "references": [f"{second}"],
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
                     "postprocessors": ["processors.to_string_stripped"],
                 },
                 {
-                    "input_fields": {"choices": ["False", "True"], "text": "example A"},
+                    "input_fields": {"choices": ["True", "False"], "text": "example A"},
                     "reference_fields": {
-                        "choices": ["False", "True"],
-                        "label": 0,
+                        "choices": ["True", "False"],
+                        "label": 1,
                         "options": [f"{first}", f"{second}"],
                     },
-                    "source": f"Text: example A, Choices: {first}. False, {second}. True.",
-                    "target": f"{first}",
-                    "references": [f"{first}"],
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{second}",
+                    "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
                     "postprocessors": ["processors.to_string_stripped"],
