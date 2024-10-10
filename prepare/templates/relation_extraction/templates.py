@@ -28,7 +28,7 @@ for language in all_relations_for_pair_templates.keys():
             postprocessors=[
                 "processors.take_first_non_empty_line",
                 "processors.lower_case_till_punc",
-                "processors.to_list_by_comma",
+                "processors.to_list_of_tuples_from_string_by_comma",
             ],
             task_name=f"relation_extraction.all_relation_types{suffix}",
         )

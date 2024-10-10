@@ -10,8 +10,6 @@ from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator
 from .random_utils import new_random_generator
-<<<<<<< HEAD
-=======
 from .serializers import (
     DialogSerializer,
     ImageSerializer,
@@ -22,7 +20,6 @@ from .serializers import (
     TableSerializer,
 )
 from .settings_utils import get_constants
->>>>>>> main
 from .type_utils import isoftype
 
 
@@ -119,8 +116,6 @@ class Template(InstanceOperator):
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
             serialized_inputs
         )
-<<<<<<< HEAD
-=======
 
         result = {
             **instance,
@@ -142,22 +137,10 @@ class Template(InstanceOperator):
             reference_fields, instance
         )  # Dict[str, str]
 
->>>>>>> main
         target, references = self.reference_fields_to_target_and_references(
             serialized_references
         )
 
-<<<<<<< HEAD
-        return {
-            **instance,
-            "source": source,
-            "target": target,
-            "references": references,
-            "instruction": instruction,
-            "target_prefix": target_prefix,
-            "postprocessors": self.postprocessors,
-        }
-=======
         result["target"] = target
         result["references"] = references
 
@@ -170,7 +153,6 @@ class Template(InstanceOperator):
         self, data: Dict[str, Any], instance: Dict[str, Any]
     ) -> Dict[str, str]:
         return {k: self.serializer.serialize(v, instance) for k, v in data.items()}
->>>>>>> main
 
     @abstractmethod
     def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
@@ -599,37 +581,6 @@ class MultipleChoiceTemplate(InputFormatTemplate):
         target = reference_fields[self.target_field]
         return target, [target]
 
-<<<<<<< HEAD
-    def _shuffle_choices(self, instance):
-        target_index = self.outputs_to_target_index(instance["reference_fields"])
-        original_label_choice = instance["reference_fields"][self.choices_field][
-            target_index
-        ]
-        choices = instance["input_fields"][self.choices_field]
-        random_generator = new_random_generator(
-            {**instance["input_fields"], **instance["reference_fields"]}
-        )
-        random_generator.shuffle(choices)
-        instance["input_fields"][self.choices_field] = choices
-        instance["reference_fields"][self.choices_field] = choices
-        instance["reference_fields"][self.target_field] = choices.index(
-            original_label_choice
-        )
-        return instance
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        if self.shuffle_choices:
-            instance = self._shuffle_choices(instance)
-        result = super().process(instance, stream_name)
-
-        if "options" not in result["reference_fields"]:
-            result["reference_fields"]["options"] = self.inputs_to_choices(
-                instance["reference_fields"], self.target_choice_format
-            )
-        return result
-=======
     def preprocess_input_and_reference_fields(
         self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -654,7 +605,6 @@ class MultipleChoiceTemplate(InputFormatTemplate):
         )
         return instance
 
->>>>>>> main
 
 class YesNoTemplate(InputFormatTemplate):
     """A template for generating binary Yes/No questions asking whether an input text is of a specific class.
@@ -939,10 +889,5 @@ class TemplatesList(ListCollection):
 
 class TemplatesDict(DictCollection):
     def verify(self):
-<<<<<<< HEAD
-        for _key, template in self.items():
-            assert isinstance(template, Template)
-=======
         for template in self.items.values():
             assert isinstance(template, Template)
->>>>>>> main

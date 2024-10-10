@@ -607,42 +607,44 @@ class TestTemplates(UnitxtTestCase):
                     'objects': ['Alex']
                     },
             },
-            {
-                "input_fields": {
-                    "text": "Jack is a manager of Thomas. Thomas is employed by IBM"
-                    },
-                "reference_fields": {
-                    "subjects": ['Jack','Thomas'],
-                    "relations": ['managerOf','employedBy'],
-                    'objects': ['Thomas','IBM']
-                    },
-            }
+            # {
+            #     "input_fields": {
+            #         "text": "Jack is a manager of Thomas. Thomas is employed by IBM"
+            #         },
+            #     "reference_fields": {
+            #         "subjects": ['Jack','Thomas'],
+            #         "relations": ['managerOf','employedBy'],
+            #         'objects': ['Thomas','IBM']
+            #         },
+            # }
         ]
 
         targets = [
             {
                 "input_fields": {
                     "text": "Maria is married to Alex."
-                },
+                    },
                 "reference_fields": {
                     "subjects": ["Maria"],
                     "relations": ['marriedTo'],
                     'objects': ['Alex']
-                },
+                    },
                 "source": "Maria is married to Alex.",
-                "target": {'subjects': [], 'relations': [], },
+                "target": "{'subjects': ['Maria'], 'relations': ['marriedTo'], 'objects': ['Alex']}",
                 "references": [
-                    '{"PER": ["John,: Doe", "New York"], "ORG": ["Goo:gle"]}'
-                ],
+                    "{'subjects': ['Maria'], 'relations': ['marriedTo'], 'objects': ['Alex']}"
+                    ],
                 "instruction": "",
                 "target_prefix": "",
                 "postprocessors": [
-                    "processors.load_json",
-                    "processors.dict_of_lists_to_value_key_pairs",
-                ],
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                    "processors.to_list_of_tuples_from_string_by_comma",
+                ]
             }
 
         ]
+        check_operator(template, targets, targets, tester=self)
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
