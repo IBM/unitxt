@@ -52,6 +52,7 @@ global_target = {
     "f1_micro_ci_high": 0.57,
     "score_ci_low": 0.57,
     "score_ci_high": 0.57,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(
@@ -91,6 +92,7 @@ global_target = {
     "f1_micro": 0.4,
     "score": 0.4,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(
@@ -129,6 +131,7 @@ global_target = {
     "f1_micro": 0.33,
     "score": 0.33,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(
@@ -167,6 +170,7 @@ global_target = {
     "f1_micro": 0.0,
     "score": 0.0,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(
@@ -207,6 +211,7 @@ global_target = {
     "f1_micro": 0.4,
     "score": 0.4,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(
@@ -271,6 +276,7 @@ global_target = {
     "f1_micro": 0.57,
     "score": 0.57,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(
@@ -321,6 +327,7 @@ global_target = {
     "f1_micro": 0.0,
     "score": 0.0,
     "score_name": "f1_micro",
+    "num_of_evaluated_instances": 1,
 }
 
 outputs = test_metric(

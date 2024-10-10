@@ -17,6 +17,7 @@ global_targets = {
     "score_ci_high": 0.9,
     "score_ci_low": 0.5,
     "score_name": "roc_auc",
+    "num_of_evaluated_instances": 3,
 }
 
 outputs = test_metric(

@@ -91,6 +91,7 @@ global_target = {
     "score_ci_high": 1.0,
     "sacrebleu_ci_low": 0.11,
     "sacrebleu_ci_high": 1.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(
@@ -158,6 +159,7 @@ global_target = {
     "score_ci_high": 1.0,
     "sacrebleu_ci_low": 0.57,
     "sacrebleu_ci_high": 1.0,
+    "num_of_evaluated_instances": 2,
 }
 outputs = test_metric(
     metric=metric,
@@ -212,6 +214,7 @@ global_target = {
     "score_ci_high": 1.0,
     "sacrebleu_ci_low": 0.13,
     "sacrebleu_ci_high": 1.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(
@@ -271,6 +274,7 @@ global_target = {
     "score_ci_high": 1.0,
     "sacrebleu_ci_low": 0.41,
     "sacrebleu_ci_high": 1.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(

@@ -50,6 +50,7 @@ global_target = {
     "score_ci_high": 0.66,
     "score_ci_low": 0.15,
     "score_name": "nDCG",
+    "num_of_evaluated_instances": 11,
 }
 outputs = test_metric(
     metric=metric,

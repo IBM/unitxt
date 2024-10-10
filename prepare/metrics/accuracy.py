@@ -21,6 +21,7 @@ global_target = {
     "accuracy_ci_high": 1.0,
     "score_ci_low": 0.0,
     "score_ci_high": 1.0,
+    "num_of_evaluated_instances": 3,
 }
 
 outputs = test_metric(
