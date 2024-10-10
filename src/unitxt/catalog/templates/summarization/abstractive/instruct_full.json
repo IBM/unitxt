@@ -1,6 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "instruction": "Summarize the following {document_type}.",
-    "input_format": "{document_type}:\n{document}\nSummary:\n",
-    "references_field": "summaries"
-}

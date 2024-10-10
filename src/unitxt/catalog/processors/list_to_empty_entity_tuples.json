@@ -1,6 +1,0 @@
-{
-    "__type__": "post_process",
-    "operator": {
-        "__type__": "list_to_empty_entities_tuples"
-    }
-}

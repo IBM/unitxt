@@ -18,6 +18,7 @@ from unitxt.templates import (
     TemplateFormatKeyError,
     TemplatesDict,
     YesNoTemplate,
+    TupleTemplate
 )
 from unitxt.test_utils.operators import (
     check_operator,
@@ -585,6 +586,65 @@ class TestTemplates(UnitxtTestCase):
 
         to_cover_templates_dict = ToCoverTemplatesDict()
         to_cover_templates_dict.verify()
+        
+        
+        
+    def test_tuple_template(self):
+        template = TupleTemplate(
+            input_format="{text}",
+            tuple_fields = ['subject','relation','object'],
+            
+        )
+        
+        inputs = [
+            {
+                "input_fields": {
+                    "text": "Maria is married to Alex."
+                    },
+                "reference_fields": {
+                    "subjects": ["Maria"],
+                    "relations": ['marriedTo'],
+                    'objects': ['Alex']
+                    },
+            },
+            # {
+            #     "input_fields": {
+            #         "text": "Jack is a manager of Thomas. Thomas is employed by IBM"
+            #         },
+            #     "reference_fields": {
+            #         "subjects": ['Jack','Thomas'],
+            #         "relations": ['managerOf','employedBy'],
+            #         'objects': ['Thomas','IBM']
+            #         },
+            # }
+        ]
+
+        targets = [
+            {
+                "input_fields": {
+                    "text": "Maria is married to Alex."
+                    },
+                "reference_fields": {
+                    "subjects": ["Maria"],
+                    "relations": ['marriedTo'],
+                    'objects': ['Alex']
+                    },
+                "source": "Maria is married to Alex.",
+                "target": "{'subjects': ['Maria'], 'relations': ['marriedTo'], 'objects': ['Alex']}",
+                "references": [
+                    "{'subjects': ['Maria'], 'relations': ['marriedTo'], 'objects': ['Alex']}"
+                    ],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                    "processors.to_list_of_tuples_from_string_by_comma",
+                ]
+            }
+
+        ]
+        check_operator(template, targets, targets, tester=self)
 
     def test_yes_no_template_process_input(self):
         """Test the processing of the input of a YesNoTemplate."""
@@ -994,9 +1054,9 @@ class TestTemplates(UnitxtTestCase):
                         "choices": ["False", "True"],
                         "label": 1,
                     },
-                    "source": f"Text: example A, Choices: {first}. False, {second}. True.",
-                    "target": f"{second}",
-                    "references": [f"{second}"],
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{first}",
+                    "references": [f"{first}"],
                     "instruction": "",
                     "target_prefix": "",
                     "postprocessors": ["processors.to_string_stripped"],
@@ -1011,9 +1071,9 @@ class TestTemplates(UnitxtTestCase):
                         "choices": ["False", "True"],
                         "label": 0,
                     },
-                    "source": f"Text: example A, Choices: {first}. False, {second}. True.",
-                    "target": f"{first}",
-                    "references": [f"{first}"],
+                    "source": f"Text: example A, Choices: {first}. True, {second}. False.",
+                    "target": f"{second}",
+                    "references": [f"{second}"],
                     "instruction": "",
                     "target_prefix": "",
                     "postprocessors": ["processors.to_string_stripped"],
@@ -1117,3 +1177,6 @@ class TestTemplates(UnitxtTestCase):
             "postprocessors": ["processors.to_string_stripped"],
         }
         self.assertDictEqual(result, target)
+        
+        
+    

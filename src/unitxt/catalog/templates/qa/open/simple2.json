@@ -1,7 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "instruction": "Answer the question.",
-    "input_format": "Question: {question}",
-    "target_prefix": "Answer: ",
-    "references_field": "answers"
-}

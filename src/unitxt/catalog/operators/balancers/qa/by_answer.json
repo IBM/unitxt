@@ -1,6 +1,0 @@
-{
-    "__type__": "deterministic_balancer",
-    "fields": [
-        "reference_fields/answer"
-    ]
-}

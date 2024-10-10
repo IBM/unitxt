@@ -22,8 +22,6 @@ from .serializers import (
 from .settings_utils import get_constants
 from .type_utils import isoftype
 
-constants = get_constants()
-
 
 class TemplateFormatKeyError(UnitxtError):
     def __init__(self, template, data, data_type, format_str, format_name):
@@ -193,13 +191,8 @@ class ApplyTemplate(InstanceOperator):
     def get_template(self, instance: Dict[str, Any]) -> Template:
         pass
 
-    def apply(
-        self,
-        template: Template,
-        instance: Dict[str, Any],
-        stream_name: Optional[str] = None,
-    ):
-        return template.process_instance(instance, stream_name)
+    def apply(self, template: Template, instance: Dict[str, Any]):
+        return template.process_instance(instance)
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -214,7 +207,7 @@ class ApplyTemplate(InstanceOperator):
                 for demo_instance in instance[self.demos_field]
             ]
         dict_set(instance, "recipe_metadata/template", template)
-        return self.apply(template, instance, stream_name)
+        return self.apply(template, instance)
 
 
 class ApplySingleTemplate(ApplyTemplate):
@@ -323,9 +316,6 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
     choice_b_label: str
     choice_tie_label: str
     shuffle: bool
-
-    def verify(self):
-        super().verify()
 
     def verbalize_answer_field(self, reference_fields: Dict[str, object]):
         answer = reference_fields[self.answer_field]
@@ -792,6 +782,37 @@ def escape_chars(s, chars_to_escape):
         s = s.replace(char, f"\\{char}")
     return s
 
+# Exactly.   I think you can create TupleTemplate that  has a parameter tuple_fields, which is List[str]  (e.g [“subject”,“relation”,’object”].  
+# Check that each reference_field is a List[str] of the same size, and have a
+# def outputs_to_target_and_references() that iterators of the 3 fields and create a string “(subject1, relation1, object1), (subject2, relation2, object2) “.
+# Then it should have a post processor that takes a string like “(subject1, relation1, object1), (subject2, relation2, object2) ” and converts in to List[Tuple[str,str,str]].
+class TupleTemplate(InputOutputTemplate): 
+    tuple_fields: List[str] #### f.e. ('subject', 'relation', 'object')
+    postprocessors: List[str] = ["processors.to_list_of_tuples_from_string_by_comma"]
+    output_format = "{subjects}, {mentions}, {objects}"
+    empty_label: str = "None"
+    
+    # Checks if all lists (or other collections) that contain components for tuples creation are equal size. 
+    # Example: ['John','Mary], ['Engineer','Surgeon'] -> [('John','Engineer'), ('Mary','Surgeon')] - equal length is required for complementing tuples.
+    def check_len_of_references_components(self, outputs: Dict[str, object]):
+        
+        unique_lengths = set([len(val) for val in outputs.values()])
+        if not len(unique_lengths) == 1:
+            lengths = {key:len(outputs[key]) for key in outputs.keys()}
+            raise ValueError(
+                f"Reference fields are not of equal length!\n{lengths}"
+            )
+        if len(outputs) == 0:
+            raise ValueError(
+                f"Empty dataset!"
+            )
+        print(outputs)
+        
+    def reference_fields_to_target_and_references(self, reference_fields: Dict[str, object]) -> str:
+        self.check_len_of_references_components(reference_fields) ### references: {'managerOf':['John','Maya']}
+        references_grouped = zip(*reference_fields.values()) ### references_grouped: iterator( ('John', 'managerOf', 'Maya') )
+        reference_str = ', '.join([str(t) for t in references_grouped]) ### references_str: "('John','managerOf','Maya')"
+        return super().outputs_to_target_and_references({self.labels_field: reference_str})
 
 class SpanLabelingBaseTemplate(MultiLabelTemplate):
     spans_starts_field: str = "spans_starts"

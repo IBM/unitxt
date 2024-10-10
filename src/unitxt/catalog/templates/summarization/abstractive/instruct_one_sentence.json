@@ -1,9 +1,0 @@
-{
-    "__type__": "multi_reference_template",
-    "instruction": "Summarize the following text into one sentence.",
-    "input_format": "Text:\n{document}\nSummary:\n",
-    "references_field": "summaries",
-    "postprocessors": [
-        "processors.take_first_non_empty_line"
-    ]
-}

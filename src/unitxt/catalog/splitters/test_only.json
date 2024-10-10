@@ -1,8 +1,0 @@
-{
-    "__type__": "split_random_mix",
-    "mix": {
-        "train": "test[0%]",
-        "validation": "test[0%]",
-        "test": "test"
-    }
-}

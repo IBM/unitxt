@@ -1,6 +1,0 @@
-{
-    "__type__": "perplexity",
-    "model_name": "google/flan-t5-small",
-    "source_template": "Generate an answer based on the given content: {reference}",
-    "target_template": "{prediction}"
-}

@@ -1,5 +1,0 @@
-{
-    "__type__": "system_format",
-    "demo_format": "<|user|>\n{source}\n<|assistant|>\n {target_prefix}{target}\n\n",
-    "model_input_format": "{system_prompt}{instruction}{demos}<|user|>\n{source}\n<|assistant|>\n{target_prefix}"
-}
