@@ -148,6 +148,7 @@ class TestAPI(UnitxtTestCase):
             {
                 "template": {
                     "templates.regression.two_texts.title": {
+                        "num_of_evaluated_instances": 3,
                         "spearmanr": 0.5,
                         "score": 0.5,
                         "score_name": "spearmanr",
@@ -157,6 +158,7 @@ class TestAPI(UnitxtTestCase):
                         "spearmanr_ci_high": 1.0,
                     },
                     "templates.regression.two_texts.simple": {
+                        "num_of_evaluated_instances": 2,
                         "spearmanr": -1.0,
                         "score": -1.0,
                         "score_name": "spearmanr",
@@ -204,6 +206,7 @@ class TestAPI(UnitxtTestCase):
             "processed_references": [5.0],
             "score": {
                 "global": {
+                    "num_of_evaluated_instances": 5,
                     "spearmanr": 0.026315789473684213,
                     "score": 0.026315789473684213,
                     "score_name": "spearmanr",
@@ -262,6 +265,7 @@ class TestAPI(UnitxtTestCase):
             "processed_references": [5.0],
             "score": {
                 "global": {
+                    "num_of_evaluated_instances": 5,
                     "score": 0.026315789473684213,
                     "score_ci_high": 0.9639697714358006,
                     "score_ci_low": -0.970678676196682,
