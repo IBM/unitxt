@@ -36,6 +36,7 @@ global_target = {
     "score_ci_high": 0.59,
     "score_ci_low": 0.58,
     "score_name": "meteor",
+    "num_of_evaluated_instances": 4,
 }
 
 metric.n_resamples = 3

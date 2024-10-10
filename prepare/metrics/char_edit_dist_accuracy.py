@@ -32,6 +32,7 @@ global_target = {
     "char_edit_dist_accuracy_ci_high": 1.0,
     "score_ci_low": 0.58,
     "score_ci_high": 1.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(
@@ -63,6 +64,7 @@ dist_global_target = {
     "char_edit_distance_ci_high": 8.0,
     "score_ci_low": 0.0,
     "score_ci_high": 8.0,
+    "num_of_evaluated_instances": 2,
 }
 
 test_metric(
@@ -88,6 +90,7 @@ global_target = {
     "char_edit_dist_accuracy": 0.0,
     "score": 0.0,
     "score_name": "char_edit_dist_accuracy",
+    "num_of_evaluated_instances": 1,
 }
 
 test_metric(
@@ -110,6 +113,7 @@ dist_global_target = {
     "char_edit_distance": 0.0,
     "score": 0.0,
     "score_name": "char_edit_distance",
+    "num_of_evaluated_instances": 1,
 }
 
 test_metric(

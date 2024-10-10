@@ -51,6 +51,7 @@ global_target = {
     "f1_ci_high": 0.89,
     "score_ci_low": 0.0,
     "score_ci_high": 0.89,
+    "num_of_evaluated_instances": 3,
 }
 
 outputs = test_metric(

@@ -352,6 +352,7 @@ class TestFusion(UnitxtTestCase):
                 "subsets": {
                     "stsb": {
                         "classification": {
+                            "num_of_evaluated_instances": 5,
                             "spearmanr": -0.968,
                             "score": -0.968,
                             "score_name": "spearmanr",
@@ -362,6 +363,7 @@ class TestFusion(UnitxtTestCase):
                             "groups": {
                                 "template": {
                                     "templates.regression.two_texts.title": {
+                                        "num_of_evaluated_instances": 4,
                                         "spearmanr": -0.943,
                                         "score": -0.943,
                                         "score_name": "spearmanr",
@@ -371,6 +373,7 @@ class TestFusion(UnitxtTestCase):
                                         "spearmanr_ci_high": -0.816,
                                     },
                                     "templates.regression.two_texts.similarity.flan": {
+                                        "num_of_evaluated_instances": 1,
                                         "spearmanr": None,
                                         "score": None,
                                         "score_name": "spearmanr",
@@ -379,6 +382,7 @@ class TestFusion(UnitxtTestCase):
                             },
                         },
                         "regression": {
+                            "num_of_evaluated_instances": 8,
                             "spearmanr": -0.065,
                             "score": -0.065,
                             "score_name": "spearmanr",
@@ -391,6 +395,7 @@ class TestFusion(UnitxtTestCase):
                         "score_name": "subsets_mean",
                     },
                     "wnli": {
+                        "num_of_evaluated_instances": 12,
                         "f1_macro": 0.357,
                         "f1_entailment": 0.0,
                         "f1_not entailment": 0.714,
@@ -409,6 +414,7 @@ class TestFusion(UnitxtTestCase):
                         "groups": {
                             "template": {
                                 "templates.classification.multi_class.relation.default": {
+                                    "num_of_evaluated_instances": 12,
                                     "f1_macro": 0.357,
                                     "f1_entailment": 0.0,
                                     "f1_not entailment": 0.714,
@@ -429,6 +435,7 @@ class TestFusion(UnitxtTestCase):
                         },
                     },
                     "rte": {
+                        "num_of_evaluated_instances": 5,
                         "f1_macro": 0.333,
                         "f1_not entailment": 0.667,
                         "f1_entailment": 0.0,
