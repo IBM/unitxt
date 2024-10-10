@@ -1,0 +1,16 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag_eval.faithfulness.metric_template",
+        "templates.rag_eval.faithfulness.judge_with_question_full",
+        "templates.rag_eval.faithfulness.judge_with_question_full_logprobs",
+        "templates.rag_eval.faithfulness.judge_with_question_simplified",
+        "templates.rag_eval.faithfulness.judge_with_question_simplified_logprobs",
+        "templates.rag_eval.faithfulness.judge_no_question_full",
+        "templates.rag_eval.faithfulness.judge_no_question_full_logprobs",
+        "templates.rag_eval.faithfulness.judge_no_question_simplified",
+        "templates.rag_eval.faithfulness.judge_no_question_simplified_logprobs",
+        "templates.rag_eval.faithfulness.judge_no_question_simplified_explain",
+        "templates.rag_eval.faithfulness.judge_no_question_simplified_explain_logprobs"
+    ]
+}

@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Evidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_faithful}",
+    "postprocessors": [
+        "processors.load_json_from_predictions",
+        "processors.infer_logprobs_to_yes_no_probs",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "System prompt: You are CompareGPT, a machine to verify the groundedness of predictions. Answer with only yes/no.\nYou are given a grounding evidence and a prediction from a model. Compare the \"Prediction\" and the \"Evidence\" to determine whether all the information of the prediction is present in the evidence or can be inferred from the evidence. You must answer \"no\" if there are any specific details in the prediction that are not mentioned in the evidence or cannot be inferred from the evidence.\n\n"
+}

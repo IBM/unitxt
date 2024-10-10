@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nPrediction: {answer}\n",
+    "output_format": "{is_relevant}",
+    "postprocessors": [
+        "processors.load_json_from_predictions",
+        "processors.infer_logprobs_to_yes_no_probs",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question and a prediction from a model. Please determine whether the prediction answers the question. Answer with only yes/no.\n\n"
+}

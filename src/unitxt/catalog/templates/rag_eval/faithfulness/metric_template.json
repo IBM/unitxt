@@ -1,0 +1,12 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\nEvidence: {contexts}\n Prediction: {answer}",
+    "output_format": "{is_faithful}",
+    "postprocessors": [
+        "processors.to_string_stripped",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": ""
+}

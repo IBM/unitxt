@@ -1,8 +1,10 @@
+import json
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
+from .inference import LogProbInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
@@ -142,16 +144,41 @@ def infer(
     engine,
     dataset_query: Optional[str] = None,
     return_data=False,
+    return_log_probs=False,
+    return_meta_data=False,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
     engine, _ = fetch_artifact(engine)
-    raw_predictions = engine.infer(dataset)
+    if return_log_probs:
+        assert isinstance(engine, LogProbInferenceEngine), (
+            f"Error in infer: return_log_probs set to True but supplied engine "
+            f"{engine.__class__.__name__} does not support logprobs."
+        )
+        infer_outputs = engine.infer_log_probs(dataset, return_meta_data)
+        raw_predictions = (
+            [output.prediction for output in infer_outputs]
+            if return_meta_data
+            else infer_outputs
+        )
+        raw_predictions = [
+            json.dumps(raw_prediction) for raw_prediction in raw_predictions
+        ]
+    else:
+        infer_outputs = engine.infer(dataset, return_meta_data)
+        raw_predictions = (
+            [output.prediction for output in infer_outputs]
+            if return_meta_data
+            else infer_outputs
+        )
     predictions = post_process(raw_predictions, dataset)
     if return_data:
-        for prediction, raw_prediction, instance in zip(
-            predictions, raw_predictions, dataset
+        for prediction, raw_prediction, instance, infer_output in zip(
+            predictions, raw_predictions, dataset, infer_outputs
         ):
+            if return_meta_data:
+                instance["infer_meta_data"] = infer_output.__dict__
+                del instance["infer_meta_data"]["prediction"]
             instance["prediction"] = prediction
             instance["raw_prediction"] = raw_prediction
         return dataset

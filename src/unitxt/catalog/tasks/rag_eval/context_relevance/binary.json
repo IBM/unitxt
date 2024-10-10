@@ -1,0 +1,32 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "contexts": "List[str]",
+        "question": "str",
+        "choices": "List[str]"
+    },
+    "outputs": {
+        "is_context_relevant": "List[str]",
+        "number_val": "Union[float, int]"
+    },
+    "metrics": [
+        "metrics.spearman",
+        "metrics.kendalltau_b",
+        "metrics.roc_auc",
+        "metrics.f1_binary",
+        "metrics.accuracy_binary",
+        "metrics.max_f1_binary",
+        "metrics.max_accuracy_binary"
+    ],
+    "prediction_type": "float",
+    "defaults": {
+        "choices": [
+            "yes",
+            "no"
+        ],
+        "is_context_relevant": [
+            "-"
+        ],
+        "number_val": -1
+    }
+}

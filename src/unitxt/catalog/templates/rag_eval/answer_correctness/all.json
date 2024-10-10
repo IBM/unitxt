@@ -1,0 +1,16 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag_eval.answer_correctness.metric_template",
+        "templates.rag_eval.answer_correctness.judge_instruct_qa_format",
+        "templates.rag_eval.answer_correctness.judge_instruct_qa_format_logprobs",
+        "templates.rag_eval.answer_correctness.judge_simplified_format",
+        "templates.rag_eval.answer_correctness.judge_simplified_format_logprobs",
+        "templates.rag_eval.answer_correctness.judge_simplified_with_context",
+        "templates.rag_eval.answer_correctness.judge_simplified_with_context_logprobs",
+        "templates.rag_eval.answer_correctness.judge_simplified_no_context",
+        "templates.rag_eval.answer_correctness.judge_simplified_no_context_logprobs",
+        "templates.rag_eval.answer_correctness.judge_loose_match_no_context",
+        "templates.rag_eval.answer_correctness.judge_loose_match_no_context_logprobs"
+    ]
+}

@@ -1,0 +1,10 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag_eval.context_relevance.metric_template",
+        "templates.rag_eval.context_relevance.judge_context_relevance",
+        "templates.rag_eval.context_relevance.judge_context_relevance_logprobs",
+        "templates.rag_eval.context_relevance.judge_context_relevance_ares",
+        "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs"
+    ]
+}
