@@ -20,6 +20,7 @@ global_target = {
     "score_ci_low": 0.0,
     "string_containment_ci_high": 1.0,
     "string_containment_ci_low": 0.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(
@@ -52,6 +53,7 @@ global_target = {
     "score_ci_low": 0.0,
     "string_containment_ci_high": 0.75,
     "string_containment_ci_low": 0.0,
+    "num_of_evaluated_instances": 2,
 }
 
 outputs = test_metric(

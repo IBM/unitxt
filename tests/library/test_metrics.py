@@ -1,3 +1,4 @@
+from collections import defaultdict
 from math import isnan
 from typing import Dict, List
 
@@ -1061,6 +1062,11 @@ class TestMetrics(UnitxtTestCase):
             0.3832160660602437,
             0.08060156608173413,
         ]
+        # count num of instances in each group
+        instance_counts = defaultdict(int)
+        for addl_input in GROUPED_INSTANCE_ADDL_INPUTS:
+            instance_counts[addl_input["group_id"]] += 1
+
         for metric, target in zip(accuracy_metrics, global_targets):
             for score_prefix in ["my_", ""]:
                 metric.score_prefix = score_prefix
@@ -1075,6 +1081,17 @@ class TestMetrics(UnitxtTestCase):
                     outputs[0]["score"]["global"]["score"],
                     msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
                 )
+                self.assertEqual(
+                    outputs[0]["score"]["global"]["num_of_evaluated_instances"],
+                    len(GROUPED_INSTANCE_ADDL_INPUTS),
+                )
+                for group_key, instance_count in instance_counts.items():
+                    self.assertEqual(
+                        outputs[0]["score"]["global"][
+                            f"num_of_evaluated_instances_in_group_{group_key}"
+                        ],
+                        instance_count,
+                    )
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""
@@ -1229,6 +1246,7 @@ class TestMetrics(UnitxtTestCase):
             "my_perplexity": 0.06,
             "score": 0.06,
             "score_name": "my_perplexity",
+            "num_of_evaluated_instances": 1,
         }
 
         global_result = outputs[0]["score"]["global"].copy()
@@ -1617,6 +1635,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             metric_label: 1.0,
             "score": 1.0,
             "score_name": metric_label,
+            "num_of_evaluated_instances": 3,
         }
 
         expected_scores = [
@@ -1790,6 +1809,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             "ensemble_score": 0.44,
             "score": 0.44,
             "score_name": "ensemble_score",
+            "num_of_evaluated_instances": 4,
         }
 
         test_metric(
