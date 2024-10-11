@@ -141,9 +141,38 @@ A context that includes information relevant to the nature or generation of the 
 ###Feedback:
 """
 
+############################################# GPT #################################################
+
+assessment_prompt_gpt = """You are presented with a response generated to satisfy an instruction. 
+You will assess the quality of the response subject to an evaluation criteria.
+###Context:
+{context_variables}
+###Response:
+{response}
+###Evaluation criteria:
+{criteria}
+{options}
+Briefly assess the quality of the response subject to the evaluation criteria.
+Focus on the evaluation criteria during assessment, do not provide a general assessment.
+Assessment: 
+"""
+
+summarization_prompt_gpt = """Summarize the following assessment into an single easy to understand statement.
+Assessment: {assessment}
+Assessment Summary:
+""" 
+
+answer_prompt_gpt = """Now consider the evaluation criteria and choose a final answer. 
+Validate the answer against the assessment.
+###Evaluation criteria:
+{criteria}
+{options}
+Answer: """
+
 template_dict = {"mixtral": {"assessment": InputOutputTemplate(input_format=assessment_prompt_mixtral), "summarization": InputOutputTemplate(input_format=summarization_prompt_mixtral), "answer" : InputOutputTemplate(input_format=answer_prompt_mixtral)},
-                 "granite": {"assessment": InputOutputTemplate(input_format=assessment_prompt_granite), "summarization": InputOutputTemplate(input_format=summarization_prompt_granite), "answer" : InputOutputTemplate(input_format=answer_prompt_granite)},
-                 "llama_8b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
-                 "llama_70b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
-                 "prometheus": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None}
+                "granite": {"assessment": InputOutputTemplate(input_format=assessment_prompt_granite), "summarization": InputOutputTemplate(input_format=summarization_prompt_granite), "answer" : InputOutputTemplate(input_format=answer_prompt_granite)},
+                "llama_8b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
+                "llama_70b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
+                "gpt": {"assessment": InputOutputTemplate(input_format=assessment_prompt_gpt), "summarization": InputOutputTemplate(input_format=summarization_prompt_gpt), "answer" : InputOutputTemplate(input_format=answer_prompt_gpt)},
+                "prometheus": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None}
                 }
