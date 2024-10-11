@@ -1,10 +1,11 @@
-
 import os
 from unitxt import add_to_catalog
-from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParamsMixin
+from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParamsMixin, OpenAiInferenceEngine, OpenAiInferenceEngineParamsMixin
 from unitxt.evalassist_llm_as_judge import (
     EvalAssistLLMAsJudge
 )
+
+# os.environ["GENAI_KEY"] = ""
 from templates_eval_assist import template_dict
 from rubrics_eval_assist import rubrics
 
@@ -18,12 +19,15 @@ for rubric_name, rubric_obj in rubrics.items():
 
 # os.environ["GENAI_KEY"] = ""
 params = IbmGenAiInferenceEngineParamsMixin(max_new_tokens=1024, random_seed=42)
+# os.environ["OPENAI_API_KEY"] = ""
+openai_params = OpenAiInferenceEngineParamsMixin(max_tokens=1024, seed=42)
 
 # Register the metrics for all four models
 for model_name, inference_engine in [("mixtral", IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01", parameters=params)),
                     ("granite", IbmGenAiInferenceEngine(model_name="ibm/granite-20b-code-instruct", parameters=params)),
                     ("llama_8b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-8b-instruct", parameters=params)),
                     ("llama_70b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", parameters=params)),
+                    ("gpt", OpenAiInferenceEngine(model_name="gpt-4o-2024-05-13", parameters=openai_params)),
                     ("prometheus", IbmGenAiInferenceEngine(model_name="kaist-ai/prometheus-8x7b-v2", parameters=params))]:
     eval_assist_metric = EvalAssistLLMAsJudge(inference_model=inference_engine, 
                                             #   rubric=rubrics["temperature"],

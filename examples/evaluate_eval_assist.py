@@ -20,7 +20,7 @@ data = {
 }
 
 rubric = "metrics.llm_as_judge.eval_assist.direct.rubrics.conciseness"
-metric = f"metrics.llm_as_judge.eval_assist.direct.mixtral[rubric={rubric}]"
+metric = f"metrics.llm_as_judge.eval_assist.direct.gpt[rubric={rubric}]"
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
@@ -36,7 +36,6 @@ card = TaskCard(
                 instruction="Answer the following question.",
                 input_format="{question}",
                 output_format="",
-                postprocessors=["processors.lower_case"],
             )
         }
     ),
