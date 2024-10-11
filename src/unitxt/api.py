@@ -208,3 +208,24 @@ def infer(
         dataset = dataset.add_column("prediction", predictions)
         return dataset.add_column("raw_prediction", raw_predictions)
     return predictions
+
+def infer_log_probs(
+    instance_or_instances,
+    engine,
+    dataset_query: Optional[str] = None,
+    return_data=False,
+    **kwargs,
+):
+    dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    engine, _ = fetch_artifact(engine)
+    log_probs = engine.infer_log_probs(dataset)
+
+    # predictions = post_process(raw_predictions, dataset)
+    # if return_data:
+    #     for prediction, raw_prediction, instance in zip(
+    #         predictions, raw_predictions, dataset
+    #     ):
+    #         instance["prediction"] = prediction
+    #         instance["raw_prediction"] = raw_prediction
+    #     return dataset
+    return log_probs
