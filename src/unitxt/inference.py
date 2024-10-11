@@ -1414,13 +1414,13 @@ class CredentialsOpenAi(TypedDict, total=False):
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
-    frequency_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
-    max_tokens: Optional[int] = None
+    frequency_penalty: Optional[float] = 0.0
+    presence_penalty: Optional[float] = 0.0
+    max_tokens: Optional[int] = 100
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
+    temperature: Optional[float] = 1.0
+    top_p: Optional[float] = 1.0
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = True
@@ -2373,6 +2373,84 @@ def get_text_without_images(instance, image_token="<image>"):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
 
+
+class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_name: str
+    max_new_tokens: int
+    lazy_load = True
+    image_token = "<image>"
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_lava")
+
+    def _prepare_engine(self):
+        import torch
+        from transformers import AutoProcessor, LlavaForConditionalGeneration
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        import torch
+
+        results = []
+        for instance in tqdm(dataset):
+            text = get_text_without_images(instance, self.image_token)
+            images = get_images_without_text(instance)
+
+            if len(images) == 1:
+                images = images[0]
+
+            inputs = self.processor(images=images, text=text, return_tensors="pt").to(
+                self.device, torch.float16
+            )
+
+            input_len = len(inputs["input_ids"][0])
+            output = self.model.generate(
+                **inputs,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False,
+                pad_token_id=self.processor.tokenizer.eos_token_id,
+            )
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
+            results.append(result)
+
+        return results
 
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
