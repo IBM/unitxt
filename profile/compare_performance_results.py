@@ -27,6 +27,9 @@ ratio = pr_perf["net_time"] / main_perf["net_time"]
 
 if ratio > 1.1:
     logger.critical("Performance degradation exceeds 10% !")
+    logger.critical(
+        "Explore branch performance via 'python profile/card_profiler.py', followed by 'snakeviz profile/logs/cards_benchmark.prof'"
+    )
     sys.exit(1)
 
 logger.critical(
