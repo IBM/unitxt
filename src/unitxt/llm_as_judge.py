@@ -4,7 +4,7 @@ from .api import infer
 from .artifact import fetch_artifact
 from .dataclass import Field
 from .formats import Format, SystemFormat
-from .inference import InferenceEngine, OpenAiInferenceEngine
+from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
 from .settings_utils import get_settings
@@ -268,6 +268,25 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         if "references" not in instance:
             instance["references"] = [""]
         return instance
+
+    def verify(self):
+        super().verify()
+        if self.infer_log_probs and not isinstance(
+            self.inference_model, LogProbInferenceEngine
+        ):
+            raise NotImplementedError(
+                f"Error in TaskBasedLLMasJudge: return_log_probs set to True but supplied engine "
+                f"{self.inference_model.__class__.__name__} does not support logprobs."
+            )
+        if self.include_meta_data and not hasattr(
+            self.inference_model, "get_return_object"
+        ):
+            Warning(
+                f"Supplied inference engine {self.inference_model.__class__.__name__} does not support "
+                "return_meta_data. Setting return_meta_data to False. Metadata scores will not appear "
+                "in returned instances scores."
+            )
+            self.include_meta_data = False
 
     def prepare(self):
         super().prepare()
