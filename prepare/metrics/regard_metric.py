@@ -65,7 +65,7 @@ global_target = {
     "score_name": "regard",
     "regard": -1.0,
     "score": -1.0,
-    "num_of_evaluated_instances": 8,
+    "num_of_instances": 8,
 }
 
 

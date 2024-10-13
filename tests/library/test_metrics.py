@@ -1082,13 +1082,13 @@ class TestMetrics(UnitxtTestCase):
                     msg=f"metric {metric.__class__.__name__} output {outputs[0]['score']['global']['score_name']} does not equal the expected value {target}",
                 )
                 self.assertEqual(
-                    outputs[0]["score"]["global"]["num_of_evaluated_instances"],
+                    outputs[0]["score"]["global"]["num_of_instances"],
                     len(GROUPED_INSTANCE_ADDL_INPUTS),
                 )
                 for group_key, instance_count in instance_counts.items():
                     self.assertEqual(
                         outputs[0]["score"]["global"][
-                            f"num_of_evaluated_instances_in_group_{group_key}"
+                            f"num_of_instances_in_group_{group_key}"
                         ],
                         instance_count,
                     )
@@ -1246,7 +1246,7 @@ class TestMetrics(UnitxtTestCase):
             "my_perplexity": 0.06,
             "score": 0.06,
             "score_name": "my_perplexity",
-            "num_of_evaluated_instances": 1,
+            "num_of_instances": 1,
         }
 
         global_result = outputs[0]["score"]["global"].copy()
@@ -1635,7 +1635,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             metric_label: 1.0,
             "score": 1.0,
             "score_name": metric_label,
-            "num_of_evaluated_instances": 3,
+            "num_of_instances": 3,
         }
 
         expected_scores = [
@@ -1809,7 +1809,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             "ensemble_score": 0.44,
             "score": 0.44,
             "score_name": "ensemble_score",
-            "num_of_evaluated_instances": 4,
+            "num_of_instances": 4,
         }
 
         test_metric(

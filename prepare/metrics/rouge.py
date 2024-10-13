@@ -43,7 +43,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.67,
     "score_name": "rougeL",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 outputs = test_metric(
     metric=metric,

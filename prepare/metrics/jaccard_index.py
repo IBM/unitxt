@@ -15,7 +15,7 @@ global_target = {
     "jaccard_index": 0.5,
     "score": 0.5,
     "score_name": "jaccard_index",
-    "num_of_evaluated_instances": 1,
+    "num_of_instances": 1,
 }
 
 outputs = test_metric(

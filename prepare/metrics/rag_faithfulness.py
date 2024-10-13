@@ -86,7 +86,7 @@ def test_faithfulness_sentence_bert():
             "score_ci_high": 0.75,
             "score_ci_low": 0.53,
             "score_name": "score",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {
@@ -109,7 +109,7 @@ def test_faithfulness_sentence_bert():
             "score_ci_high": 0.42,
             "score_ci_low": -0.08,
             "score_name": "score",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {
@@ -172,7 +172,7 @@ def test_faithfulness_token_k_precision():
         "score_ci_high": 1.0,
         "score_ci_low": 0.33,
         "score_name": "precision",
-        "num_of_evaluated_instances": 2,
+        "num_of_instances": 2,
     }
 
     for catalog_name, global_target, instance_targets in [

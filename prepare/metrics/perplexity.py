@@ -31,7 +31,7 @@ def run_test(metric_to_test, instance_scores, global_scores):
         "score_ci_high": global_scores["ci_high"],
         "score_ci_low": global_scores["ci_low"],
         "score_name": "perplexity",
-        "num_of_evaluated_instances": len(instance_scores),
+        "num_of_instances": len(instance_scores),
     }
 
     test_metric(
@@ -142,7 +142,7 @@ generate_completions(
         "mean": 0.03,
         "ci_high": 0.05,
         "ci_low": 0.01,
-        "num_of_evaluated_instances": 6,
+        "num_of_instances": 6,
     },
 )
 

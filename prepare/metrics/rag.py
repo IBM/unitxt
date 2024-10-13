@@ -67,7 +67,7 @@ global_target = {
     "score_ci_high": 0.89,
     "score_ci_low": 0.0,
     "score_name": "f1",
-    "num_of_evaluated_instances": 3,
+    "num_of_instances": 3,
 }
 metric = MetricPipeline(
     main_score="f1",
@@ -122,7 +122,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.8,
     "score_name": "f1",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,
@@ -155,7 +155,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.73,
     "score_name": "f1",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,
@@ -188,7 +188,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.81,
     "score_name": "f1",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 test_metric(
     metric=metric,
@@ -221,7 +221,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.85,
     "score_name": "f1",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 test_metric(
     metric=metric,
@@ -254,7 +254,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.74,
     "score_name": "f1",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 test_metric(
     metric=metric,
@@ -278,7 +278,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.71,
     "score_name": "score",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 test_metric(
     metric=metric,
@@ -299,7 +299,7 @@ global_target = {
     "score_ci_high": 0.14,
     "score_ci_low": 0.03,
     "score_name": "score",
-    "num_of_evaluated_instances": 2,
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,

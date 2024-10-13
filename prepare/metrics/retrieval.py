@@ -136,7 +136,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.0,
     "score_name": "match_at_1",
-    "num_of_evaluated_instances": 3,
+    "num_of_instances": 3,
 }
 
 outputs = test_metric(

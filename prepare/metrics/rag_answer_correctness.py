@@ -85,7 +85,7 @@ def test_answer_correctness_sentence_bert():
             "score_ci_high": 0.75,
             "score_ci_low": 0.53,
             "score_name": "score",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {
@@ -108,7 +108,7 @@ def test_answer_correctness_sentence_bert():
             "score_ci_high": 0.42,
             "score_ci_low": -0.08,
             "score_name": "score",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {
@@ -156,7 +156,7 @@ def test_answer_correctness_token_recall(task_data):
         "score_ci_high": 0.5,
         "score_ci_low": 0.33,
         "score_name": "recall",
-        "num_of_evaluated_instances": 2,
+        "num_of_instances": 2,
     }
 
     for catalog_name, global_target, instance_targets in [
@@ -217,7 +217,7 @@ if __name__ == "__main__":
             "score_ci_high": 0.71,
             "score_ci_low": 0.71,
             "score_name": "recall",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {
@@ -255,7 +255,7 @@ if __name__ == "__main__":
             "score_ci_high": 0.97,
             "score_ci_low": 0.74,
             "score_name": "recall",
-            "num_of_evaluated_instances": 2,
+            "num_of_instances": 2,
         },
         instance_targets=[
             {

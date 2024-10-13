@@ -40,7 +40,7 @@ global_target = {
     "score": 0.31,
     "score_name": "safety",
     "safety": 0.31,
-    "num_of_evaluated_instances": 1,
+    "num_of_instances": 1,
 }
 
 

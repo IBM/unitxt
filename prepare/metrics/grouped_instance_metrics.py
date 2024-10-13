@@ -135,11 +135,11 @@ global_target = {
     "score_ci_high": 0.48,
     "fixed_group_mean_accuracy_ci_low": 0.1,
     "fixed_group_mean_accuracy_ci_high": 0.48,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 outputs = test_metric(
@@ -163,11 +163,11 @@ global_target = {
     "score_ci_high": 0.44,
     "group_mean_accuracy_ci_low": 0.02,
     "group_mean_accuracy_ci_high": 0.44,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -193,11 +193,11 @@ global_target = {
     "score_ci_high": 0.68,
     "fixed_group_mean_string_containment_ci_low": 0.0,
     "fixed_group_mean_string_containment_ci_high": 0.68,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -224,11 +224,11 @@ global_target = {
     "score_ci_high": 0.71,
     "group_mean_string_containment_ci_low": 0.16,
     "group_mean_string_containment_ci_high": 0.71,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -256,11 +256,11 @@ global_target = {
     "score_ci_high": 1.0,
     "fixed_group_mean_baseline_accuracy_ci_low": 0.0,
     "fixed_group_mean_baseline_accuracy_ci_high": 1.0,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 outputs = test_metric(
@@ -285,11 +285,11 @@ global_target = {
     "score_ci_high": 0.33,
     "fixed_group_mean_paraphrase_accuracy_ci_low": 0.0,
     "fixed_group_mean_paraphrase_accuracy_ci_high": 0.33,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 outputs = test_metric(
@@ -315,11 +315,11 @@ global_target = {
     "score_ci_high": 1.0,
     "fixed_group_mean_baseline_string_containment_ci_low": 0.25,
     "fixed_group_mean_baseline_string_containment_ci_high": 1.0,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 outputs = test_metric(
@@ -346,11 +346,11 @@ global_target = {
     "score_ci_high": 0.67,
     "fixed_group_mean_paraphrase_string_containment_ci_low": 0.5,
     "fixed_group_mean_paraphrase_string_containment_ci_high": 0.67,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 outputs = test_metric(
@@ -379,11 +379,11 @@ global_target = {
     "score_ci_high": 1.0,
     "fixed_group_pdr_paraphrase_accuracy_ci_low": 0.67,
     "fixed_group_pdr_paraphrase_accuracy_ci_high": 1.0,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -409,11 +409,11 @@ global_target = {
     "score_ci_high": 0.5,
     "fixed_group_pdr_paraphrase_string_containment_ci_low": 0.33,
     "fixed_group_pdr_paraphrase_string_containment_ci_high": 0.5,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -442,11 +442,11 @@ global_target = {
     "score_ci_high": 0.33,
     "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_low": -1.0,
     "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_high": 0.33,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -475,11 +475,11 @@ global_target = {
     "score_ci_high": -0.39,
     "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_low": -0.5,
     "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_high": -0.39,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -509,11 +509,11 @@ global_target = {
     "score_ci_high": 0.02,
     "fixed_group_norm_hedges_g_paraphrase_accuracy_ci_low": -1.0,
     "fixed_group_norm_hedges_g_paraphrase_accuracy_ci_high": 0.02,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -542,11 +542,11 @@ global_target = {
     "score_ci_high": -0.05,
     "fixed_group_norm_hedges_g_paraphrase_string_containment_ci_low": -0.1,
     "fixed_group_norm_hedges_g_paraphrase_string_containment_ci_high": -0.05,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -576,11 +576,11 @@ global_target = {
     "score_ci_high": 1.0,
     "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_low": 0.33,
     "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_high": 1.0,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -609,11 +609,11 @@ global_target = {
     "score_ci_high": 0.5,
     "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_low": 0.39,
     "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_high": 0.5,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -642,11 +642,11 @@ global_target = {
     "score_ci_high": 1.0,
     "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_low": 0.06,
     "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_high": 1.0,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -675,11 +675,11 @@ global_target = {
     "score_ci_high": 0.1,
     "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_low": 0.05,
     "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_high": 0.1,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 
@@ -714,11 +714,11 @@ global_target = {
     "group_mean_recall": 0.52,
     "group_mean_recall_ci_low": 0.25,
     "group_mean_recall_ci_high": 0.71,
-    "num_of_evaluated_instances": 15,
-    "num_of_evaluated_instances_in_group_group1": 5,
-    "num_of_evaluated_instances_in_group_group2": 5,
-    "num_of_evaluated_instances_in_group_group3": 4,
-    "num_of_evaluated_instances_in_group_group4": 1,
+    "num_of_instances": 15,
+    "num_of_instances_in_group_group1": 5,
+    "num_of_instances_in_group_group2": 5,
+    "num_of_instances_in_group_group3": 4,
+    "num_of_instances_in_group_group4": 1,
 }
 
 instance_targets_token_overlap = [

@@ -98,7 +98,7 @@ global_target = {
     "recall_at_5": 0.67,
     "score": 0.67,
     "score_name": "recall_at_5",
-    "num_of_evaluated_instances": 6,
+    "num_of_instances": 6,
 }
 
 outputs = test_metric(

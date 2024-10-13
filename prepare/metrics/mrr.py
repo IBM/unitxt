@@ -30,7 +30,7 @@ global_target = {
     "mrr_ci_high": 0.8,
     "score_ci_low": 0.07,
     "score_ci_high": 0.8,
-    "num_of_evaluated_instances": 5,
+    "num_of_instances": 5,
 }
 
 outputs = test_metric(

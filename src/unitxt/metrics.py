@@ -136,7 +136,7 @@ class Metric(Artifact):
         return (
             self.score_prefix + score_name
             if score_name not in ["score", "score_name"]
-            and not score_name.startswith("num_of_evaluated_instances")
+            and not score_name.startswith("num_of_instances")
             else score_name
         )
 
@@ -151,7 +151,7 @@ class Metric(Artifact):
             )
         for new_score_name in new_scores:
             if new_score_name in ["score", "score_name"] or new_score_name.startswith(
-                "num_of_evaluated_instances"
+                "num_of_instances"
             ):
                 continue
             if new_score_name in existing_scores:
@@ -285,7 +285,7 @@ class Metric(Artifact):
                 "score_name",
                 "score_ci_low",
                 "score_ci_high",
-            ] or score_name.startswith("num_of_evaluated_instances"):
+            ] or score_name.startswith("num_of_instances"):
                 continue
             if score_name in instance["score"]["global"]:
                 UnitxtWarning(
@@ -600,7 +600,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
             )
         self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_evaluated_instances": len(instances)}
+        global_score = {"num_of_instances": len(instances)}
 
         result = self._compute(references, predictions, task_data)
         global_score.update(
@@ -681,7 +681,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
-        global_score = {"num_of_evaluated_instances": len(instances)}
+        global_score = {"num_of_instances": len(instances)}
         # compute the metric over all refs and preds
         instance_scores = self.compute(
             references=references,
@@ -1069,7 +1069,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances = self.compute_instance_scores(stream)
-        global_score = {"num_of_evaluated_instances": len(instances)}
+        global_score = {"num_of_instances": len(instances)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1249,7 +1249,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # Each instance goes into group_to_instances per each score_name.
         # So we count over the first score_name only
         for group_key in group_to_instance_scores:
-            global_score[f"num_of_evaluated_instances_in_group_{group_key}"] = sum(
+            global_score[f"num_of_instances_in_group_{group_key}"] = sum(
                 [
                     len(
                         group_to_instance_scores[group_key][score_names[0]][
