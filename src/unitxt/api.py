@@ -151,10 +151,11 @@ def infer(
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
     engine, _ = fetch_artifact(engine)
     if return_log_probs:
-        assert isinstance(engine, LogProbInferenceEngine), (
-            f"Error in infer: return_log_probs set to True but supplied engine "
-            f"{engine.__class__.__name__} does not support logprobs."
-        )
+        if not isinstance(engine, LogProbInferenceEngine):
+            raise NotImplementedError(
+                f"Error in infer: return_log_probs set to True but supplied engine "
+                f"{engine.__class__.__name__} does not support logprobs."
+            )
         infer_outputs = engine.infer_log_probs(dataset, return_meta_data)
         raw_predictions = (
             [output.prediction for output in infer_outputs]

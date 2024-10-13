@@ -80,10 +80,11 @@ class InferenceEngine(abc.ABC, Artifact):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
-        assert return_meta_data is False or hasattr(self, "get_return_object"), (
-            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
-            f"Please set return_meta_data=False"
-        )
+        if return_meta_data and not hasattr(self, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data,"
+                f"Please set return_meta_data=False"
+            )
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
@@ -137,10 +138,11 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns the list of the logprob dicts.
         return_meta_data is only supported for some InferenceEngines.
         """
-        assert return_meta_data is False or hasattr(self, "get_return_object"), (
-            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
-            f"Please set return_meta_data=False"
-        )
+        if return_meta_data and not hasattr(self, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data,"
+                f"Please set return_meta_data=False"
+            )
 
         [self.verify_instance(instance) for instance in dataset]
         return self._infer_log_probs(dataset, return_meta_data)
