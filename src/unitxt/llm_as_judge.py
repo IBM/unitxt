@@ -23,11 +23,11 @@ def get_task_data_dict(task_data):
 
 
 class LLMAsJudgeBase(BulkInstanceMetric):
-    """LLM-as-judge-based metric class for evaluating correctness.
+    """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
 
     Attributes:
         main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn"]): The type of task the llm as judge runs. This defines the output and input
+        task (str): The type of task the llm as judge runs. This defines the output and input
          format of the judge model.
         template (Template): The template used when generating inputs for the judge llm.
         format (Format): The format used when generating inputs for judge llm.
@@ -99,12 +99,17 @@ class LLMAsJudgeBase(BulkInstanceMetric):
 
 
 class LLMAsJudge(LLMAsJudgeBase):
-    """LLM-as-judge-based metric class for evaluating correctness.
+    """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
+
+    This class uses the source prompt given to the generator and the generator's predictions to evaluate
+    correctness using one of three supported tasks (rating.single_turn, rating.single_turn_with_reference,
+    pairwise_comparative_rating.single_turn).
 
     Attributes:
         main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn"]): The type of task the llm as judge runs. This defines the output and input
-         format of the judge model.
+        task (Literal["rating.single_turn","rating.single_turn_with_reference",
+        "pairwise_comparative_rating.single_turn"]): The type of task the llm as judge runs.
+         This defines the output and input format of the judge model.
         template (Template): The template used when generating inputs for the judge llm.
         format (Format): The format used when generating inputs for judge llm.
         system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
@@ -253,8 +258,37 @@ class LLMAsJudge(LLMAsJudgeBase):
 
 
 class TaskBasedLLMasJudge(LLMAsJudgeBase):
+    """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
+
+    This class can use any task and matching template to evaluate the predictions. All
+    task/templates field are taken from the instance's task_data.
+    The instances sent to the judge can either be: 1.a unitxt dataset, in which case the predictions are
+    copied to a specified field of the task. 2. dictionaries with the fields required by the task and template.
+
+    Attributes:
+        main_score (str): The main score label used for evaluation.
+        task (str): The type of task the llm as judge runs.
+        This defines the output and input format of the judge model.
+        template (Template): The template used when generating inputs for the judge llm.
+        format (Format): The format used when generating inputs for judge llm.
+        system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
+        strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
+         inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
+        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
+        reduction_map (dict): A dictionary specifying the reduction method for the metric.
+        batch_size (int): The size of the bulk.
+        infer_log_probs(bool): whether to perform the inference using logprobs. If true, the template's
+        post-processing must support the logprobs output.
+        judge_to_generator_fields_mapping (Dict[str, str]): optional mapping between the names of the fields in the generator task and the
+        judge task. For example, if the generator task uses "reference_answers" and the judge task  expect "ground_truth",
+        include  {"ground_truth": "reference_answers"} in this dictionary.
+        prediction_field: if indicated, and prediction exist, copy prediction to this field name in task_data.
+        include_meta_data (bool): whether to include the inference per-instance metadata in the returned results.
+
+    """
+
     infer_log_probs: bool = True
-    mapping: Dict[str, str] = {}
+    judge_to_generator_fields_mapping: Dict[str, str] = {}
     prediction_field: Optional[str] = None
     include_meta_data: bool = True
 
@@ -319,7 +353,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
 
             instance_task_data = {}
             for judge_task_input_field in judge_task_input_fields:
-                orig_task_field_name = self.mapping.get(
+                orig_task_field_name = self.judge_to_generator_fields_mapping.get(
                     judge_task_input_field, judge_task_input_field
                 )
                 new_val = input_instance.get(orig_task_field_name)
