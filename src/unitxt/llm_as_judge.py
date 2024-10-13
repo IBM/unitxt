@@ -46,8 +46,6 @@ class LLMAsJudgeBase(BulkInstanceMetric):
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
     prediction_type = Any  # Because handled with multiple tasks
-    infer_log_probs = False
-    include_meta_data: bool = False
 
     def verify(self):
         if not isinstance(self.template, Template):
@@ -90,19 +88,11 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         task_data: List[Dict],
     ) -> List[Dict[str, Any]]:
         instances = self.prepare_instances(references, predictions, task_data)
-        outputs = infer(
-            instances,
-            engine=self.inference_model,
-            task=self.get_full_task_name(),
-            template=self.template,
-            system_prompt=self.system_prompt,
-            format=self.format,
-            return_data=True,
-            return_log_probs=self.infer_log_probs,
-            return_meta_data=self.include_meta_data,
-        )
-
+        outputs = self.infer_instances(instances)
         return self.get_results_from_outputs(outputs)
+
+    def infer_instances(self, instances):
+        raise NotImplementedError
 
     def prepare_instances(self, references, predictions, task_data):
         raise NotImplementedError
@@ -219,6 +209,17 @@ class LLMAsJudge(LLMAsJudgeBase):
     def get_full_task_name(self):
         return f"tasks.response_assessment.{self.task}"
 
+    def infer_instances(self, instances):
+        return infer(
+            instances,
+            engine=self.inference_model,
+            task=self.get_full_task_name(),
+            template=self.template,
+            system_prompt=self.system_prompt,
+            format=self.format,
+            return_data=True,
+        )
+
     def get_results_from_outputs(self, outputs):
         results = []
         for instance in outputs:
@@ -331,3 +332,16 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             instances.append(instance_task_data)
 
         return instances
+
+    def infer_instances(self, instances):
+        return infer(
+            instances,
+            engine=self.inference_model,
+            task=self.get_full_task_name(),
+            template=self.template,
+            system_prompt=self.system_prompt,
+            format=self.format,
+            return_data=True,
+            return_log_probs=self.infer_log_probs,
+            return_meta_data=self.include_meta_data,
+        )
