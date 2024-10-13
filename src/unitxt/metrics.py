@@ -659,6 +659,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: ["mean", "weighted_win_rate"]
     )
 
+    def preprocess_instance(self, instance):
+        return instance
+
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         global_score = {}
 
@@ -666,6 +669,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             self.verify_instance(instance)
+            instance = self.preprocess_instance(instance)
             instances.append(instance)
 
         predictions = [instance["prediction"] for instance in instances]

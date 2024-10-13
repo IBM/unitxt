@@ -252,10 +252,22 @@ class LLMAsJudge(LLMAsJudgeBase):
 
 
 class TaskBasedLLMasJudge(LLMAsJudgeBase):
-    infer_log_probs = True
+    infer_log_probs: bool = True
     mapping: Dict[str, str] = {}
     prediction_field: Optional[str] = None
     include_meta_data: bool = True
+
+    # Allow for input which is a dictionary of all input fields. In this case, all input fields are
+    # treated as the task data, and the predictions and references are taken directly from there
+    # by the judge's template
+    def preprocess_instance(self, instance):
+        if "task_data" not in instance:
+            instance["task_data"] = instance.copy()
+        if "prediction" not in instance:
+            instance["prediction"] = None
+        if "references" not in instance:
+            instance["references"] = [""]
+        return instance
 
     def prepare(self):
         super().prepare()
