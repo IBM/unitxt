@@ -226,3 +226,11 @@ This approach can be adapted for various image-text to text tasks, such as image
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text.py>`_
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+
+Evaluate Image-Text to Text Model With Different Templates
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Evaluate Image-Text to Text Models with different templates and explore the sensitivity of the model to different textual variations.
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text_with_different_templates.py>`_
+
+Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+
