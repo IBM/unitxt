@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
-from .inference import LogProbInferenceEngine
+from .inference import InferenceEngine, LogProbInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
@@ -141,11 +141,11 @@ def produce(instance_or_instances, dataset_query: Optional[str] = None, **kwargs
 
 def infer(
     instance_or_instances,
-    engine,
+    engine: InferenceEngine,
     dataset_query: Optional[str] = None,
-    return_data=False,
-    return_log_probs=False,
-    return_meta_data=False,
+    return_data: bool = False,
+    return_log_probs: bool = False,
+    return_meta_data: bool = False,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
