@@ -47,6 +47,9 @@ class TextGenerationInferenceOutput:
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
 
+    label: str
+    model_name: str = ""
+
     @abc.abstractmethod
     def _infer(
         self,
@@ -90,6 +93,18 @@ class InferenceEngine(abc.ABC, Artifact):
         if settings.mock_inference_mode:
             return [instance["source"] for instance in dataset]
         return self._infer(dataset, return_meta_data)
+
+    def get_engine_id(self):
+        if self.model_name:
+            model_id = (
+                self.model_name.split("/")[-1]
+                .replace("-", "_")
+                .replace(".", ",")
+                .lower()
+            )
+        else:
+            model_id = ""
+        return f"{model_id}_{self.label}"
 
     @deprecation(version="2.0.0")
     def _set_inference_parameters(self):
@@ -162,6 +177,7 @@ class HFPipelineBasedInferenceEngine(
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
+    label: str = "hf_pipeline"
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -232,6 +248,7 @@ class HFPipelineBasedInferenceEngine(
 
 class MockInferenceEngine(InferenceEngine):
     model_name: str
+    label: str = "mock"
 
     def prepare_engine(self):
         return
@@ -289,6 +306,8 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 class GenericInferenceEngine(InferenceEngine):
     default: Optional[str] = None
+    label: str = "generic"
+    model_name: str = None
 
     def prepare_engine(self):
         if "UNITXT_INFERENCE_ENGINE" in os.environ:
@@ -304,6 +323,7 @@ class GenericInferenceEngine(InferenceEngine):
             )
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
+        self.model_name = self.engine.get_engine_id()
 
     def _infer(
         self,
@@ -705,6 +725,8 @@ class TogetherAiInferenceEngine(
 
 
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    label: str = "vllm"
+
     def create_client(self):
         from openai import OpenAI
 
@@ -967,6 +989,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
     lazy_load = True
+    label: str = "hf_lava"
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
