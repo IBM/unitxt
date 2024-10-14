@@ -131,7 +131,7 @@ class SystemFormat(BaseFormat):
 
     """
 
-    demo_format: str = "{instruction}\\N{source}\\N{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
+    demo_format: str = "{source}\\N{target_prefix}{target}\n\n"  #  example: "User: {source}\nAgent: {target}\n\n"
     model_input_format: str = (
         "{system_prompt}\\N{instruction}\\N{demos}{source}\\N{target_prefix}"
     )
