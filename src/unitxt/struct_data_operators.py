@@ -258,6 +258,59 @@ class SerializeTableAsJson(SerializeTable):
         return json.dumps(output_dict)
 
 
+class SerializeTableAsHTML(SerializeTable):
+    """HTML Table Serializer.
+
+    HTML table format used for rendering tables in web pages.
+    Format(Sample):
+    <table>
+        <thead>
+            <tr><th>name</th><th>age</th><th>sex</th></tr>
+        </thead>
+        <tbody>
+            <tr><td>Alice</td><td>26</td><td>F</td></tr>
+            <tr><td>Raj</td><td>34</td><td>M</td></tr>
+        </tbody>
+    </table>
+    """
+
+    # main method that serializes a table.
+    # table_content must be in the prescribed input format.
+    def serialize_table(self, table_content: Dict) -> str:
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Build the HTML table structure
+        serialized_tbl_str = "<table>\n"
+        serialized_tbl_str += self.process_header(header) + "\n"
+        serialized_tbl_str += self.process_rows(rows) + "\n"
+        serialized_tbl_str += "</table>"
+
+        return serialized_tbl_str.strip()
+
+    # serialize the header into an HTML <thead> section
+    def process_header(self, header: List) -> str:
+        header_html = "  <thead>\n    <tr>"
+        for col in header:
+            header_html += f"<th>{col}</th>"
+        header_html += "</tr>\n  </thead>"
+        return header_html
+
+    # serialize the rows into an HTML <tbody> section
+    def process_rows(self, rows: List[List]) -> str:
+        rows_html = "  <tbody>"
+        for row in rows:
+            rows_html += "\n    <tr>"
+            for cell in row:
+                rows_html += f"<td>{cell}</td>"
+            rows_html += "</tr>"
+        rows_html += "\n  </tbody>"
+        return rows_html
+
+
 # truncate cell value to maximum allowed length
 def truncate_cell(cell_value, max_len):
     if cell_value is None:
@@ -664,3 +717,133 @@ class ConstructTableFromRowsCols(InstanceOperator):
         instance[self.to_field] = output_dict
 
         return instance
+
+
+class TransposeTable(FieldOperator):
+    """Transpose a table.
+
+    Sample Input:
+        {
+            "header": ["name", "age", "sex"],
+            "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+        }
+
+    Sample Output:
+        {
+            "header": [" ", "0", "1", "2"],
+            "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
+        }
+    """
+
+    def process_value(self, table: Any) -> Any:
+        return self.transpose_table(table)
+
+    def transpose_table(self, table: Dict) -> Dict:
+        # Extract the header and rows from the table object
+        header = table["header"]
+        rows = table["rows"]
+
+        # Transpose the table by converting rows as columns and vice versa
+        transposed_header = [" "] + [str(i) for i in range(len(rows))]
+        transposed_rows = [
+            [header[i]] + [row[i] for row in rows] for i in range(len(header))
+        ]
+
+        return {"header": transposed_header, "rows": transposed_rows}
+
+
+class DuplicateTableRows(FieldOperator):
+    """Duplicates specific rows of a table for the given number of times.
+
+    Args:
+        row_indices (List[int]) - rows to be duplicated
+        times(int) - how many times to duplicate
+    """
+
+    row_indices: List[int] = []
+    times: int = 1
+
+    def process_value(self, table: Any) -> Any:
+        # Extract the header and rows from the table
+        header = table["header"]
+        rows = table["rows"]
+
+        # Duplicate only the specified rows
+        duplicated_rows = []
+        for i, row in enumerate(rows):
+            if i in self.row_indices:
+                duplicated_rows.extend(
+                    [row] * self.times
+                )  # Duplicate the selected rows
+            else:
+                duplicated_rows.append(row)  # Leave other rows unchanged
+
+        # Return the new table with selectively duplicated rows
+        return {"header": header, "rows": duplicated_rows}
+
+
+class DuplicateTableColumns(FieldOperator):
+    """Duplicates specific columns of a table for the given number of times.
+
+    Args:
+        column_indices (List[int]) - columns to be duplicated
+        times(int) - how many times to duplicate
+    """
+
+    column_indices: List[int] = []
+    times: int = 1
+
+    def process_value(self, table: Any) -> Any:
+        # Extract the header and rows from the table
+        header = table["header"]
+        rows = table["rows"]
+
+        # Duplicate the specified columns in the header
+        duplicated_header = []
+        for i, col in enumerate(header):
+            if i in self.column_indices:
+                duplicated_header.extend([col] * self.times)
+            else:
+                duplicated_header.append(col)
+
+        # Duplicate the specified columns in each row
+        duplicated_rows = []
+        for row in rows:
+            new_row = []
+            for i, value in enumerate(row):
+                if i in self.column_indices:
+                    new_row.extend([value] * self.times)
+                else:
+                    new_row.append(value)
+            duplicated_rows.append(new_row)
+
+        # Return the new table with selectively duplicated columns
+        return {"header": duplicated_header, "rows": duplicated_rows}
+
+
+class InsertEmptyTableRows(FieldOperator):
+    """Inserts empty rows in a table randomly for the given number of times.
+
+    Args:
+        times(int) - how many times to insert
+    """
+
+    times: int = 0
+
+    def process_value(self, table: Any) -> Any:
+        # Extract the header and rows from the table
+        header = table["header"]
+        rows = table["rows"]
+
+        # Insert empty rows at random positions
+        for _ in range(self.times):
+            empty_row = [""] * len(
+                header
+            )  # Create an empty row with the same number of columns
+            insert_pos = random.randint(
+                0, len(rows)
+            )  # Get a random position to insert the empty row created
+            rows.insert(insert_pos, empty_row)
+
+        # Return the modified table
+        return {"header": header, "rows": rows}
