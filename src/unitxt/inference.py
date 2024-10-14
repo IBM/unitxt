@@ -864,7 +864,7 @@ class WMLInferenceEngine(
         if self.credentials is None:
             self.credentials = self._read_wml_credentials_from_env()
 
-        client = APIClient(credentials=self.credentials)
+        client = APIClient(wml_credentials=self.credentials)
         if "space_id" in self.credentials:
             client.set.default_space(self.credentials["space_id"])
         else:
@@ -877,12 +877,12 @@ class WMLInferenceEngine(
         self._set_inference_parameters()
 
     def _load_model_and_params(self):
-        from ibm_watsonx_ai.foundation_models import ModelInference
+        from ibm_watsonx_ai.foundation_models import Model
 
-        model = ModelInference(
+        model = Model(
             model_id=self.model_name,
-            deployment_id=self.deployment_id,
-            api_client=self._client,
+            credentials=self.credentials,
+            project_id=self.credentials.get("project_id"),
         )
         params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
 
