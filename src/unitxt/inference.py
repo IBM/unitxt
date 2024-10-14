@@ -18,6 +18,11 @@ from .settings_utils import get_settings
 settings = get_settings()
 
 
+def get_model_and_label_id(model_name, label):
+    model_id = model_name.split("/")[-1].replace("-", "_").replace(".", ",").lower()
+    return f"{model_id}_{label}"
+
+
 @dataclasses.dataclass
 class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
@@ -46,9 +51,6 @@ class TextGenerationInferenceOutput:
 
 class InferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference."""
-
-    label: str
-    model_name: str = ""
 
     @abc.abstractmethod
     def _infer(
@@ -95,16 +97,7 @@ class InferenceEngine(abc.ABC, Artifact):
         return self._infer(dataset, return_meta_data)
 
     def get_engine_id(self):
-        if self.model_name:
-            model_id = (
-                self.model_name.split("/")[-1]
-                .replace("-", "_")
-                .replace(".", ",")
-                .lower()
-            )
-        else:
-            model_id = ""
-        return f"{model_id}_{self.label}"
+        raise NotImplementedError()
 
     @deprecation(version="2.0.0")
     def _set_inference_parameters(self):
@@ -177,11 +170,13 @@ class HFPipelineBasedInferenceEngine(
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
-    label: str = "hf_pipeline"
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_pipeline")
 
     def _prepare_pipeline(self):
         import torch
@@ -248,8 +243,10 @@ class HFPipelineBasedInferenceEngine(
 
 class MockInferenceEngine(InferenceEngine):
     model_name: str
-    label: str = "mock"
     default_inference_value: str = "[[10]]"
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "mock")
 
     def prepare_engine(self):
         return
@@ -307,8 +304,6 @@ class IbmGenAiInferenceEngineParams(Artifact):
 
 class GenericInferenceEngine(InferenceEngine):
     default: Optional[str] = None
-    label: str = "generic"
-    model_name: str = None
 
     def prepare_engine(self):
         if "UNITXT_INFERENCE_ENGINE" in os.environ:
@@ -324,7 +319,9 @@ class GenericInferenceEngine(InferenceEngine):
             )
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
-        self.model_name = self.engine.get_engine_id()
+
+    def get_engine_id(self):
+        return "generic_inference_engine"
 
     def _infer(
         self,
@@ -341,6 +338,9 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         "ollama": "Install ollama package using 'pip install --upgrade ollama"
     }
     data_classification_policy = ["public", "proprietary"]
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         pass
@@ -380,6 +380,9 @@ class IbmGenAiInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         from genai import Client, Credentials
@@ -527,6 +530,9 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
     @classmethod
     def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
         api_key = os.environ.get(api_param_env_var_name)
@@ -656,6 +662,9 @@ class TogetherAiInferenceEngine(
     }
     data_classification_policy = ["public"]
     parameters: Optional[TogetherAiInferenceEngineParamsMixin] = None
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         from together import Together
@@ -835,6 +844,9 @@ class WMLInferenceEngine(
     concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
 
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
     def verify(self):
         super().verify()
 
@@ -990,13 +1002,15 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
     lazy_load = True
-    label: str = "hf_lava"
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
         "torch": "Install torch, go on PyTorch website for mode details.",
         "accelerate": "pip install accelerate",
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_lava")
 
     def _prepare_engine(self):
         import torch
