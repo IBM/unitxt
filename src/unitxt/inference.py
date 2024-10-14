@@ -249,6 +249,7 @@ class HFPipelineBasedInferenceEngine(
 class MockInferenceEngine(InferenceEngine):
     model_name: str
     label: str = "mock"
+    default_inference_value: str = "[[10]]"
 
     def prepare_engine(self):
         return
@@ -258,7 +259,7 @@ class MockInferenceEngine(InferenceEngine):
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return ["[[10]]" for instance in dataset]
+        return [self.default_inference_value for instance in dataset]
 
 
 class MockModeMixin(Artifact):
