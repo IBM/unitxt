@@ -79,7 +79,6 @@ class LLMAsJudgeBase(BulkInstanceMetric):
 
     def get_full_task_name(self):
         raise NotImplementedError
-        # f"tasks.response_assessment.{self.task}",
 
     def compute(
         self,
@@ -89,12 +88,32 @@ class LLMAsJudgeBase(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         instances = self.prepare_instances(references, predictions, task_data)
         outputs = self.infer_instances(instances)
-        return self.get_results_from_outputs(outputs)
+        return self.get_metric_results_from_prediction_outputs(outputs)
 
-    def infer_instances(self, instances):
+    def prepare_instances(
+        self, references, predictions, task_data
+    ) -> List[Dict[str, Any]]:
+        """Generate a list of instances for inference.
+
+        Each generated instance should include all the fields required by the metrics' task and template, to
+        create the source prompt for the judge.
+        """
         raise NotImplementedError
 
-    def prepare_instances(self, references, predictions, task_data):
+    def infer_instances(self, instances: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Generate the dataset and call the inference engine to generate the judges' predictions.
+
+        Return the list of the produced instances with their generated judge predictions.
+        """
+        raise NotImplementedError
+
+    def get_metric_results_from_prediction_outputs(
+        self, outputs: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Generate a scores' dictionary for each instance.
+
+        Return the list of scores dictionaries for the input instances.
+        """
         raise NotImplementedError
 
 
@@ -225,7 +244,7 @@ class LLMAsJudge(LLMAsJudgeBase):
             return_data=True,
         )
 
-    def get_results_from_outputs(self, outputs):
+    def get_metric_results_from_prediction_outputs(self, outputs):
         results = []
         for instance in outputs:
             if self.task == "pairwise_comparative_rating.single_turn":
@@ -331,7 +350,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
     def get_full_task_name(self):
         return self.task
 
-    def get_results_from_outputs(self, outputs):
+    def get_metric_results_from_prediction_outputs(self, outputs):
         results = []
         for instance in outputs:
             result = {
