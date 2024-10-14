@@ -1076,6 +1076,14 @@ class TestMetrics(UnitxtTestCase):
                     references=GROUPED_INSTANCE_REFERENCES,
                     task_data=GROUPED_INSTANCE_ADDL_INPUTS,
                 )
+                prefix_in_global_and_per_group = "_".join(
+                    [
+                        metric.reduction_map["group_mean"]["agg_func"][0],
+                        score_prefix,
+                        metric.main_score,
+                    ]
+                ).replace("__", "_")  # for the case of empty score_prefix
+
                 self.assertAlmostEqual(
                     target,
                     outputs[0]["score"]["global"]["score"],
@@ -1085,10 +1093,22 @@ class TestMetrics(UnitxtTestCase):
                     outputs[0]["score"]["global"]["num_of_instances"],
                     len(GROUPED_INSTANCE_ADDL_INPUTS),
                 )
+                self.assertTrue(
+                    any(
+                        key.endswith(prefix_in_global_and_per_group)
+                        for key in outputs[0]["score"]["global"]
+                    )
+                )
                 for group_key, instance_count in instance_counts.items():
                     self.assertEqual(
                         outputs[0]["score"]["global"][group_key]["num_of_instances"],
                         instance_count,
+                    )
+                    self.assertTrue(
+                        any(
+                            prefix_in_global_and_per_group == key
+                            for key in outputs[0]["score"]["global"][group_key]
+                        )
                     )
 
     def test_grouped_instance_metric_errors(self):

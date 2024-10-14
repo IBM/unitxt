@@ -1110,7 +1110,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances, reduction_params, reduction_fields, global_score
+                    instances,
+                    reduction_params,
+                    reduction_fields,
+                    global_score,
+                    aggregation_function_name,
                 )
             else:
                 raise ValueError(
@@ -1206,6 +1210,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         group_aggregation_func,
         prepend_score_prefix: bool,
         global_score: dict,
+        aggregation_function_name: str,
     ):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
@@ -1217,7 +1222,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 callable function returns a single score for the group
             prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
                 if down the stream such a prepending is expected.
-            global_score: the being built up global score. It will be filled here with number of instances per each group.
+            global_score: the being built up global score. It will be filled here with number of instances per each group, and group scores.
+            aggregation_function_name: used to annotate the groups' global scores.
 
         Returns:
             List of dicts, each corresponding to a group of instances (defined by 'group_id'),
@@ -1295,12 +1301,22 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         # update each group section in global_score
         for i, group_name in enumerate(sorted(group_to_instance_scores.keys())):
-            global_score[group_name].update(to_return[i]["score"]["instance"])
+            global_score[group_name].update(
+                {
+                    aggregation_function_name + "_" + k: v
+                    for k, v in to_return[i]["score"]["instance"].items()
+                }
+            )
 
         return to_return
 
     def _set_up_group_mean_aggregation(
-        self, instances, reduction_params, reduction_fields, global_score
+        self,
+        instances,
+        reduction_params,
+        reduction_fields,
+        global_score,
+        aggregation_function_name,
     ):
         group_aggregation_func = reduction_params["agg_func"][1]
         # if treat groups as units
@@ -1314,6 +1330,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 group_aggregation_func=group_aggregation_func,
                 prepend_score_prefix=True,
                 global_score=global_score,
+                aggregation_function_name=aggregation_function_name,
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
@@ -1330,6 +1347,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     group_aggregation_func=group_aggregation_func,
                     prepend_score_prefix=False,
                     global_score=global_score,
+                    aggregation_function_name=aggregation_function_name,
                 )
                 return nan_mean(
                     [group["score"]["instance"][field_name] for group in group_scores]
