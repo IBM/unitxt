@@ -5,5 +5,6 @@
     "task": "tasks.rag_eval.faithfulness.binary",
     "format": "formats.empty",
     "main_score": "faithfulness_q_c_a_logprobs",
-    "prediction_field": "answer"
+    "prediction_field": "answer",
+    "infer_log_probs": true
 }

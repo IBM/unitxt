@@ -5,16 +5,16 @@ from unitxt.llm_as_judge import (
 
 metric_type_to_template_dict = {
     "faithfulness": {
-        "q_c_a_logprobs": "judge_with_question_simplified_logprobs",
-        "c_a_logprobs": "judge_no_question_simplified_logprobs",
+        "q_c_a": "judge_with_question_simplified",
+        "c_a": "judge_no_question_simplified",
     },
-    "context_relevance": {"q_c_ares_logprobs": "judge_context_relevance_ares_logprobs"},
-    "correctness_holistic": {"q_c_a_logprobs": "judge_correctness_simple_logprobs"},
+    "context_relevance": {"q_c_ares": "judge_context_relevance_ares"},
+    "correctness_holistic": {"q_c_a": "judge_correctness_simple"},
     "answer_correctness": {
-        "q_a_gt_loose_logprobs": "judge_loose_match_no_context_logprobs",
-        "q_a_gt_strict_logprobs": "judge_simplified_format",
+        "q_a_gt_loose": "judge_loose_match_no_context",
+        "q_a_gt_strict": "judge_simplified_format",
     },
-    "answer_relevance": {"q_a_logprobs": "judge_answer_relevance_logprobs"},
+    "answer_relevance": {"q_a": "judge_answer_relevance"},
 }
 
 
@@ -26,18 +26,21 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
     for template_short_name, template_name in template_dict.items():
         task_name = f"tasks.rag_eval.{metric_type}.binary"
 
-        metric_label = f"{metric_type}_{template_short_name}"
-        metric = TaskBasedLLMasJudge(
-            inference_model="engines.classification.llama_3_1_70b_instruct_wml",
-            template=f"templates.rag_eval.{metric_type}.{template_name}",
-            task=task_name,
-            format="formats.empty",
-            main_score=metric_label,
-            prediction_field=get_prediction_field(metric_type),
-        )
+        for use_logprobs in [True, False]:
+            logprobs_label = "_logprobs" if use_logprobs else ""
+            metric_label = f"{metric_type}_{template_short_name}{logprobs_label}"
+            metric = TaskBasedLLMasJudge(
+                inference_model="engines.classification.llama_3_1_70b_instruct_wml",
+                template=f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}",
+                task=task_name,
+                format="formats.empty",
+                main_score=metric_label,
+                prediction_field=get_prediction_field(metric_type),
+                infer_log_probs=use_logprobs,
+            )
 
-        add_to_catalog(
-            metric,
-            f"metrics.llm_as_judge.binary.{metric_label}",
-            overwrite=True,
-        )
+            add_to_catalog(
+                metric,
+                f"metrics.llm_as_judge.binary.{metric_label}",
+                overwrite=True,
+            )
