@@ -338,11 +338,12 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
                 self.main_score: instance["prediction"],
                 f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
             }
-            meta_data = {
-                f"{self.main_score}_{k}": v
-                for k, v in instance["infer_meta_data"].items()
-            }
-            result.update(meta_data)
+            if self.include_meta_data:
+                meta_data = {
+                    f"{self.main_score}_{k}": v
+                    for k, v in instance["infer_meta_data"].items()
+                }
+                result.update(meta_data)
             results.append(result)
         return results
 
