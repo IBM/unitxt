@@ -326,6 +326,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
     def prepare(self):
         super().prepare()
         self.reduction_map = {"mean": [self.main_score]}
+        self.score_prefix = f"{self.inference_model.get_engine_id()}_"
 
     def get_full_task_name(self):
         return self.task
@@ -335,9 +336,13 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         for instance in outputs:
             result = {
                 self.main_score: instance["prediction"],
-                "judge_raw_output": instance["raw_prediction"],
+                f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
             }
-            result.update(instance["infer_meta_data"])
+            meta_data = {
+                f"{self.main_score}_{k}": v
+                for k, v in instance["infer_meta_data"].items()
+            }
+            result.update(meta_data)
             results.append(result)
         return results
 
