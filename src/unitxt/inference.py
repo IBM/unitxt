@@ -85,8 +85,8 @@ class InferenceEngine(abc.ABC, Artifact):
         """
         if return_meta_data and not hasattr(self, "get_return_object"):
             raise NotImplementedError(
-                f"Inference engine {self.__class__.__name__} does not support return_meta_data,"
-                f"Please set return_meta_data=False"
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
             )
 
         [self.verify_instance(instance) for instance in dataset]
@@ -155,8 +155,8 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         """
         if return_meta_data and not hasattr(self, "get_return_object"):
             raise NotImplementedError(
-                f"Inference engine {self.__class__.__name__} does not support return_meta_data,"
-                f"Please set return_meta_data=False"
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
             )
 
         [self.verify_instance(instance) for instance in dataset]
