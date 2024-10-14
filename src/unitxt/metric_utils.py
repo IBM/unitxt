@@ -205,7 +205,7 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                         target = target[part]
                     target[path[-1]] = global_score
 
-        # the leafs always have score_name and score
+        # the leafs always have score_name and score, and num_of_instances
         def recursive_mean(dic):
             if isinstance(dic, dict):
                 if "score" in dic and "score_name" in dic:
@@ -213,14 +213,17 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
 
                 result = {}
                 all_scores = []
+                total_num_of_instances = 0
                 for k, v in dic.items():
                     score = recursive_mean(v)
                     if score is not None:
                         all_scores.append(score["score"])
+                        total_num_of_instances += score["num_of_instances"]
                         result[k] = score
 
                 result["score"] = nan_mean(all_scores)
                 result["score_name"] = "subsets_mean"
+                result["num_of_instances"] = total_num_of_instances
 
                 if result:
                     return result
