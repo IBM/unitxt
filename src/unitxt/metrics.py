@@ -1185,13 +1185,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score_name"] = self.main_score
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
+            if "global" not in instance["score"]:
+                instance["score"]["global"] = {}
+            if "instance" not in instance["score"]:
+                instance["score"]["instance"] = {}
 
             instance["score"]["instance"].update(
                 self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
                     instance_score, instance["score"]["instance"]
                 )
             )
-
             instances.append(instance)
 
         return instances
@@ -1253,7 +1256,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # Each instance goes into group_to_instances per each score_name.
         # So we count over the first score_name only
         for group_key in group_to_instance_scores:
-            global_score[f"num_of_instances_in_group_{group_key}"] = sum(
+            if group_key not in global_score:
+                global_score[group_key] = {}
+            global_score[group_key]["num_of_instances"] = sum(
                 [
                     len(
                         group_to_instance_scores[group_key][score_names[0]][
@@ -1267,7 +1272,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             )
 
         # if group_aggregation_func expects a subgroup-types score dict, pass it; otherwise pass the default type list of scores
-        return [
+        to_return = [
             {
                 "score": {
                     "instance": {
@@ -1287,6 +1292,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 group_to_instance_scores.keys()
             )  # sorted for consistency
         ]
+
+        # update each group section in global_score
+        for i, group_name in enumerate(sorted(group_to_instance_scores.keys())):
+            global_score[group_name].update(to_return[i]["score"]["instance"])
+
+        return to_return
 
     def _set_up_group_mean_aggregation(
         self, instances, reduction_params, reduction_fields, global_score
@@ -3117,7 +3128,7 @@ class SafetyMetric(GlobalMetric):
 class LlamaIndexLLMMetric(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
-    prediction_type: str = str
+    prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
     anthropic_models: List[

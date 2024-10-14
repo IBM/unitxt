@@ -1087,9 +1087,7 @@ class TestMetrics(UnitxtTestCase):
                 )
                 for group_key, instance_count in instance_counts.items():
                     self.assertEqual(
-                        outputs[0]["score"]["global"][
-                            f"num_of_instances_in_group_{group_key}"
-                        ],
+                        outputs[0]["score"]["global"][group_key]["num_of_instances"],
                         instance_count,
                     )
 
