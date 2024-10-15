@@ -11,6 +11,7 @@ from unitxt.processors import (
     ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
     FirstCharacter,
+    FixWhiteSpace,
     GetStringAfter,
     InferDictsToBinaryLogprobs,
     LiteralEval,
@@ -19,6 +20,8 @@ from unitxt.processors import (
     MatchClosestOption,
     PostProcess,
     RegexParser,
+    RemoveArticles,
+    RemovePunctuations,
     StanceToProCon,
     StringEquals,
     StrToFloatFormat,
@@ -259,5 +262,23 @@ add_to_catalog(
         ]
     ),
     "processors.infer_last_token_logprobs_to_yes_no_probs",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(RemoveArticles()),
+    "processors.remove_articles",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(RemovePunctuations()),
+    "processors.remove_punctuations",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(FixWhiteSpace()),
+    "processors.fix_whitespace",
     overwrite=True,
 )
