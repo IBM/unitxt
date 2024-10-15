@@ -57,12 +57,11 @@ metric_names = [
     "context_relevance_q_c_ares_logprobs",
     "answer_relevance_q_a_logprobs",
 ]
-metrics_path = "metrics.llm_as_judge.binary"
+metrics_path = "metrics.llm_as_judge.binary.llama_3_1_70b_instruct_wml_"
 
 # select the desired model.
 # all available models are under "catalog.engines.classification"
 model_names = [
-    "llama_3_1_70b_instruct_wml",
     "mixtral_8x7b_instruct_v01_wml",
     # "gpt_4_turbo_openai",
 ]
@@ -77,8 +76,9 @@ if __name__ == "__main__":
 
     for metric_name in metric_names:
         for model_name in model_names:
-            # override the metric with the inference model
-            llmaj_metric_name = f"{metrics_path}.{metric_name}[inference_model={models_path}.{model_name}]"
+            # override the metric with the inference model. the default model is llama_3_1_70b_instruct_wml so
+            # no need to override when using it.
+            llmaj_metric_name = f"{metrics_path}{metric_name}[inference_model={models_path}.{model_name}]"
 
             # apply the metric over the input
             metrics_operator = SequentialOperator(steps=[llmaj_metric_name])

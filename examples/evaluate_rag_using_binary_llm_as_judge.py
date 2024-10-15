@@ -28,23 +28,7 @@ test_examples = [
     },
 ]
 
-# select the desired metrics.
-# Each metric measures a certain aspect of the generated answer (e.g. correctness, faithfulness)
-# all available metrics are under "catalog.metrics.llm_as_judge.binary"
-# the ones with extension "logprobs" provide a real value between 0 and 1 prediction, the one without it
-# provide a binary prediction
-metric_names = [
-    "answer_correctness_q_a_gt_loose_logprobs",
-    "faithfulness_q_c_a_logprobs",
-]
-metrics_path = "metrics.llm_as_judge.binary"
-
-# select the desired inference model.
-# all available models are under "catalog.engines.classification"
-model_names = ["llama_3_1_70b_instruct_wml"]
-models_path = "engines.classification"
-
-
+# define our card for the generation task
 card = TaskCard(
     # Load the data from the dictionary.
     loader=LoadFromDictionary(
@@ -60,26 +44,31 @@ card = TaskCard(
     ),
 )
 
-# Now let's construct our judge metrics.
+# Select the desired metric(s).
+# Each metric measures a certain aspect of the generated answer (e.g. correctness, faithfulness, answer relevance).
+# All available metrics are under "catalog.metrics.llm_as_judge.binary"
+# Those with extension "logprobs" provide a real value prediction in [0,1], the others provide a binary prediction.
+# By default, all judges use llama_3_1_70b_instruct_wml. We will soon see how to change this.
+metric_name = "metrics.llm_as_judge.binary.llama_3_1_70b_instruct_wml_answer_correctness_q_a_gt_loose_logprobs"
+
 # The binary rag judges tasks expect the input fields among the following: "question", "contexts", "ground_truths".
 # In our generation task the ground truth are in the "reference_answers" field, so we need to inform the metric
 # about this mapping. This is done using the "judge_to_generator_fields_mapping" attribute:
 mapping_override = "judge_to_generator_fields_mapping={ground_truths=reference_answers}"
+correctness_judge_metric_llama = f"{metric_name}[{mapping_override}]"
 
-# generate the metrics:
-judge_metrics = []
-for metric_name in metric_names:
-    full_metric_name = f"{metrics_path}.{metric_name}"
-    for model_name in model_names:
-        full_model_name = f"{models_path}.{model_name}"
-        # override the metric with the inference model and mapping
-        judge_metrics.append(
-            f"{full_metric_name}[inference_model={full_model_name}, {mapping_override}]"
-        )
+# We can also use another inference model by overriding the "inference_model" attribute of the metric.
+# all available models for this judge are under "catalog.engines.classification"
+mixtral_engine = "engines.classification.mixtral_8x7b_instruct_v01_wml"
+correctness_judge_metric_mixtral = (
+    f"{metric_name}[{mapping_override}, inference_model={mixtral_engine}]"
+)
+
+metrics = [correctness_judge_metric_llama, correctness_judge_metric_mixtral]
 
 # Verbalize the dataset using the template
 dataset = load_dataset(
-    card=card, template_card_index="answer_based_on_context", metrics=judge_metrics
+    card=card, template_card_index="answer_based_on_context", metrics=metrics
 )
 test_dataset = dataset["test"]
 
@@ -87,6 +76,7 @@ test_dataset = dataset["test"]
 model_name = "google/flan-t5-xl"
 inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
 predictions = inference_model.infer(test_dataset)
+
 # Evaluate the generated predictions using the selected metrics
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 

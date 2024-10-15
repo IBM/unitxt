@@ -41,6 +41,6 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
 
             add_to_catalog(
                 metric,
-                f"metrics.llm_as_judge.binary.{metric_label}",
+                f"metrics.llm_as_judge.binary.llama_3_1_70b_instruct_wml_{metric_label}",
                 overwrite=True,
             )
