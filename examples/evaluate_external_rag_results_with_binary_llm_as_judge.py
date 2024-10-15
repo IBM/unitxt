@@ -64,7 +64,7 @@ metrics_path = "metrics.llm_as_judge.binary"
 model_names = [
     "llama_3_1_70b_instruct_wml",
     "mixtral_8x7b_instruct_v01_wml",
-    "gpt_4_turbo_openai",
+    # "gpt_4_turbo_openai",
 ]
 models_path = "engines.classification"
 
