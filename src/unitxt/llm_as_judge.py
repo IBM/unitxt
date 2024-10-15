@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import infer
@@ -77,8 +78,9 @@ class LLMAsJudgeBase(BulkInstanceMetric):
                     " Support will be added in future updates)."
                 )
 
+    @abstractmethod
     def get_full_task_name(self):
-        raise NotImplementedError
+        pass
 
     def compute(
         self,
@@ -90,6 +92,7 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         outputs = self.infer_instances(instances)
         return self.get_metric_results_from_prediction_outputs(outputs)
 
+    @abstractmethod
     def prepare_instances(
         self, references, predictions, task_data
     ) -> List[Dict[str, Any]]:
@@ -98,15 +101,17 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         Each generated instance should include all the fields required by the metrics' task and template, to
         create the source prompt for the judge.
         """
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def infer_instances(self, instances: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Generate the dataset and call the inference engine to generate the judges' predictions.
 
         Return the list of the produced instances with their generated judge predictions.
         """
-        raise NotImplementedError
+        pass
 
+    @abstractmethod
     def get_metric_results_from_prediction_outputs(
         self, outputs: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
@@ -114,7 +119,7 @@ class LLMAsJudgeBase(BulkInstanceMetric):
 
         Return the list of scores dictionaries for the input instances.
         """
-        raise NotImplementedError
+        pass
 
 
 class LLMAsJudge(LLMAsJudgeBase):
