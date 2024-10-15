@@ -226,3 +226,16 @@ This approach can be adapted for various image-text to text tasks, such as image
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text.py>`_
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+
+
+Types and Serializers
+----------------------------
+
+Custom Types and Serializers
++++++++++++++++++++++++++++++
+
+This example show how to define new data types as well as the way these data type should be handled when processed to text.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`_
+
+Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.

@@ -1,12 +1,14 @@
+.. _types_and_serializers:
+
 =====================================
-Tags and Descriptions
+Types and Serializers
 =====================================
 
-Unitxt employ different tools for serializing data into textual
-format. One of this mechanism is the Type-Serializers mechanism which assign serialization to specific types.
-For example consider the following ``typing types``:
+Unitxt employs various tools for serializing data into textual format. One of these mechanisms is the Type-Serializers mechanism, which assigns serialization to specific types. For example, consider the following ``typing`` types:
 
 .. code-block:: python
+
+    from typing import NewType, TypedDict, Union, Literal, List, Any
 
     Text = NewType("Text", str)
     Number = NewType("Number", Union[float, int])
@@ -21,14 +23,12 @@ For example consider the following ``typing types``:
         header: List[str]
         rows: List[List[Any]]
 
-For each type we can assign different serialization method specific for that type.
-In turn we can plug and play different serialization methods and change our data textual representation accordingly.
+For each type, we can assign different serialization methods specific to that type. This enables us to "plug and play" different serialization methods and modify our data’s textual representation accordingly.
 
-Registering the types
----------------------------------------
+Registering the Types
+-----------------------
 
-First we need to register the different types we want to support
-from the python ``typing`` types defined above.
+First, we need to register the different types we want to support from the Python ``typing`` types defined above.
 
 .. code-block:: python
 
@@ -40,11 +40,10 @@ from the python ``typing`` types defined above.
     register_type(Dialog)
     register_type(Table)
 
-Defining Serializer for a Type
----------------------------------------
+Defining a Serializer for a Type
+---------------------------------
 
-Once the types are registered we can define serializers for those types.
-For example consider making serializer to the ``Dialog`` type
+Once the types are registered, we can define serializers for those types. For example, consider creating a serializer for the ``Dialog`` type:
 
 .. code-block:: python
 
@@ -57,18 +56,17 @@ For example consider making serializer to the ``Dialog`` type
             # Convert the Dialog into a string representation, typically combining roles and content
             return "\n".join(f"{turn['role']}: {turn['content']}" for turn in value)
 
+Using the New Serializer
+--------------------------
 
-Using The New Serializer
----------------------------------------
+To use the new serializer, we need to do two things:
+1. Ensure our task supports this type.
+2. Add the serializer to the data loading recipe.
 
-In order to use the new serializer we need to do two things:
-(1) make sure our task support this type
-(2) add the serializer to the data loading recipe
+Using the New Type in a Task
+----------------------------
 
-Using new type in task
--------------------------
-
-Once the new type is regisetered we can create a task that require this type:
+Once the new type is registered, we can create a task that requires this type:
 
 .. code-block:: python
 
@@ -81,12 +79,12 @@ Once the new type is regisetered we can create a task that require this type:
         metrics=["metrics.rouge"],
     )
 
-Loading the data with the serializer
-------------------------------------
+Loading Data with the Serializer
+---------------------------------
 
-Once the task is defined with the type we can use the serializer when loading the data.
+Once the task is defined with the type, we can use the serializer when loading the data.
 
-Given this stand alone card:
+Given this standalone card:
 
 .. code-block:: python
 
@@ -94,10 +92,11 @@ Given this stand alone card:
         "test": [
             {
                 "dialog": [
-                    {"role": "user", "content": "what is the time?"},
-                    {"role": "system", "content": "4:13pm"},
+                    {"role": "user", "content": "What is the time?"},
+                    {"role": "system", "content": "4:13 PM"},
                 ],
                 "summary": "User asked for the time and got an answer."
+            }
         ]
     }
 
@@ -106,7 +105,7 @@ Given this stand alone card:
         task=dialog_summarization_task,
     )
 
-We can load the data with the serializer by using:
+We can load the data with the serializer using:
 
 .. code-block:: python
 
@@ -119,3 +118,46 @@ We can load the data with the serializer by using:
         ),
         serializer=DialogSerializer(),
     )
+
+Now if you print the input of the first instance of the dataset by ``print(dataset["test"][0]["source"])`` you will get:
+
+.. code-block::
+
+    Summarize the following dialog.
+    user: What is the time?
+    system: 4:13 PM
+
+
+
+Adding a Serializer to a Template
+------------------------------------
+
+Another option is to set a default serializer for a given template. When creating a template, we need to add all the serializers for all the types we want to support. For this purpose, we use a multi-type serializer that wraps all the serializers together.
+
+.. code-block:: python
+
+    from unitxt.serializers import (
+        MultiTypeSerializer, ImageSerializer, TableSerializer, DialogSerializer, ListSerializer,
+    )
+
+    serializer = MultiTypeSerializer(
+        serializers=[
+            ImageSerializer(),
+            TableSerializer(),
+            DialogSerializer(),
+            ListSerializer(),
+        ]
+    )
+
+Now, we can add them to the template:
+
+.. code-block:: python
+
+    InputOutputTemplate(
+        instruction="Summarize the following dialog.",
+        input_format="{dialog}",
+        output_format="{summary}",
+        serializer=serializer
+    )
+
+Important: Serializers are activated in the order they are defined, in a "first in, first serve" manner. This means that if you place the ``ListSerializer`` before the ``DialogSerializer``, the `ListSerializer` will serialize the dialog, as the ``Dialog`` is also a ``List`` and matches the type requirement of the ``ListSerializer``.
