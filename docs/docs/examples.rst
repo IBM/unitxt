@@ -227,10 +227,23 @@ This approach can be adapted for various image-text to text tasks, such as image
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
 
+
 Evaluate Image-Text to Text Model With Different Templates
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Evaluate Image-Text to Text Models with different templates and explore the sensitivity of the model to different textual variations.
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text_with_different_templates.py>`_
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+
+Types and Serializers
+----------------------------
+
+Custom Types and Serializers
++++++++++++++++++++++++++++++
+
+This example show how to define new data types as well as the way these data type should be handled when processed to text.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`_
+
+Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.
 
