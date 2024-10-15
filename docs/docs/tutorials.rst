@@ -17,5 +17,6 @@ Tutorials ✨
    benchmark
    llm_as_judge
    tags_and_descriptions
+   types_and_serializers
    contributors_guide
 
