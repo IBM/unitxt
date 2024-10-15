@@ -249,12 +249,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def produce(self, task_instances):
         """Use the recipe in production to produce model ready query from standard task instance."""
         self.before_process_multi_stream()
-        multi_stream = MultiStream.from_iterables(
-            {
-                constants.inference_stream: self.production_preprocess(task_instances),
-                self.demos_pool_name: self.production_demos_pool(),
-            }
-        )
+        streams = {
+            constants.inference_stream: self.production_preprocess(task_instances),
+        }
+        if self.use_demos:
+            streams[self.demos_pool_name] = self.production_demos_pool()
+        multi_stream = MultiStream.from_iterables(streams)
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 

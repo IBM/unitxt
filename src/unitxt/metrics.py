@@ -36,7 +36,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy
+from .operators import Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -1537,16 +1537,40 @@ class MetricPipeline(MultiStreamOperator, Metric):
         ), "Must define at most one of postpreprocess_steps (which is deprecated) and postprocess_steps (to be used from now on)"
         if has_postpreprocess:
             self.postprocess_steps = self.postpreprocess_steps
-        self.prepare_score = Copy(
-            field_to_field=[
-                [
-                    f"score/instance/{self.metric._add_score_prefix(self.main_score)}",
-                    "score/instance/score",
-                ],
-                [
-                    f"score/global/{self.metric._add_score_prefix(self.main_score)}",
-                    "score/global/score",
-                ],
+        self.prepare_score = SequentialOperator(
+            steps=[
+                Copy(
+                    field=f"score/instance/{self.metric._add_score_prefix(self.main_score)}",
+                    to_field="score/instance/score",
+                ),
+                Copy(
+                    field=f"score/global/{self.metric._add_score_prefix(self.main_score)}",
+                    to_field="score/global/score",
+                ),
+                Copy(
+                    field=f"score/global/{self.metric._add_score_prefix(self.main_score)}_ci_low",
+                    to_field="score/global/score_ci_low",
+                    not_exist_do_nothing=True,
+                ),
+                Copy(
+                    field=f"score/global/{self.metric._add_score_prefix(self.main_score)}_ci_high",
+                    to_field="score/global/score_ci_high",
+                    not_exist_do_nothing=True,
+                ),
+                Set(
+                    fields={
+                        "score/instance/score_name": self.metric._add_score_prefix(
+                            self.main_score
+                        )
+                    }
+                ),
+                Set(
+                    fields={
+                        "score/global/score_name": self.metric._add_score_prefix(
+                            self.main_score
+                        )
+                    }
+                ),
             ],
         )
 

@@ -107,3 +107,21 @@ class DuplicateBySubLists(StreamOperator):
 class GetLength(FieldOperator):
     def process_value(self, collection: Any) -> Any:
         return len(collection)
+
+
+class Filter(FieldOperator):
+    values: List[Any]
+
+    def process_value(self, collection: Any) -> Any:
+        # If collection is a list, tuple, or set
+        if isinstance(collection, (list, set, tuple)):
+            return type(collection)(
+                item for item in collection if item not in self.values
+            )
+
+        # If collection is a dictionary, filter by keys
+        if isinstance(collection, dict):
+            return {k: v for k, v in collection.items() if k not in self.values}
+
+        # If collection is of an unsupported type
+        raise TypeError(f"Unsupported collection type: {type(collection)}")

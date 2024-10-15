@@ -69,7 +69,7 @@ global_target = {
     "score_name": "f1",
 }
 metric = MetricPipeline(
-    main_score="score",
+    main_score="f1",
     preprocess_steps=[
         Copy(field="task_data/context", to_field="references"),
         ListFieldValues(fields=["references"], to_field="references"),

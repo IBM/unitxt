@@ -87,3 +87,12 @@ class Replace(FieldOperator):
 
     def process_value(self, value: str) -> str:
         return value.replace(self.old, self.new)
+
+
+class MapReplace(FieldOperator):
+    mapping: Dict[str, str]
+
+    def process_value(self, value: Any) -> Any:
+        for key, val in self.mapping.items():
+            value = value.replace(key, val)
+        return value

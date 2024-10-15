@@ -136,8 +136,8 @@ class MapInstanceValues(InstanceOperator):
     it maps values of instances in a stream using predefined mappers.
 
     Attributes:
-        mappers (Dict[str, Dict[str, str]]): The mappers to use for mapping instance values.
-            Keys are the names of the fields to be mapped, and values are dictionaries
+        mappers (Dict[str, Dict[str, Any]]): The mappers to use for mapping instance values.
+            Keys are the names of the fields to undergo mapping, and values are dictionaries
             that define the mapping from old values to new values.
         strict (bool): If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
@@ -208,7 +208,7 @@ class MapInstanceValues(InstanceOperator):
     def get_mapped_value(self, instance, key, mapper, val):
         val_as_str = str(val)  # make sure the value is a string
         if val_as_str in mapper:
-            return mapper[val_as_str]
+            return recursive_copy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
                 f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
@@ -321,6 +321,13 @@ class SelectFields(InstanceOperator):
         return new_instance
 
 
+class DefaultPlaceHolder:
+    pass
+
+
+default_place_holder = DefaultPlaceHolder()
+
+
 class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
@@ -351,6 +358,7 @@ class InstanceFieldOperator(InstanceOperator):
     process_every_value: bool = False
     get_default: Any = None
     not_exist_ok: bool = False
+    not_exist_do_nothing: bool = False
 
     def verify(self):
         super().verify()
@@ -437,9 +445,13 @@ class InstanceFieldOperator(InstanceOperator):
                 old_value = dict_get(
                     instance,
                     from_field,
-                    default=self.get_default,
-                    not_exist_ok=self.not_exist_ok,
+                    default=default_place_holder,
+                    not_exist_ok=self.not_exist_ok or self.not_exist_do_nothing,
                 )
+                if old_value is default_place_holder:
+                    if self.not_exist_do_nothing:
+                        return instance
+                    old_value = self.get_default
             except Exception as e:
                 raise ValueError(
                     f"Failed to get '{from_field}' from {instance} due to : {e}"
@@ -472,6 +484,13 @@ class FieldOperator(InstanceFieldOperator):
     @abstractmethod
     def process_value(self, value: Any) -> Any:
         pass
+
+
+class MapValues(FieldOperator):
+    mapping: Dict[str, str]
+
+    def process_value(self, value: Any) -> Any:
+        return self.mapping[str(value)]
 
 
 class Rename(FieldOperator):
@@ -641,7 +660,9 @@ class ListFieldValues(InstanceOperator):
         values = []
         for field_name in self.fields:
             values.append(dict_get(instance, field_name))
-        instance[self.to_field] = values
+
+        dict_set(instance, self.to_field, values)
+
         return instance
 
 
@@ -678,7 +699,7 @@ class ZipFieldValues(InstanceOperator):
             zipped = zip_longest(*values)
         else:
             zipped = zip(*values)
-        instance[self.to_field] = list(zipped)
+        dict_set(instance, self.to_field, list(zipped))
         return instance
 
 
