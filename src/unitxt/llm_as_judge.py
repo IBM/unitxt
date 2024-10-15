@@ -306,7 +306,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
 
     """
 
-    infer_log_probs: bool = True
+    infer_log_probs: bool = False
     judge_to_generator_fields_mapping: Dict[str, str] = {}
     prediction_field: Optional[str] = None
     include_meta_data: bool = True
