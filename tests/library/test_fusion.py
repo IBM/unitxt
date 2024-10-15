@@ -393,6 +393,7 @@ class TestFusion(UnitxtTestCase):
                         },
                         "score": -0.517,
                         "score_name": "subsets_mean",
+                        "num_of_instances": 13,
                     },
                     "wnli": {
                         "num_of_instances": 12,
@@ -454,7 +455,12 @@ class TestFusion(UnitxtTestCase):
                     },
                     "score": 0.161,
                     "score_name": "subsets_mean",
+                    "num_of_instances": 30,
                 },
-                "global": {"score": 0.161, "score_name": "subsets_mean"},
+                "global": {
+                    "score": 0.161,
+                    "score_name": "subsets_mean",
+                    "num_of_instances": 30,
+                },
             },
         )

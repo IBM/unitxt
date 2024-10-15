@@ -157,10 +157,10 @@ add_to_catalog(metric, "metrics.robustness.fixed_group_mean_accuracy", overwrite
 
 metric = GroupMeanAccuracy()
 global_target = {
-    "group1": {"num_of_instances": 5},
-    "group2": {"num_of_instances": 5},
-    "group3": {"num_of_instances": 4},
-    "group4": {"num_of_instances": 1},
+    "group1": {"num_of_instances": 5, "mean_accuracy": 0.2},
+    "group2": {"num_of_instances": 5, "mean_accuracy": 0.2},
+    "group3": {"num_of_instances": 4, "mean_accuracy": 0.5},
+    "group4": {"num_of_instances": 1, "mean_accuracy": 0.0},
     "group_mean_accuracy": 0.22,
     "group_mean_accuracy_ci_high": 0.44,
     "group_mean_accuracy_ci_low": 0.02,
@@ -218,10 +218,10 @@ add_to_catalog(
 
 metric = GroupMeanStringContainment()
 global_target = {
-    "group1": {"num_of_instances": 5},
-    "group2": {"num_of_instances": 5},
-    "group3": {"num_of_instances": 4},
-    "group4": {"num_of_instances": 1},
+    "group1": {"num_of_instances": 5, "mean_string_containment": 0.6},
+    "group2": {"num_of_instances": 5, "mean_string_containment": 0.6},
+    "group3": {"num_of_instances": 4, "mean_string_containment": 0.75},
+    "group4": {"num_of_instances": 1, "mean_string_containment": 0.0},
     "group_mean_string_containment": 0.49,
     "group_mean_string_containment_ci_high": 0.71,
     "group_mean_string_containment_ci_low": 0.16,
@@ -756,10 +756,30 @@ add_to_catalog(
 # TokenOverlap: example of a metric that has more than one score
 
 global_target = {
-    "group1": {"num_of_instances": 5},
-    "group2": {"num_of_instances": 5},
-    "group3": {"num_of_instances": 4},
-    "group4": {"num_of_instances": 1},
+    "group1": {
+        "num_of_instances": 5,
+        "mean_f1": 0.6,
+        "mean_precision": 0.6,
+        "mean_recall": 0.6,
+    },
+    "group2": {
+        "num_of_instances": 5,
+        "mean_f1": 0.93,
+        "mean_precision": 0.9,
+        "mean_recall": 1.0,
+    },
+    "group3": {
+        "num_of_instances": 4,
+        "mean_f1": 0.5,
+        "mean_precision": 0.5,
+        "mean_recall": 0.5,
+    },
+    "group4": {
+        "num_of_instances": 1,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+    },
     "group_mean_f1": 0.51,
     "group_mean_f1_ci_high": 0.68,
     "group_mean_f1_ci_low": 0.22,

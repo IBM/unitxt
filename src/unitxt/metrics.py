@@ -1114,7 +1114,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     reduction_params,
                     reduction_fields,
                     global_score,
-                    aggregation_function_name,
                 )
             else:
                 raise ValueError(
@@ -1316,8 +1315,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         reduction_params,
         reduction_fields,
         global_score,
-        aggregation_function_name,
     ):
+        aggregation_function_name = str(reduction_params["agg_func"][0])
         group_aggregation_func = reduction_params["agg_func"][1]
         # if treat groups as units
         do_resample_as_group = reduction_params["agg_func"][2]
