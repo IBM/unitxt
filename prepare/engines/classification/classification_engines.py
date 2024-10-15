@@ -4,7 +4,6 @@ from unitxt.inference import (
     OpenAiInferenceEngine,
     WMLInferenceEngine,
 )
-from unitxt.random_utils import get_seed
 
 
 def get_inference_engine(model_name, framework_name):
@@ -12,14 +11,14 @@ def get_inference_engine(model_name, framework_name):
         return WMLInferenceEngine(
             model_name=model_name,
             max_new_tokens=5,
-            random_seed=get_seed(),
+            random_seed=42,
             decoding_method="greedy",
         )
     if framework_name == "ibm_gen_ai":
         return IbmGenAiInferenceEngine(
             model_name=model_name,
             max_new_tokens=5,
-            random_seed=get_seed(),
+            random_seed=42,
             decoding_method="greedy",
         )
     if framework_name == "openai":
@@ -40,12 +39,6 @@ model_names_to_infer_framework = {
 
 for judge_model_name, infer_frameworks in model_names_to_infer_framework.items():
     for infer_framework in infer_frameworks:
-        template_format = (
-            "formats.llama3_instruct"
-            if "llama" in judge_model_name
-            else "formats.empty"
-        )
-
         inference_engine = get_inference_engine(judge_model_name, infer_framework)
         inference_engine_label = inference_engine.get_engine_id()
 
