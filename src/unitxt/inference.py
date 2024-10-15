@@ -14,6 +14,7 @@ from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .settings_utils import get_settings
+from .type_utils import isoftype
 
 settings = get_settings()
 
@@ -33,6 +34,9 @@ class TextGenerationInferenceOutput:
 
     input_tokens (int) : number of input tokens to the model.
     output_tokens (int) : number of output tokens to the model.
+    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+    seed (int): seed used by the model during generation.
+    input_text (str): input to the model.
     model_name (str): the model_name as kept in the InferenceEngine.
     inference_type (str): The label stating the type of the InferenceEngine.
     """
@@ -40,6 +44,9 @@ class TextGenerationInferenceOutput:
     prediction: Union[str, List[Dict[str, Any]]]
     input_tokens: Optional[int] = None
     output_tokens: Optional[int] = None
+    stop_reason: Optional[str] = None
+    seed: Optional[int] = None
+    input_text: Optional[str] = None
     model_name: Optional[str] = None
     inference_type: Optional[str] = None
 
@@ -106,6 +113,10 @@ class InferenceEngine(abc.ABC, Artifact):
                 param_inst_val = getattr(self, param)
                 if param_inst_val is None:
                     setattr(self, param, param_dict_val)
+
+    def get_model_details(self) -> Dict:
+        """Might not be possible to implement for all inference engines."""
+        pass
 
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
@@ -356,10 +367,12 @@ class IbmGenAiInferenceEngine(
         "genai": "Install ibm-genai package using 'pip install --upgrade ibm-generative-ai"
     }
     data_classification_policy = ["public", "proprietary"]
+    rate_limit: int = 10
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
 
-    def prepare_engine(self):
-        from genai import Client, Credentials
+    @staticmethod
+    def _get_credentials():
+        from genai import Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
@@ -368,8 +381,19 @@ class IbmGenAiInferenceEngine(
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
         )
-        credentials = Credentials(api_key=api_key)
+
+        return Credentials(api_key=api_key)
+
+    def prepare_engine(self):
+        from genai import Client
+        from genai.text.generation import CreateExecutionOptions
+
+        credentials = self._get_credentials()
         self.client = Client(credentials=credentials)
+
+        self.execution_options = CreateExecutionOptions(
+            concurrency_limit=self.rate_limit
+        )
 
         self._set_inference_parameters()
 
@@ -378,22 +402,24 @@ class IbmGenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters
+        from genai.schema import TextGenerationParameters, TextGenerationResult
 
         genai_params = TextGenerationParameters(
             **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
-        results = []
         responses = self.client.text.generation.create(
             model_id=self.model_name,
-            inputs=[instance["source"] for instance in dataset],
+            inputs=dataset["source"],
             parameters=genai_params,
+            execution_options=self.execution_options,
         )
+
+        results = []
         for response in responses:
-            generated_text = response.results[0].generated_text
+            generation_result: TextGenerationResult = response.results[0]
             result = self.get_return_object(
-                generated_text, response.results[0], return_meta_data
+                generation_result.generated_text, generation_result, return_meta_data
             )
             results.append(result)
         return results
@@ -403,7 +429,7 @@ class IbmGenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters
+        from genai.schema import TextGenerationParameters, TextGenerationResult
 
         logprobs_return_options = {
             "generated_tokens": True,
@@ -420,13 +446,14 @@ class IbmGenAiInferenceEngine(
         genai_params = TextGenerationParameters(**genai_params)
         predictions = self.client.text.generation.create(
             model_id=self.model_name,
-            inputs=[instance["source"] for instance in dataset],
+            inputs=dataset["source"],
             parameters=genai_params,
+            execution_options=self.execution_options,
         )
 
         predict_results = []
         for prediction in predictions:
-            result = prediction.results[0]
+            result: TextGenerationResult = prediction.results[0]
             assert isinstance(
                 result.generated_tokens, list
             ), "result.generated_tokens should be a list"
@@ -453,8 +480,21 @@ class IbmGenAiInferenceEngine(
                 output_tokens=result.generated_token_count,
                 model_name=self.model_name,
                 inference_type=self.label,
+                input_text=result.input_text,
+                seed=self.random_seed,
+                stop_reason=result.stop_reason,
             )
         return predict_result
+
+    def get_model_details(self) -> Dict:
+        from genai import ApiClient
+        from genai.model import ModelService
+
+        api_client = ApiClient(credentials=self._get_credentials())
+        model_info = (
+            ModelService(api_client=api_client).retrieve(id=self.model_name).result
+        )
+        return model_info.dict()
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
@@ -752,6 +792,11 @@ class WMLInferenceEngineParams(Artifact):
     return_options: Optional[Dict[str, bool]] = None
 
 
+CredentialsWML = Dict[
+    Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
+]
+
+
 class WMLInferenceEngine(
     InferenceEngine,
     WMLInferenceEngineParamsMixin,
@@ -763,9 +808,10 @@ class WMLInferenceEngine(
     Attributes:
         credentials (Dict[str, str], optional): By default, it is created by a class
             instance which tries to retrieve proper environment variables
-            ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY"). However, a dictionary with
-            the following keys: "url", "apikey", "project_id" can be directly provided
-            instead.
+            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
+            However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
+            "username", "password".
+            can be directly provided instead.
         model_name (str, optional): ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
@@ -796,7 +842,7 @@ class WMLInferenceEngine(
         results = wml_inference.infer(dataset["test"])
     """
 
-    credentials: Optional[Dict[Literal["url", "apikey", "project_id"], str]] = None
+    credentials: Optional[CredentialsWML] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     label: str = "wml"
@@ -809,16 +855,18 @@ class WMLInferenceEngine(
     parameters: Optional[WMLInferenceEngineParams] = None
     concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
+    _model: Any = InternalField(default=None, name="WML model")
 
     def verify(self):
         super().verify()
 
-        if self.credentials is not None:
-            for key in self.credentials:
-                if key not in ["url", "apikey", "project_id", "space_id"]:
-                    raise ValueError(
-                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id", "space_id"]'
-                    )
+        assert (
+            isinstance(self.concurrency_limit, int)
+            and 1 <= self.concurrency_limit <= 10
+        ), (
+            f"'concurrency_limit' must be a positive integer not greater than 10. "
+            f"However, '{self.concurrency_limit}' was given."
+        )
 
         assert (
             self.model_name
@@ -835,34 +883,12 @@ class WMLInferenceEngine(
                     data["credentials"][key] = value
         return data
 
-    @staticmethod
-    def _read_wml_credentials_from_env() -> (
-        Dict[Literal["url", "apikey", "project_id", "space_id"], str]
-    ):
-        credentials = {}
-        project_or_deployment_var_name = (
-            "WML_SPACE_ID" if "WML_SPACE_ID" in os.environ else "WML_PROJECT_ID"
-        )
-
-        for env_var_name in ["WML_URL", project_or_deployment_var_name, "WML_APIKEY"]:
-            env_var = os.environ.get(env_var_name)
-            assert env_var, (
-                f"Error while trying to run 'WMLInferenceEngine'. "
-                f"Please set the env variable: '{env_var_name}', or "
-                f"directly provide an instance of ibm-watsonx-ai 'Credentials' "
-                f"to the engine."
-            )
-
-            name = env_var_name.lower().replace("wml_", "")
-            credentials[name] = env_var
-
-        return credentials
-
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
         if self.credentials is None:
             self.credentials = self._read_wml_credentials_from_env()
+        self._verify_wml_credentials(self.credentials)
 
         client = APIClient(credentials=self.credentials)
         if "space_id" in self.credentials:
@@ -871,50 +897,124 @@ class WMLInferenceEngine(
             client.set.default_project(self.credentials["project_id"])
         return client
 
+    @staticmethod
+    def _read_wml_credentials_from_env() -> CredentialsWML:
+        credentials: CredentialsWML = {}
+
+        url = os.environ.get("WML_URL")
+        assert url, (
+            "Error while trying to run 'WMLInferenceEngine'. "
+            "Please set the env variable: 'WML_URL'"
+        )
+        credentials["url"] = url
+
+        space_id = os.environ.get("WML_SPACE_ID")
+        project_id = os.environ.get("WML_PROJECT_ID")
+        if space_id and project_id:
+            get_logger().warning(
+                "Either 'WML_SPACE_ID' or 'WML_PROJECT_ID' need to be "
+                "specified, however, both were found. 'WMLInferenceEngine' "
+                "will use space by default. If it is not desired, then have "
+                "only one of those defined in the env."
+            )
+            credentials["space_id"] = space_id
+        elif project_id:
+            credentials["project_id"] = project_id
+        else:
+            raise AssertionError(
+                "Error while trying to run 'WMLInferenceEngine'. "
+                "Please set either 'WML_SPACE_ID' or 'WML_PROJECT_ID' env "
+                "variable."
+            )
+
+        apikey = os.environ.get("WML_APIKEY")
+        username = os.environ.get("WML_USERNAME")
+        password = os.environ.get("WML_PASSWORD")
+
+        if apikey and username and password:
+            get_logger().warning(
+                "Either 'WML_APIKEY' or both 'WML_USERNAME' and 'WML_PASSWORD' "
+                "need to be specified, however, all of them were found. "
+                "'WMLInferenceEngine' will use api key only by default. If it is not "
+                "desired, then have only one of those options defined in the env."
+            )
+
+        if apikey:
+            credentials["apikey"] = apikey
+        elif username and password:
+            credentials["username"] = username
+            credentials["password"] = password
+        else:
+            raise AssertionError(
+                "Error while trying to run 'WMLInferenceEngine'. "
+                "Please set either 'WML_APIKEY' or both 'WML_USERNAME' and "
+                "'WML_PASSWORD' env variables."
+            )
+
+        return credentials
+
+    @staticmethod
+    def _verify_wml_credentials(credentials: CredentialsWML) -> None:
+        assert isoftype(credentials, CredentialsWML), (
+            "WML credentials object must be a dictionary which may "
+            "contain only the following keys: "
+            "['url', 'apikey', 'username', 'password']."
+        )
+
+        assert credentials.get(
+            "url"
+        ), "'url' is a mandatory key for WML credentials dict."
+        assert "space_id" in credentials or "project_id" in credentials, (
+            "Either 'space_id' or 'project_id' must be provided "
+            "as keys for WML credentials dict."
+        )
+        assert "apikey" in credentials or (
+            "username" in credentials and "password" in credentials
+        ), (
+            "Either 'apikey' or both 'username' and 'password' must be provided "
+            "as keys for WML credentials dict."
+        )
+
     def prepare_engine(self):
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
 
-    def _load_model_and_params(self):
-        from ibm_watsonx_ai.foundation_models import ModelInference
+    def _load_model(self):
+        from ibm_watsonx_ai.foundation_models.inference import ModelInference
 
-        model = ModelInference(
+        self._model = ModelInference(
             model_id=self.model_name,
             deployment_id=self.deployment_id,
             api_client=self._client,
         )
-        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
-
-        return model, params
 
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        model, params = self._load_model_and_params()
+        if self._model is None:
+            self._load_model()
 
-        result = []
-        for instance in dataset:
-            instance_result = model.generate(
-                prompt=instance["source"],
-                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
-            )
-            prediction = instance_result["results"][0]["generated_text"]
-            instance_final_results = self.get_return_object(
-                prediction, instance_result, return_meta_data
-            )
-            result.append(instance_final_results)
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
 
-        return result
+        return self._send_requests(
+            params=params,
+            inputs=dataset["source"],
+            return_logprobs=False,
+            return_meta_data=return_meta_data,
+        )
 
     def _infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        model, params = self._load_model_and_params()
+        if self._model is None:
+            self._load_model()
+
+        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
 
         user_return_options = params.pop("return_options", {})
         # currently this is the only configuration that returns generated logprobs and behaves as expected
@@ -937,28 +1037,55 @@ class WMLInferenceEngine(
             "return_options": logprobs_return_options,
         }
 
-        results = model.generate(
-            prompt=[instance["source"] for instance in dataset],
+        return self._send_requests(
             params=params,
+            inputs=dataset["source"],
+            return_logprobs=True,
+            return_meta_data=return_meta_data,
         )
+
+    def _send_requests(
+        self,
+        params: Dict[str, Any],
+        inputs: List[str],
+        return_logprobs: bool,
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        generation_type = "generated_tokens" if return_logprobs else "generated_text"
+
+        results = self._model.generate(
+            prompt=inputs,
+            params=params,
+            concurrency_limit=self.concurrency_limit,
+        )
+
         final_results = []
-        for result in results:
-            generated_tokens = result["results"][0]["generated_tokens"]
+        for result, inp in zip(results, inputs):
+            result_metadata = result["results"][0]
+            generated_content = result_metadata[generation_type]
             final_results.append(
-                self.get_return_object(generated_tokens, result, return_meta_data)
+                self.get_return_object(
+                    generated_content, result_metadata, inp, return_meta_data
+                )
             )
         return final_results
 
-    def get_return_object(self, predict_result, result, return_meta_data):
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
             return TextGenerationInferenceOutput(
                 prediction=predict_result,
-                input_tokens=result["results"][0]["input_token_count"],
-                output_tokens=result["results"][0]["generated_token_count"],
-                model_name=self.model_name,
+                input_tokens=result["input_token_count"],
+                output_tokens=result["generated_token_count"],
+                model_name=self.model_name or self.deployment_id,
                 inference_type=self.label,
+                stop_reason=result["stop_reason"],
+                seed=self.random_seed,
+                input_text=input_text,
             )
         return predict_result
+
+    def get_model_details(self) -> Dict:
+        return self._model.get_details()
 
 
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
