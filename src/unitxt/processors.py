@@ -2,6 +2,7 @@ import ast
 import copy
 import json
 import re
+import string
 from difflib import get_close_matches
 from typing import Any, Dict
 
@@ -373,3 +374,19 @@ class InferDictsToBinaryLogprobs(FieldOperator):
         if self.take_logprobs_from_end:
             return range(-1, -(n_tokens + 1), -1)
         return range(n_tokens)
+
+
+class RemoveArticles(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return re.sub(r"\b(a|an|the)\b", " ", text)
+
+
+class RemovePunctuations(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        puncs_to_exclude = set(string.punctuation)
+        return "".join(c for c in text if c not in puncs_to_exclude)
+
+
+class FixWhiteSpace(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return " ".join(text.split())
