@@ -356,6 +356,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             result = {
                 self.main_score: instance["prediction"],
                 f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
+                f"{self.main_score}_judge_raw_input": instance["source"],
             }
             if self.include_meta_data:
                 meta_data = {
