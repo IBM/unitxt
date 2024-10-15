@@ -24,3 +24,5 @@ bs4
 tenacity==8.3.0
 accelerate
 spacy
+ollama
+ibm-watsonx-ai
