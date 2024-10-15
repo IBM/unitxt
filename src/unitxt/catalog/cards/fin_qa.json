@@ -4,7 +4,8 @@
         "__type__": "load_hf",
         "path": "ibm/finqa",
         "data_classification_policy": [
-            "public"
+            "public",
+            "proprietary"
         ],
         "streaming": false
     },

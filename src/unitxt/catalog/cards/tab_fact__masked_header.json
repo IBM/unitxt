@@ -45,6 +45,10 @@
                     "entailed"
                 ]
             }
+        },
+        {
+            "__type__": "get_masked_table_header",
+            "field": "text_a"
         }
     ],
     "task": "tasks.classification.multi_class.relation",

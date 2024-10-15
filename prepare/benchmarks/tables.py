@@ -1,5 +1,4 @@
 import argparse
-import datetime
 import os.path
 import pickle
 
@@ -8,7 +7,7 @@ from tqdm import tqdm
 from unitxt import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
+    IbmGenAiInferenceEngine,
     OpenAiInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
@@ -27,7 +26,15 @@ parser.add_argument("-model", "--model", type=str, required=True)
 parser.add_argument("-num_demos", "--num_demos", type=int, required=True)
 parser.add_argument("-out_path", "--out_path", type=str, required=True)
 parser.add_argument("-debug", "--debug", type=bool, default=False)
-parser.add_argument("-seed", "--seed", type=int, required=False, default=settings.seed)
+parser.add_argument(
+    "-cards",
+    "--cards",
+    type=str,
+    required=True,
+)
+parser.add_argument(
+    "-seeds", "--seeds", type=str, required=False, default=str(settings.seed)
+)
 parser.add_argument(
     "-shuffle_rows", "--shuffle_rows", type=bool, required=False, default=False
 )
@@ -37,131 +44,89 @@ parser.add_argument(
 args = parser.parse_args()
 model_name = args.model
 num_demos = args.num_demos
-out_path = args.out_path
+out_path = os.path.join(args.out_path, args.model.split("/")[-1])
 debug = args.debug
-seed = args.seed
+seeds = args.seeds
 shuffle_rows = args.shuffle_rows
 shuffle_cols = args.shuffle_cols
-
-# debug:
-# python prepare/benchmarks/tables.py -model "google/flan-t5-base" -num_demos 1 -out_path "/Users/shir/Downloads/run_bench" -shuffle_rows True -debug True
-
-# model_name = "google/flan-t5-base" #"gpt-4o-mini"
-# num_demos = 0
-# out_path = "/Users/shir/Downloads/run_bench"
-# debug = False
-# seed = settings.seed
-# shuffle_rows = False
-# shuffle_cols = False
-# args = dict()
-# print("debug ", debug)
+cards = args.cards
 
 DEMOS_POOL_SIZE = 10
-datasets = ["tab_fact"]  # ["fin_qa", "wikitq", "tab_fact"]
+cards_parsed = cards.split(",")
+try:
+    seeds_parsed = [int(i) for i in seeds.split(",")]
+except:
+    seeds_parsed = [settings.seed]
+subsets = {}
 
-all_subsets = {
-    "fin_qa": {
-        "fin_qa__json": StandardRecipe(
-            card="cards.fin_qa",
-            template_card_index=0,
-            serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "fin_qa__markdown": StandardRecipe(
-            card="cards.fin_qa",
-            template_card_index=0,
-            serializer=SerializeTableAsMarkdown(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "fin_qa__row_indexed_major": StandardRecipe(
-            card="cards.fin_qa",
-            template_card_index=0,
-            serializer=SerializeTableAsIndexedRowMajor(
-                shuffle_rows=shuffle_rows, seed=seed
-            ),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "fin_qa__df": StandardRecipe(
-            card="cards.fin_qa",
-            template_card_index=0,
-            serializer=SerializeTableAsDFLoader(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-    },
-    "wikitq": {
-        "wikitq__json": StandardRecipe(
-            card="cards.wikitq",
-            template_card_index=0,
-            serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "wikitq__markdown": StandardRecipe(
-            card="cards.wikitq",
-            template_card_index=0,
-            serializer=SerializeTableAsMarkdown(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "wikitq__row_indexed_major": StandardRecipe(
-            card="cards.wikitq",
-            template_card_index=0,
-            serializer=SerializeTableAsIndexedRowMajor(
-                shuffle_rows=shuffle_rows, seed=seed
-            ),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "wikitq__df": StandardRecipe(
-            card="cards.wikitq",
-            template_card_index=0,
-            serializer=SerializeTableAsDFLoader(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-    },
-    "tab_fact": {
-        "tab_fact__json": StandardRecipe(
-            card="cards.tab_fact",
-            template_card_index=0,
-            serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "tab_fact__markdown": StandardRecipe(
-            card="cards.tab_fact",
-            template_card_index=0,
-            serializer=SerializeTableAsMarkdown(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "tab_fact__row_indexed_major": StandardRecipe(
-            card="cards.tab_fact",
-            template_card_index=0,
-            serializer=SerializeTableAsIndexedRowMajor(
-                shuffle_rows=shuffle_rows, seed=seed
-            ),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-        "tab_fact__df": StandardRecipe(
-            card="cards.tab_fact",
-            template_card_index=0,
-            serializer=SerializeTableAsDFLoader(shuffle_rows=shuffle_rows, seed=seed),
-            num_demos=num_demos,
-            demos_pool_size=DEMOS_POOL_SIZE,
-        ),
-    },
-}
 
-subsets = {key: vals for key, vals in all_subsets.items() if key in datasets}
+format = "formats.empty"
+if "llama" in model_name:
+    format = "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
+elif "mixtral" in model_name:
+    format = "formats.models.mistral.instruction.all_demos_in_one_turn"
+
+
+for seed in seeds_parsed:
+    for card in cards_parsed:
+        subset = {
+            card
+            + "__json"
+            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+                card="cards." + card,
+                template_card_index=0,
+                serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
+                num_demos=num_demos,
+                demos_pool_size=DEMOS_POOL_SIZE,
+                format=format,
+            ),
+            card
+            + "__markdown"
+            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+                card="cards." + card,
+                template_card_index=0,
+                serializer=SerializeTableAsMarkdown(
+                    shuffle_rows=shuffle_rows, seed=seed
+                ),
+                num_demos=num_demos,
+                demos_pool_size=DEMOS_POOL_SIZE,
+                format=format,
+            ),
+            card
+            + "__row_indexed_major"
+            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+                card="cards." + card,
+                template_card_index=0,
+                serializer=SerializeTableAsIndexedRowMajor(
+                    shuffle_rows=shuffle_rows, seed=seed
+                ),
+                num_demos=num_demos,
+                demos_pool_size=DEMOS_POOL_SIZE,
+                format=format,
+            ),
+            card
+            + "__df"
+            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+                card="cards." + card,
+                template_card_index=0,
+                serializer=SerializeTableAsDFLoader(
+                    shuffle_rows=shuffle_rows, seed=seed
+                ),
+                num_demos=num_demos,
+                demos_pool_size=DEMOS_POOL_SIZE,
+                format=format,
+            ),
+        }
+        subsets.update(subset)
+
 
 for subset_name, subset in tqdm(subsets.items()):
-    # print("Running:", subset_name, "|", [f"{arg}: {value} | " for arg, value in vars(args).items()],)
+    # print(
+    #     "Running:",
+    #     subset_name,
+    #     "|",
+    #     [f"{arg}: {value} | " for arg, value in vars(args).items()],
+    # )
 
     benchmark = Benchmark(
         max_samples_per_subset=100 if not debug else 5,
@@ -180,28 +145,39 @@ for subset_name, subset in tqdm(subsets.items()):
             inference_model = OpenAiInferenceEngine(
                 model_name=model_name,
                 max_tokens=100,
-                temperature=0.001,
+                temperature=0.05,
             )
         else:
-            inference_model = HFPipelineBasedInferenceEngine(
+            inference_model = IbmGenAiInferenceEngine(
                 model_name=model_name,
                 max_new_tokens=100,
-                use_fp16=True,
-                # temperature=0 is hard coded in HFPipelineBasedInferenceEngine since it is not allowed to be a param
+                temperature=0.05,
+                # batch_size=16,
             )
+
+            # inference_model = HFPipelineBasedInferenceEngine(
+            #     model_name=model_name,
+            #     max_new_tokens=100,
+            #     use_fp16=True,
+            #     # temperature=0 is hard coded in HFPipelineBasedInferenceEngine since it is not allowed to be a param
+            # )
 
         predictions = inference_model.infer(test_dataset)
         evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
-        # exp_name = "-{0}{1}{2}".format(("shuffle_cols" if shuffle_cols else ""),("shuffle_rows" if shuffle_rows else ""),(seed if seed != settings.seed else ""),)
+        # exp_name = "__{0}".format(
+        #     ("__shuffle_rows" if shuffle_rows else ""),
+        # )
 
         out_file_name = (
-            model_name.replace("/", "_")
+            model_name.split("/")[-1]
             + "#"
             + subset_name
             # + (exp_name if exp_name else "")
-            + "#"
-            + str(datetime.datetime.now())
+            + ("__shuffle_rows" if shuffle_rows else "")
+            # + "#"
+            # + str(datetime.datetime.now())
+            + ("_DEBUG" if debug else "")
         )
         curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
         with open(curr_out_path, "wb") as f:

@@ -4,10 +4,19 @@
         "__type__": "load_hf",
         "path": "kasnerz/scigen",
         "data_classification_policy": [
-            "public"
+            "public",
+            "proprietary"
         ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[50%]",
+                "validation": "train[50%]",
+                "test": "test+validation"
+            }
+        },
         {
             "__type__": "filter_by_condition",
             "values": {

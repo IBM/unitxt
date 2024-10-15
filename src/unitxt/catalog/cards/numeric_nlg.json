@@ -2,9 +2,21 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "kasnerz/numericnlg"
+        "path": "kasnerz/numericnlg",
+        "data_classification_policy": [
+            "public",
+            "proprietary"
+        ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[50%]",
+                "validation": "train[50%]",
+                "test": "test+validation"
+            }
+        },
         {
             "__type__": "set",
             "fields": {

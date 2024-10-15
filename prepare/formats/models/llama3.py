@@ -42,3 +42,17 @@ add_to_catalog(
     "formats.llama3_instruct_all_demos_in_one_turn",
     overwrite=True,
 )
+
+format = SystemFormat(
+    demo_format="{source}\n\n{target_prefix}{target}\n\n",
+    model_input_format="{instruction}"
+    "<|eot_id|><|start_header_id|>user<|end_header_id|>\n\n"
+    "{demos}"
+    "{source}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n{target_prefix}",
+)
+
+add_to_catalog(
+    format,
+    "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt",
+    overwrite=True,
+)
