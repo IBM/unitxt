@@ -41,6 +41,9 @@ parser.add_argument(
 parser.add_argument(
     "-shuffle_cols", "--shuffle_cols", type=bool, required=False, default=False
 )
+parser.add_argument(
+    "-serializers", "--serializers", type=str, required=False, default="csv,json,markdown,row_indexed_major,df"
+)
 args = parser.parse_args()
 model_name = args.model
 num_demos = args.num_demos
@@ -50,9 +53,11 @@ seeds = args.seeds
 shuffle_rows = args.shuffle_rows
 shuffle_cols = args.shuffle_cols
 cards = args.cards
+serializers = args.serializers
 
 DEMOS_POOL_SIZE = 10
 cards_parsed = cards.split(",")
+serializers_parsed = serializers.split(",")
 try:
     seeds_parsed = [int(i) for i in seeds.split(",")]
 except:
@@ -68,21 +73,28 @@ elif "mixtral" in model_name:
 
 
 for seed in seeds_parsed:
+    # cards for new operations
     for card in cards_parsed:
-        subset = {
-            card
-            + "__json"
-            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        # csv (default), html
+        if "csv" in serializers_parsed:
+            subsets[card + "__csv" + ("__seed=" + str(seed) if seed != settings.seed else "")] = StandardRecipe(
+                card="cards." + card,
+                template_card_index=0,
+                num_demos=num_demos,
+                demos_pool_size=DEMOS_POOL_SIZE,
+                format=format,
+            )
+        if "json" in serializers_parsed:
+            subsets[card + "__json" + ("__seed=" + str(seed) if seed != settings.seed else "")] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
                 serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
                 num_demos=num_demos,
                 demos_pool_size=DEMOS_POOL_SIZE,
                 format=format,
-            ),
-            card
-            + "__markdown"
-            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+            )
+        if "markdown" in serializers_parsed:
+            subsets[card + "__markdown" + ("__seed=" + str(seed) if seed != settings.seed else "")] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
                 serializer=SerializeTableAsMarkdown(
@@ -91,10 +103,9 @@ for seed in seeds_parsed:
                 num_demos=num_demos,
                 demos_pool_size=DEMOS_POOL_SIZE,
                 format=format,
-            ),
-            card
-            + "__row_indexed_major"
-            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+            )
+        if "row_indexed_major" in serializers_parsed:
+            subsets[card + "__row_indexed_major" + ("__seed=" + str(seed) if seed != settings.seed else "")] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
                 serializer=SerializeTableAsIndexedRowMajor(
@@ -103,10 +114,9 @@ for seed in seeds_parsed:
                 num_demos=num_demos,
                 demos_pool_size=DEMOS_POOL_SIZE,
                 format=format,
-            ),
-            card
-            + "__df"
-            + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+            )
+        if "df" in serializers_parsed:
+            subsets[card + "__df" + ("__seed=" + str(seed) if seed != settings.seed else "")] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
                 serializer=SerializeTableAsDFLoader(
@@ -115,18 +125,74 @@ for seed in seeds_parsed:
                 num_demos=num_demos,
                 demos_pool_size=DEMOS_POOL_SIZE,
                 format=format,
-            ),
-        }
-        subsets.update(subset)
+            )
+        # subset = {
+        #     card
+        #     + "__csv"
+        #     + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        #         card="cards." + card,
+        #         template_card_index=0,
+        #         num_demos=num_demos,
+        #         demos_pool_size=DEMOS_POOL_SIZE,
+        #         format=format,
+        #     ),
+        #     card
+        #     + "__json"
+        #     + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        #         card="cards." + card,
+        #         template_card_index=0,
+        #         serializer=SerializeTableAsJson(shuffle_rows=shuffle_rows, seed=seed),
+        #         num_demos=num_demos,
+        #         demos_pool_size=DEMOS_POOL_SIZE,
+        #         format=format,
+        #     ),
+        #     card
+        #     + "__markdown"
+        #     + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        #         card="cards." + card,
+        #         template_card_index=0,
+        #         serializer=SerializeTableAsMarkdown(
+        #             shuffle_rows=shuffle_rows, seed=seed
+        #         ),
+        #         num_demos=num_demos,
+        #         demos_pool_size=DEMOS_POOL_SIZE,
+        #         format=format,
+        #     ),
+        #     card
+        #     + "__row_indexed_major"
+        #     + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        #         card="cards." + card,
+        #         template_card_index=0,
+        #         serializer=SerializeTableAsIndexedRowMajor(
+        #             shuffle_rows=shuffle_rows, seed=seed
+        #         ),
+        #         num_demos=num_demos,
+        #         demos_pool_size=DEMOS_POOL_SIZE,
+        #         format=format,
+        #     ),
+        #     card
+        #     + "__df"
+        #     + ("__seed=" + str(seed) if seed != settings.seed else ""): StandardRecipe(
+        #         card="cards." + card,
+        #         template_card_index=0,
+        #         serializer=SerializeTableAsDFLoader(
+        #             shuffle_rows=shuffle_rows, seed=seed
+        #         ),
+        #         num_demos=num_demos,
+        #         demos_pool_size=DEMOS_POOL_SIZE,
+        #         format=format,
+        #     ),
+        # }
+        # subsets.update(subset)
 
 
 for subset_name, subset in tqdm(subsets.items()):
-    # print(
-    #     "Running:",
-    #     subset_name,
-    #     "|",
-    #     [f"{arg}: {value} | " for arg, value in vars(args).items()],
-    # )
+    print(
+        "Running:",
+        subset_name,
+        "|",
+        [f"{arg}: {value} | " for arg, value in vars(args).items()],
+    )
 
     benchmark = Benchmark(
         max_samples_per_subset=100 if not debug else 5,
@@ -177,12 +243,12 @@ for subset_name, subset in tqdm(subsets.items()):
             + ("__shuffle_rows" if shuffle_rows else "")
             # + "#"
             # + str(datetime.datetime.now())
-            + ("_DEBUG" if debug else "")
+            + ("__DEBUG" if debug else "")
         )
         curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
         with open(curr_out_path, "wb") as f:
             pickle.dump(evaluated_dataset, f)
-            # print("saved file path: ", curr_out_path)
-    except Exception:
-        # print(e)
+            print("saved file path: ", curr_out_path)
+    except Exception as e:
+        print(e)
         pass
