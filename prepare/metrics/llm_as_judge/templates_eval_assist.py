@@ -169,10 +169,10 @@ Validate the answer against the assessment.
 {options}
 Answer: """
 
-template_dict = {"mixtral": {"assessment": InputOutputTemplate(input_format=assessment_prompt_mixtral), "summarization": InputOutputTemplate(input_format=summarization_prompt_mixtral), "answer" : InputOutputTemplate(input_format=answer_prompt_mixtral)},
-                "granite": {"assessment": InputOutputTemplate(input_format=assessment_prompt_granite), "summarization": InputOutputTemplate(input_format=summarization_prompt_granite), "answer" : InputOutputTemplate(input_format=answer_prompt_granite)},
-                "llama_8b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
-                "llama_70b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
-                "gpt": {"assessment": InputOutputTemplate(input_format=assessment_prompt_gpt), "summarization": InputOutputTemplate(input_format=summarization_prompt_gpt), "answer" : InputOutputTemplate(input_format=answer_prompt_gpt)},
-                "prometheus": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None}
+template_dict = {"mixtral_8_7b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_mixtral), "summarization": InputOutputTemplate(input_format=summarization_prompt_mixtral), "answer" : InputOutputTemplate(input_format=answer_prompt_mixtral)},
+                "granite_20b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_granite), "summarization": InputOutputTemplate(input_format=summarization_prompt_granite), "answer" : InputOutputTemplate(input_format=answer_prompt_granite)},
+                "llama3_8b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
+                "llama3_70b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
+                "gpt_4o": {"assessment": InputOutputTemplate(input_format=assessment_prompt_gpt), "summarization": InputOutputTemplate(input_format=summarization_prompt_gpt), "answer" : InputOutputTemplate(input_format=answer_prompt_gpt)},
+                "prometheus_8_7b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None}
                 }

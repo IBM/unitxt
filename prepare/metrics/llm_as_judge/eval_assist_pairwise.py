@@ -6,6 +6,7 @@ from unitxt.evalassist_llm_as_judge_pairwise import (
     EvalAssistLLMAsJudgePairwise,
     PairwiseCriteria
 )
+from unitxt.eval_assist_constants import AvailablePairwiseEvaluators
 
 from templates_eval_assist_pairwise import pairwise_template_dict
 
@@ -35,19 +36,15 @@ for criteria_name, criteria_obj in {"temperature": temperature,
     )
 
 params = IbmGenAiInferenceEngineParamsMixin(max_new_tokens=1024, random_seed=42)
-for model_name, inference_engine in [("mixtral", IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01", parameters=params)),
-                    ("llama_8b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-8b-instruct", parameters=params)),
-                    ("llama_70b", IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", parameters=params)),
-                    ("prometheus", IbmGenAiInferenceEngine(model_name="kaist-ai/prometheus-8x7b-v2", parameters=params))]:
-    
+for evaluator in AvailablePairwiseEvaluators:
+    inference_engine = IbmGenAiInferenceEngine(model_name=evaluator.model_id, parameters=params)
     eval_assist_metric = EvalAssistLLMAsJudgePairwise(inference_model=inference_engine, 
-                                            #   pairwise_criteria=temperature,
-                                              assessment_template=pairwise_template_dict[model_name]["assessment"],
-                                              summ_template=pairwise_template_dict[model_name]["summarization"],
-                                              answer_template=pairwise_template_dict[model_name]["answer"])
+                                              assessment_template=pairwise_template_dict[evaluator.json_name]["assessment"],
+                                              summ_template=pairwise_template_dict[evaluator.json_name]["summarization"],
+                                              answer_template=pairwise_template_dict[evaluator.json_name]["answer"])
     
     add_to_catalog(
         eval_assist_metric,
-        f"metrics.llm_as_judge.eval_assist.pairwise.{model_name}",
+        f"metrics.llm_as_judge.eval_assist.pairwise.{evaluator.json_name}",
         overwrite=True
     )
