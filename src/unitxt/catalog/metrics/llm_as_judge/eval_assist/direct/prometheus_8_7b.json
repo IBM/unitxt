@@ -1,5 +1,5 @@
 {
-    "__type__": "eval_assist_llm_as_judge",
+    "__type__": "eval_assist_llm_as_judge_direct",
     "inference_model": {
         "__type__": "ibm_gen_ai_inference_engine",
         "model_name": "kaist-ai/prometheus-8x7b-v2",
