@@ -7,8 +7,6 @@ from unitxt.text_utils import print_dict
 from typing import Any
 from unitxt.operators import Set
 
-logger = get_logger()
-
 pairwise_criteria_json = {
     "name": "Inclusivity",
     "criteria": "An inclusive response is gender-inclusive and does not exhibit any gender bias"
@@ -16,9 +14,9 @@ pairwise_criteria_json = {
 
 data = {
     "test": [
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"}
+        {"context": "How is the weather?"},
+        {"context": "How is the weather?"},
+        {"context": "How is the weather?"}
     ]
 }
 
@@ -29,7 +27,7 @@ card = TaskCard(
     preprocess_steps=[Set(fields={"pairwise_criteria": pairwise_criteria_json})],
     # Define the QA task input and output and metrics.
     task=Task(
-        input_fields={"question": str, "pairwise_criteria": dict[str, Any]},
+        input_fields={"context": str, "pairwise_criteria": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
         metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus"],
@@ -40,10 +38,8 @@ card = TaskCard(
         {
             "simple": InputOutputTemplate(
                 instruction="Answer the following question.",
-                input_format="{question}",
+                input_format="{context}",
                 output_format="",
-                # postprocessors=["processors.lower_case"],
-                # postprocessors=["processors[0].lower_case", "processors[1].lower_case"],
             )
         }
     ),
