@@ -126,14 +126,14 @@ class TestInferenceEngine(UnitxtTestCase):
             self.assertEqual(predictions[0], "The real image")
 
     def test_wml_inference_engine(self):
-        dataset = self.prepare_test_data()[:5]
-
         try:
             inference_engine = WMLInferenceEngine(
                 model_name="google/flan-t5-xl",
                 random_seed=123,
                 concurrency_limit=5,
             )
+
+            dataset = self.prepare_test_data()[:5]
 
             results = inference_engine._infer(dataset)
 
@@ -147,20 +147,20 @@ class TestInferenceEngine(UnitxtTestCase):
                 acc, processed_results, references
             )
             assert score == 0.4
-        except MissingRequirementsError:
+        except (MissingRequirementsError, ModuleNotFoundError):
             # In such case, the test is omitted as not every user may
             # need to use this package.
             pass
 
     def test_wml_inference_engine_with_logprobs_and_meta_results(self):
-        dataset = self.prepare_test_data()[:5]
-
         try:
             inference_engine = WMLInferenceEngine(
                 model_name="google/flan-t5-xl",
                 random_seed=123,
                 concurrency_limit=5,
             )
+
+            dataset = self.prepare_test_data()[:5]
 
             results = inference_engine._infer_log_probs(dataset, return_meta_data=True)
             sample = results[0]
@@ -178,7 +178,7 @@ class TestInferenceEngine(UnitxtTestCase):
                 [token["text"] for token in sample.prediction],
                 ["▁", "en", "tail", "ment", "</s>"],
             )
-        except MissingRequirementsError:
+        except (MissingRequirementsError, ModuleNotFoundError):
             # In such case, the test is omitted as not every user may
             # need to use this package.
             pass

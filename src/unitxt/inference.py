@@ -385,6 +385,8 @@ class IbmGenAiInferenceEngine(
         return Credentials(api_key=api_key)
 
     def prepare_engine(self):
+        self.check_missing_requirements()
+
         from genai import Client
         from genai.text.generation import CreateExecutionOptions
 
@@ -976,6 +978,8 @@ class WMLInferenceEngine(
         )
 
     def prepare_engine(self):
+        self.check_missing_requirements()
+
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
