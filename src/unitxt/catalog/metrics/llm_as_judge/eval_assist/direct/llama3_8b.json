@@ -1,8 +1,8 @@
 {
-    "__type__": "eval_assist_llm_as_judge",
+    "__type__": "eval_assist_llm_as_judge_direct",
     "inference_model": {
         "__type__": "ibm_gen_ai_inference_engine",
-        "model_name": "ibm/granite-20b-code-instruct",
+        "model_name": "meta-llama/llama-3-8b-instruct",
         "parameters": {
             "__type__": "ibm_gen_ai_inference_engine_params_mixin",
             "max_new_tokens": 1024,
