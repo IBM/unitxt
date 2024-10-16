@@ -61,14 +61,14 @@ The catalog contains predefined data-task cards for various datasets :ref:`here 
 Demos (Demonstrations)
 ----------------------
 
-**Demonstrations** are the examples added to the model prompt in in-context learning.  
-In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a 
-non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>` 
-as seen in :ref:`this figure <prompt_structure>`.  
-Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.  
-Usually, the examples in the demo pool are taken from the train split, 
-but this can be overridden by the ``demos_taken_from`` parameter.    
-The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.  
+**Demonstrations** are the examples added to the model prompt in in-context learning.
+In-context learning is activated when the  ``num_demos`` parameter of the :ref:`recipe <recipe>` is set to a
+non-zero value.   The demonstrations are verbalized by the :ref:`template <template>` and the :ref:`format <format>`
+as seen in :ref:`this figure <prompt_structure>`.
+Different demo examples are chosen per instance from a fixed set of examples called a ``demo_pool``.
+Usually, the examples in the demo pool are taken from the train split,
+but this can be overridden by the ``demos_taken_from`` parameter.
+The size of the demo pool is determined by a mandatory parameter called the ``demos_pool_size`` parameter.
 
 
 
@@ -117,7 +117,7 @@ Inference Engine
 ----------------
 
 An **Inference Engine** in Unitxt is an object that performs model inference on Unitxt datasets.
-Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs. 
+Unitxt provides out of the box inference engines that wrap HuggingFace Pipelines, OpenAI, and IBMGenAI APIs.
 Since Unitxt has separate data preparation and evaluation pipelines, you can use any external code or engine to generate
 model predictions. The built-in inference engines can make it more convenient.
 They also ensure that no sensitive data is passed to external services.
@@ -145,7 +145,7 @@ Post processors
 ----------------
 
 **Post Processors** are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
-and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the 
+and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the
 set of post processors that are appropriate for it.   For example, post processors in a binary classification
 template could remove trailing whitespace, take the first word, convert `Yes` to `1` , and all other values to `0`.
 
@@ -155,7 +155,7 @@ Prediction and Processed Prediction
 ------------------------------------
 
 A **Prediction** is the output of the model on the input provided to it.
-The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other 
+The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other
 framework or code.  The predictions over all instances are  passed to the evaluation pipeline, together with the original dataset.
 
 The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
@@ -227,8 +227,8 @@ Every instance in the stream is a simple python dictionary.
 System Prompt
 -------
 
-The **System Prompt** is the fixed text that is added to the model input by the :ref:`Format <format>` during 
-the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>` 
+The **System Prompt** is the fixed text that is added to the model input by the :ref:`Format <format>` during
+the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>`
 
 .. _task:
 
@@ -268,7 +268,7 @@ The catalog contains predefined templates :ref:`here <catalog.templates>`. :ref:
 .. _verbalization:
 
 Verbalization
----------
+--------------
 
 **Verbalization** is the process of taking the task fields and converting them into their
 textual representation, which is provided as input to the model.
@@ -284,3 +284,12 @@ The verbalization involves verbalizing the task input fields for the input, and 
    :alt: The unitxt prompt structure
    :width: 75%
    :align: center
+
+
+Serialization
+--------------
+
+Is the process of taking a specific field of a task a converting it into a string.
+This process is controlled by the :ref:`Serializer <serializers>`.
+Unlike the verbalization which is task specific, namely putting into words an input of a specific task, the serialization
+has nothing to do with task, and is just based on the type of the field.
