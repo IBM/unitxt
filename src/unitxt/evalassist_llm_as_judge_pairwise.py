@@ -1,5 +1,6 @@
 from .metrics import BulkInstanceMetric
 from .inference import InferenceEngine
+from unitxt import get_logger
 from .templates import Template
 from .task import Task
 from .artifact import Artifact
@@ -19,6 +20,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
 
     reduction_map = {"mean": ["score"]}
     main_score = "score"
+    logger = get_logger()
 
     assessment_task =  Task(
             input_fields={"context_variables": str, "response_a" : str, "response_b" : str,
@@ -60,7 +62,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
         if self.inference_model.model_name == "kaist-ai/prometheus-8x7b-v2":
              # each prediction would be an tuple of two responses 
             instances = [{
-                    "context_variables": input_instance['question'],
+                    "context_variables": input_instance['context'],
                     "response_a" : prediction[0],
                     "response_b" : prediction[1],
                     "option_a" : option_pair[0],
@@ -70,7 +72,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             
             # Assessment stage
             assessment_outputs = infer(instances, task=self.assessment_task_prometheus, engine=self.inference_model, template=self.assessment_template)
-            print("ass_output pairwise prometheus", assessment_outputs)
+            self.logger.info("generated assessment")
 
             feedbacks = [out.split("[RESULT]")[0].strip() for out in assessment_outputs]
             return [{"score": 0.8, "assessment": assessment_outputs[i], "summary": feedbacks[i]} for i in range(len(predictions))]
@@ -78,7 +80,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
         else:   
             # each prediction would be an tuple of two responses 
             instances = [{
-                    "context_variables": input_instance['question'],
+                    "context_variables": input_instance['context'],
                     "response_a" : prediction[0],
                     "response_b" : prediction[1],
                     "option_a" : option_pair[0],
@@ -89,12 +91,12 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             
             # Assessment stage
             assessment_outputs = infer(instances, task=self.assessment_task, engine=self.inference_model, template=self.assessment_template)
-            print("ass_output pairwise", assessment_outputs)
+            self.logger.info("generated assessment")
             assessment_instances = [{"assessment": assessment_output} for assessment_output in assessment_outputs]
 
             # Summarization stage
             summ_output = infer(assessment_instances, task=self.summ_task, engine=self.inference_model, template=self.summ_template)
-            print("summ_output ", summ_output)
+            self.logger.info("generated summary")
 
             return [{"score": 0.8, "assessment": assessment_outputs[i], "summary": summ_output[i]} for i in range(len(predictions))]
         
