@@ -1,9 +1,21 @@
+import json
 import unittest
+from typing import List
 
+from datasets.arrow_dataset import Dataset
 from unitxt import produce
-from unitxt.inference import HFLlavaInferenceEngine, HFPipelineBasedInferenceEngine
+from unitxt.api import load_dataset
+from unitxt.inference import (
+    HFLlavaInferenceEngine,
+    HFPipelineBasedInferenceEngine,
+    TextGenerationInferenceOutput,
+    WMLInferenceEngine,
+)
+from unitxt.metrics import Accuracy, Metric
+from unitxt.operator import MissingRequirementsError
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
+from unitxt.test_utils.metrics import apply_metric
 
 from tests.utils import UnitxtTestCase
 
@@ -11,6 +23,28 @@ settings = get_settings()
 
 
 class TestInferenceEngine(UnitxtTestCase):
+    @staticmethod
+    def prepare_test_data() -> Dataset:
+        return load_dataset(
+            dataset_query="card=cards.rte,template_card_index=0,loader_limit=20"
+        )["test"]
+
+    @staticmethod
+    def get_test_references(task_data: List[str]) -> List[List[List[str]]]:
+        return [[[json.loads(sample)["label"]]] for sample in task_data]
+
+    @staticmethod
+    def process_predictions(predictions: List[str]) -> List[List[str]]:
+        return [[prediction] for prediction in predictions]
+
+    @staticmethod
+    def calculate_metric_global_score(
+        metric: Metric, preds: List[List[str]], refs: List[List[List[str]]]
+    ) -> float:
+        return apply_metric(metric=metric, predictions=preds, references=refs)[0][
+            "score"
+        ]["global"]["score"]
+
     def test_pipeline_based_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
@@ -90,6 +124,64 @@ class TestInferenceEngine(UnitxtTestCase):
             predictions = inference_model.infer(test_dataset)
 
             self.assertEqual(predictions[0], "The real image")
+
+    def test_wml_inference_engine(self):
+        dataset = self.prepare_test_data()[:5]
+
+        try:
+            inference_engine = WMLInferenceEngine(
+                model_name="google/flan-t5-xl",
+                random_seed=123,
+                concurrency_limit=5,
+            )
+
+            results = inference_engine._infer(dataset)
+
+            assert len(results) == len(dataset["source"])
+            assert results[0] == "entailment"
+
+            references = self.get_test_references(dataset["task_data"])
+            processed_results = self.process_predictions(results)
+            acc = Accuracy()
+            score = self.calculate_metric_global_score(
+                acc, processed_results, references
+            )
+            assert score == 0.4
+        except MissingRequirementsError:
+            # In such case, the test is omitted as not every user may
+            # need to use this package.
+            pass
+
+    def test_wml_inference_engine_with_logprobs_and_meta_results(self):
+        dataset = self.prepare_test_data()[:5]
+
+        try:
+            inference_engine = WMLInferenceEngine(
+                model_name="google/flan-t5-xl",
+                random_seed=123,
+                concurrency_limit=5,
+            )
+
+            results = inference_engine._infer_log_probs(dataset, return_meta_data=True)
+            sample = results[0]
+
+            assert len(results) == len(dataset["source"])
+            assert isinstance(sample, TextGenerationInferenceOutput)
+            assert sample.seed == 123
+            assert sample.stop_reason == "eos_token"
+            assert len(sample.prediction) == 5
+            self.assertListEqual(
+                list(sample.prediction[0].keys()),
+                ["text", "logprob", "top_tokens"],
+            )
+            self.assertListEqual(
+                [token["text"] for token in sample.prediction],
+                ["▁", "en", "tail", "ment", "</s>"],
+            )
+        except MissingRequirementsError:
+            # In such case, the test is omitted as not every user may
+            # need to use this package.
+            pass
 
 
 if __name__ == "__main__":

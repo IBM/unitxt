@@ -115,8 +115,8 @@ class InferenceEngine(abc.ABC, Artifact):
                     setattr(self, param, param_dict_val)
 
     def get_model_details(self) -> Dict:
-        """Might not be possible to implement for all inference engines."""
-        pass
+        """Might not be possible to implement for all inference engines. Returns an empty dict by default."""
+        return {}
 
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
