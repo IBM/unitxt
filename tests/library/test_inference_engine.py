@@ -5,6 +5,7 @@ from unitxt.inference_engines import (
     HFLlavaInferenceEngine,
     HFLogProbScoringEngine,
     HFPipelineBasedInferenceEngine,
+    IbmGenAiInferenceEngine,
     SelectingByScoreInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
@@ -14,6 +15,7 @@ from tests.utils import UnitxtTestCase
 
 settings = get_settings()
 
+import os
 
 class TestInferenceEngine(UnitxtTestCase):
     def test_pipeline_based_inference_engine(self):
@@ -123,6 +125,23 @@ class TestInferenceEngine(UnitxtTestCase):
 
         self.assertEqual(dataset[0]["prediction"], "world")
         self.assertEqual(dataset[1]["prediction"], "the")
+
+    def test_option_selecting_inference_engine_genai(self):
+        dataset = [
+            {"source": "hello how are you ", "task_data": {"options": ["world", "truck"]}},
+            {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+            # multiple options with the same token prefix
+            {"source": "I will give you my ", "task_data": {"options": ["telephone number", "truck monster", "telephone address"]}},
+        ]
+
+        os.environ['GENAI_KEY'] = ""
+
+        engine = IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
+
+        dataset = engine.select(dataset)
+        self.assertEqual(dataset[0]["prediction"], "world")
+        self.assertEqual(dataset[1]["prediction"], "the")
+        self.assertEqual(dataset[2]["prediction"], "telephone number")
 
 
 if __name__ == "__main__":
