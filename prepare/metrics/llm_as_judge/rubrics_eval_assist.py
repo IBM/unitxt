@@ -1,4 +1,4 @@
-from unitxt.evalassist_llm_as_judge import (
+from unitxt.evalassist_llm_as_judge_direct import (
     Rubric
 )
 

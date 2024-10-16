@@ -9,23 +9,24 @@ from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-# os.environ["GENAI_KEY"] = ""
+os.environ["GENAI_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = ""
 
 data = {
     "test": [
-       {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-    ],
+       {"context": "How is the weather?"},
+        {"context": "How is the weather?"},
+        {"context": "How is the weather?"},
+    ]
 }
 
-rubric = "metrics.llm_as_judge.eval_assist.direct.rubrics.conciseness"
-metric = f"metrics.llm_as_judge.eval_assist.direct.gpt[rubric={rubric}]"
+rubric = "metrics.llm_as_judge.eval_assist.direct.rubrics.temperature"
+metric = f"metrics.llm_as_judge.eval_assist.direct.mixtral_8_7b[rubric={rubric}]"
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data),
     task=Task(
-        input_fields={"question": str},
+        input_fields={"context": str},
         reference_fields={},
         prediction_type=str,
         metrics = [metric]
@@ -33,9 +34,8 @@ card = TaskCard(
     templates=TemplatesDict(
         {
             "simple": InputOutputTemplate(
-                instruction="Answer the following question.",
-                input_format="{question}",
-                output_format="",
+                input_format="{context}",
+                output_format=""
             )
         }
     ),
