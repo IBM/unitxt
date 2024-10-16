@@ -145,6 +145,9 @@ class Metric(Artifact):
     ) -> Dict[str, Any]:
         new_scores = {}
         for score_name, score in scores.items():
+            if isinstance(score, dict):
+                new_scores[score_name] = score
+                continue  # do not prefix group names
             score_with_prefix = self._add_score_prefix(score_name)
             new_scores[score_with_prefix] = (
                 score if score_name not in ["score_name"] else self.score_prefix + score

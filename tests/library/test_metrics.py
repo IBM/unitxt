@@ -1647,6 +1647,7 @@ Answer: """,
             main_score: 0.0,
             "score": 0.0,
             "score_name": main_score,
+            "num_of_instances": 2,
         }
 
         expected_scores = [
