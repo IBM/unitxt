@@ -23,11 +23,13 @@ class PillowMixin(PackageRequirementsMixin):
 
 
 def extract_images(text, instance):
+    operator = GrayScale()
     regex = r'<img\s+src=["\'](.*?)["\']'
     image_sources = re.findall(regex, text)
     images = []
     for image_source in image_sources:
         image = dict_get(instance, image_source)
+        image = operator.process_image(image)
         images.append(image)
     return images
 
