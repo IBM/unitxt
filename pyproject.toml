@@ -55,7 +55,7 @@ target-version = "py38"
 "utils/hf/prepare_dataset.py" = ["T201"]
 "utils/hf/prepare_metric.py" = ["T201"]
 "utils/compare_unitxt_datasets_between_versions.py" = ["C901"]
-"profile/run_profile.py" = ["T201"]
+"performance_profile/run_profile.py" = ["T201"]
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
