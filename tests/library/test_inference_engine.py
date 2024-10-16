@@ -8,8 +8,10 @@ from unitxt.api import load_dataset
 from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
+    MockInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngine,
+    mock_logprobs_default_value_factory,
 )
 from unitxt.metrics import Accuracy, Metric
 from unitxt.operator import MissingRequirementsError
@@ -182,6 +184,31 @@ class TestInferenceEngine(UnitxtTestCase):
             # In such case, the test is omitted as not every user may
             # need to use this package.
             pass
+
+    def test_mock_inference_engine(self):
+        dataset = self.prepare_test_data()
+
+        inference_engine = MockInferenceEngine(model_name="model")
+
+        assert inference_engine.get_engine_id() == "model_mock"
+        assert inference_engine.get_model_details() == {}
+
+        results = inference_engine.infer(dataset)
+
+        assert len(results) == len(dataset)
+        assert results[0] == inference_engine.default_inference_value
+
+        results = inference_engine.infer_log_probs(dataset, return_meta_data=True)
+        sample = results[0]
+
+        assert len(results) == len(dataset)
+        assert isinstance(sample, TextGenerationInferenceOutput)
+        assert sample.prediction == mock_logprobs_default_value_factory()
+        assert sample.seed == 111
+        assert sample.stop_reason == ""
+        assert sample.output_tokens == len(mock_logprobs_default_value_factory())
+        assert sample.input_tokens == len(dataset[0]["source"])
+        assert sample.input_text == dataset[0]["source"]
 
 
 if __name__ == "__main__":

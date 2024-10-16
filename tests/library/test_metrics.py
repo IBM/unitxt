@@ -2,7 +2,7 @@ from math import isnan
 from typing import Dict, List
 
 from unitxt.inference import MockInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge import LLMAsJudge, TaskBasedLLMasJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
     NER,
@@ -1540,6 +1540,88 @@ class TestConfidenceIntervals(UnitxtTestCase):
                     "ci_low" not in score_name and "ci_high" not in score_name,
                     msg=f"Unexpected confidence interval score '{score_name}'.",
                 )
+
+    def test_task_based_llm_as_judge_metric(self):
+        model_id = "meta-llama/llama-3-8b-instruct"
+        format = "formats.llama3_instruct"
+        task = "tasks.rag_eval.answer_correctness.binary"
+        template = "templates.rag_eval.answer_correctness.judge_loose_match_no_context"
+
+        inference_model = MockInferenceEngine(
+            model_name=model_id, default_inference_value="no"
+        )
+        model_label = inference_model.get_engine_id()
+        template_label = template.split(".")[-1]
+        metric_label = f"answer_correctness_{template_label}"
+        metric = TaskBasedLLMasJudge(
+            inference_model=inference_model,
+            template=template,
+            task=task,
+            format=format,
+            main_score=metric_label,
+            infer_log_probs=False,
+        )
+
+        predictions = [None, None]
+        references = [[""], [""]]
+        task_data = [
+            {
+                "question": "What foundation models are available in watsonx.ai ?",
+                "answer": "Watsonx.ai supports no foundation models",
+                "ground_truths": [
+                    "Many Large Language Models are supported by Watsonx.ai"
+                ],
+                "contexts": ["Many Large Language Models are supported by Watsonx.ai"],
+            }
+        ] * 2
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        actual_scores = [output["score"] for output in outputs]
+        main_score = f"{model_label}_{metric_label}"
+        instance_targets = [
+            {
+                main_score: 0.0,
+                "score": 0.0,
+                "score_name": main_score,
+                main_score + "_judge_raw_output": "no",
+                main_score + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+
+You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
+There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
+The prediction must contain all the important information presented in the ground truths, but doesn't have to fully match it.
+Answer with only yes/no.
+<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+Question: What foundation models are available in watsonx.ai ?
+
+Ground-truth answer: Many Large Language Models are supported by Watsonx.ai
+
+Prediction: Watsonx.ai supports no foundation models
+<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+Answer: """,
+            }
+        ] * 2
+        global_target = {
+            main_score: 0.0,
+            "score": 0.0,
+            "score_name": main_score,
+        }
+
+        expected_scores = [
+            {
+                "global": global_target,
+                "instance": instance_target,
+            }
+            for instance_target in instance_targets
+        ]
+
+        self.assertListEqual(actual_scores, expected_scores)
 
     def test_llm_as_judge_metric(self):
         model_id = "meta-llama/llama-3-8b-instruct"

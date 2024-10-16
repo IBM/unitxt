@@ -19,6 +19,11 @@ from .type_utils import isoftype
 settings = get_settings()
 
 
+def get_model_and_label_id(model_name, label):
+    model_id = model_name.split("/")[-1].replace("-", "_").replace(".", ",").lower()
+    return f"{model_id}_{label}"
+
+
 @dataclasses.dataclass
 class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
@@ -87,15 +92,19 @@ class InferenceEngine(abc.ABC, Artifact):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
-        assert return_meta_data is False or hasattr(self, "get_return_object"), (
-            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
-            f"Please set return_meta_data=False"
-        )
+        if return_meta_data and not hasattr(self, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+            )
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
             return [instance["source"] for instance in dataset]
         return self._infer(dataset, return_meta_data)
+
+    def get_engine_id(self):
+        raise NotImplementedError()
 
     @deprecation(version="2.0.0")
     def _set_inference_parameters(self):
@@ -148,10 +157,11 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns the list of the logprob dicts.
         return_meta_data is only supported for some InferenceEngines.
         """
-        assert return_meta_data is False or hasattr(self, "get_return_object"), (
-            f"Inference engin {self.__class__.__name__} does not support return_meta_data,"
-            f"Please set return_meta_data=False"
-        )
+        if return_meta_data and not hasattr(self, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+            )
 
         [self.verify_instance(instance) for instance in dataset]
         return self._infer_log_probs(dataset, return_meta_data)
@@ -175,6 +185,9 @@ class HFPipelineBasedInferenceEngine(
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_pipeline")
 
     def _prepare_pipeline(self):
         import torch
@@ -239,8 +252,28 @@ class HFPipelineBasedInferenceEngine(
         return outputs
 
 
-class MockInferenceEngine(InferenceEngine):
+def mock_logprobs_default_value_factory() -> List[Dict[str, Any]]:
+    return [
+        {
+            "logprob": -1,
+            "text": "[[10]]",
+            "top_tokens": [
+                {"logprob": -1, "text": "[[10]]"},
+            ],
+        }
+    ]
+
+
+class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     model_name: str
+    default_inference_value: str = "[[10]]"
+    default_inference_value_logprob: List[Dict[str, Any]] = dataclasses.field(
+        default_factory=mock_logprobs_default_value_factory,
+    )
+    label: str = "mock_inference_engine"
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "mock")
 
     def prepare_engine(self):
         return
@@ -250,7 +283,38 @@ class MockInferenceEngine(InferenceEngine):
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return ["[[10]]" for instance in dataset]
+        return [
+            self.get_return_object(
+                self.default_inference_value, instance, return_meta_data
+            )
+            for instance in dataset
+        ]
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return [
+            self.get_return_object(
+                self.default_inference_value_logprob, instance, return_meta_data
+            )
+            for instance in dataset
+        ]
+
+    def get_return_object(self, predict_result, instance, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=len(instance["source"]),
+                output_tokens=len(predict_result),
+                model_name=self.model_name,
+                inference_type=self.label,
+                input_text=instance["source"],
+                seed=111,
+                stop_reason="",
+            )
+        return predict_result
 
 
 class MockModeMixin(Artifact):
@@ -314,6 +378,9 @@ class GenericInferenceEngine(InferenceEngine):
             engine_reference = self.default
         self.engine, _ = fetch_artifact(engine_reference)
 
+    def get_engine_id(self):
+        return "generic_inference_engine"
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -329,6 +396,9 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         "ollama": "Install ollama package using 'pip install --upgrade ollama"
     }
     data_classification_policy = ["public", "proprietary"]
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         pass
@@ -369,6 +439,9 @@ class IbmGenAiInferenceEngine(
     data_classification_policy = ["public", "proprietary"]
     rate_limit: int = 10
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     @staticmethod
     def _get_credentials():
@@ -546,6 +619,9 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
 
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
     @classmethod
     def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
         api_key = os.environ.get(api_param_env_var_name)
@@ -676,6 +752,9 @@ class TogetherAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[TogetherAiInferenceEngineParamsMixin] = None
 
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
     def prepare_engine(self):
         from together import Together
         from together.types.models import ModelType
@@ -745,6 +824,8 @@ class TogetherAiInferenceEngine(
 
 
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    label: str = "vllm"
+
     def create_client(self):
         from openai import OpenAI
 
@@ -858,6 +939,9 @@ class WMLInferenceEngine(
     concurrency_limit: int = 10
     _client: Any = InternalField(default=None, name="WML client")
     _model: Any = InternalField(default=None, name="WML model")
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name or self.deployment_id, self.label)
 
     def verify(self):
         super().verify()
@@ -1102,6 +1186,9 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
         "torch": "Install torch, go on PyTorch website for mode details.",
         "accelerate": "pip install accelerate",
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_lava")
 
     def _prepare_engine(self):
         import torch
