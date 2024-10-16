@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nDocument: {contexts}\n",
+    "output_format": "{is_context_relevant}",
+    "postprocessors": [
+        "processors.load_json_from_predictions",
+        "processors.infer_logprobs_to_yes_no_probs",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "Given the following question and document, you must analyze the provided document and determine whether it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question. Answer with only yes/no.\n"
+}
