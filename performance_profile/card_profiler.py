@@ -10,7 +10,6 @@ from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 from unitxt.stream import MultiStream
 from unitxt.templates import TemplatesDict, TemplatesList
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 settings = get_settings()
@@ -73,16 +72,10 @@ class CardProfiler:
 
     def profiler_print_first_dicts(self, ms: MultiStream, card_name: str):
         logger.info(
-            f"All {len(ms)} streams of the multistream generated for card '{card_name}':"
+            f"The multistream generated for card '{card_name}' has {len(ms)} streams of the following lengths:"
         )
         for stream_name in ms:
-            logger.info(f"{stream_name}")
-        for stream_name in ms:
-            instances = list(ms[stream_name])
-            logger.info(
-                f"The first of all {len(instances)} instances of stream {stream_name}:"
-            )
-            print_dict(instances[0])
+            logger.info(f"{stream_name} is of length {len(list(ms[stream_name]))}")
 
     def profiler_do_the_profiling(self, card_name: str, **kwargs):
         recipe = self.profiler_instantiate_recipe(**kwargs)
