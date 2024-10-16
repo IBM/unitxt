@@ -39,6 +39,7 @@ for metric_name, metric_class in metric_classes.items():
         "score": 1.0,
         "score_name": score_name,
         score_name: 1.0,
+        "num_of_instances": 1,
     }
 
     outputs = test_metric(

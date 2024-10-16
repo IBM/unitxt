@@ -34,6 +34,7 @@ global_target_precision_micro = {
     "score_ci_high": 0.86,
     "precision_micro_ci_low": 0.5,
     "precision_micro_ci_high": 0.86,
+    "num_of_instances": 4,
 }
 
 instance_targets_precision_macro = [
@@ -51,6 +52,7 @@ global_target_precision_macro = {
     "score_ci_high": 0.86,
     "precision_macro_ci_low": 0.5,
     "precision_macro_ci_high": 0.86,
+    "num_of_instances": 4,
 }
 outputs = test_metric(
     metric=precision_micro_metric,
@@ -76,6 +78,7 @@ global_target_recall_micro = {
     "score_ci_high": 0.47,
     "recall_micro_ci_low": 0.33,
     "recall_micro_ci_high": 0.47,
+    "num_of_instances": 4,
 }
 
 instance_targets_recall_micro = [
@@ -93,6 +96,7 @@ global_target_recall_macro = {
     "score_ci_high": 0.47,
     "recall_macro_ci_low": 0.33,
     "recall_macro_ci_high": 0.47,
+    "num_of_instances": 4,
 }
 
 instance_targets_recall_macro = [
@@ -159,6 +163,7 @@ global_target_precision_micro = {
     "score_ci_high": np.nan,
     "precision_micro_ci_low": np.nan,
     "precision_micro_ci_high": np.nan,
+    "num_of_instances": 7,
 }
 
 global_target_precision_macro = {
@@ -169,6 +174,7 @@ global_target_precision_macro = {
     "score_ci_high": np.nan,
     "precision_macro_ci_low": np.nan,
     "precision_macro_ci_high": np.nan,
+    "num_of_instances": 7,
 }
 
 outputs = test_metric(
@@ -196,6 +202,7 @@ global_target_recall_micro = {
     "score_ci_high": np.nan,
     "recall_micro_ci_low": np.nan,
     "recall_micro_ci_high": np.nan,
+    "num_of_instances": 7,
 }
 
 global_target_recall_macro = {
@@ -206,6 +213,7 @@ global_target_recall_macro = {
     "score_ci_high": 0.67,
     "recall_macro_ci_low": 0.63,
     "recall_macro_ci_high": 0.67,
+    "num_of_instances": 7,
 }
 
 instance_targets_recall_micro = [

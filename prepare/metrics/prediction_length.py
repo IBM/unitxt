@@ -15,6 +15,7 @@ global_target = {
     "prediction_length": 4.0,
     "score": 4.0,
     "score_name": "prediction_length",
+    "num_of_instances": 3,
 }
 
 

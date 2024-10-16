@@ -72,6 +72,7 @@ global_target = {
     "sacrebleu_ci_high": 100.0,
     "score_ci_low": 11.48,
     "score_ci_high": 100.0,
+    "num_of_instances": 2,
 }
 
 outputs = test_metric(
