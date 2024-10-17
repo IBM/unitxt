@@ -235,7 +235,6 @@ class MultiStream(dict):
                         cache_dir=cache_dir,
                         gen_kwargs={"key": key},
                         features=features,
-                        split=key,
                     )
                     for key in self.keys()
                 }
@@ -247,7 +246,6 @@ class MultiStream(dict):
                 key: IterableDataset.from_generator(
                     self.get_generator,
                     gen_kwargs={"key": key},
-                    split=key,
                 )
                 for key in self.keys()
             }
