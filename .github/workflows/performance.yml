@@ -25,9 +25,10 @@ jobs:
       with:
         python-version: '3.9'
 
-    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system -e ".[tests]"
-    - run: pip install coverage[toml]
+    - name: Install Requirements
+      run: |
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        uv pip install --system -e ".[tests]"
 
     - name: Prepare the dirs for performance evaluation in main
       run: |
@@ -36,7 +37,7 @@ jobs:
         echo "" > performance_action/__init__.py
         echo " " > performance_action/logs/cards_benchmark.prof
         echo " " > performance_action/logs/cards_benchmark.json
-        cp performance/card_profile.py performance_action/card_profile.py
+        cp performance/card_profiler.py performance_action/card_profiler.py
         cp performance/compare_performance_results.py performance_action/compare_performance_results.py
 
     - name: Checkout main branch
