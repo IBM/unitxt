@@ -1,0 +1,6 @@
+{
+    "__type__": "post_process",
+    "operator": {
+        "__type__": "remove_punctuations"
+    }
+}
