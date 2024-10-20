@@ -1313,42 +1313,6 @@ class Accuracy(InstanceMetric):
         return result
 
 
-
-class ExactMatchMM(InstanceMetric):
-    reduction_map = {"mean": ["exact_match_mm"]}
-    main_score = "exact_match_mm"
-    prediction_type = Any  # string representation is compared
-
-    @staticmethod
-    @lru_cache(maxsize=10000)
-    def exact_match(pred, gt):
-        """Brought from MMStar"""
-        answer = gt.lower().strip().replace("\n", " ")
-        predict = pred.lower().strip().replace("\n", " ")
-        try:
-            if answer == predict[0]:
-                return 1.0
-            elif predict[0] == "(" and answer == predict[1]:
-                return 1.0
-            elif predict[0:7] == "option " and answer == predict[7]:
-                return 1.0
-            elif predict[0:14] == "the answer is " and answer == predict[14]:
-                return 1.0
-        except Exception as e:
-            return 0.0
-        return 0.0
-
-    def compute(
-            self, references: List[Any], prediction: Any, task_data: List[Dict]
-    ) -> dict:
-        # result = {self.main_score: float(str(prediction) in [str(reference) for reference in references])}
-        result = {self.main_score: max([self.exact_match(str(prediction), str(reference)) for reference in references])}
-        result["score"] = result[self.main_score]
-        result["score_name"] = self.main_score
-        return result
-
-
-
 class ANLS(InstanceMetric):
     main_score = "anls"
     reduction_map = {"mean": ["anls"]}

@@ -1026,9 +1026,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
                 **inputs,
                 max_new_tokens=self.max_new_tokens,
                 do_sample=False,
-                num_beams=1,
                 pad_token_id=self.processor.tokenizer.eos_token_id,
-                use_cache=False
             )
             result = self.processor.decode(
                 output[0][input_len:], skip_special_tokens=True
