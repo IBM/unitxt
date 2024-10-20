@@ -62,5 +62,4 @@ jobs:
 
     - name: Compare main and PR performance results
       run: |
-        echo "### Performance Comparison Results" >> $GITHUB_STEP_SUMMARY
         python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
