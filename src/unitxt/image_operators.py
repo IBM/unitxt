@@ -73,3 +73,8 @@ class GrayScale(ImageFieldOperator):
 
         # Convert back to a PIL image with 3 channels
         return self.image.fromarray(grayscale_array)
+
+
+class ToRGB(ImageFieldOperator):
+    def process_image(self, image):
+        return image.convert("RGB")
