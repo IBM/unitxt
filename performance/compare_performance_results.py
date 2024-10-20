@@ -1,3 +1,4 @@
+import argparse
 import json
 import sys
 
@@ -5,11 +6,21 @@ from unitxt.logging_utils import get_logger
 
 logger = get_logger()
 
+# Argument parser to get file paths from the command line
+parser = argparse.ArgumentParser(description="Compare performance profiles.")
+parser.add_argument(
+    "main_perf_file", type=str, help="Path to main performance profile JSON file"
+)
+parser.add_argument(
+    "pr_perf_file", type=str, help="Path to PR performance profile JSON file"
+)
+args = parser.parse_args()
+
 # Reading both performance json files:
-with open("performance_profile/logs/main_cards_benchmark.json") as openfile:
+with open(args.main_perf_file) as openfile:
     main_perf = json.load(openfile)
 
-with open("performance_profile/logs/pr_cards_benchmark.json") as openfile:
+with open(args.pr_perf_file) as openfile:
     pr_perf = json.load(openfile)
 
 logger.critical(
@@ -33,5 +44,5 @@ if ratio > 1.1:
     sys.exit(1)
 
 logger.critical(
-    "Compared to main branch, performance or the PR branch is within acceptable limits."
+    "Compared to main branch, performance of the PR branch is within acceptable limits."
 )

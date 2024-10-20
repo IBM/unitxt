@@ -29,66 +29,39 @@ jobs:
     - run: uv pip install --system -e ".[tests]"
     - run: pip install coverage[toml]
 
-    - name: Save card_profiler python script
-      uses: actions/upload-artifact@v4
-      with:
-        name: card_profiler
-        path: performance_profile/card_profiler.py
-        compression-level: 0
-        overwrite: true
+    - name: Prepare the dirs for performance evaluation in main
+      run: |
+        mkdir -p performance_action
+        mkdir -p performance_action/logs
+        echo "" > performance_action/__init__.py
+        echo " " > performance_action/logs/cards_benchmark.prof
+        echo " " > performance_action/logs/cards_benchmark.json
+        cp performance/card_profile.py performance_action/card_profile.py
+        cp performance/compare_performance_results.py performance_action/compare_performance_results.py
 
     - name: Checkout main branch
       uses: actions/checkout@v4
       with:
         ref: main
-
-    - name: Prepare the dirs for performance evaluation in main
-      run: |
-        mkdir -p performance_profile
-        mkdir -p performance_profile/logs
-        echo "" > performance_profile/__init__.py
-        echo " " > performance_profile/logs/cards_benchmark.prof
-        echo " " > performance_profile/logs/cards_benchmark.json
-
-    - name: Download card_profiler python script
-      uses: actions/download-artifact@v4
-      with:
-        name: card_profiler
-        path: performance_profile/
+        clean: false
 
     - name: Run performance on main branch
       run: |
-        python -m performance_profile.card_profiler
-        cp performance_profile/logs/cards_benchmark.json performance_profile/logs/main_cards_benchmark.json
-
-    - name: Save main performance json
-      uses: actions/upload-artifact@v4
-      with:
-        name: main_performance_json
-        path: performance_profile/logs/main_cards_benchmark.json
-        compression-level: 0
-        overwrite: true
+        python performance_action/card_profiler.py
+        cp performance/logs/cards_benchmark.json performance_action/logs/main_cards_benchmark.json
+        rm performance/logs/cards_benchmark.json
 
     - name: Checkout PR branch
       uses: actions/checkout@v4
       with:
         ref: ${{ github.head_ref }}
-
-    - name: Create performance_profile/logs dir 
-      run: |
-        mkdir -p performance_profile/logs
-        echo " " > performance_profile/logs/cards_benchmark.prof
+        clean: false
 
     - name: Run performance on PR branch
       run: |
-        python -m performance_profile.card_profiler
-        cp performance_profile/logs/cards_benchmark.json performance_profile/logs/pr_cards_benchmark.json
-
-    - name: Download main performance result
-      uses: actions/download-artifact@v4
-      with:
-        name: main_performance_json
-        path: performance_profile/logs/
+        python performance_action/card_profiler.py
+        cp performance/logs/cards_benchmark.json performance_action/logs/pr_cards_benchmark.json
+        rm performance/logs/cards_benchmark.json
 
     - name: Compare main and PR performance results
-      run:  python -m performance_profile.compare_performance_results
+      run: python performance_action/compare_performance_results.py performance_action/logs/main_cards_benchmark.json performance_action/logs/pr_cards_benchmark.json

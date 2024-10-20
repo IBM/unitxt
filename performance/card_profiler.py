@@ -21,17 +21,17 @@ Usage: set values for variables cards (the benchmark)
 
 from unitxt root dir, run the following linux commands:
 
-python performance_profile/card_profiler.py
+python performance/card_profiler.py
 
 The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
 accumulated across the cards in the benchmark, and wraps both results into a json file:
-performance_profile/logs/cards_benchmark.json
+performance/logs/cards_benchmark.json
 
-In addition, the script generates a binary file named performance_profile/logs/cards_benchmark.prof,
+In addition, the script generates a binary file named performance/logs/cards_benchmark.prof,
 which can be nicely and interactively visualized via snakeviz:
 
 (pip install snakeviz)
-snakeviz performance_profile/logs/cards_benchmark.prof
+snakeviz performance/logs/cards_benchmark.prof
 
 snakeviz opens an interactive internet browser window allowing to explore all time-details.
 See exporing options here: https://jiffyclub.github.io/snakeviz/
@@ -114,11 +114,9 @@ cards = ["cards.cola", "cards.dart"]  # the benchmark
 def main():
     logger.info(f"benchmark cards are: {cards}")
 
-    cProfile.run(
-        "profile_from_cards()", "performance_profile/logs/cards_benchmark.prof"
-    )
+    cProfile.run("profile_from_cards()", "performance/logs/cards_benchmark.prof")
     f = StringIO()
-    pst = pstats.Stats("performance_profile/logs/cards_benchmark.prof", stream=f)
+    pst = pstats.Stats("performance/logs/cards_benchmark.prof", stream=f)
     pst.strip_dirs()
     pst.sort_stats("name")  # sort by function name
     pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
@@ -136,7 +134,7 @@ def main():
         "load_time": load_time,
         "net_time": diff,
     }
-    with open("performance_profile/logs/cards_benchmark.json", "w") as outfile:
+    with open("performance/logs/cards_benchmark.json", "w") as outfile:
         json.dump(dictionary, outfile)
 
 
