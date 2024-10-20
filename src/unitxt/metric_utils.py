@@ -16,8 +16,8 @@ from .operator import (
 from .operators import (
     ApplyMetric,
     ApplyOperatorsField,
-    Copy,
     FlattenInstances,
+    RecursiveCopy,
     Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -54,27 +54,27 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 _post_process_steps = SequentialOperator(
     steps=[
-        Copy(
+        RecursiveCopy(
             field="prediction",
             to_field="raw_prediction",
         ),
-        Copy(
+        RecursiveCopy(
             field="references",
             to_field="raw_references",
             dont_apply_to_streams=[constants.inference_stream],
         ),
-        Copy(
+        RecursiveCopy(
             field="source",
             to_field="task_data/source",
         ),
         ApplyOperatorsField(
             operators_field="postprocessors",
         ),
-        Copy(
+        RecursiveCopy(
             field="prediction",
             to_field="processed_prediction",
         ),
-        Copy(
+        RecursiveCopy(
             field="references",
             to_field="processed_references",
             dont_apply_to_streams=[constants.inference_stream],
@@ -299,7 +299,7 @@ class MetricRecipe(SequentialOperatorInitializer):
                 field="raw_references",
                 to_field="references",
             ),
-            Copy(
+            RecursiveCopy(
                 field="source",
                 to_field="task_data/source",
             ),
