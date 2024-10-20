@@ -61,4 +61,6 @@ jobs:
         python performance_action/card_profiler.py --output_file performance_action/pr_results.json
 
     - name: Compare main and PR performance results
-      run: python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json
+      run: |
+        echo "### Performance Comparison Results" >> $GITHUB_STEP_SUMMARY
+        python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
