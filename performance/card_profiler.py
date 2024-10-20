@@ -1,6 +1,7 @@
 import cProfile
 import json
 import pstats
+import tempfile
 from io import StringIO
 
 from unitxt.api import load_recipe
@@ -15,35 +16,35 @@ logger = get_logger()
 settings = get_settings()
 settings.allow_unverified_code = True
 
-"""Profiles the execution-time of api.load_dataset(), over a benchmark of cards.
-
-Usage: set values for variables cards (the benchmark)
-
-from unitxt root dir, run the following linux commands:
-
-python performance/card_profiler.py
-
-The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
-accumulated across the cards in the benchmark, and wraps both results into a json file:
-performance/logs/cards_benchmark.json
-
-In addition, the script generates a binary file named performance/logs/cards_benchmark.prof,
-which can be nicely and interactively visualized via snakeviz:
-
-(pip install snakeviz)
-snakeviz performance/logs/cards_benchmark.prof
-
-snakeviz opens an interactive internet browser window allowing to explore all time-details.
-See exporing options here: https://jiffyclub.github.io/snakeviz/
-(can also use the -s flag for snakeviz which will only set up a server and print out the url
-to use from another computer in order to view results shown by that server)
-
-In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
-You will find the total time of each step, accumulated along all cards in the benchmark.
-"""
-
 
 class CardProfiler:
+    """Profiles the execution-time of api.load_dataset(), over a benchmark of cards.
+
+    Usage: set values for variables cards (the benchmark)
+
+    from unitxt root dir, run the following linux commands:
+
+    python performance/card_profiler.py
+
+    The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
+    accumulated across the cards in the benchmark, and wraps both results into a json file:
+    performance/logs/cards_benchmark.json
+
+    In addition, the script generates a binary file named performance/logs/cards_benchmark.prof,
+    which can be nicely and interactively visualized via snakeviz:
+
+    (pip install snakeviz)
+    snakeviz performance/logs/cards_benchmark.prof
+
+    snakeviz opens an interactive internet browser window allowing to explore all time-details.
+    See exporing options here: https://jiffyclub.github.io/snakeviz/
+    (can also use the -s flag for snakeviz which will only set up a server and print out the url
+    to use from another computer in order to view results shown by that server)
+
+    In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
+    You will find the total time of each step, accumulated along all cards in the benchmark.
+    """
+
     def profiler_instantiate_recipe(self, **kwargs) -> StandardRecipe:
         return load_recipe(**kwargs)
 
@@ -114,28 +115,35 @@ cards = ["cards.cola", "cards.dart"]  # the benchmark
 def main():
     logger.info(f"benchmark cards are: {cards}")
 
-    cProfile.run("profile_from_cards()", "performance/logs/cards_benchmark.prof")
-    f = StringIO()
-    pst = pstats.Stats("performance/logs/cards_benchmark.prof", stream=f)
-    pst.strip_dirs()
-    pst.sort_stats("name")  # sort by function name
-    pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
-    s = f.getvalue()
-    assert s.split("\n")[7].split()[3] == "cumtime"
-    assert "profiler_do_the_profiling" in s.split("\n")[8]
-    tot_time = round(float(s.split("\n")[8].split()[3]), 3)
-    assert "profiler_load_by_recipe" in s.split("\n")[9]
-    load_time = round(float(s.split("\n")[9].split()[3]), 3)
-    diff = round(tot_time - load_time, 3)
+    with tempfile.NamedTemporaryFile(suffix=".prof", delete=False) as temp_prof_file:
+        temp_prof_file_path = temp_prof_file.name
+        with open(temp_prof_file_path, "w+") as outfile:
+            pass
+        cProfile.run("profile_from_cards()", temp_prof_file_path)
 
-    # Data to be written
-    dictionary = {
-        "total_time": tot_time,
-        "load_time": load_time,
-        "net_time": diff,
-    }
-    with open("performance/logs/cards_benchmark.json", "w") as outfile:
-        json.dump(dictionary, outfile)
+        f = StringIO()
+        pst = pstats.Stats(temp_prof_file_path, stream=f)
+        pst.strip_dirs()
+        pst.sort_stats("name")  # sort by function name
+        pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
+        s = f.getvalue()
+        assert s.split("\n")[7].split()[3] == "cumtime"
+        assert "profiler_do_the_profiling" in s.split("\n")[8]
+        tot_time = round(float(s.split("\n")[8].split()[3]), 3)
+        assert "profiler_load_by_recipe" in s.split("\n")[9]
+        load_time = round(float(s.split("\n")[9].split()[3]), 3)
+        diff = round(tot_time - load_time, 3)
+
+        # Data to be written
+        dictionary = {
+            "total_time": tot_time,
+            "load_time": load_time,
+            "net_time": diff,
+        }
+        with open("performance/logs/cards_benchmark.json", "w+") as outfile:
+            json.dump(dictionary, outfile)
+
+        logger.info(f"Profiling data saved to temporary file: {temp_prof_file_path}")
 
 
 if __name__ == "__main__":
