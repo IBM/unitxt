@@ -2,6 +2,7 @@ import abc
 import dataclasses
 import os
 import re
+import uuid
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from datasets import DatasetDict
@@ -1074,3 +1075,89 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
             results.append(result)
 
         return results
+
+
+def get_images(instance):
+    return instance
+
+
+class LMMSEvalInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_type: str
+    model_args: Dict[str, str]
+    batch_size: int = 1
+    max_new_tokens: int = 32
+    temperature: float = 0.0
+    do_sample: bool = False
+    generate_until: List[str] = ["\n\n"]
+
+    _requirements_list = {
+        "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.1.2",
+    }
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _prepare_engine(self):
+        import torch
+        from lmms_eval.api.registry import get_model
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = get_model(self.model_type).create_from_arg_string(
+            self.model_args,
+            {
+                "batch_size": self.batch_size,
+                "device": self.device,
+            },
+        )
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        from lmms_eval.api.instance import Instance
+
+        temp_task_name = str(uuid.uuid4())
+
+        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
+
+        requests = []
+        for i, instance in enumerate(dataset):
+            requests.append(
+                Instance(
+                    request_type="generate_until",
+                    arguments=(
+                        instance["source"],
+                        {
+                            "max_new_tokens": self.max_new_tokens,
+                            "temperature": self.temperature,
+                            "do_sample": self.do_sample,
+                            "until": self.generate_until,
+                        },
+                        lambda x: x["media"]["images"],
+                        0,
+                        temp_task_name,
+                        "test",
+                    ),
+                    idx=i,
+                    metadata=(temp_task_name, i, 1),
+                )
+            )
+
+        self.model.task_dict.pop(temp_task_name)
+
+        return self.model.generate_until(requests)
