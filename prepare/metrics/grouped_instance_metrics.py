@@ -1,3 +1,4 @@
+import numpy as np
 from unitxt import add_to_catalog
 from unitxt.metrics import (
     FixedGroupAbsvalNormCohensHParaphraseAccuracy,
@@ -129,12 +130,17 @@ for instance in instance_targets_accuracy:
 metric = FixedGroupMeanAccuracy()
 global_target = {
     "fixed_group_mean_accuracy": 0.22,
-    "score": 0.22,
-    "score_name": "fixed_group_mean_accuracy",
-    "score_ci_low": 0.1,
-    "score_ci_high": 0.48,
-    "fixed_group_mean_accuracy_ci_low": 0.1,
     "fixed_group_mean_accuracy_ci_high": 0.48,
+    "fixed_group_mean_accuracy_ci_low": 0.1,
+    "group1": {"mean_accuracy": 0.2, "num_of_instances": 5},
+    "group2": {"mean_accuracy": 0.2, "num_of_instances": 5},
+    "group3": {"mean_accuracy": 0.5, "num_of_instances": 4},
+    "group4": {"mean_accuracy": 0.0, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.22,
+    "score_ci_high": 0.48,
+    "score_ci_low": 0.1,
+    "score_name": "fixed_group_mean_accuracy",
 }
 
 outputs = test_metric(
@@ -151,13 +157,18 @@ add_to_catalog(metric, "metrics.robustness.fixed_group_mean_accuracy", overwrite
 
 metric = GroupMeanAccuracy()
 global_target = {
+    "group1": {"num_of_instances": 5, "mean_accuracy": 0.2},
+    "group2": {"num_of_instances": 5, "mean_accuracy": 0.2},
+    "group3": {"num_of_instances": 4, "mean_accuracy": 0.5},
+    "group4": {"num_of_instances": 1, "mean_accuracy": 0.0},
     "group_mean_accuracy": 0.22,
-    "score": 0.22,
-    "score_name": "group_mean_accuracy",
-    "score_ci_low": 0.02,
-    "score_ci_high": 0.44,
-    "group_mean_accuracy_ci_low": 0.02,
     "group_mean_accuracy_ci_high": 0.44,
+    "group_mean_accuracy_ci_low": 0.02,
+    "num_of_instances": 15,
+    "score": 0.22,
+    "score_ci_high": 0.44,
+    "score_ci_low": 0.02,
+    "score_name": "group_mean_accuracy",
 }
 
 
@@ -177,12 +188,17 @@ add_to_catalog(metric, "metrics.robustness.group_mean_accuracy", overwrite=True)
 metric = FixedGroupMeanStringContainment()
 global_target = {
     "fixed_group_mean_string_containment": 0.49,
-    "score": 0.49,
-    "score_name": "fixed_group_mean_string_containment",
-    "score_ci_low": 0.0,
-    "score_ci_high": 0.68,
-    "fixed_group_mean_string_containment_ci_low": 0.0,
     "fixed_group_mean_string_containment_ci_high": 0.68,
+    "fixed_group_mean_string_containment_ci_low": 0.0,
+    "group1": {"mean_string_containment": 0.6, "num_of_instances": 5},
+    "group2": {"mean_string_containment": 0.6, "num_of_instances": 5},
+    "group3": {"mean_string_containment": 0.75, "num_of_instances": 4},
+    "group4": {"mean_string_containment": 0.0, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.49,
+    "score_ci_high": 0.68,
+    "score_ci_low": 0.0,
+    "score_name": "fixed_group_mean_string_containment",
 }
 
 
@@ -202,13 +218,18 @@ add_to_catalog(
 
 metric = GroupMeanStringContainment()
 global_target = {
+    "group1": {"num_of_instances": 5, "mean_string_containment": 0.6},
+    "group2": {"num_of_instances": 5, "mean_string_containment": 0.6},
+    "group3": {"num_of_instances": 4, "mean_string_containment": 0.75},
+    "group4": {"num_of_instances": 1, "mean_string_containment": 0.0},
     "group_mean_string_containment": 0.49,
-    "score": 0.49,
-    "score_name": "group_mean_string_containment",
-    "score_ci_low": 0.16,
-    "score_ci_high": 0.71,
-    "group_mean_string_containment_ci_low": 0.16,
     "group_mean_string_containment_ci_high": 0.71,
+    "group_mean_string_containment_ci_low": 0.16,
+    "num_of_instances": 15,
+    "score": 0.49,
+    "score_ci_high": 0.71,
+    "score_ci_low": 0.16,
+    "score_name": "group_mean_string_containment",
 }
 
 
@@ -230,12 +251,17 @@ add_to_catalog(
 metric = FixedGroupMeanBaselineAccuracy()
 global_target = {
     "fixed_group_mean_baseline_accuracy": 0.5,
-    "score": 0.5,
-    "score_name": "fixed_group_mean_baseline_accuracy",
-    "score_ci_low": 0.0,
-    "score_ci_high": 1.0,
-    "fixed_group_mean_baseline_accuracy_ci_low": 0.0,
     "fixed_group_mean_baseline_accuracy_ci_high": 1.0,
+    "fixed_group_mean_baseline_accuracy_ci_low": 0.0,
+    "group1": {"mean_baseline_accuracy": 0.0, "num_of_instances": 5},
+    "group2": {"mean_baseline_accuracy": 1.0, "num_of_instances": 5},
+    "group3": {"mean_baseline_accuracy": 1.0, "num_of_instances": 4},
+    "group4": {"mean_baseline_accuracy": 0.0, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.5,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.0,
+    "score_name": "fixed_group_mean_baseline_accuracy",
 }
 
 outputs = test_metric(
@@ -254,12 +280,17 @@ add_to_catalog(
 metric = FixedGroupMeanParaphraseAccuracy()
 global_target = {
     "fixed_group_mean_paraphrase_accuracy": 0.19,
-    "score": 0.19,
-    "score_name": "fixed_group_mean_paraphrase_accuracy",
-    "score_ci_low": 0.0,
-    "score_ci_high": 0.33,
-    "fixed_group_mean_paraphrase_accuracy_ci_low": 0.0,
     "fixed_group_mean_paraphrase_accuracy_ci_high": 0.33,
+    "fixed_group_mean_paraphrase_accuracy_ci_low": 0.0,
+    "group1": {"mean_paraphrase_accuracy": 0.25, "num_of_instances": 5},
+    "group2": {"mean_paraphrase_accuracy": 0.0, "num_of_instances": 5},
+    "group3": {"mean_paraphrase_accuracy": 0.33, "num_of_instances": 4},
+    "group4": {"mean_paraphrase_accuracy": np.nan, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.19,
+    "score_ci_high": 0.33,
+    "score_ci_low": 0.0,
+    "score_name": "fixed_group_mean_paraphrase_accuracy",
 }
 
 outputs = test_metric(
@@ -279,12 +310,17 @@ add_to_catalog(
 metric = FixedGroupMeanBaselineStringContainment()
 global_target = {
     "fixed_group_mean_baseline_string_containment": 0.75,
-    "score": 0.75,
-    "score_name": "fixed_group_mean_baseline_string_containment",
-    "score_ci_low": 0.25,
-    "score_ci_high": 1.0,
-    "fixed_group_mean_baseline_string_containment_ci_low": 0.25,
     "fixed_group_mean_baseline_string_containment_ci_high": 1.0,
+    "fixed_group_mean_baseline_string_containment_ci_low": 0.25,
+    "group1": {"mean_baseline_string_containment": 1.0, "num_of_instances": 5},
+    "group2": {"mean_baseline_string_containment": 1.0, "num_of_instances": 5},
+    "group3": {"mean_baseline_string_containment": 1.0, "num_of_instances": 4},
+    "group4": {"mean_baseline_string_containment": 0.0, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.75,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.25,
+    "score_name": "fixed_group_mean_baseline_string_containment",
 }
 
 outputs = test_metric(
@@ -305,12 +341,17 @@ add_to_catalog(
 metric = FixedGroupMeanParaphraseStringContainment()
 global_target = {
     "fixed_group_mean_paraphrase_string_containment": 0.56,
-    "score": 0.56,
-    "score_name": "fixed_group_mean_paraphrase_string_containment",
-    "score_ci_low": 0.5,
-    "score_ci_high": 0.67,
-    "fixed_group_mean_paraphrase_string_containment_ci_low": 0.5,
     "fixed_group_mean_paraphrase_string_containment_ci_high": 0.67,
+    "fixed_group_mean_paraphrase_string_containment_ci_low": 0.5,
+    "group1": {"mean_paraphrase_string_containment": 0.5, "num_of_instances": 5},
+    "group2": {"mean_paraphrase_string_containment": 0.5, "num_of_instances": 5},
+    "group3": {"mean_paraphrase_string_containment": 0.67, "num_of_instances": 4},
+    "group4": {"mean_paraphrase_string_containment": np.nan, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": 0.56,
+    "score_ci_high": 0.67,
+    "score_ci_low": 0.5,
+    "score_name": "fixed_group_mean_paraphrase_string_containment",
 }
 
 outputs = test_metric(
@@ -333,12 +374,17 @@ add_to_catalog(
 metric = FixedGroupPDRParaphraseAccuracy()
 global_target = {
     "fixed_group_pdr_paraphrase_accuracy": 0.83,
-    "score": 0.83,
-    "score_name": "fixed_group_pdr_paraphrase_accuracy",
-    "score_ci_low": 0.67,
-    "score_ci_high": 1.0,
-    "fixed_group_pdr_paraphrase_accuracy_ci_low": 0.67,
     "fixed_group_pdr_paraphrase_accuracy_ci_high": 1.0,
+    "fixed_group_pdr_paraphrase_accuracy_ci_low": 0.67,
+    "group1": {"num_of_instances": 5, "pdr_paraphrase_accuracy": np.nan},
+    "group2": {"num_of_instances": 5, "pdr_paraphrase_accuracy": 1.0},
+    "group3": {"num_of_instances": 4, "pdr_paraphrase_accuracy": 0.67},
+    "group4": {"num_of_instances": 1, "pdr_paraphrase_accuracy": np.nan},
+    "num_of_instances": 15,
+    "score": 0.83,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.67,
+    "score_name": "fixed_group_pdr_paraphrase_accuracy",
 }
 
 
@@ -358,12 +404,17 @@ add_to_catalog(
 metric = FixedGroupPDRParaphraseStringContainment()
 global_target = {
     "fixed_group_pdr_paraphrase_string_containment": 0.44,
-    "score": 0.44,
-    "score_name": "fixed_group_pdr_paraphrase_string_containment",
-    "score_ci_low": 0.33,
-    "score_ci_high": 0.5,
-    "fixed_group_pdr_paraphrase_string_containment_ci_low": 0.33,
     "fixed_group_pdr_paraphrase_string_containment_ci_high": 0.5,
+    "fixed_group_pdr_paraphrase_string_containment_ci_low": 0.33,
+    "group1": {"num_of_instances": 5, "pdr_paraphrase_string_containment": 0.5},
+    "group2": {"num_of_instances": 5, "pdr_paraphrase_string_containment": 0.5},
+    "group3": {"num_of_instances": 4, "pdr_paraphrase_string_containment": 0.33},
+    "group4": {"num_of_instances": 1, "pdr_paraphrase_string_containment": np.nan},
+    "num_of_instances": 15,
+    "score": 0.44,
+    "score_ci_high": 0.5,
+    "score_ci_low": 0.33,
+    "score_name": "fixed_group_pdr_paraphrase_string_containment",
 }
 
 
@@ -386,12 +437,17 @@ add_to_catalog(
 metric = FixedGroupNormCohensHParaphraseAccuracy()
 global_target = {
     "fixed_group_norm_cohens_h_paraphrase_accuracy": -0.42,
-    "score": -0.42,
-    "score_name": "fixed_group_norm_cohens_h_paraphrase_accuracy",
-    "score_ci_low": -1.0,
-    "score_ci_high": 0.33,
-    "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_low": -1.0,
     "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_high": 0.33,
+    "fixed_group_norm_cohens_h_paraphrase_accuracy_ci_low": -1.0,
+    "group1": {"norm_cohens_h_paraphrase_accuracy": 0.33, "num_of_instances": 5},
+    "group2": {"norm_cohens_h_paraphrase_accuracy": -1.0, "num_of_instances": 5},
+    "group3": {"norm_cohens_h_paraphrase_accuracy": -0.61, "num_of_instances": 4},
+    "group4": {"norm_cohens_h_paraphrase_accuracy": np.nan, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": -0.42,
+    "score_ci_high": 0.33,
+    "score_ci_low": -1.0,
+    "score_name": "fixed_group_norm_cohens_h_paraphrase_accuracy",
 }
 
 
@@ -414,12 +470,29 @@ add_to_catalog(
 metric = FixedGroupNormCohensHParaphraseStringContainment()
 global_target = {
     "fixed_group_norm_cohens_h_paraphrase_string_containment": -0.46,
-    "score": -0.46,
-    "score_name": "fixed_group_norm_cohens_h_paraphrase_string_containment",
-    "score_ci_low": -0.5,
-    "score_ci_high": -0.39,
-    "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_low": -0.5,
     "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_high": -0.39,
+    "fixed_group_norm_cohens_h_paraphrase_string_containment_ci_low": -0.5,
+    "group1": {
+        "norm_cohens_h_paraphrase_string_containment": -0.5,
+        "num_of_instances": 5,
+    },
+    "group2": {
+        "norm_cohens_h_paraphrase_string_containment": -0.5,
+        "num_of_instances": 5,
+    },
+    "group3": {
+        "norm_cohens_h_paraphrase_string_containment": -0.39,
+        "num_of_instances": 4,
+    },
+    "group4": {
+        "norm_cohens_h_paraphrase_string_containment": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": -0.46,
+    "score_ci_high": -0.39,
+    "score_ci_low": -0.5,
+    "score_name": "fixed_group_norm_cohens_h_paraphrase_string_containment",
 }
 
 
@@ -443,12 +516,17 @@ add_to_catalog(
 metric = FixedGroupNormHedgesGParaphraseAccuracy()
 global_target = {
     "fixed_group_norm_hedges_g_paraphrase_accuracy": -0.35,
-    "score": -0.35,
-    "score_name": "fixed_group_norm_hedges_g_paraphrase_accuracy",
-    "score_ci_low": -1.0,
-    "score_ci_high": 0.02,
-    "fixed_group_norm_hedges_g_paraphrase_accuracy_ci_low": -1.0,
     "fixed_group_norm_hedges_g_paraphrase_accuracy_ci_high": 0.02,
+    "fixed_group_norm_hedges_g_paraphrase_accuracy_ci_low": -1.0,
+    "group1": {"norm_hedges_g_paraphrase_accuracy": 0.06, "num_of_instances": 5},
+    "group2": {"norm_hedges_g_paraphrase_accuracy": -1.0, "num_of_instances": 5},
+    "group3": {"norm_hedges_g_paraphrase_accuracy": -0.09, "num_of_instances": 4},
+    "group4": {"norm_hedges_g_paraphrase_accuracy": np.nan, "num_of_instances": 1},
+    "num_of_instances": 15,
+    "score": -0.35,
+    "score_ci_high": 0.02,
+    "score_ci_low": -1.0,
+    "score_name": "fixed_group_norm_hedges_g_paraphrase_accuracy",
 }
 
 
@@ -471,12 +549,29 @@ add_to_catalog(
 metric = FixedGroupNormHedgesGParaphraseStringContainment()
 global_target = {
     "fixed_group_norm_hedges_g_paraphrase_string_containment": -0.08,
-    "score": -0.08,
-    "score_name": "fixed_group_norm_hedges_g_paraphrase_string_containment",
-    "score_ci_low": -0.1,
-    "score_ci_high": -0.05,
-    "fixed_group_norm_hedges_g_paraphrase_string_containment_ci_low": -0.1,
     "fixed_group_norm_hedges_g_paraphrase_string_containment_ci_high": -0.05,
+    "fixed_group_norm_hedges_g_paraphrase_string_containment_ci_low": -0.1,
+    "group1": {
+        "norm_hedges_g_paraphrase_string_containment": -0.1,
+        "num_of_instances": 5,
+    },
+    "group2": {
+        "norm_hedges_g_paraphrase_string_containment": -0.1,
+        "num_of_instances": 5,
+    },
+    "group3": {
+        "norm_hedges_g_paraphrase_string_containment": -0.05,
+        "num_of_instances": 4,
+    },
+    "group4": {
+        "norm_hedges_g_paraphrase_string_containment": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": -0.08,
+    "score_ci_high": -0.05,
+    "score_ci_low": -0.1,
+    "score_name": "fixed_group_norm_hedges_g_paraphrase_string_containment",
 }
 
 
@@ -500,12 +595,20 @@ add_to_catalog(
 metric = FixedGroupAbsvalNormCohensHParaphraseAccuracy()
 global_target = {
     "fixed_group_absval_norm_cohens_h_paraphrase_accuracy": 0.65,
-    "score": 0.65,
-    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_accuracy",
-    "score_ci_low": 0.33,
-    "score_ci_high": 1.0,
-    "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_low": 0.33,
     "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_high": 1.0,
+    "fixed_group_absval_norm_cohens_h_paraphrase_accuracy_ci_low": 0.33,
+    "group1": {"absval_norm_cohens_h_paraphrase_accuracy": 0.33, "num_of_instances": 5},
+    "group2": {"absval_norm_cohens_h_paraphrase_accuracy": 1.0, "num_of_instances": 5},
+    "group3": {"absval_norm_cohens_h_paraphrase_accuracy": 0.61, "num_of_instances": 4},
+    "group4": {
+        "absval_norm_cohens_h_paraphrase_accuracy": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": 0.65,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.33,
+    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_accuracy",
 }
 
 
@@ -528,12 +631,29 @@ add_to_catalog(
 metric = FixedGroupAbsvalNormCohensHParaphraseStringContainment()
 global_target = {
     "fixed_group_absval_norm_cohens_h_paraphrase_string_containment": 0.46,
-    "score": 0.46,
-    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_string_containment",
-    "score_ci_low": 0.39,
-    "score_ci_high": 0.5,
-    "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_low": 0.39,
     "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_high": 0.5,
+    "fixed_group_absval_norm_cohens_h_paraphrase_string_containment_ci_low": 0.39,
+    "group1": {
+        "absval_norm_cohens_h_paraphrase_string_containment": 0.5,
+        "num_of_instances": 5,
+    },
+    "group2": {
+        "absval_norm_cohens_h_paraphrase_string_containment": 0.5,
+        "num_of_instances": 5,
+    },
+    "group3": {
+        "absval_norm_cohens_h_paraphrase_string_containment": 0.39,
+        "num_of_instances": 4,
+    },
+    "group4": {
+        "absval_norm_cohens_h_paraphrase_string_containment": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": 0.46,
+    "score_ci_high": 0.5,
+    "score_ci_low": 0.39,
+    "score_name": "fixed_group_absval_norm_cohens_h_paraphrase_string_containment",
 }
 
 
@@ -556,12 +676,20 @@ add_to_catalog(
 metric = FixedGroupAbsvalNormHedgesGParaphraseAccuracy()
 global_target = {
     "fixed_group_absval_norm_hedges_g_paraphrase_accuracy": 0.38,
-    "score": 0.38,
-    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_accuracy",
-    "score_ci_low": 0.06,
-    "score_ci_high": 1.0,
-    "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_low": 0.06,
     "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_high": 1.0,
+    "fixed_group_absval_norm_hedges_g_paraphrase_accuracy_ci_low": 0.06,
+    "group1": {"absval_norm_hedges_g_paraphrase_accuracy": 0.06, "num_of_instances": 5},
+    "group2": {"absval_norm_hedges_g_paraphrase_accuracy": 1.0, "num_of_instances": 5},
+    "group3": {"absval_norm_hedges_g_paraphrase_accuracy": 0.09, "num_of_instances": 4},
+    "group4": {
+        "absval_norm_hedges_g_paraphrase_accuracy": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": 0.38,
+    "score_ci_high": 1.0,
+    "score_ci_low": 0.06,
+    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_accuracy",
 }
 
 
@@ -584,12 +712,29 @@ add_to_catalog(
 metric = FixedGroupAbsvalNormHedgesGParaphraseStringContainment()
 global_target = {
     "fixed_group_absval_norm_hedges_g_paraphrase_string_containment": 0.08,
-    "score": 0.08,
-    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_string_containment",
-    "score_ci_low": 0.05,
-    "score_ci_high": 0.1,
-    "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_low": 0.05,
     "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_high": 0.1,
+    "fixed_group_absval_norm_hedges_g_paraphrase_string_containment_ci_low": 0.05,
+    "group1": {
+        "absval_norm_hedges_g_paraphrase_string_containment": 0.1,
+        "num_of_instances": 5,
+    },
+    "group2": {
+        "absval_norm_hedges_g_paraphrase_string_containment": 0.1,
+        "num_of_instances": 5,
+    },
+    "group3": {
+        "absval_norm_hedges_g_paraphrase_string_containment": 0.05,
+        "num_of_instances": 4,
+    },
+    "group4": {
+        "absval_norm_hedges_g_paraphrase_string_containment": np.nan,
+        "num_of_instances": 1,
+    },
+    "num_of_instances": 15,
+    "score": 0.08,
+    "score_ci_high": 0.1,
+    "score_ci_low": 0.05,
+    "score_name": "fixed_group_absval_norm_hedges_g_paraphrase_string_containment",
 }
 
 
@@ -611,19 +756,44 @@ add_to_catalog(
 # TokenOverlap: example of a metric that has more than one score
 
 global_target = {
+    "group1": {
+        "num_of_instances": 5,
+        "mean_f1": 0.6,
+        "mean_precision": 0.6,
+        "mean_recall": 0.6,
+    },
+    "group2": {
+        "num_of_instances": 5,
+        "mean_f1": 0.93,
+        "mean_precision": 0.9,
+        "mean_recall": 1.0,
+    },
+    "group3": {
+        "num_of_instances": 4,
+        "mean_f1": 0.5,
+        "mean_precision": 0.5,
+        "mean_recall": 0.5,
+    },
+    "group4": {
+        "num_of_instances": 1,
+        "mean_f1": 0.0,
+        "mean_precision": 0.0,
+        "mean_recall": 0.0,
+    },
     "group_mean_f1": 0.51,
-    "score": 0.51,
-    "score_name": "group_mean_f1",
-    "group_mean_f1_ci_low": 0.22,
     "group_mean_f1_ci_high": 0.68,
-    "score_ci_low": 0.22,
-    "score_ci_high": 0.68,
+    "group_mean_f1_ci_low": 0.22,
     "group_mean_precision": 0.5,
-    "group_mean_precision_ci_low": 0.21,
     "group_mean_precision_ci_high": 0.67,
+    "group_mean_precision_ci_low": 0.21,
     "group_mean_recall": 0.52,
-    "group_mean_recall_ci_low": 0.25,
     "group_mean_recall_ci_high": 0.71,
+    "group_mean_recall_ci_low": 0.25,
+    "num_of_instances": 15,
+    "score": 0.51,
+    "score_ci_high": 0.68,
+    "score_ci_low": 0.22,
+    "score_name": "group_mean_f1",
 }
 
 instance_targets_token_overlap = [

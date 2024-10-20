@@ -23,6 +23,7 @@ global_target = {
     "score_ci_high": 0.75,
     "f1_micro_ci_low": 0.33,
     "f1_micro_ci_high": 0.75,
+    "num_of_instances": 5,
 }
 
 instance_target = [
