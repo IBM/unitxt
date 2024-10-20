@@ -34,6 +34,7 @@ from .metric_utils import __file__ as _
 from .metrics import __file__ as _
 from .normalizers import __file__ as _
 from .operator import __file__ as _
+from .operator_utils import __file__ as _
 from .operators import __file__ as _
 from .parsing_utils import __file__ as _
 from .processors import __file__ as _
