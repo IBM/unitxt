@@ -12,7 +12,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
         Cast(field="answer", to="int"),
     ],
-    task="tasks.qa.multiple_choice.with_context",
+    task="tasks.qa.multiple_choice.with_context[metrics=[metrics.exact_match_mm]]",
     templates="templates.qa.multiple_choice.with_context.no_intro.all",
     __tags__={},
     __description__=(

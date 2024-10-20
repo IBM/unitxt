@@ -19,6 +19,7 @@ class Augmentor(FieldOperator):
 
     def process_value(self, value: Any) -> Any:
         return self.operator.process_value(value)
+        return self.operator.process_value(value)
 
 
 class TaskInputsAugmentor(Augmentor):
