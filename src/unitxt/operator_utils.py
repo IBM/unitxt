@@ -1,0 +1,85 @@
+from typing import List
+
+from .operator import (
+    InstanceOperator,
+    SequentialInstanceOperator,
+    SequentialOperator,
+    StreamingOperator,
+)
+
+
+def to_non_sequential_operators(operator: StreamingOperator) -> List[StreamingOperator]:
+    if not isinstance(operator, SequentialOperator):
+        return [operator]
+    to_return = []
+    for step in operator.steps:
+        to_return.extend(to_non_sequential_operators(step))
+    return to_return
+
+
+# flake8: noqa: C901
+# unfold SequentialOperator-s, and replace each maximal subsequence of InstanceOperator-s by SequentialInstanceOperator
+def simplify_steps(steps: List[StreamingOperator]) -> List[StreamingOperator]:
+    def same_streams(
+        instance_operators_list: List[InstanceOperator],
+        instance_operator: InstanceOperator,
+    ) -> bool:
+        if len(instance_operators_list) == 0:
+            return True
+        existing_app_dont = (
+            instance_operators_list[0].apply_to_streams,
+            instance_operators_list[0].dont_apply_to_streams,
+        )
+        new_app_dont = (
+            instance_operator.apply_to_streams,
+            instance_operator.dont_apply_to_streams,
+        )
+        if (existing_app_dont[0] is None) != (new_app_dont[0] is None):
+            return False
+        if (existing_app_dont[1] is None) != (new_app_dont[1] is None):
+            return False
+        if existing_app_dont[0] is not None:
+            if sorted(existing_app_dont[0]) != sorted(new_app_dont[0]):
+                return False
+        if existing_app_dont[1] is not None:
+            if sorted(existing_app_dont[1]) != sorted(new_app_dont[1]):
+                return False
+        return True
+
+    new_steps = []
+    for step in steps:
+        new_steps.extend(to_non_sequential_operators(step))
+
+    to_return = []
+    next_chunk = []
+    for step in new_steps:
+        if isinstance(step, InstanceOperator) and same_streams(next_chunk, step):
+            next_chunk.append(step)
+            continue
+        if next_chunk:
+            if len(next_chunk) > 1:
+                to_return.append(
+                    SequentialInstanceOperator(
+                        steps=next_chunk,
+                        apply_to_streams=next_chunk[0].apply_to_streams,
+                        dont_apply_to_streams=next_chunk[0].dont_apply_to_streams,
+                    )
+                )
+            else:
+                to_return.append(next_chunk[0])
+            next_chunk = []
+        to_return.append(step)
+
+    if next_chunk:
+        if len(next_chunk) > 1:
+            to_return.append(
+                SequentialInstanceOperator(
+                    steps=next_chunk,
+                    apply_to_streams=next_chunk[0].apply_to_streams,
+                    dont_apply_to_streams=next_chunk[0].dont_apply_to_streams,
+                )
+            )
+        else:
+            to_return.append(next_chunk[0])
+
+    return to_return
