@@ -47,6 +47,7 @@ class TestExamples(UnitxtTestCase):
             "evaluate_ensemble_judge.py",
             "evaluate_benchmark.py",
             "evaluate_image_text_to_text.py",
+            "evaluate_image_text_to_text_with_different_templates.py",
             "evaluate_idk_judge.py",
             "evaluate_grounded_ensemble_judge.py",
         ]

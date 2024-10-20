@@ -249,7 +249,7 @@ ingridients = {
     "demos_pool_size": 0,
     "num_demos": 0,
     "template_card_index": 0,
-    "max_test_instances": 10,
+    "max_test_instances": 100,
 }
 recipe = prepapre_recipe(default_args, ingridients)
 add_to_catalog(recipe, "recipes.bluebench.safety.attaq_500", overwrite=True)

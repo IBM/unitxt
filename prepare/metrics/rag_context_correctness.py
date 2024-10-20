@@ -102,6 +102,7 @@ def test_context_correctness():
         "score_ci_high": 0.83,
         "score_ci_low": 0.5,
         "score_name": "map",
+        "num_of_instances": 2,
     }
     mrr_global_target = {
         "mrr": 0.75,
@@ -111,6 +112,7 @@ def test_context_correctness():
         "score_ci_high": 1.0,
         "score_ci_low": 0.5,
         "score_name": "mrr",
+        "num_of_instances": 2,
     }
     retrieval_at_k_global_target = {
         "match_at_1": 0.5,
@@ -151,6 +153,7 @@ def test_context_correctness():
         "score_ci_high": 1.0,
         "score_ci_low": 0.0,
         "score_name": "match_at_1",
+        "num_of_instances": 2,
     }
 
     for catalog_name, global_target, instance_targets, main_score in [

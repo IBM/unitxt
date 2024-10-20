@@ -870,9 +870,9 @@ class Copy(FieldOperator):
         return value
 
 
-class DeepCopy(FieldOperator):
+class RecursiveCopy(FieldOperator):
     def process_value(self, value: Any) -> Any:
-        return deep_copy(value)
+        return recursive_copy(value)
 
 
 @deprecation(version="2.0.0", alternative=Copy)
