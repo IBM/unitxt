@@ -48,9 +48,7 @@ jobs:
 
     - name: Run performance on main branch
       run: |
-        python performance_action/card_profiler.py
-        cp performance/logs/cards_benchmark.json performance_action/logs/main_cards_benchmark.json
-        rm performance/logs/cards_benchmark.json
+        python performance_action/card_profiler.py --output_file performance_action/main_results.json
 
     - name: Checkout PR branch
       uses: actions/checkout@v4
@@ -60,9 +58,7 @@ jobs:
 
     - name: Run performance on PR branch
       run: |
-        python performance_action/card_profiler.py
-        cp performance/logs/cards_benchmark.json performance_action/logs/pr_cards_benchmark.json
-        rm performance/logs/cards_benchmark.json
+        python performance_action/card_profiler.py --output_file performance_action/pr_results.json
 
     - name: Compare main and PR performance results
-      run: python performance_action/compare_performance_results.py performance_action/logs/main_cards_benchmark.json performance_action/logs/pr_cards_benchmark.json
+      run: python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json

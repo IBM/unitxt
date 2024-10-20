@@ -1,5 +1,7 @@
+import argparse
 import cProfile
 import json
+import os
 import pstats
 import tempfile
 from io import StringIO
@@ -113,12 +115,26 @@ cards = ["cards.cola", "cards.dart"]  # the benchmark
 
 
 def main():
+    # Parse command-line arguments
+    parser = argparse.ArgumentParser(description="Card Profiler")
+    parser.add_argument(
+        "--output_file",
+        type=str,
+        required=True,
+        help="Path to save output files (without extension)",
+    )
+    args = parser.parse_args()
+
+    # Ensure the directory for the output file exists
+    output_dir = os.path.dirname(args.output_file)
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+
     logger.info(f"benchmark cards are: {cards}")
 
+    # Create a temporary .prof file
     with tempfile.NamedTemporaryFile(suffix=".prof", delete=False) as temp_prof_file:
         temp_prof_file_path = temp_prof_file.name
-        with open(temp_prof_file_path, "w+") as outfile:
-            pass
         cProfile.run("profile_from_cards()", temp_prof_file_path)
 
         f = StringIO()
@@ -140,10 +156,12 @@ def main():
             "load_time": load_time,
             "net_time": diff,
         }
-        with open("performance/logs/cards_benchmark.json", "w+") as outfile:
+
+        # Write the profiling results to the JSON file (user-specified)
+        with open(args.output_file, "w+") as outfile:
             json.dump(dictionary, outfile)
 
-        logger.info(f"Profiling data saved to temporary file: {temp_prof_file_path}")
+        logger.info(f"JSON output saved to: {args.output_file}")
 
 
 if __name__ == "__main__":
