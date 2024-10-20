@@ -28,10 +28,10 @@ if main_perf["net_time"] == 0:
 ratio = pr_perf["net_time"] / main_perf["net_time"]
 
 # Markdown table formatting
-table_header = "| Branch       | Net Time (seconds) | Performance Ratio |\n"
-table_divider = "|--------------|--------------------|-------------------|\n"
-table_main = f"| Main Branch  | {main_perf['net_time']:<18} | -                 |\n"
-table_pr = f"| PR Branch    | {pr_perf['net_time']:<18} | {ratio:.2f}            |\n"
+table_header = "| Branch       | Tot Time (sec) | Load Time (sec) | Net Time (sec) | Performance Ratio |\n"
+table_divider = "|--------------|----------------|-----------------|----------------|-------------------|\n"
+table_main = f"| Main Branch  | {main_perf['total_time']:<14} | {main_perf['load_time']:<14} | {main_perf['net_time']:<14} | -                 |\n"
+table_pr = f"| PR Branch    | {pr_perf['total_time']:<14} | {pr_perf['load_time']:<14} | {pr_perf['net_time']:<14} | {ratio:.2f}            |\n"
 
 # Print markdown table
 print("### Performance Comparison Results\n")
