@@ -9,6 +9,7 @@ from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
+from .operator_utils import simplify_recipe_steps
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import FinalizeDataset
@@ -454,6 +455,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 ) from e
 
         super().prepare()
+        self.steps = simplify_recipe_steps(self.steps)
 
 
 class StandardRecipe(StandardRecipeWithIndexes):

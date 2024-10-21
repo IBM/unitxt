@@ -584,3 +584,22 @@ class SequentialOperatorInitializer(SequentialOperator):
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
         return multi_stream
+
+
+class SequentialInstanceOperator(InstanceOperator):
+    steps: List[InstanceOperator]
+
+    def verify(self):
+        assert self.steps is not None, "steps must be defined"
+        assert isinstance(self.steps, list), "steps must be a list"
+        for step in self.steps:
+            assert isinstance(
+                step, InstanceOperator
+            ), f"Each step must be an InstanceOperator, whereas {step} is not."
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        for step in self.steps:
+            instance = step.process(instance)
+        return instance

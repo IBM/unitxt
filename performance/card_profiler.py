@@ -9,6 +9,9 @@ from io import StringIO
 from unitxt.api import load_recipe
 from unitxt.artifact import fetch_artifact
 from unitxt.logging_utils import get_logger
+from unitxt.operator import SequentialOperator
+
+# from unitxt.operator_utils import find_step_by_type
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 from unitxt.stream import MultiStream
@@ -53,9 +56,15 @@ class CardProfiler:
         return load_recipe(**kwargs)
 
     def profiler_load_by_recipe(self, recipe: StandardRecipe) -> MultiStream:
-        ms = recipe.loading.process()
+        # is is already verified that steps[0] does the loading
+        ms = recipe.steps[0].process()
         assert isinstance(ms, MultiStream)
         return ms
+
+    def profiler_recipe_steps_following_loader(
+        self, ms: MultiStream, rest: SequentialOperator
+    ) -> MultiStream:
+        return rest.process(ms)
 
     def profiler_metadata_and_standardization(
         self, ms: MultiStream, recipe: StandardRecipe
@@ -83,11 +92,17 @@ class CardProfiler:
             logger.info(f"{stream_name} is of length {len(list(ms[stream_name]))}")
 
     def profiler_do_the_profiling(self, card_name: str, **kwargs):
+        logger.info(f"\nProfiling card {card_name}")
         recipe = self.profiler_instantiate_recipe(**kwargs)
+        # loader_step_index, _ = find_step_by_type(recipe.steps, Loader)
+        # assert loader_step_index is not None, "Did not find any Loader step in recipe"
+        # assert (
+        # loader_step_index == 0
+        # ), f"Found loader in step {loader_step_index} of recipe, rather than step 0."
         ms = self.profiler_load_by_recipe(recipe)
-        ms = self.profiler_metadata_and_standardization(ms, recipe)
-        ms = self.profiler_processing_demos_metadata(ms, recipe)
-        ms = self.profiler_verbalize_and_finalize(ms, recipe)
+
+        rest = SequentialOperator(steps=recipe.steps[1:])
+        ms = self.profiler_recipe_steps_following_loader(ms, rest)
         self.profiler_print_first_dicts(ms, card_name)
 
 
@@ -113,7 +128,21 @@ def profile_from_cards():
         )
 
 
-cards = ["cards.cola", "cards.dart"]  # the benchmark
+def find_cumtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
+    relevant_lines = list(
+        filter(
+            lambda x: f"({func_name})" in x and file_name in x,
+            pst_printout.split("\n")[7:],
+        )
+    )
+    if len(relevant_lines) == 0:
+        return 0.0
+    return sum(
+        round(float(relevant_line.split()[3]), 3) for relevant_line in relevant_lines
+    )
+
+
+cards = ["cards.cola", "cards.wnli"]  # the benchmark
 
 
 def main():
@@ -143,19 +172,25 @@ def main():
         pst = pstats.Stats(temp_prof_file_path, stream=f)
         pst.strip_dirs()
         pst.sort_stats("name")  # sort by function name
-        pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
+        pst.print_stats(
+            "profiler_do_the_profiling|profiler_load_by_recipe|load_data|stream_dataset|load_dataset"
+        )
         s = f.getvalue()
         assert s.split("\n")[7].split()[3] == "cumtime"
-        assert "profiler_do_the_profiling" in s.split("\n")[8]
-        tot_time = round(float(s.split("\n")[8].split()[3]), 3)
-        assert "profiler_load_by_recipe" in s.split("\n")[9]
-        load_time = round(float(s.split("\n")[9].split()[3]), 3)
-        diff = round(tot_time - load_time, 3)
+        tot_time = find_cumtime_of("profiler_do_the_profiling", "card_profiler.py", s)
+        load_time = find_cumtime_of("profiler_load_by_recipe", "card_profiler.py", s)
+        just_load_no_initial_ms_time = round(
+            find_cumtime_of("stream_dataset", "loaders.py", s)
+            + find_cumtime_of("load_dataset", "loaders.py", s),
+            3,
+        )
+        diff = round(tot_time - just_load_no_initial_ms_time, 3)
 
         # Data to be written
         dictionary = {
             "total_time": tot_time,
             "load_time": load_time,
+            "load_time_no_initial_ms": just_load_no_initial_ms_time,
             "net_time": diff,
             "cards_tested": cards,
             "used_eager_mode": settings.use_eager_execution,
