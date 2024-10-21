@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Explode, Wrap
-from unitxt.image_operators import ToImage
+from unitxt.image_operators import ToImage, ToRGB
 from unitxt.operators import Copy
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
@@ -43,6 +43,7 @@ card = TaskCard(
     ),
     preprocess_steps=[
         RenameSplits(mapper={"validation": "test"}),
+        ToRGB(field="image"),
         ToImage(field="image", to_field="context"),
         Set(fields={"context_type": "image"}),
     ],

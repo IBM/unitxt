@@ -16,8 +16,8 @@ from .operator import (
 from .operators import (
     ApplyMetric,
     ApplyOperatorsField,
-    Copy,
     FlattenInstances,
+    RecursiveCopy,
     Rename,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -54,27 +54,27 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 _post_process_steps = SequentialOperator(
     steps=[
-        Copy(
+        RecursiveCopy(
             field="prediction",
             to_field="raw_prediction",
         ),
-        Copy(
+        RecursiveCopy(
             field="references",
             to_field="raw_references",
             dont_apply_to_streams=[constants.inference_stream],
         ),
-        Copy(
+        RecursiveCopy(
             field="source",
             to_field="task_data/source",
         ),
         ApplyOperatorsField(
             operators_field="postprocessors",
         ),
-        Copy(
+        RecursiveCopy(
             field="prediction",
             to_field="processed_prediction",
         ),
-        Copy(
+        RecursiveCopy(
             field="references",
             to_field="processed_references",
             dont_apply_to_streams=[constants.inference_stream],
@@ -213,14 +213,19 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
 
                 result = {}
                 all_scores = []
+                all_num_of_instances = []
                 for k, v in dic.items():
                     score = recursive_mean(v)
                     if score is not None:
                         all_scores.append(score["score"])
+                        if "num_of_instances" in score:
+                            all_num_of_instances.append(score["num_of_instances"])
                         result[k] = score
 
                 result["score"] = nan_mean(all_scores)
                 result["score_name"] = "subsets_mean"
+                if all_num_of_instances:
+                    result["num_of_instances"] = sum(all_num_of_instances)
 
                 if result:
                     return result
@@ -237,6 +242,10 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                     "score": score["subsets"]["score"],
                     "score_name": score["subsets"]["score_name"],
                 }
+                if "num_of_instances" in score["subsets"]:
+                    score["global"]["num_of_instances"] = score["subsets"][
+                        "num_of_instances"
+                    ]
 
             sorted_instances = []
             for key in sorted(stream_instances.keys()):
@@ -299,7 +308,7 @@ class MetricRecipe(SequentialOperatorInitializer):
                 field="raw_references",
                 to_field="references",
             ),
-            Copy(
+            RecursiveCopy(
                 field="source",
                 to_field="task_data/source",
             ),
