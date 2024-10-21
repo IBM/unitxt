@@ -1245,11 +1245,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # loop through the instances and group the scores
         for instance in instances:
             task_data = instance["task_data"]
-            group_key = task_data["group_id"]
+            group_key = str(task_data["group_id"])
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                task_data[self.subgroup_column]
+                str(task_data[self.subgroup_column])
                 if uses_subgroups
                 else default_subgroup_name
             )
