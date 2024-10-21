@@ -111,7 +111,7 @@ def profile_from_cards():
         )
 
 
-cards = ["cards.cola", "cards.dart", "cards.wnli"]  # the benchmark
+cards = ["cards.cola", "cards.dart"]  # the benchmark
 
 
 def main():
