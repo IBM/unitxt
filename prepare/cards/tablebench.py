@@ -44,8 +44,10 @@ card = TaskCard(
             target_prefix="Final Answer: ",
             output_format="{answers}",
             postprocessors=[
-                "processors.to_string_stripped",
                 "processors.lower_case",
+                "processors.remove_punctuations",
+                "processors.remove_articles",
+                "processors.fix_whitespace",
             ],
         ),
     ],
