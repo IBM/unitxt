@@ -1,5 +1,3 @@
-import json
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -15,7 +13,7 @@ card = TaskCard(
     preprocess_steps=[
         # FeatureGroupedShuffle(grouping_features=["id"], page_size=250000),
         # dafna: the above seems strange to me. I think "id" is unique per instance
-        Apply("possible_answers", function=json.loads, to_field="possible_answers"),
+        Apply("possible_answers", function="json.loads", to_field="possible_answers"),
         # group_mean reductions expect grouping field called "group_id"
         # dafna perhaps "prop_id" rather than the unique per instance "id"?
         Copy(field_to_field=[("prop_id", "group_id")]),
