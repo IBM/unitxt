@@ -6,7 +6,6 @@ from unitxt.operators import Apply, Copy, FeatureGroupedShuffle
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
-# flake8: noqa: RUF005
 loader = LoadFromDictionary(
     data={
         "test": [
@@ -162,4 +161,4 @@ card = TaskCard(
     ),
 )
 
-test_card(card, demos_taken_from="test", strict=False)
+test_card(card, demos_taken_from="test", strict=True)
