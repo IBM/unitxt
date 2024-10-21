@@ -1,11 +1,12 @@
 import json
 import unittest
-from typing import List
+from typing import Any, Dict, List
 
 from datasets.arrow_dataset import Dataset
 from unitxt import produce
 from unitxt.api import load_dataset
 from unitxt.inference import (
+    HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
     MockInferenceEngine,
@@ -18,6 +19,7 @@ from unitxt.operator import MissingRequirementsError
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 from unitxt.test_utils.metrics import apply_metric
+from unitxt.type_utils import isoftype
 
 from tests.utils import UnitxtTestCase
 
@@ -127,6 +129,17 @@ class TestInferenceEngine(UnitxtTestCase):
 
             self.assertEqual(predictions[0], "The real image")
 
+            inference_model.return_dict_in_generate = True
+            inference_model.output_scores = True
+
+            prediction = inference_model.infer_log_probs(test_dataset)[0]
+
+            assert isoftype(prediction, List[Dict[str, Any]])
+            self.assertListEqual(
+                list(prediction[0].keys()),
+                ["text", "logprob", "top_tokens"],
+            )
+
     def test_wml_inference_engine(self):
         try:
             inference_engine = WMLInferenceEngine(
@@ -135,7 +148,7 @@ class TestInferenceEngine(UnitxtTestCase):
                 concurrency_limit=5,
             )
 
-            dataset = self.prepare_test_data()[:5]
+            dataset = self.prepare_test_data().take(5)
 
             results = inference_engine._infer(dataset)
 
@@ -162,7 +175,7 @@ class TestInferenceEngine(UnitxtTestCase):
                 concurrency_limit=5,
             )
 
-            dataset = self.prepare_test_data()[:5]
+            dataset = self.prepare_test_data().take(5)
 
             results = inference_engine._infer_log_probs(dataset, return_meta_data=True)
             sample = results[0]
@@ -209,6 +222,45 @@ class TestInferenceEngine(UnitxtTestCase):
         assert sample.output_tokens == len(mock_logprobs_default_value_factory())
         assert sample.input_tokens == len(dataset[0]["source"])
         assert sample.input_text == dataset[0]["source"]
+
+    def test_hf_auto_model_inference_engine(self):
+        data = self.prepare_test_data()
+
+        engine = HFAutoModelInferenceEngine(
+            model_name="google/flan-t5-small",
+            max_new_tokens=16,
+            repetition_penalty=1.5,
+            top_k=5,
+            return_dict_in_generate=True,
+            output_scores=True,
+            data_classification_policy=["public"],
+        )
+
+        assert engine.get_engine_id() == "flan_t5_small_hf_auto_model"
+        assert engine.repetition_penalty == 1.5
+
+        results = engine.infer_log_probs(data, return_meta_data=True)
+        sample = results[0]
+        prediction = sample.prediction
+
+        assert len(results) == len(data)
+        assert isinstance(sample, TextGenerationInferenceOutput)
+        assert sample.output_tokens == 5
+        assert isoftype(prediction, List[Dict[str, Any]])
+        self.assertListEqual(
+            list(prediction[0].keys()),
+            ["text", "logprob", "top_tokens"],
+        )
+        assert isinstance(prediction[0]["text"], str)
+        assert isinstance(prediction[0]["logprob"], float)
+
+        engine.return_dict_in_generate = False
+        engine.output_scores = False
+
+        results = engine.infer(data)
+
+        assert isoftype(results, List[str])
+        assert results[0] == "entailment"
 
 
 if __name__ == "__main__":
