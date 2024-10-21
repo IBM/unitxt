@@ -1,6 +1,7 @@
 import itertools
 import re
-from typing import Dict
+from collections import defaultdict
+from typing import Any, Dict, List
 
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
@@ -232,6 +233,27 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
             raise ValueError("Wrong stream name")
         new_streams[val] = input_streams.pop(key)
     return {**input_streams, **new_streams}
+
+
+def random_stream_mixer(multi_stream, mapping) -> Dict[str, List[Dict[str, Any]]]:
+    stream_routing = build_stream_routing(mapping)
+    new_streams = defaultdict(list)
+    # for now, enforce the order of renewing the random generagor, for backward compatibility
+    for (
+        _
+    ) in mapping:  # for backward compatibility, loop here over the new streams first
+        for old_stream_name in stream_routing:
+            assert (
+                old_stream_name in multi_stream
+            ), f"'{old_stream_name}' split not found.  Possibles options: {multi_stream.keys()}"
+            optional_streams, weights = stream_routing[old_stream_name]
+            random_generator = new_random_generator(sub_seed=old_stream_name)
+            for item in multi_stream[old_stream_name]:
+                choice = random_generator.choices(
+                    optional_streams, weights=weights, k=1
+                )[0]
+                new_streams[choice].append(item)
+    return new_streams
 
 
 def random_mix_generator(
