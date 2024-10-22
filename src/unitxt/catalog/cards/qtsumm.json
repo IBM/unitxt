@@ -1,0 +1,50 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "yale-nlp/QTSumm"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "table"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field": "table",
+            "to_field": "context"
+        },
+        {
+            "__type__": "rename",
+            "field": "query",
+            "to_field": "question"
+        },
+        {
+            "__type__": "rename",
+            "field": "summary",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "wrap",
+            "field": "answers",
+            "inside": "list",
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.rouge, metrics.bleu, metrics.bert_score.bert_base_uncased, metrics.meteor]]",
+    "templates": [
+        "templates.qa.with_context.qtsumm"
+    ],
+    "__description__": "The QTSumm dataset is a large-scale dataset for the task of query-focused summarization over tabular data.",
+    "__tags__": {
+        "modality": "table",
+        "urls": {
+            "arxiv": "https://arxiv.org/pdf/2305.14303"
+        },
+        "languages": [
+            "english"
+        ]
+    }
+}
