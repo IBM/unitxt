@@ -3004,7 +3004,7 @@ class SafetyMetric(GlobalMetric):
     # instead of using the 'task_data' parameters, so prediction
     # type and reference type are different
     prediction_type = Any
-    batch_size: int = 100
+    batch_size: int = 10
     critical_threshold: int = -5  # _CRITICAL_THRESHOLD = -5
     high_threshold: int = -4  # _HIGH_THRESHOLD = -4
     medium_threshold: int = -3  # _MEDIUM_THRESHOLD = -3
