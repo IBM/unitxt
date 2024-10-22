@@ -237,7 +237,7 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
 def random_mix_generator(
     new_stream_name, new_stream_sources, stream_routing, input_streams
 ):
-    for old_stream_name in new_stream_sources:
+    for old_stream_name in sorted(new_stream_sources):
         optional_streams, weights = stream_routing[old_stream_name]
         random_generator = new_random_generator(sub_seed=old_stream_name)
         assert (
