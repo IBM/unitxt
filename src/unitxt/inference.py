@@ -681,9 +681,7 @@ class HFLlavaInferenceEngine(HFInferenceEngine):
 
         self.model = LlavaForConditionalGeneration.from_pretrained(
             self.model_name,
-            torch_dtype=torch.float16
-            if self.device == torch.device("mps")
-            else torch.bfloat16,
+            torch_dtype=torch.float16,
             low_cpu_mem_usage=True,
         ).to(self.device)
 
