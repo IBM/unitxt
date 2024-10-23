@@ -1582,6 +1582,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             format=format,
             main_score=metric_label,
             infer_log_probs=False,
+            include_meta_data=False,
         )
 
         predictions = [None, None]
