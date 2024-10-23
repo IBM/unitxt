@@ -12,6 +12,7 @@ from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
+from .operator_utils import simplify_steps
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import Finalize
@@ -417,6 +418,7 @@ class StandardRecipeWithIndexes(BaseRecipe):
                 ) from e
 
         super().prepare()
+        self.steps = simplify_steps(self.steps)
 
 
 class StandardRecipe(StandardRecipeWithIndexes):
