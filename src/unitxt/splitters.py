@@ -10,7 +10,7 @@ from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
     parse_slices_string,
-    random_mix_streams,
+    random_stream_mixer,
     rename_split,
     slice_streams,
 )
@@ -59,8 +59,8 @@ class SplitRandomMix(Splitter):
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_random_mix_string(v) for k, v in self.mix.items()}
-        generators = random_mix_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators)
+        dict_of_instance_lists = random_stream_mixer(multi_stream, mapping)
+        return MultiStream.from_iterables(dict_of_instance_lists, copying=True)
 
 
 class SeparateSplit(Splitter):
