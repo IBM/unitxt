@@ -2,7 +2,17 @@ import abc
 import dataclasses
 import os
 import re
-from typing import Any, Dict, List, Literal, Mapping, Optional, Sequence, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 from datasets import DatasetDict
 from tqdm import tqdm
@@ -175,35 +185,39 @@ class LazyLoadMixin(Artifact):
         pass
 
 
-class HFInferenceEngineBaseParamsMixin(Artifact):
+class HFGenerationParamsMixin(Artifact):
     max_new_tokens: int
-    do_sample: Optional[bool] = None
+    do_sample: bool = False
     temperature: Optional[float] = None
     top_p: Optional[float] = None
     top_k: Optional[int] = None
     num_beams: Optional[int] = None
     repetition_penalty: Optional[float] = None
-    output_scores: Optional[bool] = None
-    return_dict_in_generate: Optional[bool] = None
     pad_token_id: Optional[int] = None
     eos_token_id: Optional[int] = None
 
 
-class HFInferenceEngineBase(
+class HFInferenceEngine(
     InferenceEngine,
+    LogProbInferenceEngine,
     PackageRequirementsMixin,
     LazyLoadMixin,
-    HFInferenceEngineBaseParamsMixin,
+    HFGenerationParamsMixin,
 ):
     model_name: str
     label: str
 
-    is_use_fast: Optional[bool] = None
-    use_fp16: Optional[bool] = None
-    load_in_8bit: Optional[bool] = None
+    n_top_tokens: int = 5
 
-    device: Any = InternalField(default=None, name="Inference device")
+    device: Any = None
+    device_map: Any = None
+
+    use_fast_tokenizer: bool = True
+    use_fp16: bool = True
+    load_in_8bit: bool = False
+
     model: Any = InternalField(default=None, name="Inference object")
+    processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
@@ -215,31 +229,147 @@ class HFInferenceEngineBase(
         return hasattr(self, "model") and self.model is not None
 
     def _set_inference_device(self):
-        import torch
+        if self.device is not None and self.device_map is not None:
+            raise ValueError(
+                f"You must specify either 'device' or 'device_map', however both "
+                f"were given: 'device={self.device}', 'device_map={self.device_map}'."
+            )
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else 0
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        if self.device is None and self.device_map is None:
+            import torch
 
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
+            self.device = torch.device(
+                "mps"
+                if torch.backends.mps.is_available()
+                else 0
+                if torch.cuda.is_available()
+                else "cpu"
+            )
 
-    def _prepare_engine(self):
-        self._set_inference_device()
-        self._init_model()
+    @abc.abstractmethod
+    def _init_processor(self):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def _init_model(self):
         raise NotImplementedError
 
-    @abc.abstractmethod
+    def _prepare_engine(self):
+        self._set_inference_device()
+        self._init_processor()
+        self._init_model()
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
     def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
+    def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
+        return [
+            self.processor.decode(token, skip_special_tokens=True)
+            for token in tokens[inp_length:]
+        ]
+
+    @staticmethod
+    def create_string_from_tokens(string_tokens: List[str]) -> str:
+        return "".join(token for token in string_tokens)
+
+    def make_predictions(self, prepared_inputs: Mapping) -> Mapping:
+        return self.model.generate(
+            **prepared_inputs,
+            **self.to_dict([HFGenerationParamsMixin], keep_empty=False),
+            output_scores=True,
+            return_dict_in_generate=True,
+        )
+
+    def compute_transition_scores(
+        self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
+    ) -> Sequence:
+        # Some models may not support computing scores in this form by default, so a possible
+        # child class should have its own implementation of this method if necessary.
+        return self.model.compute_transition_scores(
+            sequences,
+            scores,
+            normalize_logits=True,
+            beam_indices=beam_indices,
+        )
+
+    def get_logprobs(
+        self, predictions: Mapping, string_tokens: List[List[str]]
+    ) -> List[List[Dict[str, Any]]]:
+        beam_indices = (
+            predictions.beam_indices
+            if self.num_beams is not None and self.num_beams > 1
+            else None
+        )
+
+        transition_scores = self.compute_transition_scores(
+            sequences=predictions.sequences,
+            scores=predictions.scores,
+            beam_indices=beam_indices,
+        )
+
+        logprobs: List[List[Dict[str, Any]]] = []
+
+        for sample_no, sample_scores in enumerate(transition_scores.detach().cpu()):
+            sample_logprobs: List[Dict[str, Any]] = []
+
+            for n, score in enumerate(sample_scores):
+                sample_logprobs.append(
+                    {
+                        "text": string_tokens[sample_no][n],
+                        "logprob": float(score.cpu()),
+                        "top_tokens": [
+                            {
+                                "text": self.processor.decode(idx),
+                                "logprob": float(
+                                    predictions.scores[n][sample_no][idx].cpu()
+                                ),
+                            }
+                            for idx in predictions.scores[n][sample_no].argsort(
+                                dim=0, descending=True
+                            )[: self.n_top_tokens]
+                        ],
+                    }
+                )
+
+            logprobs.append(sample_logprobs)
+
+        return logprobs
+
+    @abc.abstractmethod
+    def prepare_inputs(self, data: Iterable) -> Mapping:
         raise NotImplementedError
+
+    def get_return_object(
+        self,
+        output: Union[str, List[Dict[str, Any]]],
+        output_tokens: Optional[int],
+        inp: Optional[str],
+        inp_tokens: Optional[int],
+        return_meta_data: bool,
+    ) -> Union[str, List[Dict[str, Any]], TextGenerationInferenceOutput]:
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=output,
+                output_tokens=output_tokens if output_tokens is not None else None,
+                input_text=inp,
+                input_tokens=inp_tokens if inp_tokens is not None else None,
+                model_name=self.model_name,
+                inference_type=self.label,
+            )
+        return output
+
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+        return super().infer(dataset, return_meta_data)
 
     @abc.abstractmethod
     def _infer(
@@ -249,12 +379,315 @@ class HFInferenceEngineBase(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         raise NotImplementedError
 
+    def infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+        return super().infer_log_probs(dataset, return_meta_data)
 
-class HFPipelineBasedInferenceEngine(HFInferenceEngineBase):
+    @abc.abstractmethod
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError
+
+
+class HFAutoModelInferenceEngine(HFInferenceEngine):
+    label: str = "hf_auto_model"
+
+    def _init_processor(self):
+        from transformers import AutoTokenizer
+
+        self.processor = AutoTokenizer.from_pretrained(
+            pretrained_model_name_or_path=self.model_name,
+            use_fast=self.use_fast_tokenizer,
+            padding=True,
+            truncation=True,
+        )
+
+    def _init_model(self):
+        from transformers import (
+            AutoConfig,
+            AutoModelForCausalLM,
+            AutoModelForSeq2SeqLM,
+        )
+
+        model_class = (
+            AutoModelForSeq2SeqLM
+            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
+            else AutoModelForCausalLM
+        )
+
+        self.model = model_class.from_pretrained(
+            pretrained_model_name_or_path=self.model_name,
+            trust_remote_code=True,
+            device_map=self.device_map,
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+    def prepare_inputs(self, data: Iterable) -> Mapping:
+        return self.processor(
+            data,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+        ).to(self.device or self.device_map)
+
+    def _infer_fn(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool,
+        return_logprobs: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        tokenized_inputs = self.prepare_inputs(
+            [instance["source"] for instance in dataset]
+        )
+        input_length = (
+            1
+            if self.model.config.is_encoder_decoder
+            else tokenized_inputs.input_ids.shape[1]
+        )
+
+        predictions = self.make_predictions(tokenized_inputs)
+        sequences = predictions.sequences
+
+        string_tokens = [
+            self.decode_tokens(sequence, input_length) for sequence in sequences
+        ]
+
+        final_outputs = (
+            self.get_logprobs(predictions, string_tokens)
+            if return_logprobs
+            else [self.create_string_from_tokens(strings) for strings in string_tokens]
+        )
+
+        return [
+            self.get_return_object(
+                output=final_outputs[i],
+                output_tokens=len(string_tokens[i]),
+                inp=dataset[i]["source"],
+                inp_tokens=len(tokenized_inputs.encodings[i].tokens)
+                if tokenized_inputs.encodings is not None
+                else None,
+                return_meta_data=return_meta_data,
+            )
+            for i in range(len(sequences))
+        ]
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, False)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, True)
+
+
+class HFLlavaInferenceEngine(HFInferenceEngine):
+    lazy_load: bool = True
+    label: str = "hf_lava"
+
+    def compute_transition_scores(
+        self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
+    ) -> Sequence:
+        if not hasattr(self.model.config, "vocab_size"):
+            self.model.config.vocab_size = self.model.vocab_size
+
+        return super().compute_transition_scores(sequences, scores, beam_indices)
+
+    def _init_processor(self):
+        from transformers import AutoProcessor
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+        if not self.pad_token_id and hasattr(self.processor, "eos_token_id"):
+            self.pad_token_id = self.processor.eos_token_id
+
+    def _init_model(self):
+        import torch
+        from transformers import LlavaForConditionalGeneration
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+            device_map=self.device_map,
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+    def prepare_inputs(self, data: Iterable) -> Mapping:
+        import torch
+
+        text = data["source"]
+
+        images = extract_images(text, data)
+        if len(images) == 1:
+            images = images[0]
+
+        # Regular expression to match all <img src="..."> tags
+        regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+        model_input = re.sub(regex, "<image>", text)
+
+        inputs: Mapping = self.processor(
+            images=images, text=model_input, return_tensors="pt"
+        ).to(self.device or self.device_map, torch.float16)
+
+        return inputs
+
+    def _infer_fn(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool,
+        return_logprobs: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        results = []
+
+        for instance in tqdm(dataset):
+            processed_inputs = self.prepare_inputs(instance)
+            input_len = len(processed_inputs["input_ids"][0])
+
+            predictions = self.make_predictions(processed_inputs)
+
+            string_tokens = self.decode_tokens(predictions.sequences[0], input_len)
+
+            final_outputs = (
+                self.get_logprobs(predictions, [string_tokens])[0]
+                if return_logprobs
+                else self.create_string_from_tokens(string_tokens)
+            )
+
+            results.append(
+                self.get_return_object(
+                    output=final_outputs,
+                    output_tokens=len(string_tokens),
+                    inp=instance["source"],
+                    inp_tokens=None,
+                    return_meta_data=return_meta_data,
+                )
+            )
+
+        return results
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, False)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, True)
+
+
+class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
+    label: str = "hf_peft_auto_model"
+
+    peft_config: Any = InternalField(
+        default=None,
+        name="PEFT config read from the directory or the Hub repository "
+        "id specified in the 'model_name'.",
+    )
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+        "peft": "Install 'peft' package using: 'pip install peft'.",
+    }
+
+    def _prepare_engine(self):
+        self._read_peft_config()
+        super()._prepare_engine()
+
+    def _read_peft_config(self):
+        from peft import PeftConfig
+
+        try:
+            config = PeftConfig.from_pretrained(self.model_name)
+            assert isinstance(config.base_model_name_or_path, str)
+            self.peft_config = config
+
+        except ValueError as e:
+            if "Can't find" in str(e):
+                raise ValueError(
+                    f"Specified model '{self.model_name}' is not the PEFT model. "
+                    f"Use a regular instance of the `HFAutoModelInferenceEngine` "
+                    f"instead."
+                ) from e
+
+            raise e
+
+    def _init_processor(self):
+        from transformers import AutoTokenizer
+
+        self.processor = AutoTokenizer.from_pretrained(
+            self.peft_config.base_model_name_or_path
+        )
+
+    def _init_model_and_processor(self):
+        from peft import AutoPeftModelForCausalLM, AutoPeftModelForSeq2SeqLM
+        from transformers import AutoConfig
+
+        model_class = (
+            AutoPeftModelForSeq2SeqLM
+            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
+            else AutoPeftModelForCausalLM
+        )
+
+        self.model = model_class.from_pretrained(
+            pretrained_model_name_or_path=self.peft_config.base_model_name_or_path,
+            trust_remote_code=True,
+            device_map=self.device_map,
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+
+@deprecation(
+    version="2.0.0", msg=" Use non-pipeline-based 'HFInferenceEngine' instead."
+)
+class HFPipelineBasedInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
+):
+    model_name: str
+    label: str = "hf_pipeline_inference_engine"
+
+    use_fast_tokenizer: bool = True
+    use_fp16: bool = True
+    load_in_8bit: bool = False
+
     task: Optional[str] = None
 
-    label: str = "hf_pipeline_inference_engine"
-    use_fp16: bool = True
+    device: Any = None
+    device_map: Any = None
+
+    pipe: Any = InternalField(default=None)
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "hf_pipeline")
@@ -300,25 +733,49 @@ class HFPipelineBasedInferenceEngine(HFInferenceEngineBase):
 
         return args
 
-    def _init_model(self):
+    def _create_pipeline(self, model_args: Dict[str, Any]):
         from transformers import pipeline
-
-        if self.task is None:
-            self._define_task()
-
-        model_args = self._get_model_args()
 
         self.model = pipeline(
             model=self.model_name,
             task=self.task,
-            use_fast=self.is_use_fast,
+            use_fast=self.use_fast_tokenizer,
             trust_remote_code=True,
             **model_args,
             **self.to_dict(
-                [HFInferenceEngineBaseParamsMixin],
+                [HFGenerationParamsMixin],
                 keep_empty=False,
             ),
         )
+
+    def _set_inference_device(self):
+        if self.device is not None and self.device_map is not None:
+            raise ValueError(
+                f"You must specify either 'device' or 'device_map', however both "
+                f"were given: 'device={self.device}', 'device_map={self.device_map}'."
+            )
+
+        if self.device is None and self.device_map is None:
+            import torch
+
+            self.device = torch.device(
+                "mps"
+                if torch.backends.mps.is_available()
+                else 0
+                if torch.cuda.is_available()
+                else "cpu"
+            )
+
+    def _prepare_engine(self):
+        self._set_inference_device()
+        if self.task is None:
+            self._define_task()
+        model_args = self._get_model_args()
+        self._create_pipeline(model_args)
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
 
     def _infer(
         self,
@@ -346,437 +803,6 @@ class HFPipelineBasedInferenceEngine(HFInferenceEngineBase):
                 input_text=inp,
             )
         return output["generated_text"]
-
-
-class HFPeftInferenceEngine(HFPipelineBasedInferenceEngine):
-    label: str = "hf_peft_pipeline_inference_engine"
-
-    _requirements_list = {
-        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
-        "torch": "Install torch, go on PyTorch website for mode details.",
-        "accelerate": "pip install accelerate",
-        "peft": "Install 'peft' package using: 'pip install peft'.",
-    }
-
-    @staticmethod
-    def is_peft_model(model_name: str) -> bool:
-        from peft import PeftConfig
-
-        try:
-            PeftConfig.from_pretrained(model_name)
-            return True
-        except ValueError as e:
-            if "Can't find" in str(e):
-                return False
-            raise e
-
-    def prepare_engine(self):
-        if not self.is_peft_model(self.model_name):
-            raise ValueError(
-                f"Specified model '{self.model_name}' is not the PEFT model. "
-                f"Use a regular instance of the `HFPipelineBasedInferenceEngine` "
-                f"instead."
-            )
-        super().prepare_engine()
-
-    def _define_task(self):
-        from peft import AutoPeftModelForCausalLM, AutoPeftModelForSeq2SeqLM, PeftConfig
-        from transformers import AutoTokenizer
-
-        peft_config = PeftConfig.from_pretrained(self.model_name)
-        assert isinstance(peft_config.base_model_name_or_path, str)
-        original_model_name = self.model_name
-        self.model_name = peft_config.base_model_name_or_path
-        super()._define_task()
-
-        if self.task == "text2text-generation":
-            self.model_name = AutoPeftModelForSeq2SeqLM.from_pretrained(
-                original_model_name
-            )
-        else:
-            self.model_name = AutoPeftModelForCausalLM.from_pretrained(
-                original_model_name
-            )
-
-        self.processor = AutoTokenizer.from_pretrained(
-            peft_config.base_model_name_or_path
-        )
-
-    def _get_model_args(self) -> Dict[str, Any]:
-        args = super()._get_model_args()
-        args["tokenizer"] = self.processor
-        return args
-
-
-class HFInferenceEngine(HFInferenceEngineBase, LogProbInferenceEngine):
-    processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
-
-    @abc.abstractmethod
-    def get_engine_id(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def _init_model(self):
-        raise NotImplementedError
-
-    @abc.abstractmethod
-    def prepare_inputs(self, data):
-        raise NotImplementedError
-
-    def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
-        return [
-            self.processor.decode(token, skip_special_tokens=True)
-            for token in tokens[inp_length:]
-        ]
-
-    @staticmethod
-    def create_string_from_tokens(string_tokens: List[str]) -> str:
-        return "".join(token for token in string_tokens)
-
-    def make_predictions(self, prepared_inputs: Mapping) -> Union[Sequence, Mapping]:
-        return self.model.generate(
-            **prepared_inputs,
-            **self.to_dict([HFInferenceEngineBaseParamsMixin], keep_empty=False),
-        )
-
-    def compute_transition_scores(self, sequences, scores, beam_indices):
-        # Some models may not support computing scores in this form by default,
-        # so a child class should have its own implementation of this method if necessary.
-        return self.model.compute_transition_scores(
-            sequences,
-            scores,
-            normalize_logits=True,
-            beam_indices=beam_indices,
-        )
-
-    def get_logprobs(
-        self, predictions: Mapping, string_tokens: Union[List[List[str]], List[str]]
-    ) -> List[List[Dict[str, Any]]]:
-        if not isoftype(string_tokens, List[List[str]]):
-            string_tokens = [string_tokens]
-
-        raw_scores = predictions.scores
-
-        beam_indices = (
-            predictions.beam_indices
-            if self.num_beams is not None and self.num_beams > 1
-            else None
-        )
-
-        transition_scores = self.compute_transition_scores(
-            sequences=predictions.sequences,
-            scores=raw_scores,
-            beam_indices=beam_indices,
-        )
-
-        logprobs: List[List[Dict[str, Any]]] = []
-
-        for sample_no, sample_scores in enumerate(transition_scores.detach().cpu()):
-            sample_logprobs: List[Dict[str, Any]] = []
-
-            for n, score in enumerate(sample_scores):
-                sample_logprobs.append(
-                    {
-                        "text": string_tokens[sample_no][n],
-                        "logprob": float(score.cpu()),
-                        "top_tokens": [
-                            {
-                                "text": self.processor.decode(idx),
-                                "logprob": float(raw_scores[n][sample_no][idx].cpu()),
-                            }
-                            for idx in raw_scores[n][sample_no].argsort(
-                                dim=0, descending=True
-                            )[:5]
-                        ],
-                    }
-                )
-
-            logprobs.append(sample_logprobs)
-
-        return logprobs
-
-    def get_return_object(
-        self,
-        output: Union[str, List[Dict[str, Any]]],
-        output_tokens: Optional[int],
-        inp: str,
-        inp_tokens: Optional[int],
-        return_meta_data: bool,
-    ):
-        if return_meta_data:
-            return TextGenerationInferenceOutput(
-                prediction=output,
-                output_tokens=output_tokens if output_tokens is not None else None,
-                input_text=inp,
-                input_tokens=inp_tokens if inp_tokens is not None else None,
-                model_name=self.model_name,
-                inference_type=self.label,
-            )
-        return output
-
-    @abc.abstractmethod
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        raise NotImplementedError
-
-    def infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        assert not self.return_dict_in_generate and not self.output_scores, (
-            "You must set both 'return_dict_in_generate' and 'output_scores' "
-            "to 'False' if you don't want the engine to return logprobs."
-        )
-        return super().infer(dataset, return_meta_data)
-
-    @abc.abstractmethod
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        raise NotImplementedError
-
-    def infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        assert self.return_dict_in_generate and self.output_scores, (
-            "You must set both 'return_dict_in_generate' and 'output_scores' "
-            "to 'True' if you want the engine to return logprobs."
-        )
-        return super().infer_log_probs(dataset, return_meta_data)
-
-
-class HFAutoModelInferenceEngine(HFInferenceEngine):
-    label: str = "hf_auto_model_inference_engine"
-
-    def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, "hf_auto_model")
-
-    def _init_model(self):
-        from transformers import (
-            AutoConfig,
-            AutoModelForCausalLM,
-            AutoModelForSeq2SeqLM,
-            AutoTokenizer,
-        )
-
-        self.processor = AutoTokenizer.from_pretrained(
-            pretrained_model_name_or_path=self.model_name,
-            use_fast=self.is_use_fast,
-            padding=True,
-            truncation=True,
-        )
-
-        model_class = (
-            AutoModelForSeq2SeqLM
-            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
-            else AutoModelForCausalLM
-        )
-
-        self.model = model_class.from_pretrained(
-            pretrained_model_name_or_path=self.model_name,
-            trust_remote_code=True,
-        ).to(self.device)
-
-    def prepare_inputs(self, data):
-        return self.processor(
-            [instance["source"] for instance in data],
-            padding=True,
-            truncation=True,
-            return_tensors="pt",
-        ).to(self.device)
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        tokenized_inputs = self.prepare_inputs(dataset)
-        input_length = (
-            1
-            if self.model.config.is_encoder_decoder
-            else tokenized_inputs.input_ids.shape[1]
-        )
-
-        predictions: List[List[str]] = [
-            self.decode_tokens(prediction, input_length)
-            for prediction in self.make_predictions(tokenized_inputs)
-        ]
-
-        return [
-            self.get_return_object(
-                output=self.create_string_from_tokens(predictions[i]),
-                output_tokens=len(predictions[i]),
-                inp=dataset[i]["source"],
-                inp_tokens=len(tokenized_inputs.encodings[i].tokens)
-                if tokenized_inputs.encodings is not None
-                else None,
-                return_meta_data=return_meta_data,
-            )
-            for i in range(len(predictions))
-        ]
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        tokenized_inputs = self.prepare_inputs(dataset)
-        input_length = (
-            1
-            if self.model.config.is_encoder_decoder
-            else tokenized_inputs.input_ids.shape[1]
-        )
-
-        predictions: Mapping = self.make_predictions(tokenized_inputs)
-        string_tokens: List[List[str]] = [
-            self.decode_tokens(prediction, input_length)
-            for prediction in predictions.sequences
-        ]
-
-        outputs = self.get_logprobs(predictions, string_tokens)
-
-        return [
-            self.get_return_object(
-                output=outputs[i],
-                output_tokens=len(outputs[i]),
-                inp=dataset[i]["source"],
-                inp_tokens=len(tokenized_inputs.encodings[i].tokens)
-                if tokenized_inputs.encodings is not None
-                else None,
-                return_meta_data=return_meta_data,
-            )
-            for i in range(len(outputs))
-        ]
-
-
-class HFLlavaInferenceEngine(HFInferenceEngine):
-    lazy_load: bool = True
-    label: str = "hf_lava_inference_engine"
-
-    def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, "hf_lava")
-
-    def compute_transition_scores(self, sequences, scores, beam_indices):
-        if not hasattr(self.model.config, "vocab_size"):
-            self.model.config.vocab_size = self.model.vocab_size
-
-        return self.model.compute_transition_scores(
-            sequences,
-            scores,
-            normalize_logits=True,
-            beam_indices=beam_indices,
-        )
-
-    def _init_model(self):
-        import torch
-        from transformers import AutoProcessor, LlavaForConditionalGeneration
-
-        self.model = LlavaForConditionalGeneration.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        ).to(self.device)
-
-        self.processor = AutoProcessor.from_pretrained(self.model_name)
-
-        if not self.pad_token_id and hasattr(self.processor, "eos_token_id"):
-            self.pad_token_id = self.processor.eos_token_id
-
-    def prepare_inputs(self, data):
-        import torch
-
-        text = data["source"]
-
-        images = extract_images(text, data)
-        if len(images) == 1:
-            images = images[0]
-
-        # Regular expression to match all <img src="..."> tags
-        regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
-        model_input = re.sub(regex, "<image>", text)
-
-        inputs: Mapping = self.processor(
-            images=images, text=model_input, return_tensors="pt"
-        ).to(self.device, torch.float16)
-
-        return inputs
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-
-        results = []
-
-        for instance in tqdm(dataset):
-            processed_inputs = self.prepare_inputs(instance)
-            input_len = len(processed_inputs["input_ids"][0])
-
-            predictions: Sequence = self.make_predictions(processed_inputs)
-
-            string_tokens = self.decode_tokens(predictions[0], input_len)
-
-            results.append(
-                self.get_return_object(
-                    output=self.create_string_from_tokens(string_tokens),
-                    output_tokens=len(string_tokens),
-                    inp=instance["source"],
-                    inp_tokens=None,
-                    return_meta_data=return_meta_data,
-                )
-            )
-
-        return results
-
-    def _infer_log_probs(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        assert self.return_dict_in_generate and self.output_scores, (
-            "You must set both 'return_dict_in_generate' and 'output_scores' "
-            "to 'True' if you want the engine to return logprobs."
-        )
-
-        if not self._is_loaded():
-            self._prepare_engine()
-
-        results = []
-
-        for instance in tqdm(dataset):
-            processed_inputs = self.prepare_inputs(instance)
-            input_len = len(processed_inputs["input_ids"][0])
-
-            predictions: Mapping = self.make_predictions(processed_inputs)
-
-            string_tokens = self.decode_tokens(predictions.sequences[0], input_len)
-
-            outputs: List[Dict[str, Any]] = self.get_logprobs(
-                predictions, string_tokens
-            )[0]
-
-            results.append(
-                self.get_return_object(
-                    output=outputs,
-                    output_tokens=len(outputs),
-                    inp=instance["source"],
-                    inp_tokens=None,
-                    return_meta_data=return_meta_data,
-                )
-            )
-
-        return results
 
 
 def mock_logprobs_default_value_factory() -> List[Dict[str, Any]]:

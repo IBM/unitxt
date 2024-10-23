@@ -129,9 +129,6 @@ class TestInferenceEngine(UnitxtTestCase):
 
             self.assertEqual(predictions[0], "The real image")
 
-            inference_model.return_dict_in_generate = True
-            inference_model.output_scores = True
-
             prediction = inference_model.infer_log_probs(test_dataset)[0]
 
             assert isoftype(prediction, List[Dict[str, Any]])
@@ -231,8 +228,6 @@ class TestInferenceEngine(UnitxtTestCase):
             max_new_tokens=16,
             repetition_penalty=1.5,
             top_k=5,
-            return_dict_in_generate=True,
-            output_scores=True,
             data_classification_policy=["public"],
         )
 
@@ -253,9 +248,6 @@ class TestInferenceEngine(UnitxtTestCase):
         )
         assert isinstance(prediction[0]["text"], str)
         assert isinstance(prediction[0]["logprob"], float)
-
-        engine.return_dict_in_generate = False
-        engine.output_scores = False
 
         results = engine.infer(data)
 
