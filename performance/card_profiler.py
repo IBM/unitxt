@@ -111,7 +111,7 @@ def profile_from_cards():
         )
 
 
-cards = ["cards.cola", "cards.dart"]  # the benchmark
+cards = ["cards.cola", "cards.dart", "cards.wnli"]  # the benchmark
 
 
 def main():
@@ -155,6 +155,7 @@ def main():
             "total_time": tot_time,
             "load_time": load_time,
             "net_time": diff,
+            "cards_tested": cards,
         }
 
         # Write the profiling results to the JSON file (user-specified)
