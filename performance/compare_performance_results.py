@@ -36,6 +36,8 @@ table_pr = f"| PR Branch    | {pr_perf['total_time']:<14} | {pr_perf['load_time'
 # Print markdown table
 print("### Performance Comparison Results\n")
 print(table_header + table_divider + table_main + table_pr)
+print("\n\nParticipating cards in main: ", main_perf["cards_tested"])
+print("\n\nParticipating cards in PR: ", pr_perf["cards_tested"])
 
 # Performance degradation check (5% threshold)
 if ratio > 1.05:
