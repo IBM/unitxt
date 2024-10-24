@@ -26,25 +26,26 @@ class CardProfiler:
 
     from unitxt root dir, run the following linux commands:
 
-    python performance/card_profiler.py
+    python performance/card_profiler.py --output_file=<path_to_a_json_file>
 
     The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
-    accumulated across the cards in the benchmark, and wraps both results into a json file:
-    performance/logs/cards_benchmark.json
+    accumulated across the cards in the benchmark, and wraps both results into a json output_file,
+    which is written in the path provided.
 
-    In addition, the script generates a binary file named performance/logs/cards_benchmark.prof,
+    In addition, the script generates a binary file named xxx.prof, as specified in field
+    "performance.prof file" of the json output_file,
     which can be nicely and interactively visualized via snakeviz:
 
     (pip install snakeviz)
-    snakeviz performance/logs/cards_benchmark.prof
+    snakeviz <path provided in field 'performance.prof file' of the json output_file>
 
     snakeviz opens an interactive internet browser window allowing to explore all time-details.
-    See exporing options here: https://jiffyclub.github.io/snakeviz/
+    See exploring options here: https://jiffyclub.github.io/snakeviz/
     (can also use the -s flag for snakeviz which will only set up a server and print out the url
     to use from another computer in order to view results shown by that server)
 
     In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
-    You will find the total time of each step, accumulated along all cards in the benchmark.
+    You will find the total time of each step, accumulated over all cards in the benchmark.
     """
 
     def profiler_instantiate_recipe(self, **kwargs) -> StandardRecipe:
@@ -155,6 +156,8 @@ def main():
             "total_time": tot_time,
             "load_time": load_time,
             "net_time": diff,
+            "cards_tested": cards,
+            "performance.prof file": temp_prof_file_path,
         }
 
         # Write the profiling results to the JSON file (user-specified)
