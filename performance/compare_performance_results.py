@@ -38,7 +38,7 @@ print("### Performance Comparison Results\n")
 print(table_header + table_divider + table_main + table_pr)
 print("\n\nParticipating cards: ", pr_perf["cards_tested"])
 print("\n\n.perf file for Main branch: ", main_perf["performance.prof file"])
-print("\n\n.perf file for PR branch: ", pr_perf["performance.prof file"])
+print("\n.perf file for PR branch: ", pr_perf["performance.prof file"])
 
 # Performance degradation check (5% threshold)
 if ratio > 1.05:
