@@ -157,6 +157,7 @@ def main():
             "load_time": load_time,
             "net_time": diff,
             "cards_tested": cards,
+            "used_eager_mode": settings.use_eager_execution,
             "performance.prof file": temp_prof_file_path,
         }
 
