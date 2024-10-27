@@ -16,6 +16,10 @@
             }
         },
         {
+            "__type__": "to_rgb",
+            "field": "image"
+        },
+        {
             "__type__": "to_image",
             "field": "image",
             "to_field": "context"
