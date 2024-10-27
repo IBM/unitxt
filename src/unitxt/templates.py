@@ -18,6 +18,7 @@ from .serializers import (
     NumberQuantizingSerializer,
     Serializer,
     TableSerializer,
+    VideoSerializer,
 )
 from .settings_utils import get_constants
 from .type_utils import isoftype
@@ -59,6 +60,7 @@ class Template(InstanceOperator):
         default_factory=lambda: MultiTypeSerializer(
             serializers=[
                 ImageSerializer(),
+                VideoSerializer(),
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
