@@ -31,6 +31,7 @@ class CardProfiler:
     The script computes the total runtime of the benchmark, and the time spent in loading the dataset,
     accumulated across the cards in the benchmark, and wraps both results into a json output_file,
     which is written in the path provided.
+    If --output_file cmd line argument is not provided, the default path is taken to be 'performance/logs/cards.json'.
 
     In addition, the script generates a binary file named xxx.prof, as specified in field
     "performance.prof file" of the json output_file,
@@ -121,8 +122,8 @@ def main():
     parser.add_argument(
         "--output_file",
         type=str,
-        required=True,
-        help="Path to save output files (without extension)",
+        default="performance/logs/cards.json",
+        help="Path to save the json output file",
     )
     args = parser.parse_args()
 
