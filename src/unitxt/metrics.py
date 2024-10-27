@@ -1245,11 +1245,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # loop through the instances and group the scores
         for instance in instances:
             task_data = instance["task_data"]
-            group_key = task_data["group_id"]
+            group_key = str(task_data["group_id"])
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                task_data[self.subgroup_column]
+                str(task_data[self.subgroup_column])
                 if uses_subgroups
                 else default_subgroup_name
             )
@@ -1387,6 +1387,8 @@ class ANLS(InstanceMetric):
     reduction_map = {"mean": ["anls"]}
     prediction_type = Any  # string representation is compared
 
+    threshold: float = 0.5
+
     @staticmethod
     @lru_cache(maxsize=10000)
     def preprocess_text(text):
@@ -1405,7 +1407,6 @@ class ANLS(InstanceMetric):
         references: List[Any],
         prediction: Any,
         task_data: List[Dict],
-        threshold=1.0,
     ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
@@ -1414,7 +1415,7 @@ class ANLS(InstanceMetric):
 
         question_result = 1.0 - min(values)
 
-        if question_result < threshold:
+        if question_result < self.threshold:
             question_result = 0.0
 
         result = {}

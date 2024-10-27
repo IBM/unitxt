@@ -8,13 +8,13 @@ with settings.context(
     disable_hf_datasets_cache=False,
 ):
     inference_model = LMMSEvalInferenceEngine(
-        model_type="llava_hf",
-        model_args="pretrained=llava-hf/llava-interleave-qwen-0.5b-hf",
+        model_type="llava_onevision",
+        model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
     )
 
     dataset = load_dataset(
         card="cards.doc_vqa.lmms_eval",
-        template="templates.qa.with_context.title",
+        template="templates.qa.with_context.lmms_eval",
         loader_limit=30,
         streaming=True,
     )
@@ -25,7 +25,7 @@ with settings.context(
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
     print_dict(
-        evaluated_dataset[0],
+        evaluated_dataset[7],
         keys_to_print=[
             "source",
             "media",

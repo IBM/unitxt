@@ -50,7 +50,7 @@ class TextGenerationInferenceOutput:
     inference_type: Optional[str] = None
 
 
-class InferenceEngine(abc.ABC, Artifact):
+class InferenceEngine(Artifact):
     """Abstract base class for inference."""
 
     @abc.abstractmethod
@@ -73,6 +73,7 @@ class InferenceEngine(abc.ABC, Artifact):
         pass
 
     def prepare(self):
+        super().prepare()
         if not settings.mock_inference_mode:
             self.prepare_engine()
 
@@ -999,10 +1000,20 @@ class WMLInferenceEngine(
         return predict_result
 
 
+def get_images_without_text(instance):
+    return extract_images(instance["source"], instance)
+
+
+def get_text_without_images(instance, image_token="<image>"):
+    regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+    return re.sub(regex, image_token, instance["source"])
+
+
 class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     model_name: str
     max_new_tokens: int
     lazy_load = True
+    image_token = "<image>"
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
@@ -1052,16 +1063,16 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         results = []
         for instance in tqdm(dataset):
-            text = instance["source"]
-            images = extract_images(text, instance)
-            # Regular expression to match all <img src="..."> tags
-            regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
-            model_input = re.sub(regex, "<image>", text)
+            text = get_text_without_images(instance, self.image_token)
+            images = get_images_without_text(instance)
+
             if len(images) == 1:
                 images = images[0]
-            inputs = self.processor(
-                images=images, text=model_input, return_tensors="pt"
-            ).to(self.device, torch.float16)
+
+            inputs = self.processor(images=images, text=text, return_tensors="pt").to(
+                self.device, torch.float16
+            )
+
             input_len = len(inputs["input_ids"][0])
             output = self.model.generate(
                 **inputs,
@@ -1077,11 +1088,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
         return results
 
 
-def get_images(instance):
-    return instance
-
-
-class LMMSEvalInferenceEngine(InferenceEngine, LazyLoadMixin):
+class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoadMixin):
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
@@ -1089,9 +1096,10 @@ class LMMSEvalInferenceEngine(InferenceEngine, LazyLoadMixin):
     temperature: float = 0.0
     do_sample: bool = False
     generate_until: List[str] = ["\n\n"]
+    image_token = "<image>"
 
     _requirements_list = {
-        "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.1.2",
+        "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
     }
 
     def prepare_engine(self):
@@ -1100,15 +1108,18 @@ class LMMSEvalInferenceEngine(InferenceEngine, LazyLoadMixin):
 
     def _prepare_engine(self):
         import torch
-        from lmms_eval.api.registry import get_model
+        from lmms_eval.models import get_model
 
         self.device = torch.device(
             "mps"
             if torch.backends.mps.is_available()
-            else 0
+            else "cuda"
             if torch.cuda.is_available()
             else "cpu"
         )
+
+        if isinstance(self.model_args, dict):
+            self.model_args = ",".join(f"{k}={v}" for k, v in self.model_args.items())
 
         self.model = get_model(self.model_type).create_from_arg_string(
             self.model_args,
@@ -1133,31 +1144,38 @@ class LMMSEvalInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         temp_task_name = str(uuid.uuid4())
 
-        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
-
         requests = []
         for i, instance in enumerate(dataset):
             requests.append(
                 Instance(
                     request_type="generate_until",
                     arguments=(
-                        instance["source"],
+                        get_text_without_images(instance, image_token=self.image_token),
                         {
                             "max_new_tokens": self.max_new_tokens,
                             "temperature": self.temperature,
                             "do_sample": self.do_sample,
                             "until": self.generate_until,
                         },
-                        lambda x: x["media"]["images"],
-                        0,
+                        get_images_without_text,
+                        i,
                         temp_task_name,
                         "test",
                     ),
                     idx=i,
-                    metadata=(temp_task_name, i, 1),
+                    # metadata=(temp_task_name, i, 1),
+                    metadata={
+                        "task": temp_task_name,
+                        "doc_id": i,
+                        "repeats": 1,
+                    },
                 )
             )
 
+        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
+
+        responses = self.model.generate_until(requests)
+
         self.model.task_dict.pop(temp_task_name)
 
-        return self.model.generate_until(requests)
+        return responses
