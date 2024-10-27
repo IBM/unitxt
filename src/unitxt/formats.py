@@ -182,6 +182,7 @@ class SystemFormat(BaseFormat):
                 target_prefix=demo_target_prefix,
                 source=demo_source,
                 target=demo_target,
+                instruction=instruction,
                 **self.format_args,
             )
             demos_string += demo_str

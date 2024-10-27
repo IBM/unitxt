@@ -244,7 +244,8 @@ class MultiStream(dict):
         return IterableDatasetDict(
             {
                 key: IterableDataset.from_generator(
-                    self.get_generator, gen_kwargs={"key": key}
+                    self.get_generator,
+                    gen_kwargs={"key": key},
                 )
                 for key in self.keys()
             }

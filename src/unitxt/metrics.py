@@ -135,7 +135,7 @@ class Metric(Artifact):
     def _add_score_prefix(self, score_name):
         return (
             self.score_prefix + score_name
-            if score_name not in ["score", "score_name"]
+            if score_name not in ["score", "score_name", "num_of_instances"]
             else score_name
         )
 
@@ -149,13 +149,14 @@ class Metric(Artifact):
                 score if score_name not in ["score_name"] else self.score_prefix + score
             )
         for new_score_name in new_scores:
-            if new_score_name in ["score", "score_name"]:
+            if new_score_name in ["score", "score_name", "num_of_instances"]:
                 continue
             if new_score_name in existing_scores:
                 UnitxtWarning(
                     message=f"Metric '{new_score_name}' that has just been evaluated to {new_scores[new_score_name]}, is already recorded "
                     f"to have value {existing_scores[new_score_name]} by a previous metric evaluation on this instance or stream. "
-                    f"To avoid overwriting the existing value, add a score_prefix to the metric (e.g. score_prefix='my_second_').",
+                    f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                    f"which will yield, in this case, a score named: 'my_second_{new_score_name}')",
                     additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
                 )
         return new_scores
@@ -276,7 +277,13 @@ class Metric(Artifact):
         self, instance: Dict[str, Any], global_score: dict
     ):
         for score_name in global_score:
-            if score_name in ["score", "score_name", "score_ci_low", "score_ci_high"]:
+            if score_name in [
+                "score",
+                "score_name",
+                "score_ci_low",
+                "score_ci_high",
+                "num_of_instances",
+            ]:
                 continue
             if score_name in instance["score"]["global"]:
                 UnitxtWarning(
@@ -541,7 +548,6 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
         references = []
         predictions = []
         task_data = []
-        global_score = {}
 
         instances = []
 
@@ -592,6 +598,7 @@ class GlobalMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
             )
         self._validate_references_and_prediction(references, predictions)
+        global_score = {"num_of_instances": len(instances)}
 
         result = self._compute(references, predictions, task_data)
         global_score.update(
@@ -659,13 +666,14 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         default_factory=lambda: ["mean", "weighted_win_rate"]
     )
 
+    def preprocess_instance(self, instance):
+        return instance
+
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        global_score = {}
-
         instances = []
-
         for instance in stream:
             self.verify_instance(instance)
+            instance = self.preprocess_instance(instance)
             instances.append(instance)
 
         predictions = [instance["prediction"] for instance in instances]
@@ -675,6 +683,7 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             for instance in instances
         ]
         self._validate_references_and_prediction(references, predictions)
+        global_score = {"num_of_instances": len(instances)}
         # compute the metric over all refs and preds
         instance_scores = self.compute(
             references=references,
@@ -1062,7 +1071,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances = self.compute_instance_scores(stream)
-        global_score = {}
+        global_score = {"num_of_instances": len(instances)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1099,7 +1108,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances, reduction_params, reduction_fields
+                    instances,
+                    reduction_params,
+                    reduction_fields,
                 )
             else:
                 raise ValueError(
@@ -1174,13 +1185,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             instance_score["score_name"] = self.main_score
             if "score" not in instance:
                 instance["score"] = {"global": {}, "instance": {}}
+            if "global" not in instance["score"]:
+                instance["score"]["global"] = {}
+            if "instance" not in instance["score"]:
+                instance["score"]["instance"] = {}
 
             instance["score"]["instance"].update(
                 self._add_score_prefixes_to_score_dict_and_check_against_existing_scores(
                     instance_score, instance["score"]["instance"]
                 )
             )
-
             instances.append(instance)
 
         return instances
@@ -1190,7 +1204,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         instances: List[dict],
         score_names: List[str],
         group_aggregation_func,
-        prepend_score_prefix: bool = True,
+        prepend_score_prefix: bool,
     ):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
@@ -1221,11 +1235,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # loop through the instances and group the scores
         for instance in instances:
             task_data = instance["task_data"]
-            group_key = task_data["group_id"]
+            group_key = str(task_data["group_id"])
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                task_data[self.subgroup_column]
+                str(task_data[self.subgroup_column])
                 if uses_subgroups
                 else default_subgroup_name
             )
@@ -1259,7 +1273,10 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         ]
 
     def _set_up_group_mean_aggregation(
-        self, instances, reduction_params, reduction_fields
+        self,
+        instances,
+        reduction_params,
+        reduction_fields,
     ):
         group_aggregation_func = reduction_params["agg_func"][1]
         # if treat groups as units
@@ -1268,7 +1285,10 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             # pass the group aggregate---not instance---scores to resample as usual
             aggregation_function = self.average_item_scores
             scores_to_resample = self.get_group_scores(
-                instances, reduction_fields, group_aggregation_func
+                instances=instances,
+                score_names=reduction_fields,
+                group_aggregation_func=group_aggregation_func,
+                prepend_score_prefix=True,
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
@@ -1280,7 +1300,10 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 group_aggregation_func=group_aggregation_func,
             ):
                 group_scores = self.get_group_scores(
-                    instances, [field_name], group_aggregation_func, False
+                    instances=instances,
+                    score_names=[field_name],
+                    group_aggregation_func=group_aggregation_func,
+                    prepend_score_prefix=False,
                 )
                 return nan_mean(
                     [group["score"]["instance"][field_name] for group in group_scores]
@@ -3017,7 +3040,7 @@ class SafetyMetric(GlobalMetric):
     # instead of using the 'task_data' parameters, so prediction
     # type and reference type are different
     prediction_type = Any
-    batch_size: int = 100
+    batch_size: int = 10
     critical_threshold: int = -5  # _CRITICAL_THRESHOLD = -5
     high_threshold: int = -4  # _HIGH_THRESHOLD = -4
     medium_threshold: int = -3  # _MEDIUM_THRESHOLD = -3
@@ -3115,7 +3138,7 @@ class SafetyMetric(GlobalMetric):
 class LlamaIndexLLMMetric(InstanceMetric):
     model_name: str = ""
     main_score: str = ""
-    prediction_type: str = str
+    prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
     anthropic_models: List[

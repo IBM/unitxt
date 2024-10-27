@@ -75,8 +75,6 @@ class GrayScale(ImageFieldOperator):
         return self.image.fromarray(grayscale_array)
 
 
-class RGB(ImageFieldOperator):
+class ToRGB(ImageFieldOperator):
     def process_image(self, image):
-        # Convert the image to grayscale
-        rgb_image = image.convert("RGB")
-        return rgb_image
+        return image.convert("RGB")

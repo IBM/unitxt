@@ -6,6 +6,6 @@
     "template_card_index": 0,
     "max_train_instances": 1000,
     "max_validation_instances": 1000,
-    "max_test_instances": 10,
+    "max_test_instances": 100,
     "card": "cards.attaq_500"
 }
