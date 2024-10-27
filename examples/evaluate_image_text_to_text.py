@@ -3,8 +3,8 @@ from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine
 from unitxt.text_utils import print_dict
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.61.73.90', 55557)
+# from cvar_pyutils.debugging_tools import set_remote_debugger
+# set_remote_debugger('9.61.73.90', 55557)
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
@@ -13,23 +13,27 @@ with settings.context(
     )
 
     dataset = load_dataset(
-        # card="cards.doc_vqa.lmms_eval",
         card="cards.ai2d",
-        # card="cards.mmmu.accounting",
-        # template="templates.qa.multiple_choice.with_topic.title",
-        template="templates.qa.multiple_choice.with_context.no_intro.all",
-        # template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
+        template="templates.qa.multiple_choice.with_context.lmms_eval",
         format="formats.models.llava_interleave",
-        loader_limit=20,
+        # loader_limit=20,
         # augmentor="augmentors.image.grey_scale",
         augmentor="augmentors.image.rgb",
         streaming=True,
-        # metrics=["metrics.anls"]
         metrics=["metrics.exact_match_mm"]
     )
-
-    test_dataset = list(tqdm(dataset["test"], total=20))
-    # test_dataset = list(tqdm(dataset["test"]))
+    # dataset = load_dataset(
+    #     card="cards.doc_vqa.lmms_eval",
+    #     template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
+    #     format="formats.models.llava_interleave",
+    #     loader_limit=20,
+    #     # augmentor="augmentors.image.grey_scale",
+    #     augmentor="augmentors.image.rgb",
+    #     streaming=True,
+    #     metrics=["metrics.anls"]
+    # )
+    # test_dataset = list(tqdm(dataset["test"], total=20))
+    test_dataset = list(tqdm(dataset["test"]))
 
     predictions = inference_model.infer(test_dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
