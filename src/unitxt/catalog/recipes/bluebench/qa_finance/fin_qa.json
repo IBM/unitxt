@@ -1,7 +1,7 @@
 {
     "__type__": "standard_recipe",
     "demos_pool_size": 100,
-    "num_demos": 2,
+    "num_demos": 1,
     "demos_taken_from": "train",
     "template_card_index": 0,
     "max_train_instances": 1000,
