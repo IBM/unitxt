@@ -2,7 +2,7 @@
     "__type__": "task",
     "input_fields": {
         "topic": "str",
-        "context": "Union[Text, Image, Audio, Table, Dialog]",
+        "context": "Union[Text, Image, Audio, Table, Dialog, Video]",
         "context_type": "str",
         "question": "str",
         "choices": "List[str]"

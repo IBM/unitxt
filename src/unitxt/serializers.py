@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Image, Number, Table
+from .types import Dialog, Image, Number, Table, Video
 
 
 class Serializer(InstanceFieldOperator):
@@ -111,10 +111,22 @@ class ImageSerializer(SingleTypeSerializer):
         return value["image"]
 
 
+class VideoSerializer(ImageSerializer):
+    serialized_type = Video
+
+    def serialize(self, value: Video, instance: Dict[str, Any]) -> str:
+        serialized_images = []
+        for image in value:
+            image = super().serialize(image, instance)
+            serialized_images.append(image)
+        return "".join(serialized_images)
+
+
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
             ImageSerializer(),
+            VideoSerializer(),
             TableSerializer(),
             DialogSerializer(),
         ]

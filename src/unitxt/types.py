@@ -18,6 +18,9 @@ class Image(TypedDict):
     image: Any
 
 
+Video = NewType("Video", List[Image])
+
+
 class Audio(TypedDict):
     audio: Any
 
@@ -34,3 +37,4 @@ register_type(Dialog)
 register_type(Table)
 register_type(Audio)
 register_type(Image)
+register_type(Video)
