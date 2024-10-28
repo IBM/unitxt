@@ -1,7 +1,9 @@
 import abc
 import dataclasses
+import json
 import os
 import re
+import sys
 import uuid
 from typing import Any, Dict, List, Literal, Optional, Union
 
@@ -1088,14 +1090,12 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
         return results
 
 
-class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoadMixin):
+class LMMSEvalBaseInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+):
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
-    max_new_tokens: int = 32
-    temperature: float = 0.0
-    do_sample: bool = False
-    generate_until: List[str] = ["\n\n"]
     image_token = "<image>"
 
     _requirements_list = {
@@ -1108,7 +1108,10 @@ class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoa
 
     def _prepare_engine(self):
         import torch
+        from lmms_eval.api.instance import Instance
         from lmms_eval.models import get_model
+
+        self.new_instance = Instance
 
         self.device = torch.device(
             "mps"
@@ -1131,6 +1134,13 @@ class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoa
 
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
+
+
+class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
+    max_new_tokens: int = 32
+    temperature: float = 0.0
+    do_sample: bool = False
+    generate_until: List[str] = ["\n\n"]
 
     def _infer(
         self,
@@ -1163,7 +1173,6 @@ class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoa
                         "test",
                     ),
                     idx=i,
-                    # metadata=(temp_task_name, i, 1),
                     metadata={
                         "task": temp_task_name,
                         "doc_id": i,
@@ -1179,3 +1188,72 @@ class LMMSEvalInferenceEngine(InferenceEngine, PackageRequirementsMixin, LazyLoa
         self.model.task_dict.pop(temp_task_name)
 
         return responses
+
+
+class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
+    request_type: Literal["loglikelihood"] = "loglikelihood"
+
+    def make_instance(self, instance, special_args, index, task_name):
+        from lmms_eval.api.instance import Instance
+
+        return Instance(
+            request_type=self.request_type,
+            arguments=(
+                get_text_without_images(instance, image_token=self.image_token),
+                special_args,
+                get_images_without_text,
+                index,
+                task_name,
+                "test",
+            ),
+            idx=index,
+            metadata={
+                "task": task_name,
+                "doc_id": index,
+                "repeats": 1,
+            },
+        )
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        temp_task_name = str(uuid.uuid4())
+
+        requests = []
+        for i, instance in enumerate(dataset):
+            task_data = instance["task_data"]
+
+            if isinstance(task_data, str):
+                task_data = json.loads(task_data)
+
+            for option in task_data["options"]:
+                requests.append(
+                    self.make_instance(
+                        instance,
+                        option,
+                        i,
+                        temp_task_name,
+                    )
+                )
+
+        self.model.task_dict[temp_task_name] = DatasetDict({"test": dataset})
+        self.model.metadata = {}
+
+        responses = self.model.loglikelihood(requests)
+
+        self.model.task_dict.pop(temp_task_name)
+
+        optimal_scores = [sys.float_info.max] * len(dataset)
+        optimal_responses = [None] * len(dataset)
+
+        for request, (score, _) in zip(requests, responses):
+            if score < optimal_scores[request.idx]:
+                optimal_scores[request.idx] = score
+                optimal_responses[request.idx] = request.arguments[1]
+
+        return optimal_responses
