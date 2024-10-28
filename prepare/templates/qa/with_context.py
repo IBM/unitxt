@@ -63,6 +63,15 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}",
+        target_prefix="Answer the question using a single word or phrase.",
+        references_field="answers",
+    ),
+    "templates.qa.with_context.lmms_eval",
+    overwrite=True,
+)
 
 add_to_catalog(
     TemplatesList(

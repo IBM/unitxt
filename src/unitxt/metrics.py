@@ -1341,6 +1341,8 @@ class ANLS(InstanceMetric):
     reduction_map = {"mean": ["anls"]}
     prediction_type = Any  # string representation is compared
 
+    threshold: float = 0.5
+
     @staticmethod
     @lru_cache(maxsize=10000)
     def preprocess_text(text):
@@ -1359,7 +1361,6 @@ class ANLS(InstanceMetric):
         references: List[Any],
         prediction: Any,
         task_data: List[Dict],
-        threshold=1.0,
     ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
@@ -1368,7 +1369,7 @@ class ANLS(InstanceMetric):
 
         question_result = 1.0 - min(values)
 
-        if question_result < threshold:
+        if question_result < self.threshold:
             question_result = 0.0
 
         result = {}
