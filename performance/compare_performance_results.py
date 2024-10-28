@@ -36,13 +36,16 @@ table_pr = f"| PR Branch    | {pr_perf['total_time']:<14} | {pr_perf['load_time'
 # Print markdown table
 print("### Performance Comparison Results\n")
 print(table_header + table_divider + table_main + table_pr)
+print("\n\nParticipating cards: ", pr_perf["cards_tested"])
+print("Main branch use_eager_execution: ", main_perf["used_eager_mode"])
+print("PR branch use_eager_execution: ", pr_perf["used_eager_mode"])
 
 # Performance degradation check (5% threshold)
 if ratio > 1.05:
     print("\n**Warning**: Performance degradation exceeds 5%!")
     print(
-        "Explore branch performance via 'python performance_profile/card_profiler.py',"
-        " followed by 'snakeviz performance_profile/logs/cards_benchmark.prof'."
+        "Explore branch performance via 'python performance_profile/card_profiler.py --output_file=<path to json file>',"
+        "followed by 'snakeviz <the performance.prof file specified in the output json file>'."
     )
     sys.exit(1)
 
