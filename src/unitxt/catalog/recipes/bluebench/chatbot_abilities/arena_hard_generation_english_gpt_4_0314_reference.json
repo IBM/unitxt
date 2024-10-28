@@ -9,6 +9,6 @@
     "card": "cards.arena_hard.generation.english_gpt_4_0314_reference",
     "template": "templates.empty",
     "metrics": [
-        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_ibm_genai_template_arena_hard"
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_generic_engine_template_arena_hard"
     ]
 }
