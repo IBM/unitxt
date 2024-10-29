@@ -494,7 +494,7 @@ class IbmGenAiInferenceEngine(
         
         texts = [x['source'] for x in dataset]
 
-        resposes = tqdm(
+        responses = tqdm(
             self.client.text.generation.create(
                 model_id=self.model_name,
                 inputs=texts,
