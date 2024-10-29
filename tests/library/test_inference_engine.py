@@ -1,3 +1,4 @@
+from typing import cast
 import unittest
 
 from unitxt import produce
@@ -6,7 +7,9 @@ from unitxt.inference_engines import (
     HFLogProbScoringEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
+    SelectingByLogProbsInferenceEngine,
     SelectingByScoreInferenceEngine,
+    WMLInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
@@ -115,6 +118,7 @@ class TestInferenceEngine(UnitxtTestCase):
         dataset = [
             {"source": "hello ", "task_data": {"options": ["world", "truck"]}},
             {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+            {"source": "The letter ", "task_data": {"options": ["a", "1 2 3 4"]}},
         ]
 
         engine = SelectingByScoreInferenceEngine(
@@ -125,8 +129,9 @@ class TestInferenceEngine(UnitxtTestCase):
 
         self.assertEqual(dataset[0]["prediction"], "world")
         self.assertEqual(dataset[1]["prediction"], "the")
+        self.assertEqual(dataset[2]["prediction"], "a")
 
-    def test_option_selecting_inference_engine_genai(self):
+    def test_option_selecting_by_log_prob_inference_engine(self):
         dataset = [
             {"source": "hello how are you ", "task_data": {"options": ["world", "truck"]}},
             {"source": "by ", "task_data": {"options": ["the", "truck"]}},
@@ -134,15 +139,14 @@ class TestInferenceEngine(UnitxtTestCase):
             {"source": "I will give you my ", "task_data": {"options": ["telephone number", "truck monster", "telephone address"]}},
         ]
 
-        os.environ['GENAI_KEY'] = ""
+        genai_engine = IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
+        watsonx_engine = WMLInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
 
-        engine = IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
-
-        dataset = engine.select(dataset)
-        self.assertEqual(dataset[0]["prediction"], "world")
-        self.assertEqual(dataset[1]["prediction"], "the")
-        self.assertEqual(dataset[2]["prediction"], "telephone number")
-
+        for engine in [genai_engine, watsonx_engine]:
+            dataset = cast(SelectingByLogProbsInferenceEngine, engine).select(dataset)
+            self.assertEqual(dataset[0]["prediction"], "world")
+            self.assertEqual(dataset[1]["prediction"], "the")
+            self.assertEqual(dataset[2]["prediction"], "telephone number")
 
 if __name__ == "__main__":
     unittest.main()

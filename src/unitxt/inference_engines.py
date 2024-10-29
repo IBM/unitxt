@@ -40,9 +40,10 @@ import abc
 import os
 import re
 from collections import Counter
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, cast
 
-from tqdm import tqdm
+from tqdm import tqdm, trange
+from abc import abstractmethod
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
@@ -167,6 +168,67 @@ class SelectingByScoreInferenceEngine(OptionSelectingInferenceEngine):
 
         return dataset
 
+class SelectingByLogProbsInferenceEngine(OptionSelectingInferenceEngine):
+
+    @abstractmethod
+    def get_token_count(self, dataset):
+        """Get the token count of the source key of each dict of the dataset
+
+        Args:
+            dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
+
+        Returns:
+            List[int]: The token count of the texts
+        """
+
+
+    def select(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """ Calculate most likely labels based on log probabilities for a set of fixed completions """
+        token_counts = self.get_token_count(dataset)
+        
+        # pass in the token count so we only return the option score
+        dataset_to_score = [{
+            'source': instance['source'] + option, 
+            'task_data': {'token_count': token_count}
+        } for instance, token_count in zip(dataset, token_counts) for option in instance['task_data']['options']]
+        
+        scores: list[list[dict[str, float | str]]] = self.score(dataset_to_score)
+
+        scores_iterator = iter(scores)
+        
+        for instance in dataset:
+            tokens_with_logprob_list = []
+            # get the input tokens for the completions of the current resp_idx
+            for option in instance["task_data"]["options"]:
+                tokens_with_logprob = next(scores_iterator)['prediction']
+                tokens_with_logprob_list.append(tokens_with_logprob)
+            # we start comparing all the options, e.g. if there are five options the value will be [0,1,2,3,4]
+            to_compare_indexes = list(range(len(instance['task_data']['options'])))
+            # token_with_logprob_comp is the logprobs and the text of the tokens
+            # for each of the options at a specific index
+            for token_with_logprob_comp in zip(*tokens_with_logprob_list):
+                tokens_comp = [t['value'] for t in token_with_logprob_comp]
+                logprob_comp = [t['logprob'] for t in token_with_logprob_comp]
+                # Find the maximum value by comparing the logprob of the nth token of non-discarded options
+                index_max = max(((val, idx) for idx, val in enumerate(logprob_comp) if idx in to_compare_indexes), key=lambda x: x[0])[1]
+                # get the token of the biggest logprob
+                token_value_with_max_logprob = tokens_comp[index_max]
+                # check that the token is not repeated in the non-discarded options
+                count = tokens_comp.count(token_value_with_max_logprob)
+                if count > 1:
+                    # multiple tokens with same max logprob, we need to continue iterating
+                    to_compare_indexes = [index for index, token_value in enumerate(tokens_comp) if token_value == token_value_with_max_logprob]
+                    continue
+                # we got the index of the maximum log_prob that doesn't have a duplicated token value at other index
+                break
+
+            if len(to_compare_indexes) > 1:
+                # multiple options are either equal or have the same token values prefix
+                # choose the first
+                index_max = to_compare_indexes[0]
+
+            instance['prediction'] = instance["task_data"]["options"][index_max]
+        return dataset
 
 class HFLogProbInferenceEngine(LogProbInferenceEngine):
     """Abstract base class for inference with log probs."""
@@ -370,7 +432,7 @@ class IbmGenAiInferenceEngine(
     IbmGenAiInferenceEngineParamsMixin,
     PackageRequirementsMixin,
     ScoringInferenceEngine,
-    OptionSelectingInferenceEngine
+    SelectingByLogProbsInferenceEngine
 ):
     label: str = "ibm_genai"
     model_name: str
@@ -415,13 +477,24 @@ class IbmGenAiInferenceEngine(
 
         return dataset
 
+    def get_token_count(self, dataset):
+        texts = [instance['source'] for instance in dataset]
+        token_counts = list(tqdm([result.token_count for response in self.client.text.tokenization.create(
+                model_id=self.model_name,
+                input=texts,
+                execution_options={'ordered': True}) for result in response.results],
+            desc='Tokenizing',
+            total=len(texts)))
+        return token_counts
+
     def score(self, dataset):
         """Add to each instance in the data a "prediction" score field."""
         from genai.schema import TextGenerationParameters, TextGenerationReturnOptions
+        from genai import Client
         
         texts = [x['source'] for x in dataset]
 
-        scores = [[{'value': token.text, 'logprob': token.logprob} for token in response.results[0].input_tokens] for response in tqdm(
+        resposes = tqdm(
             self.client.text.generation.create(
                 model_id=self.model_name,
                 inputs=texts,
@@ -436,65 +509,15 @@ class IbmGenAiInferenceEngine(
                 )),
             total=len(texts),
             desc="Completions"
-        )]
+        )
+
+        scores = [[{'value': token.text, 'logprob': token.logprob} for token in response.results[0].input_tokens] for response in resposes]
+
 
         for instance, score in zip(dataset, scores):
             instance['prediction'] = score[instance['task_data']['token_count']-1:]
         return dataset
 
-    def select(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """ Calculate most likely labels based on log probabilities for a set of fixed completions """
-        texts = [instance['source'] for instance in dataset]
-        token_counts = list(tqdm([result.token_count for response in self.client.text.tokenization.create(
-                        model_id=self.model_name,
-                        input=texts,
-                        execution_options={'ordered': True}) for result in response.results],
-                    desc='Tokenizing',
-                    total=len(texts)))
-        
-        # pass in the token count so we only return the option score
-        dataset_to_score = [{
-            'source': instance['source'] + option, 
-            'task_data': {'token_count': token_count}
-        } for instance, token_count in zip(dataset, token_counts) for option in instance['task_data']['options']]
-        
-        scores: list[list[dict[str, float | str]]] = self.score(dataset_to_score)
-
-        scores_iterator = iter(scores)
-        
-        for instance in dataset:
-            token_values_list = []
-            # get the input tokens for the completions of the current resp_idx
-            for option in instance["task_data"]["options"]:
-                tokens_with_logprob = next(scores_iterator)['prediction']
-                token_values_list.append(tokens_with_logprob)
-            # we start comparing all the options, e.g. if there are five options the value will be [0,1,2,3,4]
-            to_compare_indexes = list(range(len(instance['task_data']['options'])))
-            # log_prob_comp and token token_values_comp are the logprobs and the text of the tokens
-            # for each of the options at a specific index
-            for token_with_logprob_comp in zip(*token_values_list):
-                tokens_comp = [t['value'] for t in token_with_logprob_comp]
-                logprob_comp = [t['logprob'] for t in token_with_logprob_comp]
-                # Find the maximum value by comparing the logprob of the nth token of non-discarded options
-                index_max = max(((val, idx) for idx, val in enumerate(logprob_comp) if idx in to_compare_indexes), key=lambda x: x[0])[1]
-                # get the token of the biggest logprob
-                token_value_with_max_logprob = tokens_comp[index_max]
-                # check that the token is not repeated in the non-discarded options
-                count = tokens_comp.count(token_value_with_max_logprob)
-                if count > 1:
-                    # multiple tokens with same max logprob, we need to continue iterating
-                    to_compare_indexes = [index for index, token_value in enumerate(tokens_comp) if token_value == token_value_with_max_logprob]
-                    continue
-                # we got the index of the maximum log_prob that doesn't have a duplicated token value at other index
-                break
-
-            if len(to_compare_indexes) > 1:
-                # multiple options are either equal or have the same token values prefix
-                # choose the first
-                index_max = to_compare_indexes[0]
-
-            instance['prediction'] = instance["task_data"]["options"][index_max]
-        return dataset
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
@@ -649,6 +672,8 @@ class WMLInferenceEngine(
     TextGenerationInferenceEngine,
     WMLInferenceEngineParamsMixin,
     PackageRequirementsMixin,
+    ScoringInferenceEngine,
+    SelectingByLogProbsInferenceEngine
 ):
     """Runs inference using ibm-watsonx-ai.
 
@@ -777,6 +802,57 @@ class WMLInferenceEngine(
         for instance, prediction in zip(dataset, predictions):
             instance["prediction"] = prediction
 
+        return dataset
+
+    def get_token_count(self, dataset):
+        from ibm_watsonx_ai.foundation_models import ModelInference
+
+        texts = [instance['source'] for instance in dataset]
+
+        model = ModelInference(
+            model_id=self.model_name,
+            deployment_id=self.deployment_id,
+            api_client=self._client,
+        )
+
+        results = []
+        for i in trange(len(texts), desc="Tokenizing"):
+            tk = model.tokenize(prompt=texts[i], return_tokens=True)['result']
+            results.append(tk['token_count'])
+        return results
+
+    def score(self, dataset):
+        """Add to each instance in the data a "prediction" score field."""
+        from ibm_watsonx_ai.foundation_models import ModelInference
+        model = ModelInference(
+            model_id=self.model_name,
+            deployment_id=self.deployment_id,
+            api_client=self._client,
+        )
+        
+        texts = [x['source'] for x in dataset]
+
+        responses = list(tqdm(
+            model.generate(
+                prompt=texts,
+                params={
+                    'decoding_method':'greedy',
+                    'max_new_tokens': 1, 
+                    'return_options': {
+                        'input_tokens': True,
+                        'token_logprobs': True
+                    },
+                }
+            ),
+            total=len(texts),
+            desc="Completions"
+        ))
+        import json
+
+        scores = [[{'value': token['text'], 'logprob': token['logprob'] if 'logprob' in token else 1} for token in response['results'][0]['input_tokens']] for response in responses]
+
+        for instance, score in zip(dataset, scores):
+            instance['prediction'] = score[instance['task_data']['token_count']-1:]
         return dataset
 
 
