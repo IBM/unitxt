@@ -1,4 +1,3 @@
-from collections import defaultdict
 from math import isnan
 from typing import Dict, List
 
@@ -1062,10 +1061,6 @@ class TestMetrics(UnitxtTestCase):
             0.3832160660602437,
             0.08060156608173413,
         ]
-        # count num of instances in each group
-        instance_counts = defaultdict(int)
-        for addl_input in GROUPED_INSTANCE_ADDL_INPUTS:
-            instance_counts[addl_input["group_id"]] += 1
 
         for metric, target in zip(accuracy_metrics, global_targets):
             for score_prefix in ["my_", ""]:
@@ -1076,13 +1071,6 @@ class TestMetrics(UnitxtTestCase):
                     references=GROUPED_INSTANCE_REFERENCES,
                     task_data=GROUPED_INSTANCE_ADDL_INPUTS,
                 )
-                prefix_in_global_and_per_group = "_".join(
-                    [
-                        metric.reduction_map["group_mean"]["agg_func"][0],
-                        score_prefix,
-                        metric.main_score,
-                    ]
-                ).replace("__", "_")  # for the case of empty score_prefix
 
                 self.assertAlmostEqual(
                     target,
@@ -1093,23 +1081,21 @@ class TestMetrics(UnitxtTestCase):
                     outputs[0]["score"]["global"]["num_of_instances"],
                     len(GROUPED_INSTANCE_ADDL_INPUTS),
                 )
+
+                end_of_main_score_name_in_global = "_".join(
+                    [
+                        metric.reduction_map["group_mean"]["agg_func"][0],
+                        score_prefix,
+                        metric.main_score,
+                    ]
+                ).replace("__", "_")  # for the case of empty score_prefix
+
                 self.assertTrue(
                     any(
-                        key.endswith(prefix_in_global_and_per_group)
+                        key.endswith(end_of_main_score_name_in_global)
                         for key in outputs[0]["score"]["global"]
                     )
                 )
-                for group_key, instance_count in instance_counts.items():
-                    self.assertEqual(
-                        outputs[0]["score"]["global"][group_key]["num_of_instances"],
-                        instance_count,
-                    )
-                    self.assertTrue(
-                        any(
-                            prefix_in_global_and_per_group == key
-                            for key in outputs[0]["score"]["global"][group_key]
-                        )
-                    )
 
     def test_grouped_instance_metric_errors(self):
         """Test certain value and assertion error raises for grouped instance metrics (with group_mean reduction)."""

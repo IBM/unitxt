@@ -50,6 +50,7 @@ class TestExamples(UnitxtTestCase):
             "evaluate_image_text_to_text_with_different_templates.py",
             "evaluate_idk_judge.py",
             "evaluate_grounded_ensemble_judge.py",
+            "evaluate_image_text_to_text_lmms_eval_inference.py",
         ]
 
         failed_examples_files = []

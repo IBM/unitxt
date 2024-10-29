@@ -135,8 +135,7 @@ class Metric(Artifact):
     def _add_score_prefix(self, score_name):
         return (
             self.score_prefix + score_name
-            if score_name not in ["score", "score_name"]
-            and not score_name.startswith("num_of_instances")
+            if score_name not in ["score", "score_name", "num_of_instances"]
             else score_name
         )
 
@@ -145,17 +144,12 @@ class Metric(Artifact):
     ) -> Dict[str, Any]:
         new_scores = {}
         for score_name, score in scores.items():
-            if isinstance(score, dict):
-                new_scores[score_name] = score
-                continue  # do not prefix group names
             score_with_prefix = self._add_score_prefix(score_name)
             new_scores[score_with_prefix] = (
                 score if score_name not in ["score_name"] else self.score_prefix + score
             )
         for new_score_name in new_scores:
-            if new_score_name in ["score", "score_name"] or new_score_name.startswith(
-                "num_of_instances"
-            ):
+            if new_score_name in ["score", "score_name", "num_of_instances"]:
                 continue
             if new_score_name in existing_scores:
                 UnitxtWarning(
@@ -288,7 +282,8 @@ class Metric(Artifact):
                 "score_name",
                 "score_ci_low",
                 "score_ci_high",
-            ] or score_name.startswith("num_of_instances"):
+                "num_of_instances",
+            ]:
                 continue
             if score_name in instance["score"]["global"]:
                 UnitxtWarning(
@@ -1116,7 +1111,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instances,
                     reduction_params,
                     reduction_fields,
-                    global_score,
                 )
             else:
                 raise ValueError(
@@ -1211,8 +1205,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         score_names: List[str],
         group_aggregation_func,
         prepend_score_prefix: bool,
-        global_score: dict,
-        aggregation_function_name: str,
     ):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
@@ -1224,8 +1216,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 callable function returns a single score for the group
             prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
                 if down the stream such a prepending is expected.
-            global_score: the being built up global score. It will be filled here with number of instances per each group, and group scores.
-            aggregation_function_name: used to annotate the groups' global scores.
 
         Returns:
             List of dicts, each corresponding to a group of instances (defined by 'group_id'),
@@ -1245,11 +1235,11 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         # loop through the instances and group the scores
         for instance in instances:
             task_data = instance["task_data"]
-            group_key = task_data["group_id"]
+            group_key = str(task_data["group_id"])
             # for functions that do comparisons between subgroup_column groups
             # if function doesn't use subgroup_column, or none is present, set "default" as default value, and pass all scores
             subgroup_type = (
-                task_data[self.subgroup_column]
+                str(task_data[self.subgroup_column])
                 if uses_subgroups
                 else default_subgroup_name
             )
@@ -1260,27 +1250,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     ]
                 )
 
-        # count the instances in each group and subgroup.
-        # Each instance goes into group_to_instances per each score_name.
-        # So we count over the first score_name only
-        for group_key in group_to_instance_scores:
-            if group_key not in global_score:
-                global_score[group_key] = {}
-            global_score[group_key]["num_of_instances"] = sum(
-                [
-                    len(
-                        group_to_instance_scores[group_key][score_names[0]][
-                            subgroup_type
-                        ]
-                    )
-                    for subgroup_type in group_to_instance_scores[group_key][
-                        score_names[0]
-                    ]
-                ]
-            )
-
         # if group_aggregation_func expects a subgroup-types score dict, pass it; otherwise pass the default type list of scores
-        to_return = [
+        return [
             {
                 "score": {
                     "instance": {
@@ -1301,25 +1272,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             )  # sorted for consistency
         ]
 
-        # update each group section in global_score
-        for i, group_name in enumerate(sorted(group_to_instance_scores.keys())):
-            global_score[group_name].update(
-                {
-                    aggregation_function_name + "_" + k: v
-                    for k, v in to_return[i]["score"]["instance"].items()
-                }
-            )
-
-        return to_return
-
     def _set_up_group_mean_aggregation(
         self,
         instances,
         reduction_params,
         reduction_fields,
-        global_score,
     ):
-        aggregation_function_name = str(reduction_params["agg_func"][0])
         group_aggregation_func = reduction_params["agg_func"][1]
         # if treat groups as units
         do_resample_as_group = reduction_params["agg_func"][2]
@@ -1331,8 +1289,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 score_names=reduction_fields,
                 group_aggregation_func=group_aggregation_func,
                 prepend_score_prefix=True,
-                global_score=global_score,
-                aggregation_function_name=aggregation_function_name,
             )
         else:
             # pass the instance scores to resample, and calculate the group aggregation on the resamplings
@@ -1348,8 +1304,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     score_names=[field_name],
                     group_aggregation_func=group_aggregation_func,
                     prepend_score_prefix=False,
-                    global_score=global_score,
-                    aggregation_function_name=aggregation_function_name,
                 )
                 return nan_mean(
                     [group["score"]["instance"][field_name] for group in group_scores]
@@ -1387,6 +1341,8 @@ class ANLS(InstanceMetric):
     reduction_map = {"mean": ["anls"]}
     prediction_type = Any  # string representation is compared
 
+    threshold: float = 0.5
+
     @staticmethod
     @lru_cache(maxsize=10000)
     def preprocess_text(text):
@@ -1405,7 +1361,6 @@ class ANLS(InstanceMetric):
         references: List[Any],
         prediction: Any,
         task_data: List[Dict],
-        threshold=1.0,
     ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
@@ -1414,7 +1369,7 @@ class ANLS(InstanceMetric):
 
         question_result = 1.0 - min(values)
 
-        if question_result < threshold:
+        if question_result < self.threshold:
             question_result = 0.0
 
         result = {}
@@ -1960,7 +1915,7 @@ class F1Binary(GlobalMetric):
     metric = "f1"
     single_reference_per_prediction = True
     ci_scores = [main_score, "f1_binary_neg"]
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def prepare(self):
         super().prepare()
@@ -2515,7 +2470,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
 class RocAuc(GlobalMetric):
     main_score = "roc_auc"
     process_single_instances = False
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = float
 
@@ -3050,7 +3005,7 @@ class SafetyMetric(GlobalMetric):
     # instead of using the 'task_data' parameters, so prediction
     # type and reference type are different
     prediction_type = Any
-    batch_size: int = 100
+    batch_size: int = 10
     critical_threshold: int = -5  # _CRITICAL_THRESHOLD = -5
     high_threshold: int = -4  # _HIGH_THRESHOLD = -4
     medium_threshold: int = -3  # _MEDIUM_THRESHOLD = -3
@@ -3597,7 +3552,7 @@ class NDCG(GlobalMetric):
 
     main_score = "nDCG"
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = Optional[float]
 
@@ -4970,7 +4925,7 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
          Decodes the RandomForestClassifier object and predict a score based on the given instance.
     """
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
         from sklearn.tree._tree import Tree
