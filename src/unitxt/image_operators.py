@@ -7,7 +7,8 @@ from typing import Any, Dict
 import numpy as np
 
 from .dict_utils import dict_get
-from .operators import FieldOperator, InstanceFieldOperator, PackageRequirementsMixin
+from .operator import PackageRequirementsMixin
+from .operators import FieldOperator, InstanceFieldOperator
 
 
 class PillowMixin(PackageRequirementsMixin):
