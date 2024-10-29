@@ -527,7 +527,7 @@ class LoadFromIBMCloud(Loader):
     caching: bool = True
     data_classification_policy = ["proprietary"]
 
-    _requirements_list: List[str] = ["ibm_boto3"]
+    _requirements_list: List[str] = ["ibm-cos-sdk"]
 
     def _download_from_cos(self, cos, bucket_name, item_name, local_file):
         logger.info(f"Downloading {item_name} from {bucket_name} COS")

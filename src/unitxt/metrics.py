@@ -1915,7 +1915,7 @@ class F1Binary(GlobalMetric):
     metric = "f1"
     single_reference_per_prediction = True
     ci_scores = [main_score, "f1_binary_neg"]
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def prepare(self):
         super().prepare()
