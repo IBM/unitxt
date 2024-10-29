@@ -5,6 +5,8 @@ on:
     paths:
       - 'src/unitxt/inference.py'
       - 'tests/inference/*.py'
+      - '.github/workflows/inference_tests.yml'
+
   release:
     types: [published]
 
@@ -20,9 +22,9 @@ jobs:
        HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
        TQDM_DISABLE: "True"
        env:
-        WML_URL: ${{ secrets.WML_URL }}
-        WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
-        WML_APIKEY: ${{ secrets.WML_APIKEY }}
+         WML_URL: ${{ secrets.WML_URL }}
+         WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
+         WML_APIKEY: ${{ secrets.WML_APIKEY }}
 
      steps:
      - uses: actions/checkout@v4
