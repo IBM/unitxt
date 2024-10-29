@@ -4,3 +4,4 @@ git+https://github.com/ibm/detect-secrets.git@master#egg=detect-secrets
 tomli
 codespell
 fuzzywuzzy
+httpretty
