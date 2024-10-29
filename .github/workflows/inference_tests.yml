@@ -11,7 +11,7 @@ on:
     types: [published]
 
 jobs:
-   run-catalog-preparation:
+   run-full-tests-suit:
 
      runs-on: ubuntu-latest
      env:

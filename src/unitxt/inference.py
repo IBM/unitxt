@@ -97,8 +97,14 @@ class InferenceEngine(Artifact):
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
-            return [instance["source"] for instance in dataset]
+            return self._mock_infer(dataset)
         return self._infer(dataset, return_meta_data)
+
+    def _mock_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [instance["source"] for instance in dataset]
 
     def get_engine_id(self):
         raise NotImplementedError()
@@ -255,12 +261,18 @@ class MockInferenceEngine(InferenceEngine):
     def prepare_engine(self):
         return
 
+    def _mock_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [self.default_inference_value for _ in dataset]
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [self.default_inference_value for instance in dataset]
+        return self._mock_infer(dataset)
 
 
 class MockModeMixin(Artifact):
