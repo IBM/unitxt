@@ -4,18 +4,16 @@ from unitxt.inference import IbmGenAiInferenceEngineParamsMixin, IbmGenAiInferen
 from unitxt.evalassist_llm_as_judge_direct import (
     EvalAssistLLMAsJudgeDirect
 )
-from unitxt.eval_assist_constants import AvailableDirectEvaluators
-
+from unitxt.eval_assist_constants import AvailableDirectEvaluators, AvailableRubrics
 from templates_eval_assist import template_dict
-from rubrics_eval_assist import rubrics
 
 print("registering rubrics")
 # Register all the predefined rubrics
-for rubric_name, rubric_obj in rubrics.items():
-    print(rubric_name)
+
+for available_rubric in AvailableRubrics:
     add_to_catalog(
-        rubric_obj,
-        f"metrics.llm_as_judge.eval_assist.direct.rubrics.{rubric_name}",
+        available_rubric.rubric,
+        f"metrics.llm_as_judge.eval_assist.direct.rubrics.{available_rubric.json_name}",
         overwrite=True
     )
 
@@ -41,3 +39,4 @@ for evaluator in AvailableDirectEvaluators:
         f"metrics.llm_as_judge.eval_assist.direct.{evaluator.json_name}",
         overwrite=True
     )
+    
