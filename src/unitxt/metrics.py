@@ -2470,7 +2470,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
 class RocAuc(GlobalMetric):
     main_score = "roc_auc"
     process_single_instances = False
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = float
 
@@ -3552,7 +3552,7 @@ class NDCG(GlobalMetric):
 
     main_score = "nDCG"
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = Optional[float]
 
@@ -4925,7 +4925,7 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
          Decodes the RandomForestClassifier object and predict a score based on the given instance.
     """
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
         from sklearn.tree._tree import Tree

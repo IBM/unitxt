@@ -407,7 +407,7 @@ class LoadFromSklearn(Loader):
     dataset_name: str
     splits: List[str] = ["train", "test"]
 
-    _requirements_list: List[str] = ["sklearn", "pandas"]
+    _requirements_list: List[str] = ["scikit-learn", "pandas"]
 
     def verify(self):
         super().verify()
