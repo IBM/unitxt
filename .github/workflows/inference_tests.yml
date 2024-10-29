@@ -19,7 +19,10 @@ jobs:
        HF_HUB_VERBOSITY: error
        HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
        TQDM_DISABLE: "True"
-
+       env:
+        WML_URL: ${{ secrets.WML_URL }}
+        WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
+        WML_APIKEY: ${{ secrets.WML_APIKEY }}
 
      steps:
      - uses: actions/checkout@v4
@@ -29,7 +32,7 @@ jobs:
          python-version: '3.10'
 
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-     - run: uv pip install --system ".[tests]"
+     - run: uv pip install --system ".[tests,watsonx]"
      - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
      - name: Run Tests

@@ -839,7 +839,7 @@ class WMLInferenceEngine(
     deployment_id: Optional[str] = None
     label: str = "wml"
     _requirements_list = {
-        "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
+        "ibm-watsonx-ai==1.1.14": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
     }

@@ -1,9 +1,13 @@
-import unittest
-
 from unitxt import produce
-from unitxt.inference import HFLlavaInferenceEngine, HFPipelineBasedInferenceEngine
+from unitxt.api import load_dataset
+from unitxt.inference import (
+    HFLlavaInferenceEngine,
+    HFPipelineBasedInferenceEngine,
+    WMLInferenceEngine,
+)
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
+from unitxt.text_utils import print_dict
 
 from tests.utils import UnitxtInferenceTestCase
 
@@ -91,6 +95,29 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
             self.assertEqual(predictions[0], "The real image")
 
+    def test_watsonx_inference(self):
+        wml_engine = WMLInferenceEngine(
+            model_name="google/flan-t5-xl",
+            data_classification_policy=["public"],
+            random_seed=111,
+            min_new_tokens=16,
+            max_new_tokens=128,
+            top_p=0.5,
+            top_k=1,
+            repetition_penalty=1.5,
+            decoding_method="greedy",
+        )
 
-if __name__ == "__main__":
-    unittest.main()
+        # Loading dataset:
+        dataset = load_dataset(
+            card="cards.go_emotions.simplified",
+            template="templates.classification.multi_label.empty",
+            loader_limit=3,
+        )
+        test_data = dataset["test"]
+
+        # Performing inference:
+        predictions = wml_engine.infer(test_data)
+        for inp, prediction in zip(test_data, predictions):
+            result = {**inp, "prediction": prediction}
+            print_dict(result, keys_to_print=["source", "prediction"])
