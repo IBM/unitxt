@@ -32,6 +32,7 @@ from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
+    PackageRequirementsMixin,
     SequentialOperator,
     StreamingOperator,
     StreamOperator,
@@ -2121,7 +2122,7 @@ class F1Weighted(F1):
     average = "weighted"
 
 
-class F1MultiLabel(GlobalMetric):
+class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -2129,6 +2130,7 @@ class F1MultiLabel(GlobalMetric):
 
     prediction_type = List[str]
     single_reference_per_prediction = True
+    _requirements_list = ["scikit-learn"]
 
     def prepare(self):
         super().prepare()

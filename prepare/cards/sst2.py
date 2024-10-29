@@ -44,5 +44,5 @@ card = TaskCard(
     ),
 )
 
-test_card(card, debug=True)
+test_card(card)
 add_to_catalog(card, "cards.sst2", overwrite=True)
