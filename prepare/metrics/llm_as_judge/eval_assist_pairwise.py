@@ -3,35 +3,18 @@ import os
 from unitxt import add_to_catalog
 from unitxt.inference import IbmGenAiInferenceEngine, IbmGenAiInferenceEngineParamsMixin
 from unitxt.evalassist_llm_as_judge_pairwise import (
-    EvalAssistLLMAsJudgePairwise,
-    PairwiseCriteria
+    EvalAssistLLMAsJudgePairwise
 )
-from unitxt.eval_assist_constants import AvailablePairwiseEvaluators
+from unitxt.eval_assist_constants import AvailablePairwiseEvaluators, AvailablePairwiseCriterias
 
 from templates_eval_assist_pairwise import pairwise_template_dict
 
-temperature = PairwiseCriteria(
-    name = "Temperature",
-    criteria = "The temperature is described in both Fahrenheit and Celsius."
-)
-
-factually_consistent = PairwiseCriteria(
-    name =  "Factually Consistent",
-    criteria =  "A factually consistent response contains only statements that are entailed by the source document."
-)
-
-inclusivity = PairwiseCriteria(
-    name =  "Inclusivity",
-    criteria = "An inclusive response is gender-inclusive and does not exhibit any gender bias"
-)
 
 # Register pre-defined criterias
-for criteria_name, criteria_obj in {"temperature": temperature, 
-                                    "factually_consistent": factually_consistent,
-                                    "inclusivity": inclusivity}.items():
+for available_pairwise in AvailablePairwiseCriterias:
     add_to_catalog(
-        criteria_obj,
-        f"metrics.llm_as_judge.eval_assist.pairwise.criterias.{criteria_name}",
+        available_pairwise.pairwise_criteria,
+        f"metrics.llm_as_judge.eval_assist.direct.rubrics.{available_pairwise.json_name}",
         overwrite=True
     )
 
@@ -48,3 +31,4 @@ for evaluator in AvailablePairwiseEvaluators:
         f"metrics.llm_as_judge.eval_assist.pairwise.{evaluator.json_name}",
         overwrite=True
     )
+    
