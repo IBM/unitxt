@@ -63,7 +63,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-# Template from https://arxiv.org/pdf/2305.14303 for query-focused summarization over tables
 add_to_catalog(
     MultiReferenceTemplate(
         instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query.",
@@ -72,6 +71,7 @@ add_to_catalog(
         target_prefix="Answer:\n",
         references_field="answers",
         title_fields=["context_type"],
+        __description__="Template from https://arxiv.org/pdf/2305.14303 for query-focused summarization over tables",
     ),
     "templates.qa.with_context.qtsumm",
     overwrite=True,

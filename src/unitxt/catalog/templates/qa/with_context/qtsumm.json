@@ -7,5 +7,6 @@
     "references_field": "answers",
     "title_fields": [
         "context_type"
-    ]
+    ],
+    "__description__": "Template from https://arxiv.org/pdf/2305.14303 for query-focused summarization over tables"
 }
