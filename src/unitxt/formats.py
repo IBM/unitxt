@@ -157,7 +157,6 @@ class SystemFormat(BaseFormat):
         target_prefix = self._retrieve_field_and_pop_from_instance(
             instance=instance,
             field_name="target_prefix",
-            do_pop=False,
         )
         system_prompt = self._retrieve_field_and_pop_from_instance(
             instance=instance, field_name="system_prompt"
