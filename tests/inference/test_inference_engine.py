@@ -1,8 +1,11 @@
+from typing import cast
 from unitxt import produce
 from unitxt.api import load_dataset
 from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
+    IbmGenAiInferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
     WMLInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
@@ -121,3 +124,20 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         for inp, prediction in zip(test_data, predictions):
             result = {**inp, "prediction": prediction}
             print_dict(result, keys_to_print=["source", "prediction"])
+
+    def test_option_selecting_by_log_prob_inference_engines(self):
+        dataset = [
+            {"source": "hello how are you ", "task_data": {"options": ["world", "truck"]}},
+            {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+            # multiple options with the same token prefix
+            {"source": "I will give you my ", "task_data": {"options": ["telephone number", "truck monster", "telephone address"]}},
+        ]
+
+        genai_engine = IbmGenAiInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
+        watsonx_engine = WMLInferenceEngine(model_name="mistralai/mixtral-8x7b-instruct-v01")
+
+        for engine in [genai_engine, watsonx_engine]:
+            dataset = cast(OptionSelectingByLogProbsInferenceEngine, engine).select(dataset)
+            self.assertEqual(dataset[0]["prediction"], "world")
+            self.assertEqual(dataset[1]["prediction"], "the")
+            self.assertEqual(dataset[2]["prediction"], "telephone number")
