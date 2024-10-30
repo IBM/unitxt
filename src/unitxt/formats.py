@@ -230,6 +230,56 @@ class Message(TypedDict):
 
 
 class OpenAIFormat(BaseFormat):
+    r"""Formats output for LLM APIs using OpenAI's chat schema.
+
+    Many API services use OpenAI's chat format as a standard for conversational models.
+    `OpenAIFormat` prepares the output in this API-compatible format, converting input
+    instances into OpenAI's structured chat format, which supports both text and
+    multimedia elements, like images.
+
+    The formatted output can be easily converted to a dictionary using `json.loads()`
+    to make it ready for direct use with OpenAI's API.
+
+    Example:
+        Given an input instance:
+
+        .. code-block:: python
+
+            {
+                "source": "<img src='https://example.com/image1.jpg'>What's in this image?",
+                "target": "A dog",
+                "instruction": "Help the user.",
+            },
+
+        When processed by:
+
+        .. code-block:: python
+
+            system_format = OpenAIFormat()
+
+        The resulting formatted output is:
+
+        .. code-block:: python
+
+            {
+                "target": "A dog",
+                "source": '[{"role": "system", "content": "Help the user."}, '
+                          '{"role": "user", "content": [{"type": "image_url", '
+                          '"image_url": {"url": "https://example.com/image1.jpg", "detail": "low"}}, '
+                          '{"type": "text", "text": "What\'s in this image?"}]}]'
+            }
+
+        This `source` field is a JSON-formatted string. To make it ready for OpenAI's API,
+        you can convert it to a dictionary using `json.loads()`:
+
+        .. code-block:: python
+
+            import json
+            formatted_instance = json.loads(formatted_output["source"])
+
+        The resulting `formatted_instance` is now a dictionary ready for sending to the OpenAI API.
+    """
+
     def to_content(self, text: str) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
         img_tag_pattern = re.compile(
@@ -334,7 +384,7 @@ class OpenAIFormat(BaseFormat):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         chat = self.to_chat(instance, stream_name)
-        instance.pop("target_prefix")
+        instance.pop("target_prefix", None)
         instance["source"] = json.dumps(chat)
         return instance
 

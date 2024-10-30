@@ -78,19 +78,17 @@ class TestFormats(UnitxtTestCase):
         )
 
     def test_openai_format_with_images(self):
-        instruction = "solve the math exercises"
-
         demo_instances = [
             {
                 "source": "What is 1+2? <img src='https://example.com/image1.jpg'>",
                 "target": "3",
-                "instruction": instruction,
+                "instruction": "solve the math exercises",
                 "input_fields": {},
             },
             {
                 "source": "What is 4-2? <img src='https://example.com/image2.jpg'>",
                 "target": "2",
-                "instruction": instruction,
+                "instruction": "solve the math exercises",
                 "input_fields": {},
             },
         ]
@@ -99,7 +97,7 @@ class TestFormats(UnitxtTestCase):
             {
                 "source": "What is 1+1? <img src='https://example.com/image3.jpg'>",
                 "target": "2",
-                "instruction": instruction,
+                "instruction": "solve the math exercises",
                 "demos": demo_instances,
                 "input_fields": {},
                 "target_prefix": "The answer is ",
@@ -108,7 +106,7 @@ class TestFormats(UnitxtTestCase):
             {
                 "source": "What is 3+2? <img src='https://example.com/image4.jpg'>",
                 "target": "5",
-                "instruction": instruction,
+                "instruction": "solve the math exercises",
                 "demos": demo_instances,
                 "input_fields": {},
                 "target_prefix": "The answer is ",
