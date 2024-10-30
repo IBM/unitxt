@@ -1,11 +1,13 @@
 import json
 import re
+from abc import abstractmethod
 from typing import (
     Any,
     Dict,
     List,
     Literal,
     Optional,
+    Tuple,
     TypedDict,
     Union,
 )
@@ -63,9 +65,7 @@ class BaseFormat(Format):
     demos_field: str = "demos"
 
     @staticmethod
-    def _retrieve_field_and_pop_from_instance(
-        instance, field_name, do_pop: bool = True
-    ) -> str:
+    def _pop_field(instance, field_name, do_pop: bool = True) -> str:
         if field_name is not None and field_name in instance:
             field_value = instance[field_name]
             if do_pop:
@@ -75,6 +75,48 @@ class BaseFormat(Format):
             ), f"Value in field '{field_name}' should not be none. Received instance: {instance}"
             return field_value
         return ""
+
+    def _prepare_instance_fields(self, instance) -> Tuple[str]:
+        instance_fields = {}
+
+        for field in "source", "instruction", "system_prompt", "target_prefix":
+            instance_fields[field] = self._pop_field(instance, field)
+
+        instance_fields["demos"] = []
+        if self.demos_field is not None and self.demos_field in instance:
+            demos = instance[self.demos_field]
+            assert (
+                demos is not None and isoftype(demos, List[Dict[str, Any]])
+            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
+            for demo_instance in demos:
+                demo = {}
+                for field in ["source", "target", "target_prefix"]:
+                    demo[field] = self._pop_field(demo_instance, field, do_pop=False)
+                instance_fields["demos"].append(demo)
+
+        return instance_fields
+
+    @abstractmethod
+    def _format_instance_to_source(
+        self,
+        system_prompt: str,
+        instruction: str,
+        source: str,
+        target_prefix: str,
+        demos: List[Dict[str, Any]],
+    ) -> str:
+        """Abstract method for formatting instances in different subclasses.
+
+        Subclasses should implement this method to define specific formatting behavior.
+        """
+        return ""
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        instance_fields = self._prepare_instance_fields(instance)
+        instance["source"] = self._format_instance_to_source(**instance_fields)
+        return instance
 
 
 class SystemFormat(BaseFormat):
@@ -141,52 +183,18 @@ class SystemFormat(BaseFormat):
     )
     format_args: Dict[str, str] = OptionalField(default_factory=dict)
 
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        assert (
-            "source" in instance
-        ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
-        source = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="source"
-        )
-
-        instruction = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="instruction"
-        )
-        target_prefix = self._retrieve_field_and_pop_from_instance(
-            instance=instance,
-            field_name="target_prefix",
-        )
-        system_prompt = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="system_prompt"
-        )
-
-        demo_instances = []
-        if self.demos_field is not None and self.demos_field in instance:
-            demos = instance[self.demos_field]
-            assert (
-                demos is not None and isoftype(demos, List[Dict[str, Any]])
-            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
-            demo_instances = demos
-            # instance.pop(self.demos_field)
-
+    def _format_instance_to_source(
+        self,
+        system_prompt: str,
+        instruction: str,
+        source: str,
+        target_prefix: str,
+        demos: List[Dict[str, Any]],
+    ) -> str:
         demos_string = ""
-        for demo_instance in demo_instances:
-            demo_source = self._retrieve_field_and_pop_from_instance(
-                instance=demo_instance, field_name="source", do_pop=False
-            )
-            demo_target = self._retrieve_field_and_pop_from_instance(
-                instance=demo_instance, field_name="target", do_pop=False
-            )
-            demo_target_prefix = self._retrieve_field_and_pop_from_instance(
-                instance=demo_instance, field_name="target_prefix", do_pop=False
-            )
-
+        for demo in demos:
             demo_str = self.demo_format.format(
-                target_prefix=demo_target_prefix,
-                source=demo_source,
-                target=demo_target,
+                **demo,
                 instruction=instruction,
                 **self.format_args,
             )
@@ -200,9 +208,8 @@ class SystemFormat(BaseFormat):
             target_prefix=target_prefix,
             **self.format_args,
         )
-        output = apply_capital_new_line_notation(output)
-        instance["source"] = output
-        return instance
+
+        return apply_capital_new_line_notation(output)
 
 
 class TextContent(TypedDict):
@@ -274,9 +281,15 @@ class OpenAIFormat(BaseFormat):
         .. code-block:: python
 
             import json
-            formatted_instance = json.loads(formatted_output["source"])
 
-        The resulting `formatted_instance` is now a dictionary ready for sending to the OpenAI API.
+            messages = json.loads(formatted_output["source"])
+
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+            )
+
+        The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
     """
 
     def to_content(self, text: str) -> Union[str, List[Content]]:
@@ -319,28 +332,13 @@ class OpenAIFormat(BaseFormat):
         return contents
 
     def to_chat(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+        self,
+        system_prompt: str,
+        instruction: str,
+        source: str,
+        target_prefix: str,
+        demos: List[Dict[str, Any]],
     ) -> List[Message]:
-        assert (
-            "source" in instance
-        ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
-
-        source = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="source"
-        )
-
-        instruction = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="instruction"
-        )
-        target_prefix = self._retrieve_field_and_pop_from_instance(
-            instance=instance,
-            field_name="target_prefix",
-            do_pop=False,
-        )
-        system_prompt = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="system_prompt"
-        )
-
         system_content = self.to_content(
             system_prompt + ("\n" if system_prompt != "" else "") + instruction,
         )
@@ -351,16 +349,8 @@ class OpenAIFormat(BaseFormat):
                 "content": system_content,
             },
         ]
-        demo_instances = []
-        if self.demos_field is not None and self.demos_field in instance:
-            demos = instance[self.demos_field]
-            assert (
-                demos is not None and isoftype(demos, List[Dict[str, Any]])
-            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
-            demo_instances = demos
-            # instance.pop(self.demos_field)
 
-        for demo_instance in demo_instances:
+        for demo_instance in demos:
             user_content = self.to_content(demo_instance["source"])
             assistant_content = self.to_content(target_prefix + demo_instance["target"])
             messages.extend(
@@ -379,13 +369,22 @@ class OpenAIFormat(BaseFormat):
 
         return messages
 
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        chat = self.to_chat(instance, stream_name)
-        instance.pop("target_prefix", None)
-        instance["source"] = json.dumps(chat)
-        return instance
+    def _format_instance_to_source(
+        self,
+        system_prompt: str,
+        instruction: str,
+        source: str,
+        target_prefix: str,
+        demos: List[Dict[str, Any]],
+    ) -> str:
+        chat = self.to_chat(
+            system_prompt,
+            instruction,
+            source,
+            target_prefix,
+            demos,
+        )
+        return json.dumps(chat)
 
 
 class HFSystemFormat(OpenAIFormat):
@@ -423,20 +422,24 @@ class HFSystemFormat(OpenAIFormat):
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        chat = self.to_chat(instance, stream_name)
-
-        target_prefix = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="target_prefix"
+    def _format_instance_to_source(
+        self,
+        system_prompt: str,
+        instruction: str,
+        source: str,
+        target_prefix: str,
+        demos: List[Dict[str, Any]],
+    ) -> str:
+        chat = self.to_chat(
+            system_prompt,
+            instruction,
+            source,
+            target_prefix,
+            demos,
         )
-
-        instance["source"] = (
+        return (
             self.tokenizer.apply_chat_template(
                 chat, tokenize=False, add_generation_prompt=True
             )
             + target_prefix
         )
-
-        return instance
