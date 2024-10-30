@@ -1,9 +1,13 @@
+import json
 import re
 from typing import (
     Any,
     Dict,
     List,
+    Literal,
     Optional,
+    TypedDict,
+    Union,
 )
 
 from .dataclass import OptionalField
@@ -151,7 +155,9 @@ class SystemFormat(BaseFormat):
             instance=instance, field_name="instruction"
         )
         target_prefix = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="target_prefix"
+            instance=instance,
+            field_name="target_prefix",
+            do_pop=False,
         )
         system_prompt = self._retrieve_field_and_pop_from_instance(
             instance=instance, field_name="system_prompt"
@@ -200,7 +206,140 @@ class SystemFormat(BaseFormat):
         return instance
 
 
-class HFSystemFormat(BaseFormat):
+class TextContent(TypedDict):
+    type: Literal["text"]
+    text: str
+
+
+class ImageUrlContent(TypedDict):
+    type: Literal["image_url"]
+    image_url: Dict[Literal["url"], str]
+
+
+class ImageFileContent(TypedDict):
+    type: Literal["image_file"]
+    image_file: Dict[Literal["file_id"], str]
+
+
+Content = Union[TextContent, ImageUrlContent, ImageFileContent]
+
+
+class Message(TypedDict):
+    role: Literal["system", "user", "assistant"]
+    content: Union[str, List[Content]]
+
+
+class OpenAIFormat(BaseFormat):
+    def to_content(self, text: str) -> Union[str, List[Content]]:
+        # Regular expression to find <img> tags with src attribute
+        img_tag_pattern = re.compile(
+            r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', re.IGNORECASE
+        )
+
+        # Find all matches of <img> tags and their positions
+        matches = list(img_tag_pattern.finditer(text))
+
+        # If no images are found, return the text as a plain string
+        if not matches:
+            return text
+
+        contents: List[dict] = []
+        last_pos = 0
+
+        # Process each match
+        for match in matches:
+            start, end = match.span()
+            img_url = match.group(1)
+
+            # Add preceding text, if any
+            if last_pos < start:
+                contents.append({"type": "text", "text": text[last_pos:start]})
+
+            # Add image content with a default detail level
+            contents.append(
+                {"type": "image_url", "image_url": {"url": img_url, "detail": "low"}}
+            )
+
+            # Update the last processed position
+            last_pos = end
+
+        # Add any remaining text after the last image
+        if last_pos < len(text):
+            contents.append({"type": "text", "text": text[last_pos:]})
+
+        return contents
+
+    def to_chat(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> List[Message]:
+        assert (
+            "source" in instance
+        ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
+
+        source = self._retrieve_field_and_pop_from_instance(
+            instance=instance, field_name="source"
+        )
+
+        instruction = self._retrieve_field_and_pop_from_instance(
+            instance=instance, field_name="instruction"
+        )
+        target_prefix = self._retrieve_field_and_pop_from_instance(
+            instance=instance,
+            field_name="target_prefix",
+            do_pop=False,
+        )
+        system_prompt = self._retrieve_field_and_pop_from_instance(
+            instance=instance, field_name="system_prompt"
+        )
+
+        system_content = self.to_content(
+            system_prompt + ("\n" if system_prompt != "" else "") + instruction,
+        )
+
+        messages = [
+            {
+                "role": "system",
+                "content": system_content,
+            },
+        ]
+        demo_instances = []
+        if self.demos_field is not None and self.demos_field in instance:
+            demos = instance[self.demos_field]
+            assert (
+                demos is not None and isoftype(demos, List[Dict[str, Any]])
+            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
+            demo_instances = demos
+            # instance.pop(self.demos_field)
+
+        for demo_instance in demo_instances:
+            user_content = self.to_content(demo_instance["source"])
+            assistant_content = self.to_content(target_prefix + demo_instance["target"])
+            messages.extend(
+                [
+                    {"role": "user", "content": user_content},
+                    {
+                        "role": "assistant",
+                        "content": assistant_content,
+                    },
+                ]
+            )
+
+        last_user_content = self.to_content(source)
+
+        messages.extend([{"role": "user", "content": last_user_content}])
+
+        return messages
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        chat = self.to_chat(instance, stream_name)
+        instance.pop("target_prefix")
+        instance["source"] = json.dumps(chat)
+        return instance
+
+
+class HFSystemFormat(OpenAIFormat):
     r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
     HFSystemFormat expects the input instance to contain:
@@ -227,9 +366,10 @@ class HFSystemFormat(BaseFormat):
     """
 
     model_name: str
-    _requirements_list = ["transformers"]
+    _requirements_list = ["transformers", "Jinja2"]
 
     def prepare(self):
+        super().prepare()
         from transformers import AutoTokenizer
 
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
@@ -237,55 +377,17 @@ class HFSystemFormat(BaseFormat):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        assert (
-            "source" in instance
-        ), f"field 'source' is expected to be in the input instance. Received instance: {instance}"
+        chat = self.to_chat(instance, stream_name)
 
-        source = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="source"
-        )
-
-        instruction = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="instruction"
-        )
         target_prefix = self._retrieve_field_and_pop_from_instance(
             instance=instance, field_name="target_prefix"
         )
-        system_prompt = self._retrieve_field_and_pop_from_instance(
-            instance=instance, field_name="system_prompt"
-        )
 
-        messages = [
-            {
-                "role": "system",
-                "content": system_prompt
-                + ("\n" if system_prompt != "" else "")
-                + instruction,
-            },
-        ]
-        demo_instances = []
-        if self.demos_field is not None and self.demos_field in instance:
-            demos = instance[self.demos_field]
-            assert (
-                demos is not None and isoftype(demos, List[Dict[str, Any]])
-            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
-            demo_instances = demos
-            # instance.pop(self.demos_field)
-
-        for demo_instance in demo_instances:
-            messages.extend(
-                [
-                    {"role": "user", "content": demo_instance["source"]},
-                    {
-                        "role": "assistant",
-                        "content": target_prefix + demo_instance["target"],
-                    },
-                ]
+        instance["source"] = (
+            self.tokenizer.apply_chat_template(
+                chat, tokenize=False, add_generation_prompt=True
             )
-        messages.extend([{"role": "user", "content": source}])
-        tokenized_chat = self.tokenizer.apply_chat_template(
-            messages, tokenize=False, add_generation_prompt=True
+            + target_prefix
         )
 
-        instance["source"] = tokenized_chat + target_prefix
         return instance

@@ -1,5 +1,5 @@
 from unitxt.card import TaskCard
-from unitxt.formats import HFSystemFormat, SystemFormat
+from unitxt.formats import HFSystemFormat, OpenAIFormat, SystemFormat
 from unitxt.loaders import LoadFromDictionary
 from unitxt.standard import StandardRecipe
 from unitxt.system_prompts import TextualSystemPrompt
@@ -13,6 +13,148 @@ from tests.utils import UnitxtTestCase
 
 
 class TestFormats(UnitxtTestCase):
+    def test_openai_format(self):
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {
+                "source": "1+2",
+                "target": "3",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+            {
+                "source": "4-2",
+                "target": "2",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+        ]
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+        ]
+
+        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
+        system_format = OpenAIFormat()
+
+        targets = [
+            {
+                "target": "2",
+                "input_fields": {},
+                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, {"role": "user", "content": "1+2"}, {"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": "4-2"}, {"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": "1+1"}]',
+                "demos": demo_instances,
+            },
+            {
+                "target": "5",
+                "input_fields": {},
+                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, {"role": "user", "content": "1+2"}, {"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": "4-2"}, {"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": "3+2"}]',
+                "demos": demo_instances,
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_openai_format_with_images(self):
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {
+                "source": "What is 1+2? <img src='https://example.com/image1.jpg'>",
+                "target": "3",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+            {
+                "source": "What is 4-2? <img src='https://example.com/image2.jpg'>",
+                "target": "2",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+        ]
+
+        inputs = [
+            {
+                "source": "What is 1+1? <img src='https://example.com/image3.jpg'>",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+            {
+                "source": "What is 3+2? <img src='https://example.com/image4.jpg'>",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+        ]
+
+        # Expected structured format for targets after processing
+        targets = [
+            {
+                "target": "2",
+                "input_fields": {},
+                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, '
+                '{"role": "user", "content": [{"type": "text", "text": "What is 1+2? "}, '
+                '{"type": "image_url", "image_url": {"url": "https://example.com/image1.jpg", "detail": "low"}}]}, '
+                '{"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": [{"type": "text", '
+                '"text": "What is 4-2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image2.jpg", "detail": "low"}}]}, '
+                '{"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": [{"type": "text", '
+                '"text": "What is 1+1? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image3.jpg", "detail": "low"}}]}]',
+                "demos": demo_instances,
+            },
+            {
+                "target": "5",
+                "input_fields": {},
+                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, '
+                '{"role": "user", "content": [{"type": "text", "text": "What is 1+2? "}, '
+                '{"type": "image_url", "image_url": {"url": "https://example.com/image1.jpg", "detail": "low"}}]}, '
+                '{"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": [{"type": "text", '
+                '"text": "What is 4-2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image2.jpg", "detail": "low"}}]}, '
+                '{"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": [{"type": "text", '
+                '"text": "What is 3+2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image4.jpg", "detail": "low"}}]}]',
+                "demos": demo_instances,
+            },
+        ]
+
+        # Imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix = ""
+        system_format = OpenAIFormat()
+
+        # Run the check
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_hf_system_format(self):
         instruction = "solve the math exercises"
 
