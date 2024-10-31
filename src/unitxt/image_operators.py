@@ -2,7 +2,7 @@ import base64
 import io
 import re
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import numpy as np
 
@@ -73,6 +73,46 @@ class GrayScale(ImageFieldOperator):
 
         # Convert back to a PIL image with 3 channels
         return self.image.fromarray(grayscale_array)
+
+
+class GridLines(ImageFieldOperator):
+    """A class that overlays a fixed number of evenly spaced horizontal and vertical lines on an image.
+
+    Attributes:
+    - num_lines (int): The number of horizontal and vertical lines to add.
+    - line_thickness (int): Thickness of each line in pixels.
+    - line_color (Tuple[int, int, int]): RGB color of the grid lines.
+
+    Methods:
+    - process_image(image): Adds grid lines to the provided image and returns the modified image.
+    """
+
+    num_lines: int = 20
+    line_thickness: int = 1
+    line_color: Tuple[int, int, int] = (255, 0, 0)
+
+    def process_image(self, image):
+        image_array = np.array(image)
+
+        # Determine image dimensions
+        height, width, _ = image_array.shape
+
+        # Calculate spacing for the lines based on image size and number of lines
+        horizontal_spacing = height // (self.num_lines + 1)
+        vertical_spacing = width // (self.num_lines + 1)
+
+        # Add horizontal lines
+        for i in range(1, self.num_lines + 1):
+            y = i * horizontal_spacing
+            image_array[y : y + self.line_thickness, :, :] = self.line_color
+
+        # Add vertical lines
+        for i in range(1, self.num_lines + 1):
+            x = i * vertical_spacing
+            image_array[:, x : x + self.line_thickness, :] = self.line_color
+
+        # Convert back to a PIL image
+        return self.image.fromarray(image_array)
 
 
 class ToRGB(ImageFieldOperator):
