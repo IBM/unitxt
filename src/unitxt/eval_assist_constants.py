@@ -24,13 +24,8 @@ class PairwiseEvaluatorNameEnum(EvaluatorEnum):
     LLAMA3_70B = ('Llama3-70b', 'llama3_70b', 'meta-llama/llama-3-70b-instruct')
     PROMETHEUS = ('Prometheus', 'prometheus_8_7b', 'kaist-ai/prometheus-8x7b-v2')
 
-AvailableDirectEvaluators = [DirectEvaluatorNameEnum.MIXTRAL, DirectEvaluatorNameEnum.LLAMA3_8B,
-                             DirectEvaluatorNameEnum.LLAMA3_70B, DirectEvaluatorNameEnum.PROMETHEUS, 
-                             DirectEvaluatorNameEnum.GPT4]
-
-AvailablePairwiseEvaluators = [PairwiseEvaluatorNameEnum.MIXTRAL, PairwiseEvaluatorNameEnum.LLAMA3_8B,
-                                PairwiseEvaluatorNameEnum.LLAMA3_70B, PairwiseEvaluatorNameEnum.PROMETHEUS]
-
+AvailableDirectEvaluators = list(DirectEvaluatorNameEnum)
+AvailablePairwiseEvaluators = list(PairwiseEvaluatorNameEnum)
 
 ################################  Rubrics ################################
 
@@ -171,17 +166,8 @@ class RubricNameEnum(RubricEnum):
         ]
     ))
 
-
 # Available Rubrics
-AvailableRubrics = [
-    RubricNameEnum.TEMPERATURE,
-    RubricNameEnum.CONCISENESS,
-    RubricNameEnum.ANSWER_RELEVANCE,
-    RubricNameEnum.HARMFULNESS,
-    RubricNameEnum.INSENSITIVITY,
-    RubricNameEnum.COHERENCE,
-    RubricNameEnum.MANIPULATIVE
-]
+AvailableRubrics = list(RubricNameEnum)
 
 class PairwiseEnum(Enum):
     def __new__(cls, json_name, pairwise_criteria):
@@ -208,8 +194,4 @@ class PairwiseNameEnum(PairwiseEnum):
     ))
 
 # Available Pairwise Criteria
-AvailablePairwiseCriterias = [
-    PairwiseNameEnum.TEMPERATURE,
-    PairwiseNameEnum.FACTUALLY_CONSISTENT,
-    PairwiseNameEnum.INCLUSIVITY,
-]
+AvailablePairwiseCriterias = list(PairwiseNameEnum)
