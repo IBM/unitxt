@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
+from unitxt.inference import GenericInferenceEngine
 from unitxt.llm_as_judge import (
     TaskBasedLLMasJudge,
 )
-from unitxt.inference import GenericInferenceEngine
 
 metric_type_to_template_dict = {
     "faithfulness": {
@@ -22,8 +22,9 @@ generic_engine_label = "generic_inference_engine"
 
 inference_models = {
     "llama_3_1_70b_instruct_wml": "engines.classification.llama_3_1_70b_instruct_wml",
-    generic_engine_label: GenericInferenceEngine()
+    generic_engine_label: GenericInferenceEngine(),
 }
+
 
 def get_prediction_field(metric_type):
     return None if metric_type == "context_relevance" else "answer"
@@ -34,8 +35,10 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
         task_name = f"tasks.rag_eval.{metric_type}.binary"
 
         for use_logprobs in [True, False]:
-            for inf_label,inference_model in inference_models.items():
-                if use_logprobs and inf_label == generic_engine_label: # engine GenericInferenceEngine does not support logprobs
+            for inf_label, inference_model in inference_models.items():
+                if (
+                    use_logprobs and inf_label == generic_engine_label
+                ):  # engine GenericInferenceEngine does not support logprobs
                     continue
                 logprobs_label = "_logprobs" if use_logprobs else ""
                 metric_label = f"{metric_type}_{template_short_name}{logprobs_label}"
