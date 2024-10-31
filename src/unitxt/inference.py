@@ -1414,13 +1414,13 @@ class CredentialsOpenAi(TypedDict, total=False):
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
-    frequency_penalty: Optional[float] = 0.0
-    presence_penalty: Optional[float] = 0.0
-    max_tokens: Optional[int] = 100
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
-    temperature: Optional[float] = 1.0
-    top_p: Optional[float] = 1.0
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = True
