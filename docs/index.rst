@@ -173,7 +173,7 @@ Welcome!
    docs/installation
    docs/tutorials
    docs/examples
-   blog/blog
+   blog/index
    documentation
    catalog/catalog.__dir__
 
