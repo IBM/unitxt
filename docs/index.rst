@@ -173,16 +173,7 @@ Welcome!
    docs/installation
    docs/tutorials
    docs/examples
-   docs/data_classification_policy
-   docs/rag_support
-   docs/multimodality
-   docs/operators
-   docs/saving_and_loading_from_catalog
-   docs/production
-   docs/debugging
-   docs/helm
-   docs/lm_eval
-   docs/glossary
+   blog/blog
    documentation
    catalog/catalog.__dir__
 

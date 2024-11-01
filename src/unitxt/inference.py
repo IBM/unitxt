@@ -75,6 +75,7 @@ class InferenceEngine(Artifact):
         pass
 
     def prepare(self):
+        super().prepare()
         if not settings.mock_inference_mode:
             super().prepare()
             self.prepare_engine()
