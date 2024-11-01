@@ -18,7 +18,7 @@ with settings.context(
     dataset = load_dataset(
         card="cards.seed_bench",
         template="templates.qa.multiple_choice.with_context.lmms_eval",
-        # loader_limit=30,
+        loader_limit=30,
         streaming=True,
     )
 

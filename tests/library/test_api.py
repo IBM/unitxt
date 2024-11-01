@@ -439,7 +439,10 @@ class TestAPI(UnitxtTestCase):
             },
         ]
         predictions = infer(instances, engine, recipe)
-        targets = ["365", "1"]
+        targets = [
+            "Question: How many days there are in a week\nAnswer:",
+            "Question: If a ate an apple in the morning, and one in the evening, how many apples did I eat?\nAnswer:",
+        ]
         self.assertListEqual(predictions, targets)
 
     def test_infer_with_task(self):
@@ -452,5 +455,8 @@ class TestAPI(UnitxtTestCase):
             },
         ]
         predictions = infer(instances, engine, recipe)
-        targets = ["365", "1"]
+        targets = [
+            "Question: How many days there are in a week\nAnswer:",
+            "Question: If a ate an apple in the morning, and one in the evening, how many apples did I eat?\nAnswer:",
+        ]
         self.assertListEqual(predictions, targets)

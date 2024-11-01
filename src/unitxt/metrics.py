@@ -32,6 +32,7 @@ from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
+    PackageRequirementsMixin,
     SequentialOperator,
     StreamingOperator,
     StreamOperator,
@@ -1915,7 +1916,7 @@ class F1Binary(GlobalMetric):
     metric = "f1"
     single_reference_per_prediction = True
     ci_scores = [main_score, "f1_binary_neg"]
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def prepare(self):
         super().prepare()
@@ -2121,7 +2122,7 @@ class F1Weighted(F1):
     average = "weighted"
 
 
-class F1MultiLabel(GlobalMetric):
+class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     _metric = None
     main_score = "f1_macro"
     average = None  # Report per class then aggregate by mean
@@ -2129,6 +2130,7 @@ class F1MultiLabel(GlobalMetric):
 
     prediction_type = List[str]
     single_reference_per_prediction = True
+    _requirements_list = ["scikit-learn"]
 
     def prepare(self):
         super().prepare()
@@ -2470,7 +2472,7 @@ class MatthewsCorrelation(HuggingfaceMetric):
 class RocAuc(GlobalMetric):
     main_score = "roc_auc"
     process_single_instances = False
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = float
 
@@ -3552,7 +3554,7 @@ class NDCG(GlobalMetric):
 
     main_score = "nDCG"
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
     single_reference_per_prediction = True
     prediction_type = Optional[float]
 
@@ -4925,7 +4927,7 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
          Decodes the RandomForestClassifier object and predict a score based on the given instance.
     """
 
-    _requirements_list: List[str] = ["sklearn"]
+    _requirements_list: List[str] = ["scikit-learn"]
 
     def decode_tree(self, tree_dict, n_features, n_classes, n_outputs):
         from sklearn.tree._tree import Tree

@@ -37,7 +37,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-# Template from https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA
 add_to_catalog(
     MultiReferenceTemplate(
         instruction="Answer the question based on the information provided in the document given below. The answer should be a single word or a number or a short phrase of few words.",
@@ -45,6 +44,7 @@ add_to_catalog(
         output_format="{answer}",
         target_prefix="Answer:\n",
         references_field="answers",
+        __description__="Template from https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA",
     ),
     "templates.qa.with_context.ffqa",
     overwrite=True,
