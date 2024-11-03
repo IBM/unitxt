@@ -8,7 +8,7 @@ from unitxt.settings_utils import get_constants, get_settings
 from unitxt.text_utils import print_dict
 from unitxt.utils import import_module_from_file
 
-from tests.utils import UnitxtTestCase
+from tests.utils import UnitxtExamplesTestCase
 
 logger = get_logger()
 constants = get_constants()
@@ -44,7 +44,7 @@ excluded_files = [
 ]
 
 
-class TestExamples(UnitxtTestCase):
+class TestExamples(UnitxtExamplesTestCase):
     def test_examples(self):
         logger.info(glob_query)
         logger.info(f"Testing example files: {all_example_files}")
