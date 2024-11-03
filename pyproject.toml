@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "unitxt"
 dynamic = ["version"]
@@ -5,8 +9,9 @@ description = "Load any mixture of text to text data in one line of code"
 authors = [
     { name = "IBM Research", email = "elron.bandel@ibm.com" }
 ]
-readme = "README.md"
 requires-python = ">=3.8"
+license = { file = "LICENSE" }
+readme = "README.md"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent"
@@ -19,19 +24,24 @@ dependencies = [
     "scipy"
 ]
 
-[tool.setuptools.dynamic]
-version = {attr = "src.unitxt.version.version"}
-
 [project.urls]
-homepage = "https://github.com/ibm/unitxt"
+Homepage = "https://www.unitxt.ai"
+Documentation = "https://www.unitxt.ai/en/latest/documentation.html"
+Repository = "https://github.com/ibm/unitxt"
+
+# [tool.setuptools.dynamic]
+# version = {attr = "src.unitxt.version.version"}
 
 [tool.setuptools]
-packages = ["src"]
+package-dir = {"" = "src"}
+packages = ["unitxt"]
 include-package-data = true
-
 
 [tool.setuptools.package-data]
 unitxt = ["catalog/*.json", "ui/banner.png"]
+
+[tool.setuptools.dynamic]
+version = {attr = "unitxt.version.version"}
 
 [project.optional-dependencies]
 dev = [
