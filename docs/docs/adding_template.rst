@@ -99,8 +99,8 @@ The reason the post processors are set in the template, is because different tem
 For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
 template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
 
-Post processors implemented as operators.  Usually they are implemented as fields operator, that are applied to the prediction
-and reference fields.   When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
+Post processors implemented as operators.  Usually they are implemented as fields operators that are applied to the ``prediction``
+and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa. 
 Here we see how we can lowercase only the model prediction.
 
 .. code-block:: python
