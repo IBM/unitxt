@@ -55,6 +55,8 @@ Here’s the code used to set up our tests. This example uses Unitxt to create s
     predictions = inference_model.infer(data)
     results = evaluate(predictions=predictions, data=data)
 
+In order to run this you will first have to install llms-eval library which might not work on mac.
+
 *Full code example at:* https://github.com/IBM/unitxt/blob/main/examples/robustness_testing_for_vision_text_models.py
 
 In this setup:
