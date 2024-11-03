@@ -79,12 +79,12 @@ Post Processors
 ---------------
 
 The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <metric>`.
-The post processors applied both to the model prediction and to the references. 
+Typically, the post processors applied both to the model prediction and to the references. 
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
-so the metric computation will ignore case. When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
-
+so the metric computation will ignore case. 
 .. code-block:: python
 
+    from unitxt.templates import InputOutputTemplate
     template = InputOutputTemplate(
         instruction="In the following task, you translate a {text_type}.",
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
@@ -98,6 +98,30 @@ so the metric computation will ignore case. When needed, It is possible to add p
 The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
 For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
 template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
+
+Post processors implemented as operators.  Usually they are implemented as fields operator, that are applied to the prediction
+and reference fields.   When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
+Here we see how we can lowercase only the model prediction.
+
+.. code-block:: python
+
+    from unitxt.processors import PostProcess
+    from unitxt.operators import FieldOperator
+
+    class Lower(FieldOperator):
+        def process_value(self, text: Any) -> Any:
+            return text.lower()
+
+    from unitxt.templates import InputOutputTemplate
+    template = InputOutputTemplate(
+        instruction="In the following task, you translate a {text_type}.",
+        input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
+        target_prefix="Translation: ",
+        output_format='{translation}',
+        postprocessors= [ 
+            PostProcess(Lower(),process_references=False)    
+        ]
+    )
 
 You can see all the available predefined post processors in the catalog (:ref:`Processor <processors>`.)
 
