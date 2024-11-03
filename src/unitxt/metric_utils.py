@@ -320,6 +320,30 @@ UNITXT_METRIC_SCHEMA = Features(
 )
 
 
+class EvaluationResults(list):
+    @property
+    def score(self):
+        return self[0]["score"]["global"]
+
+    @property
+    def groups(self):
+        if "groups" not in self[0]["score"]:
+            raise ValueError("Groups scores not found try using group_by in the recipe")
+        return self[0]["score"]["groups"]
+
+    @property
+    def subsets(self):
+        if "subsets" not in self[0]["score"]:
+            raise ValueError("Subsets scores not found try using Benchmark")
+        return self[0]["score"]["subsets"]
+
+    def to_df(self):
+        import pandas as pd
+
+        # Flatten and load into DataFrame
+        return pd.json_normalize(self)
+
+
 def _compute(
     predictions: List[str],
     references: Iterable,
@@ -340,7 +364,7 @@ def _compute(
         multi_stream = operator(multi_stream)
 
     stream = multi_stream[split_name]
-    return list(stream)
+    return EvaluationResults(stream)
 
 
 """
