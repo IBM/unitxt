@@ -38,7 +38,7 @@ packages = {find = {where = ["src"]}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-unitxt = ["catalog/*.json", "ui/banner.png"]
+unitxt = ["catalog/**/*.json", "ui/banner.png"]
 
 [tool.setuptools.dynamic]
 version = {attr = "unitxt.version.version"}
