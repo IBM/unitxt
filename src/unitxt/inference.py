@@ -869,6 +869,12 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     def prepare_engine(self):
         return
 
+    def _mock_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [self.default_inference_value for _ in dataset]
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -1127,6 +1133,7 @@ class IbmGenAiInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
+    rate_limit: int = 10
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
