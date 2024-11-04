@@ -1,54 +1,27 @@
-import json
-import unittest
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
-from datasets.arrow_dataset import Dataset
 from unitxt import produce
 from unitxt.api import load_dataset
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
-    MockInferenceEngine,
+    IbmGenAiInferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngine,
-    mock_logprobs_default_value_factory,
 )
-from unitxt.metrics import Accuracy, Metric
-from unitxt.operator import MissingRequirementsError
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
-from unitxt.test_utils.metrics import apply_metric
+from unitxt.text_utils import print_dict
 from unitxt.type_utils import isoftype
 
-from tests.utils import UnitxtTestCase
+from tests.utils import UnitxtInferenceTestCase
 
 settings = get_settings()
 
 
-class TestInferenceEngine(UnitxtTestCase):
-    @staticmethod
-    def prepare_test_data() -> Dataset:
-        return load_dataset(
-            dataset_query="card=cards.rte,template_card_index=0,loader_limit=20"
-        )["test"]
-
-    @staticmethod
-    def get_test_references(task_data: List[str]) -> List[List[List[str]]]:
-        return [[[json.loads(sample)["label"]]] for sample in task_data]
-
-    @staticmethod
-    def process_predictions(predictions: List[str]) -> List[List[str]]:
-        return [[prediction] for prediction in predictions]
-
-    @staticmethod
-    def calculate_metric_global_score(
-        metric: Metric, preds: List[List[str]], refs: List[List[List[str]]]
-    ) -> float:
-        return apply_metric(metric=metric, predictions=preds, references=refs)[0][
-            "score"
-        ]["global"]["score"]
-
+class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_pipeline_based_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
@@ -137,91 +110,72 @@ class TestInferenceEngine(UnitxtTestCase):
                 ["text", "logprob", "top_tokens"],
             )
 
-    def test_wml_inference_engine(self):
-        try:
-            inference_engine = WMLInferenceEngine(
-                model_name="google/flan-t5-xl",
-                random_seed=123,
-                concurrency_limit=5,
+    def test_watsonx_inference(self):
+        wml_engine = WMLInferenceEngine(
+            model_name="google/flan-t5-xl",
+            data_classification_policy=["public"],
+            random_seed=111,
+            min_new_tokens=16,
+            max_new_tokens=128,
+            top_p=0.5,
+            top_k=1,
+            repetition_penalty=1.5,
+            decoding_method="greedy",
+        )
+
+        # Loading dataset:
+        dataset = load_dataset(
+            card="cards.go_emotions.simplified",
+            template="templates.classification.multi_label.empty",
+            loader_limit=3,
+        )
+        test_data = dataset["test"]
+
+        # Performing inference:
+        predictions = wml_engine.infer(test_data)
+        for inp, prediction in zip(test_data, predictions):
+            result = {**inp, "prediction": prediction}
+            print_dict(result, keys_to_print=["source", "prediction"])
+
+    def test_option_selecting_by_log_prob_inference_engines(self):
+        dataset = [
+            {
+                "source": "hello how are you ",
+                "task_data": {"options": ["world", "truck"]},
+            },
+            {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+            # multiple options with the same token prefix
+            {
+                "source": "I will give you my ",
+                "task_data": {
+                    "options": [
+                        "telephone number",
+                        "truck monster",
+                        "telephone address",
+                    ]
+                },
+            },
+        ]
+
+        genai_engine = IbmGenAiInferenceEngine(
+            model_name="mistralai/mixtral-8x7b-instruct-v01"
+        )
+        watsonx_engine = WMLInferenceEngine(
+            model_name="mistralai/mixtral-8x7b-instruct-v01"
+        )
+
+        for engine in [genai_engine, watsonx_engine]:
+            dataset = cast(OptionSelectingByLogProbsInferenceEngine, engine).select(
+                dataset
             )
-
-            dataset = self.prepare_test_data().take(5)
-
-            results = inference_engine._infer(dataset)
-
-            assert len(results) == len(dataset["source"])
-            assert results[0] == "entailment"
-
-            references = self.get_test_references(dataset["task_data"])
-            processed_results = self.process_predictions(results)
-            acc = Accuracy()
-            score = self.calculate_metric_global_score(
-                acc, processed_results, references
-            )
-            assert score == 0.4
-        except (MissingRequirementsError, ModuleNotFoundError):
-            # In such case, the test is omitted as not every user may
-            # need to use this package.
-            pass
-
-    def test_wml_inference_engine_with_logprobs_and_meta_results(self):
-        try:
-            inference_engine = WMLInferenceEngine(
-                model_name="google/flan-t5-xl",
-                random_seed=123,
-                concurrency_limit=5,
-            )
-
-            dataset = self.prepare_test_data().take(5)
-
-            results = inference_engine._infer_log_probs(dataset, return_meta_data=True)
-            sample = results[0]
-
-            assert len(results) == len(dataset["source"])
-            assert isinstance(sample, TextGenerationInferenceOutput)
-            assert sample.seed == 123
-            assert sample.stop_reason == "eos_token"
-            assert len(sample.prediction) == 5
-            self.assertListEqual(
-                list(sample.prediction[0].keys()),
-                ["text", "logprob", "top_tokens"],
-            )
-            self.assertListEqual(
-                [token["text"] for token in sample.prediction],
-                ["▁", "en", "tail", "ment", "</s>"],
-            )
-        except (MissingRequirementsError, ModuleNotFoundError):
-            # In such case, the test is omitted as not every user may
-            # need to use this package.
-            pass
-
-    def test_mock_inference_engine(self):
-        dataset = self.prepare_test_data()
-
-        inference_engine = MockInferenceEngine(model_name="model")
-
-        assert inference_engine.get_engine_id() == "model_mock"
-        assert inference_engine.get_model_details() == {}
-
-        results = inference_engine.infer(dataset)
-
-        assert len(results) == len(dataset)
-        assert results[0] == inference_engine.default_inference_value
-
-        results = inference_engine.infer_log_probs(dataset, return_meta_data=True)
-        sample = results[0]
-
-        assert len(results) == len(dataset)
-        assert isinstance(sample, TextGenerationInferenceOutput)
-        assert sample.prediction == mock_logprobs_default_value_factory()
-        assert sample.seed == 111
-        assert sample.stop_reason == ""
-        assert sample.output_tokens == len(mock_logprobs_default_value_factory())
-        assert sample.input_tokens == len(dataset[0]["source"])
-        assert sample.input_text == dataset[0]["source"]
+            self.assertEqual(dataset[0]["prediction"], "world")
+            self.assertEqual(dataset[1]["prediction"], "the")
+            self.assertEqual(dataset[2]["prediction"], "telephone number")
 
     def test_hf_auto_model_inference_engine(self):
-        data = self.prepare_test_data()
+        data = load_dataset(
+            dataset_query="card=cards.rte,template_card_index=0,loader_limit=20"
+        )["test"]
 
         engine = HFAutoModelInferenceEngine(
             model_name="google/flan-t5-small",
@@ -253,7 +207,3 @@ class TestInferenceEngine(UnitxtTestCase):
 
         assert isoftype(results, List[str])
         assert results[0] == "entailment"
-
-
-if __name__ == "__main__":
-    unittest.main()

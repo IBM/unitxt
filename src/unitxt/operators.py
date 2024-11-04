@@ -70,7 +70,6 @@ from .operator import (
     InstanceOperator,
     MultiStream,
     MultiStreamOperator,
-    PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
@@ -1229,9 +1228,6 @@ class ComputeExpressionMixin(Artifact):
 
     expression: str
     imports_list: List[str] = OptionalField(default_factory=list)
-
-    def verify(self):
-        PackageRequirementsMixin.check_missing_requirements(self, self.imports_list)
 
     def prepare(self):
         # can not do the imports here, because object does not pickle with imports
