@@ -67,7 +67,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Augmentor = OptionalField(default_factory=NullAugmentor)
+    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(
+        default_factory=NullAugmentor
+    )
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
@@ -294,9 +296,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if isinstance(self.augmentor, TaskInputsAugmentor):
-            self.augmentor.set_fields(self.card.task.augmentable_inputs)
-            self.processing.steps.append(self.augmentor)
+        if not isinstance(self.augmentor, list):
+            self.augmentor = [self.augmentor]
+
+        for augmentor in self.augmentor:
+            if isinstance(augmentor, TaskInputsAugmentor):
+                augmentor.set_fields(self.card.task.augmentable_inputs)
+                self.processing.steps.append(augmentor)
 
         if self.has_custom_demos_pool:
             self.processing.steps.append(
@@ -375,8 +381,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-        if isinstance(self.augmentor, FinalStateInputsAugmentor):
-            self.verbalization.steps.append(self.augmentor)
+
+        for aumgentor in self.augmentor:
+            if isinstance(aumgentor, FinalStateInputsAugmentor):
+                self.verbalization.steps.append(aumgentor)
 
         if self.postprocessors is not None:
             self.finalize.steps.append(
