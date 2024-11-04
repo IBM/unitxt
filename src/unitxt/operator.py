@@ -34,8 +34,8 @@ class PackageRequirementsMixin(Artifact):
     )
 
     def prepare(self):
-        super().prepare()
         self.check_missing_requirements()
+        super().prepare()
 
     def check_missing_requirements(self, requirements=None):
         if requirements is None:
