@@ -1,3 +1,4 @@
+import importlib.metadata
 import importlib.util
 import os
 from contextlib import contextmanager

@@ -8,7 +8,7 @@ from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
 from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
-from .operator import InstanceOperator
+from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
     DialogSerializer,
@@ -21,7 +21,7 @@ from .serializers import (
     VideoSerializer,
 )
 from .settings_utils import get_constants
-from .type_utils import isoftype
+from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
 
@@ -67,6 +67,12 @@ class Template(InstanceOperator):
             ]
         )
     )
+
+    def verify(self):
+        super().verify()
+        assert isoftype(
+            self.postprocessors, List[Union[Operator, str]]
+        ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
 
     def input_fields_to_instruction_and_target_prefix(self, input_fields):
         instruction = self.apply_formatting(

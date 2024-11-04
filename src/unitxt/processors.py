@@ -9,9 +9,11 @@ from typing import Any, Dict
 import numpy as np
 
 from .deprecation_utils import deprecation
+from .error_utils import Documentation, UnitxtError
 from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
 from .settings_utils import get_constants
+from .type_utils import isoftype
 
 constants = get_constants()
 
@@ -23,6 +25,11 @@ class PostProcess(MultiStreamOperator):
 
     def prepare(self):
         super().prepare()
+        if not isoftype(self.operator, InstanceFieldOperator):
+            raise UnitxtError(
+                f"PostProcess requires operator field to be of type InstanceFieldOperator. Got object of type <{type(self.operator).__name__}>.",
+                Documentation.POST_PROCESSORS,
+            )
         self.prediction_operator = copy.copy(self.operator)
         self.prediction_operator.field = "prediction"
         self.references_operator = copy.copy(self.operator)
