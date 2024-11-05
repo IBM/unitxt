@@ -1852,6 +1852,8 @@ class F1(GlobalMetric):
     prediction_type = str
     single_reference_per_prediction = True
 
+    _requirements_list: List[str] = ["scikit-learn"]
+
     def prepare(self):
         super().prepare()
         import evaluate
@@ -2289,7 +2291,7 @@ class Rouge(InstanceMetric, NLTKMixin):
         return score
 
 
-class RougeHF(HuggingfaceInstanceMetric, NLTKMixin):
+class RougeHF(NLTKMixin, HuggingfaceInstanceMetric):
     hf_metric_name = "rouge"
     main_score = "rougeL"
     scale = 1.0

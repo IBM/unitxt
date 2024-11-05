@@ -221,7 +221,7 @@ add_to_catalog(
 )
 
 add_to_catalog(
-    PostProcess(Cast(to="float", failure_default={"float": 0.5})),
+    PostProcess(Cast(to="float", failure_default=0.5)),
     "processors.cast_to_float_return_0_5_if_failed",
     overwrite=True,
 )

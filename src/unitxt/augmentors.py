@@ -9,7 +9,7 @@ from typing import (
 
 from .operators import FieldOperator
 from .random_utils import new_random_generator
-from .type_utils import isoftype
+from .type_utils import isoftype, parse_type_string, to_type_string
 
 
 class Augmentor(FieldOperator):
@@ -25,6 +25,24 @@ class TaskInputsAugmentor(Augmentor):
     def set_fields(self, fields: List[str]):
         fields = ["input_fields/" + field for field in fields]
         self.field_to_field = {field: field for field in fields}
+
+
+class TypeDependentAugmenter(TaskInputsAugmentor):
+    augmented_type: object
+
+    def process_value(self, value: Any) -> Any:
+        if not isoftype(value, self.augmented_type):
+            return value
+        return self.operator.process_value(value)
+
+    @classmethod
+    def process_data_after_load(cls, data):
+        data["augmented_type"] = parse_type_string(data["augmented_type"])
+        return data
+
+    def process_data_before_dump(self, data):
+        data["augmented_type"] = to_type_string(data["augmented_type"])
+        return data
 
 
 class FinalStateInputsAugmentor(Augmentor):
