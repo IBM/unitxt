@@ -1,5 +1,6 @@
 from unitxt import settings
 from unitxt.api import evaluate
+from unitxt.artifact import fetch_artifact
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
     LMMSEvalInferenceEngine,
@@ -13,15 +14,20 @@ with settings.context(
     disable_hf_datasets_cache=False,
 ):
     subsets = {}
-    for card in ["cards.seed_bench", "cards.ai2d"]:
+    for card in ["cards.seed_bench"]:
+        task_card, _ = fetch_artifact(card)
+        loader0 = task_card.loader
         for enumerator in ["capitals", "lowercase"]:
             for augmentor in [None, "augmentors.image.white_noise"]:
-                subsets[f"{card} {enumerator} {augmentor}"] = StandardRecipe(
+                recipei = StandardRecipe(
                     card=card,
                     template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
                     loader_limit=100,
                     augmentor=augmentor,
                 )
+                recipei.loading.steps[0] = loader0
+                loader0.loader_limit = recipei.loader_limit
+                subsets[f"{card} {enumerator} {augmentor}"] = recipei
 
     benchmark = Benchmark(subsets=subsets)
 
