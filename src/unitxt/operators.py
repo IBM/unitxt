@@ -1635,23 +1635,14 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricsList
 
-        # Number of instances in input stream is assumed to be small. This is why
-        # each metric consumes all of them and lays them in its main memory, and even generates
-        # some 1000 copies thereof for the sake of CI.
-        # So we start with deep copying here, to make a 'frozen' status of the stream, having
-        # passed the preprocess_steps of the task, and inference, and now getting to be evaluated,
-        # a frozen status to be fed into each of the metrics listed in metric_field,
-        # so that the evaluation of one does not affect the evaluation of another
-        # (typically, affecting via change of instance as part of
-        # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
-
-        instances_upon_entrance_to_metrics_evaluations = []
-        for instance in stream:
-            instances_upon_entrance_to_metrics_evaluations.append(
-                recursive_copy(instance)
-            )
-
-        first_instance = instances_upon_entrance_to_metrics_evaluations[0]
+        # Number of instances in input stream is assumed to be small, the instances that passed inference.
+        # This is why each metric consumes all of them and lays them in its main memory, and even generates
+        # some 1000 copies thereof for the sake of CI. So we start with spelling them out here:
+        instances_list = list(stream)
+        
+        # to be populated only when two or more metrics
+        instances_upon_entrance_to_metrics_evaluations = []   
+        first_instance = instances_list[0]
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1680,26 +1671,41 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        for metric in metrics_list:
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
-            multi_stream = MultiStream(
-                {
-                    "tmp": ListStream(
-                        instances_list=instances_upon_entrance_to_metrics_evaluations,
-                        copying=True,  # ensures deep copy when iterating over instances
-                    )
-                }
-            )
-            multi_stream = metric(multi_stream)
-            for evaluated_instance, freezed_instance in zip(
-                multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
-            ):
-                freezed_instance["score"] = recursive_shallow_copy(
-                    evaluated_instance["score"]
+        if len(metric_names) > 1:
+            # In case of two or more metrics, in order to save from metrics that change predictions and references,
+            # and hinder their successive metrics, we start with a recursive copying here, to make a 'frozen' status of
+            # the stream, having passed the preprocess_steps of the task, and inference, and now getting to be evaluated.
+            # That frozen status will be fed into each of the second and further metrics listed in metric_field,
+            # so that the evaluation of one does not affect the evaluation of another
+            # (typically, affecting via change of instance as part of
+            # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
+            for instance in instances_list:
+                instances_upon_entrance_to_metrics_evaluations.append(
+                    recursive_copy(instance)
                 )
 
-        yield from instances_upon_entrance_to_metrics_evaluations
+        for metric_no, metric in enumerate(metrics_list):
+            if not self.calc_confidence_intervals:
+                metric.disable_confidence_interval_calculation()
+
+            multi_stream = MultiStream(
+                {"tmp": ListStream(instances_list=instances_list)}
+            )
+            multi_stream = metric(multi_stream)
+            if metric_no < len(metric_names) - 1:
+                # not the last metric, so continue to the next metric by preparing a fresh copy of the stream as had
+                # been saved before any earlier metric (potentially) modified its predictions and references,
+                # a fresh copy into which the just computed score is updated.
+                instances_list = []
+                for evaluated_instance, freezed_instance in zip(
+                    multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
+                ):
+                    instance = recursive_copy(freezed_instance)
+                    instance["score"] = evaluated_instance["score"]
+                    instances_list.append(instance)
+
+        # now done with the last metric
+        yield from multi_stream["tmp"]
 
 
 class MergeStreams(MultiStreamOperator):
