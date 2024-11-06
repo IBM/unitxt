@@ -145,8 +145,8 @@ class Loader(SourceOperator):
         iterables = self.__class__._loader_cache.get(str(self), None)
         if iterables is None:
             iterables = self.load_iterables()
-            self._loader_cache.max_size = settings.loader_cache_size
-            self._loader_cache[str(self)] = iterables
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
