@@ -35,6 +35,18 @@ def extract_images(text, instance):
     return images
 
 
+class EncodeImageToString(FieldOperator):
+    image_format: str = "JPEG"
+
+    def encode_image_to_base64(self, image):
+        buffer = io.BytesIO()
+        image.save(buffer, format=self.image_format)
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    def process_value(self, value: Any) -> Any:
+        return {"image": self.encode_image_to_base64(value)}
+
+
 class DecodeImage(FieldOperator, PillowMixin):
     def decode_base64_to_image(self, base64_string):
         image_data = base64.b64decode(base64_string)

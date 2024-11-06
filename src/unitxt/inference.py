@@ -14,6 +14,7 @@ from typing import (
     Mapping,
     Optional,
     Sequence,
+    Tuple,
     Union,
 )
 
@@ -23,7 +24,7 @@ from tqdm import tqdm, trange
 from .artifact import Artifact, fetch_artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
-from .image_operators import extract_images
+from .image_operators import EncodeImageToString, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .settings_utils import get_settings
@@ -1591,6 +1592,10 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
         return OpenAI(api_key=api_key, base_url=api_url)
 
 
+@deprecation(
+    version="2.0.0",
+    msg=" You can specify inference parameters directly when initializing an inference engine.",
+)
 class WMLInferenceEngineParamsMixin(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     length_penalty: Optional[Dict[str, Union[int, float]]] = None
@@ -1626,19 +1631,47 @@ class WMLInferenceEngineParams(Artifact):
     return_options: Optional[Dict[str, bool]] = None
 
 
+class WMLGenerationParamsMixin(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    length_penalty: Optional[Dict[str, Union[int, float]]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    min_new_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
+    stop_sequences: Optional[List[str]] = None
+    time_limit: Optional[int] = None
+    truncate_input_tokens: Optional[int] = None
+    prompt_variables: Optional[Dict[str, Any]] = None
+    return_options: Optional[Dict[str, bool]] = None
+
+
+class WMLChatParamsMixin(Artifact):
+    frequency_penalty: Optional[float] = None
+    top_logprobs: Optional[int] = 5
+    presence_penalty: Optional[float] = None
+    response_format: Optional[Dict[str, Any]] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    time_limit: Optional[int] = None
+    top_p: Optional[float] = None
+    n: Optional[int] = None
+
+
 CredentialsWML = Dict[
     Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
 ]
 
 
-class WMLInferenceEngine(
+class WMLInferenceEngineBase(
     InferenceEngine,
-    WMLInferenceEngineParamsMixin,
     PackageRequirementsMixin,
     LogProbInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 ):
-    """Runs inference using ibm-watsonx-ai.
+    """Base for classes running inference using ibm-watsonx-ai.
 
     Attributes:
         credentials (Dict[str, str], optional): By default, it is created by a class
@@ -1651,30 +1684,9 @@ class WMLInferenceEngine(
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
-        parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
-            which defines inference parameters and their values. Deprecated attribute, please
-            pass respective parameters directly to the WMLInferenceEngine class instead.
-        concurrency_limit (int): number of requests that will be sent in parallel, max is 10.
-
-    Examples:
-        from .api import load_dataset
-
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngine(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
-
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+        parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
+            Defines inference parameters and their values. Deprecated attribute, please pass respective
+            parameters directly to the respective class instead.
     """
 
     credentials: Optional[CredentialsWML] = None
@@ -1687,8 +1699,10 @@ class WMLInferenceEngine(
         "may cause conflicts with other installed packages."
     }
     data_classification_policy = ["public", "proprietary"]
-    parameters: Optional[WMLInferenceEngineParams] = None
-    concurrency_limit: int = 10
+    parameters: Optional[
+        Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin]
+    ] = None
+
     _client: Any = InternalField(default=None, name="WML client")
     _model: Any = InternalField(default=None, name="WML model")
 
@@ -1697,14 +1711,6 @@ class WMLInferenceEngine(
 
     def verify(self):
         super().verify()
-
-        assert (
-            isinstance(self.concurrency_limit, int)
-            and 1 <= self.concurrency_limit <= 10
-        ), (
-            f"'concurrency_limit' must be a positive integer not greater than 10. "
-            f"However, '{self.concurrency_limit}' was given."
-        )
 
         assert (
             self.model_name
@@ -1829,6 +1835,19 @@ class WMLInferenceEngine(
             api_client=self._client,
         )
 
+    @abc.abstractmethod
+    def _send_requests(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_logprobs: bool,
+        return_meta_data: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError(
+            f"The class '{self.get_pretty_print_name()}' is an abstract class. "
+            f"Please used either 'WMLInferenceEngineGeneration' or "
+            f"'WMLInferenceEngineChat' instead, depending on your task."
+        )
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -1837,11 +1856,8 @@ class WMLInferenceEngine(
         if self._model is None:
             self._load_model()
 
-        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
-
         return self._send_requests(
-            params=params,
-            inputs=[instance["source"] for instance in dataset],
+            dataset=dataset,
             return_logprobs=False,
             return_meta_data=return_meta_data,
         )
@@ -1854,16 +1870,128 @@ class WMLInferenceEngine(
         if self._model is None:
             self._load_model()
 
-        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
+        return self._send_requests(
+            dataset=dataset,
+            return_logprobs=True,
+            return_meta_data=return_meta_data,
+        )
 
+    @abc.abstractmethod
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+        raise NotImplementedError
+
+    def get_model_details(self) -> Dict:
+        return self._model.get_details()
+
+    def get_token_count(self, dataset):
+        if self._model is None:
+            self._load_model()
+
+        texts = [instance["source"] for instance in dataset]
+
+        for i in trange(len(texts), desc="Tokenizing"):
+            response = self._model.tokenize(prompt=texts[i], return_tokens=True)[
+                "result"
+            ]
+            dataset[i]["token_count"] = response["token_count"]
+
+        return dataset
+
+    def get_options_log_probs(self, dataset):
+        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
+        if self._model is None:
+            self._load_model()
+
+        texts = [x["source"] for x in dataset]
+
+        responses = list(
+            tqdm(
+                self._model.generate(
+                    prompt=texts,
+                    params={
+                        "decoding_method": "greedy",
+                        "max_new_tokens": 1,
+                        "return_options": {
+                            "input_tokens": True,
+                            "token_logprobs": True,
+                        },
+                    },
+                ),
+                total=len(texts),
+                desc="Completions",
+            )
+        )
+
+        scores = [
+            [
+                {
+                    "text": token["text"],
+                    "logprob": token["logprob"] if "logprob" in token else 1,
+                }
+                for token in response["results"][0]["input_tokens"]
+            ]
+            for response in responses
+        ]
+
+        for instance, score in zip(dataset, scores):
+            instance["prediction"] = score[instance["task_data"]["token_count"] - 1 :]
+        return dataset
+
+
+class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMixin):
+    """Generates text for textual inputs.
+
+    If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
+
+    Attributes:
+        concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value.
+
+    Examples:
+        from .api import load_dataset
+
+        wml_credentials = {
+            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+        }
+        model_name = "google/flan-t5-xxl"
+        wml_inference = WMLInferenceEngineGeneration(
+            credentials=wml_credentials,
+            model_name=model_name,
+            data_classification_policy=["public"],
+            top_p=0.5,
+            random_seed=123,
+        )
+
+        dataset = load_dataset(
+            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+        )
+        results = wml_inference.infer(dataset["test"])
+    """
+
+    concurrency_limit: int = 10
+
+    def verify(self):
+        super().verify()
+
+        assert (
+            isinstance(self.concurrency_limit, int)
+            and 1 <= self.concurrency_limit <= 10
+        ), (
+            f"'concurrency_limit' must be a positive integer not greater than 10. "
+            f"However, '{self.concurrency_limit}' was given."
+        )
+
+    def _set_logprobs_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
         user_return_options = params.pop("return_options", {})
-        # currently this is the only configuration that returns generated logprobs and behaves as expected
+        # currently this is the only configuration that returns generated
+        # logprobs and behaves as expected
         logprobs_return_options = {
             "input_tokens": True,
             "generated_tokens": True,
             "token_logprobs": True,
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
         }
+
         for key, value in logprobs_return_options.items():
             if key in user_return_options and user_return_options[key] != value:
                 raise ValueError(
@@ -1872,26 +2000,26 @@ class WMLInferenceEngine(
                     f"please use '{key}={value}'."
                 )
 
-        params = {
+        return {
             **params,
             "return_options": logprobs_return_options,
         }
 
-        return self._send_requests(
-            params=params,
-            inputs=[instance["source"] for instance in dataset],
-            return_logprobs=True,
-            return_meta_data=return_meta_data,
-        )
-
     def _send_requests(
         self,
-        params: Dict[str, Any],
-        inputs: List[str],
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_logprobs: bool,
-        return_meta_data: bool = False,
+        return_meta_data: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        generation_type = "generated_tokens" if return_logprobs else "generated_text"
+        params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
+
+        if return_logprobs:
+            generation_type = "generated_tokens"
+            params = self._set_logprobs_params(params)
+        else:
+            generation_type = "generated_text"
+
+        inputs: List[str] = [instance["source"] for instance in dataset]
 
         results = self._model.generate(
             prompt=inputs,
@@ -1924,70 +2052,164 @@ class WMLInferenceEngine(
             )
         return predict_result
 
-    def get_model_details(self) -> Dict:
-        return self._model.get_details()
 
-    def get_token_count(self, dataset):
-        from ibm_watsonx_ai.foundation_models import ModelInference
+class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
+    """Creates chat session and returns a model's response.
 
-        texts = [instance["source"] for instance in dataset]
+    You can also include images in your inputs. If you use only textual input, it is
+    recommended to use 'WMLInferenceEngineGeneration' instead as it is faster, and allows
+    more parameters for text generation.
 
-        model = ModelInference(
-            model_id=self.model_name,
-            deployment_id=self.deployment_id,
-            api_client=self._client,
+    Attributes:
+        image_encoder (EncodeImageToString, optional): operator which encodes images in
+            given format to base64 strings required by service. You should specify it when
+            you are using images in your inputs.
+
+    Example:
+        from .api import load_dataset
+        from .image_operators
+
+        image_encoder = EncodeImageToString(image_format="JPEG")
+
+        wml_credentials = {
+            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+        }
+        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+        wml_inference = WMLInferenceEngineChat(
+            credentials=wml_credentials,
+            model_name=model_name,
+            image_encoder=image_encoder,
+            data_classification_policy=["public"],
+            max_tokens=1024,
         )
 
-        for i in trange(len(texts), desc="Tokenizing"):
-            response = model.tokenize(prompt=texts[i], return_tokens=True)["result"]
-            dataset[i]["token_count"] = response["token_count"]
-
-        return dataset
-
-    def get_options_log_probs(self, dataset):
-        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        from ibm_watsonx_ai.foundation_models import ModelInference
-
-        model = ModelInference(
-            model_id=self.model_name,
-            deployment_id=self.deployment_id,
-            api_client=self._client,
+        dataset = load_dataset(
+            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
         )
+        results = wml_inference.infer(dataset["test"])
+    """
 
-        texts = [x["source"] for x in dataset]
+    image_encoder: Optional[EncodeImageToString] = None
 
-        responses = list(
-            tqdm(
-                model.generate(
-                    prompt=texts,
-                    params={
-                        "decoding_method": "greedy",
-                        "max_new_tokens": 1,
-                        "return_options": {
-                            "input_tokens": True,
-                            "token_logprobs": True,
-                        },
-                    },
-                ),
-                total=len(texts),
-                desc="Completions",
-            )
-        )
+    @staticmethod
+    def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
+        task_data = instance["task_data"]
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        question = task_data.get("question")
 
-        scores = [
-            [
-                {
-                    "text": token["text"],
-                    "logprob": token["logprob"] if "logprob" in token else 1,
-                }
-                for token in response["results"][0]["input_tokens"]
-            ]
-            for response in responses
+        images = [None]
+        if "media" in instance and "images" in instance["media"]:
+            images = extract_images(instance["source"], instance)
+
+        return question, images
+
+    def _prepare_messages(
+        self, text_query: str, image_query: Any
+    ) -> List[Dict[str, Any]]:
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": text_query,
+                    }
+                ],
+            },
         ]
+        if image_query is not None:
+            encoded_image = image_query
+            if not isinstance(encoded_image, str):
+                if self.image_encoder is None:
+                    raise ValueError(
+                        "If sending image queries as well, and they are not "
+                        "already encoded to base64 strings, you must specify "
+                        "the 'image_encoder' to be used."
+                    )
 
-        for instance, score in zip(dataset, scores):
-            instance["prediction"] = score[instance["task_data"]["token_count"] - 1 :]
-        return dataset
+                encoded_image = self.image_encoder.encode_image_to_base64(image_query)
+
+            messages[0]["content"].append(
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": "data:image/jpeg;base64," + encoded_image,
+                    },
+                }
+            )
+
+        return messages
+
+    def _send_requests(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_logprobs: bool,
+        return_meta_data: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        params = self.to_dict([WMLChatParamsMixin], keep_empty=False)
+
+        if return_logprobs:
+            output_type = "logprobs"
+            params["logprobs"] = True
+        else:
+            params["logprobs"] = False
+            output_type = "message"
+
+        final_results = []
+
+        for instance in dataset:
+            question, images = self._extract_queries(instance)
+
+            # We iterate over all possible images, since SDK allows
+            # only one image per request.
+            for image in images:
+                messages = self._prepare_messages(
+                    text_query=question or instance["source"],
+                    image_query=image,
+                )
+
+                result = self._model.chat(
+                    messages=messages,
+                    params=params,
+                )
+
+                final_results.append(
+                    self.get_return_object(
+                        result["choices"][0][output_type]["content"],
+                        result,
+                        instance["source"],
+                        return_meta_data,
+                    )
+                )
+
+        return final_results
+
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=result["usage"]["prompt_tokens"],
+                output_tokens=len(predict_result)
+                if isinstance(predict_result, list)
+                else None,
+                model_name=self.model_name or self.deployment_id,
+                inference_type=self.label,
+                stop_reason=result["choices"][0]["finish_reason"],
+                input_text=input_text,
+            )
+        return predict_result
+
+
+@deprecation(
+    version="2.0.0",
+    msg=" Please use either 'WMLInferenceEngineGeneration' or 'WMLInferenceEngineChat'"
+    " depending on your task.",
+)
+class WMLInferenceEngine(WMLInferenceEngineGeneration):
+    def prepare_engine(self):
+        super().prepare_engine()
+        get_logger().warning("'WMLInferenceEngine' is deprecated")
 
 
 def get_images_without_text(instance):

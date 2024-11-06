@@ -2,6 +2,7 @@ from typing import Any, Dict, List, cast
 
 from unitxt import produce
 from unitxt.api import load_dataset
+from unitxt.image_operators import EncodeImageToString
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
@@ -9,7 +10,8 @@ from unitxt.inference import (
     IbmGenAiInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     TextGenerationInferenceOutput,
-    WMLInferenceEngine,
+    WMLInferenceEngineChat,
+    WMLInferenceEngineGeneration,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
@@ -111,7 +113,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             )
 
     def test_watsonx_inference(self):
-        wml_engine = WMLInferenceEngine(
+        wml_engine = WMLInferenceEngineGeneration(
             model_name="google/flan-t5-xl",
             data_classification_policy=["public"],
             random_seed=111,
@@ -160,7 +162,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         genai_engine = IbmGenAiInferenceEngine(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
-        watsonx_engine = WMLInferenceEngine(
+        watsonx_engine = WMLInferenceEngineGeneration(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
 
@@ -207,3 +209,29 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         assert isoftype(results, List[str])
         assert results[0] == "entailment"
+
+    def test_watsonx_inference_with_images(self):
+        dataset = StandardRecipe(
+            card="cards.doc_vqa.en",
+            template="templates.qa.with_context.with_type",
+            format="formats.models.llava_interleave",
+            loader_limit=30,
+        )()
+
+        test_data = list(dataset["test"])[:2]
+
+        image_encoder = EncodeImageToString()
+
+        inference_engine = WMLInferenceEngineChat(
+            model_name="meta-llama/llama-3-2-11b-vision-instruct",
+            image_encoder=image_encoder,
+            max_tokens=128,
+            top_logprobs=3,
+        )
+
+        results = inference_engine.infer_log_probs(test_data, return_meta_data=True)
+
+        assert isoftype(results, List[TextGenerationInferenceOutput])
+        assert results[0].input_tokens == 6541
+        assert results[0].stop_reason == "stop"
+        assert isoftype(results[0].prediction, List[Dict[str, Any]])
