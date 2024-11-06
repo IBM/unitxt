@@ -84,7 +84,7 @@ class Loader(SourceOperator):
     # class level shared cache:
     _loader_cache = LRUCache(max_size=settings.loader_cache_size)
 
-    def get_limit(self):
+    def get_limit(self) -> int:
         if settings.global_loader_limit is not None and self.loader_limit is not None:
             return min(int(settings.global_loader_limit), self.loader_limit)
         if settings.global_loader_limit is not None:
