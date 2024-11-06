@@ -1,0 +1,7 @@
+{
+    "__type__": "type_dependent_augmenter",
+    "operator": {
+        "__type__": "transpose_table"
+    },
+    "augmented_type": "Table"
+}

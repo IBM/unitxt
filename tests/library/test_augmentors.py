@@ -5,6 +5,7 @@ from unitxt.augmentors import (
     AugmentWhitespace,
     ModelInputAugmentor,
     TaskInputsAugmentor,
+    TypeDependentAugmenter,
 )
 from unitxt.test_utils.operators import (
     apply_operator,
@@ -37,6 +38,29 @@ class TestOperators(UnitxtTestCase):
         operator.set_fields(["sentence"])
         with self.assertRaises(ValueError):
             apply_operator(operator, inputs)
+
+    def test_type_dependent_augmenter_with_right_type(self):
+        text = "The dog ate my cat"
+        inputs = [{"input_fields": {"text": text}}]
+        operator = TypeDependentAugmenter(
+            operator=AugmentWhitespace(), augmented_type=str
+        )
+        operator.set_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        normalized_output_source = outputs[0]["input_fields"]["text"].split()
+        normalized_input_source = text.split()
+        self.assertEqual(normalized_output_source, normalized_input_source)
+        self.assertNotEqual(text, outputs[0]["input_fields"]["text"])
+
+    def test_type_dependent_augmenter_with_wrong_type(self):
+        text = "The dog ate my cat"
+        inputs = [{"input_fields": {"text": text}}]
+        operator = TypeDependentAugmenter(
+            operator=AugmentWhitespace(), augmented_type=float
+        )
+        operator.set_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        self.assertEqual(outputs[0]["input_fields"]["text"], text)
 
     def test_augment_whitespace_task_input(self):
         text = "The dog ate my cat"
