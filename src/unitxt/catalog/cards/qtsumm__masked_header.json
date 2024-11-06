@@ -39,6 +39,10 @@
             "field": "answers",
             "inside": "list",
             "to_field": "answers"
+        },
+        {
+            "__type__": "get_masked_table_header",
+            "field": "context"
         }
     ],
     "task": "tasks.qa.with_context.abstractive[metrics=[metrics.rouge, metrics.bleu, metrics.bert_score.bert_base_uncased, metrics.meteor]]",

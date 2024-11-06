@@ -7,6 +7,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.splitters import SplitRandomMix
+from unitxt.struct_data_operators import TransposeTable
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -28,6 +29,7 @@ card = TaskCard(
         Rename(field="query", to_field="question"),
         Rename(field="summary", to_field="answers"),
         Wrap(field="answers", inside="list", to_field="answers"),
+        TransposeTable(field="context"),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.rouge, metrics.bleu, metrics.bert_score.bert_base_uncased, metrics.meteor]]",
     templates=["templates.qa.with_context.qtsumm"],
@@ -40,4 +42,4 @@ card = TaskCard(
 )
 
 test_card(card, num_demos=1, demos_pool_size=5, strict=False)
-add_to_catalog(card, "cards.qtsumm", overwrite=True)
+add_to_catalog(card, "cards.qtsumm__transpose", overwrite=True)

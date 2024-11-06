@@ -18,10 +18,6 @@
             }
         },
         {
-            "__type__": "truncate_table_rows",
-            "field": "table"
-        },
-        {
             "__type__": "get_masked_table_header",
             "field": "table"
         }

@@ -6,6 +6,8 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Apply, FilterByCondition, Set
+from unitxt.splitters import SplitRandomMix
+from unitxt.struct_data_operators import TransposeTable
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
@@ -16,9 +18,23 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        SplitRandomMix(
+            mix={
+                "train": "test[20%]",
+                "validation": "test[20%]",
+                "test": "test[60%]",
+            }
+        ),
         # consider samples with DP(Direct Prompting) as instruction type
         FilterByCondition(values={"instruction_type": "DP"}, condition="eq"),
-        # FilterByCondition(values={"qtype": ["FactChecking", "NumericalReasoning"]}, condition="in"), # filter by question type if needed
+        FilterByCondition(
+            values={
+                "qtype": [
+                    "FactChecking",
+                ]
+            },
+            condition="in",
+        ),  # filter by question type if needed
         Apply("table", function="json.loads", to_field="table"),  # parse table json
         # rename table fields to match with standard table format
         Rename(
@@ -26,6 +42,7 @@ card = TaskCard(
         ),
         Set({"context_type": "Table"}),
         Rename(field_to_field={"table": "context", "answer": "answers"}),
+        TransposeTable(field="context"),
     ],
     task=Task(
         input_fields={
@@ -62,4 +79,4 @@ card = TaskCard(
 )
 
 test_card(card, strict=False, loader_limit=200)
-add_to_catalog(card, "cards.tablebench", overwrite=True)
+add_to_catalog(card, "cards.tablebench_fact_checking__transpose", overwrite=True)

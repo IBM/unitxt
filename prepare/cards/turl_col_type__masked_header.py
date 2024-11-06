@@ -9,7 +9,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.splitters import SplitRandomMix
-from unitxt.struct_data_operators import GetMaskedTableHeader, TruncateTableRows
+from unitxt.struct_data_operators import GetMaskedTableHeader
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
 
@@ -26,9 +26,9 @@ card = TaskCard(
                 "test": "test+validation",
             }
         ),
-        TruncateTableRows(
-            field="table",
-        ),
+        # TruncateTableRows(
+        #     field="table",
+        # ),
         GetMaskedTableHeader(field="table"),
     ],
     task=Task(

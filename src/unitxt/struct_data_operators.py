@@ -135,7 +135,8 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
     def process_row(self, row: List, row_index: int):
         serialized_row_str = ""
         row_cell_values = [
-            str(value) if isinstance(value, (int, float)) else value for value in row
+            str(value) if isinstance(value, (int, float, type(None))) else value
+            for value in row
         ]
 
         serialized_row_str += " | ".join(row_cell_values)

@@ -16,6 +16,10 @@
                 "validation": "train[50%]",
                 "test": "test+validation"
             }
+        },
+        {
+            "__type__": "transpose_table",
+            "field": "table"
         }
     ],
     "task": {

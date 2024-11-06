@@ -34,7 +34,6 @@ add_to_catalog(
     "tasks.generation.with_context",
     overwrite=True,
 )
-
 add_to_catalog(
     Task(
         input_fields={
@@ -47,9 +46,9 @@ add_to_catalog(
         reference_fields={"output": str},
         prediction_type=str,
         metrics=[
+            "metrics.bert_score.bert_base_uncased",
             "metrics.bleu",
             "metrics.rouge",
-            "metrics.bert_score.bert_base_uncased",
             "metrics.meteor",
         ],
         augmentable_inputs=["input_a", "input_b"],

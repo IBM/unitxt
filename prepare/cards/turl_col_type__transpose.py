@@ -8,6 +8,7 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.splitters import SplitRandomMix
+from unitxt.struct_data_operators import TransposeTable
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
 
@@ -27,6 +28,7 @@ card = TaskCard(
         # TruncateTableRows(
         #     field="table",
         # ),
+        TransposeTable(field="table"),
     ],
     task=Task(
         input_fields={
@@ -47,7 +49,6 @@ card = TaskCard(
     ),
     templates=[
         InputOutputTemplate(
-            instruction="",
             input_format="""
                     This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
                 """.strip(),
@@ -70,4 +71,4 @@ card = TaskCard(
 )
 
 test_card(card, num_demos=2, demos_pool_size=10)
-add_to_catalog(card, "cards.turl_col_type", overwrite=True)
+add_to_catalog(card, "cards.turl_col_type__transpose", overwrite=True)

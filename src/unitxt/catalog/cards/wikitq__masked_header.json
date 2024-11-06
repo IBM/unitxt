@@ -25,7 +25,7 @@
             }
         },
         {
-            "__type__": "truncate_table_rows",
+            "__type__": "rename",
             "field": "table",
             "to_field": "context"
         },
