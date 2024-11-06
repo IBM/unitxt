@@ -38,7 +38,7 @@ import tempfile
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
@@ -135,13 +135,13 @@ class Loader(SourceOperator):
             self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
-    def load_iterables(self):
+    def load_iterables(self) -> Dict[str, Iterable]:
         pass
 
     def _maybe_set_classification_policy(self):
         pass
 
-    def load_data(self):
+    def load_data(self) -> MultiStream:
         iterables = self.__class__._loader_cache.get(str(self), None)
         if iterables is None:
             iterables = self.load_iterables()
