@@ -395,7 +395,7 @@ class LoadFromSklearn(Loader):
 
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
-    def load_data(self):
+    def load_iterables(self):
         with TemporaryDirectory() as temp_directory:
             for split in self.splits:
                 split_data = self.downloader(subset=split)
