@@ -149,6 +149,7 @@ if Settings.is_uninitilized():
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
     settings.disable_hf_datasets_cache = (bool, True)
+    settings.loader_cache_size = (int, 1)
 
 if Constants.is_uninitilized():
     constants = Constants()
