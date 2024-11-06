@@ -75,7 +75,7 @@ class CardProfiler:
         ms = recipe.verbalization.process(ms)
         return recipe.finalize.process(ms)
 
-    def profiler_print_first_dicts(self, ms: MultiStream, card_name: str):
+    def profiler_list_all_streams(self, ms: MultiStream, card_name: str):
         logger.info(
             f"The multistream generated for card '{card_name}' has {len(ms)} streams of the following lengths:"
         )
@@ -89,7 +89,7 @@ class CardProfiler:
         ms = self.profiler_metadata_and_standardization(ms, recipe)
         ms = self.profiler_processing_demos_metadata(ms, recipe)
         ms = self.profiler_verbalize_and_finalize(ms, recipe)
-        self.profiler_print_first_dicts(ms, card_name)
+        self.profiler_list_all_streams(ms, card_name)
 
 
 def profile_from_cards():
@@ -159,16 +159,14 @@ def main():
         pst.strip_dirs()
         pst.sort_stats("name")  # sort by function name
         pst.print_stats(
-            "profiler_do_the_profiling|profiler_load_by_recipe|load_data|stream_dataset|load_dataset"
+            "profiler_do_the_profiling|profiler_load_by_recipe|load_data|stream_dataset|load_dataset|load_iterables"
         )
         s = f.getvalue()
         assert s.split("\n")[7].split()[3] == "cumtime"
         tot_time = find_cummtime_of("profiler_do_the_profiling", "card_profiler.py", s)
         load_time = find_cummtime_of("profiler_load_by_recipe", "card_profiler.py", s)
-        just_load_no_initial_ms_time = round(
-            find_cummtime_of("stream_dataset", "loaders.py", s)
-            + find_cummtime_of("load_dataset", "loaders.py", s),
-            3,
+        just_load_no_initial_ms_time = find_cummtime_of(
+            "load_iterables", "loaders.py", s
         )
         diff = round(tot_time - just_load_no_initial_ms_time, 3)
 

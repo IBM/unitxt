@@ -47,11 +47,12 @@ from tqdm import tqdm
 
 from .dataclass import OptionalField
 from .fusion import FixedFusion
+from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
 from .settings_utils import get_settings
-from .stream import DynamicStream, MultiStream
+from .stream import MultiStream
 from .type_utils import isoftype
 from .utils import LRUCache
 
@@ -122,7 +123,7 @@ class Loader(SourceOperator):
         )
         return operator(multi_stream)
 
-    def sef_default_data_classification(
+    def set_default_data_classification(
         self, default_data_classification_policy, additional_info
     ):
         if self.data_classification_policy is None:
@@ -276,28 +277,23 @@ class LoadHF(Loader):
 
         return dataset
 
-    def split_limited_load(self, dataset, split_name):
-        yield from itertools.islice(dataset[split_name], self.get_limit())
-
     def limited_load(self, dataset):
         self.log_limited_loading()
-        return MultiStream(
-            {
-                name: DynamicStream(
-                    generator=self.split_limited_load,
-                    gen_kwargs={"dataset": dataset, "split_name": name},
-                )
-                for name in dataset.keys()
-            }
-        )
+        return {
+            split_name: ReusableGenerator(
+                generator=itertools.islice,
+                gen_argv=[dataset[split_name], self.get_limit()],
+            )
+            for split_name in dataset
+        }
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
-            self.sef_default_data_classification(
+            self.set_default_data_classification(
                 ["proprietary"], "when loading from local files"
             )
         else:
-            self.sef_default_data_classification(
+            self.set_default_data_classification(
                 ["public"], "when loading from Huggingface hub"
             )
 
@@ -342,7 +338,7 @@ class LoadCSV(Loader):
     sep: str = ","
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
 
@@ -566,7 +562,7 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
 
@@ -717,7 +713,7 @@ class LoadFromDictionary(Loader):
                     )
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
 
@@ -893,7 +889,7 @@ class LoadFromHFSpace(LoadHF):
             )
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["public"], "when loading from Huggingface spaces"
         )
 
