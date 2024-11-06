@@ -145,10 +145,6 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
-    __repr_cache__: str = InternalField(
-        default=None, required=False, also_positional=False
-    )
-
     data_classification_policy: List[str] = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -399,12 +395,6 @@ class Artifact(Dataclass):
             )
 
         return instance
-
-    def __repr__(self) -> str:
-        """String representation."""
-        if self.__repr_cache__ is None:
-            self.__repr_cache__ = f"{self.__class__.__name__}({', '.join(f'{key}={value}' for key, value in self._to_raw_dict().items() if key != '__type__')})"
-        return self.__repr_cache__
 
 
 def get_raw(obj):
