@@ -21,10 +21,10 @@ data = {
 }
 
 rubric = "metrics.llm_as_judge.eval_assist.direct.rubrics.temperature"
-metric = f"metrics.llm_as_judge.eval_assist.direct.mixtral_8_7b[rubric={rubric}]"
+metric = f"metrics.llm_as_judge.eval_assist.direct.gpt_4o[rubric={rubric}]"
 
 card = TaskCard(
-    loader=LoadFromDictionary(data=data),
+    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     task=Task(
         input_fields={"context": str},
         reference_fields={},
@@ -58,3 +58,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+    

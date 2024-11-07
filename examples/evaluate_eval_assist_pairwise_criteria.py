@@ -21,19 +21,14 @@ data = {
 }
 
 card = TaskCard(
-    # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
-    # with different loaders.
-    loader=LoadFromDictionary(data=data),
+    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[Set(fields={"pairwise_criteria": pairwise_criteria_json})],
-    # Define the QA task input and output and metrics.
     task=Task(
         input_fields={"context": str, "pairwise_criteria": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus"],
+        metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus_8_7b"],
     ),
-    # Create a simple template that formats the input.
-    # Add lowercase normalization as a post processor.
     templates=TemplatesDict(
         {
             "simple": InputOutputTemplate(
@@ -65,3 +60,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+    
