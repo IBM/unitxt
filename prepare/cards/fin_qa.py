@@ -1,3 +1,5 @@
+from typing import Any
+
 from unitxt.blocks import (
     LoadHF,
     TaskCard,
@@ -6,11 +8,12 @@ from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy, FilterByExpression
 from unitxt.settings_utils import get_settings
 from unitxt.splitters import SplitRandomMix
-from unitxt.struct_data_operators import MapTableListsToStdTableJSON
+from unitxt.struct_data_operators import (
+    MapTableListsToStdTableJSON,
+)
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
-from unitxt.types import Table
 
 settings = get_settings()
 
@@ -33,7 +36,7 @@ with settings.context(allow_unverified_code=True):
         task=Task(
             inputs={
                 "pre_text": str,
-                "table": Table,
+                "table": Any,
                 "post_text": str,
                 "question": str,
             },

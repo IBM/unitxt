@@ -14,12 +14,12 @@ from unitxt.inference import (
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 from unitxt.struct_data_operators import (
+    SerializeTableAsConcatenation,
     SerializeTableAsDFLoader,
     SerializeTableAsHTML,
     SerializeTableAsIndexedRowMajor,
     SerializeTableAsJson,
     SerializeTableAsMarkdown,
-    SerializeTableRowAsText,
 )
 
 settings = get_settings()
@@ -36,9 +36,6 @@ parser.add_argument(
     required=True,
 )
 parser.add_argument(
-    "-seeds", "--seeds", type=str, required=False, default=str(settings.seed)
-)
-parser.add_argument(
     "-serializers",
     "--serializers",
     type=str,
@@ -52,17 +49,26 @@ parser.add_argument(
     required=False,
     default=None,
 )
-parser.add_argument("-comb_size", "--comb_size", type=int, required=False, default=1)
+parser.add_argument(
+    "-augmentors_comb_size",
+    "--augmentors_comb_size",
+    type=int,
+    required=False,
+    default=1,
+)
+parser.add_argument(
+    "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
+)
 args = parser.parse_args()
 model_name = args.model
 num_demos = args.num_demos
 out_path = os.path.join(args.out_path, args.model.split("/")[-1])
 debug = args.debug
-seeds = args.seeds
 cards = args.cards
 serializers = args.serializers
 augmentors = args.augmentors
-comb_size = args.comb_size
+augmentors_comb_size = args.augmentors_comb_size
+max_pred_tokens = args.max_pred_tokens
 
 serializers_map = {
     "html": SerializeTableAsHTML,
@@ -70,13 +76,12 @@ serializers_map = {
     "markdown": SerializeTableAsMarkdown,
     "row_indexed_major": SerializeTableAsIndexedRowMajor,
     "df": SerializeTableAsDFLoader,
-    "text": SerializeTableRowAsText,
+    "concat": SerializeTableAsConcatenation,
     "csv": None,
 }
 ALLOWED_AUGMENTORS = {
     "shuffle_cols_names",
     "mask_cols_names",
-    "truncate_rows",
     "shuffle_cols",
     "shuffle_rows",
     "insert_empty_rows",
@@ -96,14 +101,9 @@ if augmentors_parsed and any(augmentors_parsed - ALLOWED_AUGMENTORS):
     # print(augmentors_parsed - ALLOWED_AUGMENTORS, "NOT ALLOWED !")
     augmentors_parsed = augmentors_parsed.intersection(ALLOWED_AUGMENTORS)
     augmentors_full_names = ["augmentors.table." + a for a in augmentors_parsed]
-    comb_augmentors = combinations(augmentors_full_names, comb_size)
+    comb_augmentors = combinations(augmentors_full_names, augmentors_comb_size)
 else:
     comb_augmentors = [None]
-
-try:
-    seeds_parsed = [int(i.strip()) for i in seeds.split(",")]
-except:
-    seeds_parsed = [settings.seed]
 
 format = "formats.empty"
 if "llama" in model_name:
@@ -132,7 +132,6 @@ subsets = {}
 for card in cards_parsed:
     for augment in comb_augmentors:
         for serializer in serializers_parsed:
-            # for seed in seeds_parsed:
             subsets[get_subset_name(card, serializer, augment)] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
@@ -169,13 +168,13 @@ for subset_name, subset in tqdm(subsets.items()):
         if "gpt" in model_name:
             inference_model = OpenAiInferenceEngine(
                 model_name=model_name,
-                max_tokens=100,
+                max_tokens=max_pred_tokens,
                 temperature=0.05,
             )
         else:
             inference_model = IbmGenAiInferenceEngine(
                 model_name=model_name,
-                max_new_tokens=100,
+                max_new_tokens=max_pred_tokens,
                 temperature=0.05,
             )
 
@@ -189,6 +188,7 @@ for subset_name, subset in tqdm(subsets.items()):
         with open(curr_out_path, "wb") as f:
             pickle.dump(evaluated_dataset, f)
             # print("saved file path: ", curr_out_path)
-    except Exception:
-        # print(e)
+    except Exception as e:
+        with open(os.path.join(out_path, "errors.txt"), "a") as f:
+            f.write(str(e))
         pass
