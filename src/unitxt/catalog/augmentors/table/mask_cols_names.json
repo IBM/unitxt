@@ -1,0 +1,7 @@
+{
+    "__type__": "type_dependent_augmenter",
+    "operator": {
+        "__type__": "mask_columns_names"
+    },
+    "augmented_type": "Table"
+}

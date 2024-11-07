@@ -8,7 +8,6 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy
 from unitxt.splitters import SplitRandomMix
-from unitxt.templates import TemplatesList
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
