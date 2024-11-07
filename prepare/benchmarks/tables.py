@@ -22,6 +22,10 @@ from unitxt.struct_data_operators import (
     SerializeTableAsMarkdown,
 )
 
+# usage: tables.py [-h] -model MODEL -num_demos NUM_DEMOS -out_path OUT_PATH [-debug DEBUG] -cards CARDS [
+# -serializers SERIALIZERS] [-augmentors AUGMENTORS] [-augmentors_comb_size AUGMENTORS_COMB_SIZE] [-max_pred_tokens
+# MAX_PRED_TOKENS]
+
 settings = get_settings()
 
 parser = argparse.ArgumentParser()
@@ -70,7 +74,7 @@ augmentors = args.augmentors
 augmentors_comb_size = args.augmentors_comb_size
 max_pred_tokens = args.max_pred_tokens
 
-serializers_map = {
+SERIALIZERS_MAP = {
     "html": SerializeTableAsHTML,
     "json": SerializeTableAsJson,
     "markdown": SerializeTableAsMarkdown,
@@ -91,19 +95,37 @@ ALLOWED_AUGMENTORS = {
 }
 DEMOS_POOL_SIZE = 10
 
+# def select_random_combinations(lst, num_combinations=20):
+#     # Generate all non-empty subsets
+#     non_empty_subsets = []
+#     for r in range(1, len(lst) + 1):
+#         non_empty_subsets.extend(itertools.combinations(lst, r))
+#
+#     # Randomly select num_combinations subsets
+#     selected_combinations = random.sample(non_empty_subsets, num_combinations)
+#
+#     # Convert the combinations from tuples back to lists (optional, but can be useful)
+#     selected_combinations = [list(comb) for comb in selected_combinations]
+#
+#     # Sort the combinations by their length
+#     selected_combinations.sort(key=len)
+#
+#     return selected_combinations
+
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
-
 augmentors_parsed = (
     {item.strip() for item in augmentors.split(",")} if augmentors else {}
 )
-if augmentors_parsed and any(augmentors_parsed - ALLOWED_AUGMENTORS):
-    # print(augmentors_parsed - ALLOWED_AUGMENTORS, "NOT ALLOWED !")
+if augmentors_parsed:
+    # if any(augmentors_parsed - ALLOWED_AUGMENTORS):
+    #     print(augmentors_parsed - ALLOWED_AUGMENTORS, "NOT ALLOWED !")
     augmentors_parsed = augmentors_parsed.intersection(ALLOWED_AUGMENTORS)
-    augmentors_full_names = ["augmentors.table." + a for a in augmentors_parsed]
-    comb_augmentors = combinations(augmentors_full_names, augmentors_comb_size)
+    comb_augmentors = [
+        list(comb) for comb in combinations(augmentors_parsed, augmentors_comb_size)
+    ]
 else:
-    comb_augmentors = [None]
+    comb_augmentors = [["shuffle_cols_names"], ["duplicate_rows", "transpose"]]
 
 format = "formats.empty"
 if "llama" in model_name:
@@ -119,12 +141,7 @@ def get_subset_name(card, serializer, augment, seed=settings.seed):
         + "__serializer="
         + serializer
         + ("__seed=" + str(seed) if seed != settings.seed else "")
-        + (
-            "__augment="
-            + "+".join([] if not augment else [aug.split(".")[-1] for aug in augment])
-            if augment
-            else ""
-        )
+        + ("__augment=" + ",".join(augment) if augment else "")
     )
 
 
@@ -135,22 +152,21 @@ for card in cards_parsed:
             subsets[get_subset_name(card, serializer, augment)] = StandardRecipe(
                 card="cards." + card,
                 template_card_index=0,
-                serializer=serializers_map[serializer]()
-                if serializers_map[serializer]
+                serializer=SERIALIZERS_MAP[serializer]()
+                if serializer in SERIALIZERS_MAP and SERIALIZERS_MAP[serializer]
                 else None,
                 num_demos=num_demos,
                 demos_pool_size=DEMOS_POOL_SIZE,
                 format=format,
-                augmentor=augment,
+                augmentor=["augmentors.table." + a for a in augment]
+                if augment
+                else [None],
             )
 
 
 # print("Run Params:", [f"{arg}: {value} | " for arg, value in vars(args).items()])
 for subset_name, subset in tqdm(subsets.items()):
-    # print(
-    #     "Running:",
-    #     subset_name,
-    # )
+    # print("Running:", subset_name)
 
     benchmark = Benchmark(
         max_samples_per_subset=100 if not debug else 5,
@@ -191,4 +207,5 @@ for subset_name, subset in tqdm(subsets.items()):
     except Exception as e:
         with open(os.path.join(out_path, "errors.txt"), "a") as f:
             f.write(str(e))
+        # print(e)
         pass

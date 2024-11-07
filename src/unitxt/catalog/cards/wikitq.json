@@ -4,8 +4,7 @@
         "__type__": "load_hf",
         "path": "wikitablequestions",
         "data_classification_policy": [
-            "public",
-            "proprietary"
+            "public"
         ],
         "num_proc": 10
     },
@@ -25,7 +24,7 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "copy",
             "field": "table",
             "to_field": "context"
         }
@@ -34,7 +33,7 @@
     "templates": [
         {
             "__type__": "multi_reference_template",
-            "input_format": "Based on this {context_type}: {context}\nAnswer the question: {question}",
+            "input_format": "Answer the following question based on the provided {context_type}:dataset:\n**question:** {question}\n**{context_type}:** {context}\n**Answer:**",
             "references_field": "answers",
             "postprocessors": [
                 "processors.str_to_float_format"
