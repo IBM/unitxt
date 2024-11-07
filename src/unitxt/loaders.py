@@ -122,7 +122,7 @@ class Loader(SourceOperator):
         )
         return operator(multi_stream)
 
-    def set_default_data_classification(
+    def sef_default_data_classification(
         self, default_data_classification_policy, additional_info
     ):
         if self.data_classification_policy is None:
@@ -293,11 +293,11 @@ class LoadHF(Loader):
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
-            self.set_default_data_classification(
+            self.sef_default_data_classification(
                 ["proprietary"], "when loading from local files"
             )
         else:
-            self.set_default_data_classification(
+            self.sef_default_data_classification(
                 ["public"], "when loading from Huggingface hub"
             )
 
