@@ -317,8 +317,7 @@ We will create a card, as we do for every other Unitxt scenario:
             LiteralEval(field="question"),
             Copy(field="question/0", to_field="question"),
             LiteralEval(field="answer"),
-            Copy(field="answer/0", to_field="answer")
-,
+            Copy(field="answer/0", to_field="answer"),
         ],
         task="tasks.response_assessment.rating.single_turn",
         templates=["templates.response_assessment.rating.mt_bench_single_turn"],
