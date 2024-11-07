@@ -1,0 +1,23 @@
+{
+    "__type__": "eval_assist_llm_as_judge_pairwise",
+    "inference_engine": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "mistralai/mixtral-8x7b-instruct-v01",
+        "max_new_tokens": 1024,
+        "random_seed": 42
+    },
+    "assessment_template": {
+        "__type__": "input_output_template",
+        "input_format": "<s> [INST]\n\nYou are provided a pair of responses (Response {option_a} and Response {option_b}) generated subject to a context. \nYou will choose the better quality response subject to the evaluation criteria. \n\nThis is the context:\n{context_variables}\nThis is the evaluation criteria:\n{criteria_name}\n{criteria_description}\nResponse {option_a}:\n{response_a}\nResponse {option_b}:\n{response_b}\n\n\nKeeping the evaluation criteria in mind, briefly assess which response is better.\nFocus on the evaluation criteria during assessment, do not provide a general assessment.\nAssessment: [/INST]\n"
+    },
+    "summarization_template": {
+        "__type__": "input_output_template",
+        "input_format": "\n<s> [INST]\n\nSummarize the following assessment while maintaining the pertinent details.\n\nAssessment: {assessment}\nAssessment Summary: [/INST]"
+    },
+    "option_selection_template": {
+        "__type__": "input_output_template",
+        "input_format": "{assessment_prompt}{assessment}</s>\n[INST]\n\nNow considering the evaluation criteria, which response is better quality?\nValidate the answer against the assessment.\n\n{choose_response_instruction}\nAnswer: Response [/INST]"
+    },
+    "option_selection_strategy": "PARSE_OPTION_LOGPROB",
+    "evaluator_name": "MIXTRAL"
+}

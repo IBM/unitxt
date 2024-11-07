@@ -1,27 +1,34 @@
 {
-    "__type__": "rubric",
-    "name": "Coherence",
-    "criteria": "Is the response coherent with respect to the original text?",
+    "__type__": "criteria_with_options",
+    "name": "coherence",
+    "description": "Is the response coherent with respect to the original text?",
     "options": [
         {
-            "option": "1",
+            "name": "1",
             "description": "The response lacks coherence and detail, failing to accurately capture the main points of the original text. It may contain grammatical errors or inaccuracies."
         },
         {
-            "option": "2",
+            "name": "2",
             "description": "The response provides a slightly improved restatement of the original text compared to score 1 but still lacks coherence and may contain inaccuracies or omissions."
         },
         {
-            "option": "3",
+            "name": "3",
             "description": "The response captures the main points of the original text with moderate accuracy and coherence, offering a clearer understanding of the central events and relationships depicted."
         },
         {
-            "option": "4",
+            "name": "4",
             "description": "The response effectively conveys the main points of the original text with good accuracy and coherence, providing a clear overview of the events and relationships."
         },
         {
-            "option": "5",
+            "name": "5",
             "description": "The response demonstrates a high level of accuracy and coherence, effectively conveying the main points of the original text in a concise and clear manner."
         }
-    ]
+    ],
+    "option_map": {
+        "1": 0.0,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 0.1
+    }
 }

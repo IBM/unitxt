@@ -1,23 +1,29 @@
 {
-    "__type__": "rubric",
-    "name": "Answer relevance",
-    "criteria": "Does the response directly answer the question?",
+    "__type__": "criteria_with_options",
+    "name": "answer_relevance",
+    "description": "Does the response directly answer the question?",
     "options": [
         {
-            "option": "Excellent",
+            "name": "Excellent",
             "description": "The response directly answers the question."
         },
         {
-            "option": "Acceptable",
+            "name": "Acceptable",
             "description": "The response is adequate but could be better."
         },
         {
-            "option": "Could be Improved",
+            "name": "Could be Improved",
             "description": "The response relates to the questions but does not directly answer it."
         },
         {
-            "option": "Bad",
+            "name": "Bad",
             "description": "The response does not answer the question at all."
         }
-    ]
+    ],
+    "option_map": {
+        "Excellent": 1.0,
+        "Acceptable": 0.75,
+        "Could be Improve": 0.5,
+        "Bad": 0.0
+    }
 }
