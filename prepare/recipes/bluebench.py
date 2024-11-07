@@ -76,7 +76,7 @@ def prepapre_recipe(default_args, specific_args):
     recipe.update(specific_args)
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
-    return StandardRecipe(**recipe)
+    return StandardRecipe(**recipe, format="formats.chat_api")
 
 
 ### Reasoning

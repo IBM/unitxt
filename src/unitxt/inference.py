@@ -1494,6 +1494,8 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     seed: int = 1
     temperature: float = 0.0
     top_p: float = 1.0
+    max_retries: int = 5
+    max_parallel_requests: int = 5
     _requirements_list = ["litellm", "tenacity"]
 
     def prepare_engine(self):
@@ -1505,9 +1507,10 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from litellm import completion
+        from tqdm.auto import tqdm
 
         outputs = []
-        for instance in dataset:
+        for instance in tqdm(dataset, desc="LiteLLM Inference"):
             response = completion(
                 model=self.model,
                 messages=instance["source"],
@@ -1515,6 +1518,8 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
                 top_p=self.top_p,
+                max_retries=self.max_retries,
+                max_parallel_requests=self.max_parallel_requests,
             )
             outputs.append(response["choices"][0].message.content)
         return outputs

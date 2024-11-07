@@ -24,6 +24,9 @@ jobs:
        WML_URL: ${{ secrets.WML_URL }}
        WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
        WML_APIKEY: ${{ secrets.WML_APIKEY }}
+       WX_URL: ${{ secrets.WML_URL }}
+       WX_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
+       WX_APIKEY: ${{ secrets.WML_APIKEY }}
        GENAI_KEY: ${{ secrets.GENAI_KEY }}
 
      steps:
