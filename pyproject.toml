@@ -113,6 +113,10 @@ ui = [
 watsonx = [
     "ibm-watsonx-ai==1.1.14"
 ]
+inference-tests = [
+  "litellm",
+  "tenacity"
+]
 
 # Combine all extras by referencing other groups
 all = [

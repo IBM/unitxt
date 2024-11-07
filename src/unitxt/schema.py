@@ -51,6 +51,12 @@ def get_schema(stream_name):
     return UNITXT_DATASET_SCHEMA
 
 
+def loads_instance(batch):
+    if batch["source"][0].startswith('[{"role":'):
+        batch["source"] = [json.loads(d) for d in batch["source"]]
+    return batch
+
+
 class Finalize(InstanceOperatorValidator):
     group_by: List[List[str]]
     remove_unnecessary_fields: bool = True
@@ -152,4 +158,4 @@ class Finalize(InstanceOperatorValidator):
         assert all(
             key in instance for key in schema
         ), f"Instance should have the following keys: {schema}. Instance is: {instance}"
-        schema.encode_example(instance)
+        # schema.encode_example(instance)

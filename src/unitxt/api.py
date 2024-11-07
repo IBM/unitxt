@@ -8,7 +8,7 @@ from .inference import InferenceEngine, LogProbInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import UNITXT_DATASET_SCHEMA
+from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .standard import StandardRecipe
 
 logger = get_logger()
@@ -113,7 +113,11 @@ def load_dataset(
     if streaming:
         return recipe()
 
-    return recipe().to_dataset(features=UNITXT_DATASET_SCHEMA)
+    return (
+        recipe()
+        .to_dataset(features=UNITXT_DATASET_SCHEMA)
+        .with_transform(loads_instance)
+    )
 
 
 def evaluate(predictions, data) -> List[Dict[str, Any]]:

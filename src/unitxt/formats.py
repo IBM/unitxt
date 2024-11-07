@@ -1,4 +1,3 @@
-import json
 import re
 from abc import abstractmethod
 from typing import (
@@ -235,7 +234,7 @@ class Message(TypedDict):
     content: Union[str, List[Content]]
 
 
-class OpenAIFormat(BaseFormat):
+class ChatAPIFormat(BaseFormat):
     r"""Formats output for LLM APIs using OpenAI's chat schema.
 
     Many API services use OpenAI's chat format as a standard for conversational models.
@@ -376,18 +375,17 @@ class OpenAIFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-    ) -> str:
-        chat = self.to_chat(
+    ) -> Union[str, List[Message]]:
+        return self.to_chat(
             system_prompt,
             instruction,
             source,
             target_prefix,
             demos,
         )
-        return json.dumps(chat)
 
 
-class HFSystemFormat(OpenAIFormat):
+class HFSystemFormat(ChatAPIFormat):
     r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
     HFSystemFormat expects the input instance to contain:

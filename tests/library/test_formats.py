@@ -1,5 +1,5 @@
 from unitxt.card import TaskCard
-from unitxt.formats import HFSystemFormat, OpenAIFormat, SystemFormat
+from unitxt.formats import ChatAPIFormat, HFSystemFormat, SystemFormat
 from unitxt.loaders import LoadFromDictionary
 from unitxt.standard import StandardRecipe
 from unitxt.system_prompts import TextualSystemPrompt
@@ -53,7 +53,7 @@ class TestFormats(UnitxtTestCase):
         ]
 
         # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
-        system_format = OpenAIFormat()
+        system_format = ChatAPIFormat()
 
         targets = [
             {
@@ -143,7 +143,7 @@ class TestFormats(UnitxtTestCase):
         ]
 
         # Imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix = ""
-        system_format = OpenAIFormat()
+        system_format = ChatAPIFormat()
 
         # Run the check
         check_operator(

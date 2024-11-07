@@ -6,6 +6,7 @@ from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
+    LiteLLMInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     WMLInferenceEngine,
 )
@@ -160,3 +161,26 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(dataset[0]["prediction"], "world")
             self.assertEqual(dataset[1]["prediction"], "the")
             self.assertEqual(dataset[2]["prediction"], "telephone number")
+
+    def test_lite_llm_inference_engine(self):
+        inference_model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-8b-instruct",
+            max_tokens=2,
+        )
+        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,format=formats.chat_api"
+        instances = [
+            {
+                "question": "How many days there are in a week? answer just the number in digits",
+                "answers": ["7"],
+            },
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
+                "answers": ["2"],
+            },
+        ]
+        dataset = produce(instances, recipe)
+
+        predictions = inference_model.infer(dataset)
+
+        targets = ["7", "2"]
+        self.assertListEqual(predictions, targets)

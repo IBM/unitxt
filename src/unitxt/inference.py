@@ -1486,3 +1486,35 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
                 optimal_responses[request.idx] = request.arguments[1]
 
         return optimal_responses
+
+
+class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+    model: str
+    max_tokens: int = 256
+    seed: int = 1
+    temperature: float = 0.0
+    top_p: float = 1.0
+    _requirements_list = ["litellm", "tenacity"]
+
+    def prepare_engine(self):
+        pass
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        from litellm import completion
+
+        outputs = []
+        for instance in dataset:
+            response = completion(
+                model=self.model,
+                messages=instance["source"],
+                seed=self.seed,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+            )
+            outputs.append(response["choices"][0].message.content)
+        return outputs
