@@ -97,8 +97,34 @@ A context that includes information relevant to the nature or generation of the 
 ###Feedback: 
 """
 
+############################################# GPT #################################################
+
+assessment_prompt_system_content="""You are an fair and objective evaluator. You will be provided a pair of responses (Response {option_a} and Response {option_b}) that were generated subject to a context.
+Your task is to choose the better quality response subject to a criteria. At the end, write a final decision in the format: "Winner: [Response {option_a} or Response {option_b}]". Enclose this final decision within triple quotes (\"\"\").
+"""
+
+assessment_prompt_user_content="""
+Context:
+{context_variables}
+
+Criteria:
+{criteria_name}
+{criteria_description}
+
+Response {option_a}:
+{response_a}
+
+Response {option_b}:
+{response_b}
+"""
+
+summarization_prompt_gpt = """Summarize the following assessment into an single easy to understand statement.
+Assessment: {assessment}
+Assessment Summary:
+""" 
+
 pairwise_template_dict = {"mixtral_8_7b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_mixtral), "summarization": InputOutputTemplate(input_format=summarization_prompt_mixtral), "answer" : InputOutputTemplate(input_format=answer_prompt_mixtral)},
                  "llama3_8b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
                  "llama3_70b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_llama), "summarization": InputOutputTemplate(input_format=summarization_prompt_llama), "answer" : InputOutputTemplate(input_format=answer_prompt_llama)},
-                 "prometheus_8_7b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None}
-                }
+                 "prometheus_8_7b": {"assessment": InputOutputTemplate(input_format=assessment_prompt_prometheus), "summarization": None, "answer" : None},
+                 "gpt_4o": {"assessment": InputOutputTemplate(input_format=assessment_prompt_user_content, instruction=assessment_prompt_system_content), "summarization": InputOutputTemplate(input_format=summarization_prompt_gpt), "answer" : None}}

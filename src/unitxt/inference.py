@@ -144,6 +144,11 @@ class InferenceEngine(Artifact):
         if settings.mock_inference_mode:
             return self._mock_infer(dataset)
         return self._infer(dataset, return_meta_data)
+    
+    def infer_log_probs(self, dataset) -> str:
+        """Verifies instances of a dataset and performs inference."""
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer_log_probs(dataset)
 
     def _mock_infer(
         self,
@@ -1414,13 +1419,13 @@ class CredentialsOpenAi(TypedDict, total=False):
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
-    frequency_penalty: Optional[float] = 0.0
-    presence_penalty: Optional[float] = 0.0
-    max_tokens: Optional[int] = 100
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
     seed: Optional[int] = None
     stop: Union[Optional[str], List[str]] = None
-    temperature: Optional[float] = 1.0
-    top_p: Optional[float] = 1.0
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = True
@@ -1458,6 +1463,7 @@ class OpenAiInferenceEngine(
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
     data_classification_policy = ["public"]
+    use_instruction_in_system_turn : Optional[bool] = False
     parameters: Optional[OpenAiInferenceEngineParams] = None
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
@@ -1512,7 +1518,12 @@ class OpenAiInferenceEngine(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
+            try :
+                messages = json.loads(instance["source"])
+            except :
+                messages = []
+                messages.append({"role": "user", "content": instance["source"]})
+
             response = self.client.chat.completions.create(
                 messages=messages,
                 model=self.model_name,
@@ -1532,32 +1543,32 @@ class OpenAiInferenceEngine(
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            try :
+                messages = json.loads(instance["source"])   
+            except :
+                messages = []
+                messages.append({"role": "user", "content": instance["source"]})
+
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
-            top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
-                {
-                    "top_tokens": [
-                        {"text": obj.token, "logprob": obj.logprob}
-                        for obj in generated_token.top_logprobs
-                    ]
-                }
-                for generated_token in top_logprobs_response
-            ]
-            output = self.get_return_object(pred_output, response, return_meta_data)
-            outputs.append(output)
+            outputs.append({"text": response.choices[0].message.content, 
+                            "logprobs": response.choices[0].logprobs.content})
+            
+            # top_logprobs_response = response.choices[0].logprobs.content
+            # pred_output = [
+            #     {
+            #         "top_tokens": [
+            #             {"text": obj.token, "logprob": obj.logprob}
+            #             for obj in generated_token.top_logprobs
+            #         ]
+            #     }
+            #     for generated_token in top_logprobs_response
+            # ]
+            # output = self.get_return_object(pred_output, response, return_meta_data)
+            # outputs.append(output)
         return outputs
 
     def get_return_object(self, predict_result, response, return_meta_data):
@@ -2451,6 +2462,7 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
             results.append(result)
 
         return results
+
 
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
