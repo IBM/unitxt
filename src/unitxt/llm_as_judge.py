@@ -262,14 +262,14 @@ class LLMAsJudge(LLMAsJudgeBase):
 
                 result = {
                     self.main_score: model_a_preference_score,
-                    "judge_raw_output": instance["raw_prediction"],
-                    "judge_raw_input": instance["source"],
+                    f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
+                    f"{self.main_score}_judge_raw_input": instance["source"],
                 }
             else:
                 result = {
                     self.main_score: instance["prediction"],
-                    "judge_raw_output": instance["raw_prediction"],
-                    "judge_raw_input": instance["source"],
+                    f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
+                    f"{self.main_score}_judge_raw_input": instance["source"],
                 }
             results.append(result)
         return results

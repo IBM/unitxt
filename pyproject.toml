@@ -1,5 +1,136 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "unitxt"
+dynamic = ["version"]
+description = "Load any mixture of text to text data in one line of code"
+authors = [
+    { name = "IBM Research", email = "elron.bandel@ibm.com" }
+]
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+dependencies = [
+    "datasets>=2.16.0",
+    "evaluate",
+    "absl-py",
+    "ipadic",
+    "scipy"
+]
+
+[project.urls]
+Homepage = "https://www.unitxt.ai"
+Documentation = "https://www.unitxt.ai/en/latest/documentation.html"
+Repository = "https://github.com/ibm/unitxt"
+
+# [tool.setuptools.dynamic]
+# version = {attr = "src.unitxt.version.version"}
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = {find = {where = ["src"]}}
+include-package-data = true
+
+[tool.setuptools.package-data]
+unitxt = ["catalog/**/*.json", "ui/banner.png"]
+
+[tool.setuptools.dynamic]
+version = {attr = "unitxt.version.version"}
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pre-commit",
+    "detect-secrets @ git+https://github.com/ibm/detect-secrets.git@master",
+    "tomli",
+    "codespell",
+    "fuzzywuzzy",
+    "httpretty"
+]
+docs = [
+    "sphinx_rtd_theme",
+    "piccolo_theme",
+    "sphinxext-opengraph",
+    "datasets",
+    "evaluate",
+    "nltk",
+    "sacrebleu",
+    "absl-py",
+    "rouge_score",
+    "scikit-learn",
+    "jiwer",
+    "editdistance",
+    "fuzzywuzzy"
+]
+helm = [
+    "crfm-helm[unitxt]>=0.5.3"
+]
+service = [
+    "torch==1.12.1",
+    "fastapi==0.109.0",
+    "uvicorn[standard]==0.27.0.post1",
+    "python-jose[cryptography]==3.3.0",
+    "transformers"
+]
+tests = [
+    "bert_score",
+    "transformers",
+    "sentence_transformers",
+    "ibm-cos-sdk",
+    "kaggle==1.6.14",
+    "opendatasets",
+    "httpretty~=1.1.4",
+    "editdistance",
+    "rouge-score",
+    "nltk",
+    "mecab-python3",
+    "sacrebleu[ko]",
+    "scikit-learn",
+    "jiwer",
+    "conllu",
+    "llama-index-core",
+    "llama-index-llms-openai",
+    "pytrec-eval",
+    "SentencePiece",
+    "fuzzywuzzy",
+    "openai",
+    "ibm-generative-ai",
+    "bs4",
+    "tenacity==8.3.0",
+    "accelerate",
+    "spacy"
+]
+ui = [
+    "gradio",
+    "transformers"
+]
+watsonx = [
+    "ibm-watsonx-ai==1.1.14"
+]
+
+# Combine all extras by referencing other groups
+all = [
+    "unitxt[base]",
+    "unitxt[dev]",
+    "unitxt[docs]",
+    "unitxt[helm]",
+    "unitxt[service]",
+    "unitxt[tests]",
+    "unitxt[ui]",
+    "unitxt[watsonx]"
+]
+
+[project.scripts]
+unitxt-explore = "unitxt.ui:launch"
+unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
+
 [tool.ruff]
-# Exclude a variety of commonly ignored directories.
 exclude = [
     ".bzr",
     ".direnv",
@@ -24,11 +155,8 @@ exclude = [
     "venv",
 ]
 
-# Same as Black.
 line-length = 88
 indent-width = 4
-
-# Assume Python 3.8
 target-version = "py38"
 
 [tool.ruff.lint.per-file-ignores]
@@ -58,55 +186,40 @@ target-version = "py38"
 "performance/*.py" = ["T201"]
 
 [tool.ruff.lint]
-# Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 extend-select = [
-  "UP",  # pyupgrade
-  "D",   # pydocstyle
-  "F", # pyflakes
-  "E", # pycodestyle
-  "B", # bugbear
-  "C", # mccabe
-  "R", # flake8-rst-docstrings
-  "T", # flake8-typing-imports
-  "TID25", #
-  "W", # pycodestyle-wordlist
-  "RUF100", # flake8-mypy
-  "I", # isort
-  "G", # flake8-bugbear
-  "N", # PEP8 Naming
-  "Q", # flake8-quotes
-  "RUF", # ruff
+  "UP",
+  "D",
+  "F",
+  "E",
+  "B",
+  "C",
+  "R",
+  "T",
+  "TID25",
+  "W",
+  "RUF100",
+  "I",
+  "G",
+  "N",
+  "Q",
+  "RUF",
 ]
 ignore = ["E501", "E203", "E722", "D101", "D102", "D103", "D100", "D104", "D105", "D106", "D107", "RUF012", "G004"]
-
-# Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
-
-# Allow unused variables when underscore-prefixed.
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.format]
-# Like Black, use double quotes for strings.
 quote-style = "double"
-
-# Like Black, indent with spaces, rather than tabs.
 indent-style = "space"
-
-# Like Black, respect magic trailing commas.
 skip-magic-trailing-comma = false
-
-# Like Black, automatically detect the appropriate line ending.
 line-ending = "auto"
-
-
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.Query", "fastapi.params.Query"]
-
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "src".msg = "Use unitxt outside src/ and relative imports inside src/ and install unitxt from source with `pip install -e '.[dev]'`."

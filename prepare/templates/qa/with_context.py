@@ -77,7 +77,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     MultiReferenceTemplate(
         input_format="{context}\n{question}",
@@ -87,7 +86,6 @@ add_to_catalog(
     "templates.qa.with_context.lmms_eval",
     overwrite=True,
 )
-
 
 add_to_catalog(
     TemplatesList(
