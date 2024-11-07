@@ -32,26 +32,26 @@ rubric_json = {
 
 data = {
     "test": [
-       {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
+       {"context": "How is the weather?"},
+        {"context": "How is the weather?"},
+        {"context": "How is the weather?"},
     ],
 }
 
 card = TaskCard(
-    loader=LoadFromDictionary(data=data),
+    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[Set(fields={"rubric": rubric_json})],
     task=Task(
-        input_fields={"question": str, "rubric": dict[str, Any]},
+        input_fields={"context": str, "rubric": dict[str, Any]},
         reference_fields={},
         prediction_type=str,
-        metrics = ["metrics.llm_as_judge.eval_assist.direct.prometheus"],
+        metrics = ["metrics.llm_as_judge.eval_assist.direct.prometheus_8_7b"],
     ),
     templates=TemplatesDict(
         {
             "simple": InputOutputTemplate(
                 instruction="Answer the following question.",
-                input_format="{question}",
+                input_format="{context}",
                 output_format="",
             )
         }
@@ -75,3 +75,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+    
