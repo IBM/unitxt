@@ -1,11 +1,15 @@
+import re
+import random
+import numpy as np
+from typing import List,Dict
 from .metrics import BulkInstanceMetric
 from .inference import InferenceEngine
 from unitxt import get_logger
 from .templates import Template
 from .task import Task
 from .artifact import Artifact
-from .api import infer
-from typing import List,Dict
+from .api import infer, infer_log_probs
+from .formats import OpenAIFormat
 
 class PairwiseCriteria(Artifact):
     name : str
@@ -41,6 +45,26 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             reference_fields={},
             prediction_type=str,
             metrics=[])
+    
+    def _parse_completion(self, completion: str, option_pair: list[str]) -> tuple[str, str]:
+        """ Ensure that the assessments are always a valid option """
+        quotes_pattern = r'(""".*?"""|```.*?```)'
+        winner_pattern = r'Winner:\s*(.*)'
+        # try to find the triple quotes section
+        match = re.findall(quotes_pattern, completion)
+        # if it doesnt exist, match for winner
+        if len(match) == 0:
+            match = re.findall(winner_pattern, completion)
+        if len(match) > 0:
+            decision = match[0]
+            for o in option_pair:
+                search_for = rf"\b{o.strip()}\b"
+                match_found = re.search(search_for, decision)
+                if match_found is not None:
+                    return match_found[0]
+        
+        # failure case - return a arbitrary option label
+        return random.choice(option_pair)
    
     def prepare(self):
         super().prepare()
@@ -58,6 +82,36 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
 
         #TODO: Not sure, have to check again
         option_pairs = [['1', '2'] for _ in range(len(predictions))]
+        kwargs = {}
+
+        if self.inference_model.model_name == "gpt-4o-2024-05-13":
+            kwargs["format"] = OpenAIFormat()
+            assessment_prompt_user_content_instances = [{
+                    "context_variables": input_instance['context'],
+                    "response_a" : prediction[0],
+                    "response_b" : prediction[1],
+                    "option_a" : option_pair[0],
+                    "option_b" : option_pair[1],
+                    "criteria_name" : pairwise_criteria.name,
+                    "criteria_description" : pairwise_criteria.criteria
+                } for prediction, option_pair, input_instance in zip(predictions, option_pairs, task_data)]
+            
+            generated_text_and_logprobs = infer_log_probs(assessment_prompt_user_content_instances, task=self.assessment_task, engine=self.inference_model, template=self.assessment_template, **kwargs)
+            generated_texts = [completion['text'] for completion in generated_text_and_logprobs]
+
+            # Assessment stage
+            assessments = [self._parse_completion(text_completion, option_pair) for text_completion, option_pair in zip(generated_texts, option_pairs*len(predictions))]
+
+            certainties = [float(np.mean([np.exp(logprob.logprob) for logprob in completion['logprobs']])) for i, completion in enumerate(generated_text_and_logprobs)]
+            self.logger.info("generated assessment")
+ 
+            # Summarization stage
+            assessment_instances = [{"assessment": assessment_output} for assessment_output in generated_texts]
+            summ_output = infer(assessment_instances, task=self.summ_task, engine=self.inference_model, template=self.summ_template)
+            self.logger.info("generated summary")
+
+            return [{"score": 0.8, "assessment": assessments[i], "summary": summ_output[i], "certainties": certainties[i] } for i in range(len(predictions))]
+
         
         if self.inference_model.model_name == "kaist-ai/prometheus-8x7b-v2":
              # each prediction would be an tuple of two responses 

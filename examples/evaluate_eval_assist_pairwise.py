@@ -14,10 +14,10 @@ data = {
 }
 
 pairwise_criteria = "metrics.llm_as_judge.eval_assist.pairwise.criterias.temperature"
-metric = f"metrics.llm_as_judge.eval_assist.pairwise.mixtral_8_7b[pairwise_criteria={pairwise_criteria}]"
+metric = f"metrics.llm_as_judge.eval_assist.pairwise.gpt_4o[pairwise_criteria={pairwise_criteria}]"
 
 card = TaskCard(
-    loader=LoadFromDictionary(data=data),
+    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     task=Task(
         input_fields={"context": str},
         reference_fields={},
@@ -54,3 +54,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+    
