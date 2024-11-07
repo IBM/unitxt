@@ -1,0 +1,23 @@
+{
+    "__type__": "eval_assist_llm_as_judge_pairwise",
+    "inference_engine": {
+        "__type__": "open_ai_inference_engine",
+        "model_name": "gpt-4o-2024-05-13",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "assessment_template": {
+        "__type__": "input_output_template",
+        "input_format": "\nYou are provided a pair of responses (Response {option_a} and Response {option_b}) generated subject to a context. \nYou will choose the better quality response subject to the evaluation criteria. \n\nThis is the context:\n{context_variables}\nThis is the evaluation criteria:\n{criteria_name}\n{criteria_description}\nResponse {option_a}:\n{response_a}\nResponse {option_b}:\n{response_b}\n\n\nYou are provided a pair of responses (Response {option_a} and Response {option_b}) generated subject to a context. \nYou will choose the better quality response subject to the evaluation criteria. \n\nThis is the context:\n{context_variables}\nThis is the evaluation criteria:\n{criteria_name}\n{criteria_description}\nResponse {option_a}:\n{response_a}\nResponse {option_b}:\n{response_b}\n\n\nKeeping the evaluation criteria in mind, briefly assess which response is better.\nFocus on the evaluation criteria during assessment, do not provide a general assessment.\nAssessment: "
+    },
+    "summarization_template": {
+        "__type__": "input_output_template",
+        "input_format": "\nSummarize the following assessment while maintaining the pertinent details.\n\nAssessment: {assessment}\nAssessment Summary:\n"
+    },
+    "option_selection_template": {
+        "__type__": "input_output_template",
+        "input_format": "{assessment_prompt}{assessment}\n\nNow considering the evaluation criteria, which response is better quality?\nValidate the answer against the assessment.\n\n{choose_response_instruction}\nAnswer: Response "
+    },
+    "option_selection_strategy": "PARSE_OUTPUT_TEXT",
+    "evaluator_name": "GPT4"
+}

@@ -1,5 +1,0 @@
-{
-    "__type__": "pairwise_criteria",
-    "name": "Temperature",
-    "criteria": "The temperature is described in both Fahrenheit and Celsius."
-}
