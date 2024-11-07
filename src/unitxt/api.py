@@ -6,7 +6,7 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
-from .inference import InferenceEngine, LogProbInferenceEngine
+from .inference import InferenceEngine, LogProbInferenceEngine, OptionSelectingByLogProbsInferenceEngine
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
@@ -219,8 +219,6 @@ def infer_log_probs(
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
     engine, _ = fetch_artifact(engine)
     log_probs = engine.infer_log_probs(dataset)
-
-    # predictions = post_process(raw_predictions, dataset)
     # if return_data:
     #     for prediction, raw_prediction, instance in zip(
     #         predictions, raw_predictions, dataset
@@ -229,3 +227,24 @@ def infer_log_probs(
     #         instance["raw_prediction"] = raw_prediction
     #     return dataset
     return log_probs
+
+def select(
+    instance_or_instances,
+    engine: OptionSelectingByLogProbsInferenceEngine,
+    dataset_query: Optional[str] = None,
+    return_data: bool = False,
+    **kwargs,
+):
+    dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    engine, _ = fetch_artifact(engine)
+    
+    raw_predictions = engine.select(dataset)
+    predictions = post_process(raw_predictions, dataset)
+    if return_data:
+        for prediction, raw_prediction, instance in zip(
+            predictions, raw_predictions, dataset
+        ):
+            instance["prediction"] = prediction
+            instance["raw_prediction"] = raw_prediction
+        return dataset
+    return predictions

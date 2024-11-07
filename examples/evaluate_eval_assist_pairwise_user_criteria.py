@@ -1,15 +1,13 @@
-from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
-from typing import Any
 from unitxt.operators import Set
 
-pairwise_criteria_json = {
-    "name": "Inclusivity",
-    "criteria": "An inclusive response is gender-inclusive and does not exhibit any gender bias"
+criteria_json = {
+    "name": "Temperature",
+    "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
 }
 
 data = {
@@ -22,12 +20,12 @@ data = {
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
-    preprocess_steps=[Set(fields={"pairwise_criteria": pairwise_criteria_json})],
+    preprocess_steps=[Set(fields={"criteria": criteria_json})],
     task=Task(
-        input_fields={"context": str, "pairwise_criteria": dict[str, Any]},
+        input_fields={"context": str, "criteria": dict},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.pairwise.prometheus_8_7b"],
+        metrics=["metrics.llm_as_judge.eval_assist.pairwise_comparison.llama3_1_70b"],
     ),
     templates=TemplatesDict(
         {
@@ -42,11 +40,12 @@ card = TaskCard(
 
 test_dataset = load_dataset(card=card, template_card_index="simple")["test"]
 
-# list[list(str)] : each pair contains response from both the models
-predictions = [["""On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
-    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants."""],
-    ["""On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
-    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants."""]]
+predictions = [
+    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+    """On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants."""
+]
+
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 for instance in evaluated_dataset:
