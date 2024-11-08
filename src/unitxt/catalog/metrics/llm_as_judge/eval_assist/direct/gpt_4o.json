@@ -1,13 +1,13 @@
 {
     "__type__": "eval_assist_llm_as_judge_direct",
     "inference_model": {
-        "__type__": "ibm_gen_ai_inference_engine",
+        "__type__": "open_ai_inference_engine",
         "model_name": "gpt-4o-2024-05-13",
-        "parameters": {
-            "__type__": "ibm_gen_ai_inference_engine_params_mixin",
-            "max_new_tokens": 1024,
-            "random_seed": 42
-        }
+        "data_classification_policy": [
+            "public"
+        ],
+        "max_tokens": 1024,
+        "seed": 4
     },
     "assessment_template": {
         "__type__": "input_output_template",
