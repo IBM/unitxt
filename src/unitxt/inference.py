@@ -1467,7 +1467,6 @@ class OpenAiInferenceEngine(
         "openai": "Install openai package using 'pip install --upgrade openai"
     }
     data_classification_policy = ["public"]
-    use_instruction_in_system_turn : Optional[bool] = False
     parameters: Optional[OpenAiInferenceEngineParams] = None
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
@@ -1552,7 +1551,6 @@ class OpenAiInferenceEngine(
             except :
                 messages = []
                 messages.append({"role": "user", "content": instance["source"]})
-
             response = self.client.chat.completions.create(
                 messages=messages,
                 model=self.model_name,
