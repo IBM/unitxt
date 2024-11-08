@@ -401,6 +401,18 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}",
+        target_prefix="Answer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+    ),
+    "templates.qa.multiple_choice.with_context.lmms_eval",
+    overwrite=True,
+)
+
 
 def remove_duplicates(input_list):
     seen = set()

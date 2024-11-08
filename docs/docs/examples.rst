@@ -1,6 +1,6 @@
 .. _examples:
 ==============
-Examples ✨
+Examples 
 ==============
 
 Here you will find complete coding samples showing how to perform different tasks using Unitxt.

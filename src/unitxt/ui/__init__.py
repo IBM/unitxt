@@ -10,7 +10,10 @@ def launch(demo_settings=None):
             setattr(settings, key, value)
     from .run import demo
 
-    get_settings().global_loader_limit = 300
+    unitxt_settings = get_settings()
+    unitxt_settings.global_loader_limit = 300
+    unitxt_settings.disable_hf_datasets_cache = False
+
     demo.launch(debug=True)
 
 

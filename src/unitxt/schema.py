@@ -37,6 +37,10 @@ UNITXT_INFERENCE_SCHEMA = Features(
         "postprocessors": Sequence(Value("string")),
         "task_data": Value(dtype="string"),
         "data_classification_policy": Sequence(Value("string")),
+        "media": {
+            "images": Sequence(Image()),
+            "audios": Sequence(Audio()),
+        },
     }
 )
 
