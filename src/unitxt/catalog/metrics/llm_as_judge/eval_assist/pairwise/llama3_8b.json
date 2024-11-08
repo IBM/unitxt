@@ -3,11 +3,11 @@
     "inference_model": {
         "__type__": "ibm_gen_ai_inference_engine",
         "model_name": "meta-llama/llama-3-8b-instruct",
-        "parameters": {
-            "__type__": "ibm_gen_ai_inference_engine_params_mixin",
-            "max_new_tokens": 1024,
-            "random_seed": 42
-        }
+        "data_classification_policy": [
+            "public"
+        ],
+        "max_new_tokens": 1024,
+        "random_seed": 42
     },
     "assessment_template": {
         "__type__": "input_output_template",
