@@ -1,5 +1,3 @@
-import os
-
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
@@ -8,9 +6,6 @@ from unitxt.templates import InputOutputTemplate, TemplatesDict
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
-
-os.environ["GENAI_KEY"] = ""
-os.environ["OPENAI_API_KEY"] = ""
 
 data = {
     "test": [
