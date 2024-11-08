@@ -2,7 +2,7 @@
     "__type__": "eval_assist_llm_as_judge_direct",
     "inference_model": {
         "__type__": "ibm_gen_ai_inference_engine",
-        "model_name": "meta-llama/llama-3-70b-instruct",
+        "model_name": "ibm/granite-20b-code-instruct",
         "data_classification_policy": [
             "public"
         ],

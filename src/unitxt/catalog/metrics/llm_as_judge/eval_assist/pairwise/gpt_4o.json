@@ -1,0 +1,23 @@
+{
+    "__type__": "eval_assist_llm_as_judge_pairwise",
+    "inference_model": {
+        "__type__": "open_ai_inference_engine",
+        "model_name": "gpt-4o-2024-05-13",
+        "data_classification_policy": [
+            "public"
+        ],
+        "use_instruction_in_system_turn": true,
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "assessment_template": {
+        "__type__": "input_output_template",
+        "input_format": "\nContext:\n{context_variables}\n\nCriteria:\n{criteria_name}\n{criteria_description}\n\nResponse {option_a}:\n{response_a}\n\nResponse {option_b}:\n{response_b}\n",
+        "instruction": "You are an fair and objective evaluator. You will be provided a pair of responses (Response {option_a} and Response {option_b}) that were generated subject to a context.\nYour task is to choose the better quality response subject to a criteria. At the end, write a final decision in the format: \"Winner: [Response {option_a} or Response {option_b}]\". Enclose this final decision within triple quotes (\"\"\").\n"
+    },
+    "summ_template": {
+        "__type__": "input_output_template",
+        "input_format": "Summarize the following assessment into an single easy to understand statement.\nAssessment: {assessment}\nAssessment Summary:\n"
+    },
+    "answer_template": null
+}
