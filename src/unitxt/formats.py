@@ -293,6 +293,7 @@ class ChatAPIFormat(BaseFormat):
 
     def to_content(self, text: str) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
+        return text
         img_tag_pattern = re.compile(
             r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', re.IGNORECASE
         )

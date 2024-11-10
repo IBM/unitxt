@@ -1539,7 +1539,7 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
-    requirements: list = ["litellm", "tenacity", "tqdm"]
+    requirements: list = ["litellm", "tenacity", "tqdm", "diskcache"]
 
     def prepare_engine(self):
         # Initialize the token bucket rate limiter
@@ -1548,7 +1548,11 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             capacity=self.max_requests_per_second,
         )
         self.inference_type = "litellm"
+        import litellm
         from litellm import acompletion
+        from litellm.caching.caching import Cache
+
+        litellm.cache = Cache(type="disk")
 
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
@@ -1570,6 +1574,7 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
                 temperature=self.temperature,
                 top_p=self.top_p,
                 max_retries=self.max_retries,
+                caching=True,
             )
             usage = response.get("usage", {})
             return TextGenerationInferenceOutput(

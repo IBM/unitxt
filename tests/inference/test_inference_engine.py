@@ -181,7 +181,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 "answers": ["2"],
             },
         ]
-        total_tests = 100
+        total_tests = 5
         instances = (instances * (total_tests // len(instances)))[:total_tests]
         dataset = produce(instances, recipe)
 

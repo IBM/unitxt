@@ -9,10 +9,11 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .utils import recursive_copy
 
 settings = get_settings()
+constants = get_constants()
 logger = get_logger()
 
 
@@ -41,8 +42,12 @@ class Stream(Dataclass):
                 keep_in_memory=disable_cache,
                 cache_dir=cache_dir,
                 features=features,
-                num_proc=20,
                 hash=hash,
+                dataset_name="unitxt",
+                config_name="stream",
+                repo_id=hash,
+                # config_id=hash,
+                version=constants.version,
             )
 
     def to_iterable_dataset(
@@ -251,7 +256,7 @@ class MultiStream(dict):
                         disable_cache=disable_cache,
                         cache_dir=cache_dir,
                         features=features,
-                        hash=hash,
+                        hash=hash if hash is None else key + "-" + hash,
                     )
                     for key, value in self.items()
                 }
@@ -260,7 +265,10 @@ class MultiStream(dict):
     def to_iterable_dataset(self, features=None, hash=None) -> IterableDatasetDict:
         return IterableDatasetDict(
             {
-                key: value.to_iterable_dataset(features=features, hash=hash)
+                key: value.to_iterable_dataset(
+                    features=features,
+                    hash=hash if hash is None else key + hash,
+                )
                 for key, value in self.items()
             }
         )

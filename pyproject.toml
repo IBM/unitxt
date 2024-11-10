@@ -115,7 +115,8 @@ watsonx = [
 ]
 inference-tests = [
   "litellm @ git+https://github.com/BerriAI/litellm.git@main",
-  "tenacity"
+  "tenacity",
+  "diskcache"
 ]
 
 # Combine all extras by referencing other groups

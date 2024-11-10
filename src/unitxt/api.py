@@ -123,20 +123,22 @@ def load_dataset(
 
     signature = f"{constants.version}+{recipe}"
 
+    hash_string = str(abs(hash(signature)))
+
     stream = recipe()
     if split is not None:
         stream = stream[split]
-        signature += split
-
-    hash_string = str(hash(signature))
+        signature = split + "-" + hash_string
 
     if disable_cache is None:
         disable_cache = settings.disable_hf_datasets_cache
 
     if streaming:
-        return stream.to_iterable_dataset(features=UNITXT_DATASET_SCHEMA).map(
-            loads_instance, batched=True, hash=hash_string, disable_cache=disable_cache
-        )
+        return stream.to_iterable_dataset(
+            features=UNITXT_DATASET_SCHEMA,
+            hash=hash_string,
+            disable_cache=disable_cache,
+        ).map(loads_instance, batched=True)
 
     return stream.to_dataset(
         features=UNITXT_DATASET_SCHEMA, hash=hash_string, disable_cache=disable_cache
