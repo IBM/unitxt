@@ -163,6 +163,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(dataset[2]["prediction"], "telephone number")
 
     def test_lite_llm_inference_engine(self):
+        from unitxt.logging_utils import set_verbosity
+
+        set_verbosity("debug")
         inference_model = LiteLLMInferenceEngine(
             model="watsonx/meta-llama/llama-3-8b-instruct",
             max_tokens=2,
@@ -178,9 +181,12 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 "answers": ["2"],
             },
         ]
+        total_tests = 100
+        instances = (instances * (total_tests // len(instances)))[:total_tests]
         dataset = produce(instances, recipe)
 
         predictions = inference_model.infer(dataset)
 
         targets = ["7", "2"]
+        targets = (targets * (total_tests // len(targets)))[:total_tests]
         self.assertListEqual(predictions, targets)

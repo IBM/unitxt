@@ -33,7 +33,7 @@ class Stream(Dataclass):
     def set_copying(self, copying: bool):
         pass
 
-    def to_dataset(self, disable_cache=True, cache_dir=None, features=None):
+    def to_dataset(self, disable_cache=False, cache_dir=None, features=None, hash=None):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
             return Dataset.from_generator(
@@ -42,12 +42,14 @@ class Stream(Dataclass):
                 cache_dir=cache_dir,
                 features=features,
                 num_proc=20,
+                hash=hash,
             )
 
     def to_iterable_dataset(
         self,
+        features=None,
     ):
-        return IterableDataset.from_generator(self.__iter__)
+        return IterableDataset.from_generator(self.__iter__, features=features)
 
 
 class ListStream(Stream):
@@ -239,7 +241,7 @@ class MultiStream(dict):
             stream.set_copying(copying)
 
     def to_dataset(
-        self, disable_cache=True, cache_dir=None, features=None
+        self, disable_cache=True, cache_dir=None, features=None, hash=None
     ) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
@@ -249,14 +251,18 @@ class MultiStream(dict):
                         disable_cache=disable_cache,
                         cache_dir=cache_dir,
                         features=features,
+                        hash=hash,
                     )
                     for key, value in self.items()
                 }
             )
 
-    def to_iterable_dataset(self) -> IterableDatasetDict:
+    def to_iterable_dataset(self, features=None, hash=None) -> IterableDatasetDict:
         return IterableDatasetDict(
-            {key: value.to_iterable_dataset() for key, value in self.items()}
+            {
+                key: value.to_iterable_dataset(features=features, hash=hash)
+                for key, value in self.items()
+            }
         )
 
     def __setitem__(self, key, value):

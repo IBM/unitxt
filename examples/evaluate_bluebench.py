@@ -8,14 +8,13 @@ with settings.context(
     disable_hf_datasets_cache=False,
     allow_unverified_code=True,
 ):
-    benchmark = load_dataset("benchmarks.bluebench", streaming=True)
-    test_dataset = list(benchmark["test"])
+    test_dataset = load_dataset("benchmarks.bluebench", split="test")
 
 # Infer
 inference_model = LiteLLMInferenceEngine(
     model="watsonx/meta-llama/llama-3-8b-instruct",
-    max_tokens=2,
-    max_parallel_requests=8,
+    max_tokens=30,
+    max_requests_per_second=6,
 )
 
 predictions = inference_model.infer(test_dataset)

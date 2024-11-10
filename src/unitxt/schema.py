@@ -6,9 +6,10 @@ from datasets import Audio, Features, Image, Sequence, Value
 from .artifact import Artifact
 from .dict_utils import dict_get
 from .operator import InstanceOperatorValidator
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 
 constants = get_constants()
+settings = get_settings()
 
 UNITXT_DATASET_SCHEMA = Features(
     {
@@ -52,12 +53,25 @@ def get_schema(stream_name):
 
 
 def loads_instance(batch):
-    if batch["source"][0].startswith('[{"role":'):
+    if (
+        "source" in batch
+        and isinstance(batch["source"][0], str)
+        and (
+            batch["source"][0].startswith('[{"role":')
+            or batch["source"][0].startswith('[{"content":')
+        )
+    ):
         batch["source"] = [json.loads(d) for d in batch["source"]]
+    if (
+        not settings.task_data_as_text
+        and "task_data" in batch
+        and isinstance(batch["task_data"][0], str)
+    ):
+        batch["task_data"] = [json.loads(d) for d in batch["task_data"]]
     return batch
 
 
-class Finalize(InstanceOperatorValidator):
+class FinalizeDataset(InstanceOperatorValidator):
     group_by: List[List[str]]
     remove_unnecessary_fields: bool = True
 
@@ -92,6 +106,14 @@ class Finalize(InstanceOperatorValidator):
             task_data = {**task_data, **instance["reference_fields"]}
         return task_data
 
+    def serialize_instance_fields(self, instance, task_data):
+        if settings.task_data_as_text:
+            instance["task_data"] = json.dumps(task_data)
+
+        if not isinstance(instance["source"], str):
+            instance["source"] = json.dumps(instance["source"])
+        return instance
+
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
@@ -110,7 +132,7 @@ class Finalize(InstanceOperatorValidator):
                 for instance in instance.pop("demos")
             ]
 
-        instance["task_data"] = json.dumps(task_data)
+        instance = self.serialize_instance_fields(instance, task_data)
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []
@@ -158,4 +180,4 @@ class Finalize(InstanceOperatorValidator):
         assert all(
             key in instance for key in schema
         ), f"Instance should have the following keys: {schema}. Instance is: {instance}"
-        # schema.encode_example(instance)
+        schema.encode_example(instance)

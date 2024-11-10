@@ -2,6 +2,8 @@ import json
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+
 from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .inference import InferenceEngine, LogProbInferenceEngine
@@ -9,9 +11,12 @@ from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
+from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
 
 logger = get_logger()
+constants = get_constants()
+settings = get_settings()
 
 
 def load(source: Union[SourceOperator, str]):
@@ -80,8 +85,12 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
 
 
 def load_dataset(
-    dataset_query: Optional[str] = None, streaming: bool = False, **kwargs
-):
+    dataset_query: Optional[str] = None,
+    split: Optional[str] = None,
+    streaming: bool = False,
+    disable_cache: Optional[bool] = None,
+    **kwargs,
+) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
 
     If the 'dataset_query' argument is provided, then dataset is loaded from a card in local
@@ -93,6 +102,8 @@ def load_dataset(
             For example:
             "card=cards.wnli,template=templates.classification.multi_class.relation.default".
         streaming (bool, False): When True yields the data as Unitxt streams dictionary
+        split (str, optional): The split of the data to load
+        disable_cache (str, optional): Disable caching process of the data
         **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
 
     Returns:
@@ -110,14 +121,26 @@ def load_dataset(
     """
     recipe = load_recipe(dataset_query, **kwargs)
 
-    if streaming:
-        return recipe()
+    signature = f"{constants.version}+{recipe}"
 
-    return (
-        recipe()
-        .to_dataset(features=UNITXT_DATASET_SCHEMA)
-        .with_transform(loads_instance)
-    )
+    stream = recipe()
+    if split is not None:
+        stream = stream[split]
+        signature += split
+
+    hash_string = str(hash(signature))
+
+    if disable_cache is None:
+        disable_cache = settings.disable_hf_datasets_cache
+
+    if streaming:
+        return stream.to_iterable_dataset(features=UNITXT_DATASET_SCHEMA).map(
+            loads_instance, batched=True, hash=hash_string, disable_cache=disable_cache
+        )
+
+    return stream.to_dataset(
+        features=UNITXT_DATASET_SCHEMA, hash=hash_string, disable_cache=disable_cache
+    ).with_transform(loads_instance)
 
 
 def evaluate(predictions, data) -> List[Dict[str, Any]]:
@@ -133,14 +156,16 @@ def _get_produce_with_cache(dataset_query: Optional[str] = None, **kwargs):
     return load_recipe(dataset_query, **kwargs).produce
 
 
-def produce(instance_or_instances, dataset_query: Optional[str] = None, **kwargs):
+def produce(
+    instance_or_instances, dataset_query: Optional[str] = None, **kwargs
+) -> Union[Dataset, Dict[str, Any]]:
     is_list = isinstance(instance_or_instances, list)
     if not is_list:
         instance_or_instances = [instance_or_instances]
     result = _get_produce_with_cache(dataset_query, **kwargs)(instance_or_instances)
     if not is_list:
-        result = result[0]
-    return result
+        return result[0]
+    return Dataset.from_list(result).with_transform(loads_instance)
 
 
 def infer(
@@ -178,13 +203,6 @@ def infer(
         )
     predictions = post_process(raw_predictions, dataset)
     if return_data:
-        for prediction, raw_prediction, instance, infer_output in zip(
-            predictions, raw_predictions, dataset, infer_outputs
-        ):
-            if return_meta_data:
-                instance["infer_meta_data"] = infer_output.__dict__
-                del instance["infer_meta_data"]["prediction"]
-            instance["prediction"] = prediction
-            instance["raw_prediction"] = raw_prediction
-        return dataset
+        dataset = dataset.add_column("prediction", predictions)
+        return dataset.add_column("raw_prediction", raw_predictions)
     return predictions

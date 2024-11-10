@@ -59,13 +59,33 @@ class TestFormats(UnitxtTestCase):
             {
                 "target": "2",
                 "input_fields": {},
-                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, {"role": "user", "content": "1+2"}, {"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": "4-2"}, {"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": "1+1"}]',
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {"role": "user", "content": "1+2"},
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {"role": "user", "content": "4-2"},
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {"role": "user", "content": "1+1"},
+                ],
                 "demos": demo_instances,
             },
             {
                 "target": "5",
                 "input_fields": {},
-                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, {"role": "user", "content": "1+2"}, {"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": "4-2"}, {"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": "3+2"}]',
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {"role": "user", "content": "1+2"},
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {"role": "user", "content": "4-2"},
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {"role": "user", "content": "3+2"},
+                ],
                 "demos": demo_instances,
             },
         ]
@@ -119,25 +139,105 @@ class TestFormats(UnitxtTestCase):
             {
                 "target": "2",
                 "input_fields": {},
-                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, '
-                '{"role": "user", "content": [{"type": "text", "text": "What is 1+2? "}, '
-                '{"type": "image_url", "image_url": {"url": "https://example.com/image1.jpg", "detail": "low"}}]}, '
-                '{"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": [{"type": "text", '
-                '"text": "What is 4-2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image2.jpg", "detail": "low"}}]}, '
-                '{"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": [{"type": "text", '
-                '"text": "What is 1+1? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image3.jpg", "detail": "low"}}]}]',
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image1.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 4-2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image2.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+1? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image3.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                ],
                 "demos": demo_instances,
             },
             {
                 "target": "5",
                 "input_fields": {},
-                "source": '[{"role": "system", "content": "You are a smart assistant.\\nsolve the math exercises"}, '
-                '{"role": "user", "content": [{"type": "text", "text": "What is 1+2? "}, '
-                '{"type": "image_url", "image_url": {"url": "https://example.com/image1.jpg", "detail": "low"}}]}, '
-                '{"role": "assistant", "content": "The answer is 3"}, {"role": "user", "content": [{"type": "text", '
-                '"text": "What is 4-2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image2.jpg", "detail": "low"}}]}, '
-                '{"role": "assistant", "content": "The answer is 2"}, {"role": "user", "content": [{"type": "text", '
-                '"text": "What is 3+2? "}, {"type": "image_url", "image_url": {"url": "https://example.com/image4.jpg", "detail": "low"}}]}]',
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image1.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 4-2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image2.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 3+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image4.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                ],
                 "demos": demo_instances,
             },
         ]
