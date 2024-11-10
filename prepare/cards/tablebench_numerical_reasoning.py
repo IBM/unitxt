@@ -47,6 +47,7 @@ card = TaskCard(
         reference_fields={"answers": str},
         prediction_type=str,
         metrics=["metrics.rouge"],
+        augmentable_inputs=["context", "question"],
     ),
     templates=[
         InputOutputTemplate(

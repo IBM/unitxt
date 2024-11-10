@@ -1,5 +1,3 @@
-from typing import Any
-
 from unitxt.blocks import (
     LoadHF,
     TaskCard,
@@ -14,12 +12,15 @@ from unitxt.struct_data_operators import (
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
+from unitxt.types import Table
 
 settings = get_settings()
 
 with settings.context(allow_unverified_code=True):
     card = TaskCard(
-        loader=LoadHF(path="ibm/finqa", streaming=False),
+        loader=LoadHF(
+            path="ibm/finqa", data_classification_policy=["public"], streaming=False
+        ),
         preprocess_steps=[
             SplitRandomMix(
                 mix={
@@ -36,7 +37,7 @@ with settings.context(allow_unverified_code=True):
         task=Task(
             inputs={
                 "pre_text": str,
-                "table": Any,
+                "table": Table,
                 "post_text": str,
                 "question": str,
             },

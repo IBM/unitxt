@@ -41,6 +41,14 @@ card = TaskCard(
             "metrics.accuracy",
             "metrics.f1_macro_multi_label",
         ],
+        augmentable_inputs=[
+            "page_title",
+            "section_title",
+            "table_caption",
+            "table",
+            "colname",
+            "vocab",
+        ],
     ),
     templates=[
         InputOutputTemplate(

@@ -14,6 +14,7 @@ add_to_catalog(
         reference_fields={"answers": List[str]},
         prediction_type=str,
         metrics=["metrics.squad"],
+        augmentable_inputs=["context", "question"],
     ),
     "tasks.qa.with_context.extractive",
     overwrite=True,

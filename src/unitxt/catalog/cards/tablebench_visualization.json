@@ -75,6 +75,10 @@
         "prediction_type": "str",
         "metrics": [
             "metrics.rouge"
+        ],
+        "augmentable_inputs": [
+            "context",
+            "question"
         ]
     },
     "templates": [

@@ -3,6 +3,9 @@
     "loader": {
         "__type__": "load_hf",
         "path": "ibm/finqa",
+        "data_classification_policy": [
+            "public"
+        ],
         "streaming": false
     },
     "preprocess_steps": [
@@ -31,17 +34,13 @@
         {
             "__type__": "map_table_lists_to_std_table_json",
             "field": "table"
-        },
-        {
-            "__type__": "serialize_table_as_concatenation",
-            "field": "table"
         }
     ],
     "task": {
         "__type__": "task",
         "inputs": {
             "pre_text": "str",
-            "table": "Any",
+            "table": "Table",
             "post_text": "str",
             "question": "str"
         },

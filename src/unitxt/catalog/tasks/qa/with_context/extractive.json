@@ -11,5 +11,9 @@
     "prediction_type": "str",
     "metrics": [
         "metrics.squad"
+    ],
+    "augmentable_inputs": [
+        "context",
+        "question"
     ]
 }

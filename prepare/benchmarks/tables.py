@@ -1,9 +1,9 @@
 import argparse
 import os.path
 import pickle
-from itertools import combinations
+import random
+from itertools import chain, combinations
 
-import torch
 from tqdm import tqdm
 from unitxt import evaluate
 from unitxt.benchmark import Benchmark
@@ -22,22 +22,23 @@ from unitxt.struct_data_operators import (
     SerializeTableAsMarkdown,
 )
 
-# usage: tables.py [-h] -model MODEL -num_demos NUM_DEMOS -out_path OUT_PATH [-debug DEBUG] -cards CARDS [
-# -serializers SERIALIZERS] [-augmentors AUGMENTORS] [-augmentors_comb_size AUGMENTORS_COMB_SIZE] [-max_pred_tokens
-# MAX_PRED_TOKENS]
+# usage: tables.py -models MODELS -out_path OUT_PATH [-num_demos NUM_DEMOS] [-cards CARDS] [-serializers SERIALIZERS]
+# [-num_augmentors NUM_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS] [-debug DEBUG]
+
 
 settings = get_settings()
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-model", "--model", type=str, required=True)
-parser.add_argument("-num_demos", "--num_demos", type=int, required=True)
+parser.add_argument("-models", "--models", type=str, required=True)
 parser.add_argument("-out_path", "--out_path", type=str, required=True)
-parser.add_argument("-debug", "--debug", type=bool, default=False)
+parser.add_argument("-num_demos", "--num_demos", type=int, required=False, default=5)
 parser.add_argument(
     "-cards",
     "--cards",
     type=str,
-    required=True,
+    required=False,
+    default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,scigen,qtsumm,tablebench_data_analysis,"
+    "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
 )
 parser.add_argument(
     "-serializers",
@@ -47,31 +48,25 @@ parser.add_argument(
     default="html,csv,json,markdown,row_indexed_major,df,concat",
 )
 parser.add_argument(
-    "-augmentors",
-    "--augmentors",
-    type=str,
-    required=False,
-    default=None,
-)
-parser.add_argument(
-    "-augmentors_comb_size",
-    "--augmentors_comb_size",
+    "-num_augmentors",
+    "--num_augmentors",
     type=int,
     required=False,
-    default=1,
+    default=10,
 )
 parser.add_argument(
     "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
 )
+parser.add_argument("-debug", "--debug", type=bool, default=False)
+
 args = parser.parse_args()
-model_name = args.model
+models = args.models
 num_demos = args.num_demos
-out_path = os.path.join(args.out_path, args.model.split("/")[-1])
+out_path = args.out_path
 debug = args.debug
 cards = args.cards
 serializers = args.serializers
-augmentors = args.augmentors
-augmentors_comb_size = args.augmentors_comb_size
+num_augmentors = args.num_augmentors
 max_pred_tokens = args.max_pred_tokens
 
 SERIALIZERS_MAP = {
@@ -83,7 +78,7 @@ SERIALIZERS_MAP = {
     "concat": SerializeTableAsConcatenation,
     "csv": None,
 }
-ALLOWED_AUGMENTORS = {
+TABLE_AUGMENTORS = {
     "shuffle_cols_names",
     "mask_cols_names",
     "shuffle_cols",
@@ -95,117 +90,94 @@ ALLOWED_AUGMENTORS = {
 }
 DEMOS_POOL_SIZE = 10
 
-# def select_random_combinations(lst, num_combinations=20):
-#     # Generate all non-empty subsets
-#     non_empty_subsets = []
-#     for r in range(1, len(lst) + 1):
-#         non_empty_subsets.extend(itertools.combinations(lst, r))
-#
-#     # Randomly select num_combinations subsets
-#     selected_combinations = random.sample(non_empty_subsets, num_combinations)
-#
-#     # Convert the combinations from tuples back to lists (optional, but can be useful)
-#     selected_combinations = [list(comb) for comb in selected_combinations]
-#
-#     # Sort the combinations by their length
-#     selected_combinations.sort(key=len)
-#
-#     return selected_combinations
-
+models_parsed = [item.strip() for item in models.split(",")]
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
-augmentors_parsed = (
-    {item.strip() for item in augmentors.split(",")} if augmentors else {}
+all_augment_combinations = list(
+    chain.from_iterable(
+        combinations(TABLE_AUGMENTORS, r) for r in range(1, len(TABLE_AUGMENTORS) + 1)
+    )
 )
-if augmentors_parsed:
-    # if any(augmentors_parsed - ALLOWED_AUGMENTORS):
-    #     print(augmentors_parsed - ALLOWED_AUGMENTORS, "NOT ALLOWED !")
-    augmentors_parsed = augmentors_parsed.intersection(ALLOWED_AUGMENTORS)
-    comb_augmentors = [
-        list(comb) for comb in combinations(augmentors_parsed, augmentors_comb_size)
-    ]
-else:
-    comb_augmentors = [["shuffle_cols_names"], ["duplicate_rows", "transpose"]]
+rand_augment_combinations = random.sample(
+    all_augment_combinations, min(num_augmentors, len(all_augment_combinations))
+)
 
-format = "formats.empty"
-if "llama" in model_name:
-    format = "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
-elif "mixtral" in model_name:
-    format = "formats.models.mistral.instruction.all_demos_in_one_turn"
+# print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 
+for model in models_parsed:
+    model_name = model.split("/")[-1]
 
-def get_subset_name(card, serializer, augment, seed=settings.seed):
-    return (
-        "dataset="
-        + card
-        + "__serializer="
-        + serializer
-        + ("__seed=" + str(seed) if seed != settings.seed else "")
-        + ("__augment=" + ",".join(augment) if augment else "")
-    )
+    format = "formats.empty"
+    if "llama" in model:
+        format = "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
+    elif "mixtral" in model:
+        format = "formats.models.mistral.instruction.all_demos_in_one_turn"
 
+    subsets = {}
+    for card in cards_parsed:
+        for augment in rand_augment_combinations:
+            for serializer in serializers_parsed:
+                subset_name = (
+                    "dataset="
+                    + card
+                    + "__serializer="
+                    + serializer
+                    + ("__augment=" + ",".join(augment) if augment else "")
+                )
+                subsets[subset_name] = StandardRecipe(
+                    card="cards." + card,
+                    template_card_index=0,
+                    serializer=SERIALIZERS_MAP[serializer]()
+                    if serializer in SERIALIZERS_MAP and SERIALIZERS_MAP[serializer]
+                    else None,
+                    num_demos=num_demos,
+                    demos_pool_size=DEMOS_POOL_SIZE,
+                    format=format,
+                    augmentor=["augmentors.table." + a for a in augment]
+                    if augment
+                    else [None],
+                )
 
-subsets = {}
-for card in cards_parsed:
-    for augment in comb_augmentors:
-        for serializer in serializers_parsed:
-            subsets[get_subset_name(card, serializer, augment)] = StandardRecipe(
-                card="cards." + card,
-                template_card_index=0,
-                serializer=SERIALIZERS_MAP[serializer]()
-                if serializer in SERIALIZERS_MAP and SERIALIZERS_MAP[serializer]
-                else None,
-                num_demos=num_demos,
-                demos_pool_size=DEMOS_POOL_SIZE,
-                format=format,
-                augmentor=["augmentors.table." + a for a in augment]
-                if augment
-                else [None],
-            )
+    for subset_name, subset in tqdm(subsets.items()):
+        # print("Running:", subset_name, ", Model:", model)
 
-
-# print("Run Params:", [f"{arg}: {value} | " for arg, value in vars(args).items()])
-for subset_name, subset in tqdm(subsets.items()):
-    # print("Running:", subset_name)
-
-    benchmark = Benchmark(
-        max_samples_per_subset=100 if not debug else 5,
-        loader_limit=500 if not debug else 100,
-        subsets={subset_name: subset},
-    )
-
-    test_dataset = list(benchmark()["test"])
-
-    if not os.path.exists(out_path):
-        os.makedirs(out_path)
-
-    try:
-        torch.cuda.empty_cache()
-        if "gpt" in model_name:
-            inference_model = OpenAiInferenceEngine(
-                model_name=model_name,
-                max_tokens=max_pred_tokens,
-                temperature=0.05,
-            )
-        else:
-            inference_model = IbmGenAiInferenceEngine(
-                model_name=model_name,
-                max_new_tokens=max_pred_tokens,
-                temperature=0.05,
-            )
-
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-        out_file_name = (
-            model_name.split("/")[-1] + "#" + subset_name + ("__DEBUG" if debug else "")
+        benchmark = Benchmark(
+            max_samples_per_subset=100 if not debug else 5,
+            loader_limit=500 if not debug else 100,
+            subsets={subset_name: subset},
         )
-        curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
-        with open(curr_out_path, "wb") as f:
-            pickle.dump(evaluated_dataset, f)
-            # print("saved file path: ", curr_out_path)
-    except Exception as e:
-        with open(os.path.join(out_path, "errors.txt"), "a") as f:
-            f.write(str(e))
-        # print(e)
-        pass
+
+        test_dataset = list(benchmark()["test"])
+
+        if not os.path.exists(out_path):
+            os.makedirs(out_path)
+        out_file_name = (
+            "model=" + model_name + "__" + subset_name + ("__DEBUG" if debug else "")
+        )
+
+        try:
+            if "gpt" in model:
+                inference_model = OpenAiInferenceEngine(
+                    model_name=model,
+                    max_tokens=max_pred_tokens,
+                    temperature=0.05,
+                )
+            else:
+                inference_model = IbmGenAiInferenceEngine(
+                    model_name=model,
+                    max_new_tokens=max_pred_tokens,
+                    temperature=0.05,
+                )
+
+            predictions = inference_model.infer(test_dataset)
+            evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+            curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
+            with open(curr_out_path, "wb") as f:
+                pickle.dump(evaluated_dataset, f)
+                # print("saved file path: ", curr_out_path)
+        except Exception as e:
+            with open(os.path.join(out_path, "errors.txt"), "a") as f:
+                f.write("\n".join([model, subset_name, str(e)]))
+            # print(e)
+            pass
