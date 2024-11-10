@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Union
 
 import datasets
 
@@ -111,11 +112,11 @@ class Dataset(datasets.GeneratorBasedBuilder):
 
     def as_dataset(
         self,
-        split: datasets.Split | None = None,
+        split: Optional[datasets.Split] = None,
         run_post_process=True,
-        verification_mode: datasets.VerificationMode | str | None = None,
+        verification_mode: Optional[Union[datasets.VerificationMode, str]] = None,
         in_memory=False,
-    ) -> datasets.Dataset | datasets.DatasetDict:
+    ) -> Union[datasets.Dataset, datasets.DatasetDict]:
         return (
             super()
             .as_dataset(split, run_post_process, verification_mode, in_memory)
