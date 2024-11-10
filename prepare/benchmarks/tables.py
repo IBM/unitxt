@@ -78,7 +78,7 @@ SERIALIZERS_MAP = {
     "concat": SerializeTableAsConcatenation,
     "csv": None,
 }
-TABLE_AUGMENTORS = {
+TABLE_AUGMENTORS = [
     "shuffle_cols_names",
     "mask_cols_names",
     "shuffle_cols",
@@ -87,7 +87,7 @@ TABLE_AUGMENTORS = {
     "duplicate_columns",
     "duplicate_rows",
     "transpose",
-}
+]
 DEMOS_POOL_SIZE = 10
 
 models_parsed = [item.strip() for item in models.split(",")]
@@ -98,6 +98,7 @@ all_augment_combinations = list(
         combinations(TABLE_AUGMENTORS, r) for r in range(1, len(TABLE_AUGMENTORS) + 1)
     )
 )
+random.seed(settings.seed)
 rand_augment_combinations = random.sample(
     all_augment_combinations, min(num_augmentors, len(all_augment_combinations))
 )

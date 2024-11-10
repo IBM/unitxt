@@ -932,11 +932,11 @@ class SerializeTableAsConcatenation(SerializeTable):
         assert header and rows, "Incorrect input table format"
 
         # Process table header first
-        serialized_tbl_str = " ".join(header)
+        serialized_tbl_str = " ".join([str(i) for i in header])
 
         # Process rows sequentially starting from row 1
         for row in rows:
-            serialized_tbl_str += " " + " ".join(row)
+            serialized_tbl_str += " " + " ".join([str(i) for i in row])
 
         # return serialized table as a string
         return serialized_tbl_str.strip()
