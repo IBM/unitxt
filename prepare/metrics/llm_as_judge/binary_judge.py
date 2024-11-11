@@ -1,5 +1,3 @@
-import os
-
 from unitxt import add_to_catalog
 from unitxt.inference import GenericInferenceEngine
 from unitxt.llm_as_judge import (
@@ -21,7 +19,6 @@ metric_type_to_template_dict = {
 }
 
 generic_engine_label = "generic_inference_engine"
-os.environ["UNITXT_INFERENCE_ENGINE"] = "engines.ibm_gen_ai.llama_3_70b_instruct"
 inference_models = {
     "llama_3_1_70b_instruct_wml": "engines.classification.llama_3_1_70b_instruct_wml",
     generic_engine_label: GenericInferenceEngine(),
