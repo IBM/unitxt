@@ -103,17 +103,14 @@ random.seed(settings.seed)
 rand_augment_combinations = random.sample(
     augment_combinations, min(num_augmentors, len(augment_combinations))
 )
-"""
-all augment includes:
-    - no augment
-    - one text augment
-    - single table augments
-    - some combinations of 2 augments or more
-"""
+
 all_augment = (
-    [[None], ["augment_whitespace_task_input"]]
-    + [[a] for a in TABLE_AUGMENTORS]
-    + [list(i) for i in rand_augment_combinations]
+    [
+        [None],  # no augment
+        # ["augment_whitespace_task_input"]    # text augment
+    ]
+    + [[a] for a in TABLE_AUGMENTORS]  # single table augment
+    + [list(i) for i in rand_augment_combinations]  # subsets table augment
 )
 
 
