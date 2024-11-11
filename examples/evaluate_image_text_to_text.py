@@ -1,4 +1,3 @@
-from tqdm import tqdm
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine
@@ -14,16 +13,15 @@ with settings.context(
     dataset = load_dataset(
         card="cards.doc_vqa.lmms_eval",
         template="templates.qa.with_context.title",
-        format="formats.models.llava_interleave",
+        format="formats.chat_api",
         loader_limit=300,
         augmentor="augmentors.image.grey_scale",
         streaming=True,
+        split="test",
     )
 
-    test_dataset = list(tqdm(dataset["test"], total=300))
-
-    predictions = inference_model.infer(test_dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    predictions = inference_model.infer(dataset)
+    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
     print_dict(
         evaluated_dataset[0],
