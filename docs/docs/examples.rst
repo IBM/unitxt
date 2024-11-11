@@ -247,3 +247,17 @@ This example show how to define new data types as well as the way these data typ
 
 Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.
 
+Long Context
++++++++++++++++++++++++++++++
+
+This example explores the effect of long context in classification.  
+It converts a standard multi class classification dataset (sst2 sentiment classification),
+where single sentence texts are classified one by one, to a dataset that
+where multiple sentences are classified using  a single LLM call.  
+It compares the f1_micro in both approaches on two models.
+It uses serializers to verbalize and enumerated list of multiple sentences and labels.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_batched_multiclass_classification.py>`_
+
+Related documentation:  :ref:`Sst2 dataset card in catalog <catalog.cards.sst2>` :ref:`Types and Serializers Guide <types_and_serializers>`. 
+
