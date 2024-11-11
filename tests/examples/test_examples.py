@@ -92,4 +92,4 @@ class TestExamples(UnitxtExamplesTestCase):
         if len(failed_examples_files) > 0:
             logger.error("Failed examples:")
             logger.error(failed_examples_files)
-        self.assertGreater(len(failed_examples_files), 0)
+        self.assertLessEqual(len(failed_examples_files), 0)
