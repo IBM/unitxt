@@ -41,6 +41,7 @@ excluded_files = [
     "evaluate_grounded_ensemble_judge.py",
     "evaluate_image_text_to_text_lmms_eval_inference.py",
     "robustness_testing_for_vision_text_models.py",
+    "evaluate_batched_multiclass_classification.py",
 ]
 
 
