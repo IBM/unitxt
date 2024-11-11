@@ -2,7 +2,7 @@ import argparse
 import os.path
 import pickle
 import random
-from itertools import chain, combinations
+from itertools import combinations
 
 from tqdm import tqdm
 from unitxt import evaluate
@@ -89,30 +89,18 @@ TABLE_AUGMENTORS = [
     "transpose",
 ]
 DEMOS_POOL_SIZE = 10
+COMB_SIZE_AUGMENT = 2
 
 models_parsed = [item.strip() for item in models.split(",")]
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
 
-augment_combinations = list(
-    chain.from_iterable(
-        combinations(TABLE_AUGMENTORS, r) for r in range(2, len(TABLE_AUGMENTORS) + 1)
-    )
-)
+augment_combinations = list(combinations(TABLE_AUGMENTORS, COMB_SIZE_AUGMENT))
 random.seed(settings.seed)
 rand_augment_combinations = random.sample(
     augment_combinations, min(num_augmentors, len(augment_combinations))
 )
-
-all_augment = (
-    [
-        [None],  # no augment
-        # ["augment_whitespace_task_input"]    # text augment
-    ]
-    + [[a] for a in TABLE_AUGMENTORS]  # single table augment
-    + [list(i) for i in rand_augment_combinations]  # subsets table augment
-)
-
+all_augment = [[None]] + [list(i) for i in rand_augment_combinations]
 
 # print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 for model in models_parsed:
@@ -165,11 +153,20 @@ for model in models_parsed:
 
         test_dataset = list(benchmark()["test"])
 
+        out_file_name = (
+            "model="
+            + model_name
+            + "__"
+            + subset_name
+            + ("__DEBUG" if debug else "")
+            + ".pkl"
+        )
         if not os.path.exists(out_path):
             os.makedirs(out_path)
-        out_file_name = (
-            "model=" + model_name + "__" + subset_name + ("__DEBUG" if debug else "")
-        )
+        elif out_file_name in os.listdir(
+            out_path
+        ):  # avoid running the same config twice
+            continue
 
         try:
             if "gpt" in model:
@@ -188,7 +185,7 @@ for model in models_parsed:
             predictions = inference_model.infer(test_dataset)
             evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
-            curr_out_path = os.path.join(out_path, out_file_name) + ".pkl"
+            curr_out_path = os.path.join(out_path, out_file_name)
             with open(curr_out_path, "wb") as f:
                 pickle.dump(evaluated_dataset, f)
                 # print("saved file path: ", curr_out_path)
