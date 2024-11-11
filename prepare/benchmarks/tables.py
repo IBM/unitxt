@@ -25,9 +25,37 @@ from unitxt.struct_data_operators import (
 # usage: tables.py -models MODELS -out_path OUT_PATH [-num_demos NUM_DEMOS] [-cards CARDS] [-serializers SERIALIZERS]
 # [-num_augmentors NUM_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS] [-debug DEBUG]
 
+# constants and params
+SERIALIZERS_MAP = {
+    "html": SerializeTableAsHTML,
+    "json": SerializeTableAsJson,
+    "markdown": SerializeTableAsMarkdown,
+    "row_indexed_major": SerializeTableAsIndexedRowMajor,
+    "df": SerializeTableAsDFLoader,
+    "concat": SerializeTableAsConcatenation,
+    "csv": None,
+}
+TABLE_AUGMENTORS = [
+    "shuffle_cols_names",
+    "mask_cols_names",
+    "shuffle_cols",
+    "shuffle_rows",
+    "insert_empty_rows",
+    "duplicate_columns",
+    "duplicate_rows",
+    "transpose",
+]
+
+# TODO: Can we consider these parameters as final?
+DEMOS_POOL_SIZE = 10
+MAX_PREDICTIONS = 100
+MAX_LOAD = 500
+TEMPERATURE = 0.05
+COMB_SIZE_AUGMENT = 2
 
 settings = get_settings()
 
+# cmd params
 parser = argparse.ArgumentParser()
 parser.add_argument("-models", "--models", type=str, required=True)
 parser.add_argument("-out_path", "--out_path", type=str, required=True)
@@ -69,28 +97,7 @@ serializers = args.serializers
 num_augmentors = args.num_augmentors
 max_pred_tokens = args.max_pred_tokens
 
-SERIALIZERS_MAP = {
-    "html": SerializeTableAsHTML,
-    "json": SerializeTableAsJson,
-    "markdown": SerializeTableAsMarkdown,
-    "row_indexed_major": SerializeTableAsIndexedRowMajor,
-    "df": SerializeTableAsDFLoader,
-    "concat": SerializeTableAsConcatenation,
-    "csv": None,
-}
-TABLE_AUGMENTORS = [
-    "shuffle_cols_names",
-    "mask_cols_names",
-    "shuffle_cols",
-    "shuffle_rows",
-    "insert_empty_rows",
-    "duplicate_columns",
-    "duplicate_rows",
-    "transpose",
-]
-DEMOS_POOL_SIZE = 10
-COMB_SIZE_AUGMENT = 2
-
+# formatting cmd params
 models_parsed = [item.strip() for item in models.split(",")]
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
@@ -100,18 +107,22 @@ random.seed(settings.seed)
 rand_augment_combinations = random.sample(
     augment_combinations, min(num_augmentors, len(augment_combinations))
 )
-all_augment = [[None]] + [list(i) for i in rand_augment_combinations]
+all_augment = [[None]] + [
+    list(i) for i in rand_augment_combinations
+]  # TODO: Do we want other augmentations/sampling?
 
+# running benchmark
 # print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 for model in models_parsed:
     model_name = model.split("/")[-1]
 
-    format = "formats.empty"
+    format = "formats.empty"  # TODO: Yifan - please change it as needed.
     if "llama" in model:
         format = "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
     elif "mixtral" in model:
         format = "formats.models.mistral.instruction.all_demos_in_one_turn"
 
+    # creating the subsets dynamically
     subsets = {}
     for card in cards_parsed:
         for augment in all_augment:
@@ -142,12 +153,13 @@ for model in models_parsed:
                     ],
                 )
 
+    # running one subset at a time and saving it (to avoid losing many inferences in case of exception)
     for subset_name, subset in tqdm(subsets.items()):
         # print("Running:", subset_name, ", Model:", model)
 
         benchmark = Benchmark(
-            max_samples_per_subset=100 if not debug else 5,
-            loader_limit=500 if not debug else 100,
+            max_samples_per_subset=MAX_PREDICTIONS if not debug else 5,
+            loader_limit=MAX_LOAD if not debug else 100,
             subsets={subset_name: subset},
         )
 
@@ -169,17 +181,19 @@ for model in models_parsed:
             continue
 
         try:
-            if "gpt" in model:
+            if (
+                "gpt" in model
+            ):  # TODO: Yifan - please specify the inference engines you are using and their cases if necessary.
                 inference_model = OpenAiInferenceEngine(
                     model_name=model,
                     max_tokens=max_pred_tokens,
-                    temperature=0.05,
+                    temperature=TEMPERATURE,
                 )
             else:
                 inference_model = IbmGenAiInferenceEngine(
                     model_name=model,
                     max_new_tokens=max_pred_tokens,
-                    temperature=0.05,
+                    temperature=TEMPERATURE,
                 )
 
             predictions = inference_model.infer(test_dataset)
