@@ -2,6 +2,9 @@ import unittest
 from unittest.mock import patch
 
 from unitxt.image_operators import ToImage, extract_images
+from unitxt.settings_utils import get_constants
+
+constants = get_constants()
 
 
 class TestImageOperators(unittest.TestCase):
@@ -12,26 +15,26 @@ class TestImageOperators(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test_extract_images_single_image(self):
-        text = 'This is a text with <img src="image1.jpg"> image'
+        text = f'This is a text with <{constants.image_tag} src="image1.jpg"> image'
         instance = {"image1.jpg": "image1_data"}
         result = extract_images(text, instance)
         self.assertEqual(result, ["image1_data"])
 
     def test_extract_images_multiple_images(self):
-        text = 'Text with <img src="image1.jpg"> and <img src="image2.png">'
+        text = f'Text with <{constants.image_tag} src="image1.jpg"> and <{constants.image_tag} src="image2.png">'
         instance = {"image1.jpg": "image1_data", "image2.png": "image2_data"}
         result = extract_images(text, instance)
         self.assertEqual(result, ["image1_data", "image2_data"])
 
     def test_extract_images_missing_image(self):
-        text = 'Text with <img src="image1.jpg"> and <img src="missing.png">'
+        text = f'Text with <{constants.image_tag} src="image1.jpg"> and <{constants.image_tag} src="missing.png">'
         instance = {"image1.jpg": "image1_data"}
         with self.assertRaises(ValueError):
             extract_images(text, instance)
 
     @patch("unitxt.dict_utils.dict_get")
     def test_extract_images_dict_get_raises_value_error(self, mock_dict_get):
-        text = 'Text with <img src="missing.png">'
+        text = f'Text with <{constants.image_tag} src="missing.png">'
         instance = {}
         mock_dict_get.side_effect = ValueError("Key not found")
         with self.assertRaises(ValueError):

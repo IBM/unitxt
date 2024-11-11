@@ -20,8 +20,9 @@ from .deprecation_utils import deprecation
 from .image_operators import extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 
+constants = get_constants()
 settings = get_settings()
 logger = get_logger()
 
@@ -1241,7 +1242,7 @@ def get_images_without_text(instance):
 
 
 def get_text_without_images(instance, image_token="<image>"):
-    regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
 
 

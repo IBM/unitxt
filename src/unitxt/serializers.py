@@ -5,8 +5,11 @@ from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
+from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
 from .types import Dialog, Image, Number, Table, Video
+
+constants = get_constants()
 
 
 class Serializer(InstanceFieldOperator):
@@ -107,7 +110,7 @@ class ImageSerializer(SingleTypeSerializer):
             instance["media"]["images"] = []
         idx = len(instance["media"]["images"])
         instance["media"]["images"].append(value["image"])
-        value["image"] = f'<img src="media/images/{idx}">'
+        value["image"] = f'<{constants.image_tag} src="media/images/{idx}">'
         return value["image"]
 
 

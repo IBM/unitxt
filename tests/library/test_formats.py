@@ -1,6 +1,7 @@
 from unitxt.card import TaskCard
 from unitxt.formats import ChatAPIFormat, HFSystemFormat, SystemFormat
 from unitxt.loaders import LoadFromDictionary
+from unitxt.settings_utils import get_constants
 from unitxt.standard import StandardRecipe
 from unitxt.system_prompts import TextualSystemPrompt
 from unitxt.task import Task
@@ -10,6 +11,8 @@ from unitxt.test_utils.operators import (
 )
 
 from tests.utils import UnitxtTestCase
+
+constants = get_constants()
 
 
 class TestFormats(UnitxtTestCase):
@@ -100,13 +103,13 @@ class TestFormats(UnitxtTestCase):
     def test_openai_format_with_images(self):
         demo_instances = [
             {
-                "source": "What is 1+2? <img src='https://example.com/image1.jpg'>",
+                "source": f"What is 1+2? <{constants.image_tag} src='https://example.com/image1.jpg'>",
                 "target": "3",
                 "instruction": "solve the math exercises",
                 "input_fields": {},
             },
             {
-                "source": "What is 4-2? <img src='https://example.com/image2.jpg'>",
+                "source": f"What is 4-2? <{constants.image_tag} src='https://example.com/image2.jpg'>",
                 "target": "2",
                 "instruction": "solve the math exercises",
                 "input_fields": {},
@@ -115,7 +118,7 @@ class TestFormats(UnitxtTestCase):
 
         inputs = [
             {
-                "source": "What is 1+1? <img src='https://example.com/image3.jpg'>",
+                "source": f"What is 1+1? <{constants.image_tag} src='https://example.com/image3.jpg'>",
                 "target": "2",
                 "instruction": "solve the math exercises",
                 "demos": demo_instances,
@@ -124,7 +127,7 @@ class TestFormats(UnitxtTestCase):
                 "system_prompt": "You are a smart assistant.",
             },
             {
-                "source": "What is 3+2? <img src='https://example.com/image4.jpg'>",
+                "source": f"What is 3+2? <{constants.image_tag} src='https://example.com/image4.jpg'>",
                 "target": "5",
                 "instruction": "solve the math exercises",
                 "demos": demo_instances,

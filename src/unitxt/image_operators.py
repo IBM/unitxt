@@ -9,6 +9,9 @@ import numpy as np
 from .dict_utils import dict_get
 from .operator import PackageRequirementsMixin
 from .operators import FieldOperator, InstanceFieldOperator
+from .settings_utils import get_constants
+
+constants = get_constants()
 
 
 class PillowMixin(PackageRequirementsMixin):
@@ -26,7 +29,7 @@ class PillowMixin(PackageRequirementsMixin):
 
 
 def extract_images(text, instance):
-    regex = r'<img\s+src=["\'](.*?)["\']'
+    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']'
     image_sources = re.findall(regex, text)
     images = []
     for image_source in image_sources:

@@ -182,6 +182,7 @@ if Constants.is_uninitilized():
     constants.website_url = "https://www.unitxt.org"
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
+    constants.image_tag = "unitxt-img"
 
 
 def get_settings() -> Settings:

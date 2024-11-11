@@ -6,9 +6,12 @@ from unitxt.serializers import (
     NumberSerializer,
     TableSerializer,
 )
+from unitxt.settings_utils import get_constants
 from unitxt.types import Dialog, Image, Number, Table, Text, Turn
 
 from tests.utils import UnitxtTestCase
+
+constants = get_constants()
 
 
 class TestSerializers(UnitxtTestCase):

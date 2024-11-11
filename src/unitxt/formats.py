@@ -13,7 +13,10 @@ from typing import (
 
 from .dataclass import OptionalField
 from .operator import InstanceOperator
+from .settings_utils import get_constants
 from .type_utils import isoftype
+
+constants = get_constants()
 
 
 class Format(InstanceOperator):
@@ -293,9 +296,9 @@ class ChatAPIFormat(BaseFormat):
 
     def to_content(self, text: str) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
-        return text
         img_tag_pattern = re.compile(
-            r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', re.IGNORECASE
+            r"<" + f"{constants.image_tag}" + r'\s+[^>]*src=["\']([^"\']+)["\'][^>]*>',
+            re.IGNORECASE,
         )
 
         # Find all matches of <img> tags and their positions
