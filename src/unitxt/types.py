@@ -16,6 +16,7 @@ Dialog = NewType("Dialog", List[Turn])
 
 class Image(TypedDict):
     image: Any
+    format: str
 
 
 Video = NewType("Video", List[Image])

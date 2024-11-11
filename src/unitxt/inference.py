@@ -17,7 +17,7 @@ from tqdm.asyncio import tqdm_asyncio
 from .artifact import Artifact, fetch_artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
-from .image_operators import extract_images
+from .image_operators import data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .settings_utils import get_constants, get_settings
@@ -1288,6 +1288,21 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
+    def _get_input(self, instance):
+        assert isinstance(instance["source"], list), "Must use format=formats.chat_api"
+        images = []
+        conversation = []
+        for turn in instance["source"]:
+            if isinstance(turn["content"], list):
+                for content in turn["content"]:
+                    if content["type"] == "image_url":
+                        content["type"] = "image"
+                        image_url = content.pop("image_url")["url"]
+                        image = data_url_to_image(image_url)
+                        images.append(image)
+            conversation.append(turn)
+        return conversation, images
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -1300,11 +1315,14 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         results = []
         for instance in tqdm(dataset):
-            text = get_text_without_images(instance, self.image_token)
-            images = get_images_without_text(instance)
+            conversation, images = self._get_input(instance)
 
             if len(images) == 1:
                 images = images[0]
+
+            text = self.processor.apply_chat_template(
+                conversation, add_generation_prompt=True
+            )
 
             inputs = self.processor(images=images, text=text, return_tensors="pt").to(
                 self.device, torch.float16

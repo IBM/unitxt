@@ -11,7 +11,6 @@ from unitxt.inference import (
     WMLInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
-from unitxt.standard import StandardRecipe
 from unitxt.text_utils import print_dict
 
 from tests.utils import UnitxtInferenceTestCase
@@ -87,14 +86,15 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
 
         if not settings.use_eager_execution:
-            dataset = StandardRecipe(
+            dataset = load_dataset(
                 card="cards.doc_vqa.en",
                 template="templates.qa.with_context.with_type",
-                format="formats.models.llava_interleave",
+                format="formats.chat_api",
                 loader_limit=30,
-            )()
+                split="test",
+            )
 
-            test_dataset = [dataset["test"].peek()]
+            test_dataset = [dataset[0]]
 
             predictions = inference_model.infer(test_dataset)
 

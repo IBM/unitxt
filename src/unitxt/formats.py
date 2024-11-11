@@ -12,6 +12,8 @@ from typing import (
 )
 
 from .dataclass import OptionalField
+from .dict_utils import dict_get
+from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
@@ -84,6 +86,10 @@ class BaseFormat(Format):
         for field in "source", "instruction", "system_prompt", "target_prefix":
             instance_fields[field] = self._pop_field(instance, field)
 
+        instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
+        if not instance_fields["media"]:
+            instance_fields["media"] = {"images": [], "audios": []}
+
         instance_fields["demos"] = []
         if self.demos_field is not None and self.demos_field in instance:
             demos = instance[self.demos_field]
@@ -106,6 +112,7 @@ class BaseFormat(Format):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
+        media: Optional[Dict[str, Any]] = None,
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -192,6 +199,7 @@ class SystemFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
+        media: Optional[Dict[str, Any]] = None,
     ) -> str:
         demos_string = ""
         for demo in demos:
@@ -294,7 +302,7 @@ class ChatAPIFormat(BaseFormat):
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
     """
 
-    def to_content(self, text: str) -> Union[str, List[Content]]:
+    def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
         img_tag_pattern = re.compile(
             r"<" + f"{constants.image_tag}" + r'\s+[^>]*src=["\']([^"\']+)["\'][^>]*>',
@@ -321,9 +329,22 @@ class ChatAPIFormat(BaseFormat):
                 contents.append({"type": "text", "text": text[last_pos:start]})
 
             # Add image content with a default detail level
-            contents.append(
-                {"type": "image_url", "image_url": {"url": img_url, "detail": "low"}}
-            )
+            if img_url.startswith("media/"):
+                image = dict_get(media, img_url[6:])
+                data_url = image_to_data_url(image)
+                contents.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_url, "detail": "low"},
+                    }
+                )
+            else:
+                contents.append(
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": img_url, "detail": "low"},
+                    }
+                )
 
             # Update the last processed position
             last_pos = end
@@ -341,21 +362,27 @@ class ChatAPIFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
+        media: Optional[Dict[str, Any]] = None,
     ) -> List[Message]:
-        system_content = self.to_content(
-            system_prompt + ("\n" if system_prompt != "" else "") + instruction,
-        )
+        messages = []
 
-        messages = [
-            {
-                "role": "system",
-                "content": system_content,
-            },
-        ]
+        if system_prompt or instruction:
+            system_content = self.to_content(
+                system_prompt + ("\n" if system_prompt != "" else "") + instruction,
+                media,
+            )
+            messages.append(
+                {
+                    "role": "system",
+                    "content": system_content,
+                }
+            )
 
         for demo_instance in demos:
-            user_content = self.to_content(demo_instance["source"])
-            assistant_content = self.to_content(target_prefix + demo_instance["target"])
+            user_content = self.to_content(demo_instance["source"], media)
+            assistant_content = self.to_content(
+                target_prefix + demo_instance["target"], media
+            )
             messages.extend(
                 [
                     {"role": "user", "content": user_content},
@@ -366,7 +393,7 @@ class ChatAPIFormat(BaseFormat):
                 ]
             )
 
-        last_user_content = self.to_content(source)
+        last_user_content = self.to_content(source, media)
 
         messages.extend([{"role": "user", "content": last_user_content}])
 
@@ -379,14 +406,18 @@ class ChatAPIFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
+        media: Optional[Dict[str, Any]] = None,
     ) -> Union[str, List[Message]]:
-        return self.to_chat(
+        chat = self.to_chat(
             system_prompt,
             instruction,
             source,
             target_prefix,
             demos,
+            media,
         )
+        media["images"] = []
+        return chat
 
 
 class HFSystemFormat(ChatAPIFormat):
@@ -431,13 +462,10 @@ class HFSystemFormat(ChatAPIFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
+        media: Optional[Dict[str, Any]] = None,
     ) -> str:
         chat = self.to_chat(
-            system_prompt,
-            instruction,
-            source,
-            target_prefix,
-            demos,
+            system_prompt, instruction, source, target_prefix, demos, media
         )
         return (
             self.tokenizer.apply_chat_template(

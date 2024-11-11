@@ -7,6 +7,29 @@ from unitxt.settings_utils import get_constants
 constants = get_constants()
 
 
+def create_random_jpeg_image(width, height, seed=None):
+    import io
+
+    import numpy as np
+    from PIL import Image
+
+    # Set the seed for reproducibility
+    if seed is not None:
+        np.random.seed(seed)
+
+    # Create a random RGB image
+    random_image_array = np.random.randint(0, 256, (height, width, 3), dtype=np.uint8)
+    random_image = Image.fromarray(random_image_array, "RGB")
+
+    # Save the image to an in-memory bytes buffer in JPEG format
+    img_byte_array = io.BytesIO()
+    random_image.save(img_byte_array, format="JPEG")
+    img_byte_array.seek(0)  # Rewind to the start of the stream
+
+    # Load the JPEG image back into PIL
+    return Image.open(img_byte_array)
+
+
 class TestImageOperators(unittest.TestCase):
     def test_extract_images_no_images(self):
         text = "This is a text without images"
@@ -47,9 +70,9 @@ class TestImageToText(unittest.TestCase):
 
     def test_process_instance_value_new_media(self):
         instance = {}
-        value = "image_data"
+        value = create_random_jpeg_image(10, 10, 1)
         result = self.operator.process_instance_value(value, instance)
-        self.assertEqual(result, {"image": value})
+        self.assertEqual(result, {"image": value, "format": "JPEG"})
 
     # def test_process_instance_value_existing_media(self):
     #     instance = {"media": {"images": ["existing_image"]}}

@@ -109,9 +109,11 @@ class ImageSerializer(SingleTypeSerializer):
         if "images" not in instance["media"]:
             instance["media"]["images"] = []
         idx = len(instance["media"]["images"])
-        instance["media"]["images"].append(value["image"])
-        value["image"] = f'<{constants.image_tag} src="media/images/{idx}">'
-        return value["image"]
+        instance["media"]["images"].append(
+            {"image": value["image"], "format": value["format"]}
+        )
+        value["image"] = f"media/images/{idx}"
+        return f'<{constants.image_tag} src="media/images/{idx}">'
 
 
 class VideoSerializer(ImageSerializer):

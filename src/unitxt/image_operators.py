@@ -5,13 +5,66 @@ from abc import abstractmethod
 from typing import Any, Dict, Tuple
 
 import numpy as np
+from datasets import Image as DatasetsImage
 
 from .dict_utils import dict_get
 from .operator import PackageRequirementsMixin
 from .operators import FieldOperator, InstanceFieldOperator
 from .settings_utils import get_constants
+from .types import Image
 
 constants = get_constants()
+
+datasets_image = DatasetsImage()
+
+
+def _image_to_bytes(image, format="JPEG"):
+    import base64
+
+    with io.BytesIO() as buffer:
+        image.save(buffer, format=format)
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+
+def image_to_data_url(image: Image, default_format="JPEG"):
+    """Convert an image to a data URL.
+
+    https://developer.mozilla.org/en-US/docs/Web/URI/Schemes/data
+    """
+    image_format = image["format"] if image["format"] else default_format
+    base64_image = _image_to_bytes(image["image"], format=image_format.upper())
+    return f"data:image/{image_format.lower()};base64,{base64_image}"
+
+
+def _bytes_to_image(b64_string):
+    import base64
+    import io
+
+    from PIL import Image
+
+    # Decode the base64-encoded string
+    decoded_bytes = base64.b64decode(b64_string)
+    # Open the image from the decoded bytes
+    return Image.open(io.BytesIO(decoded_bytes))
+
+
+def data_url_to_image(data_url: str):
+    import re
+
+    # Verify that the string is a data URL
+    if not data_url.startswith("data:"):
+        raise ValueError("Invalid data URL")
+
+    # Extract the base64 data using a regular expression
+    match = re.match(r"data:image/(.*?);base64,(.*)", data_url)
+    if not match:
+        raise ValueError("Invalid data URL format")
+
+    # Extract image format and base64 data
+    image_format, b64_data = match.groups()
+
+    # Use _bytes_to_image to convert base64 data to an image
+    return _bytes_to_image(b64_data)
 
 
 class PillowMixin(PackageRequirementsMixin):
@@ -43,24 +96,25 @@ class DecodeImage(FieldOperator, PillowMixin):
         image_data = base64.b64decode(base64_string)
         return self.image.open(io.BytesIO(image_data))
 
-    def process_value(self, value: Any) -> Any:
+    def process_value(self, value: Image) -> Any:
         return {"image": self.decode_base64_to_image(value)}
 
 
 class ToImage(InstanceFieldOperator):
-    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
-        return {"image": value}
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]) -> Image:
+        return {"image": value, "format": value.format}
 
 
 class ImageFieldOperator(FieldOperator, PillowMixin):
     @abstractmethod
-    def process_image(self, image):
+    def process_image(self, image: Any):
         pass
 
-    def process_value(self, value: Any) -> Any:
-        if not isinstance(value, self.image.Image):
+    def process_value(self, value: Image) -> Any:
+        if not isinstance(value["image"], self.image.Image):
             raise ValueError(f"ImageFieldOperator requires image, got {type(value)}.")
-        return self.process_image(value)
+        value["image"] = self.process_image(value)
+        return value
 
 
 class GrayScale(ImageFieldOperator):

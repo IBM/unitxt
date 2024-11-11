@@ -10,6 +10,7 @@ from unitxt.test_utils.operators import (
     check_operator,
 )
 
+from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
 
 constants = get_constants()
@@ -127,13 +128,18 @@ class TestFormats(UnitxtTestCase):
                 "system_prompt": "You are a smart assistant.",
             },
             {
-                "source": f"What is 3+2? <{constants.image_tag} src='https://example.com/image4.jpg'>",
+                "source": f"What is 3+2? <{constants.image_tag} src='media/images/0'>",
                 "target": "5",
                 "instruction": "solve the math exercises",
                 "demos": demo_instances,
                 "input_fields": {},
                 "target_prefix": "The answer is ",
                 "system_prompt": "You are a smart assistant.",
+                "media": {
+                    "images": [
+                        {"image": create_random_jpeg_image(2, 2, 1), "format": "JPEG"}
+                    ]
+                },
             },
         ]
 
@@ -234,7 +240,7 @@ class TestFormats(UnitxtTestCase):
                             {
                                 "type": "image_url",
                                 "image_url": {
-                                    "url": "https://example.com/image4.jpg",
+                                    "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAACAAIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDO1G+u11O7AupwBM4AEh45NFFFaHxJ/9k=",
                                     "detail": "low",
                                 },
                             },
@@ -242,6 +248,7 @@ class TestFormats(UnitxtTestCase):
                     },
                 ],
                 "demos": demo_instances,
+                "media": {"images": []},
             },
         ]
 
