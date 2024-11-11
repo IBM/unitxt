@@ -240,7 +240,7 @@ class MultiStream(dict):
             stream.set_copying(copying)
 
     def to_dataset(
-        self, disable_cache=True, cache_dir=None, features=None, hash=None
+        self, disable_cache=True, cache_dir=None, features=None
     ) -> DatasetDict:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
@@ -250,7 +250,6 @@ class MultiStream(dict):
                         disable_cache=disable_cache,
                         cache_dir=cache_dir,
                         features=features,
-                        hash=hash if hash is None else key + "-" + hash,
                     )
                     for key, value in self.items()
                 }
