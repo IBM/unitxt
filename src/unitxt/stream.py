@@ -34,7 +34,7 @@ class Stream(Dataclass):
     def set_copying(self, copying: bool):
         pass
 
-    def to_dataset(self, disable_cache=False, cache_dir=None, features=None, hash=None):
+    def to_dataset(self, disable_cache=False, cache_dir=None, features=None):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
             return Dataset.from_generator(
@@ -42,12 +42,6 @@ class Stream(Dataclass):
                 keep_in_memory=disable_cache,
                 cache_dir=cache_dir,
                 features=features,
-                hash=hash,
-                dataset_name="unitxt",
-                config_name="stream",
-                repo_id=hash,
-                # config_id=hash,
-                version=constants.version,
             )
 
     def to_iterable_dataset(
@@ -262,12 +256,11 @@ class MultiStream(dict):
                 }
             )
 
-    def to_iterable_dataset(self, features=None, hash=None) -> IterableDatasetDict:
+    def to_iterable_dataset(self, features=None) -> IterableDatasetDict:
         return IterableDatasetDict(
             {
                 key: value.to_iterable_dataset(
                     features=features,
-                    hash=hash if hash is None else key + hash,
                 )
                 for key, value in self.items()
             }
