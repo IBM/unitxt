@@ -68,7 +68,7 @@ class UnitxtExamplesTestCase(unittest.TestCase):
         enable_explicit_format()
         unitxt.settings.allow_unverified_code = True
         unitxt.settings.use_only_local_catalogs = True
-        unitxt.settings.global_loader_limit = 10
+        unitxt.settings.global_loader_limit = 100
         unitxt.settings.max_log_message_size = 10000
         unitxt.settings.loader_cache_size = 10
         unitxt.settings.mock_inference_mode = True

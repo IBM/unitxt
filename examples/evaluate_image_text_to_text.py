@@ -16,7 +16,6 @@ with settings.context(
         format="formats.chat_api",
         loader_limit=300,
         augmentor="augmentors.image.grey_scale",
-        streaming=True,
         split="test",
     )
 
