@@ -92,17 +92,17 @@ def extract_images(text, instance):
 
 
 class DecodeImage(FieldOperator, PillowMixin):
-    def decode_base64_to_image(self, base64_string):
-        image_data = base64.b64decode(base64_string)
+    def process_value(self, value: str) -> Any:
+        image_data = base64.b64decode(value)
         return self.image.open(io.BytesIO(image_data))
-
-    def process_value(self, value: Image) -> Any:
-        return {"image": self.decode_base64_to_image(value)}
 
 
 class ToImage(InstanceFieldOperator):
     def process_instance_value(self, value: Any, instance: Dict[str, Any]) -> Image:
-        return {"image": value, "format": value.format}
+        return {
+            "image": value,
+            "format": value.format if value.format is not None else "JPEG",
+        }
 
 
 class ImageFieldOperator(FieldOperator, PillowMixin):
@@ -113,7 +113,7 @@ class ImageFieldOperator(FieldOperator, PillowMixin):
     def process_value(self, value: Image) -> Any:
         if not isinstance(value["image"], self.image.Image):
             raise ValueError(f"ImageFieldOperator requires image, got {type(value)}.")
-        value["image"] = self.process_image(value)
+        value["image"] = self.process_image(value["image"])
         return value
 
 

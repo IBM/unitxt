@@ -1,12 +1,15 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from datasets import Audio, Features, Image, Sequence, Value
+from datasets import Audio, Features, Sequence, Value
+from datasets import Image as DatasetImage
 
 from .artifact import Artifact
 from .dict_utils import dict_get
 from .operator import InstanceOperatorValidator
 from .settings_utils import get_constants, get_settings
+from .type_utils import isoftype
+from .types import Image
 
 constants = get_constants()
 settings = get_settings()
@@ -20,7 +23,7 @@ UNITXT_DATASET_SCHEMA = Features(
         "groups": Sequence(Value("string")),
         "subset": Sequence(Value("string")),
         "media": {
-            "images": Sequence(Image()),
+            "images": Sequence(DatasetImage()),
             "audios": Sequence(Audio()),
         },
         "postprocessors": Sequence(Value("string")),
@@ -90,6 +93,10 @@ class FinalizeDataset(InstanceOperatorValidator):
 
         if "audios" not in instance["media"]:
             instance["media"]["audios"] = []
+
+        for i in range(len(instance["media"]["images"])):
+            if isoftype(instance["media"]["images"][i], Image):
+                instance["media"]["images"][i] = instance["media"]["images"][i]["image"]
 
         return instance
 
