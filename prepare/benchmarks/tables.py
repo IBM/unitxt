@@ -37,9 +37,9 @@ parser.add_argument(
     "--cards",
     type=str,
     required=False,
-    default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,scigen,qtsumm,tablebench_data_analysis,"
+    default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,"
     "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
-)
+)  # TODO: Scigen is dropped for now because it is implemented with 1 judge - make it 3?
 parser.add_argument(
     "-serializers",
     "--serializers",
@@ -56,7 +56,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
-)
+)  # TODO: Should we set a different num for descriptive tasks? (numeric nlg, scigen, qtsumm)
 parser.add_argument("-debug", "--debug", type=bool, default=False)
 
 args = parser.parse_args()
@@ -93,18 +93,31 @@ DEMOS_POOL_SIZE = 10
 models_parsed = [item.strip() for item in models.split(",")]
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
-all_augment_combinations = list(
+
+augment_combinations = list(
     chain.from_iterable(
-        combinations(TABLE_AUGMENTORS, r) for r in range(1, len(TABLE_AUGMENTORS) + 1)
+        combinations(TABLE_AUGMENTORS, r) for r in range(2, len(TABLE_AUGMENTORS) + 1)
     )
 )
 random.seed(settings.seed)
 rand_augment_combinations = random.sample(
-    all_augment_combinations, min(num_augmentors, len(all_augment_combinations))
+    augment_combinations, min(num_augmentors, len(augment_combinations))
+)
+"""
+all augment includes:
+    - no augment
+    - one text augment
+    - single table augments
+    - some combinations of 2 augments or more
+"""
+all_augment = (
+    [[None], ["augment_whitespace_task_input"]]
+    + [[a] for a in TABLE_AUGMENTORS]
+    + [list(i) for i in rand_augment_combinations]
 )
 
-# print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 
+# print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 for model in models_parsed:
     model_name = model.split("/")[-1]
 
@@ -116,14 +129,14 @@ for model in models_parsed:
 
     subsets = {}
     for card in cards_parsed:
-        for augment in rand_augment_combinations:
+        for augment in all_augment:
             for serializer in serializers_parsed:
                 subset_name = (
                     "dataset="
                     + card
                     + "__serializer="
                     + serializer
-                    + ("__augment=" + ",".join(augment) if augment else "")
+                    + ("__augment=" + ",".join(augment) if augment != [None] else "")
                 )
                 subsets[subset_name] = StandardRecipe(
                     card="cards." + card,
@@ -134,9 +147,14 @@ for model in models_parsed:
                     num_demos=num_demos,
                     demos_pool_size=DEMOS_POOL_SIZE,
                     format=format,
-                    augmentor=["augmentors.table." + a for a in augment]
-                    if augment
-                    else [None],
+                    augmentor=[None]
+                    if augment == [None]
+                    else [
+                        "augmentors."
+                        + ("table." if a in TABLE_AUGMENTORS else "")
+                        + str(a)
+                        for a in augment
+                    ],
                 )
 
     for subset_name, subset in tqdm(subsets.items()):
