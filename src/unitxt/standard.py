@@ -22,6 +22,7 @@ from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
+from .utils import LRUCache
 
 constants = get_constants()
 logger = get_logger()
@@ -72,6 +73,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     )
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
+
+    # shared class cache
+    _demos_pool_cache = LRUCache(max_size=10)
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
@@ -225,19 +229,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference.steps = [self.verbalization, self.finalize]
 
-        self._demos_pool_cache = None
-
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
         return list(self.inference_instance(ms)[constants.inference_stream])
 
     def production_demos_pool(self):
         if self.use_demos:
-            if self._demos_pool_cache is None:
-                self._demos_pool_cache = list(
-                    self.inference_demos()[self.demos_pool_name]
-                )
-            return self._demos_pool_cache
+            demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
+            if demos_pool is None:
+                demos_pool = list(self.inference_demos()[self.demos_pool_name])
+                self.__class__._demos_pool_cache[str(self)] = demos_pool
+            return demos_pool
         return []
 
     @property

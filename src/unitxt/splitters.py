@@ -16,7 +16,7 @@ from .split_utils import (
 )
 from .stream import EmptyStreamError, FaultyStreamError, MultiStream
 from .type_utils import isoftype
-from .utils import recursive_shallow_copy
+from .utils import recursive_copy
 
 
 class Splitter(MultiStreamOperator):
@@ -353,9 +353,7 @@ class Sample(InstanceOperatorWithMultiStreamAccess):
         sample_size = self.get_sample_size(instance)
         try:
             if self.local_cache is None:
-                self.local_cache = recursive_shallow_copy(
-                    list(multi_stream[self.from_stream])
-                )
+                self.local_cache = recursive_copy(list(multi_stream[self.from_stream]))
 
             source_stream = self.local_cache
             source_stream = self.sampler.filter_source_by_instance(
