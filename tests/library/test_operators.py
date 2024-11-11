@@ -10,6 +10,7 @@ from unitxt.operators import (
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
     CastFields,
+    CollateInstances,
     Copy,
     DeterministicBalancer,
     DivideAllFieldsBy,
@@ -2556,6 +2557,28 @@ references (str):
             operator=DuplicateInstances(
                 num_duplications=2, duplication_index_field="duplication_id"
             ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_collate_instance(self):
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 2},
+            {"a": 3, "b": 2},
+            {"a": 4, "b": 2},
+            {"a": 5, "b": 2},
+        ]
+
+        targets = [
+            {"a": [1, 2], "b": [2, 2]},
+            {"a": [3, 4], "b": [2, 2]},
+            {"a": [5], "b": [2]},
+        ]
+
+        check_operator(
+            operator=CollateInstances(batch_size=2),
             inputs=inputs,
             targets=targets,
             tester=self,

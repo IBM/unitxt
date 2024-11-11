@@ -2113,3 +2113,50 @@ class DuplicateInstances(StreamOperator):
                 f"If given, duplication_index_field must be a string. "
                 f"Got: {self.duplication_index_field}"
             )
+
+
+class CollateInstances(StreamOperator):
+    """Operator which collates values from multiple instances to a single instance.
+
+    Each field becomes the list of values of corresponding field of collated `batch_size` of instances.
+
+    Attributes:
+        batch_size (int)
+
+    Example:
+        CollateInstances(batch_size=2)
+
+        Given inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 2},
+            {"a": 3, "b": 2},
+            {"a": 4, "b": 2},
+            {"a": 5, "b": 2}
+        ]
+
+        Returns targets = [
+            {"a": [1,2], "b": [2,2]},
+            {"a": [3,4], "b": [2,2]},
+            {"a": [5], "b": [2]},
+        ]
+
+
+    """
+
+    batch_size: int
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        stream = list(stream)
+        for i in range(0, len(stream), self.batch_size):
+            batch = stream[i : i + self.batch_size]
+            new_instance = {}
+            for a_field in batch[0]:
+                new_instance[a_field] = [instance[a_field] for instance in batch]
+            yield new_instance
+
+    def verify(self):
+        if not isinstance(self.batch_size, int) or self.batch_size < 1:
+            raise ValueError(
+                f"batch_size must be an integer equal to or greater than 1. "
+                f"Got: {self.batch_size}."
+            )
