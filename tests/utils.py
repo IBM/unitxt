@@ -71,6 +71,7 @@ class UnitxtExamplesTestCase(unittest.TestCase):
         unitxt.settings.global_loader_limit = 10
         unitxt.settings.max_log_message_size = 10000
         unitxt.settings.loader_cache_size = 10
+        unitxt.settings.mock_inference_mode = True
         sys.tracebacklimit = None
         register_local_catalog_for_tests()
         cls.maxDiff = None

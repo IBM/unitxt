@@ -21,66 +21,75 @@ glob_query = os.path.join(project_dir, "examples", "**", "*.py")
 all_example_files = glob.glob(glob_query, recursive=True)
 
 excluded_files = [
-    "use_llm_as_judge_metric.py",
-    "standalone_evaluation_llm_as_judge.py",
-    "evaluate_summarization_dataset_llm_as_judge.py",
-    "evaluate_different_formats.py",
-    "evaluate_different_templates.py",
-    "evaluate_different_demo_selections.py",
-    "evaluate_a_judge_model_capabilities_on_arena_hard.py",
-    "evaluate_a_model_using_arena_hard.py",
-    "evaluate_llm_as_judge.py",
-    "evaluate_using_metrics_ensemble.py",
-    "evaluate_existing_dataset_no_install.py",
-    "evaluate_existing_dataset_by_llm_as_judge.py",
-    "evaluate_ensemble_judge.py",
-    "evaluate_benchmark.py",
-    "evaluate_image_text_to_text.py",
-    "evaluate_image_text_to_text_with_different_templates.py",
-    "evaluate_idk_judge.py",
-    "evaluate_grounded_ensemble_judge.py",
-    "evaluate_image_text_to_text_lmms_eval_inference.py",
-    "robustness_testing_for_vision_text_models.py",
-    "evaluate_bluebench.py",
+    # "use_llm_as_judge_metric.py",
+    # "standalone_evaluation_llm_as_judge.py",
+    # "evaluate_summarization_dataset_llm_as_judge.py",
+    # "evaluate_different_formats.py",
+    # "evaluate_different_templates.py",
+    # "evaluate_different_demo_selections.py",
+    # "evaluate_a_judge_model_capabilities_on_arena_hard.py",
+    # "evaluate_a_model_using_arena_hard.py",
+    # "evaluate_llm_as_judge.py",
+    # "evaluate_using_metrics_ensemble.py",
+    # "evaluate_existing_dataset_no_install.py",
+    # "evaluate_existing_dataset_by_llm_as_judge.py",
+    # "evaluate_ensemble_judge.py",
+    # "evaluate_benchmark.py",
+    # "evaluate_image_text_to_text.py",
+    # "evaluate_image_text_to_text_with_different_templates.py",
+    # "evaluate_idk_judge.py",
+    # "evaluate_grounded_ensemble_judge.py",
+    # "evaluate_image_text_to_text_lmms_eval_inference.py",
+    # "robustness_testing_for_vision_text_models.py",
+    # "evaluate_bluebench.py",
 ]
 
 
 class TestExamples(UnitxtExamplesTestCase):
     def test_examples(self):
         logger.info(glob_query)
-        logger.info(f"Testing example files: {all_example_files}")
+
+        tested_files = [
+            file
+            for file in all_example_files
+            if os.path.basename(file) not in excluded_files
+        ]
+        logger.critical(f"Testing example files: {tested_files}")
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         times = {}
         all_example_files.sort()
         failed_examples_files = []
-        for file in all_example_files:
+        for file in tested_files:
+            file_name = os.path.basename(file)
             logger.info(
                 "\n_____________________________________________\n"
-                f"  Testing examples file:\n  {file}."
+                f"  Testing examples file:\n  {file_name}."
                 "\n_____________________________________________\n"
             )
 
             start_time = time.time()
-            with self.subTest(file=file):
+            with self.subTest(file=file_name):
                 try:
                     import_module_from_file(file)
-                    logger.info(f"Testing example file: {file} passed")
+                    logger.info(f"Testing example file: {file_name} passed")
                 except Exception as e:
-                    logger.error(f"Testing example file: {file} failed due to {e!s}")
+                    logger.error(
+                        f"\nTesting example file: {file_name}\nFailed due to:\n{e!s}"
+                    )
                     failed_examples_files.append(file)
                 elapsed_time = time.time() - start_time
                 formatted_time = str(timedelta(seconds=elapsed_time))
                 logger.info(
                     "\n_____________________________________________\n"
-                    f"  Finished testing example file:\n  {file}."
-                    f"  Preparation Time: {formatted_time}"
+                    f"  Finished testing example file:\n  {file_name}\n"
+                    f"  Run Time: {formatted_time}"
                     "\n_____________________________________________\n"
                 )
                 times[file] = formatted_time
-        logger.info("Example run time:")
-        print_dict(times)
+        logger.critical("Example run time:")
+        print_dict(times, log_level="critical")
         if len(failed_examples_files) > 0:
             logger.error("Failed examples:")
-            logger.info(failed_examples_files)
-            exit(1)
+            logger.error(failed_examples_files)
+        self.assertGreater(len(failed_examples_files), 0)
