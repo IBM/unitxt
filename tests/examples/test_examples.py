@@ -58,7 +58,7 @@ class TestExamples(UnitxtExamplesTestCase):
         # Make sure the order in which the tests are run is deterministic
         # Having a different order for local testing and github testing may cause diffs in results.
         times = {}
-        all_example_files.sort()
+        tested_files.sort()
         failed_examples_files = []
         for file in tested_files:
             file_name = os.path.basename(file)
@@ -73,20 +73,22 @@ class TestExamples(UnitxtExamplesTestCase):
                 try:
                     import_module_from_file(file)
                     logger.info(f"Testing example file: {file_name} passed")
+                    self.assertTrue(True)
                 except Exception as e:
                     logger.error(
                         f"\nTesting example file: {file_name}\nFailed due to:\n{e!s}"
                     )
                     failed_examples_files.append(file)
-                elapsed_time = time.time() - start_time
-                formatted_time = str(timedelta(seconds=elapsed_time))
-                logger.info(
-                    "\n_____________________________________________\n"
-                    f"  Finished testing example file:\n  {file_name}\n"
-                    f"  Run Time: {formatted_time}"
-                    "\n_____________________________________________\n"
-                )
-                times[file] = formatted_time
+                    self.assertTrue(False)
+            elapsed_time = time.time() - start_time
+            formatted_time = str(timedelta(seconds=elapsed_time))
+            logger.info(
+                "\n_____________________________________________\n"
+                f"  Finished testing example file:\n  {file_name}\n"
+                f"  Run Time: {formatted_time}"
+                "\n_____________________________________________\n"
+            )
+            times[file] = formatted_time
         logger.critical("Example run time:")
         print_dict(times, log_level="critical")
         if len(failed_examples_files) > 0:
