@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
-from unitxt.image_operators import DecodeImage
+from unitxt.image_operators import DecodeImage, ToImage
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -12,6 +12,7 @@ card = TaskCard(
         "splitters.small_no_dev",
         Wrap(field="answer", inside="list", to_field="answers"),
         DecodeImage(field="image", to_field="context"),
+        ToImage(field="context"),
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive",
