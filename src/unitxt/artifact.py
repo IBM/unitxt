@@ -22,7 +22,7 @@ from .parsing_utils import (
 )
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
-from .type_utils import issubtype
+from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
     json_dump,
@@ -370,10 +370,9 @@ class Artifact(Dataclass):
         if not data_classification_policy:
             return instance
 
-        if "data_classification_policy" not in instance:
-            raise UnitxtError(
-                f"The instance 'has no `data classification policy` field: {instance}",
-                Documentation.DATA_CLASSIFICATION_POLICY,
+        if not isoftype(instance, Dict[str, Any]):
+            raise ValueError(
+                f"The instance passed to inference engine is not a dictionary. Instance:\n{instance}"
             )
         instance_data_classification = instance.get("data_classification_policy")
         if not instance_data_classification:
