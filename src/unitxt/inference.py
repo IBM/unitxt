@@ -132,6 +132,22 @@ class InferenceEngine(Artifact):
                 if param_inst_val is None:
                     setattr(self, param, param_dict_val)
 
+    def verify_not_chat_api(self, dataset):
+        if isinstance(dataset[0]["source"], list):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support chat api format."
+            )
+
+    def to_messages(self, instance):
+        if isinstance(instance["source"], list):
+            return instance["source"]
+        return [
+            {
+                "role": "user",
+                "content": instance["source"],
+            }
+        ]
+
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
     """Abstract base class for inference with log probs."""
@@ -246,6 +262,8 @@ class HFPipelineBasedInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+
         if not self._is_loaded():
             self._prepare_pipeline()
 
@@ -374,19 +392,17 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
-        result = [
-            ollama.chat(
-                model="llama2",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    },
-                ],
+        results = []
+
+        for instance in dataset:
+            messages = self.to_messages(instance)
+            response = ollama.chat(
+                model=self.model_name,
+                messages=messages,
             )
-            for instance in dataset
-        ]
-        return [element["message"]["content"] for element in result]
+            results.append(response)
+
+        return [element["message"]["content"] for element in results]
 
 
 class OptionSelectingByLogProbsInferenceEngine:
@@ -745,17 +761,9 @@ class OpenAiInferenceEngine(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
@@ -877,18 +885,19 @@ class TogetherAiInferenceEngine(
             if v is not None
         }
 
-    def _infer_chat(self, prompt: str) -> str:
+    def _infer_chat(self, instance: Dict[str, Any]) -> str:
+        messages = self.to_messages(instance)
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             **self._get_infer_kwargs(),
         )
         return response.choices[0].message.content
 
-    def _infer_text(self, prompt: str) -> str:
+    def _infer_text(self, instance: Dict[str, Any]) -> str:
         response = self.client.completions.create(
             model=self.model_name,
-            prompt=prompt,
+            prompt=instance["source"],
             **self._get_infer_kwargs(),
         )
         return response.choices[0].text
@@ -903,10 +912,11 @@ class TogetherAiInferenceEngine(
         outputs = []
         if self.model_type == ModelType.CHAT:
             for instance in tqdm(dataset, desc="Inferring with Together AI Chat API"):
-                outputs.append(self._infer_chat(instance["source"]))
+                outputs.append(self._infer_chat(instance))
         else:
+            self.verify_not_chat_api(dataset)
             for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
-                outputs.append(self._infer_text(instance["source"]))
+                outputs.append(self._infer_text(instance))
         return outputs
 
 
@@ -1107,6 +1117,7 @@ class WMLInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
         model, params = self._load_model_and_params()
 
         result = []
@@ -1128,6 +1139,8 @@ class WMLInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+
         model, params = self._load_model_and_params()
 
         user_return_options = params.pop("return_options", {})
@@ -1585,9 +1598,10 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             await self._rate_limiter.acquire()
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
+            messages = self.to_messages(instance)
             response = await self._completion(
                 model=self.model,
-                messages=instance["source"],
+                messages=messages,
                 seed=self.seed,
                 max_tokens=self.max_tokens,
                 temperature=self.temperature,
