@@ -1,6 +1,6 @@
 import argparse
+import json
 import os.path
-import pickle
 import random
 from itertools import combinations
 
@@ -35,17 +35,17 @@ SERIALIZERS_MAP = {
     "csv": None,
 }
 TABLE_AUGMENTORS = [
-    "shuffle_cols_names",
-    "mask_cols_names",
     "shuffle_cols",
     "shuffle_rows",
-    "insert_empty_rows",
-    "duplicate_columns",
-    "duplicate_rows",
     "transpose",
+    "insert_empty_rows",
+    # "duplicate_columns",  # TODO: we leave lossy perturb for now
+    # "duplicate_rows",
+    # "shuffle_cols_names",
+    # "mask_cols_names",
 ]
 
-# TODO: Can we consider these parameters as final?
+# TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
 DEMOS_POOL_SIZE = 10
 MAX_PREDICTIONS = 100
 LOADER_LIMIT = 500
@@ -164,7 +164,7 @@ with settings.context(
                 + "__"
                 + subset_name
                 + ("__DEBUG" if debug else "")
-                + ".pkl"
+                + ".json"
             )
             if not os.path.exists(out_path):
                 os.makedirs(out_path)
@@ -200,10 +200,12 @@ with settings.context(
 
                 predictions = inference_model.infer(test_dataset)
                 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+                for i in evaluated_dataset:
+                    i.pop("postprocessors")
 
                 curr_out_path = os.path.join(out_path, out_file_name)
-                with open(curr_out_path, "wb") as f:
-                    pickle.dump(evaluated_dataset, f)
+                with open(curr_out_path, "w") as f:
+                    json.dump(evaluated_dataset, f)
                     # print("saved file path: ", curr_out_path)
             except Exception as e:
                 with open(
