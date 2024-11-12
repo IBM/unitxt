@@ -10,5 +10,6 @@
     "template": "templates.empty",
     "metrics": [
         "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_generic_template_arena_hard"
-    ]
+    ],
+    "format": "formats.chat_api"
 }
