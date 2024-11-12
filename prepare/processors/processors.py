@@ -195,31 +195,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
-add_to_catalog(
-    PostProcess(ExtractMtBenchRatingJudgment()),
-    "processors.extract_mt_bench_rating_judgment",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(ExtractMtBenchLabelJudgment()),
-    "processors.extract_mt_bench_label_judgment",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(RegexParser(regex=".+"), process_references=False),
-    "processors.regex_parser_from_prediction",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(LiteralEval(), process_references=False),
-    "processors.literal_eval",
-    overwrite=True,
-)
-
 add_to_catalog(
     PostProcess(Cast(to="float", failure_default=0.5)),
     "processors.cast_to_float_return_0_5_if_failed",
