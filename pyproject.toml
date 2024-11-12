@@ -113,6 +113,12 @@ ui = [
 watsonx = [
     "ibm-watsonx-ai==1.1.14"
 ]
+inference-tests = [
+  "litellm @ git+https://github.com/BerriAI/litellm.git@main",
+  "tenacity",
+  "diskcache",
+  "numpy==1.26.4"
+]
 
 # Combine all extras by referencing other groups
 all = [

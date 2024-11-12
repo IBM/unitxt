@@ -7,5 +7,6 @@
     "max_validation_instances": 1000,
     "max_test_instances": 100,
     "card": "cards.billsum_document_filtered_to_6000_chars",
-    "template": "templates.summarization.abstractive.bluebench"
+    "template": "templates.summarization.abstractive.bluebench",
+    "format": "formats.chat_api"
 }

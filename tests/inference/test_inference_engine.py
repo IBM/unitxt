@@ -8,13 +8,13 @@ from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
+    LiteLLMInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngineChat,
     WMLInferenceEngineGeneration,
 )
 from unitxt.settings_utils import get_settings
-from unitxt.standard import StandardRecipe
 from unitxt.text_utils import print_dict
 from unitxt.type_utils import isoftype
 
@@ -91,20 +91,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
 
         if not settings.use_eager_execution:
-            dataset = StandardRecipe(
+            dataset = load_dataset(
                 card="cards.doc_vqa.en",
                 template="templates.qa.with_context.with_type",
-                format="formats.models.llava_interleave",
+                format="formats.chat_api",
                 loader_limit=30,
-            )()
+                split="test",
+            )
 
-            test_dataset = [dataset["test"].peek()]
-
-            predictions = inference_model.infer(test_dataset)
+            predictions = inference_model.infer([dataset[0]])
 
             self.assertEqual(predictions[0], "The real image")
 
-            prediction = inference_model.infer_log_probs(test_dataset)[0]
+            prediction = inference_model.infer_log_probs([dataset[1]])[0]
 
             assert isoftype(prediction, List[Dict[str, Any]])
             self.assertListEqual(
@@ -211,14 +210,10 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         assert results[0] == "entailment"
 
     def test_watsonx_inference_with_images(self):
-        dataset = StandardRecipe(
-            card="cards.doc_vqa.en",
-            template="templates.qa.with_context.with_type",
-            format="formats.models.llava_interleave",
-            loader_limit=30,
-        )()
-
-        test_data = list(dataset["test"])[:2]
+        raw_dataset = load_dataset(
+            dataset_query="card=cards.doc_vqa.en,template_card_index=0,loader_limit=30"
+        )
+        sample = list(raw_dataset["test"])[:2]
 
         image_encoder = EncodeImageToString()
 
@@ -229,9 +224,57 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             top_logprobs=3,
         )
 
-        results = inference_engine.infer_log_probs(test_data, return_meta_data=True)
+        results = inference_engine.infer_log_probs(sample, return_meta_data=True)
 
         assert isoftype(results, List[TextGenerationInferenceOutput])
         assert results[0].input_tokens == 6541
         assert results[0].stop_reason == "stop"
         assert isoftype(results[0].prediction, List[Dict[str, Any]])
+
+        formatted_dataset = load_dataset(
+            card="cards.doc_vqa.en",
+            template="templates.qa.with_context.with_type",
+            format="formats.chat_api",
+            loader_limit=30,
+            split="test",
+        )
+        sample = [formatted_dataset[0]]
+
+        messages = inference_engine.to_messages(sample[0])[0]
+
+        assert isoftype(messages, List[Dict[str, Any]])
+        inference_engine.verify_messages(messages)
+
+        inference_engine.top_logprobs = None
+        results = inference_engine.infer(sample)
+
+        assert isinstance(results[0], str)
+
+    def test_lite_llm_inference_engine(self):
+        from unitxt.logging_utils import set_verbosity
+
+        set_verbosity("debug")
+        inference_model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-8b-instruct",
+            max_tokens=2,
+        )
+        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,format=formats.chat_api"
+        instances = [
+            {
+                "question": "How many days there are in a week? answer just the number in digits",
+                "answers": ["7"],
+            },
+            {
+                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
+                "answers": ["2"],
+            },
+        ]
+        total_tests = 5
+        instances = (instances * (total_tests // len(instances)))[:total_tests]
+        dataset = produce(instances, recipe)
+
+        predictions = inference_model.infer(dataset)
+
+        targets = ["7", "2"]
+        targets = (targets * (total_tests // len(targets)))[:total_tests]
+        self.assertListEqual(predictions, targets)

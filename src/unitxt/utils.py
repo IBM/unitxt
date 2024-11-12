@@ -322,3 +322,15 @@ def recursive_shallow_copy(obj):
         A recursively shallow-copied version of the original object.
     """
     return recursive_copy(obj, shallow_copy)
+
+
+class LongString(str):
+    def __new__(cls, value, *, repr_str=None):
+        obj = super().__new__(cls, value)
+        obj._repr_str = repr_str
+        return obj
+
+    def __repr__(self):
+        if self._repr_str is not None:
+            return self._repr_str
+        return super().__repr__()

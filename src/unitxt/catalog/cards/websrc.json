@@ -25,6 +25,10 @@
             "to_field": "context"
         },
         {
+            "__type__": "to_image",
+            "field": "context"
+        },
+        {
             "__type__": "set",
             "fields": {
                 "context_type": "image"
