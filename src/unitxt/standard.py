@@ -1,5 +1,6 @@
 from typing import List, Optional, Union
 
+from .artifact import fetch_artifact
 from .augmentors import (
     Augmentor,
     FinalStateInputsAugmentor,
@@ -16,7 +17,7 @@ from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
@@ -25,6 +26,7 @@ from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, Templ
 from .utils import LRUCache
 
 constants = get_constants()
+settings = get_settings()
 logger = get_logger()
 
 
@@ -39,7 +41,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     task: Task = None
     template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
-    format: Format = Field(default_factory=SystemFormat)
+    format: Format = None
     serializer: Union[SingleTypeSerializer, List[SingleTypeSerializer]] = None
 
     # Additional parameters
@@ -263,6 +265,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         return list(multi_stream[constants.inference_stream])
 
     def reset_pipeline(self):
+        if self.format is None:
+            if settings.default_format is not None:
+                self.format, _ = fetch_artifact(settings.default_format)
+            else:
+                self.format = SystemFormat()
+
         if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
 

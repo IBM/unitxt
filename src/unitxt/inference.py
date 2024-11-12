@@ -1121,9 +1121,9 @@ class WMLInferenceEngine(
         model, params = self._load_model_and_params()
 
         result = []
-        for instance in dataset:
+        for source in dataset["source"]:
             instance_result = model.generate(
-                prompt=instance["source"],
+                prompt=source,
                 params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
             )
             prediction = instance_result["results"][0]["generated_text"]
@@ -1364,9 +1364,7 @@ class LMMSEvalBaseInferenceEngine(
     batch_size: int = 1
     image_token = "<image>"
 
-    _requirements_list = {
-        "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
-    }
+    _requirements_list = ["lmms-eval==0.2.4"]
 
     def prepare_engine(self):
         if not self.lazy_load:
@@ -1413,6 +1411,7 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
         if not self._is_loaded():
             self._prepare_engine()
 
@@ -1562,12 +1561,26 @@ class AsyncTokenBucket:
             await asyncio.sleep(time_until_next_token)
 
 
-class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class StandardAPIParamsMixin(Artifact):
     model: str
-    max_tokens: int = 256
-    seed: int = 1
-    temperature: float = 0.0
-    top_p: float = 1.0
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = True
+    n: Optional[int] = None
+    parallel_tool_calls: Optional[bool] = None
+    service_tier: Optional[Literal["auto", "default"]] = None
+
+
+class LiteLLMInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+):
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
@@ -1599,15 +1612,12 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
+            kwargs = self.to_dict([StandardAPIParamsMixin])
             response = await self._completion(
-                model=self.model,
                 messages=messages,
-                seed=self.seed,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_p=self.top_p,
                 max_retries=self.max_retries,
                 caching=True,
+                **kwargs,
             )
             usage = response.get("usage", {})
             return TextGenerationInferenceOutput(
@@ -1643,3 +1653,63 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             return responses
 
         return [response.prediction for response in responses]
+
+
+_supported_apis = Literal["watsonx", "together-ai", "open-ai"]
+
+
+class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
+    """Inference engine capable of dynamically switching between multiple APIs.
+
+    This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
+    to enable seamless integration with various API providers. The supported APIs are
+    specified in `_supported_apis`, allowing users to interact with multiple models
+    from different sources. The `api_model_map` dictionary maps each API to
+    specific model identifiers, enabling automatic configuration based on
+    user requests.
+
+    Attributes:
+        api: Optional; Specifies the current API in use. Must be one of the
+            literals in `_supported_apis`.
+        api_model_map: Dictionary mapping each supported API to a corresponding
+            model identifier string. This mapping allows consistent access to models
+            across different API backends.
+    """
+
+    api: Optional[_supported_apis] = None
+
+    api_model_map: Dict[_supported_apis, Dict[str, str]] = {
+        "watsonx": {
+            "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
+        },
+        "together-ai": {
+            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct"
+        },
+    }
+
+    _api_to_base_class = {
+        "watsonx": LiteLLMInferenceEngine,
+        "open-ai": LiteLLMInferenceEngine,
+        "together-ai": LiteLLMInferenceEngine,
+    }
+
+    def get_api_name(self):
+        return self.api if self.api is not None else settings.default_inference_api
+
+    def prepare_engine(self):
+        api = self.get_api_name()
+        cls = self.__class__._api_to_base_class[api]
+        args = self.to_dict([OpenAiInferenceEngineParamsMixin])
+        args["model"] = self.api_model_map[api][self.model]
+        self.engine = cls(**args)
+
+    def _infer(
+        self,
+        dataset: List[Dict[str, Any]] | DatasetDict,
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self.engine._infer(dataset, return_meta_data)
+
+    def get_engine_id(self):
+        api = self.get_api_name()
+        return get_model_and_label_id(self.api_model_map[api][self.model], api)
