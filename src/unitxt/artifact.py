@@ -15,6 +15,7 @@ from .dataclass import (
     NonPositionalField,
     fields,
 )
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
@@ -369,14 +370,20 @@ class Artifact(Dataclass):
         if not data_classification_policy:
             return instance
 
+        if "data_classification_policy" not in instance:
+            raise UnitxtError(
+                f"The instance 'has no `data classification policy` field: {instance}",
+                Documentation.DATA_CLASSIFICATION_POLICY,
+            )
         instance_data_classification = instance.get("data_classification_policy")
         if not instance_data_classification:
-            get_logger().warning(
+            UnitxtWarning(
                 f"The data does not provide information if it can be used by "
                 f"'{name}' with the following data classification policy "
                 f"'{data_classification_policy}'. This may lead to sending of undesired "
                 f"data to external service. Set the 'data_classification_policy' "
-                f"of the data to ensure a proper handling of sensitive information."
+                f"of the data to ensure a proper handling of sensitive information.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
             return instance
 
@@ -384,14 +391,15 @@ class Artifact(Dataclass):
             data_classification in data_classification_policy
             for data_classification in instance_data_classification
         ):
-            raise ValueError(
+            raise UnitxtError(
                 f"The instance '{instance} 'has the following data classification policy "
                 f"'{instance_data_classification}', however, the artifact '{name}' "
                 f"is only configured to support the data with classification "
                 f"'{data_classification_policy}'. To enable this either change "
                 f"the 'data_classification_policy' attribute of the artifact, "
                 f"or modify the environment variable "
-                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly."
+                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
 
         return instance
@@ -569,10 +577,11 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
                 for artifact_data_classification in artifact_data_classifications
             )
         ):
-            raise RuntimeError(
+            raise UnitxtError(
                 "'UNITXT_DATA_CLASSIFICATION_POLICY' should be of type "
                 "'Dict[str, List[str]]', where a artifact's name is a key, and a "
-                "value is a list of data classifications used by that artifact."
+                "value is a list of data classifications used by that artifact.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
 
     if artifact not in data_classification.keys():
