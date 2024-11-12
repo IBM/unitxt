@@ -70,7 +70,6 @@ from .operator import (
     InstanceOperator,
     MultiStream,
     MultiStreamOperator,
-    PackageRequirementsMixin,
     PagedStreamOperator,
     SequentialOperator,
     SideEffectOperator,
@@ -86,6 +85,7 @@ from .stream import DynamicStream, ListStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import (
+    LRUCache,
     deep_copy,
     flatten_dict,
     recursive_copy,
@@ -1035,14 +1035,14 @@ class ArtifactFetcherMixin:
         cache (Dict[str, Artifact]): A cache for storing fetched artifacts.
     """
 
-    cache: Dict[str, Artifact] = {}
+    _artifacts_cache = LRUCache(max_size=1000)
 
     @classmethod
     def get_artifact(cls, artifact_identifier: str) -> Artifact:
-        if artifact_identifier not in cls.cache:
+        if artifact_identifier not in cls._artifacts_cache:
             artifact, artifactory = fetch_artifact(artifact_identifier)
-            cls.cache[artifact_identifier] = artifact
-        return shallow_copy(cls.cache[artifact_identifier])
+            cls._artifacts_cache[artifact_identifier] = artifact
+        return shallow_copy(cls._artifacts_cache[artifact_identifier])
 
 
 class ApplyOperatorsField(InstanceOperator):
@@ -1229,9 +1229,6 @@ class ComputeExpressionMixin(Artifact):
 
     expression: str
     imports_list: List[str] = OptionalField(default_factory=list)
-
-    def verify(self):
-        PackageRequirementsMixin.check_missing_requirements(self, self.imports_list)
 
     def prepare(self):
         # can not do the imports here, because object does not pickle with imports

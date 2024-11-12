@@ -1693,7 +1693,7 @@ Answer: """,
                 metric_label: 1.0,
                 "score_name": metric_label,
                 "score": 1.0,
-                "judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                f"{metric_label}_judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
                 "Please act as an impartial judge and "
                 "evaluate the quality of the response "
                 "provided by an AI assistant to the user "
@@ -1715,7 +1715,7 @@ Answer: """,
                 "[[10]]\n"
                 "[The End of Assistant's "
                 "Answer]<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
-                "judge_raw_output": "[[10]]",
+                f"{metric_label}_judge_raw_output": "[[10]]",
             }
         ] * 3
         global_target = {

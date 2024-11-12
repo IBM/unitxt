@@ -30,6 +30,8 @@ class Benchmark(BaseBenchmark):
             raise ValueError("Set either max_total_samples or max_samples_per_subset")
 
     def prepare(self):
+        for subset in self.subsets.values():
+            subset.loader_limit = self.loader_limit
         if self.format is not None or self.num_demos is not None:
             for subset in self.subsets.values():
                 if self.num_demos is not None:

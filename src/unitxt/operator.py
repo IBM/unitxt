@@ -2,11 +2,12 @@ from abc import abstractmethod
 from dataclasses import field
 from typing import Any, Dict, Generator, List, Optional, Union
 
+from pkg_resources import DistributionNotFound, VersionConflict, require
+
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .settings_utils import get_constants
 from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
-from .utils import is_module_available
 
 constants = get_constants()
 
@@ -16,13 +17,16 @@ class Operator(Artifact):
 
 
 class PackageRequirementsMixin(Artifact):
-    """Base class used to automatically check for the existence of required python dependencies for an artifact (e.g. Operator or Metric).
+    """Base class used to automatically check for the existence of required Python dependencies for an artifact (e.g., Operator or Metric).
 
-    The _requirement list is either a list of required packages
-    (e.g. ["torch","sentence_transformers"]) or a dictionary between required packages
-    and detailed installation instructions on how how to install each package.
-    (e.g. {"torch" : "Install Torch using `pip install torch`", "sentence_transformers" : Install Sentence Transformers using `pip install sentence-transformers`})
-    Note that the package names should be specified as they are used in the python import statement for the package.
+    The _requirements_list is either a list of required packages or a dictionary mapping required packages to installation instructions.
+
+    - **List format**: Just specify the package names, optionally with version annotations (e.g., ["torch>=1.2.4", "numpy<1.19"]).
+    - **Dict format**: Specify package names as keys and installation instructions as values
+      (e.g., {"torch>=1.2.4": "Install torch with `pip install torch>=1.2.4`"}).
+
+    When a package version annotation is specified (like `torch>=1.2.4`), the `check_missing_requirements` method
+    verifies that the installed version meets the specified constraint.
     """
 
     _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
@@ -30,35 +34,75 @@ class PackageRequirementsMixin(Artifact):
     )
 
     def prepare(self):
-        super().prepare()
         self.check_missing_requirements()
+        super().prepare()
 
     def check_missing_requirements(self, requirements=None):
         if requirements is None:
             requirements = self._requirements_list
-        if isinstance(requirements, List):
+        if isinstance(requirements, list):
             requirements = {package: "" for package in requirements}
 
         missing_packages = []
+        version_mismatched_packages = []
         installation_instructions = []
+
         for package, installation_instruction in requirements.items():
-            if not is_module_available(package):
+            try:
+                # Use pkg_resources.require to verify the package requirement
+                require(package)
+            except DistributionNotFound:
                 missing_packages.append(package)
-                installation_instructions.append(installation_instruction)
-        if missing_packages:
+                installation_instructions.append(
+                    installation_instruction
+                    or f"Install {package} with `pip install {package}`"
+                )
+            except VersionConflict as e:
+                version_mismatched_packages.append(
+                    f"{package} (installed: {e.dist.version}, required: {e.req})"
+                )
+                installation_instructions.append(
+                    installation_instruction
+                    or f"Update {package} to the required version with `pip install '{package}'`"
+                )
+
+        if missing_packages or version_mismatched_packages:
             raise MissingRequirementsError(
-                self.__class__.__name__, missing_packages, installation_instructions
+                self.__class__.__name__,
+                missing_packages,
+                version_mismatched_packages,
+                installation_instructions,
             )
 
 
 class MissingRequirementsError(Exception):
-    def __init__(self, class_name, missing_packages, installation_instructions):
+    def __init__(
+        self,
+        class_name,
+        missing_packages,
+        version_mismatched_packages,
+        installation_instructions,
+    ):
         self.class_name = class_name
         self.missing_packages = missing_packages
-        self.installation_instruction = installation_instructions
+        self.version_mismatched_packages = version_mismatched_packages
+        self.installation_instructions = installation_instructions
+
+        missing_message = (
+            f"Missing package(s): {', '.join(self.missing_packages)}."
+            if self.missing_packages
+            else ""
+        )
+        version_message = (
+            f"Version mismatch(es): {', '.join(self.version_mismatched_packages)}."
+            if self.version_mismatched_packages
+            else ""
+        )
+
         self.message = (
-            f"{self.class_name} requires the following missing package(s): {', '.join(self.missing_packages)}. "
-            + "\n".join(self.installation_instruction)
+            f"{self.class_name} requires the following dependencies:\n"
+            f"{missing_message}\n{version_message}\n"
+            + "\n".join(self.installation_instructions)
         )
         super().__init__(self.message)
 
