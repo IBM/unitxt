@@ -10,7 +10,7 @@ with unitxt.settings.context(
     data = load_dataset("benchmarks.glue[max_samples_per_subset=5]", split="test")
 
     model = get_from_catalog(
-        "engines.model.llama_3_8b_instruct[api=watsonx]"
+        "engines.model.llama_3_8b_instruct[api=watsonx,top_k=1]"
     )  # option b to define your home api
 
     predictions = model.infer(data)
