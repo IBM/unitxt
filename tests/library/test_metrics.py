@@ -1693,7 +1693,7 @@ Answer: """,
                 metric_label: 1.0,
                 "score_name": metric_label,
                 "score": 1.0,
-                "judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
+                f"{metric_label}_judge_raw_input": "<|begin_of_text|><|start_header_id|>system<|end_header_id|>\n\n"
                 "Please act as an impartial judge and "
                 "evaluate the quality of the response "
                 "provided by an AI assistant to the user "
@@ -1715,7 +1715,85 @@ Answer: """,
                 "[[10]]\n"
                 "[The End of Assistant's "
                 "Answer]<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
-                "judge_raw_output": "[[10]]",
+                f"{metric_label}_judge_raw_output": "[[10]]",
+            }
+        ] * 3
+        global_target = {
+            metric_label: 1.0,
+            "score": 1.0,
+            "score_name": metric_label,
+            "num_of_instances": 3,
+        }
+
+        expected_scores = [
+            {
+                "global": global_target,
+                "instance": instance_target,
+            }
+            for instance_target in instance_targets
+        ]
+
+        self.assertListEqual(actual_scores, expected_scores)
+
+    def test_llm_as_judge_metric_with_chat_api(self):
+        model_id = "meta-llama/llama-3-8b-instruct"
+        format = "formats.chat_api"
+        # format = "formats.llama3_instruct"
+        task = "rating.single_turn"
+        template = "templates.response_assessment.rating.mt_bench_single_turn"
+
+        inference_model = MockInferenceEngine(model_name=model_id)
+        model_label = model_id.split("/")[1].replace("-", "_")
+        model_label = f"{model_label}_ibm_genai"
+        template_label = template.split(".")[-1]
+        metric_label = f"{model_label}_template_{template_label}"
+        metric = LLMAsJudge(
+            inference_model=inference_model,
+            template=template,
+            task=task,
+            format=format,
+            main_score=metric_label,
+        )
+
+        predictions = ["[[10]]"] * 3
+        references = [["[[10]]"], ["[[10]]"], ["[[10]]"]]
+        task_data = [
+            {
+                "input": "input",
+                "type_of_input": "type",
+                "output": "output",
+                "type_of_output": "type",
+                "source": "<SYS_PROMPT>input</SYS_PROMPT>",
+                "metadata": {
+                    "template": "templates.generation.default",
+                    "data_classification_policy": ["public"],
+                },
+            }
+        ] * 3
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+        actual_scores = [output["score"] for output in outputs]
+        instance_targets = [
+            {
+                metric_label: 1.0,
+                "score_name": metric_label,
+                "score": 1.0,
+                f"{metric_label}_judge_raw_input": [
+                    {
+                        "role": "system",
+                        "content": 'Please act as an impartial judge and evaluate the quality of the response provided by an AI assistant to the user question displayed below. Your evaluation should consider factors such as the helpfulness, relevance, accuracy, depth, creativity, and level of detail of the response. Begin your evaluation by providing a short explanation. Be as objective as possible. After providing your explanation, you must rate the response on a scale of 1 to 10 by strictly following this format: "[[rating]]", for example: "Rating: [[5]]".\n\n',
+                    },
+                    {
+                        "role": "user",
+                        "content": "[Question]\nGiven the following type, generate the corresponding type. type: input\n\n\n[The Start of Assistant's Answer]\n[[10]]\n[The End of Assistant's Answer]",
+                    },
+                ],
+                f"{metric_label}_judge_raw_output": "[[10]]",
             }
         ] * 3
         global_target = {

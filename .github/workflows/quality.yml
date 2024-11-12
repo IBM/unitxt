@@ -16,7 +16,7 @@ jobs:
           python-version: '3.9'
       - name: Install requirements
         run: |
-          pip install -r requirements/dev.rqr
+          pip install ".[dev]"
       - name: Install the pre-commit hooks
         run: |
             pre-commit install

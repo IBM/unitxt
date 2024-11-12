@@ -14,7 +14,7 @@ from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
-from .schema import Finalize
+from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
@@ -22,6 +22,7 @@ from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
+from .utils import LRUCache
 
 constants = get_constants()
 logger = get_logger()
@@ -67,9 +68,14 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Augmentor = OptionalField(default_factory=NullAugmentor)
+    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(
+        default_factory=NullAugmentor
+    )
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
+
+    # shared class cache
+    _demos_pool_cache = LRUCache(max_size=10)
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
@@ -223,19 +229,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference.steps = [self.verbalization, self.finalize]
 
-        self._demos_pool_cache = None
-
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
         return list(self.inference_instance(ms)[constants.inference_stream])
 
     def production_demos_pool(self):
         if self.use_demos:
-            if self._demos_pool_cache is None:
-                self._demos_pool_cache = list(
-                    self.inference_demos()[self.demos_pool_name]
-                )
-            return self._demos_pool_cache
+            demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
+            if demos_pool is None:
+                demos_pool = list(self.inference_demos()[self.demos_pool_name])
+                self.__class__._demos_pool_cache[str(self)] = demos_pool
+            return demos_pool
         return []
 
     @property
@@ -294,9 +298,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if isinstance(self.augmentor, TaskInputsAugmentor):
-            self.augmentor.set_fields(self.card.task.augmentable_inputs)
-            self.processing.steps.append(self.augmentor)
+        if not isinstance(self.augmentor, list):
+            self.augmentor = [self.augmentor]
+
+        for augmentor in self.augmentor:
+            if isinstance(augmentor, TaskInputsAugmentor):
+                augmentor.set_fields(self.card.task.augmentable_inputs)
+                self.processing.steps.append(augmentor)
 
         if self.has_custom_demos_pool:
             self.processing.steps.append(
@@ -375,8 +383,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-        if isinstance(self.augmentor, FinalStateInputsAugmentor):
-            self.verbalization.steps.append(self.augmentor)
+
+        for aumgentor in self.augmentor:
+            if isinstance(aumgentor, FinalStateInputsAugmentor):
+                self.verbalization.steps.append(aumgentor)
 
         if self.postprocessors is not None:
             self.finalize.steps.append(
@@ -386,7 +396,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.metrics is not None:
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
-        self.finalize.steps.append(Finalize(group_by=self.group_by))
+        self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
         if isinstance(self.template, TemplatesList):

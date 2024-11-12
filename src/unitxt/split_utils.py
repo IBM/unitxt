@@ -229,7 +229,9 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
     new_streams = {}
     for key, val in mapping.items():
         if key not in input_streams:
-            raise ValueError("Wrong stream name")
+            raise ValueError(
+                f"Stream '{key}' is not in input_streams '{input_streams.keys()}'"
+            )
         new_streams[val] = input_streams.pop(key)
     return {**input_streams, **new_streams}
 

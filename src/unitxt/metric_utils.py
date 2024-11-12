@@ -25,7 +25,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
-from .utils import recursive_shallow_copy
+from .utils import recursive_copy
 
 constants = get_constants()
 
@@ -250,7 +250,7 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
             sorted_instances = []
             for key in sorted(stream_instances.keys()):
                 instance = stream_instances[key]
-                instance["score"].update(recursive_shallow_copy(score))
+                instance["score"].update(recursive_copy(score))
                 sorted_instances.append(instance)
             result[stream_name] = sorted_instances
 

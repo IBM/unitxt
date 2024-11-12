@@ -20,7 +20,7 @@ jobs:
         python-version: '3.9'
 
     - name: Install Requirements
-      run: pip install -r requirements/base.rqr
+      run: pip install .
 
     - name: Install Requirements
       run: pip install isort

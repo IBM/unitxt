@@ -7,5 +7,6 @@
     "max_validation_instances": 1000,
     "max_test_instances": 100,
     "card": "cards.rag.response_generation.clapnq",
-    "template": "templates.rag.response_generation.bluebench"
+    "template": "templates.rag.response_generation.bluebench",
+    "format": "formats.chat_api"
 }
