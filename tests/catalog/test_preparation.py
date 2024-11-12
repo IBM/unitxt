@@ -23,15 +23,16 @@ all_preparation_files = glob.glob(glob_query, recursive=True)
 # Make sure the order in which the tests are run is deterministic
 # Having a different order for local testing and github testing may cause diffs in results.
 all_preparation_files.sort()
-num_par = 8  # num of parallel executions
+num_par = 1  # num of parallel executions
 logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
-# the following should be any of modulo num_par: 0,1,2,3,4,5,6,7
-modulo = 1
-all_preparation_files = [
-    file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
-]
+# the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,9,10,11
+modulo = 0
+if num_par > 1:
+    all_preparation_files = [
+        file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
+    ]
 
 
 class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
@@ -61,7 +62,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                                 f"Skipping file {file} due to ignored error {e}"
                             )
                             continue
-                        raise
+                        self.assertTrue(False)
                     logger.info(f"Testing preparation file: {file} passed")
                     self.assertTrue(True)
 
