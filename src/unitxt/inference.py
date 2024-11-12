@@ -1705,7 +1705,7 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     def _infer(
         self,
-        dataset: List[Dict[str, Any]] | DatasetDict,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset, return_meta_data)
