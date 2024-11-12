@@ -39,7 +39,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         logger.critical(
-            f"Testing {len(all_preparation_files)} preparation files: {all_preparation_files}"
+            f"Testing {len(all_preparation_files)} preparation files: {all_preparation_files}."
         )
         times = {}
         for file in all_preparation_files:
