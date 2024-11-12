@@ -70,7 +70,7 @@ default_args = {
 }
 
 
-def prepapre_recipe(default_args, specific_args):
+def prepare_recipe(default_args, specific_args):
     recipe = {}
     recipe.update(default_args)
     recipe.update(specific_args)
@@ -92,7 +92,7 @@ ingridients = {
     "num_demos": 5,
     "template": "templates.completion.multiple_choice.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(recipe, "recipes.bluebench.reasoning.hellaswag", overwrite=True)
 
 ingridients = {
@@ -100,7 +100,7 @@ ingridients = {
     "num_demos": 5,
     "template": "templates.qa.multiple_choice.open.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(recipe, "recipes.bluebench.reasoning.openbook_qa", overwrite=True)
 
 
@@ -113,7 +113,7 @@ for subset in subsets["cards.mt.flores_101"]:
         "template": "templates.translation.directed.bluebench",
         "demos_taken_from": "validation",
     }
-    recipe = prepapre_recipe(default_args, ingridients)
+    recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
         f'recipes.bluebench.translation.mt_flores_101_{subset.replace(".", "_").lower()}',
@@ -132,7 +132,7 @@ ingridients = {
         "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.watsonx.template_arena_hard"
     ],
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe,
     "recipes.bluebench.chatbot_abilities.arena_hard_generation_english_gpt_4_0314_reference",
@@ -146,7 +146,7 @@ ingridients = {
     "card": "cards.20_newsgroups",
     "template": "templates.classification.multi_class.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe, "recipes.bluebench.news_classification.20_newsgroups", overwrite=True
 )
@@ -162,7 +162,7 @@ for subset in subsets["cards.safety.bbq"]:
         "template": "templates.qa.multiple_choice.with_context.match",
         "demos_taken_from": "test",
     }
-    recipe = prepapre_recipe(default_args, ingridients)
+    recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
         f'recipes.bluebench.bias.safety_bbq_{subset.replace(".", "_").lower()}',
@@ -179,7 +179,7 @@ for subset in subsets["cards.legalbench"]:
         "template": "templates.classification.multi_class.bluebench",
         "demos_taken_from": "test",
     }
-    recipe = prepapre_recipe(default_args, ingridients)
+    recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
         f'recipes.bluebench.legal.legalbench_{subset.replace(".", "_").lower()}',
@@ -194,7 +194,7 @@ ingridients = {
     "num_demos": 5,
     "template": "templates.classification.multi_class.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe, "recipes.bluebench.product_help.cfpb_product_watsonx", overwrite=True
 )
@@ -204,7 +204,7 @@ ingridients = {
     "num_demos": 5,
     "template": "templates.classification.multi_class.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe, "recipes.bluebench.product_help.cfpb_product_2023", overwrite=True
 )
@@ -220,7 +220,7 @@ for subset in subsets["cards.mmlu_pro"]:
         "template": "templates.qa.multiple_choice.with_topic.bluebench",
         "demos_taken_from": "test",
     }
-    recipe = prepapre_recipe(default_args, ingridients)
+    recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
         f'recipes.bluebench.knowledge.mmlu_pro_{subset.replace(".", "_").lower()}',
@@ -240,7 +240,7 @@ for subset in subsets["cards.universal_ner"]:
         "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]",
         "demos_taken_from": "test" if "pud" in subset else "train",
     }
-    recipe = prepapre_recipe(default_args, ingridients)
+    recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
         f'recipes.bluebench.entity_extraction.universal_ner_{subset.replace(".", "_").lower()}',
@@ -257,7 +257,7 @@ ingridients = {
     "template_card_index": 0,
     "max_test_instances": 100,
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(recipe, "recipes.bluebench.safety.attaq_500", overwrite=True)
 
 
@@ -268,7 +268,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.summarization.abstractive.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe,
     "recipes.bluebench.summarization.billsum_document_filtered_to_6000_chars",
@@ -280,7 +280,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.summarization.abstractive.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe,
     "recipes.bluebench.summarization.tldr_document_filtered_to_6000_chars",
@@ -294,7 +294,7 @@ ingridients = {
     "card": "cards.rag.response_generation.clapnq",
     "template": "templates.rag.response_generation.bluebench",
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
     recipe,
     "recipes.bluebench.rag_general.rag_response_generation_clapnq",
@@ -309,5 +309,5 @@ ingridients = {
     "num_demos": 1,
     "template_card_index": 0,
 }
-recipe = prepapre_recipe(default_args, ingridients)
+recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(recipe, "recipes.bluebench.qa_finance.fin_qa", overwrite=True)
