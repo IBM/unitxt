@@ -100,7 +100,7 @@ add_to_catalog(recipe, "recipes.bluebench.reasoning.openbook_qa", overwrite=True
 
 ### Translation
 
-for subset in subsets["flores_101"]:
+for subset in subsets["cards.mt.flores_101"]:
     ingridients = {
         "card": f"cards.mt.flores_101.{subset}",
         "num_demos": 5,
@@ -123,7 +123,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.empty",
     "metrics": [
-        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_ibm_genai_template_arena_hard"
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_generic_template_arena_hard"
     ],
 }
 recipe = prepapre_recipe(default_args, ingridients)
@@ -148,7 +148,7 @@ add_to_catalog(
 
 ### Bias
 
-for subset in subsets["bbq"]:
+for subset in subsets["cards.safety.bbq"]:
     ingridients = {
         "card": f"cards.safety.bbq.{subset}",
         "demos_pool_size": 20,
@@ -166,7 +166,7 @@ for subset in subsets["bbq"]:
 
 ### Legal
 
-for subset in subsets["legalbench"]:
+for subset in subsets["cards.legalbench"]:
     ingridients = {
         "card": f"cards.legalbench.{subset}",
         "demos_pool_size": 10,
@@ -206,7 +206,7 @@ add_to_catalog(
 
 ### Knowledge
 
-for subset in subsets["mmlu_pro"]:
+for subset in subsets["cards.mmlu_pro"]:
     ingridients = {
         "card": f"cards.mmlu_pro.{subset}",
         "demos_pool_size": 20,
@@ -224,7 +224,7 @@ for subset in subsets["mmlu_pro"]:
 
 ### Entity_extraction
 
-for subset in subsets["universal_ner"]:
+for subset in subsets["cards.universal_ner"]:
     ingridients = {
         "card": f"cards.universal_ner.{subset}",
         "demos_pool_size": 10000,
@@ -300,7 +300,7 @@ add_to_catalog(
 
 ingridients = {
     "card": "cards.fin_qa",
-    "num_demos": 2,
+    "num_demos": 1,
     "template_card_index": 0,
 }
 recipe = prepapre_recipe(default_args, ingridients)
