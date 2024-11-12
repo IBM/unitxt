@@ -38,8 +38,11 @@ if num_par > 1:
 class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
+        all_preparation_files_as_string = "\n".join(
+            [file.split("prepare")[-1] for file in all_preparation_files]
+        )
         logger.critical(
-            f"Testing {len(all_preparation_files)} preparation files: {all_preparation_files}."
+            f"Testing {len(all_preparation_files)} preparation files: \n{all_preparation_files_as_string}\n"
         )
         times = {}
         for file in all_preparation_files:
