@@ -10,7 +10,10 @@ from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="yale-nlp/QTSumm"),
+    loader=LoadHF(
+        path="yale-nlp/QTSumm",
+        data_classification_policy=["public"],
+    ),
     preprocess_steps=[
         SplitRandomMix(
             mix={

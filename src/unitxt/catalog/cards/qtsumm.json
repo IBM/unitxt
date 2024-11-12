@@ -2,7 +2,10 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "yale-nlp/QTSumm"
+        "path": "yale-nlp/QTSumm",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
