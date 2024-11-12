@@ -11,5 +11,6 @@
     "metrics": [
         "metrics.ner[zero_division=1.0]"
     ],
-    "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]"
+    "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]",
+    "format": "formats.chat_api"
 }

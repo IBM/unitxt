@@ -150,6 +150,7 @@ if Settings.is_uninitilized():
     settings.mock_inference_mode = (bool, False)
     settings.disable_hf_datasets_cache = (bool, True)
     settings.loader_cache_size = (int, 1)
+    settings.task_data_as_text = (bool, True)
 
 if Constants.is_uninitilized():
     constants = Constants()
@@ -181,6 +182,7 @@ if Constants.is_uninitilized():
     constants.website_url = "https://www.unitxt.org"
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
+    constants.image_tag = "unitxt-img"
 
 
 def get_settings() -> Settings:

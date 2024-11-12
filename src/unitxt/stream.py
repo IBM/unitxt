@@ -9,10 +9,11 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .utils import recursive_copy
 
 settings = get_settings()
+constants = get_constants()
 logger = get_logger()
 
 
@@ -33,7 +34,7 @@ class Stream(Dataclass):
     def set_copying(self, copying: bool):
         pass
 
-    def to_dataset(self, disable_cache=True, cache_dir=None, features=None):
+    def to_dataset(self, disable_cache=False, cache_dir=None, features=None):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
             return Dataset.from_generator(
@@ -41,13 +42,13 @@ class Stream(Dataclass):
                 keep_in_memory=disable_cache,
                 cache_dir=cache_dir,
                 features=features,
-                num_proc=20,
             )
 
     def to_iterable_dataset(
         self,
+        features=None,
     ):
-        return IterableDataset.from_generator(self.__iter__)
+        return IterableDataset.from_generator(self.__iter__, features=features)
 
 
 class ListStream(Stream):
@@ -254,9 +255,14 @@ class MultiStream(dict):
                 }
             )
 
-    def to_iterable_dataset(self) -> IterableDatasetDict:
+    def to_iterable_dataset(self, features=None) -> IterableDatasetDict:
         return IterableDatasetDict(
-            {key: value.to_iterable_dataset() for key, value in self.items()}
+            {
+                key: value.to_iterable_dataset(
+                    features=features,
+                )
+                for key, value in self.items()
+            }
         )
 
     def __setitem__(self, key, value):

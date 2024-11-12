@@ -1,24 +1,30 @@
 import abc
+import asyncio
 import dataclasses
 import json
+import logging
 import os
 import re
 import sys
+import time
 import uuid
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from datasets import DatasetDict
 from tqdm import tqdm, trange
+from tqdm.asyncio import tqdm_asyncio
 
 from .artifact import Artifact, fetch_artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
-from .image_operators import extract_images
+from .image_operators import data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 
+constants = get_constants()
 settings = get_settings()
+logger = get_logger()
 
 
 def get_model_and_label_id(model_name, label):
@@ -104,7 +110,7 @@ class InferenceEngine(Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return [instance["source"] for instance in dataset]
+        return [str(instance["source"]) for instance in dataset]
 
     def get_engine_id(self):
         raise NotImplementedError()
@@ -125,6 +131,22 @@ class InferenceEngine(Artifact):
                 param_inst_val = getattr(self, param)
                 if param_inst_val is None:
                     setattr(self, param, param_dict_val)
+
+    def verify_not_chat_api(self, dataset):
+        if isinstance(dataset[0]["source"], list):
+            raise NotImplementedError(
+                f"Inference engine {self.__class__.__name__} does not support chat api format."
+            )
+
+    def to_messages(self, instance):
+        if isinstance(instance["source"], list):
+            return instance["source"]
+        return [
+            {
+                "role": "user",
+                "content": instance["source"],
+            }
+        ]
 
 
 class LogProbInferenceEngine(abc.ABC, Artifact):
@@ -240,6 +262,8 @@ class HFPipelineBasedInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+
         if not self._is_loaded():
             self._prepare_pipeline()
 
@@ -368,19 +392,17 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
-        result = [
-            ollama.chat(
-                model="llama2",
-                messages=[
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    },
-                ],
+        results = []
+
+        for instance in dataset:
+            messages = self.to_messages(instance)
+            response = ollama.chat(
+                model=self.model_name,
+                messages=messages,
             )
-            for instance in dataset
-        ]
-        return [element["message"]["content"] for element in result]
+            results.append(response)
+
+        return [element["message"]["content"] for element in results]
 
 
 class OptionSelectingByLogProbsInferenceEngine:
@@ -739,17 +761,9 @@ class OpenAiInferenceEngine(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
@@ -871,18 +885,19 @@ class TogetherAiInferenceEngine(
             if v is not None
         }
 
-    def _infer_chat(self, prompt: str) -> str:
+    def _infer_chat(self, instance: Dict[str, Any]) -> str:
+        messages = self.to_messages(instance)
         response = self.client.chat.completions.create(
             model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
+            messages=messages,
             **self._get_infer_kwargs(),
         )
         return response.choices[0].message.content
 
-    def _infer_text(self, prompt: str) -> str:
+    def _infer_text(self, instance: Dict[str, Any]) -> str:
         response = self.client.completions.create(
             model=self.model_name,
-            prompt=prompt,
+            prompt=instance["source"],
             **self._get_infer_kwargs(),
         )
         return response.choices[0].text
@@ -897,10 +912,11 @@ class TogetherAiInferenceEngine(
         outputs = []
         if self.model_type == ModelType.CHAT:
             for instance in tqdm(dataset, desc="Inferring with Together AI Chat API"):
-                outputs.append(self._infer_chat(instance["source"]))
+                outputs.append(self._infer_chat(instance))
         else:
+            self.verify_not_chat_api(dataset)
             for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
-                outputs.append(self._infer_text(instance["source"]))
+                outputs.append(self._infer_text(instance))
         return outputs
 
 
@@ -1101,6 +1117,7 @@ class WMLInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
         model, params = self._load_model_and_params()
 
         result = []
@@ -1122,6 +1139,8 @@ class WMLInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+
         model, params = self._load_model_and_params()
 
         user_return_options = params.pop("return_options", {})
@@ -1236,7 +1255,7 @@ def get_images_without_text(instance):
 
 
 def get_text_without_images(instance, image_token="<image>"):
-    regex = r'<img\s+src=["\'](.*?)["\']\s*/?>'
+    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
 
 
@@ -1282,6 +1301,21 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
     def _is_loaded(self):
         return hasattr(self, "model") and self.model is not None
 
+    def _get_input(self, instance):
+        assert isinstance(instance["source"], list), "Must use format=formats.chat_api"
+        images = []
+        conversation = []
+        for turn in instance["source"]:
+            if isinstance(turn["content"], list):
+                for content in turn["content"]:
+                    if content["type"] == "image_url":
+                        content["type"] = "image"
+                        image_url = content.pop("image_url")["url"]
+                        image = data_url_to_image(image_url)
+                        images.append(image)
+            conversation.append(turn)
+        return conversation, images
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -1294,11 +1328,14 @@ class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
 
         results = []
         for instance in tqdm(dataset):
-            text = get_text_without_images(instance, self.image_token)
-            images = get_images_without_text(instance)
+            conversation, images = self._get_input(instance)
 
             if len(images) == 1:
                 images = images[0]
+
+            text = self.processor.apply_chat_template(
+                conversation, add_generation_prompt=True
+            )
 
             inputs = self.processor(images=images, text=text, return_tensors="pt").to(
                 self.device, torch.float16
@@ -1486,3 +1523,123 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
                 optimal_responses[request.idx] = request.arguments[1]
 
         return optimal_responses
+
+
+class AsyncTokenBucket:
+    def __init__(self, rate, capacity):
+        self.rate = rate  # Tokens added per second
+        self.capacity = capacity  # Maximum tokens in the bucket
+        self.tokens = capacity
+        self.timestamp = time.perf_counter()
+        self.lock = asyncio.Lock()
+        self.interval = 1.0 / self.rate  # Time between tokens
+
+    async def acquire(self, tokens=1):
+        while True:
+            async with self.lock:
+                now = time.perf_counter()
+                delta = now - self.timestamp
+
+                # Calculate the number of tokens to add
+                token_intervals = int(delta / self.interval)
+                if token_intervals > 0:
+                    self.tokens = min(self.capacity, self.tokens + token_intervals)
+                    self.timestamp += token_intervals * self.interval
+                    logging.debug(
+                        f"Added {token_intervals} tokens. Tokens now: {self.tokens}"
+                    )
+
+                if self.tokens >= tokens:
+                    self.tokens -= tokens
+                    logging.debug(f"Token acquired. Tokens left: {self.tokens}")
+                    return
+                # Calculate time until the next token is available
+                time_until_next_token = self.interval - (now - self.timestamp)
+                logging.debug(
+                    f"Not enough tokens. Need to wait {time_until_next_token:.4f} seconds."
+                )
+            # Sleep outside the lock to allow other coroutines to proceed
+            await asyncio.sleep(time_until_next_token)
+
+
+class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+    model: str
+    max_tokens: int = 256
+    seed: int = 1
+    temperature: float = 0.0
+    top_p: float = 1.0
+    max_requests_per_second: float = 6
+    max_retries: int = 5  # Set to 0 to prevent internal retries
+
+    requirements: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+
+    def prepare_engine(self):
+        # Initialize the token bucket rate limiter
+        self._rate_limiter = AsyncTokenBucket(
+            rate=self.max_requests_per_second,
+            capacity=self.max_requests_per_second,
+        )
+        self.inference_type = "litellm"
+        import litellm
+        from litellm import acompletion
+        from litellm.caching.caching import Cache
+
+        litellm.cache = Cache(type="disk")
+
+        self._completion = acompletion
+        # Initialize a semaphore to limit concurrency
+        self._semaphore = asyncio.Semaphore(self.max_requests_per_second)
+
+    async def _infer_instance(
+        self, index: int, instance: Dict[str, Any]
+    ) -> TextGenerationInferenceOutput:
+        """Process a single inference request."""
+        async with self._semaphore:
+            await self._rate_limiter.acquire()
+            # Introduce a slight delay to prevent burstiness
+            await asyncio.sleep(0.01)
+            messages = self.to_messages(instance)
+            response = await self._completion(
+                model=self.model,
+                messages=messages,
+                seed=self.seed,
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+                top_p=self.top_p,
+                max_retries=self.max_retries,
+                caching=True,
+            )
+            usage = response.get("usage", {})
+            return TextGenerationInferenceOutput(
+                prediction=response["choices"][0]["message"]["content"],
+                input_tokens=usage.get("prompt_tokens"),
+                output_tokens=usage.get("completion_tokens"),
+                model_name=response.get("model", self.model),
+                inference_type=self.inference_type,
+            )
+
+    async def _infer_async(
+        self, dataset: List[Dict[str, Any]]
+    ) -> List[TextGenerationInferenceOutput]:
+        """Process multiple inference requests concurrently with a progress bar."""
+        tasks = [
+            self._infer_instance(i, instance) for i, instance in enumerate(dataset)
+        ]
+        # Use tqdm_asyncio.gather to display progress bar
+        return await tqdm_asyncio.gather(
+            *tasks, desc="LiteLLM Inference", total=len(tasks)
+        )
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], "DatasetDict"],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        """Main inference entry point."""
+        loop = asyncio.get_event_loop()
+        responses = loop.run_until_complete(self._infer_async(dataset))
+
+        if return_meta_data:
+            return responses
+
+        return [response.prediction for response in responses]

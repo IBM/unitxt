@@ -1,6 +1,7 @@
 from unitxt.card import TaskCard
-from unitxt.formats import HFSystemFormat, SystemFormat
+from unitxt.formats import ChatAPIFormat, HFSystemFormat, SystemFormat
 from unitxt.loaders import LoadFromDictionary
+from unitxt.settings_utils import get_constants
 from unitxt.standard import StandardRecipe
 from unitxt.system_prompts import TextualSystemPrompt
 from unitxt.task import Task
@@ -9,10 +10,259 @@ from unitxt.test_utils.operators import (
     check_operator,
 )
 
+from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
+
+constants = get_constants()
 
 
 class TestFormats(UnitxtTestCase):
+    def test_openai_format(self):
+        instruction = "solve the math exercises"
+
+        demo_instances = [
+            {
+                "source": "1+2",
+                "target": "3",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+            {
+                "source": "4-2",
+                "target": "2",
+                "instruction": instruction,
+                "input_fields": {},
+            },
+        ]
+
+        inputs = [
+            {
+                "source": "1+1",
+                "target": "2",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+            {
+                "source": "3+2",
+                "target": "5",
+                "instruction": instruction,
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+        ]
+
+        # imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix =""
+        system_format = ChatAPIFormat()
+
+        targets = [
+            {
+                "target": "2",
+                "input_fields": {},
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {"role": "user", "content": "1+2"},
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {"role": "user", "content": "4-2"},
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {"role": "user", "content": "1+1"},
+                ],
+                "demos": demo_instances,
+            },
+            {
+                "target": "5",
+                "input_fields": {},
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {"role": "user", "content": "1+2"},
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {"role": "user", "content": "4-2"},
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {"role": "user", "content": "3+2"},
+                ],
+                "demos": demo_instances,
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_openai_format_with_images(self):
+        demo_instances = [
+            {
+                "source": f"What is 1+2? <{constants.image_tag} src='https://example.com/image1.jpg'>",
+                "target": "3",
+                "instruction": "solve the math exercises",
+                "input_fields": {},
+            },
+            {
+                "source": f"What is 4-2? <{constants.image_tag} src='https://example.com/image2.jpg'>",
+                "target": "2",
+                "instruction": "solve the math exercises",
+                "input_fields": {},
+            },
+        ]
+
+        inputs = [
+            {
+                "source": f"What is 1+1? <{constants.image_tag} src='https://example.com/image3.jpg'>",
+                "target": "2",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+            },
+            {
+                "source": f"What is 3+2? <{constants.image_tag} src='media/images/0'>",
+                "target": "5",
+                "instruction": "solve the math exercises",
+                "demos": demo_instances,
+                "input_fields": {},
+                "target_prefix": "The answer is ",
+                "system_prompt": "You are a smart assistant.",
+                "media": {
+                    "images": [
+                        {"image": create_random_jpeg_image(2, 2, 1), "format": "JPEG"}
+                    ]
+                },
+            },
+        ]
+
+        # Expected structured format for targets after processing
+        targets = [
+            {
+                "target": "2",
+                "input_fields": {},
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image1.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 4-2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image2.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+1? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image3.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                ],
+                "demos": demo_instances,
+            },
+            {
+                "target": "5",
+                "input_fields": {},
+                "source": [
+                    {
+                        "role": "system",
+                        "content": "You are a smart assistant.\nsolve the math exercises",
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 1+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image1.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 3"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 4-2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "https://example.com/image2.jpg",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                    {"role": "assistant", "content": "The answer is 2"},
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": "What is 3+2? "},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAACAAIDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDO1G+u11O7AupwBM4AEh45NFFFaHxJ/9k=",
+                                    "detail": "low",
+                                },
+                            },
+                        ],
+                    },
+                ],
+                "demos": demo_instances,
+                "media": {"images": []},
+            },
+        ]
+
+        # Imitating iclformat's add_instruction_after_demos=True, instruction is not "", and target_prefix = ""
+        system_format = ChatAPIFormat()
+
+        # Run the check
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_hf_system_format(self):
         instruction = "solve the math exercises"
 

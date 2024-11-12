@@ -128,11 +128,11 @@ for instance in instance_targets_accuracy:
 
 metric = FixedGroupMeanAccuracy()
 global_target = {
-    "fixed_group_mean_accuracy": 0.22,
+    "fixed_group_mean_accuracy": 0.23,
     "fixed_group_mean_accuracy_ci_high": 0.48,
     "fixed_group_mean_accuracy_ci_low": 0.1,
     "num_of_instances": 15,
-    "score": 0.22,
+    "score": 0.23,
     "score_ci_high": 0.48,
     "score_ci_low": 0.1,
     "score_name": "fixed_group_mean_accuracy",
@@ -152,11 +152,11 @@ add_to_catalog(metric, "metrics.robustness.fixed_group_mean_accuracy", overwrite
 
 metric = GroupMeanAccuracy()
 global_target = {
-    "group_mean_accuracy": 0.22,
+    "group_mean_accuracy": 0.23,
     "group_mean_accuracy_ci_high": 0.44,
     "group_mean_accuracy_ci_low": 0.02,
     "num_of_instances": 15,
-    "score": 0.22,
+    "score": 0.23,
     "score_ci_high": 0.44,
     "score_ci_low": 0.02,
     "score_name": "group_mean_accuracy",
@@ -635,7 +635,7 @@ global_target = {
     "group_mean_precision": 0.5,
     "group_mean_precision_ci_high": 0.67,
     "group_mean_precision_ci_low": 0.21,
-    "group_mean_recall": 0.52,
+    "group_mean_recall": 0.53,
     "group_mean_recall_ci_high": 0.71,
     "group_mean_recall_ci_low": 0.25,
     "num_of_instances": 15,
