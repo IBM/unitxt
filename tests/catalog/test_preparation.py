@@ -64,6 +64,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                                 f"Skipping file {file} due to ignored error {e}"
                             )
                             continue
+                        self.assertTrue(False)
                         raise
                     logger.info(f"Testing preparation file: {file} passed")
                     self.assertTrue(True)
