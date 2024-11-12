@@ -45,6 +45,7 @@ _excluded_files = [
     "custom_type.py",
     "evaluate_different_templates_num_demos.py",
     "evaluate_existing_dataset_with_install.py",
+    "evaluate_batched_multiclass_classification.py",
 ]
 
 
