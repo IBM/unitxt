@@ -14,7 +14,7 @@ from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
-from .schema import Finalize
+from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
@@ -396,7 +396,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.metrics is not None:
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
-        self.finalize.steps.append(Finalize(group_by=self.group_by))
+        self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
         if isinstance(self.template, TemplatesList):
