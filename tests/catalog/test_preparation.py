@@ -27,7 +27,7 @@ num_par = 1  # num of parallel executions
 logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
-# the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,9,10,11
+# the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
 modulo = 0
 if num_par > 1:
     all_preparation_files = [
@@ -62,7 +62,6 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                                 f"Skipping file {file} due to ignored error {e}"
                             )
                             continue
-                        self.assertTrue(False)
                         raise
                     logger.info(f"Testing preparation file: {file} passed")
                     self.assertTrue(True)
