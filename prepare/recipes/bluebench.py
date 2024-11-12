@@ -66,7 +66,7 @@ default_args = {
     "template_card_index": 1,
     "max_train_instances": 1000,
     "max_validation_instances": 1000,
-    "max_test_instances": 100,
+    "max_test_instances": 1000,
 }
 
 
@@ -74,6 +74,12 @@ def prepapre_recipe(default_args, specific_args):
     recipe = {}
     recipe.update(default_args)
     recipe.update(specific_args)
+
+    for parent_card in subsets:  # Iterate directly through keys
+        if parent_card in recipe["card"]:
+            recipe["max_test_instances"] //= len(subsets[parent_card])
+            break  # Exit the loop once a match is found
+
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
     return StandardRecipe(**recipe)
