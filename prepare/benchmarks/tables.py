@@ -21,8 +21,8 @@ from unitxt.struct_data_operators import (
     SerializeTableAsMarkdown,
 )
 
-# usage: tables.py -models MODELS -out_path OUT_PATH [-num_demos NUM_DEMOS] [-cards CARDS] [-serializers SERIALIZERS]
-# [-num_augmentors NUM_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS] [-debug DEBUG]
+# usage: python prepare/benchmarks/tables.py -models MODELS -out_path OUT_PATH [-cards CARDS] [-serializers SERIALIZERS]
+# [-num_augmentors NUM_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS] [-num_demos NUM_DEMOS] [-debug DEBUG]
 
 # constants and params
 SERIALIZERS_MAP = {
@@ -66,7 +66,7 @@ parser.add_argument(
     required=False,
     default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,"
     "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
-)  # TODO: Scigen is dropped for now because it is implemented with 1 judge - make it 3?
+)  # TODO: Scigen is dropped for now because it is implemented with 1 judge. Should we make it 3?
 parser.add_argument(
     "-serializers",
     "--serializers",
@@ -107,10 +107,11 @@ random.seed(settings.seed)
 rand_augment_combinations = random.sample(
     augment_combinations, min(num_augmentors, len(augment_combinations))
 )
-all_augment = [[None]] + [
-    list(i) for i in rand_augment_combinations
-]  # TODO: Do we want other augmentations/sampling?
+all_augment = (
+    [[None]] + [list(i) for i in rand_augment_combinations]
+)  # TODO: Do we want other augmentations/sampling? Also we cannot augment with params for now
 
+# TODO: Yifan - you can decide if to send runs in parallel or not (the loops exist for each case)
 # running benchmark
 # print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
 with settings.context(
