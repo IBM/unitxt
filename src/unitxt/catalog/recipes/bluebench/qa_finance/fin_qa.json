@@ -7,5 +7,6 @@
     "max_train_instances": 1000,
     "max_validation_instances": 1000,
     "max_test_instances": 100,
-    "card": "cards.fin_qa"
+    "card": "cards.fin_qa",
+    "format": "formats.chat_api"
 }

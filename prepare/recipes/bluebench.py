@@ -76,7 +76,7 @@ def prepapre_recipe(default_args, specific_args):
     recipe.update(specific_args)
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
-    return StandardRecipe(**recipe)
+    return StandardRecipe(**recipe, format="formats.chat_api")
 
 
 ### Reasoning
@@ -123,7 +123,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.empty",
     "metrics": [
-        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct_ibm_genai_template_arena_hard"
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.watsonx.template_arena_hard"
     ],
 }
 recipe = prepapre_recipe(default_args, ingridients)
