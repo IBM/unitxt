@@ -63,6 +63,7 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                             )
                             continue
                         self.assertTrue(False)
+                        raise
                     logger.info(f"Testing preparation file: {file} passed")
                     self.assertTrue(True)
 
@@ -82,8 +83,6 @@ class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
                 logger.critical(f"Testing preparation file '{file}' failed:")
                 raise e
 
-        logger.critical(
-            f"Preparation times table for the {len(times)} files that completed successfully:"
-        )
+        logger.critical(f"Preparation times table for {len(times)} files:")
         times = dict(sorted(times.items(), key=lambda item: item[1], reverse=True))
         print_dict(times, log_level="critical")
