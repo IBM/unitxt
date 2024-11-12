@@ -2,14 +2,14 @@ from unitxt import add_to_catalog
 from unitxt.standard import StandardRecipe
 
 subsets = {  # the key must appear in the card name
-    "legalbench": [
+    "cards.legalbench": [
         "abercrombie",
         "proa",
         "function_of_decision_section",
         "international_citizenship_questions",
         "corporate_lobbying",
     ],
-    "mmlu_pro": [
+    "cards.mmlu_pro": [
         "history",
         "law",
         "health",
@@ -25,7 +25,7 @@ subsets = {  # the key must appear in the card name
         "computer_science",
         "engineering",
     ],
-    "bbq": [
+    "cards.safety.bbq": [
         "Age",
         "Disability_status",
         "Gender_identity",
@@ -38,9 +38,9 @@ subsets = {  # the key must appear in the card name
         "SES",
         "Sexual_orientation",
     ],
-    "CFPB.product": ["watsonx", "2023"],
-    "universal_ner": ["en.ewt"],  # , "en.pud"],
-    "flores_101": [
+    "cards.CFPB.product.watsonx": ["watsonx", "2023"],
+    "cards.universal_ner": ["en.ewt"],  # , "en.pud"],
+    "cards.mt.flores_101": [
         "ara_eng",
         "deu_eng",
         "eng_ara",
