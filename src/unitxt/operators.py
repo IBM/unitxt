@@ -2151,7 +2151,15 @@ class CollateInstances(StreamOperator):
             batch = stream[i : i + self.batch_size]
             new_instance = {}
             for a_field in batch[0]:
-                new_instance[a_field] = [instance[a_field] for instance in batch]
+                if a_field == "data_classification_policy":
+                    flattened_list = [
+                        classification
+                        for instance in batch
+                        for classification in instance[a_field]
+                    ]
+                    new_instance[a_field] = sorted(set(flattened_list))
+                else:
+                    new_instance[a_field] = [instance[a_field] for instance in batch]
             yield new_instance
 
     def verify(self):

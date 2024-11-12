@@ -2564,17 +2564,21 @@ references (str):
 
     def test_collate_instance(self):
         inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 2},
-            {"a": 3, "b": 2},
-            {"a": 4, "b": 2},
-            {"a": 5, "b": 2},
+            {"a": 1, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 2, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 3, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 4, "b": 2, "data_classification_policy": ["private"]},
+            {"a": 5, "b": 2, "data_classification_policy": ["public"]},
         ]
 
         targets = [
-            {"a": [1, 2], "b": [2, 2]},
-            {"a": [3, 4], "b": [2, 2]},
-            {"a": [5], "b": [2]},
+            {"a": [1, 2], "b": [2, 2], "data_classification_policy": ["public"]},
+            {
+                "a": [3, 4],
+                "b": [2, 2],
+                "data_classification_policy": ["private", "public"],
+            },
+            {"a": [5], "b": [2], "data_classification_policy": ["public"]},
         ]
 
         check_operator(

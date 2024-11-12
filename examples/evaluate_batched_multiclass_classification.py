@@ -46,7 +46,8 @@ class EnumeratedListSerializer(SingleTypeSerializer):
 
 
 task = Task(
-    __description__="This is a batched multi-class classification task, where multiple texts are classified to a given set of options simultenously.",
+    __description__="""This is a batched multi-class classification task, where multiple 'texts' are classified to a given set of 'classes' in one inference call.
+    The `type_of_class` field defines the type of classiication (e.g. "sentiment", "emotion", "topic" ) """,
     input_fields={
         "texts": EnumeratedList,
         "text_type": str,
@@ -102,10 +103,6 @@ for model_name in [
                 Rename(field_to_field={"text": "texts", "label": "labels"}),
                 Copy(field="text_type/0", to_field="text_type"),
                 Copy(field="classes/0", to_field="classes"),
-                Copy(
-                    field="data_classification_policy/0",
-                    to_field="data_classification_policy",
-                ),
                 Copy(field="type_of_class/0", to_field="type_of_class"),
             ]
         )
