@@ -25,7 +25,7 @@ with settings.context(
 
     benchmark = Benchmark(subsets=subsets)
 
-    data = list(benchmark()["test"])
+    data = benchmark()["test"].to_dataset()
 
     inference_model = LMMSEvalInferenceEngine(
         model_type="llava",

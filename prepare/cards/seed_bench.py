@@ -7,8 +7,8 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/SEED-Bench"),
     preprocess_steps=[
-        ToRGB(field="image", process_every_value=True),
         ToImage(field="image", to_field="context", process_every_value=True),
+        ToRGB(field="context", process_every_value=True),
         ListFieldValues(
             fields=["choice_a", "choice_b", "choice_c", "choice_d"], to_field="choices"
         ),
