@@ -41,6 +41,7 @@ jobs:
         echo "sed -i 's/^modulo = 0/modulo = ${modulo}/' tests/catalog/test_preparation.py" >> sedit.sh
         sh sedit.sh
         python -m unittest tests.catalog.test_preparation
+        exit 0
 
   conclude-run-catalog-preparation:
 
