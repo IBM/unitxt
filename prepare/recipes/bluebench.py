@@ -143,12 +143,12 @@ add_to_catalog(
 ### News_classification
 
 ingridients = {
-    "card": "cards.20_newsgroups",
+    "card": "cards.20_newsgroups_short",
     "template": "templates.classification.multi_class.bluebench",
 }
 recipe = prepare_recipe(default_args, ingridients)
 add_to_catalog(
-    recipe, "recipes.bluebench.news_classification.20_newsgroups", overwrite=True
+    recipe, "recipes.bluebench.news_classification.20_newsgroups_short", overwrite=True
 )
 
 
