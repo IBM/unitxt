@@ -2,8 +2,27 @@ import json
 import os
 from pathlib import Path
 
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import JsonLexer
 from unitxt.artifact import Artifact
 from unitxt.utils import load_json
+
+
+def dict_to_syntax_highlighted_html(nested_dict):
+    # Convert the dictionary to a JSON string with indentation
+    json_str = json.dumps(nested_dict, indent=4)
+    # Initialize the HTML formatter with no additional wrapper
+    formatter = HtmlFormatter(nowrap=True)
+    # Apply syntax highlighting
+    highlighted_code = highlight(json_str, JsonLexer(), formatter)
+    # Wrap the highlighted code with the required HTML structure
+    return (
+        '<div class="highlight-json notranslate">'
+        '<div class="highlight"><pre><span></span>'
+        + highlighted_code
+        + "</pre></div></div>"
+    )
 
 
 def write_title(title, label):
@@ -72,11 +91,10 @@ def make_content(artifact, label, all_labels):
         result += ",  ".join(tags) + "\n\n"
     result += f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
 
-    result += "   .. code-block:: json\n\n      "
+    result += "   .. raw:: html\n\n      "
     result += (
-        json.dumps(artifact, sort_keys=True, indent=4, ensure_ascii=False).replace(
-            "\n", "\n      "
-        )
+        "    "
+        + dict_to_syntax_highlighted_html(artifact).replace("\n", "\n    ")
         + "\n"
     )
 
@@ -101,7 +119,12 @@ def make_content(artifact, label, all_labels):
     references = []
     for label in all_labels:
         label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
-        if f'"{label_no_catalog}"' in result:
+        if f"&quot;{label_no_catalog}&quot;" in result:
+            label_replace_dot_by_hyphen = label.replace(".", "-")
+            result = result.replace(
+                f"&quot;{label_no_catalog}&quot;",
+                f'&quot;<a class="reference internal" href="{label}.html#{label_replace_dot_by_hyphen}"><span class="std std-ref">{label_no_catalog}</span></a>&quot;',
+            )
             references.append(f":ref:`{label_no_catalog} <{label}>`")
     if len(references) > 0:
         result += "\nReferences: " + ", ".join(references)
