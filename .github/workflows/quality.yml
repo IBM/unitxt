@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-quality.yml
+  cancel-in-progress: true
+
 jobs:
   verify-pre-commit-executed:
     runs-on: ubuntu-latest

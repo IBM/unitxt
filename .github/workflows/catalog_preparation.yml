@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ matrix.modulo }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-${{ matrix.modulo }}-catalog_preparation.yml
   cancel-in-progress: true
 
 jobs:
