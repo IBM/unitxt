@@ -9,8 +9,12 @@ on:
   release:
     types: [published]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
-   run-full-tests-suit:
+   examples:
 
      runs-on: ubuntu-latest
      env:

@@ -61,7 +61,7 @@
         "news_classification": {
             "__type__": "benchmark",
             "subsets": {
-                "20_newsgroups": "recipes.bluebench.news_classification.20_newsgroups"
+                "20_newsgroups_short": "recipes.bluebench.news_classification.20_newsgroups_short"
             }
         },
         "product_help": {
