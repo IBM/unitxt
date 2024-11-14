@@ -1,4 +1,3 @@
-import json
 import os
 import re
 from functools import lru_cache
@@ -6,18 +5,20 @@ from pathlib import Path
 
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import JsonLexer
+from pygments.lexers import YamlLexer
 from unitxt.artifact import Artifact
+from unitxt.text_utils import print_dict_as_yaml
 from unitxt.utils import load_json
 
 
 def dict_to_syntax_highlighted_html(nested_dict):
     # Convert the dictionary to a JSON string with indentation
-    json_str = json.dumps(nested_dict, indent=4)
+    # json_str = json.dumps(nested_dict, indent=4)
+    yaml_str = print_dict_as_yaml(nested_dict)
     # Initialize the HTML formatter with no additional wrapper
     formatter = HtmlFormatter(nowrap=True)
     # Apply syntax highlighting
-    return highlight(json_str, JsonLexer(), formatter)
+    return highlight(yaml_str, YamlLexer(), formatter)
 
 
 def write_title(title, label):
@@ -144,7 +145,7 @@ def make_content(artifact, label, all_labels):
         )
 
     for type_name in type_elements:
-        source = f'<span class="nt">&quot;__type__&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;{type_name}&quot;</span>'
+        source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
         target = artifact_type_to_link(type_name)
         html_for_dict = html_for_dict.replace(
             source,
