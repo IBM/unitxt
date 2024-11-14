@@ -6,8 +6,12 @@ on:
     pull_request:
       branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-test_helm.yml
+    cancel-in-progress: true
+
 jobs:
-    test-helm:
+    helm:
 
       runs-on: ubuntu-latest
       env:

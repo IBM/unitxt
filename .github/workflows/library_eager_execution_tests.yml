@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-library_eager_execution.yml
+    cancel-in-progress: true
+
 jobs:
-  run-full-tests-suit:
+  eager:
 
     runs-on: ubuntu-latest
     env:

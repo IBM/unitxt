@@ -9,8 +9,12 @@ on:
   release:
     types: [published]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-examples_tests.yml
+    cancel-in-progress: true
+
 jobs:
-   run-full-tests-suit:
+   examples:
 
      runs-on: ubuntu-latest
      env:

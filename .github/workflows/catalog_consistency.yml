@@ -6,8 +6,12 @@ on:
    pull_request:
      branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number }}-catalog_consistency.yml
+    cancel-in-progress: true
+
 jobs:
-   run-catalog-consistency:
+   consistency:
 
      runs-on: ubuntu-latest
      env:
