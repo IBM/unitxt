@@ -63,7 +63,7 @@ task = Task(
 
 template = InputOutputTemplate(
     input_format="Classify each of the texts to its corresponding {type_of_class} from one of these options:\n{classes}\nReturn for each index the correspond class in a separate line.\nTexts:\n{texts}",
-    target_prefix="Answer:\n",
+    #   target_prefix="Answer:\n",
     output_format="{labels}",
     postprocessors=[PostProcess(ParseEnumeratedList())],
     serializer=MultiTypeSerializer(serializers=[EnumeratedListSerializer()]),
@@ -73,7 +73,7 @@ df = pd.DataFrame(
 )
 
 for model_name in [
-    "ibm/granite-8b-instruct-preview-4k",
+    "ibm/granite-3-8b-instruct",
     "meta-llama/llama-3-8b-instruct",
 ]:
     if model_name.startswith("ibm"):
@@ -121,11 +121,14 @@ for model_name in [
 
         test_dataset = dataset["test"]
 
-        from unitxt.inference import IbmGenAiInferenceEngine
+        # inference_model = IbmGenAiInferenceEngine(
+        #    model_name=model_name, max_new_tokens=1024
+        # )
 
-        inference_model = IbmGenAiInferenceEngine(
-            model_name=model_name, max_new_tokens=1024
-        )
+        from unitxt.inference import WMLInferenceEngine
+
+        inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=1024)
+
         predictions = inference_model.infer(test_dataset)
 
         evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
