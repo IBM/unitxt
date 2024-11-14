@@ -1,34 +1,48 @@
 name: Test Catalog Preparation
 
 on:
-   push:
-     branches: [ main ]
-   pull_request:
-     branches: [ main ]
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+    
 jobs:
-   run-catalog-preparation:
+  preparation:
 
-     runs-on: ubuntu-latest
-     env:
-       OS: ubuntu-latest
-       UNITXT_DEFAULT_VERBOSITY: error
-       DATASETS_VERBOSITY: error
-       HF_HUB_VERBOSITY: error
-       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
-       TQDM_DISABLE: "True"
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      UNITXT_DEFAULT_VERBOSITY: error
+      DATASETS_VERBOSITY: error
+      HF_HUB_VERBOSITY: error
+      HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+      TQDM_DISABLE: "True"
 
+    strategy:
+      matrix:
+        modulo: [0,1,2,3,4,5,6,7]
 
-     steps:
-     - uses: actions/checkout@v4
+    steps:
+    - uses: actions/checkout@v4
 
-     - uses: actions/setup-python@v5
-       with:
-         python-version: '3.9'
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.9'
 
-     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-     - run: uv pip install --system ".[tests]"
-     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
+    - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+    - run: uv pip install --system ".[tests]"
+    - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
-     - name: Run Tests
-       run: python -m unittest discover -s tests/catalog -p "test_*.py"
+    - name: Run Tests
+      run: |
+        modulo="${{ matrix.modulo }}"
+        echo "modulo=${modulo}" >> $GITHUB_STEP_SUMMARY
+        echo "sed -i 's/^num_par = 1 /num_par = 8 /' tests/catalog/test_preparation.py" > sedit.sh
+        echo "sed -i 's/^modulo = 0/modulo = ${modulo}/' tests/catalog/test_preparation.py" >> sedit.sh
+        sh sedit.sh
+        python -m unittest tests.catalog.test_preparation
+
