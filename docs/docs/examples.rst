@@ -50,6 +50,10 @@ It also shows how to use preprocessing steps to align the raw input of the datas
 
 Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open QA task in catalog <catalog.tasks.qa.open>`, :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`.
 
+
+Evaluation usecases
+-----------------------
+
 Evaluate the impact of different templates and in-context learning demonstrations
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -89,6 +93,20 @@ This example demonstrates how to evaluate a dataset using a pool of templates an
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_templates_num_demos.py>`_
 
 Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
+
+Long Context
++++++++++++++++++++++++++++++
+
+This example explores the effect of long context in classification.  
+It converts a standard multi class classification dataset (sst2 sentiment classification),
+where single sentence texts are classified one by one, to a dataset
+where multiple sentences are classified using a single LLM call.  
+It compares the f1_micro in both approaches on two models.
+It uses serializers to verbalize and enumerated list of multiple sentences and labels.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_batched_multiclass_classification.py>`_
+
+Related documentation:  :ref:`Sst2 dataset card in catalog <catalog.cards.sst2>` :ref:`Types and Serializers Guide <types_and_serializers>`. 
 
 Construct a benchmark of multiple datasets and obtain the final score
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -246,4 +264,5 @@ This example show how to define new data types as well as the way these data typ
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`_
 
 Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.
+
 
