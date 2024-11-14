@@ -44,6 +44,11 @@ TABLE_AUGMENTORS = [
     # "shuffle_cols_names",
     # "mask_cols_names",
 ]
+DESCRIPTIVE_DATASETS = {
+    "scigen",
+    "numeric_nlg",
+    "qtsumm",
+}  # for making max pred tokens bigger
 
 # TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
 DEMOS_POOL_SIZE = 10
@@ -64,9 +69,9 @@ parser.add_argument(
     "--cards",
     type=str,
     required=False,
-    default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,"
+    default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,scigen,"
     "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
-)  # TODO: Scigen is dropped for now because it is implemented with 1 judge. Should we make it 3?
+)  # TODO: Scigen is implemented with 1 judge. Should we make it 3?
 parser.add_argument(
     "-serializers",
     "--serializers",
@@ -120,6 +125,14 @@ with settings.context(
     for model in models_parsed:
         model_name = model.split("/")[-1]
 
+        format = "formats.empty"
+        if "llama" in model:
+            format = (
+                "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
+            )
+        elif "mixtral" in model:
+            format = "formats.models.mistral.instruction.all_demos_in_one_turn"
+
         # creating the subsets dynamically
         subsets = {}
         for card in cards_parsed:
@@ -144,6 +157,7 @@ with settings.context(
                         else None,
                         num_demos=num_demos,
                         demos_pool_size=DEMOS_POOL_SIZE,
+                        format=format,
                         augmentor=[None]
                         if augment == [None]
                         else [
@@ -172,6 +186,11 @@ with settings.context(
                 out_path
             ):  # avoid running the same config twice
                 continue
+            max_pred_tokens = (
+                300
+                if any(s in subset_name for s in DESCRIPTIVE_DATASETS)
+                else max_pred_tokens
+            )
 
             benchmark = Benchmark(
                 max_samples_per_subset=MAX_PREDICTIONS if not debug else 5,
