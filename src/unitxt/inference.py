@@ -2550,16 +2550,22 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
-            response = await self._completion(
-                model=self.model,
-                messages=messages,
-                seed=self.seed,
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-                top_p=self.top_p,
-                max_retries=self.max_retries,
-                caching=True,
-            )
+            try:
+                response = await self._completion(
+                    model=self.model,
+                    messages=messages,
+                    seed=self.seed,
+                    max_tokens=self.max_tokens,
+                    temperature=self.temperature,
+                    top_p=self.top_p,
+                    max_retries=self.max_retries,
+                    caching=True,
+                )
+            except Exception as e:
+                raise RuntimeError(
+                    f"Error inferring the following instance:\n{instance}"
+                ) from e
+
             usage = response.get("usage", {})
             return TextGenerationInferenceOutput(
                 prediction=response["choices"][0]["message"]["content"],
