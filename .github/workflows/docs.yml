@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    compile-docs:
+    docs:
 
       runs-on: ubuntu-latest
       env:

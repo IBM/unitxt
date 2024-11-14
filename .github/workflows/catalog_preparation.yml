@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-  run-catalog-preparation:
+  preparation:
 
     runs-on: ubuntu-latest
     env:

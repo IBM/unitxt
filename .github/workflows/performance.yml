@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-  run-performance-tests:
+  performance:
 
     runs-on: ubuntu-latest
     env:

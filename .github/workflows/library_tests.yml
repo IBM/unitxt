@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-  run-full-tests-suit:
+  unittests:
 
     runs-on: ubuntu-latest
     env:

@@ -11,7 +11,7 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    test-helm:
+    helm:
 
       runs-on: ubuntu-latest
       env:
