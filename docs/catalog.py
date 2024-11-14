@@ -12,8 +12,7 @@ from unitxt.utils import load_json
 
 
 def dict_to_syntax_highlighted_html(nested_dict):
-    # Convert the dictionary to a JSON string with indentation
-    # json_str = json.dumps(nested_dict, indent=4)
+    # Convert the dictionary to a YAML string with indentation
     yaml_str = print_dict_as_yaml(nested_dict)
     # Initialize the HTML formatter with no additional wrapper
     formatter = HtmlFormatter(nowrap=True)
@@ -121,8 +120,6 @@ def make_content(artifact, label, all_labels):
     type_elements = get_all_type_elements(artifact)
 
     html_for_dict = dict_to_syntax_highlighted_html(artifact)
-
-    all_labels = sorted(all_labels, key=len, reverse=True)
 
     pairs = []
     references = []
@@ -345,6 +342,8 @@ class CatalogDocsBuilder:
             for catalog_entry in catalog_entries
             if catalog_entry.is_json()
         }
+
+        all_labels = sorted(all_labels, key=len, reverse=True)
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
         for catalog_entry in catalog_entries:
