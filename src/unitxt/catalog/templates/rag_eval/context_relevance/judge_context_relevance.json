@@ -10,5 +10,5 @@
     ],
     "reference": "{number_val}",
     "target_prefix": "Answer: ",
-    "instruction": "You are given a question and the corresponding evidence. Please determine whether the evidence contain the answer to the question. Answer with only yes/no.\n\n"
+    "instruction": "You are given a question and the corresponding evidence. Please determine whether the evidence contain the answer to the question.  Answer only \"Yes\" or \"No\"..\n\n"
 }

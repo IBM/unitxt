@@ -9,5 +9,5 @@
     ],
     "reference": "{number_val}",
     "target_prefix": "Answer: ",
-    "instruction": "Given the following question and document, you must analyze the provided document and determine whether it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question. Answer with only yes/no.\n"
+    "instruction": "Given the following question and document, you must analyze the provided document and determine whether it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question.  Answer only \"Yes\" or \"No\"..\n"
 }
