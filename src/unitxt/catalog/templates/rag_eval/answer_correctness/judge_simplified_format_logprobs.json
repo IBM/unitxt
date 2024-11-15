@@ -9,5 +9,5 @@
     ],
     "reference": "{number_val}",
     "target_prefix": "Answer: ",
-    "instruction": "You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the \"Ground-truth answer\" and the \"Prediction\" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction.  Answer only \"Yes\" or \"No\"..\n"
+    "instruction": "You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the \"Ground-truth answer\" and the \"Prediction\" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction. Answer with only yes/no.\n"
 }

@@ -9,5 +9,5 @@
     ],
     "reference": "{number_val}",
     "target_prefix": "Answer: ",
-    "instruction": "You are given a question, some corresponding evidence, the ground truth answer and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence and ground truth answer.  Answer only \"Yes\" or \"No\"..\n"
+    "instruction": "You are given a question, some corresponding evidence, the ground truth answer and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence and ground truth answer. Answer with only yes/no.\n"
 }

@@ -128,26 +128,26 @@ Prediction: {answer}
 # Instructions
 ###############
 
-context_relevance_instructions = """You are given a question and the corresponding evidence. Please determine whether the evidence contain the answer to the question.  Answer only "Yes" or "No"..\n
+context_relevance_instructions = """You are given a question and the corresponding evidence. Please determine whether the evidence contain the answer to the question. Answer with only yes/no.\n
 """
 
-context_relevance_instructions_ares = """Given the following question and document, you must analyze the provided document and determine whether it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question.  Answer only "Yes" or "No"..\n"""
+context_relevance_instructions_ares = """Given the following question and document, you must analyze the provided document and determine whether it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question. Answer with only yes/no.\n"""
 
-correctness_instructions_instruct_qa_full = """System prompt: You are CompareGPT, a machine to verify the correctness of predictions.  Answer only "Yes" or "No"..
+correctness_instructions_instruct_qa_full = """System prompt: You are CompareGPT, a machine to verify the correctness of predictions. Answer with only yes/no.
 You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction, including numbers and dates. You must answer "no" if there are any specific details in the ground-truth answer that are not mentioned in the prediction. There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.\n
 """
 
-correctness_instructions_simplified = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction.  Answer only "Yes" or "No"..\n"""
+correctness_instructions_simplified = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction. Answer with only yes/no.\n"""
 
 
-faithfilness_instructions_with_question_full = """System prompt: You are CompareGPT, a machine to verify the groundedness of predictions.  Answer only "Yes" or "No"..
+faithfilness_instructions_with_question_full = """System prompt: You are CompareGPT, a machine to verify the groundedness of predictions. Answer with only yes/no.
 You are given a question, the corresponding evidence and a prediction from a model. Compare the "Prediction" and the "Evidence" to determine whether all the information of the prediction is present in the evidence or can be inferred from the evidence. You must answer "no" if there are any specific details in the prediction that are not mentioned in the evidence or cannot be inferred from the evidence.\n
 """
 
 faithfilness_instructions_with_question_simplified = """You are given a question, the corresponding evidence and a prediction from a model. Compare the "Prediction" and the "Evidence" to determine whether all the information of the prediction is present in the evidence or can be inferred from the evidence. You must answer "no" if there are any specific details in the prediction that are not mentioned in the evidence or cannot be inferred from the evidence. Answer only "Yes" or "No".\n
 """
 
-faithfulness_instructions_no_question_full = """System prompt: You are CompareGPT, a machine to verify the groundedness of predictions.  Answer only "Yes" or "No"..
+faithfulness_instructions_no_question_full = """System prompt: You are CompareGPT, a machine to verify the groundedness of predictions. Answer with only yes/no.
 You are given a grounding evidence and a prediction from a model. Compare the "Prediction" and the "Evidence" to determine whether all the information of the prediction is present in the evidence or can be inferred from the evidence. You must answer "no" if there are any specific details in the prediction that are not mentioned in the evidence or cannot be inferred from the evidence.\n
 """
 
@@ -156,14 +156,14 @@ faithfulness_instructions_no_question_simplified = """You are given a grounding 
 faithfulness_instructions_no_question_simplified_explained = """You are given an "Evidence" and a "Prediction" from a model. Compare the "Prediction" and the "Evidence" texts to determine whether all the information of the "Prediction" is present in the "Evidence" or can be inferred from the "Evidence". You must answer "No" if there are any specific details in the "Prediction" that are not mentioned in the "Evidence" or cannot be inferred from the "Evidence". Answer only "Yes" or "No". Then, provide an explanation to your answer.
 """
 
-answer_relevance_instructions = """You are given a question and a prediction from a model. Please determine whether the prediction answers the question.  Answer only "Yes" or "No".\n
+answer_relevance_instructions = """You are given a question and a prediction from a model. Please determine whether the prediction answers the question. Answer with only yes/no.\n
 """
 
-correctness_referenceless_instructions_simple = """You are given a question, some corresponding evidence and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence.  Answer only "Yes" or "No"..\n"""
+correctness_referenceless_instructions_simple = """You are given a question, some corresponding evidence and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence. Answer with only yes/no.\n"""
 
-correctness_reference_based_with_context_instructions_simple = """You are given a question, some corresponding evidence, the ground truth answer and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence and ground truth answer.  Answer only "Yes" or "No"..\n"""
+correctness_reference_based_with_context_instructions_simple = """You are given a question, some corresponding evidence, the ground truth answer and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence and ground truth answer. Answer with only yes/no.\n"""
 
-correctness_reference_based_no_context_instructions_simple = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction is a correct and complete answer to the question.  Answer only "Yes" or "No"..\n"""
+correctness_reference_based_no_context_instructions_simple = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction is a correct and complete answer to the question. Answer with only yes/no.\n"""
 
 correctness_referenceless_instructions_explain_first = (
     "You are given a question, some corresponding evidence and a prediction from a model. "
@@ -179,7 +179,7 @@ correctness_referenceless_instructions_explain_first = (
 correctness_reference_based_no_context_instructions_loose = """You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
 There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
 The prediction must contain all the important information presented in the ground truths, but doesn't have to fully match it.
- Answer only "Yes" or "No"..\n"""
+Answer with only yes/no.\n"""
 
 
 ####################
