@@ -14,7 +14,7 @@ import random
 
 class EvalAssistLLMAsJudgeDirect(BulkInstanceMetric):
     inference_engine: InferenceEngine
-    criteria_or_criterias: Optional[Union[CriteriaWithOptions, list[CriteriaWithOptions]]] = None
+    criteria_or_criterias: CriteriaWithOptions = None
     assessment_template : Template = None
     summarization_template : Template = None
     option_selection_template : Template = None
@@ -110,19 +110,25 @@ class EvalAssistLLMAsJudgeDirect(BulkInstanceMetric):
         self.score_prefix = self.evaluator_name.value + '-'
 
         if self.criteria_or_criterias is None:
-           # Get it from the task data
-           # TODO: implement verify to check that the criteria was provided
-            criteria_dicts = [task_data_instance["criteria"] for task_data_instance in task_data]
-            criterias = [CriteriaWithOptions.from_dict(criteria_dict) for criteria_dict in criteria_dicts]
+            # TODO: implement verify to check that the criteria was provided
+            self.logger.info("Reading criteria from the task_data")
+            criteria_dicts = [{
+                **task_data_instance["criteria"],
+                "__type__": "criteria_with_options"
+            } for task_data_instance in task_data]
+            for criteria_dict in criteria_dicts:
+                criteria_dict['options'] = [{
+                    **option,
+                    "__type__": "criteria_option"
+                } for option in criteria_dict['options']]
+            criterias = [fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts]
         # criteria is in passes in the constructor
         elif isinstance(self.criteria_or_criterias, CriteriaWithOptions):
+            self.logger.info("Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions")
             criterias: list[CriteriaWithOptions] = [self.criteria_or_criterias] * evaluations_count
-        elif isinstance(self.criteria_or_criterias, str):
-            criteria: CriteriaWithOptions = fetch_artifact(self.criteria_or_criterias)[0]
-            criteria.options = [CriteriaOption.from_dict(option) for option in criteria.options]
-            criterias = [criteria] * evaluations_count
         else:
             criterias = self.criteria_or_criterias
+            
         assessment_task = self.assessment_task if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.assessment_task_prometheus
         summarization_task = self.summarization_task
         option_selection_task = self.option_selection_task  if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.option_selection_task_prometheus
