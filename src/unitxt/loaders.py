@@ -41,13 +41,13 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
+from datasets import IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import OptionalField
 from .fusion import FixedFusion
-from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
@@ -244,9 +244,6 @@ class LoadHF(Loader):
         if self.split is not None:
             dataset = {self.split: dataset}
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
-
         return dataset
 
     def load_dataset(self):
@@ -278,22 +275,9 @@ class LoadHF(Loader):
             for split in dataset.keys():
                 dataset[split] = dataset[split].to_iterable_dataset()
         else:
-            dataset = {self.split: dataset}
-
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+            dataset = {self.split: dataset.to_iterable_dataset()}
 
         return dataset
-
-    def limited_load(self, dataset):
-        self.log_limited_loading()
-        return {
-            split_name: ReusableGenerator(
-                generator=itertools.islice,
-                gen_argv=[dataset[split_name], self.get_limit()],
-            )
-            for split_name in dataset
-        }
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
@@ -305,7 +289,7 @@ class LoadHF(Loader):
                 ["public"], "when loading from Huggingface hub"
             )
 
-    def load_iterables(self):
+    def load_iterables(self) -> IterableDatasetDict:
         try:
             dataset = self.stream_dataset()
         except (
@@ -313,8 +297,15 @@ class LoadHF(Loader):
         ):  # streaming is not supported for zipped files so we load without streaming
             dataset = self.load_dataset()
 
+        if self.filtering_lambda is not None:
+            dataset = self.filter_load(dataset)
+
         if self.get_limit() is not None:
-            return self.limited_load(dataset=dataset)
+            self.log_limited_loading()
+            return {
+                split_name: dataset[split_name].take(self.get_limit())
+                for split_name in dataset
+            }
 
         return dataset
 
