@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 from unitxt import add_to_catalog
 from unitxt.evalassist_llm_as_judge_direct import EvalAssistLLMAsJudgeDirect
 from unitxt.evalassist_llm_as_judge_pairwise import EvalAssistLLMAsJudgePairwise
@@ -23,7 +23,7 @@ def get_evaluator(
         evaluator_type: EvaluatorTypeEnum,
         credentials: Optional[dict[str,str]] = None,
         provider: Optional[str] = None,
-        inference_engine_params: Optional[dict[str,any]] = None) -> EvalAssistLLMAsJudgeDirect:
+        inference_engine_params: Optional[dict[str,any]] = None) ->  EvalAssistLLMAsJudgeDirect | EvalAssistLLMAsJudgePairwise:
     
     evaluator_metadata = get_evaluator_metadata(name) #, evaluator_type)
 

@@ -10,8 +10,6 @@ from unitxt import get_logger
 from .templates import Template
 from .task import Task
 from .api import infer, select
-from typing import Optional, Union
-
 
 def rank_indexes(numbers):
     # Generate the initial list of indices
@@ -34,7 +32,7 @@ def rank_indexes(numbers):
 
 class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
     inference_engine: InferenceEngine
-    criteria_or_criterias: Optional[Union[str, Criteria, list[Criteria]]] = None
+    criteria_or_criterias: Criteria = None
     assessment_template : Template = None
     summarization_template : Template = None
     option_selection_template : Template = None
@@ -121,20 +119,22 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
         self.score_prefix = self.evaluator_name.value + '-'
 
         format = OpenAIFormat() if self.model_family == ModelFamilyEnum.GPT else SystemFormat()
-
         if self.criteria_or_criterias is None:
-            #Get it from the task data
             # TODO: implement verify to check that the criteria was provided
-            criteria_dicts = [task_data_instance["criteria"] for task_data_instance in task_data]
-            criterias = [Criteria.from_dict(criteria_dict) for criteria_dict in criteria_dicts]
+            self.logger.info("Reading criteria from the task_data")
+            criteria_dicts = [{
+                **task_data_instance["criteria"],
+                "__type__": "criteria"
+            } for task_data_instance in task_data]
+            criterias = [fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts]
         # criteria is in passes in the constructor
         elif isinstance(self.criteria_or_criterias, Criteria):
+            self.logger.info("Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions")
             criterias: list[Criteria] = [self.criteria_or_criterias] * contests_count
-        elif isinstance(self.criteria_or_criterias, str):
-            criteria: Criteria = fetch_artifact(self.criteria_or_criterias)[0]
-            criterias = [criteria] * contests_count
         else:
+            self.logger.info("Reading criteria from self. Criteria is already a list")
             criterias = self.criteria_or_criterias
+
         assessment_task = self.assessment_task if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.assessment_task_prometheus
         summarization_task = self.summarization_task
         option_selection_task = self.option_selection_task  if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.option_selection_task_prometheus
@@ -207,6 +207,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
                 template=self.assessment_template,
                 return_data=True,
                 format=format)
+            
             assessment_prompts: list[str] = [instance['source'] for instance in assessment_outputs_dataset]
             assessment_outputs: list[str] = [instance['prediction'] for instance in assessment_outputs_dataset]
             
