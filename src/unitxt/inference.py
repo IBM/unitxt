@@ -1410,7 +1410,7 @@ class IbmGenAiInferenceEngine(
                 ),
             ),
             total=len(texts),
-            desc="Completions",
+                desc="Getting option log probs with with BAM",
         ))
 
         scores = [
@@ -2045,7 +2045,7 @@ class WMLInferenceEngineBase(
                     },
                 ),
                 total=len(texts),
-                desc="Completions",
+                desc="Getting option log probs with with Watsonx",
             )
         )
 
