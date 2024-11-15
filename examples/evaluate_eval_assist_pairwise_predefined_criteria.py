@@ -7,9 +7,9 @@ from unitxt.text_utils import print_dict
 logger = get_logger()
 data = {
     "test": [
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"}
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
     ]
 }
 
@@ -17,7 +17,7 @@ criteria = "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.tempe
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy= ["public"]),
     task=Task(
-        input_fields={"context": str},
+        input_fields={"context": dict},
         reference_fields={},
         prediction_type=str,
         metrics = [f"metrics.llm_as_judge.eval_assist.pairwise_comparison.llama3_1_70b[criteria_or_criterias={criteria}]"]

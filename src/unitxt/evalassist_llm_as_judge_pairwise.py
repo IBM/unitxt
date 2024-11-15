@@ -3,6 +3,7 @@ import random
 import re
 from unitxt.artifact import fetch_artifact
 from unitxt.eval_assist_constants import Criteria, EvaluatorNameEnum, ModelFamilyEnum, OptionSelectionStrategyEnum
+from unitxt.eval_assist_utils import get_parsed_context
 from unitxt.formats import OpenAIFormat, SystemFormat
 from .metrics import BulkInstanceMetric
 from .inference import InferenceEngine
@@ -100,7 +101,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
         evaluations_count = len(predictions)
         combination_indexes = list(itertools.combinations(range(evaluations_count), 2))
         contests_count = len(combination_indexes)
-        per_response_results = {f"{i+1}": {'summaries': [], 'contest_results': [], 'selections': [], 'compared_to': [], "completions": [], "positional_bias_completions": []} for i in range(evaluations_count)}
+        per_response_results = {f"{i+1}": {'summaries': [], 'contest_results': [], 'selections': [], 'compared_to': [], "completions": [], "positional_bias": [], "positional_bias_completions": [], "prompts": {"option_selection": []}} for i in range(evaluations_count)}
         response_pairs: list[list[str]] = []
         option_pairs: list[list[str]] = []
         for combination in combination_indexes:
@@ -139,7 +140,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
         summarization_task = self.summarization_task
         option_selection_task = self.option_selection_task  if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.option_selection_task_prometheus
        
-        contexts = [td['context'] for td in task_data]
+        contexts = [get_parsed_context(context) for context in [td['context'] for td in task_data]]
 
         if self.check_positional_bias:
             criterias += criterias
@@ -179,7 +180,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             summarization_output = assessment_outputs
             self.logger.info("The summary was generated succesfully.")
 
-            selection_instances = [{
+            option_selection_instances = [{
                 "assessment_prompt": assessment_prompt, 
                 "assessment": assessment_output, 
                 "options": [f"Response {option}" for option in option_pair],
@@ -238,7 +239,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
                     for context, prediction, choose_response_instruction in zip(
                         contexts, predictions, choose_response_instructions)]
             
-            selection_instances = [{
+            option_selection_instances = [{
                 "assessment_prompt": assessment_prompt,
                 "assessment": assessment_output,
                 "choose_response_instruction": choose_response_instruction,
@@ -249,7 +250,7 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
 
         if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB:
             option_selection_outputs_dataset = select(
-                selection_instances,
+                option_selection_instances,
                 engine=self.inference_engine,
                 task=option_selection_task,
                 template=self.option_selection_template,
@@ -259,9 +260,9 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             option_selection_outputs: list[str] = [instance['prediction'] for instance in option_selection_outputs_dataset]
             # take the number of the response from 'Response n'
             selections = [selection.split(' ')[-1] for selection in option_selection_outputs]
-        elif self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT:
+        else: # self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT:
             option_selection_outputs_dataset = infer(
-                selection_instances,
+                option_selection_instances,
                 task=option_selection_task,
                 engine=self.inference_engine,
                 template=self.option_selection_template,
@@ -298,21 +299,24 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             per_response_results[response_name_1]['summaries'].append(summarization_output[i])
             per_response_results[response_name_2]['summaries'].append(summarization_output[i])
 
+            per_response_results[response_name_1]['prompts']['option_selection'].append(option_selection_prompts[i])
+            per_response_results[response_name_2]['prompts']['option_selection'].append(option_selection_prompts[i])
+
             ## add positional bias
             if self.check_positional_bias:
-                if not 'positional_bias' in per_response_results[response_name_1]:
-                    per_response_results[response_name_1]['positional_bias'] = []
-                if not 'positional_bias' in per_response_results[response_name_2]:
-                    per_response_results[response_name_2]['positional_bias'] = []
                 per_response_results[response_name_1]['positional_bias'].append(positional_bias[i])
                 per_response_results[response_name_2]['positional_bias'].append(positional_bias[i])
+
+                # add prompts
+                per_response_results[response_name_1]['prompts']['option_selection'].append(option_selection_prompts[i])
+                per_response_results[response_name_2]['prompts']['option_selection'].append(option_selection_prompts[i])
 
             if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT:
                 per_response_results[response_name_1]['completions'].append(option_selection_outputs[i])
                 per_response_results[response_name_2]['completions'].append(option_selection_outputs[i])
                 if self.check_positional_bias:
-                    per_response_results[response_name_1]['positional_bias_completions'].append(option_selection_outputs[i])
-                    per_response_results[response_name_2]['positional_bias_completions'].append(option_selection_outputs[i])
+                    per_response_results[response_name_1]['positional_bias_completions'].append(option_selection_outputs[contests_count + i])
+                    per_response_results[response_name_2]['positional_bias_completions'].append(option_selection_outputs[contests_count + i])
 
         # add winrate
         for key in per_response_results:
@@ -325,8 +329,9 @@ class EvalAssistLLMAsJudgePairwise(BulkInstanceMetric):
             per_response_results[response_key]['ranking'] = ranking[i] + 1
 
         for key in per_response_results:
+            # add response name
             per_response_results[key]['response_name'] = key
-            
+
         # remove None values from the result dict, e.g. when positional_bias_check is False there is no positional_bias entry in the dict
         return [
             {
