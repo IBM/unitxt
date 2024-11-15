@@ -2,6 +2,7 @@ import json
 from typing import Optional, Union
 from unitxt.artifact import fetch_artifact
 from unitxt.eval_assist_constants import CriteriaOption, CriteriaWithOptions, EvaluatorNameEnum, ModelFamilyEnum, OptionSelectionStrategyEnum
+from unitxt.eval_assist_utils import get_parsed_context
 from .metrics import BulkInstanceMetric
 from .inference import InferenceEngine, OptionSelectingByLogProbsInferenceEngine
 from .templates import Template
@@ -18,9 +19,9 @@ class EvalAssistLLMAsJudgeDirect(BulkInstanceMetric):
     assessment_template : Template = None
     summarization_template : Template = None
     option_selection_template : Template = None
-    option_selection_strategy: OptionSelectionStrategyEnum = OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-    evaluator_name: EvaluatorNameEnum = EvaluatorNameEnum.MIXTRAL
-    model_family: ModelFamilyEnum = ModelFamilyEnum.MIXTRAL
+    option_selection_strategy: OptionSelectionStrategyEnum = None
+    evaluator_name: EvaluatorNameEnum = None
+    model_family: ModelFamilyEnum = None
     check_positional_bias = True
     reduction_map = {"mean": ["score"]}
     main_score = "score"
@@ -133,8 +134,7 @@ class EvalAssistLLMAsJudgeDirect(BulkInstanceMetric):
         summarization_task = self.summarization_task
         option_selection_task = self.option_selection_task  if self.evaluator_name != EvaluatorNameEnum.PROMETHEUS else self.option_selection_task_prometheus
        
-        contexts = [td['context'] for td in task_data]
-
+        contexts = [get_parsed_context(context) for context in [td['context'] for td in task_data]]
         if self.check_positional_bias:
             criterias += [CriteriaWithOptions(
                 name=criteria.name,
@@ -270,7 +270,8 @@ class EvalAssistLLMAsJudgeDirect(BulkInstanceMetric):
                     "positional_bias_selected_option": selections[evaluations_count + i] if self.check_positional_bias else None,
                     "assessment": assessment_outputs_dataset[i]['prediction'],
                     "positional_bias_assessment": assessment_outputs_dataset[i + evaluations_count]['prediction'] if self.check_positional_bias else None,
-                    # "option_selection_prompt": option_selection_prompts[i],
+                    "option_selection_prompt": option_selection_prompts[i],
+                    "posional_bias_option_selection_prompt": option_selection_prompts[i + evaluations_count],
                     "summary": summarization_output[i],
                     # "assessment_prompt": assessment_prompts[i],
                     # "positional_bias_assessment_prompt": assessment_prompts[evaluations_count + i],

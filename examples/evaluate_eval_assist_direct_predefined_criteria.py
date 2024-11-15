@@ -9,20 +9,21 @@ logger = get_logger()
 
 data = {
     "test": [
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"},
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
     ]
 }
 
 criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
+metrics = [f'metrics.llm_as_judge.eval_assist.direct_assessment.llama3_1_70b[criteria_or_criterias={criteria}]']
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     task=Task(
-        input_fields={"context": str},
+        input_fields={"context": dict},
         reference_fields={},
         prediction_type=str,
-        metrics = [f"metrics.llm_as_judge.eval_assist.direct_assessment.llama3_1_70b[criteria_or_criterias={criteria}]"],
+        metrics=metrics,
     ),
     templates=TemplatesDict(
         {
