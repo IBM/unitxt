@@ -37,7 +37,7 @@ def add_rag_templates(
 judge_yes_no_postprocessors = [
     "processors.take_first_word",
     "processors.lower_case",
-    "processors.yes_no_to_int",
+    "processors.predictions_yes_1_else_0",
     "processors.cast_to_float_return_zero_if_failed",
 ]
 
