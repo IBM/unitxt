@@ -34,17 +34,17 @@ criteria_json = {
 
 data = {
     "test": [
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"},
-        {"context": "How is the weather?"},
-    ],
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
+        {"context": {"context": "How is the weather?"}},
+    ]
 }
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[Set(fields={"criteria": criteria_json})],
     task=Task(
-        input_fields={"context": str, "criteria": dict},
+        input_fields={"context": dict, "criteria": dict},
         reference_fields={},
         prediction_type=str,
         metrics = ["metrics.llm_as_judge.eval_assist.direct_assessment.llama3_1_70b"],
