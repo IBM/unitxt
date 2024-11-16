@@ -51,6 +51,11 @@ class Stream(Dataclass):
         return IterableDataset.from_generator(self.__iter__, features=features)
 
 
+class UnitxtIterableDataset(IterableDataset):
+    def peek(self):
+        return next(iter(self))
+
+
 class ListStream(Stream):
     instances_list: List[Dict[str, Any]]
     copying: bool = False
@@ -160,6 +165,15 @@ class DynamicStream(Stream):
 
     def __post_init__(self):
         self.stream = None
+        if settings.use_iterable_dataset_as_stream:
+            unitxt_iterable_dataset = IterableDataset.from_generator(
+                generator=self.generator,
+                gen_kwargs=self.gen_kwargs,
+            )
+            unitxt_iterable_dataset.__class__ = UnitxtIterableDataset
+            unitxt_iterable_dataset.copying = self.copying
+            self.stream = unitxt_iterable_dataset
+
         if settings.use_eager_execution:
             try:
                 instances_list = []

@@ -5,6 +5,7 @@ from ..operator import StreamingOperator
 from ..stream import MultiStream
 from ..type_utils import isoftype
 from .artifact import test_artfifact_saving_and_loading
+from .utils import recursive_copy
 
 
 def apply_operator(
@@ -65,7 +66,9 @@ def check_operator(
     ), "inputs must be a list of dicts or None for stream source"
     assert isoftype(targets, List[dict]), "targets must be a list of dicts"
 
-    outputs = apply_operator(operator, inputs)
+    input_to_test = [recursive_copy(input_instance) for input_instance in inputs]
+
+    outputs = apply_operator(operator, input_to_test)
 
     assert (
         len(list(outputs)) == len(targets)
