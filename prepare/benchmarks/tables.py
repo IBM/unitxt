@@ -89,7 +89,9 @@ parser.add_argument(
 parser.add_argument(
     "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
 )  # TODO: Should we set a different num for descriptive tasks? (numeric nlg, scigen, qtsumm)
-parser.add_argument("-num_demos", "--num_demos", type=int, required=False, default=5)
+parser.add_argument(
+    "-num_demos", "--num_demos", type=int, required=False, default=5
+)  # num of demos for wikitq is 1
 parser.add_argument("-debug", "--debug", type=bool, default=False)
 
 args = parser.parse_args()
@@ -155,7 +157,7 @@ with settings.context(
                         serializer=SERIALIZERS_MAP[serializer]()
                         if serializer in SERIALIZERS_MAP and SERIALIZERS_MAP[serializer]
                         else None,
-                        num_demos=num_demos,
+                        num_demos=num_demos if card != "wikitq" else 1,
                         demos_pool_size=DEMOS_POOL_SIZE,
                         format=format,
                         augmentor=[None]
