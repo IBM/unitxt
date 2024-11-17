@@ -45,14 +45,18 @@ def simplify_recipe_steps(
         return True
 
     loader_step_index, loader_step = find_step_by_type(recipe_steps, Loader)
+    assert is_or_contains(loader_step, Loader)
+    assert (
+        loader_step_index == 0
+    ), f"Loader step is expected to be first. got loader_step_index = {loader_step_index}."
     if loader_step_index is None or loader_step_index > 0:
         # no Loader found, or not in expected position, leave this simplification
         return recipe_steps
 
-    # simplify now the rest of the steps:
+    # simplify now all the steps:
     rest_steps = []
     # first - unfold
-    for step in recipe_steps[1:]:
+    for step in recipe_steps:  # [1:]:
         rest_steps.extend(to_non_sequential_operators(step))
 
     # then fold back to sequences of matching instance operators
@@ -91,7 +95,8 @@ def simplify_recipe_steps(
         else:
             to_return.append(next_chunk[0])
 
-    return [loader_step, *rest_steps]
+    # in to_return, move to front all the splitters, so that they are executed first:
+    return to_return
 
 
 def is_or_contains(operator1: StreamingOperator, operator2: StreamingOperator) -> bool:

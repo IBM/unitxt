@@ -287,7 +287,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             if self.loader_limit:
                 loader.loader_limit = self.loader_limit
                 logger.info(f"Loader line limit was set to  {self.loader_limit}")
+            loader._maybe_set_classification_policy()  # update the loader with policy
+            operator = Set(
+                fields={"data_classification_policy": loader.data_classification_policy}
+            )
+
             self.loading.steps.append(loader)
+            self.loading.steps.append(operator)
 
             # This is required in case loader_limit is not enforced by the loader
             if self.loader_limit:

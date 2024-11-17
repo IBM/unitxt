@@ -150,8 +150,9 @@ class Loader(SourceOperator):
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
-        self._maybe_set_classification_policy()
-        return self.add_data_classification(self.load_data())
+        return self.load_data()
+        # self._maybe_set_classification_policy()
+        # return self.add_data_classification(self.load_data())
 
 
 class LoadHF(Loader):
