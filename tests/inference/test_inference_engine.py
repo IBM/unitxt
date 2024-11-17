@@ -2,6 +2,7 @@ from typing import cast
 
 from unitxt import produce
 from unitxt.api import load_dataset
+from unitxt.error_utils import UnitxtError
 from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
@@ -68,7 +69,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             data_classification_policy=["public"],
         )
         dataset = [{"source": "", "data_classification_policy": ["pii"]}]
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             inference_model.infer(dataset)
         self.assertEqual(
             str(e.exception),
