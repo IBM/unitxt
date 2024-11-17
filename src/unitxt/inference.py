@@ -1728,7 +1728,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
 
     def _infer(
         self,
-        dataset: List[Dict[str, Any]] | DatasetDict,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> List[str] | List[TextGenerationInferenceOutput]:
         inputs = []
