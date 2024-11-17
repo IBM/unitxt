@@ -4,6 +4,7 @@ from unitxt import produce
 from unitxt.api import load_dataset
 from unitxt.inference import (
     HFLlavaInferenceEngine,
+    HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
     LiteLLMInferenceEngine,
@@ -190,3 +191,23 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         targets = ["7", "2"]
         targets = (targets * (total_tests // len(targets)))[:total_tests]
         self.assertListEqual(predictions, targets)
+
+    def test_log_prob_scoring_inference_engine(self):
+        engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
+
+        log_probs = engine.get_log_probs(["hello world", "by universe"])
+
+        self.assertAlmostEqual(log_probs[0], -8.58, places=2)
+        self.assertAlmostEqual(log_probs[1], -10.98, places=2)
+
+    def test_option_selecting_inference_engine(self):
+        dataset = [
+            {"source": "hello ", "task_data": {"options": ["world", "truck"]}},
+            {"source": "by ", "task_data": {"options": ["the", "truck"]}},
+        ]
+
+        engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
+        predictions = engine.infer(dataset)
+
+        self.assertEqual(predictions[0], "world")
+        self.assertEqual(predictions[1], "the")
