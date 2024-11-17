@@ -49,7 +49,7 @@ def run_unitxt_entry(
     system_prompt=None,
     format=None,
     num_demos=0,
-    augmenter=None,
+    augmentor=None,
     index=1,
     run_model=False,
 ):
@@ -69,8 +69,8 @@ def run_unitxt_entry(
         format = None
     if not isinstance(num_demos, int):
         num_demos = 0
-    if not isinstance(augmenter, str):
-        augmenter = None
+    if not isinstance(augmentor, str):
+        augmentor = None
     if not isinstance(index, int):
         index = 1
     # if not isinstance(max_new_tokens, float):
@@ -81,7 +81,7 @@ def run_unitxt_entry(
         system_prompt,
         format,
         num_demos,
-        augmenter,
+        augmentor,
         run_model,
         index,
         # max_new_tokens,
@@ -129,7 +129,7 @@ def run_unitxt(
     system_prompt=None,
     format=None,
     num_demos=0,
-    augmenter=None,
+    augmentor=None,
     run_model=False,
     index=1,
     # max_new_tokens=cons.MAX_NEW_TOKENS,
@@ -137,7 +137,7 @@ def run_unitxt(
     index = index - 1
     try:
         prompts_list, prompt_args = get_prompts(
-            dataset, template, num_demos, system_prompt, format, augmenter
+            dataset, template, num_demos, system_prompt, format, augmentor
         )
         selected_prompt = prompts_list[index]
         prompt_text = selected_prompt[config.PROMPT_SOURCE_STR]
@@ -284,7 +284,7 @@ with demo:
 
                 num_shots = gr.Slider(label="Num Shots", maximum=5, step=1, value=0)
                 with gr.Accordion(label="Additional Parameters", open=False):
-                    augmenters = gr.Dropdown(choices=[], label="Augmenter")
+                    augmentors = gr.Dropdown(choices=[], label="Augmentor")
 
             generate_prompts_button = gr.Button(
                 value="Generate Prompts", interactive=False
@@ -366,7 +366,7 @@ with demo:
 
     # DROPDOWNS AND JSON BUTTONS LOGIC
     tasks.select(
-        update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmenters]
+        update_choices_per_task, inputs=tasks, outputs=[cards, templates, augmentors]
     ).then(activate_button, outputs=tasks_js_button).then(
         deactivate_button, outputs=generate_prompts_button
     ).then(deactivate_button, outputs=infer_button)
@@ -407,7 +407,7 @@ with demo:
     num_shots.change(activate_button, outputs=generate_prompts_button).then(
         deactivate_button, outputs=infer_button
     )
-    augmenters.select(activate_button, outputs=generate_prompts_button).then(
+    augmentors.select(activate_button, outputs=generate_prompts_button).then(
         deactivate_button, outputs=infer_button
     )
 
@@ -418,7 +418,7 @@ with demo:
         system_prompts,
         formats,
         num_shots,
-        augmenters,
+        augmentors,
         sample_choice,
         run_model,
     ]
