@@ -217,11 +217,11 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         dataset = [
             {
                 "source": [{"role": "user", "content": "hi you!"}],
-                "task_data": {"options": ["hello", "truck"]},
+                "task_data": {"options": ["hello friend", "hello truck"]},
             },
             {
                 "source": [{"role": "user", "content": "black or white?"}],
-                "task_data": {"options": ["white", "truck"]},
+                "task_data": {"options": ["white.", "white truck"]},
             },
         ]
 
@@ -230,5 +230,5 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
         predictions = engine.infer(dataset)
 
-        self.assertEqual(predictions[0], "hello")
-        self.assertEqual(predictions[1], "white")
+        self.assertEqual(predictions[0], "hello friend")
+        self.assertEqual(predictions[1], "white.")
