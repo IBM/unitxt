@@ -8,6 +8,7 @@ import re
 import sys
 import time
 import uuid
+from collections import Counter
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from datasets import DatasetDict
@@ -1649,3 +1650,108 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             return responses
 
         return [response.prediction for response in responses]
+
+
+class HFOptionSelectingInferenceEngine(InferenceEngine):
+    """HuggingFace based class for inference engines that calculate log probabilities.
+
+    This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
+    """
+
+    model_name: str
+    batch_size: int
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers"
+    }
+
+    def prepare_engine(self):
+        import torch
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else "cuda"
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        # Load model and tokenizer
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(
+            self.device
+        )
+        # Set pad_token if it doesn't exist
+        if self.tokenizer.pad_token is None:
+            self.tokenizer.pad_token = self.tokenizer.eos_token
+
+    def get_log_probs(self, texts):
+        # Check available device
+        import torch
+        from tqdm import tqdm
+
+        log_probs = []
+
+        # Process texts in batches
+        for i in tqdm(range(0, len(texts), self.batch_size)):
+            batch = texts[i : i + self.batch_size]
+
+            # Tokenize batch
+            if isinstance(texts[0], list):
+                batch = self.tokenizer.apply_chat_template(batch, tokenize=False)
+
+            inputs = self.tokenizer(
+                batch, return_tensors="pt", padding=True, truncation=True
+            ).to(self.device)
+
+            # Compute log probabilities
+            with torch.no_grad():
+                predictions = self.model(**inputs)
+                logits = predictions.logits
+
+                for j in range(len(batch)):
+                    input_ids = inputs.input_ids[j]
+                    text_logits = logits[j, :-1, :]  # exclude last token
+                    text_log_probs = torch.log_softmax(text_logits, dim=-1)
+
+                    # Gather log probs for each token
+                    token_log_probs = text_log_probs[
+                        torch.arange(text_logits.shape[0]), input_ids[1:]
+                    ]
+
+                    # Sum log probs to get sequence log prob
+                    sequence_log_prob = token_log_probs.sum().item()
+                    log_probs.append(sequence_log_prob)
+
+        return log_probs
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = []
+
+        for instance in dataset:
+            for option in instance["task_data"]["options"]:
+                if isinstance(instance["source"], list):
+                    inputs.append(
+                        instance["source"] + [{"role": "assistant", "content": option}]
+                    )
+                else:
+                    inputs.append(instance["source"] + option)
+
+        scores = self.get_log_probs(inputs)
+
+        scores_iterator = iter(scores)
+
+        predictions = []
+        for instance in dataset:
+            options_scores = Counter()
+            for option in instance["task_data"]["options"]:
+                score = next(scores_iterator)
+                options_scores[option] = score
+            predictions.append(options_scores.most_common(1)[0][0])
+
+        return predictions
