@@ -3,13 +3,16 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
+import inspect
 import os
 import sys
 from dataclasses import Field as _Field
 
-import unitxt
 from unitxt.artifact import Artifact
-from unitxt.dataclass import Field
+from unitxt.dataclass import Dataclass, Field, fields, get_field_default
+from unitxt.settings_utils import get_constants
+
+constants = get_constants()
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -24,7 +27,7 @@ create_catalog_docs()
 project = "Unitxt"
 copyright = "2023, IBM Research"
 author = "IBM Research"
-release = unitxt.__version__
+release = constants.version
 html_short_title = "Unitxt"
 
 # -- General configuration ---------------------------------------------------
@@ -34,6 +37,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinxext.opengraph",
+    "sphinx.ext.linkcode",
 ]
 
 templates_path = ["_templates"]
@@ -68,6 +72,31 @@ autodoc_default_flags = [
 ]
 
 
+def linkcode_resolve(domain, info):
+    if domain != "py":
+        return None
+    if not info["module"]:
+        return None
+    try:
+        # Import the module
+        obj = sys.modules[info["module"]]
+        for part in info["fullname"].split("."):
+            obj = getattr(obj, part)
+        # Get the source file and line number
+        fn = inspect.getsourcefile(obj)
+        source, lineno = inspect.getsourcelines(obj)
+    except Exception:
+        return None
+
+    if not fn or not lineno:
+        return None
+
+    # Convert file path to relative path
+    fn = os.path.relpath(fn, start=os.path.dirname(__file__))
+    # Construct the GitHub URL
+    return f"https://github.com/IBM/unitxt/blob/main/src/{fn}#L{lineno}"
+
+
 def autodoc_skip_member(app, what, name, obj, would_skip, options):
     if would_skip:
         return True
@@ -86,8 +115,38 @@ def autodoc_skip_member(app, what, name, obj, would_skip, options):
             and class_name != name
         ):
             return True
+
     return None
 
 
+def process_init_signature(app, what, name, obj, options, signature, return_annotation):
+    # Check if the object is a class inheriting from Artifact
+    if what == "class" and issubclass(obj, Dataclass):
+        # Check if the current signature is for the __init__ method
+
+        params = []
+        for field in fields(obj):
+            if not field.name.startswith("__"):
+                new_type = (
+                    str(field.type)
+                    .replace("typing.", "")
+                    .replace("<class '", "")
+                    .replace("'>", "")
+                )
+                param = f"{field.name}: {new_type}"
+                default = get_field_default(field)
+                if "MISSING_TYPE" not in repr(default):
+                    if isinstance(default, Artifact):
+                        default = default.__id__
+                    param += f" = {default!r}"
+                else:
+                    param += " = __required__"
+                params.append(param)
+        new_signature = f"({', '.join(params)})"
+        return new_signature, return_annotation
+    return signature, return_annotation
+
+
 def setup(app):
+    app.connect("autodoc-process-signature", process_init_signature)
     app.connect("autodoc-skip-member", autodoc_skip_member)
