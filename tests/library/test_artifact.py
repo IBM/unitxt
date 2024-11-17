@@ -9,6 +9,7 @@ from unitxt.artifact import (
 )
 from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
+from unitxt.error_utils import UnitxtError
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
@@ -44,6 +45,15 @@ class TestArtifact(UnitxtTestCase):
         artifact_identifier = "tasks.classification.binary"
         artifact, _ = fetch_artifact(artifact_identifier)
         self.assertEqual(artifact_identifier, artifact.__id__)
+
+    def test_artifact_not_found(self):
+        artifact_identifier = "artifact.not_found"
+        with self.assertRaises(UnitxtError) as cm:
+            artifact, _ = fetch_artifact(artifact_identifier)
+        self.assertTrue(
+            "Artifact artifact.not_found does not exist, in Unitxt catalogs"
+            in str(cm.exception)
+        )
 
     def test_artifact_loading_with_overwrite_args(self):
         with temp_catalog() as catalog_path:
@@ -123,18 +133,16 @@ class TestArtifact(UnitxtTestCase):
 
     def test_modifying_fetched_artifact_does_not_effect_cached_artifacts(self):
         artifact_identifier = "metrics.accuracy"
-        artifact, artifactory1 = fetch_artifact(artifact_identifier)
+        artifact, catalog1 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(artifact.n_resamples, None)
         artifact.disable_confidence_interval_calculation()
         self.assertEqual(artifact.n_resamples, None)
 
-        same_artifact_retrieved_again, artifactory2 = fetch_artifact(
-            artifact_identifier
-        )
+        same_artifact_retrieved_again, catalog2 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(same_artifact_retrieved_again.n_resamples, None)
 
-        # returned artifactories should be the same object
-        self.assertTrue(artifactory1 == artifactory2)
+        # returned catalogs should be the same object
+        self.assertTrue(catalog1 == catalog2)
 
     def test_reset_artifacts_json_cache(self):
         reset_artifacts_json_cache()
@@ -159,7 +167,7 @@ class TestArtifact(UnitxtTestCase):
         self.assertEqual(instance, output)
 
         instance["data_classification_policy"] = ["pii"]
-        with self.assertRaises(ValueError) as e:
+        with self.assertRaises(UnitxtError) as e:
             metric.verify_instance(instance)
         self.assertEqual(
             str(e.exception),
@@ -169,7 +177,7 @@ class TestArtifact(UnitxtTestCase):
             f"'{data_classification_policies}'. To enable this either change "
             f"the 'data_classification_policy' attribute of the artifact, "
             f"or modify the environment variable "
-            f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
+            f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.\nFor more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html \n",
         )
         # "Fixing" the env variable so that it does not affect other tests:
         del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]

@@ -147,7 +147,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.template is None:
             raise ValueError(
-                "You must set in the recipe either `template`, `template_card_index` or `templates`."
+                "You must set in the recipe either `template`, `template_card_index`."
             )
 
         if isinstance(self.template, list):
@@ -419,9 +419,22 @@ class StandardRecipeWithIndexes(BaseRecipe):
         assert (
             self.template_card_index is None or self.template is None
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-        assert not (
-            self.template_card_index is None and self.template is None
-        ), "Specify either template or template_card_index in card"
+
+        if self.template_card_index is None and self.template is None:
+            if self.card is not None:
+                self.template_card_index = (
+                    0
+                    if isinstance(self.card.templates, list)
+                    else next(iter(self.card.templates.keys()))
+                )
+                logger.warning(
+                    "Template was not specified in recipe, using the first template from the card by default."
+                )
+            else:
+                raise ValueError(
+                    "Specify a template or template_card_index, or a card to get a default template from."
+                )
+
         if self.template_card_index is not None:
             try:
                 self.template = self.card.templates[self.template_card_index]

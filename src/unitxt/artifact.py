@@ -15,13 +15,14 @@ from .dataclass import (
     NonPositionalField,
     fields,
 )
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
 from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
-from .type_utils import issubtype
+from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
     json_dump,
@@ -44,11 +45,11 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
-class Artifactories:
+class Catalogs:
     def __new__(cls):
         if not hasattr(cls, "instance"):
             cls.instance = super().__new__(cls)
-            cls.instance.artifactories = []
+            cls.instance.catalogs = []
 
         return cls.instance
 
@@ -57,42 +58,34 @@ class Artifactories:
         return self
 
     def __next__(self):
-        while self._index < len(self.artifactories):
-            artifactory = self.artifactories[self._index]
+        while self._index < len(self.catalogs):
+            catalog = self.catalogs[self._index]
             self._index += 1
             if (
-                settings.use_only_local_catalogs and not artifactory.is_local
+                settings.use_only_local_catalogs and not catalog.is_local
             ):  # Corrected typo from 'is_loacl' to 'is_local'
                 continue
-            return artifactory
+            return catalog
         raise StopIteration
 
-    def register(self, artifactory):
+    def register(self, catalog):
         assert isinstance(
-            artifactory, Artifactory
-        ), "Artifactory must be an instance of Artifactory"
-        assert hasattr(
-            artifactory, "__contains__"
-        ), "Artifactory must have __contains__ method"
-        assert hasattr(
-            artifactory, "__getitem__"
-        ), "Artifactory must have __getitem__ method"
-        self.artifactories = [artifactory, *self.artifactories]
+            catalog, AbstractCatalog
+        ), "catalog must be an instance of AbstractCatalog"
+        assert hasattr(catalog, "__contains__"), "catalog must have __contains__ method"
+        assert hasattr(catalog, "__getitem__"), "catalog must have __getitem__ method"
+        self.catalogs = [catalog, *self.catalogs]
 
-    def unregister(self, artifactory):
+    def unregister(self, catalog):
         assert isinstance(
-            artifactory, Artifactory
-        ), "Artifactory must be an instance of Artifactory"
-        assert hasattr(
-            artifactory, "__contains__"
-        ), "Artifactory must have __contains__ method"
-        assert hasattr(
-            artifactory, "__getitem__"
-        ), "Artifactory must have __getitem__ method"
-        self.artifactories.remove(artifactory)
+            catalog, AbstractCatalog
+        ), "catalog must be an instance of Catalog"
+        assert hasattr(catalog, "__contains__"), "catalog must have __contains__ method"
+        assert hasattr(catalog, "__getitem__"), "catalog must have __getitem__ method"
+        self.catalogs.remove(catalog)
 
     def reset(self):
-        self.artifactories = []
+        self.catalogs = []
 
 
 def map_values_in_place(object, mapper):
@@ -369,14 +362,19 @@ class Artifact(Dataclass):
         if not data_classification_policy:
             return instance
 
+        if not isoftype(instance, Dict[str, Any]):
+            raise ValueError(
+                f"The instance passed to inference engine is not a dictionary. Instance:\n{instance}"
+            )
         instance_data_classification = instance.get("data_classification_policy")
         if not instance_data_classification:
-            get_logger().warning(
+            UnitxtWarning(
                 f"The data does not provide information if it can be used by "
                 f"'{name}' with the following data classification policy "
                 f"'{data_classification_policy}'. This may lead to sending of undesired "
                 f"data to external service. Set the 'data_classification_policy' "
-                f"of the data to ensure a proper handling of sensitive information."
+                f"of the data to ensure a proper handling of sensitive information.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
             return instance
 
@@ -384,14 +382,15 @@ class Artifact(Dataclass):
             data_classification in data_classification_policy
             for data_classification in instance_data_classification
         ):
-            raise ValueError(
+            raise UnitxtError(
                 f"The instance '{instance} 'has the following data classification policy "
                 f"'{instance_data_classification}', however, the artifact '{name}' "
                 f"is only configured to support the data with classification "
                 f"'{data_classification_policy}'. To enable this either change "
                 f"the 'data_classification_policy' attribute of the artifact, "
                 f"or modify the environment variable "
-                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly."
+                f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
 
         return instance
@@ -419,7 +418,7 @@ class ArtifactList(list, Artifact):
             artifact.prepare()
 
 
-class Artifactory(Artifact):
+class AbstractCatalog(Artifact):
     is_local: bool = AbstractField()
 
     @abstractmethod
@@ -435,19 +434,19 @@ class Artifactory(Artifact):
         pass
 
 
-class UnitxtArtifactNotFoundError(Exception):
-    def __init__(self, name, artifactories):
+class UnitxtArtifactNotFoundError(UnitxtError):
+    def __init__(self, name, catalogs):
         self.name = name
-        self.artifactories = artifactories
-
-    def __str__(self):
-        msg = f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}."
+        self.catalogs = catalogs
+        msg = (
+            f"Artifact {self.name} does not exist, in Unitxt catalogs: {self.catalogs}."
+        )
         if settings.use_only_local_catalogs:
-            msg += f" Notice that unitxt.settings.use_only_local_catalogs is set to True, if you want to use remote catalogs set this settings or the environment variable {settings.use_only_local_catalogs_key}."
-        return f"Artifact {self.name} does not exist, in artifactories:{self.artifactories}"
+            msg += f"\nNotice that unitxt.settings.use_only_local_catalogs is set to True, if you want to use remote catalogs set this settings or the environment variable {settings.use_only_local_catalogs_key}."
+        super().__init__(msg)
 
 
-def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
+def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]]:
     """Loads an artifict from one of possible representations.
 
     (1) If artifact representation is already an Artifact object, return it.
@@ -467,12 +466,10 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     if isinstance(artifact_rep, str):
         name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
         if is_name_legal_for_catalog(name):
-            artifactory, artifact_rep, args = get_artifactory_name_and_args(
-                name=artifact_rep
-            )
-            return artifactory.get_with_overwrite(
+            catalog, artifact_rep, args = get_catalog_name_and_args(name=artifact_rep)
+            return catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=args
-            ), artifactory
+            ), catalog
 
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
@@ -481,24 +478,24 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[Artifactory, None]]:
     return Artifact.from_dict(artifact_rep), None
 
 
-def get_artifactory_name_and_args(
-    name: str, artifactories: Optional[List[Artifactory]] = None
+def get_catalog_name_and_args(
+    name: str, catalogs: Optional[List[AbstractCatalog]] = None
 ):
     name, args = separate_inside_and_outside_square_brackets(name)
 
-    if artifactories is None:
-        artifactories = list(Artifactories())
+    if catalogs is None:
+        catalogs = list(Catalogs())
 
-    for artifactory in artifactories:
-        if name in artifactory:
-            return artifactory, name, args
+    for catalog in catalogs:
+        if name in catalog:
+            return catalog, name, args
 
-    raise UnitxtArtifactNotFoundError(name, artifactories)
+    raise UnitxtArtifactNotFoundError(name, catalogs)
 
 
 def verbosed_fetch_artifact(identifier):
-    artifact, artifactory = fetch_artifact(identifier)
-    logger.debug(f"Artifact {identifier} is fetched from {artifactory}")
+    artifact, catalog = fetch_artifact(identifier)
+    logger.debug(f"Artifact {identifier} is fetched from {catalog}")
     return artifact
 
 
@@ -569,10 +566,11 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
                 for artifact_data_classification in artifact_data_classifications
             )
         ):
-            raise RuntimeError(
+            raise UnitxtError(
                 "'UNITXT_DATA_CLASSIFICATION_POLICY' should be of type "
                 "'Dict[str, List[str]]', where a artifact's name is a key, and a "
-                "value is a list of data classifications used by that artifact."
+                "value is a list of data classifications used by that artifact.",
+                Documentation.DATA_CLASSIFICATION_POLICY,
             )
 
     if artifact not in data_classification.keys():
