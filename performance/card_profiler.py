@@ -124,7 +124,12 @@ def profile_from_cards():
 
         card_profiler = CardProfiler()
         card_profiler.profiler_do_the_profiling(
-            card_name=card, card=task_card, template=template, loader_limit=5000
+            card_name=card,
+            card=task_card,
+            template=template,
+            loader_limit=50000,
+            num_demos=5,
+            demos_pool_size=50,
         )
 
 
@@ -142,7 +147,7 @@ def find_cumtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
     )
 
 
-cards = ["cards.cola", "cards.wnli"]  # the benchmark
+cards = ["cards.cola", "cards.wnli", "cards.dart", "cards.copa"]  # the benchmark
 
 
 def main():

@@ -1,12 +1,13 @@
 from typing import List, Tuple
 
-from .loaders import Loader
+from .loaders import Loader, LoadHF
 from .operator import (
     InstanceOperator,
     SequentialInstanceOperator,
     SequentialOperator,
     StreamingOperator,
 )
+from .splitters import SplitRandomMix
 
 
 def to_non_sequential_operators(operator: StreamingOperator) -> List[StreamingOperator]:
@@ -92,6 +93,12 @@ def simplify_recipe_steps(
             to_return.append(next_chunk[0])
 
     # in to_return, move to front all the splitters, so that they are executed first:
+    if (
+        isinstance(to_return[0], LoadHF)
+        and isinstance(to_return[1], SequentialInstanceOperator)
+        and isinstance(to_return[2], SplitRandomMix)
+    ):
+        to_return = [to_return[0], to_return[2], to_return[1], *to_return[3:]]
     return to_return
 
 
