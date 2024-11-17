@@ -216,12 +216,12 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_option_selecting_inference_engine_chat_api(self):
         dataset = [
             {
-                "source": [{"role": "user", "content": "hello "}],
-                "task_data": {"options": ["world", "truck"]},
+                "source": [{"role": "user", "content": "hi you!"}],
+                "task_data": {"options": ["hello", "truck"]},
             },
             {
-                "source": [{"role": "user", "content": "by "}],
-                "task_data": {"options": ["the", "truck"]},
+                "source": [{"role": "user", "content": "black or white?"}],
+                "task_data": {"options": ["white", "truck"]},
             },
         ]
 
@@ -230,5 +230,5 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
         predictions = engine.infer(dataset)
 
-        self.assertEqual(predictions[0], "world")
-        self.assertEqual(predictions[1], "truck")
+        self.assertEqual(predictions[0], "hello")
+        self.assertEqual(predictions[1], "white")
