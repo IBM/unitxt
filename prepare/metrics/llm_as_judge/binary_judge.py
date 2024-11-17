@@ -19,7 +19,6 @@ metric_type_to_template_dict = {
 }
 
 generic_engine_label = "generic_inference_engine"
-
 inference_models = {
     "llama_3_1_70b_instruct_wml": "engines.classification.llama_3_1_70b_instruct_wml",
     generic_engine_label: GenericInferenceEngine(),
@@ -52,6 +51,13 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                     infer_log_probs=use_logprobs,
                 )
 
+                add_to_catalog(
+                    metric,
+                    f"metrics.rag.{metric_type}.{inf_label}_{template_short_name}{logprobs_label}",
+                    overwrite=True,
+                )
+
+                # for backwards compatibility: keep also legacy path to metrics
                 add_to_catalog(
                     metric,
                     f"metrics.llm_as_judge.binary.{inf_label}_{metric_label}",

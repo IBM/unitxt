@@ -198,6 +198,13 @@ def infer(
         )
     predictions = post_process(raw_predictions, dataset)
     if return_data:
+        if return_meta_data:
+            infer_output_list = [
+                infer_output.__dict__ for infer_output in infer_outputs
+            ]
+            for infer_output in infer_output_list:
+                del infer_output["prediction"]
+            dataset = dataset.add_column("infer_meta_data", infer_output_list)
         dataset = dataset.add_column("prediction", predictions)
         return dataset.add_column("raw_prediction", raw_predictions)
     return predictions
