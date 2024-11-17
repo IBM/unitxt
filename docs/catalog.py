@@ -100,12 +100,7 @@ def make_content(artifact, label, all_labels):
     result = ""
 
     if "__description__" in artifact and artifact["__description__"] is not None:
-        split_description = artifact["__description__"].split("\n")
-        desc = "\n"
-        for split in split_description:
-            desc += "| " + split + "\n"
-        result += desc
-        # result += "\n" + artifact["__description__"] + "\n"
+        result += "\n" + artifact["__description__"] + "\n"
         result += "\n"
 
     if "__tags__" in artifact and artifact["__tags__"] is not None:
