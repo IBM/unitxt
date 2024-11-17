@@ -1730,7 +1730,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
-    ) -> List[str] | List[TextGenerationInferenceOutput]:
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         inputs = []
 
         for instance in dataset:
