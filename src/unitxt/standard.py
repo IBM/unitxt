@@ -264,6 +264,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 
+    def reset(self):
+        self.reset_pipeline()
+
     def reset_pipeline(self):
         if self.format is None:
             if settings.default_format is not None:

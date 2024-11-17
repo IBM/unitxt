@@ -28,6 +28,24 @@ settings = get_settings()
 logger = get_logger()
 
 
+class StandardAPIParamsMixin(Artifact):
+    model: str
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    top_logprobs: Optional[int] = 20
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = True
+    n: Optional[int] = None
+    parallel_tool_calls: Optional[bool] = None
+    service_tier: Optional[Literal["auto", "default"]] = None
+
+
 def get_model_and_label_id(model_name, label):
     model_id = model_name.split("/")[-1].replace("-", "_").replace(".", ",").lower()
     return f"{model_id}_{label}"
@@ -372,16 +390,17 @@ class GenericInferenceEngine(InferenceEngine):
         return self.engine._infer(dataset)
 
 
-class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class OllamaInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+):
     label: str = "ollama"
-    model_name: str
     _requirements_list = {
         "ollama": "Install ollama package using 'pip install --upgrade ollama"
     }
     data_classification_policy = ["public", "proprietary"]
 
     def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, self.label)
+        return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
         pass
@@ -393,13 +412,16 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
+        args = self.to_dict([StandardAPIParamsMixin])
+
         results = []
 
         for instance in dataset:
             messages = self.to_messages(instance)
             response = ollama.chat(
-                model=self.model_name,
+                model=self.model,
                 messages=messages,
+                **args,
             )
             results.append(response)
 
@@ -1562,23 +1584,6 @@ class AsyncTokenBucket:
             await asyncio.sleep(time_until_next_token)
 
 
-class StandardAPIParamsMixin(Artifact):
-    model: str
-    frequency_penalty: Optional[float] = None
-    presence_penalty: Optional[float] = None
-    max_tokens: Optional[int] = None
-    seed: Optional[int] = None
-    stop: Union[Optional[str], List[str]] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
-    top_logprobs: Optional[int] = 20
-    logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[bool] = True
-    n: Optional[int] = None
-    parallel_tool_calls: Optional[bool] = None
-    service_tier: Optional[Literal["auto", "default"]] = None
-
-
 class LiteLLMInferenceEngine(
     InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
@@ -1616,7 +1621,6 @@ class LiteLLMInferenceEngine(
             kwargs = self.to_dict([StandardAPIParamsMixin])
             try:
                 response = await self._completion(
-                    model=self.model,
                     messages=messages,
                     max_retries=self.max_retries,
                     caching=True,
@@ -1663,8 +1667,7 @@ class LiteLLMInferenceEngine(
         return [response.prediction for response in responses]
 
 
-
-_supported_apis = Literal["watsonx", "together-ai", "open-ai"]
+_supported_apis = Literal["watsonx", "together-ai", "open-ai", "aws", "ollama"]
 
 
 class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
@@ -1690,9 +1693,19 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     api_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
         },
         "together-ai": {
-            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct"
+            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
+        },
+        "aws": {
+            "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
+            "llama-3-70b-instruct": "bedrock/meta.llama3-70b-instruct-v1:0",
+        },
+        "ollama": {
+            "llama-3-8b-instruct": "llama3:8b",
+            "llama-3-70b-instruct": "llama3:70b",
         },
     }
 
@@ -1700,6 +1713,8 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx": LiteLLMInferenceEngine,
         "open-ai": LiteLLMInferenceEngine,
         "together-ai": LiteLLMInferenceEngine,
+        "aws": LiteLLMInferenceEngine,
+        "ollama": OllamaInferenceEngine,
     }
 
     def get_api_name(self):
@@ -1708,10 +1723,10 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     def prepare_engine(self):
         api = self.get_api_name()
         cls = self.__class__._api_to_base_class[api]
-        args = self.to_dict([OpenAiInferenceEngineParamsMixin])
+        args = self.to_dict([StandardAPIParamsMixin])
         args["model"] = self.api_model_map[api][self.model]
         self.engine = cls(**args)
-    
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
@@ -1722,6 +1737,7 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     def get_engine_id(self):
         api = self.get_api_name()
         return get_model_and_label_id(self.api_model_map[api][self.model], api)
+
 
 class HFOptionSelectingInferenceEngine(InferenceEngine):
     """HuggingFace based class for inference engines that calculate log probabilities.
@@ -1797,13 +1813,11 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
 
         return log_probs
 
-
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-      
         inputs = []
 
         for instance in dataset:

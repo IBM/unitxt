@@ -1,30 +1,27 @@
-import unitxt
-from unitxt import evaluate, get_from_catalog, load_dataset
+from unitxt import evaluate, load_dataset
+from unitxt.inference import MultiAPIInferenceEngine
 from unitxt.text_utils import print_dict
 
-with unitxt.settings.context(
-    default_inference_api="watsonx",  # option a to define your home api
-    default_format="formats.chat_api",
-    disable_hf_datasets_cache=False,
-):
-    data = load_dataset("benchmarks.glue[max_samples_per_subset=5]", split="test")
+data = load_dataset(
+    "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api]",
+    split="test",
+    disable_cache=False,
+)
 
-    model = get_from_catalog(
-        "engines.model.llama_3_8b_instruct[api=watsonx,top_k=1]"
-    )  # option b to define your home api
+model = MultiAPIInferenceEngine(model="llama-3-8b-instruct", top_k=1, api="watsonx")
 
-    predictions = model.infer(data)
+predictions = model.infer(data)
 
-    evaluated_dataset = evaluate(predictions=predictions, data=data)
+evaluated_dataset = evaluate(predictions=predictions, data=data)
 
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "prediction",
-            "subset",
-        ],
-    )
-    print_dict(
-        evaluated_dataset[0]["score"]["subsets"],
-    )
+print_dict(
+    evaluated_dataset[0],
+    keys_to_print=[
+        "source",
+        "prediction",
+        "subset",
+    ],
+)
+print_dict(
+    evaluated_dataset[0]["score"]["subsets"],
+)
