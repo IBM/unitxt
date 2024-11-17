@@ -413,10 +413,15 @@ class StandardRecipeWithIndexes(BaseRecipe):
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
 
         if self.template_card_index is None and self.template is None:
-            self.template_card_index = 0
-            logger.warning(
-                "Template was not specified in recipe, using template_card_index=0 by default."
-            )
+            if self.card is not None:
+                self.template_card_index = next(iter(self.card.templates))
+                logger.warning(
+                    "Template was not specified in recipe, using the first template from the card by default."
+                )
+            else:
+                raise ValueError(
+                    "Specify a template or template_card_index, or a card to get a default template from."
+                )
 
         if self.template_card_index is not None:
             try:
