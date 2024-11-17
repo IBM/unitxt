@@ -612,10 +612,10 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(counts["entailment"], counts["not entailment"], 10)
 
-    def test_standard_recipe_with_augmenter_on_task_input(self):
+    def test_standard_recipe_with_augmentor_on_task_input(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.sst2",
-            augmenter="augmenters.text.white_space",
+            augmentor="augmentors.text.white_space",
             template_card_index=0,
             max_train_instances=0,
             max_test_instances=2,

@@ -27,7 +27,7 @@ from typing import (
 
 import pandas as pd
 
-from .augmenters import TypeDependentAugmenter
+from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
@@ -720,7 +720,7 @@ class ConstructTableFromRowsCols(InstanceOperator):
         return instance
 
 
-class TransposeTable(TypeDependentAugmenter):
+class TransposeTable(TypeDependentAugmentor):
     """Transpose a table.
 
     Sample Input:
@@ -755,7 +755,7 @@ class TransposeTable(TypeDependentAugmenter):
         return {"header": transposed_header, "rows": transposed_rows}
 
 
-class DuplicateTableRows(TypeDependentAugmenter):
+class DuplicateTableRows(TypeDependentAugmentor):
     """Duplicates specific rows of a table for the given number of times.
 
     Args:
@@ -787,7 +787,7 @@ class DuplicateTableRows(TypeDependentAugmenter):
         return {"header": header, "rows": duplicated_rows}
 
 
-class DuplicateTableColumns(TypeDependentAugmenter):
+class DuplicateTableColumns(TypeDependentAugmentor):
     """Duplicates specific columns of a table for the given number of times.
 
     Args:
@@ -828,7 +828,7 @@ class DuplicateTableColumns(TypeDependentAugmenter):
         return {"header": duplicated_header, "rows": duplicated_rows}
 
 
-class InsertEmptyTableRows(TypeDependentAugmenter):
+class InsertEmptyTableRows(TypeDependentAugmentor):
     """Inserts empty rows in a table randomly for the given number of times.
 
     Args:

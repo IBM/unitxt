@@ -53,7 +53,7 @@ class TestExamples(UnitxtTestCase):
         with TemporaryDirectory() as temp_dir:
             wnli_2_dataset = load_dataset(
                 unitxt.dataset_file,
-                "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmenter=augmenters.image.grey_scale",
+                "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmentor=augmentors.image.grey_scale",
                 trust_remote_code=True,
                 download_mode="force_redownload",
                 cache_dir=temp_dir,

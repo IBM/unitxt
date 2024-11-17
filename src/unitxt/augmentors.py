@@ -13,19 +13,19 @@ from .type_utils import isoftype, parse_type_string, to_type_string
 from .types import Text
 
 
-class Augmenter(FieldOperator):
+class Augmentor(FieldOperator):
     """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template."""
 
     pass
 
 
-class TaskInputsAugmenter(Augmenter):
+class TaskInputsAugmentor(Augmentor):
     def set_fields(self, fields: List[str]):
         fields = ["input_fields/" + field for field in fields]
         self.field_to_field = {field: field for field in fields}
 
 
-class TypeDependentAugmenter(TaskInputsAugmenter):
+class TypeDependentAugmentor(TaskInputsAugmentor):
     augmented_type: object
 
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
@@ -45,18 +45,18 @@ class TypeDependentAugmenter(TaskInputsAugmenter):
         return data
 
 
-class TextAugmenter(TypeDependentAugmenter):
+class TextAugmentor(TypeDependentAugmentor):
     augmented_type = Text
 
 
-class NullAugmenter(Augmenter):
+class NullAugmentor(Augmentor):
     """Does not change the input string."""
 
     def process_value(self, value: Any) -> Any:
         return value
 
 
-class AugmentWhitespace(TextAugmenter):
+class AugmentWhitespace(TextAugmentor):
     """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
     Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
@@ -79,7 +79,7 @@ class AugmentWhitespace(TextAugmenter):
         return new_value
 
 
-class AugmentPrefixSuffix(TextAugmenter):
+class AugmentPrefixSuffix(TextAugmentor):
     r"""Augments the input by prepending and appending randomly selected (typically, whitespace) patterns.
 
     Args:

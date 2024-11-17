@@ -8,16 +8,16 @@ from unitxt.struct_data_operators import (
 
 operator = TransposeTable()
 
-add_to_catalog(operator, "augmenters.table.transpose", overwrite=True)
+add_to_catalog(operator, "augmentors.table.transpose", overwrite=True)
 
 operator = DuplicateTableRows()
 
-add_to_catalog(operator, "augmenters.table.duplicate_rows", overwrite=True)
+add_to_catalog(operator, "augmentors.table.duplicate_rows", overwrite=True)
 
 operator = DuplicateTableColumns()
 
-add_to_catalog(operator, "augmenters.table.duplicate_columns", overwrite=True)
+add_to_catalog(operator, "augmentors.table.duplicate_columns", overwrite=True)
 
 operator = InsertEmptyTableRows()
 
-add_to_catalog(operator, "augmenters.table.insert_empty_rows", overwrite=True)
+add_to_catalog(operator, "augmentors.table.insert_empty_rows", overwrite=True)
