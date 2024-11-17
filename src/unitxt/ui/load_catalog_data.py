@@ -1,5 +1,6 @@
 import os
 
+from ..error_utils import Documentation, UnitxtError, UnitxtWarning
 from ..file_utils import get_all_files_in_dir
 from ..utils import load_json
 from .settings import AUGMENTABLE_STR, CATALOG_DIR
@@ -8,12 +9,28 @@ from .settings import AUGMENTABLE_STR, CATALOG_DIR
 def get_catalog_dirs():
     unitxt_dir = CATALOG_DIR
     private_dir = None
-    if "UNITXT_ARTIFACTORIES" in os.environ:
+    if "UNITXT_CATALOGS" in os.environ and "UNITXT_ARTIFACTORIES" == os.environ:
+        raise UnitxtError(
+            "Both UNITXT_CATALOGS and UNITXT_ARTIFACTORIES are set.  Use only UNITXT_CATALOG.  UNITXT_ARTIFICATORES is deprecated",
+            Documentation.CATALOG,
+        )
+
+    env_dirs = []
+    if "UNITXT_ARTIFACTORIES" == os.environ:
+        UnitxtWarning(
+            "UNITXT_ARTIFACTORIES is set but is deprecated, use UNITXT_CATALOGS instead.",
+            Documentation.CATALOG,
+        )
         env_dirs = os.environ["UNITXT_ARTIFACTORIES"].split(":")
-        if len(env_dirs) > 1:
-            raise ValueError(
-                f"Expecting a maximum of one catalog in addition to unitxt catalog, found {len(env_dirs)}: {env_dirs}"
-            )
+
+    if "UNITXT_CATALOGS" in os.environ:
+        env_dirs = os.environ["UNITXT_CATALOGS"].split(":")
+
+    if len(env_dirs) > 1:
+        raise ValueError(
+            f"Expecting a maximum of one catalog in addition to unitxt catalog, found {len(env_dirs)}: {env_dirs}"
+        )
+    if len(env_dirs) > 0:
         private_dir = env_dirs[0]
     return unitxt_dir, private_dir
 
