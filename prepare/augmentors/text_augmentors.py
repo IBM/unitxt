@@ -19,7 +19,7 @@ operator = AugmentPrefixSuffix(
     remove_existing_whitespaces=True,
 )
 
-add_to_catalog(operator, "augmentors.text.prefix_suffix", overwrite=True)
+add_to_catalog(operator, "augmentors.text.whitespace_prefix_suffix", overwrite=True)
 add_to_catalog(
     operator,
     "augmentors.augment_whitespace_prefix_and_suffix_task_input",
