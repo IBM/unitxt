@@ -39,7 +39,7 @@ def safe_add(parameter, key, args):
 
 
 @lru_cache
-def get_prompts(dataset, template, num_demos, system_prompt, format, augmentor):
+def get_prompts(dataset, template, num_demos, system_prompt, format, augmenter):
     prompt_args = {"card": dataset, "template": template, config.LOADER_LIMIT_STR: 300}
     if num_demos != 0:
         prompt_args.update(
@@ -47,7 +47,7 @@ def get_prompts(dataset, template, num_demos, system_prompt, format, augmentor):
         )
     safe_add(system_prompt, "system_prompt", prompt_args)
     safe_add(format, "format", prompt_args)
-    safe_add(augmentor, "augmentor", prompt_args)
+    safe_add(augmenter, "augmenter", prompt_args)
 
     prompts_list = build_prompt(prompt_args)
     return prompts_list, prompt_args
@@ -172,12 +172,12 @@ def build_command(prompt_data, with_prediction):
 def update_choices_per_task(task_choice):
     datasets_choices = None
     template_choices = None
-    augmentors_choices = None
+    augmenters_choices = None
     if isinstance(task_choice, str):
         if task_choice in data:
             datasets_choices = gr.update(choices=get_datasets(task_choice))
-            augmentors_choices = gr.update(choices=get_augmentors(task_choice))
-    return datasets_choices, template_choices, augmentors_choices
+            augmenters_choices = gr.update(choices=get_augmenters(task_choice))
+    return datasets_choices, template_choices, augmenters_choices
 
 
 def get_datasets(task_choice):
@@ -186,9 +186,9 @@ def get_datasets(task_choice):
     return sorted(datasets_list)
 
 
-def get_augmentors(task_choice):
+def get_augmenters(task_choice):
     if data[task_choice][config.AUGMENTABLE_STR]:
-        return [None, *get_catalog_items("augmentors")[0]]
+        return [None, *get_catalog_items("augmenters")[0]]
     return []
 
 

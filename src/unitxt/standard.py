@@ -1,10 +1,9 @@
 from typing import List, Optional, Union
 
-from .augmentors import (
-    Augmentor,
-    FinalStateInputsAugmentor,
-    NullAugmentor,
-    TaskInputsAugmentor,
+from .augmenters import (
+    Augmenter,
+    NullAugmenter,
+    TaskInputsAugmenter,
 )
 from .card import TaskCard
 from .collections_operators import GetLength
@@ -68,8 +67,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(
-        default_factory=NullAugmentor
+    augmenter: Union[Augmenter, List[Augmenter]] = OptionalField(
+        default_factory=NullAugmenter
     )
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
@@ -298,13 +297,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if not isinstance(self.augmentor, list):
-            self.augmentor = [self.augmentor]
+        if not isinstance(self.augmenter, list):
+            self.augmenter = [self.augmenter]
 
-        for augmentor in self.augmentor:
-            if isinstance(augmentor, TaskInputsAugmentor):
-                augmentor.set_fields(self.card.task.augmentable_inputs)
-                self.processing.steps.append(augmentor)
+        for augmenter in self.augmenter:
+            if isinstance(augmenter, TaskInputsAugmenter):
+                augmenter.set_fields(self.card.task.augmentable_inputs)
+                self.processing.steps.append(augmenter)
 
         if self.has_custom_demos_pool:
             self.processing.steps.append(
@@ -384,10 +383,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
 
-        for aumgentor in self.augmentor:
-            if isinstance(aumgentor, FinalStateInputsAugmentor):
-                self.verbalization.steps.append(aumgentor)
-
         if self.postprocessors is not None:
             self.finalize.steps.append(
                 Set(fields={"postprocessors": self.postprocessors})
@@ -459,7 +454,7 @@ class StandardRecipe(StandardRecipeWithIndexes):
         demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
         sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
-        augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
+        augmenter (Augmenter) : Augmenter to be used to pseudo randomly augment the source text
         instruction_card_index (int, optional): Index of instruction card to be used
             for preparing the recipe.
         template_card_index (int, optional): Index of template card to be used for

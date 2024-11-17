@@ -5,7 +5,7 @@ import datasets
 
 from .api import __file__ as _
 from .artifact import __file__ as _
-from .augmentors import __file__ as _
+from .augmenters import __file__ as _
 from .benchmark import __file__ as _
 from .blocks import __file__ as _
 from .card import __file__ as _
@@ -61,7 +61,6 @@ from .types import __file__ as _
 from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
-from .version import version
 
 logger = get_logger()
 constants = get_constants()

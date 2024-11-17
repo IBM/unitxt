@@ -49,7 +49,7 @@ class TestExamples(UnitxtTestCase):
         logger.info("Loading wnli- second time with augmentation")
         wnli_2_dataset = load_dataset(
             unitxt.dataset_file,
-            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmentor=augmentors.augment_whitespace_model_input",
+            "card=cards.wnli,template_card_index=0,num_demos=5,demos_pool_size=100,augmenter=augmenters.text.white_space",
             trust_remote_code=True,
             download_mode="force_redownload",
         )

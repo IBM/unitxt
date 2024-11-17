@@ -10,66 +10,53 @@ from typing import (
 from .operators import FieldOperator
 from .random_utils import new_random_generator
 from .type_utils import isoftype, parse_type_string, to_type_string
+from .types import Text
 
 
-class Augmentor(FieldOperator):
+class Augmenter(FieldOperator):
     """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template."""
 
-    operator: FieldOperator
-
-    def process_value(self, value: Any) -> Any:
-        return self.operator.process_value(value)
+    pass
 
 
-class TaskInputsAugmentor(Augmentor):
+class TaskInputsAugmenter(Augmenter):
     def set_fields(self, fields: List[str]):
         fields = ["input_fields/" + field for field in fields]
         self.field_to_field = {field: field for field in fields}
 
 
-class TypeDependentAugmenter(TaskInputsAugmentor):
+class TypeDependentAugmenter(TaskInputsAugmenter):
     augmented_type: object
 
-    def process_value(self, value: Any) -> Any:
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         if not isoftype(value, self.augmented_type):
             return value
-        return self.operator.process_value(value)
+        return super().process_instance_value(value=value, instance=instance)
 
     @classmethod
     def process_data_after_load(cls, data):
-        data["augmented_type"] = parse_type_string(data["augmented_type"])
+        if "augmented_type" in data:
+            data["augmented_type"] = parse_type_string(data["augmented_type"])
         return data
 
     def process_data_before_dump(self, data):
-        data["augmented_type"] = to_type_string(data["augmented_type"])
+        if "augmented_type" in data:
+            data["augmented_type"] = to_type_string(data["augmented_type"])
         return data
 
 
-class FinalStateInputsAugmentor(Augmentor):
-    pass
+class TextAugmenter(TypeDependentAugmenter):
+    augmented_type = Text
 
 
-class ModelInputAugmentor(FinalStateInputsAugmentor):
-    field = "source"
+class NullAugmenter(Augmenter):
+    """Does not change the input string."""
 
-
-class ImagesAugmentor(FinalStateInputsAugmentor):
-    field = "media/images"
-    process_every_value = True
-
-
-class Identity(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return value
 
 
-class NullAugmentor(Augmentor):
-    """Does not change the input string."""
-
-    operator = Identity()
-
-
-class AugmentWhitespace(FieldOperator):
+class AugmentWhitespace(TextAugmenter):
     """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
     Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
@@ -92,7 +79,7 @@ class AugmentWhitespace(FieldOperator):
         return new_value
 
 
-class AugmentPrefixSuffix(FieldOperator):
+class AugmentPrefixSuffix(TextAugmenter):
     r"""Augments the input by prepending and appending randomly selected (typically, whitespace) patterns.
 
     Args:
