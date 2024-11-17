@@ -124,10 +124,10 @@ def print_predictions(correct_predictions, results):
             f"Prediction: ({type(correct_prediction).__name__})     {correct_prediction}"
         )
         logger.info(
-            f"Processed prediction: ({type(result['prediction']).__name__}) {result['prediction']}"
+            f"Processed prediction: ({type(result['prediction']).__name__}) {result['processed_prediction']}"
         )
         logger.info(
-            f"Processed references: ({type(result['references']).__name__}) {result['references']}"
+            f"Processed references: ({type(result['references']).__name__}) {result['processed_references']}"
         )
     logger.info("*" * 5)
     logger.info("Score output:")
