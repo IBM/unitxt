@@ -266,6 +266,9 @@ class Set(InstanceOperator):
         if self.use_query is not None:
             depr_message = "Field 'use_query' is deprecated. From now on, default behavior is compatible to use_query=True. Please remove this field from your code."
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
+        self.is_field_fast = {}
+        for key in self.fields:
+            self.is_field_fast[key] = "/" not in key
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -273,7 +276,10 @@ class Set(InstanceOperator):
         for key, value in self.fields.items():
             if self.use_deepcopy:
                 value = deep_copy(value)
-            dict_set(instance, key, value)
+            if self.is_field_fast[key]:
+                instance[key] = value
+            else:
+                dict_set(instance, key, value)
         return instance
 
 
