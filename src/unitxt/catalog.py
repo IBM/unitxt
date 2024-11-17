@@ -8,10 +8,10 @@ from typing import Optional
 import requests
 
 from .artifact import (
+    AbstractCatalog,
     Artifact,
-    Artifactories,
-    Artifactory,
-    get_artifactory_name_and_args,
+    Catalogs,
+    get_catalog_name_and_args,
     reset_artifacts_json_cache,
     verify_legal_catalog_name,
 )
@@ -24,9 +24,12 @@ logger = get_logger()
 constants = get_constants()
 
 
-class Catalog(Artifactory):
+class Catalog(AbstractCatalog):
     name: str = None
     location: str = None
+
+    def __repr__(self):
+        return f"{self.location}"
 
 
 class LocalCatalog(Catalog):
@@ -145,13 +148,11 @@ def get_from_catalog(
         catalog = LocalCatalog(location=catalog_path)
 
     if catalog is None:
-        artifactories = None
+        catalogs = None
     else:
-        artifactories = [catalog]
+        catalogs = [catalog]
 
-    catalog, name, args = get_artifactory_name_and_args(
-        name, artifactories=artifactories
-    )
+    catalog, name, args = get_catalog_name_and_args(name, catalogs=catalogs)
 
     return catalog.get_with_overwrite(
         name=name,
@@ -161,10 +162,10 @@ def get_from_catalog(
 
 def get_local_catalogs_paths():
     result = []
-    for artifactory in Artifactories():
-        if isinstance(artifactory, LocalCatalog):
-            if artifactory.is_local:
-                result.append(artifactory.location)
+    for catalog in Catalogs():
+        if isinstance(catalog, LocalCatalog):
+            if catalog.is_local:
+                result.append(catalog.location)
     return result
 
 

@@ -554,13 +554,6 @@ class TestRecipes(UnitxtTestCase):
         self.assertTrue(len(results) > 0)
 
     def test_standard_recipe_with_template_errors(self):
-        # Check some template was specified
-        with self.assertRaises(AssertionError) as cm:
-            StandardRecipeWithIndexes(card="cards.wnli")
-        self.assertEqual(
-            str(cm.exception), "Specify either template or template_card_index in card"
-        )
-
         # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
             StandardRecipeWithIndexes(

@@ -29,7 +29,7 @@ class UnitxtTestCase(unittest.TestCase):
                 warnings.simplefilter("ignore")
 
 
-class UnitxtCatalogPreparationTestCase(unittest.TestCase):
+class CatalogPreparationTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         enable_explicit_format()

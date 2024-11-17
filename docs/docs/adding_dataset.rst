@@ -198,7 +198,7 @@ In the same way, you can save your custom templates and tasks, too.
 
    In order to automatically load from your new catalog, remember to
    register your new catalog by `unitxt.register_catalog('my_catalog')`
-   or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
+   or by setting the `UNITXT_CATALOGS` environment variable to include your catalog.
 
 
 Putting It All Together!
