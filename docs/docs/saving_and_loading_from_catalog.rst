@@ -90,6 +90,6 @@ When Unitxt is executed by another application, you might need to specify custom
 
 .. code-block:: bash
 
-    export UNITXT_ARTIFACTORIES="path/to/first/catalog:path/to/second/catalog"
+    export UNITXT_CATALOGS="path/to/first/catalog:path/to/second/catalog"
 
 Learn more about catalogs here: :class:`catalog <unitxt.catalog>`.

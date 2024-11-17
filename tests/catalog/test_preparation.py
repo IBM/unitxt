@@ -9,7 +9,7 @@ from unitxt.settings_utils import get_constants, get_settings
 from unitxt.text_utils import print_dict
 from unitxt.utils import import_module_from_file
 
-from tests.utils import UnitxtCatalogPreparationTestCase
+from tests.utils import CatalogPreparationTestCase
 
 logger = get_logger()
 constants = get_constants()
@@ -34,7 +34,7 @@ all_preparation_files = [
 ]
 
 
-class TestCatalogPreparation(UnitxtCatalogPreparationTestCase):
+class TestCatalogPreparation(CatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         all_preparation_files_as_string = "\n".join(
