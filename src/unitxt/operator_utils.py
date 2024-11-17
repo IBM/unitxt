@@ -45,10 +45,6 @@ def simplify_recipe_steps(
         return True
 
     loader_step_index, loader_step = find_step_by_type(recipe_steps, Loader)
-    assert is_or_contains(loader_step, Loader)
-    assert (
-        loader_step_index == 0
-    ), f"Loader step is expected to be first. got loader_step_index = {loader_step_index}."
     if loader_step_index is None or loader_step_index > 0:
         # no Loader found, or not in expected position, leave this simplification
         return recipe_steps
