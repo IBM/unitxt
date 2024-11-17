@@ -211,3 +211,23 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "world")
         self.assertEqual(predictions[1], "the")
+
+    def test_option_selecting_inference_engine_chat_api(self):
+        dataset = [
+            {
+                "source": [{"role": "user", "content": "hello "}],
+                "task_data": {"options": ["world", "truck"]},
+            },
+            {
+                "source": [{"role": "user", "content": "by "}],
+                "task_data": {"options": ["the", "truck"]},
+            },
+        ]
+
+        engine = HFOptionSelectingInferenceEngine(
+            model_name="Qwen/Qwen2.5-0.5B-Instruct", batch_size=1
+        )
+        predictions = engine.infer(dataset)
+
+        self.assertEqual(predictions[0], "world")
+        self.assertEqual(predictions[1], "truck")

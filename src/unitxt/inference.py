@@ -1698,6 +1698,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
             batch = texts[i : i + self.batch_size]
 
             # Tokenize batch
+            if isinstance(texts[0], list):
+                batch = self.tokenizer.apply_chat_template(batch, tokenize=False)
+
             inputs = self.tokenizer(
                 batch, return_tensors="pt", padding=True, truncation=True
             ).to(self.device)
@@ -1728,13 +1731,18 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
         dataset: List[Dict[str, Any]] | DatasetDict,
         return_meta_data: bool = False,
     ) -> List[str] | List[TextGenerationInferenceOutput]:
-        texts = []
+        inputs = []
 
         for instance in dataset:
             for option in instance["task_data"]["options"]:
-                texts.append(instance["source"] + option)
+                if isinstance(instance["source"], list):
+                    inputs.append(
+                        instance["source"] + [{"role": "assistant", "content": option}]
+                    )
+                else:
+                    inputs.append(instance["source"] + option)
 
-        scores = self.get_log_probs(texts)
+        scores = self.get_log_probs(inputs)
 
         scores_iterator = iter(scores)
 
