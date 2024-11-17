@@ -414,7 +414,11 @@ class StandardRecipeWithIndexes(BaseRecipe):
 
         if self.template_card_index is None and self.template is None:
             if self.card is not None:
-                self.template_card_index = next(iter(self.card.templates))
+                self.template_card_index = (
+                    0
+                    if isinstance(self.card.templates, list)
+                    else next(iter(self.card.templates.keys()))
+                )
                 logger.warning(
                     "Template was not specified in recipe, using the first template from the card by default."
                 )
