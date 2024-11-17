@@ -2,7 +2,6 @@ from typing import List, Optional, Union
 
 from .augmentors import (
     Augmentor,
-    FinalStateInputsAugmentor,
     NullAugmentor,
     TaskInputsAugmentor,
 )
@@ -383,10 +382,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-
-        for aumgentor in self.augmentor:
-            if isinstance(aumgentor, FinalStateInputsAugmentor):
-                self.verbalization.steps.append(aumgentor)
 
         if self.postprocessors is not None:
             self.finalize.steps.append(
