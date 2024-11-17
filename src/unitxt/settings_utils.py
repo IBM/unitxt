@@ -159,9 +159,9 @@ if Constants.is_uninitilized():
     constants.metric_file = os.path.join(os.path.dirname(__file__), "metric.py")
     constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
     unitxt_pkg = importlib.util.find_spec("unitxt")
+    constants.package_dir = os.path.dirname(unitxt_pkg.origin)
     if unitxt_pkg and unitxt_pkg.origin:
-        unitxt_dir = os.path.dirname(unitxt_pkg.origin)
-        constants.default_catalog_path = os.path.join(unitxt_dir, "catalog")
+        constants.default_catalog_path = os.path.join(constants.package_dir, "catalog")
     else:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path

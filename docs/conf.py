@@ -92,9 +92,9 @@ def linkcode_resolve(domain, info):
         return None
 
     # Convert file path to relative path
-    fn = os.path.relpath(fn, start=os.path.dirname(__file__))
+    fn = os.path.relpath(fn, start=constants.package_dir)
     # Construct the GitHub URL
-    return f"https://github.com/IBM/unitxt/blob/main/src/{fn}#L{lineno}"
+    return f"https://github.com/IBM/unitxt/blob/main/src/unitxt/{fn}#L{lineno}"
 
 
 def autodoc_skip_member(app, what, name, obj, would_skip, options):
@@ -120,10 +120,7 @@ def autodoc_skip_member(app, what, name, obj, would_skip, options):
 
 
 def process_init_signature(app, what, name, obj, options, signature, return_annotation):
-    # Check if the object is a class inheriting from Artifact
     if what == "class" and issubclass(obj, Dataclass):
-        # Check if the current signature is for the __init__ method
-
         params = []
         for field in fields(obj):
             if not field.name.startswith("__"):
