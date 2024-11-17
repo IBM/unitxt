@@ -9,6 +9,7 @@ from .dataclass import NonPositionalField
 from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
+from .processors import PostProcess
 from .random_utils import new_random_generator
 from .serializers import (
     DialogSerializer,
@@ -21,6 +22,7 @@ from .serializers import (
     VideoSerializer,
 )
 from .settings_utils import get_constants
+from .string_operators import Replace
 from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
@@ -127,12 +129,19 @@ class Template(InstanceOperator):
             serialized_inputs
         )
 
+        post_processors = self.postprocessors
+        if self.target_prefix is not None:
+            post_processors = [
+                PostProcess(Replace(old=self.target_prefix, new="")),
+                *post_processors,
+            ]
+
         result = {
             **instance,
             "source": source,
             "instruction": instruction,
             "target_prefix": target_prefix,
-            "postprocessors": self.postprocessors,
+            "postprocessors": post_processors,
         }
 
         if stream_name == constants.inference_stream:
