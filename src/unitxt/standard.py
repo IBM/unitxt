@@ -7,6 +7,7 @@ from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
+from .loaders import LoadHF
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
 from .operator_utils import simplify_recipe_steps
@@ -284,19 +285,24 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         if self.card is not None:
             loader = self.card.loader
+            self.loading.steps.append(loader)
             if self.loader_limit:
                 loader.loader_limit = self.loader_limit
                 logger.info(f"Loader line limit was set to  {self.loader_limit}")
-            loader._maybe_set_classification_policy()  # update the loader with policy
-            operator = Set(
-                fields={"data_classification_policy": loader.data_classification_policy}
-            )
-
-            self.loading.steps.append(loader)
-            self.loading.steps.append(operator)
+            if isinstance(loader, LoadHF):
+                # for now, for LoadHF only split the policy setter from the loader,
+                # and set the policy by a step in the recipe
+                loader._maybe_set_classification_policy()  # update the loader with policy
+                policy_set_operator = Set(
+                    fields={
+                        "data_classification_policy": loader.data_classification_policy
+                    }
+                )
+                self.loading.steps.append(policy_set_operator)
 
             # This is required in case loader_limit is not enforced by the loader
-            if self.loader_limit:
+            # LoadHF does enforce
+            if self.loader_limit and not isinstance(loader, LoadHF):
                 self.loading.steps.append(
                     StreamRefiner(max_instances=self.loader_limit)
                 )
