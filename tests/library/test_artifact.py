@@ -46,6 +46,15 @@ class TestArtifact(UnitxtTestCase):
         artifact, _ = fetch_artifact(artifact_identifier)
         self.assertEqual(artifact_identifier, artifact.__id__)
 
+    def test_artifact_not_found(self):
+        artifact_identifier = "artifact.not_found"
+        with self.assertRaises(UnitxtError) as cm:
+            artifact, _ = fetch_artifact(artifact_identifier)
+        self.assertTrue(
+            "Artifact artifact.not_found does not exist, in Unitxt catalogs"
+            in str(cm.exception)
+        )
+
     def test_artifact_loading_with_overwrite_args(self):
         with temp_catalog() as catalog_path:
             add_to_catalog(
@@ -124,18 +133,16 @@ class TestArtifact(UnitxtTestCase):
 
     def test_modifying_fetched_artifact_does_not_effect_cached_artifacts(self):
         artifact_identifier = "metrics.accuracy"
-        artifact, artifactory1 = fetch_artifact(artifact_identifier)
+        artifact, catalog1 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(artifact.n_resamples, None)
         artifact.disable_confidence_interval_calculation()
         self.assertEqual(artifact.n_resamples, None)
 
-        same_artifact_retrieved_again, artifactory2 = fetch_artifact(
-            artifact_identifier
-        )
+        same_artifact_retrieved_again, catalog2 = fetch_artifact(artifact_identifier)
         self.assertNotEqual(same_artifact_retrieved_again.n_resamples, None)
 
-        # returned artifactories should be the same object
-        self.assertTrue(artifactory1 == artifactory2)
+        # returned catalogs should be the same object
+        self.assertTrue(catalog1 == catalog2)
 
     def test_reset_artifacts_json_cache(self):
         reset_artifacts_json_cache()
