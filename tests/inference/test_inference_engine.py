@@ -77,14 +77,14 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         with self.assertRaises(UnitxtError) as e:
             inference_model.infer(dataset)
         self.assertEqual(
-            str(e.exception),
+            str(e.exception).strip(),
             f"The instance '{dataset[0]} 'has the following data classification policy "
             f"'{dataset[0]['data_classification_policy']}', however, the artifact "
-            f"'{inference_model.get_pretty_print_name()}' is only configured to support the "
-            f"data with classification '{inference_model.data_classification_policy}'. To "
-            f"enable this either change the 'data_classification_policy' attribute of the "
-            f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
-            f"accordingly.",
+            f"'{inference_model.get_pretty_print_name()}' is only configured to support the data with "
+            f"classification '{inference_model.data_classification_policy}'. To enable this either change "
+            f"the 'data_classification_policy' attribute of the artifact, or modify the environment variable "
+            f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.\n"
+            f"For more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html".strip(),
         )
 
     def test_llava_inference_engine(self):
