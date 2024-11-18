@@ -23,7 +23,7 @@ from .parsing_utils import (
 )
 from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
-from .type_utils import isoftype, issubtype
+from .type_utils import issubtype
 from .utils import (
     artifacts_json_cache,
     json_dump,
@@ -375,7 +375,7 @@ class Artifact(Dataclass):
         if not data_classification_policy:
             return instance
 
-        if not isoftype(instance, Dict[str, Any]):
+        if not isinstance(instance, dict):
             raise ValueError(
                 f"The instance passed to inference engine is not a dictionary. Instance:\n{instance}"
             )
