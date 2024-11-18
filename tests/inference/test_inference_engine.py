@@ -79,7 +79,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             f"data with classification '{inference_model.data_classification_policy}'. To "
             f"enable this either change the 'data_classification_policy' attribute of the "
             f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
-            f"accordingly.",
+            f"accordingly.\nFor more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html \n",
         )
 
     def test_llava_inference_engine(self):
