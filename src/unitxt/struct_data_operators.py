@@ -313,7 +313,7 @@ class SerializeTableAsHTML(SerializeTable):
 
 
 class SerializeTableAsConcatenation(SerializeTable):
-    """Cancat Serializer.
+    """Concat Serializer.
 
     Concat all table content to one string of header and rows.
     Format(Sample):
