@@ -7,10 +7,12 @@ from typing import Any, Dict, Tuple
 import numpy as np
 from datasets import Image as DatasetsImage
 
+from .augmentors import TaskInputsAugmentor
 from .dict_utils import dict_get
 from .operator import PackageRequirementsMixin
 from .operators import FieldOperator, InstanceFieldOperator
 from .settings_utils import get_constants
+from .type_utils import isoftype
 from .types import Image
 
 constants = get_constants()
@@ -129,7 +131,21 @@ class ImageFieldOperator(FieldOperator, PillowMixin):
         return value
 
 
-class GrayScale(ImageFieldOperator):
+class ImageAugmentor(TaskInputsAugmentor, PillowMixin):
+    augmented_type: object = Image
+
+    @abstractmethod
+    def process_image(self, image: Any):
+        pass
+
+    def process_value(self, value: Image) -> Any:
+        if not isoftype(value, Image):
+            return value
+        value["image"] = self.process_image(value["image"])
+        return value
+
+
+class GrayScale(ImageAugmentor):
     def process_image(self, image):
         # Convert the image to grayscale
         grayscale_image = image.convert("L")
@@ -147,7 +163,7 @@ class GrayScale(ImageFieldOperator):
         return self.image.fromarray(grayscale_array)
 
 
-class GridLines(ImageFieldOperator):
+class GridLines(ImageAugmentor):
     """A class that overlays a fixed number of evenly spaced horizontal and vertical lines on an image.
 
     Attributes:
@@ -187,7 +203,7 @@ class GridLines(ImageFieldOperator):
         return self.image.fromarray(image_array)
 
 
-class PixelNoise(ImageFieldOperator):
+class PixelNoise(ImageAugmentor):
     """A class that overlays a mask of randomly colored nxn squares across an image based on a specified noise rate.
 
     Attributes:
@@ -235,7 +251,7 @@ class PixelNoise(ImageFieldOperator):
         return self.image.fromarray(image_array)
 
 
-class Oldify(ImageFieldOperator):
+class Oldify(ImageAugmentor):
     noise_strength: int = 30
     tint_strength: float = 0.4  # Percentage of squares to be randomly colored
 

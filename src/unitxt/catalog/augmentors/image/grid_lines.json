@@ -1,6 +1,3 @@
 {
-    "__type__": "images_augmentor",
-    "operator": {
-        "__type__": "grid_lines"
-    }
+    "__type__": "grid_lines"
 }
