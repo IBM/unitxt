@@ -1,5 +1,5 @@
 from unitxt import evaluate, load_dataset
-from unitxt.inference import CrossProviderModel
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.text_utils import print_dict
 
 data = load_dataset(
@@ -8,7 +8,7 @@ data = load_dataset(
     disable_cache=False,
 )
 
-model = CrossProviderModel(
+model = CrossProviderInferenceEngine(
     model="llama-3-8b-instruct", temperature=0.0, top_p=1.0, provider="watsonx"
 )
 

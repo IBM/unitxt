@@ -132,9 +132,9 @@ for provider in [
             )
 
             test_dataset = dataset["test"]
-            from unitxt.inference import CrossProviderModel
+            from unitxt.inference import CrossProviderInferenceEngine
 
-            inference_model = CrossProviderModel(
+            inference_model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
             predictions = inference_model.infer(test_dataset)

@@ -1667,10 +1667,10 @@ class LiteLLMInferenceEngine(
         return [response.prediction for response in responses]
 
 
-_supported_apis = Literal["watsonx", "together-ai", "open-ai", "aws", "ollama"]
+_supported_apis = Literal["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 
-class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
+class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin

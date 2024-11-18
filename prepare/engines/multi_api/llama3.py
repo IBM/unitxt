@@ -1,7 +1,7 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.inference import CrossProviderModel
+from unitxt.inference import CrossProviderInferenceEngine
 
-engine = CrossProviderModel(
+engine = CrossProviderInferenceEngine(
     model="llama-3-8b-instruct",
 )
 
