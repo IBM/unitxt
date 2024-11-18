@@ -59,12 +59,13 @@ class DeleteTargetPrefix(InstanceOperator, ArtifactFetcherMixin):
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        target_prefix = self.get_artifact(
-            instance["task_data"]["metadata"]["template"]
-        ).target_prefix
-        target_prefix = target_prefix.format(**instance["task_data"])
-        pattern = rf"^\s*{re.escape(target_prefix)}\s*"
-        instance["prediction"] = re.sub(pattern, "", instance["prediction"])
+        if "metadata" in instance["task_data"]:
+            target_prefix = self.get_artifact(
+                instance["task_data"]["metadata"]["template"]
+            ).target_prefix
+            target_prefix = target_prefix.format(**instance["task_data"])
+            pattern = rf"^\s*{re.escape(target_prefix)}\s*"
+            instance["prediction"] = re.sub(pattern, "", instance["prediction"])
         return instance
 
 
