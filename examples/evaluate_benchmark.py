@@ -48,9 +48,8 @@ test_dataset = list(benchmark()["test"])
 
 
 # Infere using flan t5 base using HF API
-model_name = "google/flan-t5-base"
 inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+    model_name="google/flan-t5-base", max_new_tokens=32
 )
 
 predictions = inference_model.infer(test_dataset)

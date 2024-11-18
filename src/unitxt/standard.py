@@ -3,12 +3,11 @@ from typing import List, Optional, Union
 from .artifact import fetch_artifact
 from .augmentors import (
     Augmentor,
-    NullAugmentor,
-    TaskInputsAugmentor,
 )
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
@@ -69,9 +68,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(
-        default_factory=NullAugmentor
-    )
+    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(default=None)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
@@ -308,11 +305,19 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if not isinstance(self.augmentor, list):
-            self.augmentor = [self.augmentor]
+        if self.augmentor is not None:
+            if (
+                self.card.task.augmentable_inputs is None
+                or len(self.task.augmentable_inputs) == 0
+            ):
+                raise UnitxtError(
+                    f"You specified augmentor in the recipe but the got task without augmentable_inputs: {self.task}"
+                )
 
-        for augmentor in self.augmentor:
-            if isinstance(augmentor, TaskInputsAugmentor):
+            if not isinstance(self.augmentor, list):
+                self.augmentor = [self.augmentor]
+
+            for augmentor in self.augmentor:
                 augmentor.set_fields(self.card.task.augmentable_inputs)
                 self.processing.steps.append(augmentor)
 

@@ -10,6 +10,10 @@
         "choices": "List[str]"
     },
     "prediction_type": "str",
+    "augmentable_inputs": [
+        "topic",
+        "question"
+    ],
     "metrics": [
         "metrics.accuracy"
     ]

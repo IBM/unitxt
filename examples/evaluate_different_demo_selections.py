@@ -32,14 +32,13 @@ for num_demos in [1, 2]:
             num_demos=num_demos,
             demos_pool_size=50,
             loader_limit=200,
-            max_test_instances=100,
+            max_test_instances=10,
             sampler=demo_sampler,
+            split="test",
         )
 
-        test_dataset = dataset["test"]
-
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+        predictions = inference_model.infer(dataset)
+        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
         logger.info(
             f"Sample input and output for sampler {demo_sampler} and num_demos '{num_demos}':"
