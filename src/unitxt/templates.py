@@ -1,4 +1,5 @@
 import json
+import re
 from abc import abstractmethod
 from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -22,7 +23,7 @@ from .serializers import (
     VideoSerializer,
 )
 from .settings_utils import get_constants
-from .string_operators import Replace
+from .string_operators import RegexReplace
 from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
@@ -132,7 +133,13 @@ class Template(InstanceOperator):
         post_processors = self.postprocessors
         if self.target_prefix is not None:
             post_processors = [
-                PostProcess(Replace(old=self.target_prefix, new="")),
+                PostProcess(
+                    RegexReplace(
+                        pattern=rf"^\s*{re.escape(self.target_prefix)}\s*",
+                        replacement="",
+                    ),
+                    process_references=False,
+                ),
                 *post_processors,
             ]
 
