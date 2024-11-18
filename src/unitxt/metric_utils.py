@@ -63,9 +63,10 @@ class DeleteTargetPrefix(InstanceOperator, ArtifactFetcherMixin):
             target_prefix = self.get_artifact(
                 instance["task_data"]["metadata"]["template"]
             ).target_prefix
-            target_prefix = target_prefix.format(**instance["task_data"])
-            pattern = rf"^\s*{re.escape(target_prefix)}\s*"
-            instance["prediction"] = re.sub(pattern, "", instance["prediction"])
+            if target_prefix is not None and len(target_prefix) > 0:
+                target_prefix = target_prefix.format(**instance["task_data"])
+                pattern = rf"^\s*{re.escape(target_prefix)}\s*"
+                instance["prediction"] = re.sub(pattern, "", instance["prediction"])
         return instance
 
 
