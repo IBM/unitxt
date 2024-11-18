@@ -1669,8 +1669,8 @@ class LiteLLMInferenceEngine(
 _supported_apis = Literal["watsonx", "together-ai", "open-ai", "aws", "ollama"]
 
 
-class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
-    """Inference engine capable of dynamically switching between multiple APIs.
+class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
+    """Inference engine capable of dynamically switching between multiple providers APIs.
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
     to enable seamless integration with various API providers. The supported APIs are
@@ -1687,9 +1687,9 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             across different API backends.
     """
 
-    api: Optional[_supported_apis] = None
+    provider: Optional[_supported_apis] = None
 
-    api_model_map: Dict[_supported_apis, Dict[str, str]] = {
+    provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
@@ -1708,7 +1708,7 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         },
     }
 
-    _api_to_base_class = {
+    _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
         "open-ai": LiteLLMInferenceEngine,
         "together-ai": LiteLLMInferenceEngine,
@@ -1716,14 +1716,14 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "ollama": OllamaInferenceEngine,
     }
 
-    def get_api_name(self):
-        return self.api if self.api is not None else settings.default_inference_api
+    def get_provider_name(self):
+        return self.provider if self.provider is not None else settings.default_provider
 
     def prepare_engine(self):
-        api = self.get_api_name()
-        cls = self.__class__._api_to_base_class[api]
+        provider = self.get_provider_name()
+        cls = self.__class__._provider_to_base_class[provider]
         args = self.to_dict([StandardAPIParamsMixin])
-        args["model"] = self.api_model_map[api][self.model]
+        args["model"] = self.provider_model_map[provider][self.model]
         self.engine = cls(**args)
 
     def _infer(
@@ -1734,8 +1734,8 @@ class MultiAPIInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return self.engine._infer(dataset, return_meta_data)
 
     def get_engine_id(self):
-        api = self.get_api_name()
-        return get_model_and_label_id(self.api_model_map[api][self.model], api)
+        api = self.get_provider_name()
+        return get_model_and_label_id(self.provider_model_map[api][self.model], api)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine):
