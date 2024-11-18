@@ -18,6 +18,7 @@ from tqdm.asyncio import tqdm_asyncio
 from .artifact import Artifact, fetch_artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
+from .error_utils import UnitxtError
 from .image_operators import data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
@@ -1589,7 +1590,7 @@ class LiteLLMInferenceEngine(
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
-    requirements: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+    _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache"]
 
     def prepare_engine(self):
         # Initialize the token bucket rate limiter
@@ -1693,6 +1694,7 @@ class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
+            "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
         },
         "together-ai": {
             "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
@@ -1706,6 +1708,10 @@ class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-8b-instruct": "llama3:8b",
             "llama-3-70b-instruct": "llama3:70b",
         },
+        "bam": {
+            "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
+            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
+        },
     }
 
     _provider_to_base_class = {
@@ -1714,6 +1720,11 @@ class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
         "together-ai": LiteLLMInferenceEngine,
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
+        "bam": IbmGenAiInferenceEngine,
+    }
+
+    _provider_param_renaming = {
+        "bam": {"max_tokens": "max_new_tokens", "model": "model_name"}
     }
 
     def get_provider_name(self):
@@ -1721,9 +1732,26 @@ class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
 
     def prepare_engine(self):
         provider = self.get_provider_name()
+        if provider not in self._provider_to_base_class:
+            raise UnitxtError(
+                f"{provider} a known API. Supported apis: {','.join(self.provider_model_map.keys())}"
+            )
+        if self.model not in self.provider_model_map[api]:
+            raise UnitxtError(
+                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[api].keys())}"
+            )
         cls = self.__class__._provider_to_base_class[provider]
         args = self.to_dict([StandardAPIParamsMixin])
-        args["model"] = self.provider_model_map[provider][self.model]
+        args["model"] = self.provider_model_map[provider][self.model]        
+        params = list(args.keys())
+        if provider in self._provider_param_renaming:
+            for param in params:
+                if args[param] is not None:
+                    if param in self._provider_param_renaming[provider]:
+                        args[self._provider_param_renaming[provider][param]] = args[param]
+                        del args[param]
+                else:
+                    del args[param]
         self.engine = cls(**args)
 
     def _infer(
