@@ -57,7 +57,7 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
 
 class DeleteTargetPrefix(InstanceOperator, ArtifactFetcherMixin):
     def process(
-        self, instance: Dict[str, Any], stream_name: str | None = None
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         target_prefix = self.get_artifact(
             instance["task_data"]["metadata"]["template"]
