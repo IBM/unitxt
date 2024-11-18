@@ -3,6 +3,7 @@ import os
 
 from unitxt.artifact import (
     Artifact,
+    ArtifactLink,
     fetch_artifact,
     get_artifacts_data_classification,
     reset_artifacts_json_cache,
@@ -217,3 +218,23 @@ class TestArtifact(UnitxtTestCase):
 
         # "Fixing" the env variable so that it does not affect other tests:
         del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]
+
+    def test_artifact_link(self):
+        with temp_catalog() as catalog_path:
+            rename = Rename(field_to_field={"label_text": "label"})
+            add_to_catalog(
+                Rename(field_to_field={"label_text": "label"}),
+                "rename.for.test.dict",
+                catalog_path=catalog_path,
+            )
+            add_to_catalog(
+                ArtifactLink(
+                    new_artifact="rename.for.test.dict",
+                    is_self_deprecated=True,
+                ),
+                "renamefields.for.test.dict",
+                catalog_path=catalog_path,
+            )
+
+            artifact, _ = fetch_artifact("renamefields.for.test.dict")
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())

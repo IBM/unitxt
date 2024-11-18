@@ -412,6 +412,18 @@ def get_raw(obj):
     return shallow_copy(obj)
 
 
+class ArtifactLink(Artifact):
+    new_artifact: Artifact
+    is_self_deprecated: bool
+
+    def prepare(self):
+        if self.is_self_deprecated:
+            UnitxtWarning(
+                message=f"Artifact requested is deprecated. "
+                f"Its replacement, of type {self.new_artifact.__type__}, is instantiated instead"
+            )
+
+
 class ArtifactList(list, Artifact):
     def prepare(self):
         for artifact in self:
@@ -467,15 +479,21 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
         name, _ = separate_inside_and_outside_square_brackets(artifact_rep)
         if is_name_legal_for_catalog(name):
             catalog, artifact_rep, args = get_catalog_name_and_args(name=artifact_rep)
-            return catalog.get_with_overwrite(
+            artifact_to_return = catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=args
-            ), catalog
+            )
+            if isinstance(artifact_to_return, ArtifactLink):
+                artifact_to_return = artifact_to_return.new_artifact
+            return artifact_to_return, catalog
 
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
     # Load from dictionary (fails if not valid dictionary)
-    return Artifact.from_dict(artifact_rep), None
+    artifact_to_return = Artifact.from_dict(artifact_rep)
+    if isinstance(artifact_to_return, ArtifactLink):
+        artifact_to_return = artifact_to_return.new_artifact
+    return artifact_to_return, None
 
 
 def get_catalog_name_and_args(
