@@ -4,6 +4,7 @@ import json
 import os
 import pkgutil
 import re
+import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
@@ -138,6 +139,14 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
+    __is_deprecated__: bool = NonPositionalField(
+        default=False, required=False, also_positional=False
+    )
+
+    __replacing_artifact__: Any = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
+
     data_classification_policy: List[str] = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -235,8 +244,16 @@ class Artifact(Dataclass):
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, path, artifact_identifier=None, overwrite_args=None):
+    def load(cls, catalog, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
+        if "__replacing_artifact__" in d and d["__replacing_artifact__"] is not None:
+            replacing_artifact_name = d["__replacing_artifact__"]
+            if "__is_deprecated__" in d and d["__is_deprecated__"]:
+                message = f"Artifact '{artifact_identifier}' is deprecated, and its replacement, '{replacing_artifact_name}', is instantiated instead."
+                warnings.warn(message, DeprecationWarning, stacklevel=2)
+
+            path = catalog.path(replacing_artifact_name)
+            d = artifacts_json_cache(path)
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
@@ -247,7 +264,14 @@ class Artifact(Dataclass):
         return self.__class__.__name__
 
     def prepare(self):
-        pass
+        if hasattr(self, "__is_deprecated__") and self.__is_deprecated__:
+            message = "Artifact requested is deprecated. "
+            if (
+                hasattr(self, "__replacing_artifact__")
+                and self.__replacing_artifact__ is not None
+            ):
+                message += f"Its replacement, of type {self.__replacing_artifact__}, is to be instantiated instead."
+            warnings.warn(message, DeprecationWarning, stacklevel=2)
 
     def verify(self):
         pass
@@ -412,18 +436,6 @@ def get_raw(obj):
     return shallow_copy(obj)
 
 
-class ArtifactLink(Artifact):
-    new_artifact: Artifact
-    is_self_deprecated: bool
-
-    def prepare(self):
-        if self.is_self_deprecated:
-            UnitxtWarning(
-                message=f"Artifact requested is deprecated. "
-                f"Its replacement, of type {self.new_artifact.__type__}, is instantiated instead"
-            )
-
-
 class ArtifactList(list, Artifact):
     def prepare(self):
         for artifact in self:
@@ -468,11 +480,23 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     (5) Otherwise, check that the artifact representation is a dictionary and build an Artifact object from it.
     """
     if isinstance(artifact_rep, Artifact):
+        if (
+            hasattr(artifact_rep, "__replacing_artifact__")
+            and artifact_rep.__replacing_artifact__ is not None
+        ):
+            return artifact_rep.__replacing_artifact__, None
         return artifact_rep, None
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
-        return Artifact.load(artifact_rep), None
+        artifact_to_return = Artifact.load(artifact_rep)
+        if (
+            hasattr(artifact_to_return, "__replacing_artifact__")
+            and artifact_to_return.__replacing_artifact__ is not None
+        ):
+            artifact_to_return = artifact_to_return.__replacing_artifact__
+
+        return artifact_to_return, None
 
     # If artifact name in catalog
     if isinstance(artifact_rep, str):
@@ -482,18 +506,13 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
             artifact_to_return = catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=args
             )
-            if isinstance(artifact_to_return, ArtifactLink):
-                artifact_to_return = artifact_to_return.new_artifact
             return artifact_to_return, catalog
 
     # If Json string, first load into dictionary
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
     # Load from dictionary (fails if not valid dictionary)
-    artifact_to_return = Artifact.from_dict(artifact_rep)
-    if isinstance(artifact_to_return, ArtifactLink):
-        artifact_to_return = artifact_to_return.new_artifact
-    return artifact_to_return, None
+    return Artifact.from_dict(artifact_rep), None
 
 
 def get_catalog_name_and_args(

@@ -51,7 +51,10 @@ class LocalCatalog(Catalog):
         ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
         return Artifact.load(
-            path, artifact_identifier=artifact_identifier, overwrite_args=overwrite_args
+            self,
+            path,
+            artifact_identifier=artifact_identifier,
+            overwrite_args=overwrite_args,
         )
 
     def __getitem__(self, name) -> Artifact:
