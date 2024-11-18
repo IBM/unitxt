@@ -1736,19 +1736,21 @@ class CrossProviderModel(InferenceEngine, StandardAPIParamsMixin):
             raise UnitxtError(
                 f"{provider} a known API. Supported apis: {','.join(self.provider_model_map.keys())}"
             )
-        if self.model not in self.provider_model_map[api]:
+        if self.model not in self.provider_model_map[provider]:
             raise UnitxtError(
-                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[api].keys())}"
+                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[provider].keys())}"
             )
         cls = self.__class__._provider_to_base_class[provider]
         args = self.to_dict([StandardAPIParamsMixin])
-        args["model"] = self.provider_model_map[provider][self.model]        
+        args["model"] = self.provider_model_map[provider][self.model]
         params = list(args.keys())
         if provider in self._provider_param_renaming:
             for param in params:
                 if args[param] is not None:
                     if param in self._provider_param_renaming[provider]:
-                        args[self._provider_param_renaming[provider][param]] = args[param]
+                        args[self._provider_param_renaming[provider][param]] = args[
+                            param
+                        ]
                         del args[param]
                 else:
                     del args[param]
