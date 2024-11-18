@@ -1,5 +1,4 @@
 import json
-import re
 from abc import abstractmethod
 from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -10,7 +9,6 @@ from .dataclass import NonPositionalField
 from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
 from .operator import InstanceOperator, Operator
-from .processors import PostProcess
 from .random_utils import new_random_generator
 from .serializers import (
     DialogSerializer,
@@ -23,7 +21,6 @@ from .serializers import (
     VideoSerializer,
 )
 from .settings_utils import get_constants
-from .string_operators import RegexReplace
 from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
@@ -130,25 +127,12 @@ class Template(InstanceOperator):
             serialized_inputs
         )
 
-        post_processors = self.postprocessors
-        if self.target_prefix is not None:
-            post_processors = [
-                PostProcess(
-                    RegexReplace(
-                        pattern=rf"^\s*{re.escape(self.target_prefix)}\s*",
-                        replacement="",
-                    ),
-                    process_references=False,
-                ),
-                *post_processors,
-            ]
-
         result = {
             **instance,
             "source": source,
             "instruction": instruction,
             "target_prefix": target_prefix,
-            "postprocessors": post_processors,
+            "postprocessors": self.postprocessors,
         }
 
         if stream_name == constants.inference_stream:
