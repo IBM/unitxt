@@ -921,22 +921,3 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         random.shuffle(shuffled_header)
 
         return {"header": shuffled_header, "rows": table["rows"]}
-
-
-class SerializeTableAsConcatenation(SerializeTable):
-    def serialize_table(self, table_content: Dict) -> str:
-        # Extract headers and rows from the dictionary
-        header = table_content["header"]
-        rows = table_content["rows"]
-
-        assert header and rows, "Incorrect input table format"
-
-        # Process table header first
-        serialized_tbl_str = " ".join([str(i) for i in header])
-
-        # Process rows sequentially starting from row 1
-        for row in rows:
-            serialized_tbl_str += " " + " ".join([str(i) for i in row])
-
-        # return serialized table as a string
-        return serialized_tbl_str.strip()

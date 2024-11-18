@@ -3,7 +3,7 @@ from unitxt.inference import IbmGenAiInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.random_utils import get_seed
 
-model_list = ["meta-llama/llama-3-70b-instruct"]
+model_list = ["meta-llama/llama-3-1-70b-instruct"]
 format = "formats.llama3_instruct"
 template = "templates.response_assessment.rating.table2text_single_turn_with_reference"
 task = "rating.single_turn_with_reference"

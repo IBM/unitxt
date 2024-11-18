@@ -27,22 +27,22 @@ operator = InsertEmptyTableRows()
 
 add_to_catalog(operator, "augmentors.table.insert_empty_rows", overwrite=True)
 
-operator = TypeDependentAugmenter(operator=ShuffleTableRows(), augmented_type=Table)
+operator = ShuffleTableRows()
 
 add_to_catalog(operator, "augmentors.table.shuffle_rows", overwrite=True)
 
-operator = TypeDependentAugmenter(operator=ShuffleTableColumns(), augmented_type=Table)
+operator = ShuffleTableColumns()
 
 add_to_catalog(operator, "augmentors.table.shuffle_cols", overwrite=True)
 
-operator = TypeDependentAugmenter(operator=TruncateTableRows(), augmented_type=Table)
+operator = TruncateTableRows()
 
 add_to_catalog(operator, "augmentors.table.truncate_rows", overwrite=True)
 
-operator = TypeDependentAugmenter(operator=MaskColumnsNames(), augmented_type=Table)
+operator = MaskColumnsNames()
 
 add_to_catalog(operator, "augmentors.table.mask_cols_names", overwrite=True)
 
-operator = TypeDependentAugmenter(operator=ShuffleColumnsNames(), augmented_type=Table)
+operator = ShuffleColumnsNames()
 
 add_to_catalog(operator, "augmentors.table.shuffle_cols_names", overwrite=True)
