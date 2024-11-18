@@ -312,6 +312,32 @@ class SerializeTableAsHTML(SerializeTable):
         return rows_html
 
 
+class SerializeTableAsConcatenation(SerializeTable):
+    """Cancat Serializer.
+
+    Concat all table content to one string of header and rows.
+    Format(Sample):
+    name age Alex 26 Diana 34
+    """
+
+    def serialize_table(self, table_content: Dict) -> str:
+        # Extract headers and rows from the dictionary
+        header = table_content["header"]
+        rows = table_content["rows"]
+
+        assert header and rows, "Incorrect input table format"
+
+        # Process table header first
+        serialized_tbl_str = " ".join([str(i) for i in header])
+
+        # Process rows sequentially starting from row 1
+        for row in rows:
+            serialized_tbl_str += " " + " ".join([str(i) for i in row])
+
+        # return serialized table as a string
+        return serialized_tbl_str.strip()
+
+
 # truncate cell value to maximum allowed length
 def truncate_cell(cell_value, max_len):
     if cell_value is None:
@@ -566,7 +592,7 @@ class ConvertTableColNamesToSequential(FieldOperator):
         return table_content
 
 
-class ShuffleTableRows(FieldOperator):
+class ShuffleTableRows(TypeDependentAugmentor):
     """Shuffles the input table rows randomly.
 
     Sample Input:
@@ -582,12 +608,15 @@ class ShuffleTableRows(FieldOperator):
     }
     """
 
+    augmented_type = Table
+    seed = 0
+
     def process_value(self, table: Any) -> Any:
         table_input = recursive_copy(table)
-        return shuffle_rows(table_input)
+        return shuffle_rows(table_input, self.seed)
 
 
-class ShuffleTableColumns(FieldOperator):
+class ShuffleTableColumns(TypeDependentAugmentor):
     """Shuffles the table columns randomly.
 
     Sample Input:
@@ -603,9 +632,12 @@ class ShuffleTableColumns(FieldOperator):
         }
     """
 
+    augmented_type = Table
+    seed = 0
+
     def process_value(self, table: Any) -> Any:
         table_input = recursive_copy(table)
-        return shuffle_columns(table_input)
+        return shuffle_columns(table_input, self.seed)
 
 
 class LoadJson(FieldOperator):
@@ -640,9 +672,9 @@ class MapHTMLTableToJSON(FieldOperator):
     _requirements_list = ["bs4"]
 
     def process_value(self, table: Any) -> Any:
-        return self.truncate_table_rows(table_content=table)
+        return self.convert_to_json(table_content=table)
 
-    def truncate_table_rows(self, table_content: str) -> Dict:
+    def convert_to_json(self, table_content: str) -> Dict:
         from bs4 import BeautifulSoup
 
         soup = BeautifulSoup(table_content, "html.parser")
@@ -856,3 +888,26 @@ class InsertEmptyTableRows(TypeDependentAugmentor):
 
         # Return the modified table
         return {"header": header, "rows": rows}
+
+
+class MaskColumnsNames(TypeDependentAugmentor):
+    """Mask the names of tables columns with dummies "Col1", "Col2" etc."""
+
+    augmented_type = Table
+
+    def process_value(self, table: Any) -> Any:
+        masked_header = ["Col" + str(ind + 1) for ind in range(len(table["header"]))]
+
+        return {"header": masked_header, "rows": table["rows"]}
+
+
+class ShuffleColumnsNames(TypeDependentAugmentor):
+    """Shuffle table columns names to be displayed in random order."""
+
+    augmented_type = Table
+
+    def process_value(self, table: Any) -> Any:
+        shuffled_header = table["header"]
+        random.shuffle(shuffled_header)
+
+        return {"header": shuffled_header, "rows": table["rows"]}
