@@ -61,7 +61,6 @@ from .types import __file__ as _
 from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
-from .version import version
 
 logger = get_logger()
 constants = get_constants()

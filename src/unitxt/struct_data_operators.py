@@ -27,6 +27,7 @@ from typing import (
 
 import pandas as pd
 
+from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
@@ -719,7 +720,7 @@ class ConstructTableFromRowsCols(InstanceOperator):
         return instance
 
 
-class TransposeTable(FieldOperator):
+class TransposeTable(TypeDependentAugmentor):
     """Transpose a table.
 
     Sample Input:
@@ -734,6 +735,8 @@ class TransposeTable(FieldOperator):
             "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
         }
     """
+
+    augmented_type = Table
 
     def process_value(self, table: Any) -> Any:
         return self.transpose_table(table)
@@ -752,13 +755,15 @@ class TransposeTable(FieldOperator):
         return {"header": transposed_header, "rows": transposed_rows}
 
 
-class DuplicateTableRows(FieldOperator):
+class DuplicateTableRows(TypeDependentAugmentor):
     """Duplicates specific rows of a table for the given number of times.
 
     Args:
         row_indices (List[int]) - rows to be duplicated
         times(int) - how many times to duplicate
     """
+
+    augmented_type = Table
 
     row_indices: List[int] = []
     times: int = 1
@@ -782,13 +787,15 @@ class DuplicateTableRows(FieldOperator):
         return {"header": header, "rows": duplicated_rows}
 
 
-class DuplicateTableColumns(FieldOperator):
+class DuplicateTableColumns(TypeDependentAugmentor):
     """Duplicates specific columns of a table for the given number of times.
 
     Args:
         column_indices (List[int]) - columns to be duplicated
         times(int) - how many times to duplicate
     """
+
+    augmented_type = Table
 
     column_indices: List[int] = []
     times: int = 1
@@ -821,12 +828,14 @@ class DuplicateTableColumns(FieldOperator):
         return {"header": duplicated_header, "rows": duplicated_rows}
 
 
-class InsertEmptyTableRows(FieldOperator):
+class InsertEmptyTableRows(TypeDependentAugmentor):
     """Inserts empty rows in a table randomly for the given number of times.
 
     Args:
         times(int) - how many times to insert
     """
+
+    augmented_type = Table
 
     times: int = 0
 
