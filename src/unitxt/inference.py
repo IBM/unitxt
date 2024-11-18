@@ -37,7 +37,6 @@ class StandardAPIParamsMixin(Artifact):
     stop: Union[Optional[str], List[str]] = None
     temperature: Optional[float] = None
     top_p: Optional[float] = None
-    top_k: Optional[int] = None
     top_logprobs: Optional[int] = 20
     logit_bias: Optional[Dict[str, int]] = None
     logprobs: Optional[bool] = True

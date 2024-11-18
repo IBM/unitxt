@@ -3,12 +3,14 @@ from unitxt.inference import MultiAPIInferenceEngine
 from unitxt.text_utils import print_dict
 
 data = load_dataset(
-    "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api]",
+    "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api, system_prompt=system_prompts.general.be_concise]",
     split="test",
     disable_cache=False,
 )
 
-model = MultiAPIInferenceEngine(model="llama-3-8b-instruct", top_k=1, api="watsonx")
+model = MultiAPIInferenceEngine(
+    model="llama-3-8b-instruct", temperature=0.0, top_p=1.0, api="watsonx"
+)
 
 predictions = model.infer(data)
 
