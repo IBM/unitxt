@@ -15,11 +15,11 @@ with settings.context(
         split="test",
     )
 
-    inference_model = HFLlavaInferenceEngine(
+    engine = HFLlavaInferenceEngine(
         model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
     )
 
-    predictions = inference_model.infer(dataset)
+    predictions = engine.infer(dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
     print_dict(

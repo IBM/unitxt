@@ -221,6 +221,7 @@ class HFPipelineBasedInferenceEngine(
     model_name: str
     max_new_tokens: int
     use_fp16: bool = True
+    batch_size: int = 1
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -229,9 +230,20 @@ class HFPipelineBasedInferenceEngine(
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "hf_pipeline")
 
+    def _get_task(self):
+        from transformers import AutoConfig
+
+        return (
+            "text2text-generation"
+            if AutoConfig.from_pretrained(
+                self.model_name, trust_remote_code=True
+            ).is_encoder_decoder
+            else "text-generation"
+        )
+
     def _prepare_pipeline(self):
         import torch
-        from transformers import AutoConfig, pipeline
+        from transformers import pipeline
 
         model_args: Dict[str, Any] = (
             {"torch_dtype": torch.float16} if self.use_fp16 else {}
@@ -254,13 +266,7 @@ class HFPipelineBasedInferenceEngine(
         else:
             model_args.update({"device": device})
 
-        task = (
-            "text2text-generation"
-            if AutoConfig.from_pretrained(
-                self.model_name, trust_remote_code=True
-            ).is_encoder_decoder
-            else "text-generation"
-        )
+        task = self._get_task()
 
         if task == "text-generation":
             model_args.update({"return_full_text": False})
@@ -281,13 +287,16 @@ class HFPipelineBasedInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
+        if self._get_task() == "text2text-generation":
+            self.verify_not_chat_api(dataset)
 
         if not self._is_loaded():
             self._prepare_pipeline()
 
         outputs = []
-        for output in self.model([instance["source"] for instance in dataset]):
+        for output in self.model(
+            [instance["source"] for instance in dataset], batch_size=self.batch_size
+        ):
             if isinstance(output, list):
                 output = output[0]
             outputs.append(output["generated_text"])
@@ -1649,7 +1658,7 @@ class LiteLLMInferenceEngine(
         ]
         # Use tqdm_asyncio.gather to display progress bar
         return await tqdm_asyncio.gather(
-            *tasks, desc="LiteLLM Inference", total=len(tasks)
+            *tasks, desc=f"LiteLLM Inference ({self.model})", total=len(tasks)
         )
 
     def _infer(
@@ -1681,9 +1690,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Attributes:
-        api: Optional; Specifies the current API in use. Must be one of the
+        provider: Optional; Specifies the current API in use. Must be one of the
             literals in `_supported_apis`.
-        api_model_map: Dictionary mapping each supported API to a corresponding
+        provider_model_map: Dictionary mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
     """
@@ -1695,10 +1704,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
+            "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
+            "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
         },
         "together-ai": {
             "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
             "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
+            "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
         },
         "aws": {
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
@@ -1711,6 +1723,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
             "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
+            "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
+            "flan-t5-xxl": "google/flan-t5-xxl",
         },
     }
 

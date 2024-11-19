@@ -137,6 +137,13 @@ for provider in [
             inference_model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
+            """
+            We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+            watsonx, bam, openai, azure, aws and more.
+
+            For the arguments these inference engines can receive, please refer to the classes documentation or read
+            about the the open ai api arguments the CrossProviderInferenceEngine follows.
+            """
             predictions = inference_model.infer(test_dataset)
 
             evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

@@ -60,18 +60,25 @@ card = TaskCard(
 )
 
 # Verbalize the dataset using the template
-dataset = load_dataset(card=card, template_card_index="simple")
-test_dataset = dataset["test"]
-
-
-# Infere using flan t5 base using HF API
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+dataset = load_dataset(
+    card=card,
+    template_card_index="simple",
+    format="formats.chat_api",
+    split="test",
+    max_test_instances=10,
 )
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+predictions = engine.infer(dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 for instance in evaluated_dataset:

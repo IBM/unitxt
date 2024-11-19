@@ -232,3 +232,23 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "hello friend")
         self.assertEqual(predictions[1], "white.")
+
+    def test_hugginface_pipeline_inference_engine_chat_api(self):
+        dataset = [
+            {
+                "source": [{"role": "user", "content": "hi you!"}],
+            },
+            {
+                "source": [{"role": "user", "content": "black or white?"}],
+            },
+        ]
+
+        engine = HFPipelineBasedInferenceEngine(
+            model_name="Qwen/Qwen2.5-0.5B-Instruct",
+            batch_size=1,
+            max_new_tokens=1,
+        )
+        predictions = engine.infer(dataset)
+
+        self.assertEqual(predictions[0], "Hello")
+        self.assertEqual(predictions[1], "As")

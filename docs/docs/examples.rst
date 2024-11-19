@@ -1,6 +1,6 @@
 .. _examples:
 ==============
-Examples 
+Examples
 ==============
 
 Here you will find complete coding samples showing how to perform different tasks using Unitxt.
@@ -97,16 +97,16 @@ Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Format
 Long Context
 +++++++++++++++++++++++++++++
 
-This example explores the effect of long context in classification.  
+This example explores the effect of long context in classification.
 It converts a standard multi class classification dataset (sst2 sentiment classification),
 where single sentence texts are classified one by one, to a dataset
-where multiple sentences are classified using a single LLM call.  
+where multiple sentences are classified using a single LLM call.
 It compares the f1_micro in both approaches on two models.
 It uses serializers to verbalize and enumerated list of multiple sentences and labels.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_batched_multiclass_classification.py>`_
 
-Related documentation:  :ref:`Sst2 dataset card in catalog <catalog.cards.sst2>` :ref:`Types and Serializers Guide <types_and_serializers>`. 
+Related documentation:  :ref:`Sst2 dataset card in catalog <catalog.cards.sst2>` :ref:`Types and Serializers Guide <types_and_serializers>`.
 
 Construct a benchmark of multiple datasets and obtain the final score
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -264,5 +264,4 @@ This example show how to define new data types as well as the way these data typ
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`_
 
 Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.
-
 

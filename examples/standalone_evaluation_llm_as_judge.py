@@ -57,21 +57,22 @@ judge_correctness_template = InputOutputTemplate(
 )
 
 platform = "hf"
-model_name = "google/flan-t5-large"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=256, use_fp16=True
+model_name = "meta-llama/Llama-3.2-1B"
+
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
-# change to this to infer with IbmGenAI APIs:
-#
-# platform = 'ibm_gen_ai'
-# model_name = 'meta-llama/llama-3-70b-instruct'
-# inference_model = IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", max_new_tokens=32)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
-    inference_model=inference_model,
+    inference_model=engine,
     template=judge_correctness_template,
+    format="formats.chat_api",
     task="rating.single_turn",
     main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
     strip_system_prompt_and_format_from_inputs=False,
@@ -98,18 +99,22 @@ card = TaskCard(
 )
 
 # Convert card to a dataset
-dataset = load_dataset(card=card, template_card_index="simple")
-test_dataset = dataset["test"]
-
-# Infer a model to get predictions.
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+dataset = load_dataset(
+    card=card,
+    template_card_index="simple",
+    format="formats.chat_api",
+    split="test",
+    max_test_instances=10,
 )
-predictions = inference_model.infer(test_dataset)
+
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+)
+predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 for instance in evaluated_dataset:

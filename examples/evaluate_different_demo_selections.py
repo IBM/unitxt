@@ -1,7 +1,7 @@
 import pandas as pd
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.splitters import CloseTextSampler, FixedIndicesSampler, RandomSampler
 from unitxt.text_utils import print_dict
 
@@ -13,10 +13,16 @@ logger = get_logger()
 # CloseTextSampler - select the lexically closest amples from the demo pool for each test instance
 # FixedIndicesSampler - selec the same fixed set of demo examples for all instances
 
-card = "cards.ledgar"
-model_name = "google/flan-t5-xxl"
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
+inference_model = CrossProviderInferenceEngine(
+    model="llama-3-2-1b-instruct", max_tokens=32
+)
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+watsonx, bam, openai, azure, aws and more.
 
+For the arguments these inference engines can receive, please refer to the classes documentation or read
+about the the open ai api arguments the CrossProviderInferenceEngine follows.
+"""
 
 df = pd.DataFrame(columns=["num_demos", "sampler", "f1_micro", "ci_low", "ci_high"])
 
@@ -27,8 +33,9 @@ for num_demos in [1, 2]:
         FixedIndicesSampler(indices=[0, 1]),
     ]:
         dataset = load_dataset(
-            card=card,
+            card="cards.ledgar",
             template="templates.classification.multi_class.title",
+            format="formats.chat_api",
             num_demos=num_demos,
             demos_pool_size=50,
             loader_limit=200,
