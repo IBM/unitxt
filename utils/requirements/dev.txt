@@ -1,0 +1,7 @@
+ruff
+pre-commit
+detect-secrets @ git+https://github.com/IBM/detect-secrets@master
+tomli
+codespell
+fuzzywuzzy
+httpretty
