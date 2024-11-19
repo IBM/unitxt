@@ -26,12 +26,13 @@ from datasets import DatasetDict
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
-from .artifact import Artifact, fetch_artifact
+from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .image_operators import EncodeImageToString, data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
+from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
 
@@ -1001,7 +1002,7 @@ class IbmGenAiInferenceEngineParams(Artifact):
     typical_p: Optional[float] = None
 
 
-class GenericInferenceEngine(InferenceEngine):
+class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
     default: Optional[str] = None
 
     def prepare_engine(self):
@@ -1017,7 +1018,7 @@ class GenericInferenceEngine(InferenceEngine):
                 "\nor passing a similar required engine in the default argument"
             )
             engine_reference = self.default
-        self.engine, _ = fetch_artifact(engine_reference)
+        self.engine = self.get_artifact(engine_reference)
 
     def get_engine_id(self):
         return "generic_inference_engine"

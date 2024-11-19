@@ -2,12 +2,12 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import infer
-from .artifact import fetch_artifact
 from .dataclass import Field
 from .formats import Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
+from .operators import ArtifactFetcherMixin
 from .settings_utils import get_settings
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
@@ -122,7 +122,7 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         pass
 
 
-class LLMAsJudge(LLMAsJudgeBase):
+class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
     """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
 
     This class uses the source prompt given to the generator and the generator's predictions to evaluate
@@ -156,7 +156,7 @@ class LLMAsJudge(LLMAsJudgeBase):
             instances = []
             for task_data_instance in task_data:
                 template = task_data_instance["metadata"]["template"]
-                template, _ = fetch_artifact(template)
+                template = self.get_artifact(template)
                 instance = SequentialOperator(
                     steps=[template, "formats.empty"]
                 ).process_instance(

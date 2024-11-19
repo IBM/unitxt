@@ -2,11 +2,11 @@ import warnings
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
-from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
 from .operator import InstanceOperator
+from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants
 from .type_utils import (
     Type,
@@ -35,7 +35,7 @@ def parse_string_types_instead_of_actual_objects(obj):
     return parse_type_string(obj)
 
 
-class Task(InstanceOperator):
+class Task(InstanceOperator, ArtifactFetcherMixin):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
@@ -184,10 +184,10 @@ class Task(InstanceOperator):
                 data["prediction_type"] = to_type_string(data["prediction_type"])
         return data
 
-    @staticmethod
+    @classmethod
     @lru_cache(maxsize=None)
-    def get_metric_prediction_type(metric_id: str):
-        metric = fetch_artifact(metric_id)[0]
+    def get_metric_prediction_type(cls, metric_id: str):
+        metric = cls.get_artifact(metric_id)
         return metric.prediction_type
 
     def check_metrics_type(self) -> None:
