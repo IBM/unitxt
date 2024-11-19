@@ -33,7 +33,7 @@ with tempfile.TemporaryDirectory() as temp_dir:
         repo_type="dataset",
     )
 
-with open("./version.py") as f:
+with open(".src/unitxt/version.py") as f:
     version = f.read().strip().replace("version = ", "").replace('"', "")
 
 api.create_tag(repo_id="unitxt/data", repo_type="dataset", tag=version)
