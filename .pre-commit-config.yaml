@@ -22,12 +22,12 @@ repos:
       # Run the formatter
       - id: ruff-format
 
-  - repo: https://github.com/ibm/detect-secrets
+  - repo: https://github.com/Yelp/detect-secrets
     # If you desire to use a specific version of detect-secrets, you can replace `master` with other git revisions such as branch, tag or commit sha.
     # You are encouraged to use static refs such as tags, instead of branch name
     #
     # Running "pre-commit autoupdate" automatically updates rev to latest tag
-    rev: 0.13.1+ibm.61.dss
+    rev: v1.5.0
     hooks:
       - id: detect-secrets # pragma: whitelist secret
         # Add options for detect-secrets-hook binary. You can run `detect-secrets-hook --help` to list out all possible options.
@@ -35,7 +35,8 @@ repos:
         # when "--baseline" without "--use-all-plugins", pre-commit scan with just plugins in baseline file
         # when "--baseline" with "--use-all-plugins", pre-commit scan with all available plugins
         # add "--fail-on-unaudited" to fail pre-commit for unaudited potential secrets
-        args: [--baseline, utils/.secrets.baseline, --use-all-plugins, --fail-on-unaudited]
+        args: [--baseline, utils/.secrets.baseline]
+        exclude: utils/.secrets.baseline
 
   - repo: https://github.com/codespell-project/codespell
     rev: v2.2.6
