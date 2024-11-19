@@ -244,7 +244,7 @@ class Artifact(Dataclass):
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, catalog, path, artifact_identifier=None, overwrite_args=None):
+    def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
         if "__replacing_artifact__" in d and d["__replacing_artifact__"] is not None:
             replacing_artifact_name = d["__replacing_artifact__"]
@@ -252,8 +252,19 @@ class Artifact(Dataclass):
                 message = f"Artifact '{artifact_identifier}' is deprecated, and its replacement, '{replacing_artifact_name}', is instantiated instead."
                 warnings.warn(message, DeprecationWarning, stacklevel=2)
 
-            path = catalog.path(replacing_artifact_name)
+            # identify the catalog for replacing_artifact_name
+            needed_catalog = None
+            catalogs = list(Catalogs())
+            for catalog in catalogs:
+                if replacing_artifact_name in catalog:
+                    needed_catalog = catalog
+
+            if needed_catalog is None:
+                raise UnitxtArtifactNotFoundError(replacing_artifact_name, catalogs)
+
+            path = needed_catalog.path(replacing_artifact_name)
             d = artifacts_json_cache(path)
+            artifact_identifier = replacing_artifact_name
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
