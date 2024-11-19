@@ -18,7 +18,7 @@ This example demonstrates how to evaluate an existing entailment dataset (wnli) 
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`_
 
-Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
 
 Evaluate an existing dataset from the Unitxt catalog (with Unitxt installation)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -28,7 +28,7 @@ This approach is faster than using Huggingface APIs.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
 
-Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`.
+Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluate a custom dataset
@@ -48,7 +48,7 @@ It also shows how to use preprocessing steps to align the raw input of the datas
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/qa_evaluation.py>`_
 
-Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open QA task in catalog <catalog.tasks.qa.open>`, :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`.
+Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open QA task in catalog <catalog.tasks.qa.open>`, :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluation usecases
@@ -62,7 +62,7 @@ It also shows how to register assets into a local catalog and reuse them.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_templates.py>`_
 
-Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
+Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`, :ref:`Inference Engines <inference>`.
 
 Evaluate the impact of different formats and system prompts
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -92,7 +92,7 @@ This example demonstrates how to evaluate a dataset using a pool of templates an
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_different_templates_num_demos.py>`_
 
-Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
+Related documentation: :ref:`Templates tutorial <adding_template>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`, :ref:`Inference Engines <inference>`.
 
 Long Context
 +++++++++++++++++++++++++++++
@@ -115,7 +115,7 @@ This example shows how to construct a benchmark that includes multiple datasets,
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_benchmark.py>`_
 
-Related documentation: :ref:`Benchmarks tutorial <adding_benchmark>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`.
+Related documentation: :ref:`Benchmarks tutorial <adding_benchmark>`, :ref:`Formatting tutorial <adding_format>`, :ref:`Using the Catalog <using_catalog>`, :ref:`Inference Engines <inference>`.
 
 LLM as Judges
 --------------
@@ -127,7 +127,7 @@ This example demonstrates how to evaluate an existing QA dataset (squad) using t
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge.py>`_
 
-Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
 
 Evaluate a custom dataset using a custom LLM as Judge
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -160,7 +160,7 @@ while the 70b model performs much better.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge.py>`_
 
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluate your model on the Arena Hard benchmark using a custom LLMaJ
@@ -170,7 +170,7 @@ This example demonstrates how to evaluate a user model on the Arena Hard benchma
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_model_using_arena_hard.py>`_
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`.
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`, :ref:`Inference Engines <inference>`.
 
 Evaluate a judge model performance judging the Arena Hard Benchmark
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -180,7 +180,7 @@ The model is evaluated on its capability to give a judgment that is in correlati
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard.py>`_
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`.
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`, :ref:`Inference Engines <inference>`.
 
 Evaluate using ensemble of LLM as a judge metrics
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -190,7 +190,7 @@ The example shows how to ensemble two judges which uses different templates.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_using_metrics_ensemble.py>`_
 
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
 
 Evaluate predictions of models using pre-trained ensemble of LLM as judges
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -206,7 +206,7 @@ Groundedness: Every substantial claim in the response of the model is derivable 
 IDK: Does the model response say I don't know?
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_idk_judge.py>`
 
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
+Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
 
 RAG
 ---
@@ -222,7 +222,7 @@ and use the existing metrics to evaluate model results.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_response_generation.py>`_
 
-Related documentation: :ref:`RAG Guide <rag_support>`.  :ref:`Response generation task <catalog.tasks.rag.response_generation>`.
+Related documentation: :ref:`RAG Guide <rag_support>`, :ref:`Response generation task <catalog.tasks.rag.response_generation>`, :ref:`Inference Engines <inference>`.
 
 Multi-Modality
 --------------
@@ -243,7 +243,7 @@ This approach can be adapted for various image-text to text tasks, such as image
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text.py>`_
 
-Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluate Image-Text to Text Model With Different Templates
@@ -251,7 +251,7 @@ Evaluate Image-Text to Text Model With Different Templates
 Evaluate Image-Text to Text Models with different templates and explore the sensitivity of the model to different textual variations.
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text_with_different_templates.py>`_
 
-Related documentation: :ref:`Multi-Modality Guide <multi_modality>`.
+Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
 
 Types and Serializers
 ----------------------------
@@ -263,5 +263,5 @@ This example show how to define new data types as well as the way these data typ
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/custom_types.py>`_
 
-Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`.
+Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`, :ref:`Inference Engines <inference>`.
 
