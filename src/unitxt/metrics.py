@@ -17,7 +17,7 @@ import pandas as pd
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
-from .artifact import Artifact, fetch_artifact
+from .artifact import Artifact
 from .dataclass import (
     AbstractField,
     InternalField,
@@ -37,7 +37,7 @@ from .operator import (
     StreamingOperator,
     StreamOperator,
 )
-from .operators import Copy, Set
+from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
@@ -4812,7 +4812,7 @@ class IsCodeMixed(BulkInstanceMetric):
         return processed_stream.to_dataset()["test"]
 
 
-class MetricsEnsemble(InstanceMetric):
+class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
     """Metrics Ensemble class for creating ensemble of given metrics.
 
     Attributes:
@@ -4836,7 +4836,7 @@ class MetricsEnsemble(InstanceMetric):
 
     def prepare(self):
         super().prepare()
-        self.metrics = [fetch_artifact(metric)[0] for metric in self.metrics]
+        self.metrics = [self.get_artifact(metric) for metric in self.metrics]
         for i, metric in enumerate(self.metrics):
             metric.score_prefix = self.get_prefix_name(i)
         if self.weights is None:

@@ -1039,10 +1039,10 @@ class ArtifactFetcherMixin:
 
     @classmethod
     def get_artifact(cls, artifact_identifier: str) -> Artifact:
-        if artifact_identifier not in cls._artifacts_cache:
+        if str(artifact_identifier) not in cls._artifacts_cache:
             artifact, catalog = fetch_artifact(artifact_identifier)
-            cls._artifacts_cache[artifact_identifier] = artifact
-        return shallow_copy(cls._artifacts_cache[artifact_identifier])
+            cls._artifacts_cache[str(artifact_identifier)] = artifact
+        return shallow_copy(cls._artifacts_cache[str(artifact_identifier)])
 
 
 class ApplyOperatorsField(InstanceOperator):
