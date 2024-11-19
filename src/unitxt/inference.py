@@ -223,6 +223,7 @@ class HFPipelineBasedInferenceEngine(
     max_new_tokens: int
     use_fp16: bool = True
     batch_size: int = 1
+    top_k: Optional[int] = None
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
@@ -296,7 +297,9 @@ class HFPipelineBasedInferenceEngine(
 
         outputs = []
         for output in self.model(
-            [instance["source"] for instance in dataset], batch_size=self.batch_size
+            [instance["source"] for instance in dataset],
+            batch_size=self.batch_size,
+            top_k=self.top_k,
         ):
             if isinstance(output, list):
                 output = output[0]
