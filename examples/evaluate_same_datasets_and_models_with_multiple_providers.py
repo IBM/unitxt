@@ -56,21 +56,21 @@ for provider in [
                 template_card_index=0,
                 format=format,
                 num_demos=1,
-                demos_pool_size=100,
+                demos_pool_size=10,
                 loader_limit=1000,
-                max_test_instances=500,
+                max_test_instances=10,
                 disable_cache=False,
+                split="test",
             )
 
-            test_dataset = dataset["test"]
             from unitxt.inference import CrossProviderInferenceEngine
 
             inference_model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
-            predictions = inference_model.infer(test_dataset)
+            predictions = inference_model.infer(dataset)
 
-            evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+            evaluated_dataset = evaluate(predictions=predictions, data=dataset)
             # import pandas as pd
             # result_df = pd.json_normalize(evaluated_dataset)
             # result_df.to_csv(f"output.csv")

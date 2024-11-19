@@ -10,9 +10,9 @@ dataset = load_dataset(
     card="cards.arena_hard.response_assessment.pairwise_comparative_rating.both_games_gpt_4_judge",
     template="templates.response_assessment.pairwise_comparative_rating.arena_hard_with_shuffling",
     format="formats.chat_api",
-    max_test_instances=4,
+    max_test_instances=None,
     split="test",
-)
+).select(range(5))
 
 inference_model = CrossProviderInferenceEngine(
     model="llama-3-2-1b-instruct", provider="watsonx"
