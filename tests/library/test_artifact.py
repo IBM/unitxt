@@ -1,14 +1,17 @@
 import json
 import os
+import warnings
 
 from unitxt.artifact import (
     Artifact,
+    ArtifactLink,
     fetch_artifact,
     get_artifacts_data_classification,
     reset_artifacts_json_cache,
 )
 from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
+from unitxt.deprecation_utils import deprecation
 from unitxt.error_utils import UnitxtError
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
@@ -19,6 +22,7 @@ from unitxt.settings_utils import get_settings
 from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
+from tests.library.test_deprecation_utils import EnsureWarnings
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
@@ -219,25 +223,39 @@ class TestArtifact(UnitxtTestCase):
         del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]
 
     def test_artifact_link(self):
+        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
-            rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+            # test when artifact_linked_to is expressed as a link
             add_to_catalog(
                 rename,
-                "rename.for.test.dict",
+                "rename.for.test.artifact.link",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
-            class LinkExample1(Artifact):
-                pass
-
-            rename_fields = LinkExample1(__replacing_artifact__="rename.for.test.dict")
+            rename_fields = ArtifactLink(
+                artifact_linked_to="rename.for.test.artifact.link"
+            )
             add_to_catalog(
                 rename_fields,
-                "renamefields.for.test.dict",
+                "renamefields.for.test.artifact.link",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
-            artifact, _ = fetch_artifact("renamefields.for.test.dict")
+            artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())
+
+            # test when artifact_linked_to is expressed as a subclass of Artifact
+            rename_fields = ArtifactLink(artifact_linked_to=rename)
+            add_to_catalog(
+                rename_fields,
+                "renamefields.for.test.artifact.link",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_with_deprecation_warning(self):
@@ -245,57 +263,56 @@ class TestArtifact(UnitxtTestCase):
             rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
             add_to_catalog(
                 rename,
-                "rename.for.test.dict",
+                "rename.for.test.artifact.link",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
-            class LinkExample2(Artifact):
+            @deprecation("3.0.0")
+            class DeprecatedRenameFields(ArtifactLink):
                 pass
 
-            rename_fields = LinkExample2(
-                __replacing_artifact__="rename.for.test.dict",
-                __is_deprecated__=True,
-            )
+            with EnsureWarnings():
+                with warnings.catch_warnings(record=True):
+                    rename_fields = DeprecatedRenameFields(
+                        artifact_linked_to="rename.for.test.artifact.link"
+                    )
+
             add_to_catalog(
                 rename_fields,
-                "renamefields.for.test.dict",
+                "renamefields.for.test.artifact.link",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
-            with self.assertWarns(DeprecationWarning):
-                artifact, _ = fetch_artifact("renamefields.for.test.dict")
-                self.assertDictEqual(rename.to_dict(), artifact.to_dict())
+            artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
-    def test_artifact_link_with_deprecation_warning_and_overwrites(self):
+    def test_artifact_link_with_overwrites(self):
         with temp_catalog() as catalog_path:
-            rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+            rename = Rename(field_to_field={"old_name": "new_name"})
             add_to_catalog(
                 rename,
-                "rename.for.test.dict",
+                "rename.old_name.to.new_name",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
-            class LinkExample3(Artifact):
-                pass
-
-            rename_fields = LinkExample3(
-                __replacing_artifact__="rename.for.test.dict",
-                __is_deprecated__=True,
+            rename_fields = ArtifactLink(
+                artifact_linked_to="rename.old_name.to.new_name",
             )
             add_to_catalog(
                 rename_fields,
-                "renamefields.for.test.dict",
+                "rename_fields.old_name.to.new_name",
                 catalog_path=catalog_path,
+                overwrite=True,
             )
 
             overwritten_rename = Rename(
-                field_to_field={
-                    "overwritten_old_field_name": "overwritten_new_field_name"
-                }
+                field_to_field={"overwritten_old_name": "overwritten_new_name"}
             )
 
-            with self.assertWarns(DeprecationWarning):
-                artifact, _ = fetch_artifact(
-                    "renamefields.for.test.dict[field_to_field={overwritten_old_field_name=overwritten_new_field_name}]"
-                )
-                self.assertDictEqual(overwritten_rename.to_dict(), artifact.to_dict())
+            artifact, _ = fetch_artifact(
+                "rename_fields.old_name.to.new_name[field_to_field={overwritten_old_name=overwritten_new_name}]"
+            )
+            self.assertDictEqual(overwritten_rename.to_dict(), artifact.to_dict())

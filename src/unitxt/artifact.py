@@ -4,7 +4,6 @@ import json
 import os
 import pkgutil
 import re
-import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
@@ -139,14 +138,6 @@ class Artifact(Dataclass):
     )
     __id__: str = InternalField(default=None, required=False, also_positional=False)
 
-    __is_deprecated__: bool = NonPositionalField(
-        default=False, required=False, also_positional=False
-    )
-
-    __replacing_artifact__: Any = NonPositionalField(
-        default=None, required=False, also_positional=False
-    )
-
     data_classification_policy: List[str] = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -246,25 +237,28 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "__replacing_artifact__" in d and d["__replacing_artifact__"] is not None:
-            replacing_artifact_name = d["__replacing_artifact__"]
-            if "__is_deprecated__" in d and d["__is_deprecated__"]:
-                message = f"Artifact '{artifact_identifier}' is deprecated, and its replacement, '{replacing_artifact_name}', is instantiated instead."
-                warnings.warn(message, DeprecationWarning, stacklevel=2)
+        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
+            artifact_linked_to = d["artifact_linked_to"]
+            if isinstance(artifact_linked_to, dict) and (
+                "__type__" in artifact_linked_to
+            ):
+                d = artifact_linked_to
 
-            # identify the catalog for replacing_artifact_name
-            needed_catalog = None
-            catalogs = list(Catalogs())
-            for catalog in catalogs:
-                if replacing_artifact_name in catalog:
-                    needed_catalog = catalog
+            else:
+                # artifact_linked_to is a name of catalog entry
+                # identify the catalog for replacing_artifact_name
+                needed_catalog = None
+                catalogs = list(Catalogs())
+                for catalog in catalogs:
+                    if artifact_linked_to in catalog:
+                        needed_catalog = catalog
 
-            if needed_catalog is None:
-                raise UnitxtArtifactNotFoundError(replacing_artifact_name, catalogs)
+                if needed_catalog is None:
+                    raise UnitxtArtifactNotFoundError(artifact_linked_to, catalogs)
 
-            path = needed_catalog.path(replacing_artifact_name)
-            d = artifacts_json_cache(path)
-            artifact_identifier = replacing_artifact_name
+                path = needed_catalog.path(artifact_linked_to)
+                d = artifacts_json_cache(path)
+            artifact_identifier = artifact_linked_to
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
@@ -275,14 +269,7 @@ class Artifact(Dataclass):
         return self.__class__.__name__
 
     def prepare(self):
-        if hasattr(self, "__is_deprecated__") and self.__is_deprecated__:
-            message = "Artifact requested is deprecated. "
-            if (
-                hasattr(self, "__replacing_artifact__")
-                and self.__replacing_artifact__ is not None
-            ):
-                message += f"Its replacement, of type {self.__replacing_artifact__}, is to be instantiated instead."
-            warnings.warn(message, DeprecationWarning, stacklevel=2)
+        pass
 
     def verify(self):
         pass
@@ -431,6 +418,13 @@ class Artifact(Dataclass):
         return instance
 
 
+class ArtifactLink(Artifact):
+    # the artifact linied to, expressed either as an artifact or its catalog id
+    artifact_linked_to: Union[Artifact, str] = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
+
+
 def get_raw(obj):
     if isinstance(obj, Artifact):
         return obj._to_raw_dict()
@@ -491,21 +485,15 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     (5) Otherwise, check that the artifact representation is a dictionary and build an Artifact object from it.
     """
     if isinstance(artifact_rep, Artifact):
-        if (
-            hasattr(artifact_rep, "__replacing_artifact__")
-            and artifact_rep.__replacing_artifact__ is not None
-        ):
-            return artifact_rep.__replacing_artifact__, None
+        if isinstance(artifact_rep, ArtifactLink):
+            return artifact_rep.artifact_linked_to, None
         return artifact_rep, None
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
         artifact_to_return = Artifact.load(artifact_rep)
-        if (
-            hasattr(artifact_to_return, "__replacing_artifact__")
-            and artifact_to_return.__replacing_artifact__ is not None
-        ):
-            artifact_to_return = artifact_to_return.__replacing_artifact__
+        if isinstance(artifact_rep, ArtifactLink):
+            artifact_to_return = artifact_to_return.artifact_linked_to
 
         return artifact_to_return, None
 
