@@ -16,7 +16,7 @@ fi
 
 echo "version = \"$version\"" > src/unitxt/version.py
 git add src/unitxt/version.py
-git commit -m "Update version to $version"
+git commit -s -m "Update version to $version"
 git push origin main:$version
 
 echo "New branch with new version was pushed. Please open a PR for this branch."

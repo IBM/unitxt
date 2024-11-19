@@ -39,25 +39,26 @@ card = TaskCard(
 #  What is the color of the sky?
 #  Answer:
 # "
-dataset = load_dataset(card=card, template="templates.qa.open.title")
-test_dataset = dataset["test"]
-
-
-# Infer using flan t5 base using HF API
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+dataset = load_dataset(
+    card=card,
+    template="templates.qa.open.title",
+    format="formats.chat_api",
+    split="test",
+    max_test_instances=5,
 )
-# change to this to infer with IbmGenAI APIs:
-#
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# or to this to infer using OpenAI APIs:
-#
-# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+
+predictions = engine.infer(dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 for instance in evaluated_dataset:

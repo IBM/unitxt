@@ -39,38 +39,26 @@ template = InputOutputTemplate(
     postprocessors=["processors.lower_case"],
 )
 # Verbalize the dataset using the template
-dataset = load_dataset(card=card, template=template)
-test_dataset = dataset["test"]
-
-
-# Infere using flan t5 base using HF API
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+dataset = load_dataset(
+    card=card,
+    template=template,
+    format="formats.chat_api",
+    split="test",
+    max_test_instances=10,
 )
 
-# change to this to infer with IbmGenAI APIs:
-#
-# from unitxt.inference import IbmGenAiInferenceEngine
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# or this to infer using WML APIs:
-#
-# from unitxt.inference import WMLInferenceEngine
-# inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# or to this to infer using OpenAI APIs:
-#
-# from unitxt.inference import OpenAiInferenceEngine
-# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# Note that to run with OpenAI APIs you need to change the loader specification, to
-# define that your data can be sent to a public API:
-#
-# loader=LoadFromDictionary(data=data,data_classification_policy=["public"]),
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+
+predictions = engine.infer(dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 for instance in evaluated_dataset:

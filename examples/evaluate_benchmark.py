@@ -1,7 +1,7 @@
 from unitxt.api import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
-    HFPipelineBasedInferenceEngine,
+    CrossProviderInferenceEngine,
 )
 from unitxt.standard import StandardRecipe
 from unitxt.text_utils import print_dict
@@ -47,11 +47,17 @@ benchmark = Benchmark(
 test_dataset = list(benchmark()["test"])
 
 
-# Infere using flan t5 base using HF API
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+# Infere using llama-3-2-1b base using Watsonx API
+inference_model = CrossProviderInferenceEngine(
+    model="llama-3-2-1b-instruct", provider="watsonx"
 )
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+watsonx, bam, openai, azure, aws and more.
+
+For the arguments these inference engines can receive, please refer to the classes documentation or read
+about the the open ai api arguments the CrossProviderInferenceEngine follows.
+"""
 
 predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

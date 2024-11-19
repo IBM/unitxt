@@ -1,13 +1,13 @@
 from typing import List, Optional, Union
 
+from .artifact import fetch_artifact
 from .augmentors import (
     Augmentor,
-    NullAugmentor,
-    TaskInputsAugmentor,
 )
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
@@ -15,7 +15,7 @@ from .operators import Set, StreamRefiner
 from .recipe import Recipe
 from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
@@ -24,6 +24,7 @@ from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, Templ
 from .utils import LRUCache
 
 constants = get_constants()
+settings = get_settings()
 logger = get_logger()
 
 
@@ -38,7 +39,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     task: Task = None
     template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
-    format: Format = Field(default_factory=SystemFormat)
+    format: Format = None
     serializer: Union[SingleTypeSerializer, List[SingleTypeSerializer]] = None
 
     # Additional parameters
@@ -67,9 +68,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(
-        default_factory=NullAugmentor
-    )
+    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(default=None)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
 
@@ -261,7 +260,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 
+    def reset(self):
+        self.reset_pipeline()
+
     def reset_pipeline(self):
+        if self.format is None:
+            if settings.default_format is not None:
+                self.format, _ = fetch_artifact(settings.default_format)
+            else:
+                self.format = SystemFormat()
+
         if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
 
@@ -297,11 +305,19 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if not isinstance(self.augmentor, list):
-            self.augmentor = [self.augmentor]
+        if self.augmentor is not None:
+            if (
+                self.card.task.augmentable_inputs is None
+                or len(self.task.augmentable_inputs) == 0
+            ):
+                raise UnitxtError(
+                    f"You specified augmentor in the recipe but the got task without augmentable_inputs: {self.task}"
+                )
 
-        for augmentor in self.augmentor:
-            if isinstance(augmentor, TaskInputsAugmentor):
+            if not isinstance(self.augmentor, list):
+                self.augmentor = [self.augmentor]
+
+            for augmentor in self.augmentor:
                 augmentor.set_fields(self.card.task.augmentable_inputs)
                 self.processing.steps.append(augmentor)
 
