@@ -24,7 +24,7 @@ def get_task_data_dict(task_data):
     return json.loads(task_data) if isinstance(task_data, str) else task_data
 
 
-class LLMAsJudgeBase(BulkInstanceMetric):
+class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
     """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
 
     Attributes:
@@ -123,7 +123,7 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         pass
 
 
-class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
+class LLMAsJudge(LLMAsJudgeBase):
     """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
 
     This class uses the source prompt given to the generator and the generator's predictions to evaluate
@@ -362,8 +362,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             format_name = "formats.llama3_instruct"
         else:
             format_name = "formats.empty"
-        format_artifact, _ = fetch_artifact(format_name)
-        self.format = format_artifact
+        self.format = self.get_artifact(format_name)
 
     def get_full_task_name(self):
         return self.task
