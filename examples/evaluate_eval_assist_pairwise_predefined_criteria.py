@@ -7,9 +7,9 @@ from unitxt.text_utils import print_dict
 logger = get_logger()
 data = {
     "test": [
-        {"context": {"context": "How is the weather?"}},
-        {"context": {"context": "How is the weather?"}},
-        {"context": {"context": "How is the weather?"}},
+        {"context": {"Question": "How is the weather?"}},
+        {"context": {"Question": "How is the weather?"}},
+        {"context": {"Question": "How is the weather?"}},
     ]
 }
 
