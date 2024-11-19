@@ -1,0 +1,8 @@
+unitxt[base]
+unitxt[dev]
+unitxt[docs]
+unitxt[helm]
+unitxt[service]
+unitxt[tests]
+unitxt[ui]
+unitxt[watsonx]
