@@ -1708,7 +1708,9 @@ class LiteLLMInferenceEngine(
         return [response.prediction for response in responses]
 
 
-_supported_apis = Literal["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+_supported_apis = Literal[
+    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk"
+]
 
 
 class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
@@ -1739,6 +1741,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
         },
+        "watsonx-sdk": {
+            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
+            "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+        },
         "together-ai": {
             "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
             "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
@@ -1767,10 +1774,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "aws": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
+        "watsonx-sdk": WMLInferenceEngine,
     }
 
     _provider_param_renaming = {
-        "bam": {"max_tokens": "max_new_tokens", "model": "model_name"}
+        "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
+        "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
     }
 
     def get_provider_name(self):
