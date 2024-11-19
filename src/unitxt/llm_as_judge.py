@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
@@ -351,6 +352,18 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         super().prepare()
         self.reduction_map = {"mean": [self.main_score]}
         self.score_prefix = f"{self.inference_model.get_engine_id()}_"
+        if not self.format:
+            self.set_format_for_inference_engine()
+
+    # if format is not directly set in constructor, choose according to the inference model
+    def set_format_for_inference_engine(self):
+        model_name = self.inference_model.get_engine_id()
+        if re.search("llama.?3.*instruct", model_name):
+            format_name = "formats.llama3_instruct"
+        else:
+            format_name = "formats.empty"
+        format_artifact, _ = fetch_artifact(format_name)
+        self.format = format_artifact
 
     def get_full_task_name(self):
         return self.task
