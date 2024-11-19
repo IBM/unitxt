@@ -28,7 +28,7 @@ class ParseEnumeratedList(FieldOperator):
     def process_value(self, text: Any) -> Any:
         result = []
         for x in text.split("\n"):
-            line_result = re.findall(r"(\d+)\.\s*(\w+)", x)
+            line_result = re.findall(r"(\d+)\.\s*(.*)", x)
             if len(line_result) == 1:
                 result.append(line_result[0])
         return result
@@ -63,96 +63,115 @@ task = Task(
 
 template = InputOutputTemplate(
     input_format="Classify each of the texts to its corresponding {type_of_class} from one of these options:\n{classes}\nReturn for each index the correspond class in a separate line.\nTexts:\n{texts}",
-    #   target_prefix="Answer:\n",
+    target_prefix="Answer:\n",
     output_format="{labels}",
-    postprocessors=[PostProcess(ParseEnumeratedList())],
+    postprocessors=["processors.lower_case", PostProcess(ParseEnumeratedList())],
     serializer=MultiTypeSerializer(serializers=[EnumeratedListSerializer()]),
 )
 df = pd.DataFrame(
-    columns=["model", "batch_size", "num_instances", "f1_micro", "ci_low", "ci_high"]
+    columns=[
+        "provider",
+        "model",
+        "batch_size",
+        "num_instances",
+        "f1_micro",
+        "ci_low",
+        "ci_high",
+        "hellucinations",
+    ]
 )
 
-for model_name in [
-    "ibm/granite-3-8b-instruct",
-    "meta-llama/llama-3-8b-instruct",
+for provider in [
+    "watsonx",
+    "bam",
 ]:
-    if model_name.startswith("ibm"):
-        format = SystemFormat(
-            demo_format=(
-                "{instruction}\\N{source}\\N<|end_of_text|>\n"
-                "<|start_of_role|>assistant<|end_of_role|>{target}\\N<|end_of_text|>\n"
-                "<|start_of_role|>user<|end_of_role|>"
-            ),
-            model_input_format=(
-                "<|start_of_role|>system<|end_of_role|>{system_prompt}<|end_of_text|>\n"
-                "<|start_of_role|>user<|end_of_role|>{demos}{instruction}\\N{source}\\N<|end_of_text|>\n"
-                "<|start_of_role|>assistant<|end_of_role|>"
-            ),
-        )
-        batch_sizes = [50, 30, 10, 1]
+    for model_name in [
+        "granite-3-8b-instruct",
+        "llama-3-8b-instruct",
+    ]:
+        batch_sizes = [30, 20, 10, 5, 1]
 
-    if model_name.startswith("meta-llama"):
-        format = "formats.llama3_instruct"
-        batch_sizes = [100, 50, 10, 1]
+        for batch_size in batch_sizes:
+            card, _ = fetch_artifact("cards.banking77")
+            card.preprocess_steps.extend(
+                [
+                    CollateInstances(batch_size=batch_size),
+                    Rename(field_to_field={"text": "texts", "label": "labels"}),
+                    Copy(field="text_type/0", to_field="text_type"),
+                    Copy(field="classes/0", to_field="classes"),
+                    Copy(field="type_of_class/0", to_field="type_of_class"),
+                ]
+            )
+            card.task = task
+            card.templates = [template]
+            format = "formats.chat_api"
+            if provider == "bam" and model_name.startswith("llama"):
+                format = "formats.llama3_instruct"
+            if provider == "bam" and model_name.startswith("granite"):
+                format = SystemFormat(
+                    demo_format=(
+                        "{instruction}\\N{source}\\N<|end_of_text|>\n"
+                        "<|start_of_role|>assistant<|end_of_role|>{target}\\N<|end_of_text|>\n"
+                        "<|start_of_role|>user<|end_of_role|>"
+                    ),
+                    model_input_format=(
+                        "<|start_of_role|>system<|end_of_role|>{system_prompt}<|end_of_text|>\n"
+                        "<|start_of_role|>user<|end_of_role|>{demos}{instruction}\\N{source}\\N<|end_of_text|>\n"
+                        "<|start_of_role|>assistant<|end_of_role|>"
+                    ),
+                )
 
-    for batch_size in batch_sizes:
-        card, _ = fetch_artifact("cards.sst2")
-        card.preprocess_steps.extend(
-            [
-                CollateInstances(batch_size=batch_size),
-                Rename(field_to_field={"text": "texts", "label": "labels"}),
-                Copy(field="text_type/0", to_field="text_type"),
-                Copy(field="classes/0", to_field="classes"),
-                Copy(field="type_of_class/0", to_field="type_of_class"),
+            dataset = load_dataset(
+                card=card,
+                template_card_index=0,
+                format=format,
+                num_demos=1,
+                demos_pool_size=5,
+                loader_limit=1000,
+                max_test_instances=200 / batch_size,
+            )
+
+            test_dataset = dataset["test"]
+            from unitxt.inference import CrossProviderInferenceEngine
+
+            inference_model = CrossProviderInferenceEngine(
+                model=model_name, max_tokens=1024, provider=provider
+            )
+            """
+            We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+            watsonx, bam, openai, azure, aws and more.
+
+            For the arguments these inference engines can receive, please refer to the classes documentation or read
+            about the the open ai api arguments the CrossProviderInferenceEngine follows.
+            """
+            predictions = inference_model.infer(test_dataset)
+
+            evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+            # import pandas as pd
+            # result_df = pd.json_normalize(evaluated_dataset)
+            # result_df.to_csv(f"output.csv")
+            # Print results
+            print_dict(
+                evaluated_dataset[0],
+                keys_to_print=[
+                    "source",
+                    "prediction",
+                    "processed_prediction",
+                    "processed_references",
+                ],
+            )
+
+            global_scores = evaluated_dataset[0]["score"]["global"]
+            df.loc[len(df)] = [
+                provider,
+                model_name,
+                batch_size,
+                global_scores["num_of_instances"],
+                global_scores["score"],
+                global_scores["score_ci_low"],
+                global_scores["score_ci_high"],
+                1.0 - global_scores["in_classes_support"],
             ]
-        )
-        card.task = task
-        card.templates = [template]
 
-        dataset = load_dataset(
-            card=card,
-            template_card_index=0,
-            format=format,
-            num_demos=1,
-            demos_pool_size=5,
-            loader_limit=10000,
-            max_test_instances=1000 / batch_size,
-        )
-
-        test_dataset = dataset["test"]
-
-        # inference_model = IbmGenAiInferenceEngine(
-        #    model_name=model_name, max_new_tokens=1024
-        # )
-
-        from unitxt.inference import WMLInferenceEngine
-
-        inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=1024)
-
-        predictions = inference_model.infer(test_dataset)
-
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-        # Print results
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=[
-                "source",
-                "prediction",
-                "processed_prediction",
-                "processed_references",
-            ],
-        )
-
-        global_scores = evaluated_dataset[0]["score"]["global"]
-        df.loc[len(df)] = [
-            model_name,
-            batch_size,
-            global_scores["num_of_instances"],
-            global_scores["score"],
-            global_scores["score_ci_low"],
-            global_scores["score_ci_high"],
-        ]
-
-        df = df.round(decimals=2)
-        logger.info(df.to_markdown())
+            df = df.round(decimals=2)
+            logger.info(df.to_markdown())

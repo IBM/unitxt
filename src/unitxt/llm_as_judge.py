@@ -176,6 +176,26 @@ class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
     def _get_instance_for_judge_model(
         self, input_instances: List[str], predictions: List, references: List
     ) -> List[Dict]:
+        string_input_instances = []
+
+        for input_instance in input_instances:
+            if isinstance(input_instance, str):
+                string_input_instances.append(input_instance)
+            if isinstance(input_instance, list):  # chat api
+                if len(input_instance) == 1:  # only user
+                    string_input_instances.append(input_instance[0]["content"])
+                if len(input_instance) == 2:  # only system and user
+                    string_input_instances.append(
+                        input_instance[0]["content"]
+                        + "\n"
+                        + input_instance[1]["content"]
+                    )
+                else:  # num demos > 0
+                    turns = []
+                    for turn in input_instance:
+                        turns.append(f'{turn["role"]}: {turn["content"]}')
+                    string_input_instances.append("\n".join(turns))
+
         if self.task == "rating.single_turn":
             instances = [
                 {
@@ -183,7 +203,7 @@ class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
                     "answer": prediction,
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         elif self.task == "rating.single_turn_with_reference":
@@ -194,7 +214,7 @@ class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
                     "reference_answer": reference[0],
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         elif self.task == "pairwise_comparative_rating.single_turn":
@@ -207,7 +227,7 @@ class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
                     "model_b": "baseline_model",
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         else:

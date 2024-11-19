@@ -79,7 +79,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             f"data with classification '{inference_model.data_classification_policy}'. To "
             f"enable this either change the 'data_classification_policy' attribute of the "
             f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
-            f"accordingly.",
+            f"accordingly.\nFor more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html \n",
         )
 
     def test_llava_inference_engine(self):
@@ -232,3 +232,28 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "hello friend")
         self.assertEqual(predictions[1], "white.")
+
+    def test_hugginface_pipeline_inference_engine_chat_api(self):
+        from transformers import set_seed
+
+        dataset = [
+            {
+                "source": [{"role": "user", "content": "hi you!"}],
+            },
+            {
+                "source": [{"role": "user", "content": "black or white?"}],
+            },
+        ]
+
+        set_seed(0, deterministic=True)
+
+        engine = HFPipelineBasedInferenceEngine(
+            model_name="Qwen/Qwen2.5-0.5B-Instruct",
+            batch_size=1,
+            max_new_tokens=1,
+            top_k=1,
+        )
+        predictions = engine.infer(dataset)
+
+        self.assertEqual(predictions[0], "Hello")
+        self.assertEqual(predictions[1], "As")
