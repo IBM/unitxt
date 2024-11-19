@@ -1,4 +1,5 @@
 import json
+import re
 from collections import defaultdict
 from functools import lru_cache
 from statistics import mean
@@ -8,6 +9,7 @@ from datasets import Features, Value
 
 from .dataclass import Dataclass
 from .operator import (
+    InstanceOperator,
     MultiStreamOperator,
     SequentialOperator,
     SequentialOperatorInitializer,
@@ -16,6 +18,7 @@ from .operator import (
 from .operators import (
     ApplyMetric,
     ApplyOperatorsField,
+    ArtifactFetcherMixin,
     FlattenInstances,
     RecursiveCopy,
     Rename,
@@ -52,6 +55,21 @@ class FromPredictionsAndOriginalData(StreamInitializerOperator):
         )
 
 
+class DeleteTargetPrefix(InstanceOperator, ArtifactFetcherMixin):
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if "metadata" in instance["task_data"]:
+            target_prefix = self.get_artifact(
+                instance["task_data"]["metadata"]["template"]
+            ).target_prefix
+            if target_prefix is not None and len(target_prefix) > 0:
+                target_prefix = target_prefix.format(**instance["task_data"])
+                pattern = rf"^\s*{re.escape(target_prefix)}\s*"
+                instance["prediction"] = re.sub(pattern, "", instance["prediction"])
+        return instance
+
+
 _post_process_steps = SequentialOperator(
     steps=[
         RecursiveCopy(
@@ -67,6 +85,7 @@ _post_process_steps = SequentialOperator(
             field="source",
             to_field="task_data/source",
         ),
+        DeleteTargetPrefix(),
         ApplyOperatorsField(
             operators_field="postprocessors",
         ),

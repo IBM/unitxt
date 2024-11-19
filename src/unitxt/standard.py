@@ -225,7 +225,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.verbalization, self.finalize]
+        self.inference.steps = [self.metadata, self.verbalization, self.finalize]
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
