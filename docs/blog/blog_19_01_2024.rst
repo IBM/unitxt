@@ -1,0 +1,107 @@
+.. title:: Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation
+.. authors:: Elron Bandel
+.. date:: 2024-11-19
+
+=================================================================================================
+[19/11/2024] Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation
+=================================================================================================
+
+**Authors**: Elron Bandel
+
+``19/11/2024``
+
+
+Preparing data for training and testing language models is a complex task.
+It involves handling various data formats, preprocessing, and ways of verbalizing tasks.
+Ensuring reproducibility and compatibility across platforms further adds to the complexity.
+
+Recognizing these challenges, Unitxt has always aimed to simplify data preparation.
+Today, we are introducing two major updates to redefine our support for LLM workflows.
+
+Introducing Two Major Enhancements
+-----------------------------------
+
+1. **Producing Data in Chat API Format**
+   Unitxt now can produces data in the widely adopted Chat API format.
+   This ensures compatibility with popular LLM APIs without requiring extra formatting.
+   By aligning with the OpenAI Chat API standard, we simplify workflows significantly.
+
+2. **A Comprehensive Array of Inference Engines**
+   We are adding wrappers for local inference platforms like Llama and Hugging Face.
+   Additionally, multi-API platforms like LiteLLM and Watsonx are now fully supported.
+   These wrappers make executing inference tasks seamless and platform-agnostic.
+
+.. code-block:: python
+
+    # Illustration of rich chat api ready for inference:
+
+    [
+        {
+            "role": "system",
+            "content": "You are an assistant that helps classify images."
+        },
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "What does this image depict?"
+                },
+                {
+                    "type": "image",
+                    "image": {
+                        "mime_type": "image/jpeg",
+                        "data": <ENCODED_IMAGE>
+                    }
+                }
+            ]
+        }
+    ]
+
+Why These Updates Matter
+------------------------
+
+### Chat API Format: Ready-to-Use Data
+By producing data in Chat API format, Unitxt eliminates discrepancies across APIs.
+This allows for compatibility, direct feeding of data, and simplified workflows.
+Additionally, the format supports multiple modalities such as text, images, and videos.
+
+### Inference Engines: Plug-and-Play Flexibility
+With inference engine wrappers, users can execute tasks consistently across platforms.
+This ensures seamless execution, unified workflows, and compatibility with local engines.
+Collaboration within the community also becomes easier with these standardized tools.
+
+Expanding Opportunities for the Community
+------------------------------------------
+
+These updates unlock significant opportunities, including:
+
+- **Easy Assembly of LLM Judges**:
+  Quickly set up LLMs as evaluators using Unitxt inference engines.
+
+- **Full Evaluation Pipelines**:
+  Design and execute end-to-end workflows directly in the Unitxt framework.
+
+- **Multi-Modality Evaluation**:
+  Evaluate models with diverse inputs, from text to images and beyond.
+
+Our Commitment to Collaboration
+-------------------------------
+
+Although you can now run end to end evaluation in Unitxt, Unitxt is still a general data preparation library.
+That means we remain committed to partnerships with other evaluation platforms such as HELM, Eval Harness, and others.
+Our Chat API format and inference engine support enhance accessibility and compatibility.
+These updates empower our partners to adopt the latest standards seamlessly.
+
+Conclusion
+----------
+
+Unitxt is adapting to the evolving landscape of language models and their capabilities.
+By supporting the Chat API format and inference engines, we simplify model workflows.
+These updates position Unitxt as the premier platform for LLM evaluation and integration.
+
+We invite you to explore these features and join us in advancing model capabilities.
+
+---
+
+For more information, visit the :ref:`inference engines guide <inference>` or see many of our :ref:`code examples <examples>`.
