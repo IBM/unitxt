@@ -10,7 +10,7 @@ Inference
 
 Introduction
 ------------
-Unitxt offers a wide array of :class:`Inference Engines <unitxt.inference>` for running models either locally (using HuggingFace, Ollama, and VLLM) or by making API requests to services like WatsonX, AWS, and Together AI.
+Unitxt offers a wide array of :class:`Inference Engines <unitxt.inference>` for running models either locally (using HuggingFace, Ollama, and VLLM) or by making API requests to services like WatsonX, OpenAI, AWS, and Together AI.
 
 Unitxt inference engines serve two main purposes:
 
