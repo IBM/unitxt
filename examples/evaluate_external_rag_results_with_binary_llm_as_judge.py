@@ -11,7 +11,7 @@ test_examples = [
             "Supported foundation models available with watsonx.ai. Watsonx.ai offers numerous foundation models."
         ],
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
-        "a123123": "",
+        "metadata": {"data_classification_policy": ["public"]},
     },
     {
         "question": "What foundation models are available in watsonx.ai ?",
@@ -20,6 +20,7 @@ test_examples = [
             "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
         ],
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+        "metadata": {"data_classification_policy": ["public"]},
     },
     {
         "question": "What foundation models are available in watsonx.ai ?",
@@ -28,6 +29,7 @@ test_examples = [
             "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
         ],
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+        "metadata": {"data_classification_policy": ["public"]},
     },
     {
         "question": "What foundation models are available in watsonx.ai ?",
@@ -36,6 +38,7 @@ test_examples = [
             "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
         ],
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+        "metadata": {"data_classification_policy": ["public"]},
     },
     {
         "question": "What foundation models are available in watsonx.ai ?",
@@ -44,6 +47,7 @@ test_examples = [
             "Supported foundation models available with Meta. Meta AI offers numerous foundation models."
         ],
         "ground_truths": ["Many Large Language Models are supported by Watsonx.ai"],
+        "metadata": {"data_classification_policy": ["public"]},
     },
 ]
 
