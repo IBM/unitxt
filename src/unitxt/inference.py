@@ -1556,6 +1556,37 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
+class VLLMInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
+):
+    def prepare_engine(self):
+        from vllm import LLM, SamplingParams
+
+        args = self.to_dict([StandardAPIParamsMixin])
+        self.sampling_params = SamplingParams(**args)
+        self.llm = LLM(model=self.model)
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = []
+        for instance in dataset:
+            inputs.append(instance["source"])
+
+        if isinstance(inputs[0], list):
+            outputs = self.llm.chat(inputs, self.sampling_params)
+        else:
+            outputs = self.llm.generate(inputs, self.sampling_params)
+
+        predictions = []
+        for output in outputs:
+            predictions.append(output.outputs[0].text)
+
+        return predictions
+
+
 class AsyncTokenBucket:
     def __init__(self, rate, capacity):
         self.rate = rate  # Tokens added per second
