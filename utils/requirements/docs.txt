@@ -1,0 +1,13 @@
+sphinx_rtd_theme
+piccolo_theme
+sphinxext-opengraph
+datasets
+evaluate
+nltk
+sacrebleu
+absl-py
+rouge_score
+scikit-learn
+jiwer
+editdistance
+fuzzywuzzy
