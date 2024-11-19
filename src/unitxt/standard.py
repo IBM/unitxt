@@ -202,7 +202,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.steps = [
             self.loading,
-            self.metadata,
             self.standardization,
             self.processing,
             self.metadata,
