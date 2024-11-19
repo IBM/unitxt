@@ -1,6 +1,7 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
+    CrossProviderInferenceEngine,
     HFPipelineBasedInferenceEngine,
 )
 from unitxt.llm_as_judge import LLMAsJudge
@@ -8,15 +9,18 @@ from unitxt.templates import InputOutputTemplate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
+
 # First, we define the judge template.
 judge_summary_rating_template = InputOutputTemplate(
-    instruction="Please act as an impartial judge and evaluate if the assistant's summary summarise well the given text.\n"
-    'You must respond according the following format: "[[rate]] - explanation".\n'
-    'Were the rate is a score between 0 to 10 (10 for great summary, 0 for a very poor one)".\n'
-    "The explanation describe shortly why you decided to give the rank you chosen.\n"
-    "Please make sure to start with your rank ([[rank]]) before anything else.\n"
-    "For example: [[9]] The summary catches the main text ideas."
-    ".\n\n",
+    instruction=(
+        "Please act as an impartial judge and evaluate if the assistant's summary summarise well the given text.\n"
+        'You must respond according the following format: "[[rate]] - explanation".\n'
+        'Were the rate is a score between 0 to 10 (10 for great summary, 0 for a very poor one)".\n'
+        "The explanation describe shortly why you decided to give the rank you chosen.\n"
+        "Please make sure to start with your rank ([[rank]]) before anything else.\n"
+        "For example: [[9]] The summary catches the main text ideas."
+        ".\n\n"
+    ),
     input_format="[Text:\n{question}\n\n" "Assistant's summary:\n{answer}\n",
     output_format="[[{rating}]]",
     postprocessors=[
@@ -24,24 +28,19 @@ judge_summary_rating_template = InputOutputTemplate(
     ],
 )
 
-# Second, we define the inference engine we use for judge, with the preferred model and platform.
-platform = "hf"
-model_name = "google/flan-t5-large"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=256, use_fp16=True
+# Second, we define the inference engine we use for judge, with the preferred model and provider.
+# You can change the provider to any of: "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"
+inference_model = CrossProviderInferenceEngine(
+    model="llama-3-8b-instruct", provider="watsonx"
 )
-# change to this to infer with IbmGenAI APIs:
-#
-# platform = 'ibm_gen_ai'
-# model_name = 'meta-llama/llama-3-70b-instruct'
-# inference_model = IbmGenAiInferenceEngine(model_name="meta-llama/llama-3-70b-instruct", max_new_tokens=512)
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
     inference_model=inference_model,
     template=judge_summary_rating_template,
+    format="formats.chat_api",
     task="rating.single_turn",
-    main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
+    main_score="llm_judge_llama_3_8b",
     strip_system_prompt_and_format_from_inputs=False,
 )
 
@@ -51,19 +50,21 @@ dataset = load_dataset(
     template="templates.summarization.abstractive.formal",
     metrics=[llm_judge_metric],
     loader_limit=5,
+    split="test",
 )
 
-test_dataset = dataset["test"]
-
-# Infer a model to get predictions.
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
-predictions = inference_model.infer(test_dataset)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 print_dict(
@@ -106,7 +107,7 @@ llm_judge_with_summary_metric = LLMAsJudge(
     inference_model=inference_model,
     template=judge_summary_rating_with_reference_template,
     task="rating.single_turn_with_reference",
-    main_score=f"llm_judge_{model_name.split('/')[1].replace('-', '_')}_{platform}",
+    main_score="llm_judge_llama_3_2_1b_hf",
     single_reference_per_prediction=True,
     strip_system_prompt_and_format_from_inputs=False,
 )
@@ -115,21 +116,24 @@ llm_judge_with_summary_metric = LLMAsJudge(
 dataset = load_dataset(
     card="cards.xsum",
     template="templates.summarization.abstractive.formal",
+    format="formats.chat_api",
     metrics=[llm_judge_with_summary_metric],
     loader_limit=5,
+    split="test",
 )
 
-test_dataset = dataset["test"]
-
-# Infer a model to get predictions.
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
-predictions = inference_model.infer(test_dataset)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 print_dict(

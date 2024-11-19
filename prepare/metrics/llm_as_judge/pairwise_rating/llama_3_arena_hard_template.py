@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.inference import (
+    CrossProviderInferenceEngine,
     GenericInferenceEngine,
     IbmGenAiInferenceEngine,
-    LiteLLMInferenceEngine,
     WMLInferenceEngine,
 )
 from unitxt.llm_as_judge import LLMAsJudge
@@ -64,8 +64,8 @@ for template in templates:
 
 add_to_catalog(
     LLMAsJudge(
-        inference_model=LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-70b-instruct",
+        inference_model=CrossProviderInferenceEngine(
+            model="llama-3-70b-instruct",
             max_tokens=30,
         ),
         template="templates.response_assessment.pairwise_comparative_rating.arena_hard",
@@ -73,6 +73,21 @@ add_to_catalog(
         format="formats.chat_api",
         main_score="llama_3_70b_instruct_template_arena_hard",
     ),
-    "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.watsonx.template_arena_hard",
+    "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.template_arena_hard",
+    overwrite=True,
+)
+
+add_to_catalog(
+    LLMAsJudge(
+        inference_model=CrossProviderInferenceEngine(
+            model="llama-3-8b-instruct",
+            max_tokens=30,
+        ),
+        template="templates.response_assessment.pairwise_comparative_rating.arena_hard",
+        task="pairwise_comparative_rating.single_turn",
+        format="formats.chat_api",
+        main_score="llama_3_70b_instruct_template_arena_hard",
+    ),
+    "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_8b_instruct.template_arena_hard",
     overwrite=True,
 )

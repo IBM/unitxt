@@ -114,7 +114,7 @@ watsonx = [
     "ibm-watsonx-ai==1.1.14"
 ]
 inference-tests = [
-  "litellm @ git+https://github.com/BerriAI/litellm.git@main",
+  "litellm==v1.52.9",
   "tenacity",
   "diskcache",
   "numpy==1.26.4"

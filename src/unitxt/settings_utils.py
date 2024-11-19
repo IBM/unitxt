@@ -152,6 +152,8 @@ if Settings.is_uninitilized():
     settings.disable_hf_datasets_cache = (bool, True)
     settings.loader_cache_size = (int, 1)
     settings.task_data_as_text = (bool, True)
+    settings.default_provider = "watsonx"
+    settings.default_format = None
 
 if Constants.is_uninitilized():
     constants = Constants()

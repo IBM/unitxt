@@ -1,8 +1,8 @@
 {
     "__type__": "llm_as_judge",
     "inference_model": {
-        "__type__": "lite_llm_inference_engine",
-        "model": "watsonx/meta-llama/llama-3-70b-instruct",
+        "__type__": "cross_provider_inference_engine",
+        "model": "llama-3-8b-instruct",
         "max_tokens": 30
     },
     "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard",

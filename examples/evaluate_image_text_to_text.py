@@ -6,20 +6,20 @@ from unitxt.text_utils import print_dict
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-    inference_model = HFLlavaInferenceEngine(
-        model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
-    )
-
     dataset = load_dataset(
         card="cards.doc_vqa.lmms_eval",
         template="templates.qa.with_context.title",
         format="formats.chat_api",
-        loader_limit=300,
+        loader_limit=10,
         augmentor="augmentors.image.grey_scale",
         split="test",
     )
 
-    predictions = inference_model.infer(dataset)
+    engine = HFLlavaInferenceEngine(
+        model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
+    )
+
+    predictions = engine.infer(dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
     print_dict(

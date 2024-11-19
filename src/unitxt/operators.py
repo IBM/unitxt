@@ -400,7 +400,7 @@ class InstanceFieldOperator(InstanceOperator):
         ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         assert (
             len(self._field_to_field) > 0
-        ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
+        ), f"'input argument '{self.__class__.__name__}.field_to_field' should convey at least one field to process. Got {self.field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
