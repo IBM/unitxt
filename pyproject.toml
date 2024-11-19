@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "unitxt"
-dynamic = ["version", "optional-dependencies"]
+dynamic = ["version"]
 description = "Load any mixture of text to text data in one line of code"
 authors = [
     { name = "IBM Research", email = "elron.bandel@ibm.com" }
@@ -42,7 +42,95 @@ unitxt = ["catalog/**/*.json", "ui/banner.png"]
 
 [tool.setuptools.dynamic]
 version = {attr = "unitxt.version.version"}
-optional-dependencies = {dev = { file = ["utils/requirements/dev.txt"] }, docs = { file = ["utils/requirements/docs.txt"] }, helm = { file = ["utils/requirements/helm.txt"] }, service = { file = ["utils/requirements/service.txt"] }, tests = { file = ["utils/requirements/tests.txt"] }, ui = { file = ["utils/requirements/ui.txt"] }, watsonx = { file = ["utils/requirements/watsonx.txt"] }, "inference-tests" = { file = ["utils/requirements/inference-tests.txt"] }, all = { file = ["utils/requirements/all.txt"] }}
+
+[project.optional-dependencies]
+dev = [
+    "ruff",
+    "pre-commit",
+    "detect-secrets",
+    "tomli",
+    "codespell",
+    "fuzzywuzzy",
+    "httpretty"
+]
+docs = [
+    "sphinx_rtd_theme",
+    "piccolo_theme",
+    "sphinxext-opengraph",
+    "datasets",
+    "evaluate",
+    "nltk",
+    "sacrebleu",
+    "absl-py",
+    "rouge_score",
+    "scikit-learn",
+    "jiwer",
+    "editdistance",
+    "fuzzywuzzy"
+]
+helm = [
+    "crfm-helm[unitxt]>=0.5.3"
+]
+service = [
+    "torch==1.12.1",
+    "fastapi==0.109.0",
+    "uvicorn[standard]==0.27.0.post1",
+    "python-jose[cryptography]==3.3.0",
+    "transformers"
+]
+tests = [
+    "bert_score",
+    "transformers",
+    "sentence_transformers",
+    "ibm-cos-sdk",
+    "kaggle==1.6.14",
+    "opendatasets",
+    "httpretty~=1.1.4",
+    "editdistance",
+    "rouge-score",
+    "nltk",
+    "mecab-python3",
+    "sacrebleu[ko]",
+    "scikit-learn",
+    "jiwer",
+    "conllu",
+    "llama-index-core",
+    "llama-index-llms-openai",
+    "pytrec-eval",
+    "SentencePiece",
+    "fuzzywuzzy",
+    "openai",
+    "ibm-generative-ai",
+    "bs4",
+    "tenacity==8.3.0",
+    "accelerate",
+    "spacy"
+]
+ui = [
+    "gradio",
+    "transformers"
+]
+watsonx = [
+    "ibm-watsonx-ai==1.1.14"
+]
+inference-tests = [
+  "litellm==v1.52.9",
+  "tenacity",
+  "diskcache",
+  "numpy==1.26.4"
+]
+
+# Combine all extras by referencing other groups
+all = [
+    "unitxt[base]",
+    "unitxt[dev]",
+    "unitxt[docs]",
+    "unitxt[helm]",
+    "unitxt[service]",
+    "unitxt[tests]",
+    "unitxt[ui]",
+    "unitxt[watsonx]"
+]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
