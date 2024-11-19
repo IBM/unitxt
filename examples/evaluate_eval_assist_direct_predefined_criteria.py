@@ -25,17 +25,9 @@ card = TaskCard(
         prediction_type=str,
         metrics=metrics,
     ),
-    templates=TemplatesDict(
-        {
-            "simple": InputOutputTemplate(
-                input_format="{context}",
-                output_format=""
-            )
-        }
-    ),
 )
 
-test_dataset = load_dataset(card=card, template_card_index="simple")["test"]
+test_dataset = load_dataset(card=card, template="templates.empty")["test"]
 
 predictions = [
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
