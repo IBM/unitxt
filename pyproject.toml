@@ -47,7 +47,7 @@ version = {attr = "unitxt.version.version"}
 dev = [
     "ruff",
     "pre-commit",
-    "detect-secrets @ git+https://github.com/ibm/detect-secrets.git@master",
+    "detect-secrets @ git+https://github.com/IBM/detect-secrets@master",
     "tomli",
     "codespell",
     "fuzzywuzzy",
