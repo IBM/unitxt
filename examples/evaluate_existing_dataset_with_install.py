@@ -6,7 +6,6 @@ from unitxt.text_utils import print_dict
 # We set loader_limit to 20 to limit reduce inference time.
 dataset = load_dataset(
     card="cards.wnli",
-    system_prompt="system_prompts.be_concise",
     template="templates.classification.multi_class.relation.default",
     format="formats.chat_api",
     num_demos=2,
