@@ -365,7 +365,10 @@ class GenericInferenceEngine(
         self.engine = self.get_artifact(engine_reference)
 
     def get_engine_id(self):
-        return f"generic_{self.engine.get_engine_id()}"
+        # If mock_inference_mode is set, no engine is prepared.
+        if hasattr(self, "engine"):
+            return f"generic_{self.engine.get_engine_id()}"
+        return "generic_inference_engine"
 
     def _infer(
         self,
