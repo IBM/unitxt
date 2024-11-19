@@ -344,7 +344,9 @@ class IbmGenAiInferenceEngineParams(Artifact):
     typical_p: Optional[float] = None
 
 
-class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin, LogProbInferenceEngine):
+class GenericInferenceEngine(
+    InferenceEngine, ArtifactFetcherMixin, LogProbInferenceEngine
+):
     default: Optional[str] = None
 
     def prepare_engine(self):
