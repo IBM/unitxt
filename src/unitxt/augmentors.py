@@ -49,7 +49,7 @@ class TextAugmentor(TypeDependentAugmentor):
     augmented_type = Text
 
 
-class NullAugmentor(Augmentor):
+class NullAugmentor(TaskInputsAugmentor):
     """Does not change the input string."""
 
     def process_value(self, value: Any) -> Any:
