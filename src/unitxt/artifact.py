@@ -250,24 +250,12 @@ class Artifact(Dataclass):
             assert isinstance(
                 artifact_linked_to, str
             ), f"'artifact_linked_to' should be a string expressing a name of a catalog entry. Got{artifact_linked_to}."
-            # d stands for an ArtifactLink which will not be instantiated, so we run
-            # its init here:
-            if ("__deprecated_msg__" in d) and (d["__deprecated_msg__"] is not None):
-                warnings.warn(d["__deprecated_msg__"], DeprecationWarning, stacklevel=2)
+            # d stands for an ArtifactLink
+            msg = d["__deprecated_msg__"] if "__deprecated_msg__" in d else None
+            return ArtifactLink(
+                artifact_linked_to=artifact_linked_to, __deprecated_msg__=msg
+            ).load(overwrite_args)
 
-            # identify the catalog for replacing_artifact_name
-            needed_catalog = None
-            catalogs = list(Catalogs())
-            for catalog in catalogs:
-                if artifact_linked_to in catalog:
-                    needed_catalog = catalog
-
-            if needed_catalog is None:
-                raise UnitxtArtifactNotFoundError(artifact_linked_to, catalogs)
-
-            path = needed_catalog.path(artifact_linked_to)
-            d = artifacts_json_cache(path)
-            artifact_identifier = artifact_linked_to
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
@@ -433,6 +421,23 @@ class ArtifactLink(Artifact):
     artifact_linked_to: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
+
+    def load(self, overwrite_args: dict) -> Artifact:
+        # identify the catalog for the artifact_linked_to
+        needed_catalog = None
+        catalogs = list(Catalogs())
+        for catalog in catalogs:
+            if self.artifact_linked_to in catalog:
+                needed_catalog = catalog
+
+        if needed_catalog is None:
+            raise UnitxtArtifactNotFoundError(self.artifact_linked_to, catalogs)
+
+        path = needed_catalog.path(self.artifact_linked_to)
+        d = artifacts_json_cache(path)
+        new_artifact = Artifact.from_dict(d, overwrite_args=overwrite_args)
+        new_artifact.__id__ = self.artifact_linked_to
+        return new_artifact
 
 
 def get_raw(obj):
