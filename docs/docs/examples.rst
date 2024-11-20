@@ -28,7 +28,7 @@ This approach is faster than using Huggingface APIs.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
 
-Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Installation <install_unitxt>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluate a custom dataset
