@@ -1,19 +1,15 @@
-from unitxt import evaluate, load_dataset, settings
-from unitxt.inference import (
-    CrossProviderInferenceEngine,
-)
+from unitxt import evaluate, load_dataset
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.text_utils import print_dict
 
-with settings.context(
-    disable_hf_datasets_cache=False,
-    allow_unverified_code=True,
-):
-    test_dataset = load_dataset("benchmarks.bluebench", split="test")
+data = load_dataset(
+    "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api, system_prompt=system_prompts.general.be_concise]",
+    split="test",
+    disable_cache=False,
+)
 
-# Infer
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-8b-instruct",
-    max_tokens=30,
+model = CrossProviderInferenceEngine(
+    model="llama-3-8b-instruct", temperature=0.0, top_p=1.0, provider="watsonx"
 )
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
@@ -23,8 +19,9 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+predictions = model.infer(data)
+
+evaluated_dataset = evaluate(predictions=predictions, data=data)
 
 print_dict(
     evaluated_dataset[0],

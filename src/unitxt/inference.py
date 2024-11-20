@@ -29,6 +29,7 @@ from tqdm.asyncio import tqdm_asyncio
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
+from .error_utils import UnitxtError
 from .image_operators import EncodeImageToString, data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
@@ -39,6 +40,23 @@ from .type_utils import isoftype
 constants = get_constants()
 settings = get_settings()
 logger = get_logger()
+
+
+class StandardAPIParamsMixin(Artifact):
+    model: str
+    frequency_penalty: Optional[float] = None
+    presence_penalty: Optional[float] = None
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_logprobs: Optional[int] = None
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[bool] = None
+    n: Optional[int] = None
+    parallel_tool_calls: Optional[bool] = None
+    service_tier: Optional[Literal["auto", "default"]] = None
 
 
 def get_model_and_label_id(model_name, label):
@@ -863,8 +881,6 @@ class HFPipelineBasedInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
-
         if not self._is_loaded():
             self._prepare_engine()
 
@@ -1031,16 +1047,17 @@ class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
         return self.engine._infer(dataset)
 
 
-class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
+class OllamaInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+):
     label: str = "ollama"
-    model_name: str
     _requirements_list = {
         "ollama": "Install ollama package using 'pip install --upgrade ollama"
     }
     data_classification_policy = ["public", "proprietary"]
 
     def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, self.label)
+        return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
         pass
@@ -1052,13 +1069,16 @@ class OllamaInferenceEngine(InferenceEngine, PackageRequirementsMixin):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
 
+        args = self.to_dict([StandardAPIParamsMixin])
+
         results = []
 
         for instance in dataset:
             messages = self.to_messages(instance)
             response = ollama.chat(
-                model=self.model_name,
+                model=self.model,
                 messages=messages,
+                **args,
             )
             results.append(response)
 
@@ -2478,6 +2498,37 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
+class VLLMInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
+):
+    def prepare_engine(self):
+        from vllm import LLM, SamplingParams
+
+        args = self.to_dict([StandardAPIParamsMixin])
+        self.sampling_params = SamplingParams(**args)
+        self.llm = LLM(model=self.model)
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = []
+        for instance in dataset:
+            inputs.append(instance["source"])
+
+        if isinstance(inputs[0], list):
+            outputs = self.llm.chat(inputs, self.sampling_params)
+        else:
+            outputs = self.llm.generate(inputs, self.sampling_params)
+
+        predictions = []
+        for output in outputs:
+            predictions.append(output.outputs[0].text)
+
+        return predictions
+
+
 class AsyncTokenBucket:
     def __init__(self, rate, capacity):
         self.rate = rate  # Tokens added per second
@@ -2515,16 +2566,13 @@ class AsyncTokenBucket:
             await asyncio.sleep(time_until_next_token)
 
 
-class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
-    model: str
-    max_tokens: int = 256
-    seed: int = 1
-    temperature: float = 0.0
-    top_p: float = 1.0
+class LiteLLMInferenceEngine(
+    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+):
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
-    requirements: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+    _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache"]
 
     def prepare_engine(self):
         # Initialize the token bucket rate limiter
@@ -2552,16 +2600,13 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
+            kwargs = self.to_dict([StandardAPIParamsMixin])
             try:
                 response = await self._completion(
-                    model=self.model,
                     messages=messages,
-                    seed=self.seed,
-                    max_tokens=self.max_tokens,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
                     max_retries=self.max_retries,
                     caching=True,
+                    **kwargs,
                 )
             except Exception as e:
                 raise RuntimeError(
@@ -2586,7 +2631,7 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
         ]
         # Use tqdm_asyncio.gather to display progress bar
         return await tqdm_asyncio.gather(
-            *tasks, desc="LiteLLM Inference", total=len(tasks)
+            *tasks, desc=f"LiteLLM Inference ({self.model})", total=len(tasks)
         )
 
     def _infer(
@@ -2602,6 +2647,121 @@ class LiteLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin):
             return responses
 
         return [response.prediction for response in responses]
+
+
+_supported_apis = Literal[
+    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk"
+]
+
+
+class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
+    """Inference engine capable of dynamically switching between multiple providers APIs.
+
+    This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
+    to enable seamless integration with various API providers. The supported APIs are
+    specified in `_supported_apis`, allowing users to interact with multiple models
+    from different sources. The `api_model_map` dictionary maps each API to
+    specific model identifiers, enabling automatic configuration based on
+    user requests.
+
+    Attributes:
+        provider: Optional; Specifies the current API in use. Must be one of the
+            literals in `_supported_apis`.
+        provider_model_map: Dictionary mapping each supported API to a corresponding
+            model identifier string. This mapping allows consistent access to models
+            across different API backends.
+    """
+
+    provider: Optional[_supported_apis] = None
+
+    provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
+        "watsonx": {
+            "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
+            "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
+            "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
+            "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
+        },
+        "watsonx-sdk": {
+            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
+            "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+        },
+        "together-ai": {
+            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
+            "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
+            "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
+        },
+        "aws": {
+            "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
+            "llama-3-70b-instruct": "bedrock/meta.llama3-70b-instruct-v1:0",
+        },
+        "ollama": {
+            "llama-3-8b-instruct": "llama3:8b",
+            "llama-3-70b-instruct": "llama3:70b",
+        },
+        "bam": {
+            "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
+            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
+            "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
+            "flan-t5-xxl": "google/flan-t5-xxl",
+        },
+    }
+
+    _provider_to_base_class = {
+        "watsonx": LiteLLMInferenceEngine,
+        "open-ai": LiteLLMInferenceEngine,
+        "together-ai": LiteLLMInferenceEngine,
+        "aws": LiteLLMInferenceEngine,
+        "ollama": OllamaInferenceEngine,
+        "bam": IbmGenAiInferenceEngine,
+        "watsonx-sdk": WMLInferenceEngine,
+    }
+
+    _provider_param_renaming = {
+        "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
+        "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
+    }
+
+    def get_provider_name(self):
+        return self.provider if self.provider is not None else settings.default_provider
+
+    def prepare_engine(self):
+        provider = self.get_provider_name()
+        if provider not in self._provider_to_base_class:
+            raise UnitxtError(
+                f"{provider} a known API. Supported apis: {','.join(self.provider_model_map.keys())}"
+            )
+        if self.model not in self.provider_model_map[provider]:
+            raise UnitxtError(
+                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[provider].keys())}"
+            )
+        cls = self.__class__._provider_to_base_class[provider]
+        args = self.to_dict([StandardAPIParamsMixin])
+        args["model"] = self.provider_model_map[provider][self.model]
+        params = list(args.keys())
+        if provider in self._provider_param_renaming:
+            for param in params:
+                if args[param] is not None:
+                    if param in self._provider_param_renaming[provider]:
+                        args[self._provider_param_renaming[provider][param]] = args[
+                            param
+                        ]
+                        del args[param]
+                else:
+                    del args[param]
+        self.engine = cls(**args)
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self.engine._infer(dataset, return_meta_data)
+
+    def get_engine_id(self):
+        api = self.get_provider_name()
+        return get_model_and_label_id(self.provider_model_map[api][self.model], api)
 
 
 class HFOptionSelectingInferenceEngine(InferenceEngine):

@@ -129,7 +129,7 @@ ingridients = {
     "num_demos": 0,
     "template": "templates.empty",
     "metrics": [
-        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.watsonx.template_arena_hard"
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.template_arena_hard"
     ],
 }
 recipe = prepare_recipe(default_args, ingridients)

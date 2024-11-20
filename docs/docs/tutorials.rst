@@ -19,6 +19,7 @@ Tutorials ✨
    multimodality
    operators
    saving_and_loading_from_catalog
+   inference
    production
    debugging
    helm

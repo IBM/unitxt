@@ -21,20 +21,25 @@ ensemble_metric = MetricsEnsemble(
 dataset = load_dataset(
     card="cards.squad",
     template="templates.qa.with_context.simple",
+    format="formats.chat_api",
     metrics=[ensemble_metric],
     loader_limit=20,
+    max_test_instances=10,
+    split="test",
 )
-test_dataset = dataset["test"]
 
-# Infer a model to get predictions.
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+# Infer using Llama-3.2-1B base using HF API
+engine = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
-predictions = inference_model.infer(test_dataset)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
 # Print results
 for instance in evaluated_dataset:

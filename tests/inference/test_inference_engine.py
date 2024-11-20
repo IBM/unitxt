@@ -47,7 +47,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         targets = ["365", "1"]
         self.assertListEqual(predictions, targets)
 
-    def test_pipeline_based_inference_engine_lzay_load(self):
+    def test_pipeline_based_inference_engine_lazy_load(self):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
@@ -320,3 +320,27 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "hello friend")
         self.assertEqual(predictions[1], "white.")
+
+    def test_hugginface_pipeline_inference_engine_chat_api(self):
+        from transformers import set_seed
+
+        dataset = [
+            {
+                "source": [{"role": "user", "content": "hi you!"}],
+            },
+            {
+                "source": [{"role": "user", "content": "black or white?"}],
+            },
+        ]
+
+        set_seed(0, deterministic=True)
+
+        engine = HFPipelineBasedInferenceEngine(
+            model_name="Qwen/Qwen2.5-0.5B-Instruct",
+            max_new_tokens=1,
+            top_k=1,
+        )
+        predictions = engine.infer(dataset)
+
+        self.assertEqual(predictions[0], "Hello")
+        self.assertEqual(predictions[1], "As")
