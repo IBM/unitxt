@@ -18,6 +18,7 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
+from .collections import ListCollection
 from .dataclass import (
     AbstractField,
     InternalField,
@@ -48,6 +49,12 @@ logger = get_logger()
 settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
+
+
+class MetricsList(ListCollection):
+    def verify(self):
+        for metric in self.items:
+            assert isinstance(metric, Metric)
 
 
 def abstract_factory():

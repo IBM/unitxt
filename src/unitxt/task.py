@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Union
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
+from .metrics import MetricsList
 from .operator import InstanceOperator
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants
@@ -186,31 +187,34 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
 
     @classmethod
     @lru_cache(maxsize=None)
-    def get_metric_prediction_type(cls, metric_id: str):
+    def get_metrics_artifacts(cls, metric_id: str):
         metric = cls.get_artifact(metric_id)
-        return metric.prediction_type
+        if isinstance(metric, MetricsList):
+            return metric.items
+        return [metric]
 
     def check_metrics_type(self) -> None:
         prediction_type = self.prediction_type
         for metric_id in self.metrics:
-            metric_prediction_type = Task.get_metric_prediction_type(metric_id)
+            metric_artifacts_list = Task.get_metrics_artifacts(metric_id)
+            for metric_artifact in metric_artifacts_list:
+                metric_prediction_type = metric_artifact.prediction_type
+                if (
+                    prediction_type == metric_prediction_type
+                    or prediction_type == Any
+                    or metric_prediction_type == Any
+                    or (
+                        get_origin(metric_prediction_type) is Union
+                        and prediction_type in get_args(metric_prediction_type)
+                    )
+                ):
+                    continue
 
-            if (
-                prediction_type == metric_prediction_type
-                or prediction_type == Any
-                or metric_prediction_type == Any
-                or (
-                    get_origin(metric_prediction_type) is Union
-                    and prediction_type in get_args(metric_prediction_type)
+                raise UnitxtError(
+                    f"The task's prediction type ({prediction_type}) and '{metric_id}' "
+                    f"metric's prediction type ({metric_prediction_type}) are different.",
+                    Documentation.ADDING_TASK,
                 )
-            ):
-                continue
-
-            raise UnitxtError(
-                f"The task's prediction type ({prediction_type}) and '{metric_id}' "
-                f"metric's prediction type ({metric_prediction_type}) are different.",
-                Documentation.ADDING_TASK,
-            )
 
     def verify_defaults(self):
         if self.defaults:

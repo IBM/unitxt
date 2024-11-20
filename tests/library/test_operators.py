@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Any
 
 from unitxt.formats import SystemFormat
+from unitxt.metrics import MetricsList
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -2678,6 +2679,14 @@ class TestApplyMetric(UnitxtTestCase):
             expected_score_value=0.5,
         )
         self.assertAlmostEqual(global_metric_result["accuracy"], 0.5, delta=2)
+
+    def test_apply_metric_with_metrics_list(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=[MetricsList(["metrics.accuracy", "metrics.f1_macro"])],
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+        self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
 
     def test_render_demonstrations(self):
         template = InputOutputTemplate(
