@@ -1617,7 +1617,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     calc_confidence_intervals: bool
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        from .metrics import Metric
+        from .metrics import Metric, MetricsList
 
         # Number of instances in input stream is assumed to be small. This is why
         # each metric consumes all of them and lays them in its main memory, and even generates
@@ -1646,18 +1646,25 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 
+        metrics_list = []
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            if isinstance(metric, MetricsList):
+                metrics_list.extend(list(metric.items))
+            elif isinstance(metric, Metric):
+                metrics_list.append(metric)
+            else:
+                raise ValueError(
+                    f"Operator {metric_name} must be a Metric or MetricsList"
+                )
+
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set
         # by the first listed metric (as desired).
-        metric_names = list(reversed(metric_names))
+        metrics_list = list(reversed(metrics_list))
 
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            assert isinstance(
-                metric, Metric
-            ), f"Operator {metric_name} must be a Metric"
-
+        for metric in metrics_list:
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
             multi_stream = MultiStream(
