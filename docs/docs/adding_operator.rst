@@ -26,7 +26,7 @@ cast field values, uppercase string fields, or translate text between languages.
 
 Unitxt comes with a large collection of built in operators - that were design to cover most common requirements of dataset processing.
 
-The list of available operators can be found in the :ref:`operators <operators>` section.
+The list of available operators can be found in the :ref:`operators <dir_catalog.operators>` section.
 
 Built in operators have some benefits:
 
@@ -37,7 +37,7 @@ Built in operators have some benefits:
 
 It is recommended to use existing operators when possible. 
 
-However, if a highly specific or uncommon operation is needed that existing operators do not cover, and it is unlikely to be reused, you can use :ref:`ExecuteExpression <operators.ExecuteExpression>`  or :ref:`FilterByExpression <operators.FilterByExpression>`operators:
+However, if a highly specific or uncommon operation is needed that existing operators do not cover, and it is unlikely to be reused, you can use :class:`ExecuteExpression <unitxt.operators.ExecuteExpression>` or :class:`FilterByExpression <unitxt.operators.FilterByExpression>` operators:
 
 .. code-block:: python
 
