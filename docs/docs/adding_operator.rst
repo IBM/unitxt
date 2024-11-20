@@ -26,7 +26,7 @@ cast field values, uppercase string fields, or translate text between languages.
 
 Unitxt comes with a large collection of built in operators - that were design to cover most common requirements of dataset processing.
 
-The list of available operators can be found in the :ref:`operators <dir_catalog.operators>` section.
+The list of available operators can be found in the :ref:`operators <operators_list>` section.
 
 Built in operators have some benefits:
 
