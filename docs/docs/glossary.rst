@@ -17,7 +17,7 @@ Almost all Unitxt classes inherit from the Artifact class.
 Catalog
 -------
 All Unitxt artifacts -- recipes, data-task cards, templates, pre-processing operators, formats and metrics --
-can be stored in the **:ref:`Unitxt Catalog <catalog>`.**
+can be stored in the :ref:`Unitxt Catalog <dir_catalog>`.
 
 In addition to the open-source catalog, which can be found in the documentation, users can choose to define a private catalog.
 This enables teams and organizations to harness the open Unitxt Catalog while upholding organizational requirements for additional proprietary artifacts.
