@@ -8,7 +8,7 @@ from tqdm import tqdm
 from unitxt import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
-    IbmGenAiInferenceEngine,
+        IbmGenAiInferenceEngine, RITSInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
@@ -229,9 +229,15 @@ elif len(models_parsed) > 0:  # run  benchmark
                     #
                     # )
 
-                    inference_model = IbmGenAiInferenceEngine(
+                    # inference_model = IbmGenAiInferenceEngine(
+                    #     model_name=model,
+                    #     max_new_tokens=max_pred_tokens,
+                    #     temperature=TEMPERATURE,
+                    # )
+
+                    inference_model = RITSInferenceEngine(
                         model_name=model,
-                        max_new_tokens=max_pred_tokens,
+                        max_tokens=max_pred_tokens,
                         temperature=TEMPERATURE,
                     )
 
@@ -245,12 +251,12 @@ elif len(models_parsed) > 0:  # run  benchmark
                     curr_out_path = os.path.join(out_path, out_file_name)
                     with open(curr_out_path, "w") as f:
                         json.dump(evaluated_dataset, f)
-                        # print("saved file path: ", curr_out_path)
+                        print("saved file path: ", curr_out_path)
                 except Exception as e:
                     with open(
                         os.path.join(out_path, "model=" + model_name + "__errors.txt"),
                         "a",
                     ) as f:
                         f.write("\n".join([subset_name, str(e)]))
-                    # print(e)
+                    print(e)
                     pass
