@@ -13,17 +13,14 @@ dataset = load_dataset(
     loader_limit=20,
     split="test",
 )
-# loader=LoadFromDictionary(data=data,data_classification_policy=["public"]),
 
 inference_model = CrossProviderInferenceEngine(
     model="llama-3-2-1b-instruct", provider="watsonx"
 )
 """
-We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+We are using a CrossProviderInferenceEngine inference engine that supply api access to providers such as:
 watsonx, bam, openai, azure, aws and more.
-
-For the arguments these inference engines can receive, please refer to the classes documentation or read
-about the the open ai api arguments the CrossProviderInferenceEngine follows.
+For more information, visit the :ref:`inference engines guide <inference>`
 """
 predictions = inference_model.infer(dataset)
 
