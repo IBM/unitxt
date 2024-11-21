@@ -30,7 +30,7 @@ Introducing Two Major Enhancements
    as well as remote APIs such as LiteLLM, OpenAI, Watsonx, and more.
    
    These wrappers make executing evaluation and inference tasks seamless
-   and platform-agnostic, in just a `few lines of code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
+   and platform-agnostic, in just a `few lines of code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_.
 
 
 .. code-block:: python
