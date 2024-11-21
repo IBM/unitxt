@@ -1,4 +1,4 @@
-.. _data_classification_policy
+.. _data_classification_policy:
 
 .. note::
 
