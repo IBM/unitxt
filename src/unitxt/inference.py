@@ -9,6 +9,7 @@ import sys
 import time
 import uuid
 from collections import Counter
+from multiprocessing.pool import ThreadPool
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from datasets import DatasetDict
@@ -762,18 +763,20 @@ class OpenAiInferenceEngine(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            prediction = response.choices[0].message.content
-            output = self.get_return_object(prediction, response, return_meta_data)
-
+            output = self._get_chat_completion(instance, return_meta_data)
             outputs.append(output)
 
         return outputs
+
+    def _get_chat_completion(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        prediction = response.choices[0].message.content
+        return self.get_return_object(prediction, response, return_meta_data)
 
     def _infer_log_probs(
         self,
@@ -820,6 +823,71 @@ class OpenAiInferenceEngine(
                 inference_type=self.label,
             )
         return predict_result
+
+
+def run_with_imap(func):
+    def inner(self, args):
+        return func(self, *args)
+
+    return inner
+
+
+class RITSInferenceEngine(OpenAiInferenceEngine):
+    label: str = "rits"
+    model_name: str
+    _requirements_list = {
+        "openai": "Install openai package using 'pip install --upgrade openai"
+    }
+    data_classification_policy = ["public", "proprietary"]
+    parameters: Optional[OpenAiInferenceEngineParams] = None
+    base_endpoint = (
+        "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
+    )
+    api_key: str = None
+    num_parallel_requests: int = 20
+
+    def create_client(self):
+        from openai import OpenAI
+
+        self.api_key = self.get_api_param(
+            inference_engine="RITSInferenceEngine",
+            api_param_env_var_name="RITS_API_KEY",
+        )
+        model_endpoint = self.base_endpoint.format(self._get_model_name_for_endpoint())
+        return OpenAI(api_key=self.api_key, base_url=model_endpoint)
+
+    def _get_model_name_for_endpoint(self):
+        return (
+            self.model_name.split("/")[-1]
+            .lower()
+            .replace("v0.1", "v01")
+            .replace(".", "-")
+        )
+
+    def _get_completion_kwargs(self):
+        completion_kwargs = super()._get_completion_kwargs()
+        completion_kwargs["extra_headers"] = {"RITS_API_KEY": self.api_key}
+        return completion_kwargs
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = [(instance, return_meta_data) for instance in dataset]
+        outputs = []
+        with ThreadPool(processes=self.num_parallel_requests) as pool:
+            for output in tqdm(
+                pool.imap(self._get_chat_completion, inputs),
+                total=len(inputs),
+                desc=f"Inferring with {self.__class__.__name__}",
+            ):
+                outputs.append(output)
+        return outputs
+
+    @run_with_imap
+    def _get_chat_completion(self, instance, return_meta_data):
+        return super()._get_chat_completion(instance, return_meta_data)
 
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
