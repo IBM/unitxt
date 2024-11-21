@@ -17,6 +17,7 @@ from unitxt.operator import SequentialOperator
 from unitxt.operators import Rename, Set
 from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
+from unitxt.task import Task
 from unitxt.templates import YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
@@ -243,6 +244,24 @@ class TestArtifact(UnitxtTestCase):
             artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
+    def test_artifact_link_from_artifactlink(self):
+        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+        with temp_catalog() as catalog_path:
+            # test when artifact_linked_to is expressed as a name of a catalog entry
+            add_to_catalog(
+                rename,
+                "rename.for.test.artifact.link",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            rename_fields = ArtifactLink(
+                artifact_linked_to="rename.for.test.artifact.link"
+            )
+
+            artifact, _ = fetch_artifact(rename_fields)
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())
+
     def test_artifact_link_to_link(self):
         rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
@@ -346,6 +365,50 @@ class TestArtifact(UnitxtTestCase):
                 "rename_fields.old_name.to.new_name[field_to_field={overwritten_old_name=overwritten_new_name}]"
             )
             self.assertDictEqual(overwritten_rename.to_dict(), artifact.to_dict())
+
+    def test_artifact_link_within_overwrites(self):
+        with temp_catalog() as catalog_path:
+            link_to_metrics_accuracy = ArtifactLink(
+                artifact_linked_to="metrics.accuracy"
+            )
+            add_to_catalog(
+                link_to_metrics_accuracy,
+                "link.to.metrics.accuracy",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            task_as_is, _ = fetch_artifact("tasks.evaluation.preference")
+            task_indirect, _ = fetch_artifact(
+                "tasks.evaluation.preference[metrics=[link.to.metrics.accuracy]]"
+            )
+
+            # unitxt.task maintains its metrics as a list of str.
+            # So currently, the above tasks have different metrics.
+            # Now we instantiate them as actual artifacts, and then test that
+            # the different names instantiate to same metrics.
+            actual_metrics_of_task_as_is = []
+            for metric_id in task_as_is.metrics:
+                actual_metrics_of_task_as_is.extend(
+                    Task.get_metrics_artifacts(metric_id)
+                )
+            actual_metrics_of_task_indirect = []
+            for metric_id in task_indirect.metrics:
+                actual_metrics_of_task_indirect.extend(
+                    Task.get_metrics_artifacts(metric_id)
+                )
+
+            actual_metrics_to_dict_of_task_as_is = [
+                metric.to_dict() for metric in actual_metrics_of_task_as_is
+            ]
+            actual_metrics_to_dict_of_task_indirect = [
+                metric.to_dict() for metric in actual_metrics_of_task_indirect
+            ]
+
+            self.assertListEqual(
+                actual_metrics_to_dict_of_task_as_is,
+                actual_metrics_to_dict_of_task_indirect,
+            )
 
     def test_artifact_link_to_link_with_overwrites(self):
         with temp_catalog() as catalog_path:

@@ -517,14 +517,14 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     """
     if isinstance(artifact_rep, Artifact):
         if isinstance(artifact_rep, ArtifactLink):
-            return artifact_rep.artifact_linked_to, None
+            return fetch_artifact(artifact_rep.artifact_linked_to)
         return artifact_rep, None
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
         artifact_to_return = Artifact.load(artifact_rep)
         if isinstance(artifact_rep, ArtifactLink):
-            artifact_to_return = artifact_to_return.artifact_linked_to
+            artifact_to_return = fetch_artifact(artifact_to_return.artifact_linked_to)
 
         return artifact_to_return, None
 
