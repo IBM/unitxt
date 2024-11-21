@@ -375,7 +375,9 @@ class IbmGenAiInferenceEngineParams(Artifact):
     typical_p: Optional[float] = None
 
 
-class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
+class GenericInferenceEngine(
+    InferenceEngine, ArtifactFetcherMixin, LogProbInferenceEngine
+):
     default: Optional[str] = None
 
     def prepare_engine(self):
@@ -394,6 +396,9 @@ class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
         self.engine = self.get_artifact(engine_reference)
 
     def get_engine_id(self):
+        # If mock_inference_mode is set, no engine is prepared.
+        if hasattr(self, "engine"):
+            return f"generic_{self.engine.get_engine_id()}"
         return "generic_inference_engine"
 
     def _infer(
@@ -402,6 +407,18 @@ class GenericInferenceEngine(InferenceEngine, ArtifactFetcherMixin):
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not isinstance(self.engine, LogProbInferenceEngine):
+            raise NotImplementedError(
+                f"Error in infer: inference engine used by the GenericInferenceEngine"
+                f"({self.engine.__class__.__name__}) does not support logprobs."
+            )
+        return self.engine._infer_log_probs(dataset)
 
 
 class OllamaInferenceEngine(

@@ -5,7 +5,7 @@
     },
     "template": "templates.rag_eval.answer_correctness.judge_simplified_format",
     "task": "tasks.rag_eval.answer_correctness.binary",
-    "format": "formats.empty",
+    "format": null,
     "main_score": "answer_correctness_q_a_gt_strict",
     "prediction_field": "answer",
     "infer_log_probs": false
