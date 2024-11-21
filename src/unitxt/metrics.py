@@ -3543,7 +3543,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
     single_reference_per_prediction = True
-    max_context_tokens = 4096
+    max_context_words = 4096
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
@@ -3574,6 +3574,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         # treat the references as the contexts and the predictions as answers
         # concat references
         contexts = ["\n".join(refs) for refs in references]
+        contexts = [" ".join(c.split(" ")[: self.max_context_words]) for c in contexts]
         answers = predictions
 
         # prepare for computation
