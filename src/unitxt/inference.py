@@ -9,7 +9,18 @@ import sys
 import time
 import uuid
 from collections import Counter
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 from datasets import DatasetDict
 from tqdm import tqdm, trange
@@ -19,11 +30,12 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
-from .image_operators import data_url_to_image, extract_images
+from .image_operators import EncodeImageToString, data_url_to_image, extract_images
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants, get_settings
+from .type_utils import isoftype
 
 constants = get_constants()
 settings = get_settings()
@@ -67,6 +79,9 @@ class TextGenerationInferenceOutput:
 
     input_tokens (int) : number of input tokens to the model.
     output_tokens (int) : number of output tokens to the model.
+    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+    seed (int): seed used by the model during generation.
+    input_text (str): input to the model.
     model_name (str): the model_name as kept in the InferenceEngine.
     inference_type (str): The label stating the type of the InferenceEngine.
     """
@@ -74,6 +89,9 @@ class TextGenerationInferenceOutput:
     prediction: Union[str, List[Dict[str, Any]]]
     input_tokens: Optional[int] = None
     output_tokens: Optional[int] = None
+    stop_reason: Optional[str] = None
+    seed: Optional[int] = None
+    input_text: Optional[str] = None
     model_name: Optional[str] = None
     inference_type: Optional[str] = None
 
@@ -152,6 +170,10 @@ class InferenceEngine(Artifact):
                 if param_inst_val is None:
                     setattr(self, param, param_dict_val)
 
+    def get_model_details(self) -> Dict:
+        """Might not be possible to implement for all inference engines. Returns an empty dict by default."""
+        return {}
+
     def verify_not_chat_api(self, dataset):
         if isinstance(dataset[0]["source"], list):
             raise NotImplementedError(
@@ -216,26 +238,563 @@ class LazyLoadMixin(Artifact):
         pass
 
 
-class HFPipelineBasedInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+class HFGenerationParamsMixin(Artifact):
+    max_new_tokens: int
+    do_sample: bool = False
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    num_beams: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    pad_token_id: Optional[int] = None
+    eos_token_id: Optional[int] = None
+
+
+class HFInferenceEngineBase(
+    InferenceEngine,
+    LogProbInferenceEngine,
+    PackageRequirementsMixin,
+    LazyLoadMixin,
+    HFGenerationParamsMixin,
 ):
     model_name: str
-    max_new_tokens: int
-    use_fp16: bool = True
-    batch_size: int = 1
-    top_k: Optional[int] = None
+    label: str
+
+    n_top_tokens: int = 5
+
+    device: Any = None
+    device_map: Any = None
+
+    use_fast_tokenizer: bool = True
+    low_cpu_mem_usage: bool = True
+    torch_dtype: str = "torch.float16"
+
+    model: Any = InternalField(default=None, name="Inference object")
+    processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
 
     _requirements_list = {
-        "transformers": "Install huggingface package using 'pip install --upgrade transformers"
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
     }
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _set_inference_device(self):
+        if self.device is not None and self.device_map is not None:
+            raise ValueError(
+                f"You must specify either 'device' or 'device_map', however both "
+                f"were given: 'device={self.device}', 'device_map={self.device_map}'."
+            )
+
+        if self.device is None and self.device_map is None:
+            import torch
+
+            self.device = torch.device(
+                "mps"
+                if torch.backends.mps.is_available()
+                else 0
+                if torch.cuda.is_available()
+                else "cpu"
+            )
+
+    @abc.abstractmethod
+    def _init_processor(self):
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def _init_model(self):
+        raise NotImplementedError
+
+    def _get_torch_dtype(self):
+        import torch
+
+        if not isinstance(self.torch_dtype, str) or not self.torch_dtype.startswith(
+            "torch."
+        ):
+            raise ValueError(
+                f"'torch_dtype' must be a string representing torch data "
+                f"type used for inference. The name should be an absolute "
+                f"import, for example: 'torch.float16'. However, "
+                f"'{self.torch_dtype}' was given instead."
+            )
+
+        try:
+            dtype = eval(self.torch_dtype)
+        except (AttributeError, TypeError) as e:
+            raise ValueError(
+                f"Incorrect value of 'torch_dtype' was given: '{self.torch_dtype}'."
+            ) from e
+
+        if not isinstance(dtype, torch.dtype):
+            raise ValueError(
+                f"'torch_dtype' must be an instance of 'torch.dtype', however, "
+                f"'{dtype}' is an instance of '{type(dtype)}'."
+            )
+
+        return dtype
+
+    def _prepare_engine(self):
+        self._set_inference_device()
+        self._init_processor()
+        self._init_model()
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
+
+    def decode_tokens(self, tokens: Sequence, inp_length: int) -> List[str]:
+        return [
+            self.processor.decode(token, skip_special_tokens=True)
+            for token in tokens[inp_length:]
+        ]
+
+    @staticmethod
+    def create_string_from_tokens(string_tokens: List[str]) -> str:
+        return "".join(token for token in string_tokens)
+
+    def make_predictions(self, prepared_inputs: Mapping) -> Mapping:
+        return self.model.generate(
+            **prepared_inputs,
+            **self.to_dict([HFGenerationParamsMixin], keep_empty=False),
+            output_scores=True,
+            return_dict_in_generate=True,
+        )
+
+    def compute_transition_scores(
+        self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
+    ) -> Sequence:
+        # Some models may not support computing scores in this form by default, so a possible
+        # child class should have its own implementation of this method if necessary.
+        return self.model.compute_transition_scores(
+            sequences,
+            scores,
+            normalize_logits=True,
+            beam_indices=beam_indices,
+        )
+
+    def get_logprobs(
+        self, predictions: Mapping, string_tokens: List[List[str]]
+    ) -> List[List[Dict[str, Any]]]:
+        beam_indices = (
+            predictions.beam_indices
+            if self.num_beams is not None and self.num_beams > 1
+            else None
+        )
+
+        transition_scores = self.compute_transition_scores(
+            sequences=predictions.sequences,
+            scores=predictions.scores,
+            beam_indices=beam_indices,
+        )
+
+        logprobs: List[List[Dict[str, Any]]] = []
+
+        for sample_no, sample_scores in enumerate(transition_scores.detach().cpu()):
+            sample_logprobs: List[Dict[str, Any]] = []
+
+            for n, score in enumerate(sample_scores):
+                sample_logprobs.append(
+                    {
+                        "text": string_tokens[sample_no][n],
+                        "logprob": float(score.cpu()),
+                        "top_tokens": [
+                            {
+                                "text": self.processor.decode(idx),
+                                "logprob": float(
+                                    predictions.scores[n][sample_no][idx].cpu()
+                                ),
+                            }
+                            for idx in predictions.scores[n][sample_no].argsort(
+                                dim=0, descending=True
+                            )[: self.n_top_tokens]
+                        ],
+                    }
+                )
+
+            logprobs.append(sample_logprobs)
+
+        return logprobs
+
+    @abc.abstractmethod
+    def prepare_inputs(self, data: Iterable) -> Mapping:
+        raise NotImplementedError
+
+    def get_return_object(
+        self,
+        output: Union[str, List[Dict[str, Any]]],
+        output_tokens: Optional[int],
+        inp: Optional[str],
+        inp_tokens: Optional[int],
+        return_meta_data: bool,
+    ) -> Union[str, List[Dict[str, Any]], TextGenerationInferenceOutput]:
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=output,
+                output_tokens=output_tokens if output_tokens is not None else None,
+                input_text=inp,
+                input_tokens=inp_tokens if inp_tokens is not None else None,
+                model_name=self.model_name,
+                inference_type=self.label,
+            )
+        return output
+
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+        return super().infer(dataset, return_meta_data)
+
+    @abc.abstractmethod
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError
+
+    def infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+        return super().infer_log_probs(dataset, return_meta_data)
+
+    @abc.abstractmethod
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError
+
+
+class HFAutoModelInferenceEngine(HFInferenceEngineBase):
+    label: str = "hf_auto_model"
+
+    def _init_processor(self):
+        from transformers import AutoTokenizer
+
+        self.processor = AutoTokenizer.from_pretrained(
+            pretrained_model_name_or_path=self.model_name,
+            use_fast=self.use_fast_tokenizer,
+            padding=True,
+            truncation=True,
+        )
+
+    def _init_model(self):
+        from transformers import (
+            AutoConfig,
+            AutoModelForCausalLM,
+            AutoModelForSeq2SeqLM,
+        )
+
+        model_class = (
+            AutoModelForSeq2SeqLM
+            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
+            else AutoModelForCausalLM
+        )
+
+        self.model = model_class.from_pretrained(
+            pretrained_model_name_or_path=self.model_name,
+            trust_remote_code=True,
+            device_map=self.device_map,
+            torch_dtype=self._get_torch_dtype(),
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+    def prepare_inputs(self, data: Iterable) -> Mapping:
+        return self.processor(
+            data,
+            padding=True,
+            truncation=True,
+            return_tensors="pt",
+        ).to(self.device or self.device_map)
+
+    def _infer_fn(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool,
+        return_logprobs: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        tokenized_inputs = self.prepare_inputs(
+            [instance["source"] for instance in dataset]
+        )
+        input_length = (
+            1
+            if self.model.config.is_encoder_decoder
+            else tokenized_inputs.input_ids.shape[1]
+        )
+
+        predictions = self.make_predictions(tokenized_inputs)
+        sequences = predictions.sequences
+
+        string_tokens = [
+            self.decode_tokens(sequence, input_length) for sequence in sequences
+        ]
+
+        final_outputs = (
+            self.get_logprobs(predictions, string_tokens)
+            if return_logprobs
+            else [self.create_string_from_tokens(strings) for strings in string_tokens]
+        )
+
+        return [
+            self.get_return_object(
+                output=final_outputs[i],
+                output_tokens=len(string_tokens[i]),
+                inp=dataset[i]["source"],
+                inp_tokens=len(tokenized_inputs.encodings[i].tokens)
+                if tokenized_inputs.encodings is not None
+                else None,
+                return_meta_data=return_meta_data,
+            )
+            for i in range(len(sequences))
+        ]
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+        return self._infer_fn(dataset, return_meta_data, False)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+        return self._infer_fn(dataset, return_meta_data, True)
+
+
+class HFLlavaInferenceEngine(HFInferenceEngineBase):
+    lazy_load: bool = True
+    label: str = "hf_lava"
+    image_token: str = "<image>"
+
+    def compute_transition_scores(
+        self, sequences: Sequence, scores: Sequence, beam_indices: Optional[int]
+    ) -> Sequence:
+        if not hasattr(self.model.config, "vocab_size"):
+            self.model.config.vocab_size = self.model.vocab_size
+
+        return super().compute_transition_scores(sequences, scores, beam_indices)
+
+    def _init_processor(self):
+        from transformers import AutoProcessor
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+        if not self.pad_token_id and hasattr(self.processor, "eos_token_id"):
+            self.pad_token_id = self.processor.eos_token_id
+
+    def _init_model(self):
+        from transformers import LlavaForConditionalGeneration
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=self._get_torch_dtype(),
+            low_cpu_mem_usage=self.low_cpu_mem_usage,
+            device_map=self.device_map,
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+    @staticmethod
+    def _get_input(instance):
+        assert isinstance(instance["source"], list), "Must use format=formats.chat_api"
+        images = []
+        conversation = []
+        for turn in instance["source"]:
+            if isinstance(turn["content"], list):
+                for content in turn["content"]:
+                    if content["type"] == "image_url":
+                        content["type"] = "image"
+                        image_url = content.pop("image_url")["url"]
+                        image = data_url_to_image(image_url)
+                        images.append(image)
+            conversation.append(turn)
+        return conversation, images
+
+    def prepare_inputs(self, data: Iterable) -> Mapping:
+        conversation, images = self._get_input(data)
+
+        if len(images) == 1:
+            images = images[0]
+
+        text = self.processor.apply_chat_template(
+            conversation, add_generation_prompt=True
+        )
+
+        inputs: Mapping = self.processor(
+            images=images, text=text, return_tensors="pt"
+        ).to(self.device or self.device_map, self._get_torch_dtype())
+
+        return inputs
+
+    def _infer_fn(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool,
+        return_logprobs: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        results = []
+
+        for instance in tqdm(dataset):
+            processed_inputs = self.prepare_inputs(instance)
+            input_len = len(processed_inputs["input_ids"][0])
+
+            predictions = self.make_predictions(processed_inputs)
+
+            string_tokens = self.decode_tokens(predictions.sequences[0], input_len)
+
+            final_outputs = (
+                self.get_logprobs(predictions, [string_tokens])[0]
+                if return_logprobs
+                else self.create_string_from_tokens(string_tokens)
+            )
+
+            results.append(
+                self.get_return_object(
+                    output=final_outputs,
+                    output_tokens=len(string_tokens),
+                    inp=instance["source"],
+                    inp_tokens=None,
+                    return_meta_data=return_meta_data,
+                )
+            )
+
+        return results
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, False)
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return self._infer_fn(dataset, return_meta_data, True)
+
+
+class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
+    label: str = "hf_peft_auto_model"
+
+    peft_config: Any = InternalField(
+        default=None,
+        name="PEFT config read from the directory or the Hub repository "
+        "id specified in the 'model_name'.",
+    )
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+        "peft": "Install 'peft' package using: 'pip install peft'.",
+    }
+
+    def _prepare_engine(self):
+        self._read_peft_config()
+        super()._prepare_engine()
+
+    def _read_peft_config(self):
+        from peft import PeftConfig
+
+        try:
+            config = PeftConfig.from_pretrained(self.model_name)
+            assert isinstance(config.base_model_name_or_path, str)
+            self.peft_config = config
+
+        except ValueError as e:
+            if "Can't find" in str(e):
+                raise ValueError(
+                    f"Specified model '{self.model_name}' is not the PEFT model. "
+                    f"Use a regular instance of the `HFAutoModelInferenceEngine` "
+                    f"instead."
+                ) from e
+
+            raise e
+
+    def _init_processor(self):
+        from transformers import AutoTokenizer
+
+        self.processor = AutoTokenizer.from_pretrained(
+            self.peft_config.base_model_name_or_path
+        )
+
+    def _init_model(self):
+        from peft import AutoPeftModelForCausalLM, AutoPeftModelForSeq2SeqLM
+        from transformers import AutoConfig
+
+        model_class = (
+            AutoPeftModelForSeq2SeqLM
+            if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
+            else AutoPeftModelForCausalLM
+        )
+
+        self.model = model_class.from_pretrained(
+            pretrained_model_name_or_path=self.peft_config.base_model_name_or_path,
+            trust_remote_code=True,
+            device_map=self.device_map,
+            low_cpu_mem_usage=self.low_cpu_mem_usage,
+            torch_dtype=self._get_torch_dtype(),
+        )
+        if self.device_map is None:
+            self.model.to(self.device)
+
+
+@deprecation(
+    version="2.0.0", msg=" Use non-pipeline-based 'HFInferenceEngine' instead."
+)
+class HFPipelineBasedInferenceEngine(
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
+):
+    model_name: str
+    label: str = "hf_pipeline_inference_engine"
+
+    use_fast_tokenizer: bool = True
+    use_fp16: bool = True
+    load_in_8bit: bool = False
+
+    task: Optional[str] = None
+
+    device: Any = None
+    device_map: Any = None
+
+    pipe: Any = InternalField(default=None)
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "hf_pipeline")
 
-    def _get_task(self):
+    def _define_task(self):
         from transformers import AutoConfig
 
-        return (
+        self.task = (
             "text2text-generation"
             if AutoConfig.from_pretrained(
                 self.model_name, trust_remote_code=True
@@ -243,73 +802,127 @@ class HFPipelineBasedInferenceEngine(
             else "text-generation"
         )
 
-    def _prepare_pipeline(self):
+    def _get_model_args(self) -> Dict[str, Any]:
         import torch
-        from transformers import pipeline
+        from transformers import BitsAndBytesConfig
 
-        model_args: Dict[str, Any] = (
-            {"torch_dtype": torch.float16} if self.use_fp16 else {}
-        )
-        model_args.update({"max_new_tokens": self.max_new_tokens})
+        args = {}
 
-        device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else 0
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        if self.load_in_8bit:
+            quantization_config = BitsAndBytesConfig(load_in_8bit=self.load_in_8bit)
+            args["quantization_config"] = quantization_config
+        elif self.use_fp16:
+            if self.device == torch.device("mps"):
+                args["torch_dtype"] = torch.float16
+            else:
+                args["torch_dtype"] = torch.bfloat16
+
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
         # cause an error because the data is always on the gpu
         if torch.cuda.device_count() > 1:
-            assert device == torch.device(0)
-            model_args.update({"device_map": "auto"})
+            assert self.device == torch.device(0)
+            args["device_map"] = "auto"
         else:
-            model_args.update({"device": device})
+            if not self.load_in_8bit:
+                args["device"] = self.device
 
-        task = self._get_task()
+        if self.task == "text-generation":
+            args["return_full_text"] = False
 
-        if task == "text-generation":
-            model_args.update({"return_full_text": False})
+        return args
+
+    def _create_pipeline(self, model_args: Dict[str, Any]):
+        from transformers import pipeline
 
         self.model = pipeline(
-            model=self.model_name, trust_remote_code=True, **model_args
+            model=self.model_name,
+            task=self.task,
+            use_fast=self.use_fast_tokenizer,
+            trust_remote_code=True,
+            **model_args,
+            **self.to_dict(
+                [HFGenerationParamsMixin],
+                keep_empty=False,
+            ),
         )
+
+    def _set_inference_device(self):
+        if self.device is not None and self.device_map is not None:
+            raise ValueError(
+                f"You must specify either 'device' or 'device_map', however both "
+                f"were given: 'device={self.device}', 'device_map={self.device_map}'."
+            )
+
+        if self.device is None and self.device_map is None:
+            import torch
+
+            self.device = torch.device(
+                "mps"
+                if torch.backends.mps.is_available()
+                else 0
+                if torch.cuda.is_available()
+                else "cpu"
+            )
+
+    def _prepare_engine(self):
+        self._set_inference_device()
+        if self.task is None:
+            self._define_task()
+        model_args = self._get_model_args()
+        self._create_pipeline(model_args)
 
     def prepare_engine(self):
         if not self.lazy_load:
-            self._prepare_pipeline()
-
-    def _is_loaded(self):
-        return hasattr(self, "model") and self.model is not None
+            self._prepare_engine()
 
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if self._get_task() == "text2text-generation":
-            self.verify_not_chat_api(dataset)
-
         if not self._is_loaded():
-            self._prepare_pipeline()
+            self._prepare_engine()
 
-        outputs = []
-        for output in self.model(
-            [instance["source"] for instance in dataset],
-            batch_size=self.batch_size,
-            top_k=self.top_k,
-        ):
-            if isinstance(output, list):
-                output = output[0]
-            outputs.append(output["generated_text"])
-        return outputs
+        outputs = self.model([instance["source"] for instance in dataset])
+
+        return [
+            self.get_return_object(output[0], instance["source"], return_meta_data)
+            if isinstance(output, list)
+            else self.get_return_object(output, instance["source"], return_meta_data)
+            for output, instance in zip(outputs, dataset)
+        ]
+
+    def get_return_object(self, output, inp, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=output["generated_text"],
+                model_name=self.model_name,
+                inference_type=self.label,
+                input_text=inp,
+            )
+        return output["generated_text"]
 
 
-class MockInferenceEngine(InferenceEngine):
+def mock_logprobs_default_value_factory() -> List[Dict[str, Any]]:
+    return [
+        {
+            "logprob": -1,
+            "text": "[[10]]",
+            "top_tokens": [
+                {"logprob": -1, "text": "[[10]]"},
+            ],
+        }
+    ]
+
+
+class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
     model_name: str
     default_inference_value: str = "[[10]]"
+    default_inference_value_logprob: List[Dict[str, Any]] = dataclasses.field(
+        default_factory=mock_logprobs_default_value_factory,
+    )
+    label: str = "mock_inference_engine"
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, "mock")
@@ -328,7 +941,38 @@ class MockInferenceEngine(InferenceEngine):
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return self._mock_infer(dataset)
+        return [
+            self.get_return_object(
+                self.default_inference_value, instance, return_meta_data
+            )
+            for instance in dataset
+        ]
+
+    def _infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        return [
+            self.get_return_object(
+                self.default_inference_value_logprob, instance, return_meta_data
+            )
+            for instance in dataset
+        ]
+
+    def get_return_object(self, predict_result, instance, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=len(instance["source"]),
+                output_tokens=len(predict_result),
+                model_name=self.model_name,
+                inference_type=self.label,
+                input_text=instance["source"],
+                seed=111,
+                stop_reason="",
+            )
+        return predict_result
 
 
 class MockModeMixin(Artifact):
@@ -569,12 +1213,14 @@ class IbmGenAiInferenceEngine(
     }
     data_classification_policy = ["public", "proprietary"]
     parameters: Optional[IbmGenAiInferenceEngineParams] = None
+    rate_limit: int = 10
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
 
-    def prepare_engine(self):
-        from genai import Client, Credentials
+    @staticmethod
+    def _get_credentials():
+        from genai import Credentials
 
         api_key_env_var_name = "GENAI_KEY"
         api_key = os.environ.get(api_key_env_var_name)
@@ -583,8 +1229,21 @@ class IbmGenAiInferenceEngine(
             f"Error while trying to run IbmGenAiInferenceEngine."
             f" Please set the environment param '{api_key_env_var_name}'."
         )
-        credentials = Credentials(api_key=api_key)
+
+        return Credentials(api_key=api_key)
+
+    def prepare_engine(self):
+        self.check_missing_requirements()
+
+        from genai import Client
+        from genai.text.generation import CreateExecutionOptions
+
+        credentials = self._get_credentials()
         self.client = Client(credentials=credentials)
+
+        self.execution_options = CreateExecutionOptions(
+            concurrency_limit=self.rate_limit
+        )
 
         self._set_inference_parameters()
 
@@ -593,22 +1252,26 @@ class IbmGenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters
+        from genai.schema import TextGenerationParameters, TextGenerationResult
+
+        self.verify_not_chat_api(dataset)
 
         genai_params = TextGenerationParameters(
             **self.to_dict([IbmGenAiInferenceEngineParamsMixin])
         )
 
-        results = []
         responses = self.client.text.generation.create(
             model_id=self.model_name,
             inputs=[instance["source"] for instance in dataset],
             parameters=genai_params,
+            execution_options=self.execution_options,
         )
+
+        results = []
         for response in responses:
-            generated_text = response.results[0].generated_text
+            generation_result: TextGenerationResult = response.results[0]
             result = self.get_return_object(
-                generated_text, response.results[0], return_meta_data
+                generation_result.generated_text, generation_result, return_meta_data
             )
             results.append(result)
         return results
@@ -618,7 +1281,9 @@ class IbmGenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        from genai.schema import TextGenerationParameters
+        from genai.schema import TextGenerationParameters, TextGenerationResult
+
+        self.verify_not_chat_api(dataset)
 
         logprobs_return_options = {
             "generated_tokens": True,
@@ -637,11 +1302,12 @@ class IbmGenAiInferenceEngine(
             model_id=self.model_name,
             inputs=[instance["source"] for instance in dataset],
             parameters=genai_params,
+            execution_options=self.execution_options,
         )
 
         predict_results = []
         for prediction in predictions:
-            result = prediction.results[0]
+            result: TextGenerationResult = prediction.results[0]
             assert isinstance(
                 result.generated_tokens, list
             ), "result.generated_tokens should be a list"
@@ -668,8 +1334,21 @@ class IbmGenAiInferenceEngine(
                 output_tokens=result.generated_token_count,
                 model_name=self.model_name,
                 inference_type=self.label,
+                input_text=result.input_text,
+                seed=self.random_seed,
+                stop_reason=result.stop_reason,
             )
         return predict_result
+
+    def get_model_details(self) -> Dict:
+        from genai import ApiClient
+        from genai.model import ModelService
+
+        api_client = ApiClient(credentials=self._get_credentials())
+        model_info = (
+            ModelService(api_client=api_client).retrieve(id=self.model_name).result
+        )
+        return model_info.dict()
 
     def get_token_count(self, dataset):
         texts = [instance["source"] for instance in dataset]
@@ -990,6 +1669,10 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
         return OpenAI(api_key=api_key, base_url=api_url)
 
 
+@deprecation(
+    version="2.0.0",
+    msg=" You can specify inference parameters directly when initializing an inference engine.",
+)
 class WMLInferenceEngineParamsMixin(Artifact):
     decoding_method: Optional[Literal["greedy", "sample"]] = None
     length_penalty: Optional[Dict[str, Union[int, float]]] = None
@@ -1025,77 +1708,86 @@ class WMLInferenceEngineParams(Artifact):
     return_options: Optional[Dict[str, bool]] = None
 
 
-class WMLInferenceEngine(
+class WMLGenerationParamsMixin(Artifact):
+    decoding_method: Optional[Literal["greedy", "sample"]] = None
+    length_penalty: Optional[Dict[str, Union[int, float]]] = None
+    temperature: Optional[float] = None
+    top_p: Optional[float] = None
+    top_k: Optional[int] = None
+    random_seed: Optional[int] = None
+    repetition_penalty: Optional[float] = None
+    min_new_tokens: Optional[int] = None
+    max_new_tokens: Optional[int] = None
+    stop_sequences: Optional[List[str]] = None
+    time_limit: Optional[int] = None
+    truncate_input_tokens: Optional[int] = None
+    prompt_variables: Optional[Dict[str, Any]] = None
+    return_options: Optional[Dict[str, bool]] = None
+
+
+class WMLChatParamsMixin(Artifact):
+    frequency_penalty: Optional[float] = None
+    top_logprobs: Optional[int] = 5
+    presence_penalty: Optional[float] = None
+    response_format: Optional[Dict[str, Any]] = None
+    temperature: Optional[float] = None
+    max_tokens: Optional[int] = None
+    time_limit: Optional[int] = None
+    top_p: Optional[float] = None
+    n: Optional[int] = None
+
+
+CredentialsWML = Dict[
+    Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
+]
+
+
+class WMLInferenceEngineBase(
     InferenceEngine,
-    WMLInferenceEngineParamsMixin,
     PackageRequirementsMixin,
     LogProbInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 ):
-    """Runs inference using ibm-watsonx-ai.
+    """Base for classes running inference using ibm-watsonx-ai.
 
     Attributes:
         credentials (Dict[str, str], optional): By default, it is created by a class
             instance which tries to retrieve proper environment variables
-            ("WML_URL", "WML_PROJECT_ID", "WML_APIKEY"). However, a dictionary with
-            the following keys: "url", "apikey", "project_id" can be directly provided
-            instead.
+            ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
+            However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
+            "username", "password".
+            can be directly provided instead.
         model_name (str, optional): ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
         deployment_id (str, optional): Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
-        parameters (WMLInferenceEngineParams, optional): Instance of WMLInferenceEngineParams
-            which defines inference parameters and their values. Deprecated attribute, please
-            pass respective parameters directly to the WMLInferenceEngine class instead.
-        concurrency_limit (int): number of requests that will be sent in parallel, max is 10.
-
-    Examples:
-        from .api import load_dataset
-
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngine(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
-
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+        parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
+            Defines inference parameters and their values. Deprecated attribute, please pass respective
+            parameters directly to the respective class instead.
     """
 
-    credentials: Optional[Dict[Literal["url", "apikey", "project_id"], str]] = None
+    credentials: Optional[CredentialsWML] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
     label: str = "wml"
     _requirements_list = {
-        "ibm-watsonx-ai==1.1.14": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
+        "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
         "It is advised to have Python version >=3.10 installed, as at lower version this package "
         "may cause conflicts with other installed packages."
     }
     data_classification_policy = ["public", "proprietary"]
-    parameters: Optional[WMLInferenceEngineParams] = None
-    concurrency_limit: int = 10
+    parameters: Optional[
+        Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin]
+    ] = None
+
     _client: Any = InternalField(default=None, name="WML client")
+    _model: Any = InternalField(default=None, name="WML model")
 
     def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, self.label)
+        return get_model_and_label_id(self.model_name or self.deployment_id, self.label)
 
     def verify(self):
         super().verify()
-
-        if self.credentials is not None:
-            for key in self.credentials:
-                if key not in ["url", "apikey", "project_id", "space_id"]:
-                    raise ValueError(
-                        f'Illegal credential key: {key}, use only ["url", "apikey", "project_id", "space_id"]'
-                    )
 
         assert (
             self.model_name
@@ -1112,34 +1804,12 @@ class WMLInferenceEngine(
                     data["credentials"][key] = value
         return data
 
-    @staticmethod
-    def _read_wml_credentials_from_env() -> (
-        Dict[Literal["url", "apikey", "project_id", "space_id"], str]
-    ):
-        credentials = {}
-        project_or_deployment_var_name = (
-            "WML_SPACE_ID" if "WML_SPACE_ID" in os.environ else "WML_PROJECT_ID"
-        )
-
-        for env_var_name in ["WML_URL", project_or_deployment_var_name, "WML_APIKEY"]:
-            env_var = os.environ.get(env_var_name)
-            assert env_var, (
-                f"Error while trying to run 'WMLInferenceEngine'. "
-                f"Please set the env variable: '{env_var_name}', or "
-                f"directly provide an instance of ibm-watsonx-ai 'Credentials' "
-                f"to the engine."
-            )
-
-            name = env_var_name.lower().replace("wml_", "")
-            credentials[name] = env_var
-
-        return credentials
-
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
         if self.credentials is None:
             self.credentials = self._read_wml_credentials_from_env()
+        self._verify_wml_credentials(self.credentials)
 
         client = APIClient(credentials=self.credentials)
         if "space_id" in self.credentials:
@@ -1148,130 +1818,172 @@ class WMLInferenceEngine(
             client.set.default_project(self.credentials["project_id"])
         return client
 
+    @staticmethod
+    def _read_wml_credentials_from_env() -> CredentialsWML:
+        credentials: CredentialsWML = {}
+
+        url = os.environ.get("WML_URL")
+        assert url, (
+            "Error while trying to run 'WMLInferenceEngine'. "
+            "Please set the env variable: 'WML_URL'"
+        )
+        credentials["url"] = url
+
+        space_id = os.environ.get("WML_SPACE_ID")
+        project_id = os.environ.get("WML_PROJECT_ID")
+        if space_id and project_id:
+            get_logger().warning(
+                "Either 'WML_SPACE_ID' or 'WML_PROJECT_ID' need to be "
+                "specified, however, both were found. 'WMLInferenceEngine' "
+                "will use space by default. If it is not desired, then have "
+                "only one of those defined in the env."
+            )
+            credentials["space_id"] = space_id
+        elif project_id:
+            credentials["project_id"] = project_id
+        else:
+            raise AssertionError(
+                "Error while trying to run 'WMLInferenceEngine'. "
+                "Please set either 'WML_SPACE_ID' or 'WML_PROJECT_ID' env "
+                "variable."
+            )
+
+        apikey = os.environ.get("WML_APIKEY")
+        username = os.environ.get("WML_USERNAME")
+        password = os.environ.get("WML_PASSWORD")
+
+        if apikey and username and password:
+            get_logger().warning(
+                "Either 'WML_APIKEY' or both 'WML_USERNAME' and 'WML_PASSWORD' "
+                "need to be specified, however, all of them were found. "
+                "'WMLInferenceEngine' will use api key only by default. If it is not "
+                "desired, then have only one of those options defined in the env."
+            )
+
+        if apikey:
+            credentials["apikey"] = apikey
+        elif username and password:
+            credentials["username"] = username
+            credentials["password"] = password
+        else:
+            raise AssertionError(
+                "Error while trying to run 'WMLInferenceEngine'. "
+                "Please set either 'WML_APIKEY' or both 'WML_USERNAME' and "
+                "'WML_PASSWORD' env variables."
+            )
+
+        return credentials
+
+    @staticmethod
+    def _verify_wml_credentials(credentials: CredentialsWML) -> None:
+        assert isoftype(credentials, CredentialsWML), (
+            "WML credentials object must be a dictionary which may "
+            "contain only the following keys: "
+            "['url', 'apikey', 'username', 'password']."
+        )
+
+        assert credentials.get(
+            "url"
+        ), "'url' is a mandatory key for WML credentials dict."
+        assert "space_id" in credentials or "project_id" in credentials, (
+            "Either 'space_id' or 'project_id' must be provided "
+            "as keys for WML credentials dict."
+        )
+        assert "apikey" in credentials or (
+            "username" in credentials and "password" in credentials
+        ), (
+            "Either 'apikey' or both 'username' and 'password' must be provided "
+            "as keys for WML credentials dict."
+        )
+
     def prepare_engine(self):
+        self.check_missing_requirements()
+
         self._client = self._initialize_wml_client()
 
         self._set_inference_parameters()
 
-    def _load_model_and_params(self):
-        from ibm_watsonx_ai.foundation_models import ModelInference
+    def _load_model(self):
+        from ibm_watsonx_ai.foundation_models.inference import ModelInference
 
-        model = ModelInference(
+        self._model = ModelInference(
             model_id=self.model_name,
             deployment_id=self.deployment_id,
             api_client=self._client,
         )
-        params = self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False)
 
-        return model, params
+    @abc.abstractmethod
+    def _send_requests(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_logprobs: bool,
+        return_meta_data: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        raise NotImplementedError(
+            f"The class '{self.get_pretty_print_name()}' is an abstract class. "
+            f"Please used either 'WMLInferenceEngineGeneration' or "
+            f"'WMLInferenceEngineChat' instead, depending on your task."
+        )
 
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
-        model, params = self._load_model_and_params()
+        if self._model is None:
+            self._load_model()
 
-        result = []
-        for source in dataset["source"]:
-            instance_result = model.generate(
-                prompt=source,
-                params=self.to_dict([WMLInferenceEngineParamsMixin], keep_empty=False),
-            )
-            prediction = instance_result["results"][0]["generated_text"]
-            instance_final_results = self.get_return_object(
-                prediction, instance_result, return_meta_data
-            )
-            result.append(instance_final_results)
-
-        return result
+        return self._send_requests(
+            dataset=dataset,
+            return_logprobs=False,
+            return_meta_data=return_meta_data,
+        )
 
     def _infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
+        if self._model is None:
+            self._load_model()
 
-        model, params = self._load_model_and_params()
-
-        user_return_options = params.pop("return_options", {})
-        # currently this is the only configuration that returns generated logprobs and behaves as expected
-        logprobs_return_options = {
-            "input_tokens": True,
-            "generated_tokens": True,
-            "token_logprobs": True,
-            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
-        }
-        for key, value in logprobs_return_options.items():
-            if key in user_return_options and user_return_options[key] != value:
-                raise ValueError(
-                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
-                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
-                    f"please use '{key}={value}'."
-                )
-
-        params = {
-            **params,
-            "return_options": logprobs_return_options,
-        }
-
-        results = model.generate(
-            prompt=[instance["source"] for instance in dataset],
-            params=params,
+        return self._send_requests(
+            dataset=dataset,
+            return_logprobs=True,
+            return_meta_data=return_meta_data,
         )
-        final_results = []
-        for result in results:
-            generated_tokens = result["results"][0]["generated_tokens"]
-            final_results.append(
-                self.get_return_object(generated_tokens, result, return_meta_data)
-            )
-        return final_results
 
-    def get_return_object(self, predict_result, result, return_meta_data):
-        if return_meta_data:
-            return TextGenerationInferenceOutput(
-                prediction=predict_result,
-                input_tokens=result["results"][0]["input_token_count"],
-                output_tokens=result["results"][0]["generated_token_count"],
-                model_name=self.model_name,
-                inference_type=self.label,
-            )
-        return predict_result
+    @abc.abstractmethod
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+        raise NotImplementedError
+
+    def get_model_details(self) -> Dict:
+        return self._model.get_details()
 
     def get_token_count(self, dataset):
-        from ibm_watsonx_ai.foundation_models import ModelInference
+        if self._model is None:
+            self._load_model()
 
         texts = [instance["source"] for instance in dataset]
 
-        model = ModelInference(
-            model_id=self.model_name,
-            deployment_id=self.deployment_id,
-            api_client=self._client,
-        )
-
         for i in trange(len(texts), desc="Tokenizing"):
-            response = model.tokenize(prompt=texts[i], return_tokens=True)["result"]
+            response = self._model.tokenize(prompt=texts[i], return_tokens=True)[
+                "result"
+            ]
             dataset[i]["token_count"] = response["token_count"]
 
         return dataset
 
     def get_options_log_probs(self, dataset):
         """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        from ibm_watsonx_ai.foundation_models import ModelInference
-
-        model = ModelInference(
-            model_id=self.model_name,
-            deployment_id=self.deployment_id,
-            api_client=self._client,
-        )
+        if self._model is None:
+            self._load_model()
 
         texts = [x["source"] for x in dataset]
 
         responses = list(
             tqdm(
-                model.generate(
+                self._model.generate(
                     prompt=texts,
                     params={
                         "decoding_method": "greedy",
@@ -1303,6 +2015,328 @@ class WMLInferenceEngine(
         return dataset
 
 
+class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMixin):
+    """Generates text for textual inputs.
+
+    If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
+
+    Attributes:
+        concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value.
+
+    Examples:
+        from .api import load_dataset
+
+        wml_credentials = {
+            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+        }
+        model_name = "google/flan-t5-xxl"
+        wml_inference = WMLInferenceEngineGeneration(
+            credentials=wml_credentials,
+            model_name=model_name,
+            data_classification_policy=["public"],
+            top_p=0.5,
+            random_seed=123,
+        )
+
+        dataset = load_dataset(
+            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+        )
+        results = wml_inference.infer(dataset["test"])
+    """
+
+    concurrency_limit: int = 10
+
+    def verify(self):
+        super().verify()
+
+        assert (
+            isinstance(self.concurrency_limit, int)
+            and 1 <= self.concurrency_limit <= 10
+        ), (
+            f"'concurrency_limit' must be a positive integer not greater than 10. "
+            f"However, '{self.concurrency_limit}' was given."
+        )
+
+    def _set_logprobs_params(self, params: Dict[str, Any]) -> Dict[str, Any]:
+        user_return_options = params.pop("return_options", {})
+        # currently this is the only configuration that returns generated
+        # logprobs and behaves as expected
+        logprobs_return_options = {
+            "input_tokens": True,
+            "generated_tokens": True,
+            "token_logprobs": True,
+            "top_n_tokens": user_return_options.get("top_n_tokens", 5),
+        }
+
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
+
+        return {
+            **params,
+            "return_options": logprobs_return_options,
+        }
+
+    def _send_requests(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_logprobs: bool,
+        return_meta_data: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        self.verify_not_chat_api(dataset)
+
+        params = self.to_dict([WMLGenerationParamsMixin], keep_empty=False)
+
+        if return_logprobs:
+            generation_type = "generated_tokens"
+            params = self._set_logprobs_params(params)
+        else:
+            generation_type = "generated_text"
+
+        inputs: List[str] = [instance["source"] for instance in dataset]
+
+        results = self._model.generate(
+            prompt=inputs,
+            params=params,
+            concurrency_limit=self.concurrency_limit,
+        )
+
+        final_results = []
+        for result, inp in zip(results, inputs):
+            result_metadata = result["results"][0]
+            generated_content = result_metadata[generation_type]
+            final_results.append(
+                self.get_return_object(
+                    generated_content, result_metadata, inp, return_meta_data
+                )
+            )
+        return final_results
+
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=result["input_token_count"],
+                output_tokens=result["generated_token_count"],
+                model_name=self.model_name or self.deployment_id,
+                inference_type=self.label,
+                stop_reason=result["stop_reason"],
+                seed=self.random_seed,
+                input_text=input_text,
+            )
+        return predict_result
+
+
+class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
+    """Creates chat session and returns a model's response.
+
+    You can also include images in your inputs. If you use only textual input, it is
+    recommended to use 'WMLInferenceEngineGeneration' instead as it is faster, and allows
+    more parameters for text generation.
+
+    You can provide either already formatted messages, or a raw dataset as an input.
+    In case of the former, all passed images should be base64-encoded strings given as
+    an 'image_url' within a message. Moreover, only one image per a list of messages
+    may be sent.
+    As for the latter, if there are multiple images per one instance, they will be sent
+    separately with the same query. If that could possibly affect expected responses,
+    concatenate images within an instance into a single image and adjust your query
+    accordingly (if necessary).
+
+    Attributes:
+        image_encoder (EncodeImageToString, optional): operator which encodes images in
+            given format to base64 strings required by service. You should specify it when
+            you are using images in your inputs.
+
+    Example:
+        from .api import load_dataset
+        from .image_operators
+
+        image_encoder = EncodeImageToString(image_format="JPEG")
+
+        wml_credentials = {
+            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+        }
+        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+        wml_inference = WMLInferenceEngineChat(
+            credentials=wml_credentials,
+            model_name=model_name,
+            image_encoder=image_encoder,
+            data_classification_policy=["public"],
+            max_tokens=1024,
+        )
+
+        dataset = load_dataset(
+            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
+        )
+        results = wml_inference.infer(dataset["test"])
+    """
+
+    image_encoder: Optional[EncodeImageToString] = None
+
+    @staticmethod
+    def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
+        task_data = instance["task_data"]
+        if isinstance(task_data, str):
+            task_data = json.loads(task_data)
+        question = task_data.get("question")
+
+        images = [None]
+        if "images" in instance["media"]:
+            images = extract_images(instance["source"], instance)
+
+        return question or instance["source"], images
+
+    def _create_messages_from_instance(
+        self, instance: Dict[str, Any]
+    ) -> List[List[Dict[str, Any]]]:
+        """Method creates chat messages to be sent to a watsonx.ai model based on a given instance from a dataset."""
+        text, images = self._extract_queries(instance)
+
+        messages: List[List[Dict[str, Any]]] = []
+        base_message = {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": text,
+                }
+            ],
+        }
+
+        # Iteration over all possible images to create a separate message for
+        # every single image, since SDK allows only one image per request.
+        for image in images:
+            message = base_message.copy()
+
+            if image is not None:
+                encoded_image = image
+                if not isinstance(encoded_image, str):
+                    if self.image_encoder is None:
+                        raise ValueError(
+                            "If sending image queries as well, and they are not "
+                            "already encoded to base64 strings, you must specify "
+                            "the 'image_encoder' to be used."
+                        )
+                    encoded_image = self.image_encoder.encode_image_to_base64(image)
+
+                message["content"].append(
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": "data:image/jpeg;base64," + encoded_image,
+                        },
+                    }
+                )
+
+            messages.append([message])
+
+        return messages
+
+    @staticmethod
+    def verify_messages(messages: List[Dict[str, Any]]):
+        """Method verifies if externally provided messages containing images are compatible with the format required by ibm-watsonx-ai."""
+        n_images = 0
+        for message in messages:
+            if isinstance(message["content"], str):
+                continue
+
+            for content in message["content"]:
+                if isinstance(content, dict):
+                    if "image" in content["type"] and content["type"] != "image_url":
+                        raise ValueError(
+                            f"ibm-watsonx-ai only supports sending images as base64-encoded "
+                            f"strings, which should be given as 'image_url' in a message. "
+                            f"However, '{content['type']}' was given."
+                        )
+
+                    if content["type"] == "image_url":
+                        n_images += 1
+                    if n_images > 1:
+                        raise ValueError(
+                            "ibm-watsonx-ai only supports sending one image per a list "
+                            "of messages."
+                        )
+
+    def to_messages(self, instance: Union[Dict, List]) -> List[List[Dict[str, Any]]]:
+        if isinstance(instance["source"], str) and "media" in instance:
+            return self._create_messages_from_instance(instance)
+
+        messages = super().to_messages(instance)
+        self.verify_messages(messages)
+        # This is done to be compatible with inputs containing
+        # images as SDK allows sending only one image per message.
+        return [messages]
+
+    def _send_requests(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_logprobs: bool,
+        return_meta_data: bool,
+    ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
+        params = self.to_dict([WMLChatParamsMixin], keep_empty=False)
+
+        if return_logprobs:
+            output_type = "logprobs"
+            params["logprobs"] = True
+        else:
+            output_type = "message"
+            params["logprobs"] = False
+
+        final_results = []
+
+        for instance in dataset:
+            messages = self.to_messages(instance)
+
+            for message in messages:
+                result = self._model.chat(
+                    messages=message,
+                    params=params,
+                )
+
+                final_results.append(
+                    self.get_return_object(
+                        result["choices"][0][output_type]["content"],
+                        result,
+                        instance["source"],
+                        return_meta_data,
+                    )
+                )
+
+        return final_results
+
+    def get_return_object(self, predict_result, result, input_text, return_meta_data):
+        if return_meta_data:
+            return TextGenerationInferenceOutput(
+                prediction=predict_result,
+                input_tokens=result["usage"]["prompt_tokens"],
+                output_tokens=len(predict_result)
+                if isinstance(predict_result, list)
+                else None,
+                model_name=self.model_name or self.deployment_id,
+                inference_type=self.label,
+                stop_reason=result["choices"][0]["finish_reason"],
+                input_text=input_text,
+            )
+        return predict_result
+
+
+@deprecation(
+    version="2.0.0",
+    msg=" Please use either 'WMLInferenceEngineGeneration' or 'WMLInferenceEngineChat'"
+    " depending on your task.",
+)
+class WMLInferenceEngine(WMLInferenceEngineGeneration):
+    def prepare_engine(self):
+        super().prepare_engine()
+        get_logger().warning("'WMLInferenceEngine' is deprecated")
+
+
 def get_images_without_text(instance):
     return extract_images(instance["source"], instance)
 
@@ -1310,103 +2344,6 @@ def get_images_without_text(instance):
 def get_text_without_images(instance, image_token="<image>"):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
-
-
-class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
-    model_name: str
-    max_new_tokens: int
-    lazy_load = True
-    image_token = "<image>"
-
-    _requirements_list = {
-        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
-        "torch": "Install torch, go on PyTorch website for mode details.",
-        "accelerate": "pip install accelerate",
-    }
-
-    def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, "hf_lava")
-
-    def _prepare_engine(self):
-        import torch
-        from transformers import AutoProcessor, LlavaForConditionalGeneration
-
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else 0
-            if torch.cuda.is_available()
-            else "cpu"
-        )
-
-        self.model = LlavaForConditionalGeneration.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        ).to(self.device)
-
-        self.processor = AutoProcessor.from_pretrained(self.model_name)
-
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
-
-    def _is_loaded(self):
-        return hasattr(self, "model") and self.model is not None
-
-    def _get_input(self, instance):
-        assert isinstance(instance["source"], list), "Must use format=formats.chat_api"
-        images = []
-        conversation = []
-        for turn in instance["source"]:
-            if isinstance(turn["content"], list):
-                for content in turn["content"]:
-                    if content["type"] == "image_url":
-                        content["type"] = "image"
-                        image_url = content.pop("image_url")["url"]
-                        image = data_url_to_image(image_url)
-                        images.append(image)
-            conversation.append(turn)
-        return conversation, images
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-
-        import torch
-
-        results = []
-        for instance in tqdm(dataset):
-            conversation, images = self._get_input(instance)
-
-            if len(images) == 1:
-                images = images[0]
-
-            text = self.processor.apply_chat_template(
-                conversation, add_generation_prompt=True
-            )
-
-            inputs = self.processor(images=images, text=text, return_tensors="pt").to(
-                self.device, torch.float16
-            )
-
-            input_len = len(inputs["input_ids"][0])
-            output = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-                pad_token_id=self.processor.tokenizer.eos_token_id,
-            )
-            result = self.processor.decode(
-                output[0][input_len:], skip_special_tokens=True
-            )
-            results.append(result)
-
-        return results
 
 
 class LMMSEvalBaseInferenceEngine(
@@ -1417,7 +2354,9 @@ class LMMSEvalBaseInferenceEngine(
     batch_size: int = 1
     image_token = "<image>"
 
-    _requirements_list = ["lmms-eval==0.2.4"]
+    _requirements_list = {
+        "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
+    }
 
     def prepare_engine(self):
         if not self.lazy_load:
@@ -1464,7 +2403,6 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
         if not self._is_loaded():
             self._prepare_engine()
 
