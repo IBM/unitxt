@@ -31,7 +31,7 @@ For example:
             ],
     )
 
-You can see the full list of built in metrics  :ref:`Metrics section <catalog.tasks>`.
+You can see the full list of built in metrics  :ref:`Metrics section <dir_catalog.metrics>`.
 In this section we will understand Unitxt metrics and learn how to add new metrics.
 
 
@@ -135,7 +135,7 @@ Metric Base Classes
 As described in the previous section, a metric generate a set of scores per instance (called `instance` scores),
 and a set of scores over all instances (called `global` scores).
 
-Unitxt has several base classes :ref:`Metric <metrics>` class that simplify the creation of metrics, depending on how the
+Unitxt has several base classes :class:`Metric <unitxt.metrics>` class that simplify the creation of metrics, depending on how the
 scores are calculated.
 
 ``InstanceMetric` - Class for metrics in which the global scores are be calculated by aggregating the instance scores.

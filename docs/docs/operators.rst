@@ -1,3 +1,6 @@
+.. _operators_list:
+
+==============
 Operators List
 ==============
 
