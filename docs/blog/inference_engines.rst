@@ -65,15 +65,15 @@ Expanding Opportunities for the Community
 
 These updates unlock significant opportunities, including:
 
-- **Easy Assembly of LLM Judges**:
-  Quickly set up `LLMs as evaluators <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`_ using Unitxt inference engines.
-
 - **Full Evaluation Pipelines**:
   Design and execute `end-to-end workflows <https://www.unitxt.ai/en/latest/docs/examples.html#evaluation-usecases>`_ directly in the Unitxt framework.
   For example, evaluate the impact of different templates, in-context example selection, answering multiple questions in one inference, and more.
 
 - **Multi-Modality Evaluation**:
   Evaluate `models with diverse inputs <https://www.unitxt.ai/en/latest/docs/examples.html#multi-modality>`_, from text to images and beyond.
+
+- **Easy Assembly of LLM Judges**:
+  Quickly set up `LLMs as evaluators <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`_ using Unitxt inference engines.
 
 
 Our Commitment to Collaboration
