@@ -1453,6 +1453,8 @@ class OpenAiInferenceEngine(
     }
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
+    base_url: Optional[str] = None
+    default_headers: Optional[dict[str, str]] = None
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
@@ -1473,7 +1475,11 @@ class OpenAiInferenceEngine(
             inference_engine="OpenAiInferenceEngine",
             api_param_env_var_name="OPENAI_API_KEY",
         )
-        return OpenAI(api_key=api_key)
+        return OpenAI(
+            api_key=api_key,
+            base_url=self.base_url,
+            default_headers=self.default_headers,
+        )
 
     def prepare_engine(self):
         self.client = self.create_client()
