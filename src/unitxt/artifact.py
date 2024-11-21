@@ -245,16 +245,9 @@ class Artifact(Dataclass):
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
         if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
-            artifact_linked_to = d["artifact_linked_to"]
-            # artifact_linked_to is a name of catalog entry
-            assert isinstance(
-                artifact_linked_to, str
-            ), f"'artifact_linked_to' should be a string expressing a name of a catalog entry. Got{artifact_linked_to}."
             # d stands for an ArtifactLink
-            msg = d["__deprecated_msg__"] if "__deprecated_msg__" in d else None
-            return ArtifactLink(
-                artifact_linked_to=artifact_linked_to, __deprecated_msg__=msg
-            ).load(overwrite_args)
+            artifact_link = ArtifactLink.from_dict(d)
+            return artifact_link.load(overwrite_args)
 
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
@@ -421,6 +414,22 @@ class ArtifactLink(Artifact):
     artifact_linked_to: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        assert isinstance(d, dict), f"argument must be a dictionary, got: d = {d}."
+        assert (
+            "artifact_linked_to" in d and d["artifact_linked_to"] is not None
+        ), f"A non-none field named 'artifact_linked_to' is expected in input argument d, but got: {d}."
+        artifact_linked_to = d["artifact_linked_to"]
+        # artifact_linked_to is a name of catalog entry
+        assert isinstance(
+            artifact_linked_to, str
+        ), f"'artifact_linked_to' should be a string expressing a name of a catalog entry. Got{artifact_linked_to}."
+        msg = d["__deprecated_msg__"] if "__deprecated_msg__" in d else None
+        return ArtifactLink(
+            artifact_linked_to=artifact_linked_to, __deprecated_msg__=msg
+        )
 
     def load(self, overwrite_args: dict) -> Artifact:
         # identify the catalog for the artifact_linked_to
