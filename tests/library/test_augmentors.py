@@ -1,7 +1,4 @@
-from unitxt.augmentors import (
-    AugmentPrefixSuffix,
-    AugmentWhitespace,
-)
+from unitxt.augmentors import AugmentPrefixSuffix, AugmentWhitespace, NullAugmentor
 from unitxt.test_utils.operators import (
     apply_operator,
     check_operator_exception,
@@ -46,6 +43,18 @@ class TestOperators(UnitxtTestCase):
         outputs = apply_operator(operator, inputs)
         normalized_output_source = outputs[0]["input_fields"]["text"].split()
         normalized_input_source = text.split()
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
+
+    def test_augment_null_task_input(self):
+        text = "The dog ate my cat"
+        inputs = [{"input_fields": {"text": text}}]
+        operator = NullAugmentor()
+        operator.set_fields(["text"])
+        outputs = apply_operator(operator, inputs)
+        normalized_output_source = outputs[0]["input_fields"]["text"]
+        normalized_input_source = text
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"

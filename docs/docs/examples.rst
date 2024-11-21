@@ -28,7 +28,7 @@ This approach is faster than using Huggingface APIs.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
 
-Related documentation: :ref:`Installation <installation>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Installation <install_unitxt>` , :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
 
 
 Evaluate a custom dataset
@@ -170,7 +170,7 @@ This example demonstrates how to evaluate a user model on the Arena Hard benchma
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_model_using_arena_hard.py>`_
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <dir_catalog.cards.arena_hard>`, :ref:`Inference Engines <inference>`.
 
 Evaluate a judge model performance judging the Arena Hard Benchmark
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -180,7 +180,7 @@ The model is evaluated on its capability to give a judgment that is in correlati
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard.py>`_
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <arena_hard_evaluation>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <dir_catalog.cards.arena_hard>`, :ref:`Inference Engines <inference>`.
 
 Evaluate using ensemble of LLM as a judge metrics
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

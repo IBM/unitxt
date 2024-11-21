@@ -59,7 +59,7 @@ RAG evaluation is performed using both automatic `reference-based` and `referenc
 .. _context_relevance:
 
 Context-Relevance
--------
+-----------------
 This is a reference-less metric gauging the relevance of the retrieved texts to answering the user question. The metric range is [0, 1], where higher is better. 
 
 * Motivation and Approach 
@@ -75,6 +75,7 @@ By computing ``Context Relevance`` over results from different vector stores and
 We employ a small LLM - ``google/flan-t-5-small`` - that is known to show strong results in a faithfulness assessment, and we prompt it with the instruction ``Generate a question based on the given content:`` followed by one retrieved text at a time. As the model generates the question iteratively, token by token, we employ a teacher forcing strategy that uses the tokens from the actual question as ground truth. Thus, at each step, the model uses the ground-truth tokens as input rather than the output from previous steps, and predicts the probability of generating the next ground-truth token. The geometric mean over these probabilities defines the perplexity of the retrieved text.
 
 * Limitations and Future Plans
+
 In future releases we will add a list of complementary metrics ``Context Relevance @ K`` for $K = {1, 3, 5, ...}$ that are computed by averaging the perplexity scores of the top-K retrieved texts. This will be useful for assessing the ranking of the retrieval. After all, normally in RAG applications only the top results from the search are passed to the LLM for generating an answer.
 
 -----
@@ -108,6 +109,7 @@ Faithfulness
 This is a reference-less metric gauging the groundedness of the generated answer in the retrieved texts. The metric range is [0, 1], where higher is better.
 
 * Motivation and Approach
+
 We based our approach on `Adlakha et. al (2023) <https://arxiv.org/abs/2307.16877>`_ - "Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering", which found that fast and inexpensive lexical analysis can provide a relatively high correlation with human judgement on faithfulness. 
 
 Table 4 from the paper is provided below, showing that the `K-Precision` lexical approach is close to GPT-4. The main advantage of lexical strategies over the LLM as a Judge strategy is that they are easy to implement, fast to run, and inexpensive to deploy (in other words, they do not require GPUs). 
@@ -119,11 +121,13 @@ Table 4 from the paper is provided below, showing that the `K-Precision` lexical
 
 
 * Implementation Details
+
 The `K-Precision` ("Knowledge Precision") metric that is mentioned in the paper has been part of public open source projects for a long time, and now it is also adopted in the Unitxt package for computing faithfulness scores. 
 
 The metric is essentially token precision: we count how many of the generated tokens in the system response are included in the context retrieved from the index.
 
 * Limitations and Future Plans
+
 Lexical strategies look at words in isolation, ignoring word order and context. This is clearly a suboptimal approach that can lead to inaccurate assessments in many cases. We plan to switch to a more robust LLM as a Judge approach once we have models that can offer a better trade-off between speed, cost and quality. 
 
 ------------
@@ -131,7 +135,7 @@ Lexical strategies look at words in isolation, ignoring word order and context. 
 .. _answer_reward:
 
 Answer Reward
-------------
+-------------
 This is a reference-less metric that predicts which generated answer is better judged by a human, given a question. The metric range is [0, 1], where higher is better.
 
 * Motivation and Approach

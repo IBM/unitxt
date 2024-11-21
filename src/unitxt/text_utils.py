@@ -137,7 +137,8 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
         if len(d) == 0:
             return ["{}"]
         for key, val in d.items():
-            res.append(key + ": ")
+            printable_key = f'"{key}"' if (" " in key) or (key == "") else key
+            res.append(printable_key + ": ")
             yaml_for_val = construct_dict_as_yaml_lines(val, indent_delta=indent_delta)
             assert len(yaml_for_val) > 0
             if is_simple(val):

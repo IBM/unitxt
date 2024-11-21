@@ -1,9 +1,7 @@
 from typing import List, Optional, Union
 
 from .artifact import fetch_artifact
-from .augmentors import (
-    Augmentor,
-)
+from .augmentors import Augmentor, NullAugmentor
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
@@ -21,6 +19,7 @@ from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
+from .type_utils import isoftype
 from .utils import LRUCache
 
 constants = get_constants()
@@ -305,7 +304,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if self.augmentor is not None:
+        if self.augmentor is not None and not isoftype(self.augmentor, NullAugmentor):
             if (
                 self.card.task.augmentable_inputs is None
                 or len(self.task.augmentable_inputs) == 0
@@ -484,14 +483,12 @@ class StandardRecipe(StandardRecipeWithIndexes):
         sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional): Index of instruction card to be used
-            for preparing the recipe.
-        template_card_index (int, optional): Index of template card to be used for
-            preparing the recipe.
+        instruction_card_index (int, optional): Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional): Index of template card to be used for preparing the recipe.
 
     Methods:
         prepare(): This overridden method is used for preparing the recipe
-            by arranging all the steps, refiners, and renderers in a sequential manner.
+        by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
         AssertionError: If both template and template_card_index are specified at the same time.

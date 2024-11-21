@@ -15,6 +15,7 @@ Tutorials ✨
    adding_operator
    adding_metric
    data_classification_policy
+   ../modules
    rag_support
    multimodality
    operators
