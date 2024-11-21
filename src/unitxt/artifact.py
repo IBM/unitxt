@@ -444,6 +444,13 @@ class ArtifactLink(Artifact):
 
         path = needed_catalog.path(self.artifact_linked_to)
         d = artifacts_json_cache(path)
+        # if needed, follow, in a recursive manner, over multiple links,
+        # passing through instantiating of the ArtifactLink-s on the way, triggering
+        # deprecatioin warning as needed.
+        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
+            # d stands for an ArtifactLink
+            artifact_link = ArtifactLink.from_dict(d)
+            return artifact_link.load(overwrite_args)
         new_artifact = Artifact.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = self.artifact_linked_to
         return new_artifact
