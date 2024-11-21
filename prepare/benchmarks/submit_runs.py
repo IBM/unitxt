@@ -37,6 +37,10 @@ if __name__ == "__main__":
         "--models",
         type=str,
     )
+    parser.add_argument(
+        "--out_path",
+        type=str,
+    )
 
     args = parser.parse_args()
     root_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))
