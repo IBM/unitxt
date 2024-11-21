@@ -223,7 +223,6 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_link(self):
         rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
-            # test when artifact_linked_to is expressed as a name of a catalog entry
             add_to_catalog(
                 rename,
                 "rename.for.test.artifact.link",
@@ -247,7 +246,6 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_link_from_artifactlink(self):
         rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
-            # test when artifact_linked_to is expressed as a name of a catalog entry
             add_to_catalog(
                 rename,
                 "rename.for.test.artifact.link",
@@ -265,7 +263,6 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_link_to_link(self):
         rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
-            # test when artifact_linked_to is expressed as a name of a catalog entry
             add_to_catalog(
                 rename,
                 "rename.for.test.artifact.link",

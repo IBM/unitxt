@@ -412,7 +412,7 @@ class Artifact(Dataclass):
 class ArtifactLink(Artifact):
     # the artifact linked to, expressed by its catalog id
     artifact_linked_to: str = NonPositionalField(
-        default=None, required=False, also_positional=False
+        default=None, required=True, also_positional=False
     )
 
     @classmethod
