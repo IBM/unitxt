@@ -80,7 +80,7 @@ Our Commitment to Collaboration
 -------------------------------
 
 Although you can now run end to end evaluation in Unitxt, Unitxt is still a general data preparation library.
-That means we remain committed to partnerships with other evaluation platforms such as HELM, Eval Harness, and others.
+That means we remain committed to partnerships with other evaluation platforms such as `HELM <https://www.unitxt.ai/en/latest/docs/helm.html>`_, `LM Eval Harness <https://www.unitxt.ai/en/latest/docs/lm_eval.html>`_, and others.
 Our Chat API format and inference engine support enhance accessibility and compatibility.
 These updates empower our partners to adopt the latest standards seamlessly.
 
