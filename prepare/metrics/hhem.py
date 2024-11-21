@@ -12,6 +12,9 @@ pairs = [
 predictions = [p[1] for p in pairs]
 task_data = [{"contexts": [p[0]]} for p in pairs]
 
+## This metric pipeline supports two usecases:
+## 1. Regular unitxt flow: predictions are taken from model prediction and contexts appears in the task data
+## 2. Running on external rag output: each instance contains field "answer" and field "contexts"
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
@@ -22,6 +25,7 @@ metric = MetricPipeline(
         Copy(field_to_field={"contexts": "references"}, not_exist_do_nothing=True),
     ],
     metric=FaithfulnessHHEM(),
+    __description__="Vectara's halucination detection model, HHEM2.1, compares contexts and generated answer to determine faithfulness.",
 )
 instance_targets = [
     {"score": 0.01, "score_name": "score"},
