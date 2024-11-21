@@ -100,7 +100,12 @@ for binary_val in rag_classification_metrics:
             outputs=convert_to_dict_of_type(["is_correct", "number_val"]),
             metrics=rag_classification_metrics[binary_val],
             prediction_type="float",
-            defaults={"choices": ["yes", "no"], "is_correct": ["-"], "number_val": -1},
+            defaults={
+                "choices": ["yes", "no"],
+                "is_correct": ["-"],
+                "number_val": -1,
+                "contexts": ["-"],
+            },
         ),
         f"tasks.rag_eval.answer_correctness.{binary_val}",
         overwrite=True,

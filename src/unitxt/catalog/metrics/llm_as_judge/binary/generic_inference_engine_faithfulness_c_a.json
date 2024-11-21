@@ -5,7 +5,7 @@
     },
     "template": "templates.rag_eval.faithfulness.judge_no_question_simplified",
     "task": "tasks.rag_eval.faithfulness.binary",
-    "format": "formats.empty",
+    "format": null,
     "main_score": "faithfulness_c_a",
     "prediction_field": "answer",
     "infer_log_probs": false
