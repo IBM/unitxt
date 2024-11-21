@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
@@ -23,7 +24,7 @@ def get_task_data_dict(task_data):
     return json.loads(task_data) if isinstance(task_data, str) else task_data
 
 
-class LLMAsJudgeBase(BulkInstanceMetric):
+class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
     """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
 
     Attributes:
@@ -122,7 +123,7 @@ class LLMAsJudgeBase(BulkInstanceMetric):
         pass
 
 
-class LLMAsJudge(LLMAsJudgeBase, ArtifactFetcherMixin):
+class LLMAsJudge(LLMAsJudgeBase):
     """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
 
     This class uses the source prompt given to the generator and the generator's predictions to evaluate
@@ -371,6 +372,17 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         super().prepare()
         self.reduction_map = {"mean": [self.main_score]}
         self.score_prefix = f"{self.inference_model.get_engine_id()}_"
+        if not self.format:
+            self.set_format_for_inference_engine()
+
+    # if format is not directly set in constructor, choose according to the inference model
+    def set_format_for_inference_engine(self):
+        model_name = self.inference_model.get_engine_id()
+        if re.search("llama.?3.*instruct", model_name):
+            format_name = "formats.llama3_instruct"
+        else:
+            format_name = "formats.empty"
+        self.format = self.get_artifact(format_name)
 
     def get_full_task_name(self):
         return self.task

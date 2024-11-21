@@ -5,7 +5,7 @@
     },
     "template": "templates.rag_eval.answer_relevance.judge_answer_relevance",
     "task": "tasks.rag_eval.answer_relevance.binary",
-    "format": "formats.empty",
+    "format": null,
     "main_score": "answer_relevance_q_a",
     "prediction_field": "answer",
     "infer_log_probs": false
