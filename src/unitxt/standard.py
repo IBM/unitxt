@@ -483,14 +483,12 @@ class StandardRecipe(StandardRecipeWithIndexes):
         sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional): Index of instruction card to be used
-            for preparing the recipe.
-        template_card_index (int, optional): Index of template card to be used for
-            preparing the recipe.
+        instruction_card_index (int, optional): Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional): Index of template card to be used for preparing the recipe.
 
     Methods:
         prepare(): This overridden method is used for preparing the recipe
-            by arranging all the steps, refiners, and renderers in a sequential manner.
+        by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
         AssertionError: If both template and template_card_index are specified at the same time.
