@@ -5,7 +5,7 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "task_data/contexts": "contexts",
+                "task_data/contexts": "references",
                 "answer": "prediction"
             },
             "not_exist_do_nothing": true
@@ -14,10 +14,12 @@
             "__type__": "copy",
             "field_to_field": {
                 "contexts": "references"
-            }
+            },
+            "not_exist_do_nothing": true
         }
     ],
     "metric": {
         "__type__": "faithfulness_hhem"
-    }
+    },
+    "__description__": "Vectara's halucination detection model, HHEM2.1, compares contexts and generated answer to determine faithfulness."
 }

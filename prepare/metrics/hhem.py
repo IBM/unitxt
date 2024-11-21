@@ -16,10 +16,10 @@ metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         Copy(
-            field_to_field={"task_data/contexts": "contexts", "answer": "prediction"},
+            field_to_field={"task_data/contexts": "references", "answer": "prediction"},
             not_exist_do_nothing=True,
         ),
-        Copy(field_to_field={"contexts": "references"}),
+        Copy(field_to_field={"contexts": "references"}, not_exist_do_nothing=True),
     ],
     metric=FaithfulnessHHEM(),
 )
