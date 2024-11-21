@@ -78,9 +78,7 @@ if __name__ == "__main__":
         run_name = f"{exp_desc}_{model}"
         params_str = common_params_str + f"--models {model} "
 
-        command_to_run = (
-            f"PYTHONPATH=. /dccstor/gmc/shir/anaconda3/envs/active_testing/bin/python {full_fname_to_run} {params_str}"
-        )
+        command_to_run = f"PYTHONPATH=. /dccstor/gmc/shir/anaconda3/envs/fme/bin/python {full_fname_to_run} {params_str}"
         out_fname = os.path.join(log_dir, run_name + "_out.txt")
         err_fname = os.path.join(log_dir, run_name + "_err.txt")
 

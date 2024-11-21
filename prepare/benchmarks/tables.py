@@ -8,7 +8,7 @@ from tqdm import tqdm
 from unitxt import evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
-        IbmGenAiInferenceEngine, RITSInferenceEngine,
+    RITSInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
