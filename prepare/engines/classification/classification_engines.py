@@ -35,6 +35,7 @@ model_names_to_infer_framework = {
     "gpt-4-turbo": ["openai"],
     "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "ibm_gen_ai"],
     "meta-llama/llama-3-1-405b-instruct-fp8": ["ibm_gen_ai"],
+    "meta-llama/llama-3-405b-instruct": ["ibm_wml"],
 }
 
 for judge_model_name, infer_frameworks in model_names_to_infer_framework.items():

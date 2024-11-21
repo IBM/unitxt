@@ -49,7 +49,7 @@ class TextAugmentor(TypeDependentAugmentor):
     augmented_type = Text
 
 
-class NullAugmentor(Augmentor):
+class NullAugmentor(TaskInputsAugmentor):
     """Does not change the input string."""
 
     def process_value(self, value: Any) -> Any:
@@ -83,12 +83,9 @@ class AugmentPrefixSuffix(TextAugmentor):
     r"""Augments the input by prepending and appending randomly selected (typically, whitespace) patterns.
 
     Args:
-     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
-        The dictionary version allows the specification relative weights for the different patterns.
+     prefixes, suffixes (list or dict) : the potential patterns (typically, whitespace) to select from. The dictionary version allows the specification relative weights for the different patterns.
      prefix_len, suffix_len (positive int) : The added prefix or suffix will be of a certain length.
-     remove_existing_whitespaces : Clean any existing leading and trailing whitespaces.
-        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
-        trimmed input.
+     remove_existing_whitespaces : Clean any existing leading and trailing whitespaces. The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
      If only either just prefixes or just suffixes are needed, set the other to None.
 
     Examples:

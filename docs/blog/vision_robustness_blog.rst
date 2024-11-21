@@ -1,9 +1,9 @@
 .. title:: If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
-.. authors:: Elron Bandel and Nimrod Shabtay
+.. sectionauthor:: Elron Bandel and Nimrod Shabtay
 .. date:: 2024-11-01
 
 ============================
-If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
+[01/11/2024] If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
 ============================
 
 **Authors**: Elron Bandel and Nimrod Shabtay
