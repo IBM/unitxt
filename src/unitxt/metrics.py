@@ -3553,7 +3553,6 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
         if torch.cuda.is_available():
             device = "cuda"
-            self.batch_size = 8
         elif torch.backends.mps.is_available():
             device = "mps"
         else:
