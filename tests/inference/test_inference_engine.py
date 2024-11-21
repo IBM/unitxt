@@ -1,19 +1,24 @@
-from typing import cast
+from typing import Any, Dict, List, cast
 
 from unitxt import produce
 from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
+from unitxt.image_operators import EncodeImageToString
 from unitxt.inference import (
+    HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
     LiteLLMInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
-    WMLInferenceEngine,
+    TextGenerationInferenceOutput,
+    WMLInferenceEngineChat,
+    WMLInferenceEngineGeneration,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.text_utils import print_dict
+from unitxt.type_utils import isoftype
 
 from tests.utils import UnitxtInferenceTestCase
 
@@ -42,7 +47,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         targets = ["365", "1"]
         self.assertListEqual(predictions, targets)
 
-    def test_pipeline_based_inference_engine_lzay_load(self):
+    def test_pipeline_based_inference_engine_lazy_load(self):
         inference_model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
@@ -72,14 +77,14 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         with self.assertRaises(UnitxtError) as e:
             inference_model.infer(dataset)
         self.assertEqual(
-            str(e.exception),
+            str(e.exception).strip(),
             f"The instance '{dataset[0]} 'has the following data classification policy "
             f"'{dataset[0]['data_classification_policy']}', however, the artifact "
-            f"'{inference_model.get_pretty_print_name()}' is only configured to support the "
-            f"data with classification '{inference_model.data_classification_policy}'. To "
-            f"enable this either change the 'data_classification_policy' attribute of the "
-            f"artifact, or modify the environment variable 'UNITXT_DATA_CLASSIFICATION_POLICY' "
-            f"accordingly.\nFor more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html \n",
+            f"'{inference_model.get_pretty_print_name()}' is only configured to support the data with "
+            f"classification '{inference_model.data_classification_policy}'. To enable this either change "
+            f"the 'data_classification_policy' attribute of the artifact, or modify the environment variable "
+            f"'UNITXT_DATA_CLASSIFICATION_POLICY' accordingly.\n"
+            f"For more information: see https://www.unitxt.ai/en/latest//docs/data_classification_policy.html".strip(),
         )
 
     def test_llava_inference_engine(self):
@@ -96,14 +101,20 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 split="test",
             )
 
-            test_dataset = [dataset[0]]
-
-            predictions = inference_model.infer(test_dataset)
+            predictions = inference_model.infer([dataset[0]])
 
             self.assertEqual(predictions[0], "The real image")
 
+            prediction = inference_model.infer_log_probs([dataset[1]])[0]
+
+            assert isoftype(prediction, List[Dict[str, Any]])
+            self.assertListEqual(
+                list(prediction[0].keys()),
+                ["text", "logprob", "top_tokens"],
+            )
+
     def test_watsonx_inference(self):
-        wml_engine = WMLInferenceEngine(
+        wml_engine = WMLInferenceEngineGeneration(
             model_name="google/flan-t5-xl",
             data_classification_policy=["public"],
             random_seed=111,
@@ -152,7 +163,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         genai_engine = IbmGenAiInferenceEngine(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
-        watsonx_engine = WMLInferenceEngine(
+        watsonx_engine = WMLInferenceEngineGeneration(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
 
@@ -163,6 +174,83 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(dataset[0]["prediction"], "world")
             self.assertEqual(dataset[1]["prediction"], "the")
             self.assertEqual(dataset[2]["prediction"], "telephone number")
+
+    def test_hf_auto_model_inference_engine(self):
+        data = load_dataset(
+            dataset_query="card=cards.rte,template_card_index=0,loader_limit=20"
+        )["test"]
+
+        engine = HFAutoModelInferenceEngine(
+            model_name="google/flan-t5-small",
+            max_new_tokens=16,
+            repetition_penalty=1.5,
+            top_k=5,
+            data_classification_policy=["public"],
+        )
+
+        assert engine.get_engine_id() == "flan_t5_small_hf_auto_model"
+        assert engine.repetition_penalty == 1.5
+
+        results = engine.infer_log_probs(data, return_meta_data=True)
+        sample = results[0]
+        prediction = sample.prediction
+
+        assert len(results) == len(data)
+        assert isinstance(sample, TextGenerationInferenceOutput)
+        assert sample.output_tokens == 5
+        assert isoftype(prediction, List[Dict[str, Any]])
+        self.assertListEqual(
+            list(prediction[0].keys()),
+            ["text", "logprob", "top_tokens"],
+        )
+        assert isinstance(prediction[0]["text"], str)
+        assert isinstance(prediction[0]["logprob"], float)
+
+        results = engine.infer(data)
+
+        assert isoftype(results, List[str])
+        assert results[0] == "entailment"
+
+    def test_watsonx_inference_with_images(self):
+        raw_dataset = load_dataset(
+            dataset_query="card=cards.doc_vqa.en,template_card_index=0,loader_limit=30"
+        )
+        sample = list(raw_dataset["test"])[:2]
+
+        image_encoder = EncodeImageToString()
+
+        inference_engine = WMLInferenceEngineChat(
+            model_name="meta-llama/llama-3-2-11b-vision-instruct",
+            image_encoder=image_encoder,
+            max_tokens=128,
+            top_logprobs=3,
+        )
+
+        results = inference_engine.infer_log_probs(sample, return_meta_data=True)
+
+        assert isoftype(results, List[TextGenerationInferenceOutput])
+        assert results[0].input_tokens == 6541
+        assert results[0].stop_reason == "stop"
+        assert isoftype(results[0].prediction, List[Dict[str, Any]])
+
+        formatted_dataset = load_dataset(
+            card="cards.doc_vqa.en",
+            template="templates.qa.with_context.with_type",
+            format="formats.chat_api",
+            loader_limit=30,
+            split="test",
+        )
+        sample = [formatted_dataset[0]]
+
+        messages = inference_engine.to_messages(sample[0])[0]
+
+        assert isoftype(messages, List[Dict[str, Any]])
+        inference_engine.verify_messages(messages)
+
+        inference_engine.top_logprobs = None
+        results = inference_engine.infer(sample)
+
+        assert isinstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
         from unitxt.logging_utils import set_verbosity
@@ -249,7 +337,6 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         engine = HFPipelineBasedInferenceEngine(
             model_name="Qwen/Qwen2.5-0.5B-Instruct",
-            batch_size=1,
             max_new_tokens=1,
             top_k=1,
         )
