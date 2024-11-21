@@ -6,15 +6,14 @@
             "__type__": "copy",
             "field_to_field": {
                 "task_data/contexts": "contexts",
-                "task_data/answer": "answer"
+                "answer": "prediction"
             },
             "not_exist_do_nothing": true
         },
         {
             "__type__": "copy",
             "field_to_field": {
-                "contexts": "references",
-                "answer": "prediction"
+                "contexts": "references"
             }
         }
     ],

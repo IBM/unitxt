@@ -9,19 +9,17 @@ pairs = [
     ("I am in United States", "I am in California."),
 ]
 
-task_data = [{"contexts": [p[0]], "answer": p[1]} for p in pairs]
+predictions = [p[1] for p in pairs]
+task_data = [{"contexts": [p[0]]} for p in pairs]
 
 metric = MetricPipeline(
     main_score="score",
     preprocess_steps=[
         Copy(
-            field_to_field={
-                "task_data/contexts": "contexts",
-                "task_data/answer": "answer",
-            },
+            field_to_field={"task_data/contexts": "contexts", "answer": "prediction"},
             not_exist_do_nothing=True,
         ),
-        Copy(field_to_field={"contexts": "references", "answer": "prediction"}),
+        Copy(field_to_field={"contexts": "references"}),
     ],
     metric=FaithfulnessHHEM(),
 )
@@ -37,9 +35,11 @@ global_target = {
     "score_ci_low": 0.05,
     "score_ci_high": 0.65,
 }
+
+
 outputs = test_metric(
     metric=metric,
-    predictions=[""] * len(instance_targets),
+    predictions=predictions,
     references=[[""]] * len(instance_targets),
     task_data=task_data,
     instance_targets=instance_targets,
