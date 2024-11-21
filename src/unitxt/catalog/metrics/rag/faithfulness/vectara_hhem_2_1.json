@@ -1,0 +1,24 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/contexts": "contexts",
+                "task_data/answer": "answer"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "references",
+                "answer": "prediction"
+            }
+        }
+    ],
+    "metric": {
+        "__type__": "faithfulness_hhem"
+    }
+}
