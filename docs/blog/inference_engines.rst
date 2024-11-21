@@ -10,7 +10,6 @@
 
 ``19/11/2024``
 
-
 Preparing data for training and testing language models is a complex task.
 It involves handling various data formats, preprocessing, and ways of verbalizing tasks.
 Ensuring reproducibility and compatibility across platforms further adds to the complexity.
@@ -23,13 +22,16 @@ Introducing Two Major Enhancements
 
 1. **Producing Data in Chat API Format**
    Unitxt now can produces data in the widely adopted Chat API format.
-   This ensures compatibility with popular LLM APIs without requiring extra formatting.
-   By aligning with the OpenAI Chat API standard, we simplify workflows significantly.
+   This ensures compatibility with popular LLM Provider APIs and avoid the need from custom per model formatting.
+   Additionally, the format supports multiple modalities such as text, images, and videos.
 
 2. **A Comprehensive Array of Inference Engines**
-   We are adding wrappers for local inference platforms like Llama and Hugging Face.
-   Additionally, multi-API platforms like LiteLLM and Watsonx are now fully supported.
-   These wrappers make executing inference tasks seamless and platform-agnostic.
+   We added wrappers for local inference platforms like Llama and Hugging Face
+   as well as remote APIs such as LiteLLM, OpenAI, Watsonx, and more.
+   
+   These wrappers make executing evaluation and inference tasks seamless
+   and platform-agnostic, in just a `few lines of code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_
+
 
 .. code-block:: python
 
@@ -58,32 +60,21 @@ Introducing Two Major Enhancements
         }
     ]
 
-Why These Updates Matter
-------------------------
-
-### Chat API Format: Ready-to-Use Data
-By producing data in Chat API format, Unitxt eliminates discrepancies across APIs.
-This allows for compatibility, direct feeding of data, and simplified workflows.
-Additionally, the format supports multiple modalities such as text, images, and videos.
-
-### Inference Engines: Plug-and-Play Flexibility
-With inference engine wrappers, users can execute tasks consistently across platforms.
-This ensures seamless execution, unified workflows, and compatibility with local engines.
-Collaboration within the community also becomes easier with these standardized tools.
-
 Expanding Opportunities for the Community
 ------------------------------------------
 
 These updates unlock significant opportunities, including:
 
 - **Easy Assembly of LLM Judges**:
-  Quickly set up LLMs as evaluators using Unitxt inference engines.
+  Quickly set up `LLMs as evaluators <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`` using Unitxt inference engines.
 
 - **Full Evaluation Pipelines**:
-  Design and execute end-to-end workflows directly in the Unitxt framework.
+  Design and execute `end-to-end workflows <https://www.unitxt.ai/en/latest/docs/examples.html#evaluation-usecases>` directly in the Unitxt framework.
+  For example, evaluate the impact of different templates, in-context example selection, answering multiple questions in one inference, and more.
 
 - **Multi-Modality Evaluation**:
-  Evaluate models with diverse inputs, from text to images and beyond.
+  Evaluate `models with diverse inputs <https://www.unitxt.ai/en/latest/docs/examples.html#multi-modality>`, from text to images and beyond.
+
 
 Our Commitment to Collaboration
 -------------------------------

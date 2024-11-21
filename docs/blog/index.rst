@@ -8,5 +8,5 @@ Blog 📣
    :maxdepth: 1
    :caption: Read more...
 
-   blog_19_01_2024
+   inference_engines
    vision_robustness
