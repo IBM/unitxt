@@ -45,7 +45,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                     inference_model=inference_model,
                     template=f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}",
                     task=task_name,
-                    format="formats.empty",
+                    format=None,
                     main_score=metric_label,
                     prediction_field=get_prediction_field(metric_type),
                     infer_log_probs=use_logprobs,
