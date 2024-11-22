@@ -2515,13 +2515,29 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
+class VLLMInferenceEngineParamsMixin(Artifact):
+    # defaults according to https://docs.vllm.ai/en/latest/dev/sampling_params.html#sampling-parameters this is the default
+    frequency_penalty: float = 0.0
+    presence_penalty: float = 0.0
+    max_tokens: Optional[int] = None
+    seed: Optional[int] = None
+    stop: Union[Optional[str], List[str]] = None
+    temperature: float = 1.0
+    top_p: float = 1.0
+    logit_bias: Optional[Dict[str, int]] = None
+    logprobs: Optional[int] = None
+    n: int = 1
+
+
 class VLLMInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
+    InferenceEngine, PackageRequirementsMixin, VLLMInferenceEngineParamsMixin
 ):
+    model: str
+
     def prepare_engine(self):
         from vllm import LLM, SamplingParams
 
-        args = self.to_dict([StandardAPIParamsMixin])
+        args = self.to_dict([VLLMInferenceEngineParamsMixin])
         self.sampling_params = SamplingParams(**args)
         self.llm = LLM(model=self.model)
 
