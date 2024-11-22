@@ -240,7 +240,7 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
+            artifact = get_from_catalog("renamefields.for.test.artifact.link")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_from_artifactlink(self):
@@ -300,7 +300,7 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            artifact, _ = fetch_artifact(
+            artifact = get_from_catalog(
                 "renamefields.junior.junior.for.test.artifact.link"
             )
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
@@ -363,7 +363,7 @@ class TestArtifact(UnitxtTestCase):
             )
             self.assertDictEqual(overwritten_rename.to_dict(), artifact.to_dict())
 
-    def test_artifact_link_within_overwrites(self):
+    def test_artifact_link_from_within_overwrites(self):
         with temp_catalog() as catalog_path:
             link_to_metrics_accuracy = ArtifactLink(
                 artifact_linked_to="metrics.accuracy"
