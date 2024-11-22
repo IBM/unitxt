@@ -84,20 +84,17 @@ class AugmentPrefixSuffix(TextAugmentor):
 
     Args:
      prefixes, suffixes (list or dict) : the potential patterns (typically, whitespace) to select from. The dictionary version allows the specification relative weights for the different patterns.
-
      prefix_len, suffix_len (positive int) : The added prefix or suffix will be of a certain length.
      remove_existing_whitespaces : Clean any existing leading and trailing whitespaces. The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
-
      If only either just prefixes or just suffixes are needed, set the other to None.
 
     Examples:
-        To prepend the input with a prefix made of 4 ``\n``-s or ``\t``-s, employ
-        ``AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)``.
-
-        To append the input with a suffix made of 3 ``\n``-s or ``\t``-s, with triple ``\n`` suffixes
-        being preferred over triple ``\t``, at 2:1 ratio, employ
-        ``AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)``
-        which will append ``\n``-s twice as often as ``\t``-s.
+        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
+        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
+        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
+        being preferred over triple '\t', at 2:1 ratio, employ
+        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
+        which will append '\n'-s twice as often as '\t'-s.
 
     """
 

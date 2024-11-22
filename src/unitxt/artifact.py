@@ -433,6 +433,12 @@ class ArtifactLink(Artifact):
 
     def load(self, overwrite_args: dict) -> Artifact:
         # identify the catalog for the artifact_linked_to
+        assert (
+            self.artifact_linked_to is not None
+        ), "'artifact_linked_to' must be non-None in order to load it from the catalog. Currently, it is None."
+        assert isinstance(
+            self.artifact_linked_to, str
+        ), f"'artifact_linked_to' should be a string (expressing a name of a catalog entry). Currently, its type is: {type(self.artifact_linked_to)}."
         needed_catalog = None
         catalogs = list(Catalogs())
         for catalog in catalogs:

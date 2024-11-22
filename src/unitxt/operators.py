@@ -234,24 +234,27 @@ class FlattenInstances(InstanceOperator):
 
 
 class Set(InstanceOperator):
-    """Sets specified fields in each instance, in a given stream or all streams (default), with specified values. If fields exist, updates them, if do not exist -- adds them.
+    """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
 
     Args:
-        fields (Dict[str, object]): The fields to add to each instance. Use '/' to access inner fields
+        fields (Dict[str, object]): The fields to add to each instance.
+             Use '/' to access inner fields
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
-        # Set a value of a list consisting of "positive" and "negative" do field "classes" to each and every instance of all streams
-        ``Set(fields={"classes": ["positive","negatives"]})``
+        # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
+        Set(fields={"classes": ["positive","negatives"]})
 
-        # In each and every instance of all streams, field "span" is to become a dictionary containing a field "start", in which the value 0 is to be set
-        ``Set(fields={"span/start": 0}``
+        # Add a 'start' field under the 'span' field with a value of 0 to all streams
+        Set(fields={"span/start": 0}
 
-        # In all instances of stream "train" only, Set field "classes" to have the value of a list consisting of "positive" and "negative"
-        ``Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})``
+        # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
+        Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
 
-        # Set field "classes" to have the value of a given list, preventing modification of original list from changing the instance.
-        ``Set(fields={"classes": alist}), use_deepcopy=True)``  if now alist is modified, still the instances remain intact.
+        # Add a 'classes' field on a given list, prevent modification of original list
+        # from changing the instance.
+        Set(fields={"classes": alist}), use_deepcopy=True)
+        # if now alist is modified, still the instances remain intact.
     """
 
     fields: Dict[str, object]
@@ -851,13 +854,13 @@ class Copy(FieldOperator):
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
-        ``Copy(field_to_field={"a": "b"})``
+        Copy(field_to_field={"a": "b"}
         would yield {"a": 2, "b": 2}, and when processed by
-        ``Copy(field_to_field={"a": "c"})`` would yield
+        Copy(field_to_field={"a": "c"} would yield
         {"a": 2, "b": 3, "c": 2}
 
         with field names containing / , we can also copy inside the field:
-        ``Copy(field="a/0",to_field="a")``
+        Copy(field="a/0",to_field="a")
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
