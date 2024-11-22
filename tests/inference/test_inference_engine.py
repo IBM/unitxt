@@ -12,6 +12,7 @@ from unitxt.inference import (
     IbmGenAiInferenceEngine,
     LiteLLMInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
+    RITSInferenceEngine,
     TextGenerationInferenceOutput,
     WMLInferenceEngineChat,
     WMLInferenceEngineGeneration,
@@ -136,6 +137,33 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         # Performing inference:
         predictions = wml_engine.infer(test_data)
+        for inp, prediction in zip(test_data, predictions):
+            result = {**inp, "prediction": prediction}
+            print_dict(result, keys_to_print=["source", "prediction"])
+
+    def test_rits_inference(self):
+        rits_engine = RITSInferenceEngine(
+            model_name="meta-llama/llama-3-1-70b-instruct",
+            max_tokens=128,
+        )
+        # The defined rits_engine is equivalent to:
+        # rits_engine = OpenAiInferenceEngine(
+        #     model_name="meta-llama/llama-3-1-70b-instruct",
+        #     max_tokens=128,
+        #     credentials={"api_key": "<api_key>", "api_url": "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/llama-3-1-70b-instruct/v1"},
+        #     default_headers = {"RITS_API_KEY": "<api_key>"}
+        # )
+
+        # Loading dataset:
+        dataset = load_dataset(
+            card="cards.go_emotions.simplified",
+            template="templates.classification.multi_label.empty",
+            loader_limit=3,
+        )
+        test_data = dataset["test"]
+
+        # Performing inference:
+        predictions = rits_engine.infer(test_data)
         for inp, prediction in zip(test_data, predictions):
             result = {**inp, "prediction": prediction}
             print_dict(result, keys_to_print=["source", "prediction"])

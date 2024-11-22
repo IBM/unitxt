@@ -1407,6 +1407,9 @@ class IbmGenAiInferenceEngine(
         return dataset
 
 
+CredentialsOpenAi = dict[Literal["api_key", "api_url"], str]
+
+
 class OpenAiInferenceEngineParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
@@ -1455,6 +1458,7 @@ class OpenAiInferenceEngine(
     parameters: Optional[OpenAiInferenceEngineParams] = None
     base_url: Optional[str] = None
     default_headers: Optional[dict[str, str]] = None
+    credentials: Optional[CredentialsOpenAi] = {}
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
@@ -1462,23 +1466,43 @@ class OpenAiInferenceEngine(
     @classmethod
     def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
         api_key = os.environ.get(api_param_env_var_name)
+
         assert api_key is not None, (
             f"Error while trying to run {inference_engine}."
             f" Please set the environment param '{api_param_env_var_name}'."
         )
+
         return api_key
+
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        credentials: CredentialsOpenAi = {}
+        api_key = self.credentials.get(
+            "api_key", os.environ.get(f"{self.label.upper()}_API_KEY", None)
+        )
+        assert api_key, (
+            f"Error while trying to run {self.label}. "
+            f"Please set the env variable: '{self.label.upper()}_API_KEY'"
+        )
+        credentials["api_key"] = api_key
+
+        api_url = self.credentials.get(
+            "api_url", os.environ.get(f"{self.label.upper()}_API_URL", None)
+        )
+        credentials["api_url"] = api_url
+
+        return credentials
+
+    def get_default_headers(self):
+        return self.default_headers or {}
 
     def create_client(self):
         from openai import OpenAI
 
-        api_key = self.get_api_param(
-            inference_engine="OpenAiInferenceEngine",
-            api_param_env_var_name="OPENAI_API_KEY",
-        )
+        self.credentials = self._prepare_credentials()
         return OpenAI(
-            api_key=api_key,
-            base_url=self.base_url,
-            default_headers=self.default_headers,
+            api_key=self.credentials["api_key"],
+            base_url=self.base_url or self.credentials["api_url"],
+            default_headers=self.get_default_headers(),
         )
 
     def prepare_engine(self):
@@ -1557,6 +1581,43 @@ class OpenAiInferenceEngine(
                 inference_type=self.label,
             )
         return predict_result
+
+
+class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    label: str = "vllm"
+
+    def create_client(self):
+        from openai import OpenAI
+
+        api_key = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_KEY",
+        )
+        api_url = self.get_api_param(
+            inference_engine="VLLMRemoteInferenceEngine",
+            api_param_env_var_name="VLLM_API_URL",
+        )
+        return OpenAI(api_key=api_key, base_url=api_url)
+
+
+class RITSInferenceEngine(OpenAiInferenceEngine):
+    label: str = "rits"
+
+    def get_default_headers(self):
+        return {"RITS_API_KEY": self.credentials["api_key"]}
+
+    def create_client(self):
+        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
+        self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
+        return super().create_client()
+
+    def _get_model_name_for_endpoint(self):
+        return (
+            self.model_name.split("/")[-1]
+            .lower()
+            .replace("v0.1", "v01")
+            .replace(".", "-")
+        )
 
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
@@ -1656,23 +1717,6 @@ class TogetherAiInferenceEngine(
             for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
                 outputs.append(self._infer_text(instance))
         return outputs
-
-
-class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
-    label: str = "vllm"
-
-    def create_client(self):
-        from openai import OpenAI
-
-        api_key = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_KEY",
-        )
-        api_url = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_URL",
-        )
-        return OpenAI(api_key=api_key, base_url=api_url)
 
 
 @deprecation(
