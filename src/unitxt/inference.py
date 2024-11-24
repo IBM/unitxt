@@ -2719,7 +2719,7 @@ class LiteLLMInferenceEngine(
 
 
 _supported_apis = Literal[
-    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk"
+    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
 ]
 
 
@@ -2775,6 +2775,10 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
             "flan-t5-xxl": "google/flan-t5-xxl",
         },
+        "rits": {
+            "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+            "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+        },
     }
 
     _provider_to_base_class = {
@@ -2785,11 +2789,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
+        "rits": RITSInferenceEngine,
     }
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
+        "rits": {"model": "model_name"},
     }
 
     def get_provider_name(self):
@@ -2799,7 +2805,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
-                f"{provider} a known API. Supported apis: {','.join(self.provider_model_map.keys())}"
+                f"{provider} is not a configured API for CrossProviderInferenceEngine. Supported apis: {','.join(self.provider_model_map.keys())}"
             )
         if self.model not in self.provider_model_map[provider]:
             raise UnitxtError(
