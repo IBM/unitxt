@@ -450,7 +450,7 @@ class InstanceFieldOperator(InstanceOperator):
                 )
                 if old_value is default_place_holder:
                     if self.not_exist_do_nothing:
-                        return instance
+                        continue
                     old_value = self.get_default
             except Exception as e:
                 raise ValueError(
