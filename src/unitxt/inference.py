@@ -19,6 +19,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TypedDict,
     Union,
 )
 
@@ -1407,7 +1408,9 @@ class IbmGenAiInferenceEngine(
         return dataset
 
 
-CredentialsOpenAi = dict[Literal["api_key", "api_url"], str]
+class CredentialsOpenAi(TypedDict):
+    api_key: str
+    api_url: str
 
 
 class OpenAiInferenceEngineParamsMixin(Artifact):
@@ -1462,17 +1465,6 @@ class OpenAiInferenceEngine(
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
-
-    @classmethod
-    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
-        api_key = os.environ.get(api_param_env_var_name)
-
-        assert api_key is not None, (
-            f"Error while trying to run {inference_engine}."
-            f" Please set the environment param '{api_param_env_var_name}'."
-        )
-
-        return api_key
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
         credentials: CredentialsOpenAi = {}
@@ -1585,6 +1577,16 @@ class OpenAiInferenceEngine(
 
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
+
+    @classmethod
+    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
+        api_key = os.environ.get(api_param_env_var_name)
+
+        assert api_key is not None, (
+            f"Error while trying to run {inference_engine}."
+            f" Please set the environment param '{api_param_env_var_name}'."
+        )
+        return api_key
 
     def create_client(self):
         from openai import OpenAI
