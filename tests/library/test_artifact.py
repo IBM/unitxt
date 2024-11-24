@@ -221,7 +221,7 @@ class TestArtifact(UnitxtTestCase):
         del os.environ["UNITXT_DATA_CLASSIFICATION_POLICY"]
 
     def test_artifact_link(self):
-        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+        rename = Rename(field_to_field={"old_field_name": "new_field_name"})
         with temp_catalog() as catalog_path:
             add_to_catalog(
                 rename,
@@ -242,7 +242,7 @@ class TestArtifact(UnitxtTestCase):
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_from_artifactlink(self):
-        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+        rename = Rename(field_to_field={"old_field_name": "new_field_name"})
         with temp_catalog() as catalog_path:
             add_to_catalog(
                 rename,
@@ -257,7 +257,7 @@ class TestArtifact(UnitxtTestCase):
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_to_link(self):
-        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+        rename = Rename(field_to_field={"old_field_name": "new_field_name"})
         with temp_catalog() as catalog_path:
             add_to_catalog(
                 rename,
@@ -301,7 +301,7 @@ class TestArtifact(UnitxtTestCase):
 
     def test_artifact_link_with_deprecation_warning(self):
         with temp_catalog() as catalog_path:
-            rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
+            rename = Rename(field_to_field={"old_field_name": "new_field_name"})
             add_to_catalog(
                 rename,
                 "rename.for.test.artifact.link",
