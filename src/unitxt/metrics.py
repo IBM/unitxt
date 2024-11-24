@@ -3536,6 +3536,60 @@ class Perplexity(BulkInstanceMetric):
             return shifted_logits, shifted_labels
 
 
+class FaithfulnessHHEM(BulkInstanceMetric):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    batch_size: int = 2
+    model_name: str = "vectara/hallucination_evaluation_model"
+    prediction_type = str
+    single_reference_per_prediction = True
+    max_context_words = 4096
+
+    _requirements_list: List[str] = ["transformers", "torch"]
+
+    def prepare(self):
+        super().prepare()
+        import torch
+
+        if torch.cuda.is_available():
+            device = "cuda"
+        elif torch.backends.mps.is_available():
+            device = "mps"
+        else:
+            device = "cpu"
+        from transformers import AutoModelForSequenceClassification
+
+        self.model = AutoModelForSequenceClassification.from_pretrained(
+            self.model_name, trust_remote_code=True
+        ).to(device)
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> List[Dict[str, Any]]:
+        from tqdm import tqdm
+
+        # treat the references as the contexts and the predictions as answers
+        # concat references
+        contexts = ["\n".join(refs) for refs in references]
+        contexts = [" ".join(c.split(" ")[: self.max_context_words]) for c in contexts]
+        answers = predictions
+
+        # prepare for computation
+        inputs = [[c, a] for c, a in zip(contexts, answers)]
+        scores = []
+        input_batches = [
+            inputs[x : x + self.batch_size]
+            for x in range(0, len(inputs), self.batch_size)
+        ]
+        for input_batch in tqdm(input_batches, "input batch"):
+            batch_scores = self.model.predict(input_batch).cpu().tolist()
+            scores.extend(batch_scores)
+        return [{"score": score} for score in scores]
+
+
 class Squad(HuggingfaceMetric):
     hf_metric_name = "squad"
     main_score = "f1"
