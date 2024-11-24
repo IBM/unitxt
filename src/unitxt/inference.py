@@ -1611,6 +1611,7 @@ class RITSInferenceEngine(OpenAiInferenceEngine):
     def create_client(self):
         base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
         self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
+        logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
         return super().create_client()
 
     def _get_model_name_for_endpoint(self):
@@ -1618,6 +1619,7 @@ class RITSInferenceEngine(OpenAiInferenceEngine):
             self.model_name.split("/")[-1]
             .lower()
             .replace("v0.1", "v01")
+            .replace("vision-", "")
             .replace(".", "-")
         )
 
@@ -2750,6 +2752,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
+            "llama-3-2-11b-vision-instruct": "watsonx/meta-llama/llama-3-2-11b-vision-instruct",
+            "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
         },
         "watsonx-sdk": {
             "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
@@ -2778,6 +2782,11 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+            "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+            "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+            "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
+            "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
     }
 
