@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.inference import WMLInferenceEngine
+from unitxt.inference import WMLInferenceEngineGeneration
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.random_utils import get_seed
 
@@ -11,7 +11,7 @@ template = "templates.safety.harm_rating"
 task = "rating.single_turn"
 
 for model_id in model_list:
-    inference_model = WMLInferenceEngine(
+    inference_model = WMLInferenceEngineGeneration(
         model_name=model_id, max_new_tokens=252, random_seed=get_seed()
     )
     model_label = model_id.split("/")[1].replace("-", "_").replace(".", ",").lower()
