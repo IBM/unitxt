@@ -1,3 +1,4 @@
+from unitxt.artifact import ArtifactLink
 from unitxt.augmentors import (
     AugmentPrefixSuffix,
     AugmentWhitespace,
@@ -21,11 +22,14 @@ operator = AugmentPrefixSuffix(
 
 add_to_catalog(operator, "augmentors.text.whitespace_prefix_suffix", overwrite=True)
 add_to_catalog(
-    operator,
+    ArtifactLink("augmentors.text.whitespace_prefix_suffix"),
     "augmentors.augment_whitespace_prefix_and_suffix_task_input",
     overwrite=True,
 )
 add_to_catalog(AugmentWhitespace(), "augmentors.text.white_space", overwrite=True)
+
 add_to_catalog(
-    AugmentWhitespace(), "augmentors.augment_whitespace_task_input", overwrite=True
+    ArtifactLink("augmentors.text.whitespace_prefix_suffix"),
+    "augmentors.augment_whitespace_task_input",
+    overwrite=True,
 )

@@ -230,9 +230,7 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            rename_fields = ArtifactLink(
-                artifact_linked_to="rename.for.test.artifact.link"
-            )
+            rename_fields = ArtifactLink("rename.for.test.artifact.link")
             add_to_catalog(
                 rename_fields,
                 "renamefields.for.test.artifact.link",
@@ -253,9 +251,7 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            rename_fields = ArtifactLink(
-                artifact_linked_to="rename.for.test.artifact.link"
-            )
+            rename_fields = ArtifactLink("rename.for.test.artifact.link")
 
             artifact, _ = fetch_artifact(rename_fields)
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
@@ -270,9 +266,7 @@ class TestArtifact(UnitxtTestCase):
                 overwrite=True,
             )
 
-            rename_fields = ArtifactLink(
-                artifact_linked_to="rename.for.test.artifact.link"
-            )
+            rename_fields = ArtifactLink("rename.for.test.artifact.link")
             add_to_catalog(
                 rename_fields,
                 "renamefields.for.test.artifact.link",
@@ -281,7 +275,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields_junior = ArtifactLink(
-                artifact_linked_to="renamefields.for.test.artifact.link",
+                "renamefields.for.test.artifact.link",
             )
             add_to_catalog(
                 rename_fields_junior,
@@ -291,7 +285,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields_junior_junior = ArtifactLink(
-                artifact_linked_to="renamefields.junior.for.test.artifact.link",
+                "renamefields.junior.for.test.artifact.link",
             )
             add_to_catalog(
                 rename_fields_junior_junior,
@@ -345,7 +339,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields = ArtifactLink(
-                artifact_linked_to="rename.old_name.to.new_name",
+                "rename.old_name.to.new_name",
             )
             add_to_catalog(
                 rename_fields,
@@ -365,9 +359,7 @@ class TestArtifact(UnitxtTestCase):
 
     def test_artifact_link_from_within_overwrites(self):
         with temp_catalog() as catalog_path:
-            link_to_metrics_accuracy = ArtifactLink(
-                artifact_linked_to="metrics.accuracy"
-            )
+            link_to_metrics_accuracy = ArtifactLink("metrics.accuracy")
             add_to_catalog(
                 link_to_metrics_accuracy,
                 "link.to.metrics.accuracy",
@@ -418,7 +410,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields = ArtifactLink(
-                artifact_linked_to="rename.old_name.to.new_name",
+                "rename.old_name.to.new_name",
             )
             add_to_catalog(
                 rename_fields,
@@ -428,7 +420,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields_junior = ArtifactLink(
-                artifact_linked_to="rename_fields.old_name.to.new_name",
+                "rename_fields.old_name.to.new_name",
             )
             add_to_catalog(
                 rename_fields_junior,
@@ -438,7 +430,7 @@ class TestArtifact(UnitxtTestCase):
             )
 
             rename_fields_junior_junior = ArtifactLink(
-                artifact_linked_to="rename_fields.junior.old_name.to.new_name",
+                "rename_fields.junior.old_name.to.new_name",
             )
             add_to_catalog(
                 rename_fields_junior_junior,

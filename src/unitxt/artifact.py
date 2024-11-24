@@ -411,9 +411,7 @@ class Artifact(Dataclass):
 
 class ArtifactLink(Artifact):
     # the artifact linked to, expressed by its catalog id
-    artifact_linked_to: str = NonPositionalField(
-        default=None, required=True, also_positional=False
-    )
+    artifact_linked_to: str = Field(default=None, required=True)
 
     @classmethod
     def from_dict(cls, d: dict):
