@@ -55,9 +55,10 @@ To use catalog objects, simply specify their name in the Unitxt object that will
 
 Modifying Catalog Assets on the Fly
 -----------------------------------
+
 To modify a catalog asset's fields dynamically, upon fetching the asset from the catalog, use the syntax: ``artifact_name[key_to_modify=new_value]``. 
-To assign lists, use: ``asset.name[key_to_modify=[new_value_0, new_value_1]]``. 
-To assign dictionaries, use: ``asset.name[key_to_modify={new_key_0=new_value_0,new_key_1=new_value_1}]``.
+To assign lists, use: ``artifact_name[key_to_modify=[new_value_0, new_value_1]]``. 
+To assign dictionaries, use: ``artifact_name[key_to_modify={new_key_0=new_value_0,new_key_1=new_value_1}]``.
 Note that the whole new value of the field has to be specified; not just one item of a list, or one key of the dictionary.
 For instance, to change the metric specification of a task:
 
