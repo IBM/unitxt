@@ -8,13 +8,15 @@ from unitxt.artifact import (
     get_artifacts_data_classification,
     reset_artifacts_json_cache,
 )
+from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.error_utils import UnitxtError
+from unitxt.loaders import LoadFromDictionary
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
-from unitxt.operators import Rename, Set
+from unitxt.operators import Copy, Rename, Set
 from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
 from unitxt.task import Task
@@ -241,8 +243,8 @@ class TestArtifact(UnitxtTestCase):
             artifact = get_from_catalog("renamefields.for.test.artifact.link")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
-    def test_artifact_link_from_artifactlink(self):
-        rename = Rename(field_to_field={"old_field_name": "new_field_name"})
+    def test_artifact_link_from_artifactlink_object(self):
+        rename = Rename(field_to_field={"old_field_name": "new_fild_name"})
         with temp_catalog() as catalog_path:
             add_to_catalog(
                 rename,
@@ -447,3 +449,74 @@ class TestArtifact(UnitxtTestCase):
                 "rename_fields.junior.junior.old_name.to.new_name[field_to_field={overwritten_old_name=overwritten_new_name}]"
             )
             self.assertDictEqual(overwritten_rename.to_dict(), artifact.to_dict())
+
+    def test_artifact_link_in_recursive_load(self):
+        copy_operator = Copy(field_to_field={"a": "b"})
+        tiny_card = TaskCard(
+            loader=LoadFromDictionary(
+                data={"train": [{"a": 1}, {"a": 2}]}
+            ),  # any loader would do for this test
+            preprocess_steps=[copy_operator],
+            task="tasks.generation",  # any task would do for this test
+            templates="templates.empty",  # any template would do for this test
+        )
+        with temp_catalog() as catalog_path:
+            add_to_catalog(
+                copy_operator,
+                "copy.operator",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            tiny_card_step_fetched = TaskCard(
+                loader=LoadFromDictionary(data={"train": [{"a": 1}, {"a": 2}]}),
+                preprocess_steps=["copy.operator"],
+                task="tasks.generation",
+                templates="templates.empty",
+            )
+            # verify that tinytiny_card_step_fetched is same as tiny_card, focus on
+            # preprocess_steps being the only difference
+            self.assertEqual(
+                len(tiny_card_step_fetched.preprocess_steps),
+                len(tiny_card.preprocess_steps),
+            )
+            for i in range(len(tiny_card.preprocess_steps)):
+                self.assertDictEqual(
+                    tiny_card.preprocess_steps[i].to_dict(),
+                    tiny_card_step_fetched.preprocess_steps[i].to_dict(),
+                )
+
+            link_to_copy_operator = ArtifactLink(
+                artifact_linked_to="copy.operator",
+            )
+            add_to_catalog(
+                link_to_copy_operator,
+                "link.to.copy.operator",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+            tiny_card_with_links = TaskCard(
+                loader=LoadFromDictionary(data={"train": [{"a": 1}, {"a": 2}]}),
+                preprocess_steps=["link.to.copy.operator"],
+                task="tasks.generation",
+                templates="templates.empty",
+            )
+            add_to_catalog(
+                tiny_card_with_links,
+                "tiny.card.with.links",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            fetched_tiny_card_with_links, _ = fetch_artifact("tiny.card.with.links")
+            # verify that fetched_tiny_card_with_links is same as tiny_card, focus on
+            # preprocess_steps being the only difference
+            self.assertEqual(
+                len(fetched_tiny_card_with_links.preprocess_steps),
+                len(tiny_card.preprocess_steps),
+            )
+            for i in range(len(tiny_card.preprocess_steps)):
+                self.assertDictEqual(
+                    tiny_card.preprocess_steps[i].to_dict(),
+                    fetched_tiny_card_with_links.preprocess_steps[i].to_dict(),
+                )
