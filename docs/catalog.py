@@ -291,15 +291,27 @@ class CatalogEntry:
         artifact = load_json(self.path)
         label = self.get_label()
         content = make_content(artifact, label, all_labels)
+        deprecated_in_title = ""
+        deprecated_message = ""
+        role_red = ""
+        if (
+            "__deprecated_msg__" in artifact
+            and artifact["__deprecated_msg__"] is not None
+        ):
+            deprecated_in_title = " :red:`[deprecated]`"
+            deprecated_message = artifact["__deprecated_msg__"] + "\n\n"
+            role_red = ".. role:: red\n\n"
 
         title_char = "="
-        title = "📄 " + self.get_title()
+        title = "📄 " + self.get_title() + deprecated_in_title
         title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
+            f"{role_red}"
             f".. _{label}:\n\n"
             f"{title_wrapper}\n"
             f"{title}\n"
             f"{title_wrapper}\n\n"
+            f"{deprecated_message}"
             f"{content}\n\n"
             f"|\n"
             f"|\n\n"

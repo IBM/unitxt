@@ -198,3 +198,7 @@ div.document div.documentwrapper {
     float: right;
     margin-left: 10px;
 }
+
+.red {
+  color: red;
+}
