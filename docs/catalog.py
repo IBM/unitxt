@@ -67,7 +67,7 @@ def get_all_type_elements(nested_dict):
 
     def recursive_search(d):
         if isinstance(d, dict):
-            d.pop("__description__", None)
+            d.pop("", None)
             d.pop("__tags__", None)
             for key, value in d.items():
                 if key == "__type__":
@@ -102,6 +102,7 @@ def make_content(artifact, label, all_labels):
     if "__description__" in artifact and artifact["__description__"] is not None:
         result += "\n" + artifact["__description__"] + "\n"
         result += "\n"
+        artifact.pop("__description__")
 
     if "__tags__" in artifact and artifact["__tags__"] is not None:
         result += "\nTags: "
@@ -109,6 +110,7 @@ def make_content(artifact, label, all_labels):
         for k, v in artifact["__tags__"].items():
             tags.append(f"``{k}:{v!s}``")
         result += ",  ".join(tags) + "\n\n"
+        artifact.pop("__tags__")
 
     result += ".. raw:: html\n\n   "
 
@@ -290,7 +292,6 @@ class CatalogEntry:
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         label = self.get_label()
-        content = make_content(artifact, label, all_labels)
         deprecated_in_title = ""
         deprecated_message = ""
         role_red = ""
@@ -299,9 +300,13 @@ class CatalogEntry:
             and artifact["__deprecated_msg__"] is not None
         ):
             deprecated_in_title = " :red:`[deprecated]`"
-            deprecated_message = artifact["__deprecated_msg__"] + "\n\n"
+            deprecated_message = (
+                "**Deprecation message:** " + artifact["__deprecated_msg__"] + "\n\n"
+            )
             role_red = ".. role:: red\n\n"
+            artifact.pop("__deprecated_msg__")
 
+        content = make_content(artifact, label, all_labels)
         title_char = "="
         title = "📄 " + self.get_title() + deprecated_in_title
         title_wrapper = title_char * (len(title) + 1)
