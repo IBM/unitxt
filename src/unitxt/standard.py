@@ -140,6 +140,10 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
             )
 
+        if self.format is not None and not isinstance(self.format, Format):
+            raise ValueError(
+                f"format parameter must be a list of of class derived from Format.  Got format = {self.format}"
+            )
         if self.template is None:
             raise ValueError(
                 "You must set in the recipe either `template`, `template_card_index`."
