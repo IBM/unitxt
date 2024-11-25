@@ -106,11 +106,22 @@ is an ``ArtifactLink``, so it continues and fetches ``asset2`` -- the Artifact l
     )
 
 Deprecated Asset
-~~~~~~~~~~~~~~~~
+----------------
+
 Every asset has a special field named ``__deprecated_msg__`` of type ``str``, whose default value is None.
 When None, the asset is cocnsidered non-deprecated. When not None, the asset is considered deprecated, and 
 its ``__deprecated_msg__`` is logged at level WARN upon its instantiation. (Other than this logging, 
 the artifact is instantiated normally.)
+
+Example of a deprecated catalog asset:
+
+.. code-block:: python
+
+    {
+        "__type__": "textual_system_prompt",
+        "__deprecated_msg__": "This legacy system prompt reflects a task specific instruction, which is best handled by the 'instruction' field of the template.",
+        "text": "You are an agent in charge of answering a boolean (yes/no) question. The system presents you with a passage and a question. Read the passage carefully, and then answer yes or no. Think about your answer, and make sure it makes sense. Do not explain the answer. Only say yes or no."
+    }
 
 Combining this feature with ``ArtifactLink`` in the above example, we can also log a warning to the accessing code that 
 the name ``asset1`` is to be replaced by ``asset2``. 
