@@ -32,7 +32,7 @@ jobs:
        WX_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
        WX_API_KEY: ${{ secrets.WML_APIKEY }}
        GENAI_KEY: ${{ secrets.GENAI_KEY }}
-       RITS_API_KEY: ${{ secrets.RITS_API_KEY}}
+       RITS_API_KEY: ${{ secrets.RITS_API_KEY }}
      steps:
      - uses: actions/checkout@v4
 
