@@ -83,7 +83,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.generation",
-    templates=["templates.empty"],
+    templates=["templates.generation.empty"],
 )
 
 test_card(card, demos_taken_from="test", strict=False, loader_limit=100)
