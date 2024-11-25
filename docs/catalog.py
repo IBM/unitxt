@@ -67,7 +67,7 @@ def get_all_type_elements(nested_dict):
 
     def recursive_search(d):
         if isinstance(d, dict):
-            d.pop("", None)
+            d.pop("__description__", None)
             d.pop("__tags__", None)
             for key, value in d.items():
                 if key == "__type__":
@@ -102,7 +102,7 @@ def make_content(artifact, label, all_labels):
     if "__description__" in artifact and artifact["__description__"] is not None:
         result += "\n" + artifact["__description__"] + "\n"
         result += "\n"
-        artifact.pop("__description__")
+        artifact.pop("__description__")  # to not show again in the yaml
 
     if "__tags__" in artifact and artifact["__tags__"] is not None:
         result += "\nTags: "
@@ -110,7 +110,7 @@ def make_content(artifact, label, all_labels):
         for k, v in artifact["__tags__"].items():
             tags.append(f"``{k}:{v!s}``")
         result += ",  ".join(tags) + "\n\n"
-        artifact.pop("__tags__")
+        artifact.pop("__tags__")  # to not show again in the yaml
 
     result += ".. raw:: html\n\n   "
 
