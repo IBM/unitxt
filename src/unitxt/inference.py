@@ -1408,7 +1408,7 @@ class IbmGenAiInferenceEngine(
         return dataset
 
 
-class CredentialsOpenAi(TypedDict):
+class CredentialsOpenAi(TypedDict, total=False):
     api_key: str
     api_url: str
 
