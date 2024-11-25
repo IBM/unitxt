@@ -1461,7 +1461,7 @@ class OpenAiInferenceEngine(
     parameters: Optional[OpenAiInferenceEngineParams] = None
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
-    credentials: Optional[CredentialsOpenAi] = None
+    credentials: CredentialsOpenAi = {}
 
     def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
