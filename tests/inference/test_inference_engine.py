@@ -17,12 +17,14 @@ from unitxt.inference import (
     WMLInferenceEngineChat,
     WMLInferenceEngineGeneration,
 )
+from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
 from unitxt.text_utils import print_dict
 from unitxt.type_utils import isoftype
 
 from tests.utils import UnitxtInferenceTestCase
 
+logger = get_logger()
 settings = get_settings()
 
 
@@ -142,6 +144,14 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             print_dict(result, keys_to_print=["source", "prediction"])
 
     def test_rits_inference(self):
+        import os
+
+        if os.environ.get("RITS_API_KEY") is None:
+            logger.warning(
+                "Skipping test_rits_inference because RITS_API_KEY not defined"
+            )
+            return
+
         rits_engine = RITSInferenceEngine(
             model_name="meta-llama/llama-3-1-70b-instruct",
             max_tokens=128,
