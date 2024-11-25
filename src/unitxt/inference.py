@@ -19,6 +19,7 @@ from typing import (
     Optional,
     Sequence,
     Tuple,
+    TypedDict,
     Union,
 )
 
@@ -1407,6 +1408,11 @@ class IbmGenAiInferenceEngine(
         return dataset
 
 
+class CredentialsOpenAi(TypedDict, total=False):
+    api_key: str
+    api_url: str
+
+
 class OpenAiInferenceEngineParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
     presence_penalty: Optional[float] = None
@@ -1453,27 +1459,40 @@ class OpenAiInferenceEngine(
     }
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
+    base_url: Optional[str] = None
+    default_headers: Dict[str, str] = {}
+    credentials: CredentialsOpenAi = {}
 
-    def get_engine_id(self):
+    def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
 
-    @classmethod
-    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
-        api_key = os.environ.get(api_param_env_var_name)
-        assert api_key is not None, (
-            f"Error while trying to run {inference_engine}."
-            f" Please set the environment param '{api_param_env_var_name}'."
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        api_key = self.credentials.get(
+            "api_key", os.environ.get(f"{self.label.upper()}_API_KEY", None)
         )
-        return api_key
+        assert api_key, (
+            f"Error while trying to run {self.label}. "
+            f"Please set the env variable: '{self.label.upper()}_API_KEY'"
+        )
+
+        api_url = self.credentials.get(
+            "api_url", os.environ.get(f"{self.label.upper()}_API_URL", None)
+        )
+
+        return {"api_key": api_key, "api_url": api_url}
+
+    def get_default_headers(self) -> Dict[str, str]:
+        return self.default_headers
 
     def create_client(self):
         from openai import OpenAI
 
-        api_key = self.get_api_param(
-            inference_engine="OpenAiInferenceEngine",
-            api_param_env_var_name="OPENAI_API_KEY",
+        self.credentials = self._prepare_credentials()
+        return OpenAI(
+            api_key=self.credentials["api_key"],
+            base_url=self.base_url or self.credentials["api_url"],
+            default_headers=self.get_default_headers(),
         )
-        return OpenAI(api_key=api_key)
 
     def prepare_engine(self):
         self.client = self.create_client()
@@ -1551,6 +1570,32 @@ class OpenAiInferenceEngine(
                 inference_type=self.label,
             )
         return predict_result
+
+
+class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
+    label: str = "vllm"
+
+
+class RITSInferenceEngine(OpenAiInferenceEngine):
+    label: str = "rits"
+
+    def get_default_headers(self):
+        return {"RITS_API_KEY": self.credentials["api_key"]}
+
+    def prepare_engine(self):
+        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
+        self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
+        logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
+        super().prepare_engine()
+
+    def _get_model_name_for_endpoint(self):
+        return (
+            self.model_name.split("/")[-1]
+            .lower()
+            .replace("v0.1", "v01")
+            .replace("vision-", "")
+            .replace(".", "-")
+        )
 
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
@@ -1650,23 +1695,6 @@ class TogetherAiInferenceEngine(
             for instance in tqdm(dataset, desc="Inferring with Together AI Text API"):
                 outputs.append(self._infer_text(instance))
         return outputs
-
-
-class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
-    label: str = "vllm"
-
-    def create_client(self):
-        from openai import OpenAI
-
-        api_key = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_KEY",
-        )
-        api_url = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_URL",
-        )
-        return OpenAI(api_key=api_key, base_url=api_url)
 
 
 @deprecation(
@@ -2667,7 +2695,7 @@ class LiteLLMInferenceEngine(
 
 
 _supported_apis = Literal[
-    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk"
+    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
 ]
 
 
@@ -2698,6 +2726,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
+            "llama-3-2-11b-vision-instruct": "watsonx/meta-llama/llama-3-2-11b-vision-instruct",
+            "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
         },
         "watsonx-sdk": {
             "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
@@ -2723,6 +2753,15 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
             "flan-t5-xxl": "google/flan-t5-xxl",
         },
+        "rits": {
+            "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+            "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+            "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
+            "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+            "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
+            "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
+        },
     }
 
     _provider_to_base_class = {
@@ -2733,11 +2772,13 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
+        "rits": RITSInferenceEngine,
     }
 
     _provider_param_renaming = {
         "bam": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
+        "rits": {"model": "model_name"},
     }
 
     def get_provider_name(self):
@@ -2747,7 +2788,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         provider = self.get_provider_name()
         if provider not in self._provider_to_base_class:
             raise UnitxtError(
-                f"{provider} a known API. Supported apis: {','.join(self.provider_model_map.keys())}"
+                f"{provider} is not a configured API for CrossProviderInferenceEngine. Supported apis: {','.join(self.provider_model_map.keys())}"
             )
         if self.model not in self.provider_model_map[provider]:
             raise UnitxtError(
