@@ -1460,10 +1460,10 @@ class OpenAiInferenceEngine(
     data_classification_policy = ["public"]
     parameters: Optional[OpenAiInferenceEngineParams] = None
     base_url: Optional[str] = None
-    default_headers: Optional[dict[str, str]] = None
-    credentials: Optional[CredentialsOpenAi] = {}
+    default_headers: Dict[str, str] = {}
+    credentials: Optional[CredentialsOpenAi] = None
 
-    def get_engine_id(self):
+    def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
@@ -1484,8 +1484,8 @@ class OpenAiInferenceEngine(
 
         return credentials
 
-    def get_default_headers(self):
-        return self.default_headers or {}
+    def get_default_headers(self) -> Dict[str, str]:
+        return self.default_headers
 
     def create_client(self):
         from openai import OpenAI
@@ -1578,29 +1578,6 @@ class OpenAiInferenceEngine(
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
 
-    @classmethod
-    def get_api_param(cls, inference_engine: str, api_param_env_var_name: str):
-        api_key = os.environ.get(api_param_env_var_name)
-
-        assert api_key is not None, (
-            f"Error while trying to run {inference_engine}."
-            f" Please set the environment param '{api_param_env_var_name}'."
-        )
-        return api_key
-
-    def create_client(self):
-        from openai import OpenAI
-
-        api_key = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_KEY",
-        )
-        api_url = self.get_api_param(
-            inference_engine="VLLMRemoteInferenceEngine",
-            api_param_env_var_name="VLLM_API_URL",
-        )
-        return OpenAI(api_key=api_key, base_url=api_url)
-
 
 class RITSInferenceEngine(OpenAiInferenceEngine):
     label: str = "rits"
@@ -1608,11 +1585,11 @@ class RITSInferenceEngine(OpenAiInferenceEngine):
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
-    def create_client(self):
+    def prepare_engine(self):
         base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
         self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
         logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
-        return super().create_client()
+        super().prepare_engine()
 
     def _get_model_name_for_endpoint(self):
         return (
