@@ -1467,7 +1467,6 @@ class OpenAiInferenceEngine(
         return get_model_and_label_id(self.model_name, self.label)
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
-        credentials: CredentialsOpenAi = {}
         api_key = self.credentials.get(
             "api_key", os.environ.get(f"{self.label.upper()}_API_KEY", None)
         )
@@ -1475,14 +1474,12 @@ class OpenAiInferenceEngine(
             f"Error while trying to run {self.label}. "
             f"Please set the env variable: '{self.label.upper()}_API_KEY'"
         )
-        credentials["api_key"] = api_key
 
         api_url = self.credentials.get(
             "api_url", os.environ.get(f"{self.label.upper()}_API_URL", None)
         )
-        credentials["api_url"] = api_url
 
-        return credentials
+        return {"api_key": api_key, "api_url": api_url}
 
     def get_default_headers(self) -> Dict[str, str]:
         return self.default_headers
