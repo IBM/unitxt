@@ -243,6 +243,7 @@ class Set(InstanceOperator):
 
     Args:
         fields (Dict[str, object]): The fields to add to each instance. Use '/' to access inner fields
+
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
@@ -944,13 +945,13 @@ class CastFields(InstanceOperator):
         process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
 
     Example:
-    .. code-block:: python
+        .. code-block:: python
 
-            CastFields(
-                fields={"a/d": "float", "b": "int"},
-                failure_defaults={"a/d": 0.0, "b": 0},
-                process_every_value=True,
-            )
+                CastFields(
+                    fields={"a/d": "float", "b": "int"},
+                    failure_defaults={"a/d": 0.0, "b": 0},
+                    process_every_value=True,
+                )
 
     would process the input instance: ``{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}``
     into ``{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}``.

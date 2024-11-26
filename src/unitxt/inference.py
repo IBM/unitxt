@@ -2051,27 +2051,29 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     Attributes:
         concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
-            which is also the maximum value.
+        which is also the maximum value.
 
     Examples:
-        from .api import load_dataset
+        .. code-block:: python
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngineGeneration(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
+            from .api import load_dataset
 
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "google/flan-t5-xxl"
+            wml_inference = WMLInferenceEngineGeneration(
+                credentials=wml_credentials,
+                model_name=model_name,
+                data_classification_policy=["public"],
+                top_p=0.5,
+                random_seed=123,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     concurrency_limit: int = 10
@@ -2179,31 +2181,33 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
     Attributes:
         image_encoder (EncodeImageToString, optional): operator which encodes images in
-            given format to base64 strings required by service. You should specify it when
-            you are using images in your inputs.
+        given format to base64 strings required by service. You should specify it when
+        you are using images in your inputs.
 
     Example:
-        from .api import load_dataset
-        from .image_operators
+        .. code-block:: python
 
-        image_encoder = EncodeImageToString(image_format="JPEG")
+            from .api import load_dataset
+            from .image_operators
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
-        wml_inference = WMLInferenceEngineChat(
-            credentials=wml_credentials,
-            model_name=model_name,
-            image_encoder=image_encoder,
-            data_classification_policy=["public"],
-            max_tokens=1024,
-        )
+            image_encoder = EncodeImageToString(image_format="JPEG")
 
-        dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+            wml_inference = WMLInferenceEngineChat(
+                credentials=wml_credentials,
+                model_name=model_name,
+                image_encoder=image_encoder,
+                data_classification_policy=["public"],
+                max_tokens=1024,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     image_encoder: Optional[EncodeImageToString] = None

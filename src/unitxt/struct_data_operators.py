@@ -2,17 +2,25 @@
 
 These operators are specialized in handling structured data like tables.
 For tables, expected input format is:
-{
-  "header": ["col1", "col2"],
-  "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-}
+
+.. code-block:: text
+
+    {
+        "header": ["col1", "col2"],
+        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+    }
 
 For triples, expected input format is:
-[[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
+
+.. code-block:: text
+
+    [[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
 
 For key-value pairs, expected input format is:
-{"key1": "value1", "key2": value2, "key3": "value3"}
-------------------------
+
+.. code-block:: text
+
+    {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
 import json
@@ -576,16 +584,19 @@ class ListToKeyValPairs(InstanceOperator):
 class ConvertTableColNamesToSequential(FieldOperator):
     """Replaces actual table column names with static sequential names like col_0, col_1,...
 
-    Sample input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
-    Sample output:
-    {
-        "header": ["col_0", "col_1"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
+    .. code-block:: text
+
+        Sample input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
+
+        Sample output:
+        {
+            "header": ["col_0", "col_1"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -608,17 +619,19 @@ class ConvertTableColNamesToSequential(FieldOperator):
 class ShuffleTableRows(TypeDependentAugmentor):
     """Shuffles the input table rows randomly.
 
-    Sample Input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-    }
+    .. code-block:: text
 
-    Sample Output:
-    {
-        "header": ["name", "age"],
-        "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
-    }
+        Sample Input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+        }
+
+        Sample Output:
+        {
+            "header": ["name", "age"],
+            "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
+        }
     """
 
     augmented_type = Table
@@ -632,17 +645,19 @@ class ShuffleTableRows(TypeDependentAugmentor):
 class ShuffleTableColumns(TypeDependentAugmentor):
     """Shuffles the table columns randomly.
 
-    Sample Input:
-        {
-            "header": ["name", "age"],
-            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": ["age", "name"],
-            "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age"],
+                "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+            }
+
+        Sample Output:
+            {
+                "header": ["age", "name"],
+                "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
+            }
     """
 
     augmented_type = Table

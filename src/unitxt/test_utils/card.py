@@ -237,7 +237,7 @@ def test_card(
     It also shows the processed predictions and references, after the template's post processors
     are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
 
-        Parameters:
+    Parameters:
         1. `card`: The `Card` object to be tested.
         2. `debug`: A boolean value indicating whether to enable debug mode. In debug mode, the data processing pipeline is executed step by step, printing a representative output of each step.  Default is False.
         3. `strict`: A boolean value indicating whether to fail if scores do not match the expected ones.
@@ -252,7 +252,9 @@ def test_card(
             If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
         9. **kwargs`: Additional keyword arguments to be passed to the recipe.
 
-    Example:
+    Examples:
+        .. code-block:: python
+
             # Test the templates with few shots
             test_card(card,num_demos=1,demo_pool_size=10)
 
