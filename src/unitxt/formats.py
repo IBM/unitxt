@@ -422,24 +422,13 @@ class ChatAPIFormat(BaseFormat):
 class HFSystemFormat(ChatAPIFormat):
     r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
-    HFSystemFormat expects the input instance to contain:
-    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task-independent opening text.
-    2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
-    from the source dataset), in the context of the underlying task.
-    3. A field named "instruction" that contains a (non-None) string.
-    4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
-    and "target", representing a single demo.
-    5. A field named "target_prefix" that contains a string to prefix the target in each demo, and to end the whole generated prompt.
-
-    SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
+    HFSystemFormat formats instance fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance.
 
     Example:
-        HFSystemFormat(model_name="HuggingFaceH4/zephyr-7b-beta")
+        ``HFSystemFormat(model_name="HuggingFaceH4/zephyr-7b-beta")``  Uses the template defined the in tokenizer_config.json of the model:
 
-        Uses the template defined the in tokenizer_config.json of the model:
-
-        "chat_template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
+        ``"chat_template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}"``
 
         See more details in https://huggingface.co/docs/transformers/main/en/chat_templating
 

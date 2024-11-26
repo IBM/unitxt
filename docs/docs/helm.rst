@@ -30,7 +30,7 @@ If you're unsure about your choice, you can use the :ref:`Explore Unitxt <demo>`
 
     dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=templates.classification.multi_class.relation.default,max_train_instances=5', split='train')
 
-The second string parameter to `load_dataset()` is the recipe. Note that you will have to remove `max_train_instances=5` from the recipe before using it in HELM, as the `max_train_instances` parameter is not supported when using Unitxt in HELM. If you wish to use few-shot in-context learning, you should configure this using the `num_demos` and `demos_pool_size` parameters instead, e.g., `num_demos=5,demos_pool_size=10`.
+The second string parameter to ``load_dataset()`` is the recipe. Note that you will have to remove ``max_train_instances=5`` from the recipe before using it in HELM, as the ``max_train_instances`` parameter is not supported when using Unitxt in HELM. If you wish to use few-shot in-context learning, you should configure this using the ``num_demos`` and ``demos_pool_size`` parameters instead, e.g., ``num_demos=5,demos_pool_size=10``.
 
 Select the model you wish to evaluate from the HELM catalog (for a comprehensive list, refer to: https://crfm-helm.readthedocs.io/en/latest/models/):
 

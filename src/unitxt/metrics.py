@@ -1495,13 +1495,17 @@ class StringContainmentRatio(InstanceMetric):
 
     Attributes:
         field: The field from the task_data that contains the values to be checked for containment.
-               Example task:
-                    Task(
-                        input_fields={"question": str},
-                        reference_fields={"entities": str},
-                        prediction_type=str,
-                        metrics=["string_containment_ratio[field=entities]"],
-                    )
+
+    Example task that contains this metric:
+
+        .. code-block:: python
+
+            Task(
+                input_fields={"question": str},
+                reference_fields={"entities": str},
+                prediction_type=str,
+                metrics=["string_containment_ratio[field=entities]"],
+            )
     """
 
     reduction_map = {"mean": ["string_containment"]}

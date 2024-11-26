@@ -733,19 +733,24 @@ class LoadFromHFSpace(LoadHF):
 
     Args:
         space_name (str): Name of the HuggingFace Space to be accessed.
+
         data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
-            paths to files within a given repository. If given as a mapping, paths should
-            be values, while keys should represent the type of respective files
-            (training, testing etc.).
+        paths to files within a given repository. If given as a mapping, paths should
+        be values, while keys should represent the type of respective files
+        (training, testing etc.).
+
         path (str, optional): Absolute path to a directory where data should be downloaded.
+
         revision (str, optional): ID of a Git branch or commit to be used. By default, it is
-            set to None, thus data is downloaded from the main branch of the accessed
-            repository.
+        set to None, thus data is downloaded from the main branch of the accessed
+        repository.
+
         use_token (bool, optional): Whether a token is used for authentication when accessing
-            the HuggingFace Space. If necessary, the token is read from the HuggingFace
-            config folder.
+        the HuggingFace Space. If necessary, the token is read from the HuggingFace
+        config folder.
+
         token_env (str, optional): Key of an env variable which value will be used for
-            authentication when accessing the HuggingFace Space - if necessary.
+        authentication when accessing the HuggingFace Space - if necessary.
 
     Example:
         Loading from a HuggingFace Space

@@ -1,7 +1,8 @@
 .. _examples:
-==============
+
+========
 Examples
-==============
+========
 
 Here you will find complete coding samples showing how to perform different tasks using Unitxt.
 Each example comes with a self contained python file that you can run and later modify.

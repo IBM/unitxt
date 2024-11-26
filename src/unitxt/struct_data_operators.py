@@ -148,11 +148,15 @@ class SerializeTableAsMarkdown(SerializeTable):
 
     Markdown table format is used in GitHub code primarily.
     Format:
-    |col1|col2|col3|
-    |---|---|---|
-    |A|4|1|
-    |I|2|1|
-    ...
+
+    .. code-block:: text
+
+        |col1|col2|col3|
+        |---|---|---|
+        |A|4|1|
+        |I|2|1|
+        ...
+
     """
 
     # main method that serializes a table.
@@ -192,11 +196,14 @@ class SerializeTableAsDFLoader(SerializeTable):
 
     Pandas dataframe based code snippet format serializer.
     Format(Sample):
-    pd.DataFrame({
-        "name" : ["Alex", "Diana", "Donald"],
-        "age" : [26, 34, 39]
-    },
-    index=[0,1,2])
+
+    .. code-block:: python
+
+        pd.DataFrame({
+            "name" : ["Alex", "Diana", "Donald"],
+            "age" : [26, 34, 39]
+        },
+        index=[0,1,2])
     """
 
     # main method that serializes a table.
@@ -234,11 +241,14 @@ class SerializeTableAsJson(SerializeTable):
 
     Json format based serializer.
     Format(Sample):
-    {
-        "0":{"name":"Alex","age":26},
-        "1":{"name":"Diana","age":34},
-        "2":{"name":"Donald","age":39}
-    }
+
+    .. code-block:: json
+
+        {
+            "0":{"name":"Alex","age":26},
+            "1":{"name":"Diana","age":34},
+            "2":{"name":"Donald","age":39}
+        }
     """
 
     # main method that serializes a table.
@@ -264,15 +274,18 @@ class SerializeTableAsHTML(SerializeTable):
 
     HTML table format used for rendering tables in web pages.
     Format(Sample):
-    <table>
-        <thead>
-            <tr><th>name</th><th>age</th><th>sex</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Alice</td><td>26</td><td>F</td></tr>
-            <tr><td>Raj</td><td>34</td><td>M</td></tr>
-        </tbody>
-    </table>
+
+    .. code-block:: html
+
+        <table>
+            <thead>
+                <tr><th>name</th><th>age</th><th>sex</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Alice</td><td>26</td><td>F</td></tr>
+                <tr><td>Raj</td><td>34</td><td>M</td></tr>
+            </tbody>
+        </table>
     """
 
     # main method that serializes a table.
@@ -662,11 +675,14 @@ class DumpJson(FieldOperator):
 class MapHTMLTableToJSON(FieldOperator):
     """Converts HTML table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     _requirements_list = ["bs4"]
@@ -701,11 +717,14 @@ class MapHTMLTableToJSON(FieldOperator):
 class MapTableListsToStdTableJSON(FieldOperator):
     """Converts lists table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -755,17 +774,20 @@ class ConstructTableFromRowsCols(InstanceOperator):
 class TransposeTable(TypeDependentAugmentor):
     """Transpose a table.
 
-    Sample Input:
-        {
-            "header": ["name", "age", "sex"],
-            "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": [" ", "0", "1", "2"],
-            "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age", "sex"],
+                "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+            }
+
+        Sample Output:
+            {
+                "header": [" ", "0", "1", "2"],
+                "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
+            }
+
     """
 
     augmented_type = Table

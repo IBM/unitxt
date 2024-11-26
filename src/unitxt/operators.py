@@ -137,34 +137,39 @@ class MapInstanceValues(InstanceOperator):
 
     Attributes:
         mappers (Dict[str, Dict[str, Any]]): The mappers to use for mapping instance values.
-            Keys are the names of the fields to undergo mapping, and values are dictionaries
-            that define the mapping from old values to new values.
+        Keys are the names of the fields to undergo mapping, and values are dictionaries
+        that define the mapping from old values to new values.
+        Note that mapped values are defined by their string representation, so mapped values
+        are converted to strings before being looked up in the mappers.
+
         strict (bool): If True, the mapping is applied strictly. That means if a value
-            does not exist in the mapper, it will raise a KeyError. If False, values
-            that are not present in the mapper are kept as they are.
+        does not exist in the mapper, it will raise a KeyError. If False, values
+        that are not present in the mapper are kept as they are.
+
         process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
-            is to be applied to their individual elements. If False, mapping is only applied to a field
-            containing a single value.
+        is to be applied to their individual elements. If False, mapping is only applied to a field
+        containing a single value.
 
     Examples:
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
-        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
-        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})``
+        replaces ``"1"`` with ``"hi"`` and ``"2"`` with ``"bye"`` in field ``"a"`` in all instances of all streams:
+        instance ``{"a": 1, "b": 2}`` becomes ``{"a": "hi", "b": 2}``. Note that the value of ``"b"`` remained intact,
+        since field-name ``"b"`` does not participate in the mappers, and that ``1`` was casted to ``"1"`` before looked
+        up in the mapper of ``"a"``.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)
-        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
-        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
-        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)``:
+        Assuming field ``"a"`` is a list of values, potentially including ``"1"``-s and ``"2"``-s, this replaces
+        each such ``"1"`` with ``"hi"`` and ``"2"`` -- with ``"bye"`` in all instances of all streams:
+        instance ``{"a": ["1", "2"], "b": 2}`` becomes ``{"a": ["hi", "bye"], "b": 2}``.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
-        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
-        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
-        because "3" is not a key in the mapper of "a".
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)``:
+        To ensure that all values of field ``"a"`` are mapped in every instance, use ``strict=True``.
+        Input instance ``{"a":"3", "b": 2}`` will raise an exception per the above call,
+        because ``"3"`` is not a key in the mapper of ``"a"``.
 
-        MapInstanceValues(mappers={"a": {str([1,2,3,4]): 'All', str([]): 'None'}}, strict=True)
-        replaces a list [1,2,3,4] with the string 'All' and an empty list by string 'None'.
-        Note that mapped values are defined by their string representation, so mapped values
-        must be converted to strings.
+        ``MapInstanceValues(mappers={"a": {str([1,2,3,4]): "All", str([]): "None"}}, strict=True)``
+        replaces a list ``[1,2,3,4]`` with the string ``"All"`` and an empty list by string ``"None"``.
+
     """
 
     mappers: Dict[str, Dict[str, str]]
@@ -330,22 +335,26 @@ class InstanceFieldOperator(InstanceOperator):
 
     Args:
         field (Optional[str]): The field to process, if only a single one is passed. Defaults to None
+
         to_field (Optional[str]): Field name to save result into, if only one field is processed, if None is passed the
-          operation would happen in-place and its result would replace the value of "field". Defaults to None
+        operation would happen in-place and its result would replace the value of ``field``. Defaults to None
+
         field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
-          to names of fields to save the results into. Inner List, if used, should be of length 2.
-          A field is processed by feeding its value into method 'process_value' and storing the result in to_field that
+        to names of fields to save the results into. Inner List, if used, should be of length 2.
+        | A field is processed by feeding its value into method ``process_value`` and storing the result in ``to_field`` that
           is mapped to the field.
-          When the type of argument 'field_to_field' is List, the order by which the fields are processed is their order
-          in the (outer) List. But when the type of argument 'field_to_field' is Dict, there is no uniquely determined
+        | When the type of argument ``field_to_field`` is List, the order by which the fields are processed is their order
+          in the (outer) List. But when the type of argument ``field_to_field`` is Dict, there is no uniquely determined
           order. The end result might depend on that order if either (1) two different fields are mapped to the same
           to_field, or (2) a field shows both as a key and as a value in different mappings.
-          The operator throws an AssertionError in either of these cases.
-          field_to_field defaults to None
-        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
+        | The operator throws an AssertionError in either of these cases.
+        | field_to_field defaults to None
 
-        Note: if 'field' and 'to_field' (or both members of a pair in 'field_to_field') are equal (or share a common
-        prefix if 'field' and 'to_field' contain a /), then the result of the operation is saved within 'field'
+        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to python's ``*var``. Defaults to False
+
+    Note: if ``field`` and ``to_field`` (or both members of a pair in ``field_to_field`` ) are equal (or share a common
+    prefix if ``field`` and ``to_field`` contain a / ), then the result of the operation is saved within ``field`` .
+
     """
 
     field: Optional[str] = None
@@ -665,14 +674,13 @@ class ListFieldValues(InstanceOperator):
 
 
 class ZipFieldValues(InstanceOperator):
-    """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
+    """Zips values of multiple fields in a given instance, similar to ``list(zip(*fields))``.
 
     The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
     are zipped, and stored into 'to_field'.
 
-    If 'longest'=False, the length of the zipped result is determined by the shortest input value.
-    If 'longest'=False, the length of the zipped result is determined by the longest input, padding shorter
-    inputs with None -s.
+    | If 'longest'=False, the length of the zipped result is determined by the shortest input value.
+    | If 'longest'=True, the length of the zipped result is determined by the longest input, padding shorter inputs with None-s.
 
     """
 
@@ -704,11 +712,11 @@ class ZipFieldValues(InstanceOperator):
 class InterleaveListsToDialogOperator(InstanceOperator):
     """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
 
-     The list of tuples if of format (role, turn_content), where the role label is specified by
-     the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
+    The list of tuples if of format (role, turn_content), where the role label is specified by
+    the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
 
     The user turns and assistant turns field are specified in the arguments.
-     The value of each of the 'fields' is assumed to be a list.
+    The value of each of the 'fields' is assumed to be a list.
 
     """
 
@@ -936,7 +944,7 @@ class CastFields(InstanceOperator):
         process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
 
     Example:
-    .. code-block:: text
+    .. code-block:: python
 
             CastFields(
                 fields={"a/d": "float", "b": "int"},
@@ -944,8 +952,8 @@ class CastFields(InstanceOperator):
                 process_every_value=True,
             )
 
-        would process the input instance: ``{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}``
-        into ``{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}``.
+    would process the input instance: ``{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}``
+    into ``{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}``.
 
     """
 
@@ -1100,18 +1108,18 @@ class FilterByCondition(StreamOperator):
 
     Args:
        values (Dict[str, Any]): Field names and respective Values that instances must match according the condition, to be included in the output.
+
        condition: the name of the desired condition operator between the specified (sub) field's value  and the provided constant value.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where field "a" contains a value > 4
-       FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
-       FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
-       FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
-       FilterByCondition(values = {"a/b":[4,8]}, condition = "not in") will yield only instances where "a" is
-            a dict in which key "b" is mapped to a value that is neither 4 nor 8
-       FilterByCondition(values = {"a[2]":4}, condition = "le") will yield only instances where "a" is a list whose 3-rd
-            element is <= 4
+       | ``FilterByCondition(values = {"a":4}, condition = "gt")`` will yield only instances where field ``"a"`` contains a value ``> 4``
+       | ``FilterByCondition(values = {"a":4}, condition = "le")`` will yield only instances where ``"a"<=4``
+       | ``FilterByCondition(values = {"a":[4,8]}, condition = "in")`` will yield only instances where ``"a"`` is ``4`` or ``8``
+       | ``FilterByCondition(values = {"a":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is different from ``4`` or ``8``
+       | ``FilterByCondition(values = {"a/b":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is a dict in which key ``"b"`` is mapped to a value that is neither ``4`` nor ``8``
+       | ``FilterByCondition(values = {"a[2]":4}, condition = "le")`` will yield only instances where "a" is a list whose 3-rd element is ``<= 4``
 
 
     """
@@ -1812,14 +1820,14 @@ class EncodeLabels(InstanceOperator):
     Args:
         fields (List[str]): The fields to encode together.
 
-    Example: applying
-        EncodeLabels(fields = ["a", "b/*"])
-        on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
-        {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
-        output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
+    Example:
+        applying ``EncodeLabels(fields = ["a", "b/*"])``
+        on input stream = ``[{"a": "red", "b": ["red", "blue"], "c":"bread"},
+        {"a": "blue", "b": ["green"], "c":"water"}]``   will yield the
+        output stream = ``[{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]``
 
-        Note: qpath is applied here, and hence, fields that are lists, should be included in
-        input 'fields' with the appendix "/*"  as in the above example.
+        Note: dict_utils are applied here, and hence, fields that are lists, should be included in
+        input 'fields' with the appendix ``"/*"``  as in the above example.
 
     """
 
@@ -2139,21 +2147,23 @@ class CollateInstances(StreamOperator):
         batch_size (int)
 
     Example:
-        CollateInstances(batch_size=2)
+        .. code-block:: text
 
-        Given inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 2},
-            {"a": 3, "b": 2},
-            {"a": 4, "b": 2},
-            {"a": 5, "b": 2}
-        ]
+            CollateInstances(batch_size=2)
 
-        Returns targets = [
-            {"a": [1,2], "b": [2,2]},
-            {"a": [3,4], "b": [2,2]},
-            {"a": [5], "b": [2]},
-        ]
+            Given inputs = [
+                {"a": 1, "b": 2},
+                {"a": 2, "b": 2},
+                {"a": 3, "b": 2},
+                {"a": 4, "b": 2},
+                {"a": 5, "b": 2}
+            ]
+
+            Returns targets = [
+                {"a": [1,2], "b": [2,2]},
+                {"a": [3,4], "b": [2,2]},
+                {"a": [5], "b": [2]},
+            ]
 
 
     """

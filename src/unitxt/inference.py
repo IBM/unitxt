@@ -70,21 +70,26 @@ class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
 
     Args:
-    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
-    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
-    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
-    for this position and their probabilities.
-    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
-                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
-                ]
+        prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+        | If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+          the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+          for this position and their probabilities.
+        | For example: ``[ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+          {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]} ]``
 
-    input_tokens (int) : number of input tokens to the model.
-    output_tokens (int) : number of output tokens to the model.
-    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
-    seed (int): seed used by the model during generation.
-    input_text (str): input to the model.
-    model_name (str): the model_name as kept in the InferenceEngine.
-    inference_type (str): The label stating the type of the InferenceEngine.
+        input_tokens (int) : number of input tokens to the model.
+
+        output_tokens (int) : number of output tokens to the model.
+
+        stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+
+        seed (int): seed used by the model during generation.
+
+        input_text (str): input to the model.
+
+        model_name (str): the model_name as kept in the InferenceEngine.
+
+        inference_type (str): The label stating the type of the InferenceEngine.
     """
 
     prediction: Union[str, List[Dict[str, Any]]]

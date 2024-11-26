@@ -19,17 +19,17 @@ For example:
 
 .. code-block:: python
 
-task = Task(
-        input_fields={"question" : str},
-        reference_fields={"answer" : str},
-        prediction_type=str,
-        metrics=[
-            "metrics.rouge",
-            "metrics.normalized_sacrebleu",
-            "metrics.bert_score.deberta_xlarge_mnli",
-            "metrics.bert_score.deberta_large_mnli"
-        ],
-)
+    task = Task(
+            input_fields={"question" : str},
+            reference_fields={"answer" : str},
+            prediction_type=str,
+            metrics=[
+                "metrics.rouge",
+                "metrics.normalized_sacrebleu",
+                "metrics.bert_score.deberta_xlarge_mnli",
+                "metrics.bert_score.deberta_large_mnli"
+            ],
+    )
 
 The full list of built in metrics shows in the :ref:`Metrics part of the catalog <dir_catalog.metrics>`.
 In this section we will understand Unitxt metrics and learn how to add new metrics.
