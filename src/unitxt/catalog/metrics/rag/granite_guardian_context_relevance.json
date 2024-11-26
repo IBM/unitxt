@@ -1,0 +1,5 @@
+{
+    "__type__": "granite_guardian_wml_metric",
+    "main_score": "granite_guardian_context_relevance",
+    "risk_name": "context_relevance"
+}
