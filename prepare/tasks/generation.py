@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Any, Dict, Union
 
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
@@ -32,6 +32,24 @@ add_to_catalog(
         defaults={"type_of_output": "Text"},
     ),
     "tasks.generation.with_context",
+    overwrite=True,
+)
+
+add_to_catalog(
+    Task(
+        input_fields={
+            "input": str,
+            "type_of_input": str,
+            "type_of_output": str,
+            "contexts": Dict[str, Any],
+        },
+        reference_fields={"output": str},
+        prediction_type=str,
+        metrics=["metrics.normalized_sacrebleu"],
+        augmentable_inputs=["input"],
+        defaults={"type_of_output": "Text"},
+    ),
+    "tasks.generation.with_contexts",
     overwrite=True,
 )
 

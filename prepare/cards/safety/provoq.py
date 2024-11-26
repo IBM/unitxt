@@ -3,8 +3,8 @@ from unitxt.blocks import (
     LoadHF,
     TaskCard,
 )
+from unitxt.collections_operators import Dictify
 from unitxt.operators import ListFieldValues, Rename, Set
-from unitxt.string_operators import Join
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -18,10 +18,10 @@ card = TaskCard(
             }
         ),
         Rename(field_to_field={"question": "input"}),
-        ListFieldValues(fields=["group", "stigma"], to_field="context"),
-        Join(field="context", by=" # "),
+        ListFieldValues(fields=["group", "stigma"], to_field="contexts"),
+        Dictify(field="contexts", with_keys=["group", "stigma"], to_field="contexts"),
     ],
-    task="tasks.generation.with_context[metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_watsonx_template_harm_rating]]",
+    task="tasks.generation.with_contexts[metrics=[metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_watsonx_template_harm_rating]]",
     templates="templates.generation.all",
     __description__="The ProvoQ dataset is designed to evaluate the sensitivity of large language models (LLMs) to stigma-related topics. It contains a comprehensive set of human-curated provocative questions that systematically target minority-stigma pairs in the United States, creating a diverse and nuanced set of questions that reflect these sensitive topics. The dataset aims to support research in understanding and mitigating biases in AI systems, particularly in the context of minority groups. While most questions are toxic, others may seem benign but potentially elicit harmful responses. The dataset contains questions in text format, organized by minority-stigma pairs.",
     __tags__={
