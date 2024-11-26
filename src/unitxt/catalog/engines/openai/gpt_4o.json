@@ -1,0 +1,6 @@
+{
+    "__type__": "open_ai_inference_engine",
+    "model_name": "gpt-4o",
+    "max_tokens": 2048,
+    "seed": 42
+}
