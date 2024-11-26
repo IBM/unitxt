@@ -114,17 +114,17 @@ def load_dataset(
     Returns:
         DatasetDict
 
-    Examples:
-    .. code-block:: python
+    Example:
+        .. code-block:: python
 
-        dataset = load_dataset(
-            dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
-        )  # card must be present in local catalog
+            dataset = load_dataset(
+                dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
+            )  # card must be present in local catalog
 
-        card = TaskCard(...)
-        template = Template(...)
-        loader_limit = 10
-        dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
+            card = TaskCard(...)
+            template = Template(...)
+            loader_limit = 10
+            dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
 
     """
     recipe = load_recipe(dataset_query, **kwargs)

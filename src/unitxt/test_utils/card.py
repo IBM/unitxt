@@ -244,13 +244,13 @@ def test_card(
            Default is True.
         4. `test_exact_match_score_when_predictions_equal_references`: A boolean value indicating whether to test the exact match score when predictions equal references. Default is True.
         5. `test_full_mismatch_score_with_full_mismatch_prediction_values`: A boolean value indicating whether to test the full mismatch score with full mismatch prediction values.
-            The potential mismatched predeiction values are specified in full_mismatch_prediction_values`.
-            Default is True.
+           The potential mismatched predeiction values are specified in full_mismatch_prediction_values`.
+           Default is True.
         6. `exact_match_score`: The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
         7. `maximum_full_mismatch_score`: The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
         8. `full_mismatch_prediction_values`: An optional list of prediction values to use for testing full mismatches. Default is None.
-            If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
-        9. **kwargs`: Additional keyword arguments to be passed to the recipe.
+           If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
+        9. `**kwargs` : Additional keyword arguments to be passed to the recipe.
 
     Examples:
         .. code-block:: python
