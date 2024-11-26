@@ -45,6 +45,18 @@ class PostProcess(MultiStreamOperator):
         return multi_stream
 
 
+class CustomProcess(PostProcess):
+    def prepare(self):
+        super().prepare()
+        if not self.operator.field:
+            raise UnitxtError(
+                "Custom processor's field was not set - field name must be explicitly defined for custom processors"
+            )
+
+    def process(self, multi_stream):
+        return self.operator(multi_stream)
+
+
 class ToString(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return str(text)

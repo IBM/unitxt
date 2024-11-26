@@ -1,6 +1,7 @@
 from typing import Any, List
 
 from unitxt.artifact import fetch_artifact
+from unitxt.error_utils import UnitxtError
 from unitxt.processors import MatchClosestOption, Substring
 from unitxt.test_utils.operators import check_operator
 
@@ -23,6 +24,10 @@ def list_to_stream_with_prediction_or_references(
             f"Unexpected key, expected 'prediction' or 'references' - got {key}"
         )
     return stream
+
+
+def list_to_stream_with_key(list: List[Any], key: str) -> List[Any]:
+    return [{key: item} for item in list]
 
 
 class TestPostProcessors(UnitxtTestCase):
@@ -446,5 +451,40 @@ class TestPostProcessors(UnitxtTestCase):
             targets=list_to_stream_with_prediction_or_references(
                 targets, key="references"
             ),
+            tester=self,
+        )
+
+    def test_custom_process(self):
+        with self.assertRaises(UnitxtError):
+            fetch_artifact(
+                "processors.literal_eval[__type__=custom_process, operator={__type__=literal_eval}]"
+            )
+        parser, _ = fetch_artifact(
+            "processors.literal_eval[__type__=custom_process, operator={__type__=literal_eval,field=cases}]"
+        )
+        inputs = [
+            "[1, 2, 3]",
+            "[1,2,3]",
+            " [1,2,3] ",
+            "['bob','sam','lance']",
+            "[{'name': 'bob', 'age': 42}, {'name': 'Stacy', 'age': 25}]",
+            "{'name': 'Stacy', 'age': 25}",
+            "{'names': ['Sam', 'Bob'], 'age': 25}",
+        ]
+        targets = [
+            [1, 2, 3],
+            [1, 2, 3],
+            [1, 2, 3],
+            ["bob", "sam", "lance"],
+            [{"name": "bob", "age": 42}, {"name": "Stacy", "age": 25}],
+            {"name": "Stacy", "age": 25},
+            {"names": ["Sam", "Bob"], "age": 25},
+        ]
+
+        check_operator(
+            operator=parser,
+            # input_stream = stream = [{key: [item]} for item in list]
+            inputs=list_to_stream_with_key(inputs, key="cases"),
+            targets=list_to_stream_with_key(targets, key="cases"),
             tester=self,
         )
