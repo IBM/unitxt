@@ -8,7 +8,7 @@ The dataset full size if around 40k examples. You should use around 1k-4k in you
 """
 dataset = load_dataset(
     card="cards.arena_hard.generation.english_gpt_4_0314_reference",
-    template="templates.empty",
+    template="templates.generation.empty",
     format="formats.chat_api",
     metrics=[
         "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_8b_instruct.template_arena_hard"
