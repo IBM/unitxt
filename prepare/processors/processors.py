@@ -42,6 +42,7 @@ def add_processor_and_operator_to_catalog(
     artifact_name: str,
     operator: InstanceFieldOperator,
     process_references: bool = True,
+    process_prediction: bool = True,
     overwrite: bool = True,
 ):
     """Adds a processor and its associated operator to the catalog.
@@ -50,10 +51,15 @@ def add_processor_and_operator_to_catalog(
         artifact_name (str): The name of the artifact to associate with the processor and operator.
         operator (InstanceFieldOperator): The operator instance to be added.
         process_references (bool, optional): Whether to process references or not. Defaults to True similar to PostProcess.
+        process_prediction (bool, optional): Whether to process the prediction or not. Defaults to True similar to PostProcess.
         overwrite (bool, optional): Whether to overwrite an existing entry with the same artifact name. Defaults to True.
     """
     add_to_catalog(
-        PostProcess(operator, process_references=process_references),
+        PostProcess(
+            operator,
+            process_references=process_references,
+            process_prediction=process_prediction,
+        ),
         f"processors.{artifact_name}",
         overwrite=overwrite,
     )
