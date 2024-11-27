@@ -1,3 +1,4 @@
 {
-    "__type__": "augment_whitespace"
+    "__type__": "artifact_link",
+    "artifact_linked_to": "augmentors.text.whitespace_prefix_suffix"
 }
