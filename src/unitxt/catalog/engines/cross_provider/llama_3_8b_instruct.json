@@ -1,0 +1,7 @@
+{
+    "__type__": "cross_provider_inference_engine",
+    "model": "meta-llama/llama-3-8b-instruct",
+    "provider": "watsonx",
+    "max_tokens": 2048,
+    "seed": 42
+}
