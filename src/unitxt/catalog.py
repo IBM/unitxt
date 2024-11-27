@@ -148,10 +148,8 @@ def add_link_to_catalog(
     verbose=True,
 ):
     if deprecate:
-        deprecated_msg = f"Artifact'{name}' is deprecated. Artifact '{artifact_linked_to}' will be instantiated instead. "
-        deprecated_msg += (
-            f"In future uses, please access Artifact '{artifact_linked_to}' directly."
-        )
+        deprecated_msg = f"Artifact '{name}' is deprecated. Artifact '{artifact_linked_to}' will be instantiated instead. "
+        deprecated_msg += f"In future uses, please reference artifact '{artifact_linked_to}' directly."
     else:
         deprecated_msg = None
 
