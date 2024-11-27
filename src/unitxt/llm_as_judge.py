@@ -297,9 +297,15 @@ class LLMAsJudge(LLMAsJudgeBase):
 
     def prepare_instances(self, references, predictions, task_data):
         input_instances = self._get_input_instances(task_data)
-        return self._get_instance_for_judge_model(
+        instances = self._get_instance_for_judge_model(
             input_instances, predictions, references
         )
+        # Copy the data classification policy from the original instance
+        for instance, single_task_data in zip(instances, task_data):
+            instance["data_classification_policy"] = single_task_data.get(
+                "metadata", {}
+            ).get("data_classification_policy")
+        return instances
 
 
 class TaskBasedLLMasJudge(LLMAsJudgeBase):
