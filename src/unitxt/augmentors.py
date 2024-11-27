@@ -97,7 +97,7 @@ class AugmentPrefixSuffix(TextAugmentor):
         To prepend the input with a prefix made of 4 ``\n``-s or ``\t``-s, employ
         ``AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)``.
 
-        To append the input with a suffix made of 3 ``\n``-s or ``\t``-s, with ``\n`` being preferred over ``\t``, 
+        To append the input with a suffix made of 3 ``\n``-s or ``\t``-s, with ``\n`` being preferred over ``\t``,
         at 2:1 ratio, employ
         ``AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)``
         which will append ``\n``-s twice as often as ``\t``-s.

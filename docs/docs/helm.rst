@@ -10,7 +10,7 @@ Running Unitxt with HELM
    :width: 75%
    :align: center
 
-Unitxt can be integrated with `HELM <https://github.com/stanford-crfm/helm/>`_, enabling you to select and evaluate models from the extensive HELM models catalog with data recipes created by Unitxt.
+Unitxt can be integrated with `HELM <https://github.com/stanford-crfm/helm/>`__, enabling you to select and evaluate models from the extensive HELM models catalog with data recipes created by Unitxt.
 
 First, install HELM at version v0.5.0 or later:
 
@@ -62,7 +62,7 @@ To summarize the results of all runs within the created suite, use:
 
     helm-summarize --suite v1
 
-To view the aggregated results look at `benchmark_output/runs/v1/unitxt:$recipe,model=${model/\//_}/stats.json`
+To view the aggregated results look at ``benchmark_output/runs/v1/unitxt:$recipe,model=${model/\//_}/stats.json``
 
 Finally, to review the predictions in your web browser, execute:
 
