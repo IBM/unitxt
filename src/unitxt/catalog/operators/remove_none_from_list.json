@@ -1,0 +1,6 @@
+{
+    "__type__": "remove_values",
+    "unallowed_values": [
+        "none"
+    ]
+}

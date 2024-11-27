@@ -2,7 +2,7 @@ import numpy as np
 from unitxt import add_to_catalog
 from unitxt.logging_utils import get_logger
 from unitxt.operator import SequentialOperator
-from unitxt.operators import Cast, RemoveValues
+from unitxt.operators import Cast, InstanceFieldOperator, RemoveValues
 from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
@@ -37,112 +37,119 @@ from unitxt.settings_utils import get_constants
 constants = get_constants()
 logger = get_logger()
 
-add_to_catalog(
-    PostProcess(TakeFirstNonEmptyLine()),
-    "processors.take_first_non_empty_line",
+
+def add_processor_and_operator_to_catalog(
+    artifact_name: str,
+    operator: InstanceFieldOperator,
+    process_references: bool = True,
+    overwrite: bool = True,
+):
+    """Adds a processor and its associated operator to the catalog.
+
+    Args:
+        artifact_name (str): The name of the artifact to associate with the processor and operator.
+        operator (InstanceFieldOperator): The operator instance to be added.
+        process_references (bool, optional): Whether to process references or not. Defaults to True similar to PostProcess.
+        overwrite (bool, optional): Whether to overwrite an existing entry with the same artifact name. Defaults to True.
+    """
+    add_to_catalog(
+        PostProcess(operator, process_references=process_references),
+        f"processors.{artifact_name}",
+        overwrite=overwrite,
+    )
+    add_to_catalog(operator, f"operators.{artifact_name}", overwrite=overwrite)
+
+
+add_processor_and_operator_to_catalog(
+    artifact_name="take_first_non_empty_line",
+    operator=TakeFirstNonEmptyLine(),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(LowerCaseTillPunc()),
-    "processors.lower_case_till_punc",
+add_processor_and_operator_to_catalog(
+    artifact_name="literal_eval",
+    operator=LiteralEval(),
+    process_references=False,
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(StringEquals(string="hate speech")),
-    "processors.hate_speech_or_not_hate_speech",
+add_processor_and_operator_to_catalog(
+    artifact_name="lower_case_till_punc", operator=LowerCaseTillPunc(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="hate_speech_or_not_hate_speech",
+    operator=StringEquals(string="hate speech"),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(Lower()),
-    "processors.lower_case",
+add_processor_and_operator_to_catalog(
+    artifact_name="lower_case", operator=Lower(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="capitalize", operator=Capitalize(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="substring", operator=Substring(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="get_string_after_colon",
+    operator=GetStringAfter(substring=":"),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(Capitalize()),
-    "processors.capitalize",
+add_processor_and_operator_to_catalog(
+    artifact_name="toxic_or_not_toxic",
+    operator=StringEquals(string="toxic"),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(Substring()),
-    "processors.substring",
+add_processor_and_operator_to_catalog(
+    artifact_name="convert_to_boolean", operator=ConvertToBoolean(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="take_first_word", operator=TakeFirstWord(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="yes_no_to_int", operator=YesNoToInt(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="str_to_float_format", operator=StrToFloatFormat(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="to_yes_or_none", operator=ToYesOrNone(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="predictions_yes_1_else_0",
+    operator=YesToOneElseZero(),
+    process_references=False,
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(GetStringAfter(substring=":")),
-    "processors.get_string_after_colon",
+add_processor_and_operator_to_catalog(
+    artifact_name="stance_to_pro_con", operator=StanceToProCon(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="first_character", operator=FirstCharacter(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="remove_none_from_list",
+    operator=RemoveValues(unallowed_values=["none"]),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(StringEquals(string="toxic")),
-    "processors.toxic_or_not_toxic",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(ConvertToBoolean()),
-    "processors.convert_to_boolean",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(TakeFirstWord()),
-    "processors.take_first_word",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(YesNoToInt()),
-    "processors.yes_no_to_int",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(StrToFloatFormat()),
-    "processors.str_to_float_format",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(ToYesOrNone()),
-    "processors.to_yes_or_none",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(YesToOneElseZero(), process_references=False),
-    "processors.predictions_yes_1_else_0",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(StanceToProCon()),
-    "processors.stance_to_pro_con",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(FirstCharacter()),
-    "processors.first_character",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(RemoveValues(unallowed_values=["none"])),
-    "processors.remove_none_from_list",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(MatchClosestOption()),
-    "processors.match_closest_option",
-    overwrite=True,
+add_processor_and_operator_to_catalog(
+    artifact_name="match_closest_option", operator=MatchClosestOption(), overwrite=True
 )
 
 double_brackets_regex = r"\[\[(.*?)\]\]"
@@ -151,59 +158,54 @@ example = "A. and also B. And that is why my final answer is [[Yes]]"
 logger.info(parser.process_value(example))
 assert parser.process_value(example) == "Yes"
 
-add_to_catalog(
-    PostProcess(
-        ExtractWithRegex(regex=double_brackets_regex), process_references=False
-    ),
-    "processors.extract_from_double_brackets",
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_from_double_brackets",
+    operator=ExtractWithRegex(regex=double_brackets_regex),
+    process_references=False,
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(Cast(to="float", failure_default=0.0)),
-    "processors.cast_to_float_return_zero_if_failed",
+add_processor_and_operator_to_catalog(
+    artifact_name="cast_to_float_return_zero_if_failed",
+    operator=Cast(to="float", failure_default=0.0),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(Cast(to="float", failure_default=np.nan)),
-    "processors.cast_to_float_return_nan_if_failed",
+add_processor_and_operator_to_catalog(
+    artifact_name="cast_to_float_return_nan_if_failed",
+    operator=Cast(to="float", failure_default=np.nan),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(ExtractMtBenchRatingJudgment()),
-    "processors.extract_mt_bench_rating_judgment",
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_mt_bench_rating_judgment",
+    operator=ExtractMtBenchRatingJudgment(),
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(ExtractMtBenchLabelJudgment()),
-    "processors.extract_mt_bench_label_judgment",
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_mt_bench_label_judgment",
+    operator=ExtractMtBenchLabelJudgment(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="cast_to_float_return_0_5_if_failed",
+    operator=Cast(to="float", failure_default=0.5),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_arena_hard_numerical_judgment",
+    operator=ExtractArenaHardNumericalJudgment(),
+    process_references=False,
     overwrite=True,
 )
 
 add_to_catalog(
     PostProcess(RegexParser(regex=".+"), process_references=False),
     "processors.regex_parser_from_prediction",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(LiteralEval(), process_references=False),
-    "processors.literal_eval",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(Cast(to="float", failure_default=0.5)),
-    "processors.cast_to_float_return_0_5_if_failed",
-    overwrite=True,
-)
-
-add_to_catalog(
-    PostProcess(ExtractArenaHardNumericalJudgment(), process_references=False),
-    "processors.extract_arena_hard_numerical_judgment",
     overwrite=True,
 )
 
@@ -240,20 +242,14 @@ add_to_catalog(
     overwrite=True,
 )
 
-add_to_catalog(
-    PostProcess(RemoveArticles()),
-    "processors.remove_articles",
-    overwrite=True,
+add_processor_and_operator_to_catalog(
+    artifact_name="remove_articles", operator=RemoveArticles(), overwrite=True
 )
 
-add_to_catalog(
-    PostProcess(RemovePunctuations()),
-    "processors.remove_punctuations",
-    overwrite=True,
+add_processor_and_operator_to_catalog(
+    artifact_name="remove_punctuations", operator=RemovePunctuations(), overwrite=True
 )
 
-add_to_catalog(
-    PostProcess(FixWhiteSpace()),
-    "processors.fix_whitespace",
-    overwrite=True,
+add_processor_and_operator_to_catalog(
+    artifact_name="fix_whitespace", operator=FixWhiteSpace(), overwrite=True
 )

@@ -1,5 +1,6 @@
 {
     "__type__": "post_process",
+    "process_references": true,
     "operator": {
         "__type__": "string_equals",
         "string": "hate speech"

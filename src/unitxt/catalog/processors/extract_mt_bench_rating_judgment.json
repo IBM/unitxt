@@ -1,5 +1,6 @@
 {
     "__type__": "post_process",
+    "process_references": true,
     "operator": {
         "__type__": "extract_mt_bench_rating_judgment"
     }

@@ -1,5 +1,6 @@
 {
     "__type__": "post_process",
+    "process_references": true,
     "operator": {
         "__type__": "take_first_non_empty_line"
     }

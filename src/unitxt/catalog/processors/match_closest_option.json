@@ -1,5 +1,6 @@
 {
     "__type__": "post_process",
+    "process_references": true,
     "operator": {
         "__type__": "match_closest_option"
     }
