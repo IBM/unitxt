@@ -41,6 +41,14 @@ if __name__ == "__main__":
         "--out_path",
         type=str,
     )
+    parser.add_argument(
+        "--num_demos",
+        type=int,
+    )
+    parser.add_argument(
+        "--max_pred_tokens",
+        type=int,
+    )
 
     args = parser.parse_args()
     root_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))
