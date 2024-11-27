@@ -1639,9 +1639,9 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # This is why each metric consumes all of them and lays them in its main memory, and even generates
         # some 1000 copies thereof for the sake of CI. So we start with spelling them out here:
         instances_list = list(stream)
-        
+
         # to be populated only when two or more metrics
-        instances_upon_entrance_to_metrics_evaluations = []   
+        instances_upon_entrance_to_metrics_evaluations = []
         first_instance = instances_list[0]
 
         metric_names = first_instance.get(self.metric_field, [])
@@ -1671,7 +1671,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        if len(metric_names) > 1:
+        if len(metrics_list) > 1:
             # In case of two or more metrics, in order to save from metrics that change predictions and references,
             # and hinder their successive metrics, we start with a recursive copying here, to make a 'frozen' status of
             # the stream, having passed the preprocess_steps of the task, and inference, and now getting to be evaluated.
@@ -1692,7 +1692,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                 {"tmp": ListStream(instances_list=instances_list)}
             )
             multi_stream = metric(multi_stream)
-            if metric_no < len(metric_names) - 1:
+            if metric_no < len(metrics_list) - 1:
                 # not the last metric, so continue to the next metric by preparing a fresh copy of the stream as had
                 # been saved before any earlier metric (potentially) modified its predictions and references,
                 # a fresh copy into which the just computed score is updated.
