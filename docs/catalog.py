@@ -102,6 +102,7 @@ def make_content(artifact, label, all_labels):
     if "__description__" in artifact and artifact["__description__"] is not None:
         result += "\n" + artifact["__description__"] + "\n"
         result += "\n"
+        artifact.pop("__description__")  # to not show again in the yaml
 
     if "__tags__" in artifact and artifact["__tags__"] is not None:
         result += "\nTags: "
@@ -109,6 +110,7 @@ def make_content(artifact, label, all_labels):
         for k, v in artifact["__tags__"].items():
             tags.append(f"``{k}:{v!s}``")
         result += ",  ".join(tags) + "\n\n"
+        artifact.pop("__tags__")  # to not show again in the yaml
 
     result += ".. raw:: html\n\n   "
 
@@ -290,16 +292,31 @@ class CatalogEntry:
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         label = self.get_label()
-        content = make_content(artifact, label, all_labels)
+        deprecated_in_title = ""
+        deprecated_message = ""
+        role_red = ""
+        if (
+            "__deprecated_msg__" in artifact
+            and artifact["__deprecated_msg__"] is not None
+        ):
+            deprecated_in_title = " :red:`[deprecated]`"
+            deprecated_message = (
+                "**Deprecation message:** " + artifact["__deprecated_msg__"] + "\n\n"
+            )
+            role_red = ".. role:: red\n\n"
+            artifact.pop("__deprecated_msg__")
 
+        content = make_content(artifact, label, all_labels)
         title_char = "="
-        title = "📄 " + self.get_title()
+        title = "📄 " + self.get_title() + deprecated_in_title
         title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
+            f"{role_red}"
             f".. _{label}:\n\n"
             f"{title_wrapper}\n"
             f"{title}\n"
             f"{title_wrapper}\n\n"
+            f"{deprecated_message}"
             f"{content}\n\n"
             f"|\n"
             f"|\n\n"
