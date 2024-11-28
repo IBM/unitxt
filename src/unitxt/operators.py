@@ -454,7 +454,7 @@ class InstanceFieldOperator(InstanceOperator):
                     old_value = self.get_default
             except Exception as e:
                 raise ValueError(
-                    f"Failed to get '{from_field}' from {instance} due to : {e}"
+                    f"Failed to get '{from_field}' from {instance} due to the exception above."
                 ) from e
             try:
                 if self.process_every_value:
@@ -466,7 +466,7 @@ class InstanceFieldOperator(InstanceOperator):
                     new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
-                    f"Failed to process '{from_field}' from {instance} due to : {e}"
+                    f"Failed to process '{from_field}' from {instance} due to the exception above."
                 ) from e
             dict_set(
                 instance,
