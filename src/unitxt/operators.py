@@ -190,7 +190,7 @@ class MapInstanceValues(InstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instance = {instance}"
+                        f"'process_every_field' == True is allowed only when for fields whose values are lists, but value of field '{key}' is '{value}'"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):

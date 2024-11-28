@@ -95,7 +95,7 @@ class TestOperators(UnitxtTestCase):
             inputs=inputs,
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instance = {'a': '1', 'b': '2'}",
+                "'process_every_field' == True is allowed only when for fields whose values are lists, but value of field 'a' is '1'",
             ],
             tester=self,
         )
