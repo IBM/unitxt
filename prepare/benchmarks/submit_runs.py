@@ -3,6 +3,8 @@ import os
 import subprocess
 from pathlib import Path
 
+from tables import SERIALIZERS
+
 # from helm_experiments.helm_experiments_constants import ScenarioNames, HELM_SCENARIOS
 # from helm_experiments.helm_experiments_constants import Constants as HelmConstants
 
@@ -34,21 +36,45 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-out_path", "--out_path", type=str, required=False, default="."
+    )
+    parser.add_argument(
+        "-models",
         "--models",
         type=str,
+        required=False,
+        default="meta-llama/Llama-3.1-8B-Instruct",
     )
     parser.add_argument(
-        "--out_path",
+        "-cards",
+        "--cards",
         type=str,
+        required=False,
+        default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,scigen,"
+        "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
     )
     parser.add_argument(
-        "--num_demos",
-        type=int,
+        "-serializers",
+        "--serializers",
+        type=str,
+        required=False,
+        default=",".join(list(SERIALIZERS)),
     )
     parser.add_argument(
-        "--max_pred_tokens",
+        "-max_augmentors",
+        "--max_augmentors",
         type=int,
+        required=False,
+        default=10,
     )
+    parser.add_argument(
+        "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
+    )  # We set it to be 300 for descriptive tasks (numeric nlg, scigen, qtsumm)
+    parser.add_argument(
+        "-num_demos", "--num_demos", type=int, required=False, default=5
+    )  # num of demos for wikitq is 1 (tables with many rows)
+    parser.add_argument("-recipes_only", "--recipes_only", type=bool, default=False)
+    parser.add_argument("-debug", "--debug", type=bool, default=False)
 
     args = parser.parse_args()
     root_dir = os.path.abspath(os.path.join(__file__, os.pardir, os.pardir))

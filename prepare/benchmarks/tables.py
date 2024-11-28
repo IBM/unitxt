@@ -13,7 +13,7 @@ from unitxt.inference import (
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
 
-# usage: python prepare/benchmarks/tables.py -out_path OUT_PATH [-models MODELS] [-cards CARDS]
+# usage: python prepare/benchmarks/tables.py [-out_path OUT_PATH] [-models MODELS] [-cards CARDS]
 # [-serializers SERIALIZERS] [-max_augmentors MAX_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS]
 # [-num_demos NUM_DEMOS] [-recipes RECIPES_ONLY] [-debug DEBUG]
 
@@ -42,6 +42,7 @@ DESCRIPTIVE_DATASETS = {
     "numeric_nlg",
     "qtsumm",
 }  # for making max pred tokens bigger
+DATASET_WITH_LONG_EXAMPLES = {"wikitq"}
 
 # TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
 DEMOS_POOL_SIZE = 10
@@ -55,8 +56,16 @@ settings = get_settings()
 
 # cmd params
 parser = argparse.ArgumentParser()
-parser.add_argument("-out_path", "--out_path", type=str, required=True)
-parser.add_argument("-models", "--models", type=str, required=False, default="")
+parser.add_argument(
+    "-out_path", "--out_path", type=str, required=False, default="debug"
+)
+parser.add_argument(
+    "-models",
+    "--models",
+    type=str,
+    required=False,
+    default="meta-llama/llama-3-1-70b-instruct",
+)
 parser.add_argument(
     "-cards",
     "--cards",
@@ -81,10 +90,10 @@ parser.add_argument(
 )
 parser.add_argument(
     "-max_pred_tokens", "--max_pred_tokens", type=int, required=False, default=100
-)  # TODO: Should we set a different num for descriptive tasks? (numeric nlg, scigen, qtsumm)
+)  # We set it to be 300 for descriptive tasks (numeric nlg, scigen, qtsumm)
 parser.add_argument(
     "-num_demos", "--num_demos", type=int, required=False, default=5
-)  # num of demos for wikitq is 1
+)  # num of demos for wikitq is 1 (tables with many rows)
 parser.add_argument("-recipes_only", "--recipes_only", type=bool, default=False)
 parser.add_argument("-debug", "--debug", type=bool, default=False)
 
@@ -110,7 +119,7 @@ rand_augment_combinations = random.sample(
     augment_combinations, min(max_augmentors, len(augment_combinations))
 )
 all_augment = (
-    [[None]] + [list(i) for i in rand_augment_combinations]
+    [None] + [list(i) for i in rand_augment_combinations]
 )  # TODO: Do we want other augmentations/sampling? Also we cannot augment with params for now
 
 
@@ -120,6 +129,9 @@ def get_recipes():
     for card in cards_parsed:
         for augment in all_augment:
             for serializer in serializers_parsed:
+                curr_num_demos = (
+                    num_demos if card not in DATASET_WITH_LONG_EXAMPLES else 1
+                )
                 subset_name = (
                     "dataset="
                     + card
@@ -128,17 +140,22 @@ def get_recipes():
                         if serializer in SERIALIZERS
                         else ""
                     )
-                    + ("__augment=" + ",".join(augment) if augment != [None] else "")
+                    + ("__augment=" + ",".join(augment) if augment else "")
+                    + "__num_demos="
+                    + str(curr_num_demos)
                 )
 
                 str_recipe = (
                     f'card=cards.{card},'
                     f'template_card_index=0,'
                     f'serializer={"serializers.table." + serializer if serializer in SERIALIZERS and serializer != "csv" else None},'
-                    f'num_demos={num_demos},'
+                    f'num_demos={curr_num_demos},'
                     f'demos_pool_size={DEMOS_POOL_SIZE},'
-                    f'format={format if not recipes_only else "formats.empty"},'
-                    f"augmentor=[{', '.join(['augmentors.' + ('table.' if a in TABLE_AUGMENTORS else '') + str(a) for a in augment])}]"
+                    + (
+                        f"augmentor=[{', '.join(['augmentors.' + ('table.' if a in TABLE_AUGMENTORS else '') + str(a) for a in augment])}]"
+                        if augment
+                        else ""
+                    )
                 )
 
                 obj_recipe = StandardRecipe(
@@ -147,17 +164,16 @@ def get_recipes():
                     serializer="serializers.table." + serializer
                     if serializer in SERIALIZERS and serializer != "csv"
                     else None,
-                    num_demos=num_demos if card != "wikitq" else 1,
+                    num_demos=curr_num_demos,
                     demos_pool_size=DEMOS_POOL_SIZE,
-                    format=format,
-                    augmentor=[None]
-                    if augment == [None]
-                    else [
+                    augmentor=[
                         "augmentors."
                         + ("table." if a in TABLE_AUGMENTORS else "")
                         + str(a)
                         for a in augment
-                    ],
+                    ]
+                    if augment
+                    else None,
                 )
 
                 recipes[subset_name] = str_recipe if recipes_only else obj_recipe
@@ -175,17 +191,11 @@ elif len(models_parsed) > 0:  # run  benchmark
     with settings.context(
         disable_hf_datasets_cache=False,
     ):
+        # creating the subsets dynamically
+        subsets = get_recipes()
+
         for model in models_parsed:
             model_name = model.split("/")[-1]
-
-            format = "formats.empty"
-            if "llama" in model:
-                format = "formats.llama3_instruct_all_demos_in_one_turn_without_system_prompt"
-            elif "mixtral" in model:
-                format = "formats.models.mistral.instruction.all_demos_in_one_turn"
-
-            # creating the subsets dynamically
-            subsets = get_recipes()
 
             # running one subset at a time and saving it separately
             for subset_name, subset in tqdm(subsets.items(), desc="Running..."):
@@ -257,6 +267,6 @@ elif len(models_parsed) > 0:  # run  benchmark
                         os.path.join(out_path, "model=" + model_name + "__errors.txt"),
                         "a",
                     ) as f:
-                        f.write("\n".join([subset_name, str(e)]))
+                        f.write("\n\n" + "\n".join([subset_name, str(e)]))
                     print(e)
                     pass
