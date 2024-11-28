@@ -9,7 +9,7 @@ from unitxt.artifact import (
     reset_artifacts_json_cache,
 )
 from unitxt.card import TaskCard
-from unitxt.catalog import add_to_catalog, get_from_catalog
+from unitxt.catalog import add_link_to_catalog, add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.error_utils import UnitxtError
 from unitxt.loaders import LoadFromDictionary
@@ -243,6 +243,16 @@ class TestArtifact(UnitxtTestCase):
             artifact = get_from_catalog("renamefields.for.test.artifact.link")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
+            # test again, now employing add_link_to_catalog()
+            add_link_to_catalog(
+                artifact_linked_to="rename.for.test.artifact.link",
+                name="renamefields2",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+            artifact = get_from_catalog("renamefields2")
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())
+
     def test_artifact_link_from_artifactlink_object(self):
         rename = Rename(field_to_field={"old_field_name": "new_field_name"})
         with temp_catalog() as catalog_path:
@@ -328,6 +338,19 @@ class TestArtifact(UnitxtTestCase):
 
             with self.assertWarns(DeprecationWarning):
                 artifact, _ = fetch_artifact("renamefields.for.test.artifact.link")
+            self.assertDictEqual(rename.to_dict(), artifact.to_dict())
+
+            # test again, now employing add_link_to_catalog()
+            add_link_to_catalog(
+                artifact_linked_to="rename.for.test.artifact.link",
+                name="renamefields3",
+                deprecate=True,
+                catalog_path=catalog_path,
+                overwrite=True,
+            )
+
+            with self.assertWarns(DeprecationWarning):
+                artifact = get_from_catalog("renamefields3")
             self.assertDictEqual(rename.to_dict(), artifact.to_dict())
 
     def test_artifact_link_with_overwrites(self):

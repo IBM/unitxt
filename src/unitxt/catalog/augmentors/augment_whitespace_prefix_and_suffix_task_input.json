@@ -1,4 +1,5 @@
 {
     "__type__": "artifact_link",
-    "artifact_linked_to": "augmentors.text.whitespace_prefix_suffix"
+    "artifact_linked_to": "augmentors.text.whitespace_prefix_suffix",
+    "__deprecated_msg__": "Artifact 'augmentors.augment_whitespace_prefix_and_suffix_task_input' is deprecated. Artifact 'augmentors.text.whitespace_prefix_suffix' will be instantiated instead. In future uses, please reference artifact 'augmentors.text.whitespace_prefix_suffix' directly."
 }
