@@ -211,7 +211,7 @@ class MapInstanceValues(InstanceOperator):
             return recursive_copy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
-                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                f"value '{val}' in field '{key}' is not found in mapper '{mapper}'"
             )
         return val
 
@@ -454,7 +454,7 @@ class InstanceFieldOperator(InstanceOperator):
                     old_value = self.get_default
             except Exception as e:
                 raise ValueError(
-                    f"Failed to get '{from_field}' from {instance} due to the exception above."
+                    f"Failed to get '{from_field}' from instance due to the exception above."
                 ) from e
             try:
                 if self.process_every_value:
@@ -466,7 +466,7 @@ class InstanceFieldOperator(InstanceOperator):
                     new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
-                    f"Failed to process '{from_field}' from {instance} due to the exception above."
+                    f"Failed to process field '{from_field}' from instance due to the exception above."
                 ) from e
             dict_set(
                 instance,
@@ -977,7 +977,7 @@ class CastFields(InstanceOperator):
             if self.process_every_value:
                 assert isinstance(
                     value, list
-                ), f"'process_every_value' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
+                ), f"'process_every_value' can be set to True only for fields that contain lists, the contents of field '{field_name}' is of type '{type(value)}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
@@ -1154,7 +1154,7 @@ class FilterByCondition(StreamOperator):
                 instance_key = dict_get(instance, key)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in instance."
                 ) from ve
             if self.condition == "in":
                 if instance_key not in value:
@@ -1194,13 +1194,13 @@ class FilterByConditionBasedOnFields(FilterByCondition):
                 instance_key = dict_get(instance, key)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance.keys()} of instance"
                 ) from ve
             try:
                 instance_value = dict_get(instance, value)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance.keys()} of instance"
                 ) from ve
             if self.condition == "in":
                 if instance_key not in instance_value:
@@ -1551,7 +1551,7 @@ class SplitByNestedGroup(MultiStreamOperator):
             for instance in stream:
                 if self.field_name_of_group not in instance:
                     raise ValueError(
-                        f"Field {self.field_name_of_group} is missing from instance {instance}"
+                        f"Field {self.field_name_of_group} is missing from instance. Available fields: {instance.keys()}"
                     )
                 signature = (
                     stream_name

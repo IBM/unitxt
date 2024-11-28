@@ -106,7 +106,7 @@ class TestOperators(UnitxtTestCase):
             inputs=[{"a": "3", "b": "4"}],
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+                "\"value '3' in field 'a' is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
         )
@@ -137,7 +137,7 @@ class TestOperators(UnitxtTestCase):
             inputs=[{"a": [1, 2, 3, 4], "b": 2}],
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+                "\"value '3' in field 'a' is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
         )
@@ -336,7 +336,9 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Required filter field ('d') in FilterByCondition is not found in {'a': 1, 'b': {'c': 2}}"
+        exception_text = (
+            "Required filter field ('d') in FilterByCondition is not found in instance."
+        )
         check_operator_exception(
             operator=FilterByCondition(values={"d": "5"}, condition="eq"),
             inputs=inputs,
@@ -507,7 +509,7 @@ class TestOperators(UnitxtTestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
+            "Required filter field ('c') in FilterByCondition is not found in instance.",
         )
         with self.assertRaises(Exception) as ne:
             check_operator(
@@ -623,7 +625,7 @@ class TestOperators(UnitxtTestCase):
         ]
         exception_texts = [
             "Error processing instance '0' from stream 'test' in Intersect due to the exception above.",
-            "Failed to process 'label' from {'label': 'b'} due to the exception above.",
+            "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
@@ -718,7 +720,7 @@ class TestOperators(UnitxtTestCase):
         ]
         exception_texts = [
             "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
-            "Failed to process 'label' from {'label': 'b'} due to the exception above.",
+            "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
@@ -730,7 +732,7 @@ class TestOperators(UnitxtTestCase):
 
         exception_texts = [
             "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
-            "Failed to get 'label2' from {'label': 'b'} due to the exception above.",
+            "Failed to get 'label2' from instance due to the exception above.",
             """query "label2" did not match any item in dict:
 label (str):
     b
