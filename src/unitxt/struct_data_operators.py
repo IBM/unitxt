@@ -425,7 +425,7 @@ class TruncateTableRows(FieldOperator):
     """Limits table rows to specified limit by removing excess rows via random selection.
 
     Args:
-        rows_to_keep (int) - number of rows to keep.
+        rows_to_keep (int): number of rows to keep.
     """
 
     rows_to_keep: int = 10
@@ -828,8 +828,9 @@ class DuplicateTableRows(TypeDependentAugmentor):
     """Duplicates specific rows of a table for the given number of times.
 
     Args:
-        row_indices (List[int]) - rows to be duplicated
-        times(int) - how many times to duplicate
+        row_indices (List[int]): rows to be duplicated
+
+        times(int): each row to be duplicated is to show that many times
     """
 
     augmented_type = Table
@@ -860,8 +861,9 @@ class DuplicateTableColumns(TypeDependentAugmentor):
     """Duplicates specific columns of a table for the given number of times.
 
     Args:
-        column_indices (List[int]) - columns to be duplicated
-        times(int) - how many times to duplicate
+        column_indices (List[int]): columns to be duplicated
+
+        times(int): each column to be duplicated is to show that many times
     """
 
     augmented_type = Table
