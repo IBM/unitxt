@@ -296,7 +296,8 @@ def get_values(
 
 # going down from current_element via query[index_into_query]
 # returns the updated current_element.
-# if not_exist_ok and the last component is missing from dic -- generate it. But not any earier component.
+# if not_exist_ok and the last component is missing from dic -- generate that last component in that dic. 
+# But not any earier component. E.g., not that containing dict. 
 # That is, through processing the query, that most that can be added to the processed dic, is a field in a
 # dictionary or an entry in a list (extending an existing list). If more is needed to add to dic, pass it
 # through the value being set, which can be anything, structured and complex, or simple.

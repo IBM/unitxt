@@ -733,7 +733,7 @@ class TestOperators(UnitxtTestCase):
         exception_texts = [
             "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
             "Failed to get 'label2' from instance due to the exception above.",
-            "query 'label2' did not match any item in dict:label (str):\n    b\n",
+            "query 'label2' did not match any item in dict:\nlabel (str):\n    b\n",
         ]
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
@@ -2301,13 +2301,11 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-    def test_copy_paste_same_name2(self):
+    def test_copy_paste_same_name2_error(self):
         inputs = [
             {"a": "test"},
             {"a": "pest"},
         ]
-
-        targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
         check_operator_exception(
             operator=Copy(field="a", to_field="a/x"),
