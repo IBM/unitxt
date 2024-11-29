@@ -456,6 +456,7 @@ class InstanceFieldOperator(InstanceOperator):
                 raise ValueError(
                     f"Failed to get '{from_field}' from instance due to the exception above."
                 ) from e
+
             try:
                 if self.process_every_value:
                     new_value = [

@@ -198,8 +198,7 @@ class TestDictUtils(UnitxtTestCase):
         with self.assertRaises(ValueError):
             dict_delete(dic, "a/2/3")
 
-        self.assertEqual("i", dict_get(dic, "a/0/0/0/0"))
-        self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0"))
+        self.assertEqual("i1", dict_get(dic, "a/0/0/0"))
         with self.assertRaises(ValueError):
             dict_get(dic, "a/0/0/0/*/0")
 
@@ -257,38 +256,15 @@ class TestDictUtils(UnitxtTestCase):
         self.assertDictEqual(dic, {"a": [{"b": [3, 4]}, {"b": [3, 4]}]})
         dict_set(dic, "a/0/c", [])
         self.assertDictEqual({"a": [{"b": [3, 4], "c": []}, {"b": [3, 4]}]}, dic)
-        dict_set(dic, "a/0/b/c/*/d", [5, 6], set_multiple=False)
-        self.assertDictEqual(
-            dic, {"a": [{"b": {"c": [{"d": [5, 6]}]}, "c": []}, {"b": [3, 4]}]}
-        )
+        dict_set(dic, "a/0/c/*", [5, 6], set_multiple=False)
+        self.assertDictEqual({"a": [{"b": [3, 4], "c": [[5, 6]]}, {"b": [3, 4]}]}, dic)
+        dict_set(dic, "a/0/c", [])
+        dict_set(dic, "a/0/c/*", [5, 6], set_multiple=True)
+        self.assertDictEqual({"a": [{"b": [3, 4], "c": [5, 6]}, {"b": [3, 4]}]}, dic)
         # sort keys toward breakup per set_multiple
         dic = {"c": 3, "a": 1, "b": 2}
         dict_set(dic, "*", [10, 20, 30], set_multiple=True)
         self.assertDictEqual({"a": 10, "b": 20, "c": 30}, dic)
-
-        dict_set(dic, "a/0/c/d/*/e/*/f", [7, 8], set_multiple=True)
-        # breaks up just one, smoothly
-        self.assertDictEqual(
-            {
-                "c": 30,
-                "a": [{"c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]}}],
-                "b": 20,
-            },
-            dic,
-        )
-
-        dict_set(dic, "a/1/c/d/*/e/*/f/*/h", [])
-        self.assertDictEqual(
-            {
-                "c": 30,
-                "a": [
-                    {"c": {"d": [{"e": [{"f": 7}]}, {"e": [{"f": 8}]}]}},
-                    {"c": {"d": [{"e": [{"f": [{"h": []}]}]}]}},
-                ],
-                "b": 20,
-            },
-            dic,
-        )
 
         dic = {"c": [{"b": 3}, {"b": 4}], "a": [{"b": 1}, {"b": 2}]}
         dict_set(dic, "*/1/b", [5, 6], set_multiple=True)
@@ -327,40 +303,21 @@ class TestDictUtils(UnitxtTestCase):
                 not_exist_ok=False,
             )
 
-        dict_set(
-            dic,
-            "*/1/b",
-            [50, 60, 70],
-            set_multiple=True,
-        )
-        # list extends to the length of value
-        self.assertListEqual(
-            [[{"b": 1}, {"b": 50}], [{"b": 3}, {"b": 60}], [None, {"b": 70}]], dic
-        )
-
         dic = {"a": {"b": []}}
-        dict_set(dic, "a/b/2/c", [3, 4])
-        self.assertDictEqual(dic, {"a": {"b": [None, None, {"c": [3, 4]}]}})
+        dict_set(dic, "a/b/2", [3, 4])
+        self.assertDictEqual(dic, {"a": {"b": [None, None, [3, 4]]}})
 
         dic = {"a": {"b": []}}
         dict_set(dic, "c", None)
         self.assertDictEqual({"a": {"b": []}, "c": None}, dic)
-        dict_set(dic, "d/e/*/f/*", None)
-        self.assertDictEqual(
-            {"a": {"b": []}, "c": None, "d": {"e": [{"f": [None]}]}}, dic
-        )
-        dict_set(dic, "d/e/*/f/", None)
-        self.assertDictEqual(
-            {"a": {"b": []}, "c": None, "d": {"e": [{"f": [None]}]}}, dic
-        )
-        dict_set(dic, "d/e/*/f", None)
-        self.assertDictEqual(
-            {"a": {"b": []}, "c": None, "d": {"e": [{"f": None}]}}, dic
-        )
+        dict_set(dic, "a/b/*", None)
+        self.assertDictEqual({"a": {"b": [None]}, "c": None}, dic)
+        dict_set(dic, "a/b/1", None)
+        self.assertDictEqual({"a": {"b": [None, None]}, "c": None}, dic)
+        dict_set(dic, "a/b/3", 4)
+        self.assertDictEqual({"a": {"b": [None, None, None, 4]}, "c": None}, dic)
         dict_set(dic, "a/b/*", 5)
-        self.assertDictEqual(
-            {"a": {"b": [5]}, "c": None, "d": {"e": [{"f": None}]}}, dic
-        )
+        self.assertDictEqual({"a": {"b": [5, 5, 5, 5]}, "c": None}, dic)
 
         dic = {"a": {"b": []}}
         with self.assertRaises(ValueError):
@@ -383,11 +340,11 @@ class TestDictUtils(UnitxtTestCase):
         dict_set(
             dic,
             "a/*/d",
-            [3, 4, 5],
+            [3, 4],
             set_multiple=True,
             not_exist_ok=True,
         )
-        self.assertDictEqual({"a": [{"b": 1, "d": 3}, {"b": 2, "d": 4}, {"d": 5}]}, dic)
+        self.assertDictEqual({"a": [{"b": 1, "d": 3}, {"b": 2, "d": 4}]}, dic)
 
     def test_adding_one_new_field(self):
         dic = {"a": {"b": {"c": 0}}}
@@ -396,5 +353,5 @@ class TestDictUtils(UnitxtTestCase):
 
     def test_adding_one_new_field_nested(self):
         dic = {"d": 0}
-        dict_set(dic, "/a/b/d", 1)
+        dict_set(dic, "a", {"b": {"d": 1}})
         self.assertDictEqual(dic, {"a": {"b": {"d": 1}}, "d": 0})
