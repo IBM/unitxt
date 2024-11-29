@@ -22,6 +22,7 @@ from .operators import (
     FlattenInstances,
     RecursiveCopy,
     Rename,
+    SetEmptyDictIfDoesNotExist,
 )
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .schema import UNITXT_DATASET_SCHEMA
@@ -81,6 +82,7 @@ _post_process_steps = SequentialOperator(
             to_field="raw_references",
             dont_apply_to_streams=[constants.inference_stream],
         ),
+        SetEmptyDictIfDoesNotExist(field="task_data"),
         RecursiveCopy(
             field="source",
             to_field="task_data/source",
@@ -327,6 +329,7 @@ class MetricRecipe(SequentialOperatorInitializer):
                 field="raw_references",
                 to_field="references",
             ),
+            SetEmptyDictIfDoesNotExist(field="task_data"),
             RecursiveCopy(
                 field="source",
                 to_field="task_data/source",

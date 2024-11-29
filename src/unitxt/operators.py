@@ -39,6 +39,7 @@ General Operators List:
 ------------------------
 """
 
+import json
 import operator
 import uuid
 import warnings
@@ -285,6 +286,9 @@ class SetEmptyDictIfDoesNotExist(InstanceOperator):
     ) -> Dict[str, Any]:
         if self.field not in instance:
             instance[self.field] = {}
+        if not isinstance(instance[self.field], dict):
+            assert isinstance(instance[self.field], str)
+            instance[self.field] = json.loads(instance[self.field])
         return instance
 
 
