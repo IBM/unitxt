@@ -277,6 +277,17 @@ class Set(InstanceOperator):
         return instance
 
 
+class SetEmptyDictIfDoesNotExist(InstanceOperator):
+    field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if self.field not in instance:
+            instance[self.field] = {}
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
     pass

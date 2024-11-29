@@ -210,7 +210,7 @@ class TestCloseTextSampler(UnitxtTestCase):
         with self.assertRaises(ValueError) as cm:
             sampler.sample(num_samples, instances, instance)
         self.assertIn(
-            'query "input_fields/wrong_field" did not match any item in dict',
+            "query 'input_fields/wrong_field' did not match any item in dict",
             str(cm.exception),
         )
 

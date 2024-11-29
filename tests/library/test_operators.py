@@ -2346,13 +2346,7 @@ label (str):
         )
 
         inputs = [{"prediction": "red", "references": "blue"}]
-        exception_text = """Error processing instance '0' from stream 'test' in EncodeLabels due to: query 'references/*' did not match any item in dict:
-prediction (str):
-    red
-references (str):
-    blue
-""",
-        ]
+        exception_texts = ["Error processing instance '0' from stream 'test' in EncodeLabels due to: query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n"]
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,

@@ -26,10 +26,8 @@ def is_wildcard(string):
 # A -> name | * | non-neg-int
 # name -> a string satisfying is_name above.
 #
-## to delete:  * matches ALL members (each and every) of a list or a dictionary element in input dictionary,
-#
-# a path p in dictionary dic, leading to element (aka subfield) el, is said to match query qpath
-# (also said reciprocately: query qpath matches path p in dic),
+# A path p in dictionary dic, leading to element (aka subfield) el, is said to match query qpath
+# (alternatively said: query qpath matches path p in dic),
 # if the following recursively defined condition is satisfied:
 # (1) the prefix of length 0 of qpath (i.e., pref = "") matches the empty path in dic, the path leading to the whole of dic.
 # (2) Denoting by el the element in dic lead to by the path in dic that matches the prefix pref of qpath
@@ -297,8 +295,10 @@ def get_values(
 
 # going down from current_element via query[index_into_query]
 # returns the updated current_element.
-# if fixed_parameters["generate_if_not_exists"] (reflecting not_exist_ok of dict_set)
-# and the last component is missing from dic -- generate it. But not any earier component.
+# if not_exist_ok and the last component is missing from dic -- generate it. But not any earier component.
+# That is, through processing the query, that most that can be added to the processed dic, is a field in a
+# dictionary or an entry in a list (extending an existing list). If more is needed to add to dic, pass it
+# through the value being set, which can be anything, structured and complex, or simple.
 def set_values(
     current_element: Any,
     value: Any,

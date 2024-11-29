@@ -221,6 +221,8 @@ class ApplyTemplate(InstanceOperator):
                 self.apply(template, demo_instance)
                 for demo_instance in instance[self.demos_field]
             ]
+        if "recipe_metadata" not in instance:
+            instance["recipe_metadata"] = {}
         dict_set(instance, "recipe_metadata/template", template)
         return self.apply(template, instance, stream_name)
 
