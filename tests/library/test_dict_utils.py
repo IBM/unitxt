@@ -199,6 +199,9 @@ class TestDictUtils(UnitxtTestCase):
             dict_delete(dic, "a/2/3")
 
         self.assertEqual("i1", dict_get(dic, "a/0/0/0"))
+        self.assertEqual("i", dict_get(dic, "a/0/0/0/0"))
+        self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0"))
+
         with self.assertRaises(ValueError):
             dict_get(dic, "a/0/0/0/*/0")
 

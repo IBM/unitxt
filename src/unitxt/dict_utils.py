@@ -278,7 +278,8 @@ def get_values(
         return (len(to_ret) > 0 or index_into_query == -1, to_ret)
         # when * is the last component, it refers to 'all the contents' of an empty list being current_element.
     # next_component is indx or name, current_element must be a list or a dict
-    if is_index(component) and isinstance(current_element, list):
+    if is_index(component) and isinstance(current_element, (list, str)):
+        # for backward compatibility, use the fact that also a string can be indexed into
         component = int(component)
     try:
         success, new_val = get_values(
