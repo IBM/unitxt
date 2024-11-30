@@ -461,12 +461,19 @@ class LoadFromIBMCloud(Loader):
 
     Args:
         endpoint_url_env: Environment variable name for the IBM Cloud endpoint URL.
+
         aws_access_key_id_env: Environment variable name for the AWS access key ID.
+
         aws_secret_access_key_env: Environment variable name for the AWS secret access key.
+
         bucket_name: Name of the S3 bucket from which to load data.
+
         data_dir: Optional directory path within the bucket.
+
         data_files: Union type allowing either a list of file names or a mapping of splits to file names.
+
         data_field: The dataset key for nested JSON file, i.e. when multiple datasets are nested in the same file
+
         caching: Bool indicating if caching is enabled to avoid re-downloading data.
 
     Example:
