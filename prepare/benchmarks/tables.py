@@ -130,7 +130,9 @@ def get_recipes():
         for augment in all_augment:
             for serializer in serializers_parsed:
                 curr_num_demos = (
-                    num_demos if card not in DATASET_WITH_LONG_EXAMPLES else 1
+                    num_demos
+                    if card not in DATASET_WITH_LONG_EXAMPLES
+                    else min(1, num_demos)
                 )
                 subset_name = (
                     "dataset="
@@ -211,9 +213,9 @@ elif len(models_parsed) > 0:  # run  benchmark
                 )
                 if not os.path.exists(out_path):
                     os.makedirs(out_path)
-                elif out_file_name in os.listdir(
-                    out_path
-                ):  # avoid running the same config twice
+                elif out_file_name.split("__num_demos")[0] in {
+                    o.split("__num_demos")[0] for o in os.listdir(out_path)
+                }:  # avoid running the same config twice
                     continue
                 max_pred_tokens = (
                     300
