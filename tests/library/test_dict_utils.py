@@ -199,6 +199,7 @@ class TestDictUtils(UnitxtTestCase):
             dict_delete(dic, "a/2/3")
 
         self.assertEqual("i1", dict_get(dic, "a/0/0/0"))
+        # for backward compatibility: allow also indexing into a string in dict_get:
         self.assertEqual("i", dict_get(dic, "a/0/0/0/0"))
         self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0"))
 

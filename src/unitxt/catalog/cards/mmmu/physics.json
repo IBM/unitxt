@@ -17,6 +17,10 @@
             }
         },
         {
+            "__type__": "set_empty_dict_if_does_not_exist",
+            "field": "media"
+        },
+        {
             "__type__": "list_field_values",
             "fields": [
                 "image_1",

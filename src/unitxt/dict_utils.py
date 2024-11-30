@@ -424,14 +424,14 @@ def dict_get(
                 return values
         except Exception as e:
             raise ValueError(
-                f"query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
+                f"dict_get: query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
             ) from e
 
         if not_exist_ok:
             return default
 
         raise ValueError(
-            f"query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
+            f"dict_get: query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
         )
 
     # len(components) == 1
@@ -527,7 +527,11 @@ def dict_set(
             set_multiple=set_multiple,
         )
         if not success:
-            raise ValueError(f"No path in dic '{dic}' matches query '{query}'.")
+            raise ValueError(
+                f"dict_set: query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
+            )
 
     except Exception as e:
-        raise ValueError(f"No path in dic '{dic}' matches query '{query}'.") from e
+        raise ValueError(
+            f"dict_set: query '{query}' did not match any item in dict:\n{construct_dict_str(dic)}"
+        ) from e
