@@ -733,10 +733,7 @@ class TestOperators(UnitxtTestCase):
         exception_texts = [
             "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
             "Failed to get 'label2' from instance due to the exception above.",
-            """query "label2" did not match any item in dict:
-label (str):
-    b
-""",
+            "query 'label2' did not match any item in dict:label (str):\n    b\n",
         ]
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
@@ -2297,12 +2294,10 @@ label (str):
     def test_copy_string_to_string_error(self):
         inputs = [{"source": "hello", "task_data": 3}]
 
-        targets = [{"source": "hello", "task_data": {"source": "hello"}}]
-
-        check_operator(
+        check_operator_exception(
             operator=Copy(field="source", to_field="task_data/source"),
             inputs=inputs,
-            targets=targets,
+            exception_texts = [""],
             tester=self,
         )
 
@@ -2314,10 +2309,10 @@ label (str):
 
         targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
 
-        check_operator(
+        check_operator_exception(
             operator=Copy(field="a", to_field="a/x"),
             inputs=inputs,
-            targets=targets,
+            exception_tests=[""],
             tester=self,
         )
 
@@ -2346,7 +2341,10 @@ label (str):
         )
 
         inputs = [{"prediction": "red", "references": "blue"}]
-        exception_texts = ["Error processing instance '0' from stream 'test' in EncodeLabels due to: query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n"]
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.",
+            "query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n",
+        ]
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,

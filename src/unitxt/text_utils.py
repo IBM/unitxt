@@ -73,11 +73,11 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     """Constructs a formatted string of a dictionary.
 
     Args:
-        d (dict): The dictionary to be formatted.
+        d (dict or list): The dictionary (or list) to be formatted.
         indent (int, optional): The current level of indentation. Defaults to 0.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
         max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
-        keys (List[Str], optional): the list of fields to print
+        keys (List[Str], optional): the list of fields (or indices) to print
     """
     max_chars = max_chars or shutil.get_terminal_size()[0] - 10
     indent_str = " " * indent
@@ -85,9 +85,19 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     res = ""
 
     if keys is None:
-        keys = d.keys()
+        keys = (
+            d.keys()
+            if isinstance(d, dict)
+            else range(len(d))
+            if isinstance(d, list)
+            else []
+        )
     for key in keys:
-        if key not in d.keys():
+        if isinstance(d, dict) and key not in d.keys():
+            raise ValueError(
+                f"Dictionary does not contain field {key} specified in 'keys' argument. The available keys are {d.keys()}"
+            )
+        if isinstance(d, list) and key not in range(len(d)):
             raise ValueError(
                 f"Dictionary does not contain field {key} specified in 'keys' argument. The available keys are {d.keys()}"
             )
