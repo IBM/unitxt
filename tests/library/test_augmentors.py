@@ -94,17 +94,20 @@ class TestOperators(UnitxtTestCase):
         inputs = [{"input_fields": {"text": text}}]
         operator = AugmentWhitespace()
         operator.set_fields(["text"])
-        exception_text = "Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}"
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in AugmentWhitespace due to the exception above.",
+            "Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}",
+        ]
 
         try:
             check_operator_exception(
                 operator,
                 inputs,
-                exception_text=exception_text,
+                exception_texts=exception_texts,
                 tester=self,
             )
         except Exception as e:
             self.assertEqual(
                 str(e),
-                "Did not receive expected exception Error processing instance '0' from stream 'test' in AugmentWhitespace due to: Error augmenting value 'None' from 'input_fields/text' in instance: {'input_fields': {'text': None}}",
+                "Did not receive expected exception: Error processing instance '0' from stream 'test' in AugmentWhitespace due to the exception above.",
             )
