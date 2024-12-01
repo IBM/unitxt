@@ -2297,7 +2297,9 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=Copy(field="source", to_field="task_data/source"),
             inputs=inputs,
-            exception_texts = [""],
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in Copy due to the exception above."
+            ],
             tester=self,
         )
 
@@ -2310,7 +2312,9 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=Copy(field="a", to_field="a/x"),
             inputs=inputs,
-            exception_tests=[""],
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in Copy due to the exception above."
+            ],
             tester=self,
         )
 
@@ -2341,7 +2345,7 @@ class TestOperators(UnitxtTestCase):
         inputs = [{"prediction": "red", "references": "blue"}]
         exception_texts = [
             "Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.",
-            "query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n",
+            "dict_get: query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n",
         ]
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
