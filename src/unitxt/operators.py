@@ -190,7 +190,7 @@ class MapInstanceValues(InstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when for fields whose values are lists, but value of field '{key}' is '{value}'"
+                        f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{key}' is '{value}'"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
@@ -211,7 +211,7 @@ class MapInstanceValues(InstanceOperator):
             return recursive_copy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
-                f"value '{val}' in field '{key}' is not found in mapper '{mapper}'"
+                f"value '{val_as_str}', the string representation of the value in field '{key}', is not found in mapper '{mapper}'"
             )
         return val
 
@@ -977,7 +977,7 @@ class CastFields(InstanceOperator):
             if self.process_every_value:
                 assert isinstance(
                     value, list
-                ), f"'process_every_value' can be set to True only for fields that contain lists, the contents of field '{field_name}' is of type '{type(value)}'"
+                ), f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{field_name}' is '{value}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
@@ -1194,13 +1194,13 @@ class FilterByConditionBasedOnFields(FilterByCondition):
                 instance_key = dict_get(instance, key)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance.keys()} of instance"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in instance"
                 ) from ve
             try:
                 instance_value = dict_get(instance, value)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance.keys()} of instance"
+                    f"Required filter field ('{value}') in FilterByCondition is not found in instance"
                 ) from ve
             if self.condition == "in":
                 if instance_key not in instance_value:

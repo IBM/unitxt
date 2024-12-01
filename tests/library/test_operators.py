@@ -95,7 +95,7 @@ class TestOperators(UnitxtTestCase):
             inputs=inputs,
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "'process_every_field' == True is allowed only when for fields whose values are lists, but value of field 'a' is '1'",
+                "'process_every_field' == True is allowed only for fields whose values are lists, but value of field 'a' is '1'",
             ],
             tester=self,
         )
@@ -106,7 +106,7 @@ class TestOperators(UnitxtTestCase):
             inputs=[{"a": "3", "b": "4"}],
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3' in field 'a' is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
         )
@@ -137,7 +137,7 @@ class TestOperators(UnitxtTestCase):
             inputs=[{"a": [1, 2, 3, 4], "b": 2}],
             exception_texts=[
                 "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
-                "\"value '3' in field 'a' is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
         )
