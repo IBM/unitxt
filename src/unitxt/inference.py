@@ -23,7 +23,7 @@ from typing import (
     Union,
 )
 
-from datasets import DatasetDict
+from datasets import Dataset, DatasetDict
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -103,7 +103,7 @@ class InferenceEngine(Artifact):
     @abc.abstractmethod
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Perform inference on the input dataset.
@@ -126,7 +126,7 @@ class InferenceEngine(Artifact):
 
     def infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and perform inference on the input dataset.
@@ -134,6 +134,10 @@ class InferenceEngine(Artifact):
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
         predictions.
         """
+        if not isoftype(dataset, Union[List[Dict[str, Any]], Dataset]):
+            raise Exception(
+                "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
+            )
         if return_meta_data and not hasattr(self, "get_return_object"):
             raise NotImplementedError(
                 f"Inference engine {self.__class__.__name__} does not support return_meta_data as it "
@@ -147,7 +151,7 @@ class InferenceEngine(Artifact):
 
     def _mock_infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [str(instance["source"]) for instance in dataset]
 
@@ -198,7 +202,7 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
     @abc.abstractmethod
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         """Perform inference on the input dataset  that returns log probs.
@@ -211,7 +215,7 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
 
     def infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and performs inference that returns log probabilities of top tokens.
@@ -446,7 +450,7 @@ class HFInferenceEngineBase(
 
     def infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
@@ -456,14 +460,14 @@ class HFInferenceEngineBase(
     @abc.abstractmethod
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         raise NotImplementedError
 
     def infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
@@ -473,7 +477,7 @@ class HFInferenceEngineBase(
     @abc.abstractmethod
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         raise NotImplementedError
@@ -524,7 +528,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
     def _infer_fn(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool,
         return_logprobs: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
@@ -565,7 +569,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         self.verify_not_chat_api(dataset)
@@ -573,7 +577,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         self.verify_not_chat_api(dataset)
@@ -647,7 +651,7 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
     def _infer_fn(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool,
         return_logprobs: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
@@ -681,14 +685,14 @@ class HFLlavaInferenceEngine(HFInferenceEngineBase):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self._infer_fn(dataset, return_meta_data, False)
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         return self._infer_fn(dataset, return_meta_data, True)
@@ -879,7 +883,7 @@ class HFPipelineBasedInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
@@ -933,13 +937,13 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
 
     def _mock_infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [self.default_inference_value for _ in dataset]
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [
@@ -951,7 +955,7 @@ class MockInferenceEngine(InferenceEngine, LogProbInferenceEngine):
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         return [
@@ -1047,14 +1051,14 @@ class GenericInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset)
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not isinstance(self.engine, LogProbInferenceEngine):
@@ -1082,7 +1086,7 @@ class OllamaInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         import ollama
@@ -1250,7 +1254,7 @@ class IbmGenAiInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from genai.schema import TextGenerationParameters, TextGenerationResult
@@ -1279,7 +1283,7 @@ class IbmGenAiInferenceEngine(
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         from genai.schema import TextGenerationParameters, TextGenerationResult
@@ -1507,7 +1511,7 @@ class OpenAiInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
@@ -1527,7 +1531,7 @@ class OpenAiInferenceEngine(
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
@@ -1681,7 +1685,7 @@ class TogetherAiInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         from together.types.models import ModelType
@@ -1943,7 +1947,7 @@ class WMLInferenceEngineBase(
     @abc.abstractmethod
     def _send_requests(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_logprobs: bool,
         return_meta_data: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
@@ -1955,7 +1959,7 @@ class WMLInferenceEngineBase(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if self._model is None:
@@ -1969,7 +1973,7 @@ class WMLInferenceEngineBase(
 
     def _infer_log_probs(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         if self._model is None:
@@ -2112,7 +2116,7 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     def _send_requests(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_logprobs: bool,
         return_meta_data: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
@@ -2303,7 +2307,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
     def _send_requests(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_logprobs: bool,
         return_meta_data: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
@@ -2428,7 +2432,7 @@ class LMMSEvalInferenceEngine(LMMSEvalBaseInferenceEngine):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
@@ -2500,7 +2504,7 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         if not self._is_loaded():
@@ -2555,7 +2559,7 @@ class VLLMInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         inputs = []
@@ -2681,7 +2685,7 @@ class LiteLLMInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], "DatasetDict"],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         """Main inference entry point."""
@@ -2812,7 +2816,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return self.engine._infer(dataset, return_meta_data)
@@ -2898,7 +2902,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         inputs = []
