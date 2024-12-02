@@ -199,13 +199,10 @@ class TestDictUtils(UnitxtTestCase):
             dict_delete(dic, "a/2/3")
 
         self.assertEqual("i1", dict_get(dic, "a/0/0/0"))
-<<<<<<< HEAD
         # for backward compatibility: allow also indexing into a string in dict_get:
         self.assertEqual("i", dict_get(dic, "a/0/0/0/0"))
         self.assertEqual("i", dict_get(dic, "a/0/0/0/0/0/0/0"))
 
-=======
->>>>>>> 12f6435f (not_exist_ok for dict_set only allows to add a non existing key to a dictionary, or non existing entry to a list. Not a nested structure as implied by the query)
         with self.assertRaises(ValueError):
             dict_get(dic, "a/0/0/0/*/0")
 
