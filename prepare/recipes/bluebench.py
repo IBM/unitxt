@@ -127,7 +127,7 @@ ingridients = {
     "card": "cards.arena_hard.generation.english_gpt_4_0314_reference",
     "demos_pool_size": 0,
     "num_demos": 0,
-    "template": "templates.empty",
+    "template": "templates.generation.empty",
     "metrics": [
         "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.template_arena_hard"
     ],
