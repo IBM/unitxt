@@ -9,6 +9,7 @@ import sys
 import time
 import uuid
 from collections import Counter
+from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
     Dict,
@@ -1446,6 +1447,13 @@ class OpenAiInferenceEngineParams(Artifact):
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
+def run_with_imap(func):
+    def inner(self, args):
+        return func(self, *args)
+
+    return inner
+
+
 class OpenAiInferenceEngine(
     InferenceEngine,
     LogProbInferenceEngine,
@@ -1462,6 +1470,7 @@ class OpenAiInferenceEngine(
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
     credentials: CredentialsOpenAi = {}
+    num_parallel_requests: int = 20
 
     def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
@@ -1510,19 +1519,15 @@ class OpenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = [(instance, return_meta_data) for instance in dataset]
         outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            prediction = response.choices[0].message.content
-            output = self.get_return_object(prediction, response, return_meta_data)
-
-            outputs.append(output)
-
+        with ThreadPool(processes=self.num_parallel_requests) as pool:
+            for output in tqdm(
+                pool.imap(self._get_chat_completion, inputs),
+                total=len(inputs),
+                desc=f"Inferring with {self.__class__.__name__}",
+            ):
+                outputs.append(output)
         return outputs
 
     def _infer_log_probs(
@@ -1530,35 +1535,47 @@ class OpenAiInferenceEngine(
         dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
+        inputs = [(instance, return_meta_data) for instance in dataset]
         outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
-                {
-                    "top_tokens": [
-                        {"text": obj.token, "logprob": obj.logprob}
-                        for obj in generated_token.top_logprobs
-                    ]
-                }
-                for generated_token in top_logprobs_response
-            ]
-            output = self.get_return_object(pred_output, response, return_meta_data)
-            outputs.append(output)
+        with ThreadPool(processes=self.num_parallel_requests) as pool:
+            for output in tqdm(
+                pool.imap(self._get_logprobs, inputs),
+                total=len(inputs),
+                desc=f"Inferring with {self.__class__.__name__}",
+            ):
+                outputs.append(output)
         return outputs
+
+    @run_with_imap
+    def _get_chat_completion(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        prediction = response.choices[0].message.content
+        return self.get_return_object(prediction, response, return_meta_data)
+
+    @run_with_imap
+    def _get_logprobs(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        top_logprobs_response = response.choices[0].logprobs.content
+        pred_output = [
+            {
+                "top_tokens": [
+                    {"text": obj.token, "logprob": obj.logprob}
+                    for obj in generated_token.top_logprobs
+                ]
+            }
+            for generated_token in top_logprobs_response
+        ]
+        return self.get_return_object(pred_output, response, return_meta_data)
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
