@@ -1,0 +1,12 @@
+{
+    "__type__": "eval_assist_llm_as_judge_pairwise",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/ibm/granite-13b-instruct-v2",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "option_selection_strategy": "PARSE_OUTPUT_TEXT",
+    "evaluator_name": "GRANITE_13B",
+    "model_family": "GRANITE"
+}

@@ -1,0 +1,12 @@
+{
+    "__type__": "eval_assist_llm_as_judge_direct",
+    "inference_engine": {
+        "__type__": "ibm_gen_ai_inference_engine",
+        "model_name": "kaist-ai/prometheus-8x7b-v2",
+        "max_new_tokens": 1024,
+        "random_seed": 42
+    },
+    "option_selection_strategy": "PARSE_OPTION_LOGPROB",
+    "evaluator_name": "PROMETHEUS",
+    "model_family": "PROMETHEUS"
+}
