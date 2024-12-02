@@ -3,6 +3,8 @@ from abc import abstractmethod
 from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+from unitxt.processors import MatchClosestOption
+
 from .artifact import Artifact
 from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
@@ -484,6 +486,12 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
         return input_fields, reference_fields
 
 
+class OptionSelectionTemplate(InputOutputTemplate):
+    def post_process_instance(self, instance):
+        print('instance["input_fields"]["options"]')
+        print(instance["input_fields"]["options"])
+        return instance
+
 class MultipleChoiceTemplate(InputFormatTemplate):
     """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
 
@@ -527,6 +535,19 @@ class MultipleChoiceTemplate(InputFormatTemplate):
                 "XIX",
                 "XX",
             ]
+
+    def verify(self):
+        super().verify()
+        print(self.postprocessors[-1])
+        last_postprocessor = self.postprocessors[-1]
+        if isinstance(last_postprocessor, str):
+            assert last_postprocessor == "processors.match_closest_option", f"The last postprocessor of a 'MultipleChoiceTemplate' must be 'processors.match_closest_option'. Instead, it is {last_postprocessor}"
+        else:
+            assert isinstance(
+                last_postprocessor, MatchClosestOption
+            ), f"The last postprocessor of a 'MultipleChoiceTemplate' must be a 'MatchClosestOption' post processor. Instead, it is of type {type(self.postprocessors[-1])}"
+
+
 
     def inputs_to_choices(self, data: Dict[str, Any], choice_format: str) -> str:
         choices = data[self.choices_field]

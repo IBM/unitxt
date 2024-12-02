@@ -87,13 +87,10 @@ class BaseFormat(Format):
         for field in "source", "instruction", "system_prompt", "target_prefix":
             instance_fields[field] = self._pop_field(instance, field)
 
-<<<<<<< HEAD
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
         if not instance_fields["media"]:
             instance_fields["media"] = {"images": [], "audios": []}
 
-=======
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
         instance_fields["demos"] = []
         if self.demos_field is not None and self.demos_field in instance:
             demos = instance[self.demos_field]
@@ -116,10 +113,7 @@ class BaseFormat(Format):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-<<<<<<< HEAD
         media: Optional[Dict[str, Any]] = None,
-=======
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
     ) -> str:
         """Abstract method for formatting instances in different subclasses.
 
@@ -206,10 +200,7 @@ class SystemFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-<<<<<<< HEAD
         media: Optional[Dict[str, Any]] = None,
-=======
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
     ) -> str:
         demos_string = ""
         for demo in demos:
@@ -255,11 +246,7 @@ class Message(TypedDict):
     content: Union[str, List[Content]]
 
 
-<<<<<<< HEAD
 class ChatAPIFormat(BaseFormat):
-=======
-class OpenAIFormat(BaseFormat):
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
     r"""Formats output for LLM APIs using OpenAI's chat schema.
 
     Many API services use OpenAI's chat format as a standard for conversational models.
@@ -316,18 +303,11 @@ class OpenAIFormat(BaseFormat):
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
     """
 
-<<<<<<< HEAD
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
         img_tag_pattern = re.compile(
             r"<" + f"{constants.image_tag}" + r'\s+[^>]*src=["\']([^"\']+)["\'][^>]*>',
             re.IGNORECASE,
-=======
-    def to_content(self, text: str) -> Union[str, List[Content]]:
-        # Regular expression to find <img> tags with src attribute
-        img_tag_pattern = re.compile(
-            r'<img\s+[^>]*src=["\']([^"\']+)["\'][^>]*>', re.IGNORECASE
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
         )
 
         # Find all matches of <img> tags and their positions
@@ -350,7 +330,6 @@ class OpenAIFormat(BaseFormat):
                 contents.append({"type": "text", "text": text[last_pos:start]})
 
             # Add image content with a default detail level
-<<<<<<< HEAD
             if img_url.startswith("media/"):
                 image = dict_get(media, img_url[6:])
                 data_url = image_to_data_url(image)
@@ -367,11 +346,6 @@ class OpenAIFormat(BaseFormat):
                         "image_url": {"url": img_url, "detail": "low"},
                     }
                 )
-=======
-            contents.append(
-                {"type": "image_url", "image_url": {"url": img_url, "detail": "low"}}
-            )
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
 
             # Update the last processed position
             last_pos = end
@@ -389,7 +363,6 @@ class OpenAIFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-<<<<<<< HEAD
         media: Optional[Dict[str, Any]] = None,
     ) -> List[Message]:
         messages = []
@@ -411,23 +384,6 @@ class OpenAIFormat(BaseFormat):
             assistant_content = self.to_content(
                 target_prefix + demo_instance["target"], media
             )
-=======
-    ) -> List[Message]:
-        system_content = self.to_content(
-            system_prompt + ("\n" if system_prompt != "" else "") + instruction,
-        )
-
-        messages = [
-            {
-                "role": "system",
-                "content": system_content,
-            },
-        ]
-
-        for demo_instance in demos:
-            user_content = self.to_content(demo_instance["source"])
-            assistant_content = self.to_content(target_prefix + demo_instance["target"])
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
             messages.extend(
                 [
                     {"role": "user", "content": user_content},
@@ -438,11 +394,7 @@ class OpenAIFormat(BaseFormat):
                 ]
             )
 
-<<<<<<< HEAD
         last_user_content = self.to_content(source, media)
-=======
-        last_user_content = self.to_content(source)
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
 
         messages.extend([{"role": "user", "content": last_user_content}])
 
@@ -455,19 +407,14 @@ class OpenAIFormat(BaseFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-<<<<<<< HEAD
         media: Optional[Dict[str, Any]] = None,
     ) -> Union[str, List[Message]]:
-=======
-    ) -> str:
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
         chat = self.to_chat(
             system_prompt,
             instruction,
             source,
             target_prefix,
             demos,
-<<<<<<< HEAD
             media,
         )
         media["images"] = []
@@ -475,13 +422,6 @@ class OpenAIFormat(BaseFormat):
 
 
 class HFSystemFormat(ChatAPIFormat):
-=======
-        )
-        return json.dumps(chat)
-
-
-class HFSystemFormat(OpenAIFormat):
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
     r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
     HFSystemFormat expects the input instance to contain:
@@ -523,20 +463,10 @@ class HFSystemFormat(OpenAIFormat):
         source: str,
         target_prefix: str,
         demos: List[Dict[str, Any]],
-<<<<<<< HEAD
         media: Optional[Dict[str, Any]] = None,
     ) -> str:
         chat = self.to_chat(
             system_prompt, instruction, source, target_prefix, demos, media
-=======
-    ) -> str:
-        chat = self.to_chat(
-            system_prompt,
-            instruction,
-            source,
-            target_prefix,
-            demos,
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)
         )
         return (
             self.tokenizer.apply_chat_template(
@@ -544,7 +474,3 @@ class HFSystemFormat(OpenAIFormat):
             )
             + target_prefix
         )
-<<<<<<< HEAD
-=======
-    
->>>>>>> d1a989fd (Add GPT Pairwise evaluator)

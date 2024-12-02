@@ -3,6 +3,7 @@ from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.loaders import LoadFromDictionary
 from unitxt.text_utils import print_dict
+
 logger = get_logger()
 data = {
     "test": [
@@ -12,15 +13,19 @@ data = {
     ]
 }
 
+
 criteria = "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature"
 card = TaskCard(
-    loader=LoadFromDictionary(data=data, data_classification_policy= ["public"]),
+    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     task=Task(
         input_fields={"context": dict},
         reference_fields={},
         prediction_type=str,
-        metrics = [f"metrics.llm_as_judge.eval_assist.pairwise_comparison.llama3_1_70b[criteria_or_criterias={criteria}]"]
-    )
+        metrics=[
+            f"metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.mixtrallarge[criteria_or_criterias={criteria}]",
+            f"metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.mixtrallarge[criteria_or_criterias={criteria}]",
+        ],
+    ),
 )
 
 test_dataset = load_dataset(card=card, template="templates.empty")["test"]
@@ -44,4 +49,3 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
-    
