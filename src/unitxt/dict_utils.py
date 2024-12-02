@@ -296,8 +296,8 @@ def get_values(
 
 # going down from current_element via query[index_into_query]
 # returns the updated current_element.
-# if not_exist_ok and the last component is missing from dic -- generate that last component in that dic. 
-# But not any earier component. E.g., not that containing dict. 
+# if not_exist_ok and the last component is missing from dic -- generate that last component in that dic.
+# But not any earier component. E.g., not that containing dict.
 # That is, through processing the query, that most that can be added to the processed dic, is a field in a
 # dictionary or an entry in a list (extending an existing list). If more is needed to add to dic, pass it
 # through the value being set, which can be anything, structured and complex, or simple.
@@ -448,8 +448,9 @@ def dict_get(
 
 
 # dict_set sets a value, 'value', which by itself, can be a dict or list or scalar, into 'dic', to become the value of
-# the element the path from 'dic' head to which matches 'query'. (aka - 'the element specified by the query')
-# 'the element specified by the query' is thus either a key in a dictionary, or a list member specified by its index in the list.
+# the element the path from 'dic' head to which matches 'query' (aka - 'the element specified by the query').
+# 'the element specified by the query' is thus either a key in a dictionary element, or a list member specified by
+# its index in the list.
 # Unless otherwise specified (through 'not_exist_ok=True'), the processing of 'query' by dict_set does not generate
 # any new elements into 'dic'. Rather - it just sets the 'value' arg to each and every element the path to which matches
 # the query. That 'value' arg, again, can be complex and involved, a dictionary or a list, or scalar, or whatever.
@@ -457,8 +458,9 @@ def dict_get(
 # When not_exist_ok = True, dict_set is allowed to generate a new key, or list element, in the element led to
 # by the prefix being all but the last component of the query. But not allowed to generate missing earlier components.
 #
-# If two or more (existing in input dic, or newly generated per not_exist_ok = True) paths in dic match the query
-# all the elements lead to by these paths are assigned copies of value.
+# If two or more (existing in input dic, or newly generated per not_exist_ok = True) paths in dic match the query (two or
+# more paths can match queries that include * components), then all the elements lead to by these paths are assigned
+# copies of value.
 #
 # If set_multiple=True, 'value' must be a list, 'query' should contain at least one * , and there should be exactly
 # len(values) paths that match the query, and in this case, dict_set assigns one member of 'value' to each path.
@@ -484,7 +486,7 @@ def dict_set(
 ):  # sets dic to its new value
     if dic is None or not isinstance(dic, (list, dict)):
         raise ValueError(
-            f"Can only change a dic that is either a dict or a list. Got dic = '{dic}'"
+            f"Can only change arg dic that is either a dict or a list. Got dic = '{dic}'"
         )
 
     if query.strip() == "":
