@@ -1,0 +1,4 @@
+{
+    "__type__": "vllm_remote_inference_engine",
+    "model_name": null
+}
