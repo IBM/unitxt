@@ -2,13 +2,13 @@ from unitxt import add_to_catalog
 from unitxt.inference import (
     IbmGenAiInferenceEngine,
     OpenAiInferenceEngine,
-    WMLInferenceEngine,
+    WMLInferenceEngineGeneration,
 )
 
 
 def get_inference_engine(model_name, framework_name):
     if framework_name == "ibm_wml":
-        return WMLInferenceEngine(
+        return WMLInferenceEngineGeneration(
             model_name=model_name,
             max_new_tokens=5,
             random_seed=42,
