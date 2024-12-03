@@ -58,6 +58,8 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
+    credentials: Optional[dict[str, str]] = {}
+    extra_headers: Optional[dict[str, str]] = None
 
 
 def get_model_and_label_id(model_name, label):
@@ -148,6 +150,11 @@ class InferenceEngine(Artifact):
         if settings.mock_inference_mode:
             return self._mock_infer(dataset)
         return self._infer(dataset, return_meta_data)
+
+    def infer_log_probs(self, dataset) -> str:
+        """Verifies instances of a dataset and performs inference."""
+        [self.verify_instance(instance) for instance in dataset]
+        return self._infer_log_probs(dataset)
 
     def _mock_infer(
         self,
@@ -1107,6 +1114,15 @@ class OllamaInferenceEngine(
         return [element["message"]["content"] for element in results]
 
 
+class TokenLogProb(TypedDict):
+    text: str
+    logprob: float
+
+
+class NoInputLogProbsExeption(Exception):
+    pass
+
+
 class OptionSelectingByLogProbsInferenceEngine:
     """OptionSelectingByLogProbsInferenceEngine inference engine is used to select an option based on the logprobs of an options list conditioned by a prompt.
 
@@ -1114,7 +1130,7 @@ class OptionSelectingByLogProbsInferenceEngine:
     """
 
     @abc.abstractmethod
-    def get_token_count(self, dataset):
+    def get_token_count(self, dataset) -> list[int]:
         """Get the token count of the source key of each dict of the dataset. Add to each instance in the data a "token_count" field.
 
         Args:
@@ -1125,7 +1141,7 @@ class OptionSelectingByLogProbsInferenceEngine:
         """
 
     @abc.abstractmethod
-    def get_options_log_probs(self, dataset):
+    def get_options_log_probs(self, dataset) -> list[list[TokenLogProb]]:
         """Get the token logprobs of the options of the key task_data.options of each dict of the dataset.
 
         Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}.
@@ -1134,43 +1150,56 @@ class OptionSelectingByLogProbsInferenceEngine:
             dataset (List[Dict[str, Any]]): A list of dictionaries, each representing a data instance.
 
         Returns:
-            List[int]: The token count of the texts
+            list[list[TokenLogProb]]: a list of TokenLogProb for each instance in the dataset
         """
 
-    def select(self, dataset: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Calculate most likely labels based on log probabilities for a set of fixed completions."""
-        dataset_with_token_counts = self.get_token_count(dataset)
-        token_counts = [d["token_count"] for d in dataset_with_token_counts]
+    def get_task_data_dict(self, task_data):
+        # seems like the task data sometimes comes as a string, not a dict
+        # this fixes it
+        return json.loads(task_data) if isinstance(task_data, str) else task_data
 
+    def select(self, dataset: Dataset) -> List[Dict[str, Any]]:
+        """Calculate most likely labels based on log probabilities for a set of fixed completions.
+
+        The input dataset must have 'source' attribute and an options list in 'task_data.options'
+        """
+        token_counts = self.get_token_count(dataset)
+
+        task_datas =  [self.get_task_data_dict(instance["task_data"]) for instance in dataset]
         # pass in the token count so we only return the option score
         dataset_with_options = [
             {
-                "source": instance["source"] + option,
+                "source": instance["source"] + [{'role': 'assistant', 'content': option}],
                 "task_data": {"token_count": token_count},
             }
-            for instance, token_count in zip(dataset, token_counts)
-            for option in instance["task_data"]["options"]
+            for instance, task_data, token_count in zip(dataset, task_datas, token_counts)
+            for option in task_data["options"]
         ]
 
-        dataset_with_options_logprobs: list[
-            list[dict[str, float | str]]
-        ] = self.get_options_log_probs(dataset_with_options)
+        options_logprobs_list = self.get_options_log_probs(dataset_with_options)
 
-        dataset_iterator = iter(dataset_with_options_logprobs)
-
-        for instance in dataset:
+        options_logprobs_iterator = iter(options_logprobs_list)
+        selections = []
+        for i in range(dataset):
             tokens_with_logprob_list = []
+            task_data = task_datas[i]
             # get the input tokens for the completions of the current resp_idx
-            for _ in instance["task_data"]["options"]:
-                tokens_with_logprob = next(dataset_iterator)["prediction"]
+            for _ in task_data["options"]:
+                tokens_with_logprob = next(options_logprobs_iterator)
                 tokens_with_logprob_list.append(tokens_with_logprob)
             # we start comparing all the options, e.g. if there are five options the value will be [0,1,2,3,4]
-            to_compare_indexes = list(range(len(instance["task_data"]["options"])))
+            to_compare_indexes = list(range(len(task_data["options"])))
             # token_with_logprob_comp is the logprobs and the text of the tokens
             # for each of the options at a specific index
-            for token_with_logprob_comp in zip(*tokens_with_logprob_list):
+            for i, token_with_logprob_comp in enumerate(zip(*tokens_with_logprob_list)):
                 tokens_comp = [t["text"] for t in token_with_logprob_comp]
                 logprobs_comp = [t["logprob"] for t in token_with_logprob_comp]
+                if any(logprob is None for logprob in logprobs_comp):
+                    raise NoInputLogProbsExeption(
+                        f"Input logprobs weren't provided. The logprobs being compared are "
+                        f"{logprobs_comp} for tokens {tokens_comp} at position {i}. "
+                        "Probably, this models doesn't support logprobs of input tokens."
+                    )
                 # Find the maximum value by comparing the logprob of the nth token of non-discarded options
                 index_max = max(
                     (
@@ -1195,13 +1224,12 @@ class OptionSelectingByLogProbsInferenceEngine:
                 # we got the index of the maximum log_prob that doesn't have a duplicated token value at other index
                 break
 
-            if len(to_compare_indexes) > 1:
+            if count > 1:
                 # multiple options are either equal or have the same token values prefix
                 # choose the first
                 index_max = to_compare_indexes[0]
-
-            instance["prediction"] = instance["task_data"]["options"][index_max]
-        return dataset
+            selections.append(task_data["options"][index_max])
+        return selections
 
 
 class IbmGenAiInferenceEngine(
@@ -1355,9 +1383,9 @@ class IbmGenAiInferenceEngine(
         )
         return model_info.dict()
 
-    def get_token_count(self, dataset):
+    def get_token_count(self, dataset) -> list[int]:
         texts = [instance["source"] for instance in dataset]
-        token_counts = list(
+        return list(
             tqdm(
                 [
                     result.token_count
@@ -1372,44 +1400,47 @@ class IbmGenAiInferenceEngine(
                 total=len(texts),
             )
         )
-        for i, token_count in enumerate(token_counts):
-            dataset[i]["token_count"] = token_count
-        return dataset
 
-    def get_options_log_probs(self, dataset):
+    def get_options_log_probs(self, dataset) -> list[list[TokenLogProb]]:
         """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        from genai.schema import TextGenerationParameters, TextGenerationReturnOptions
+        from genai.schema import (
+            TextGenerationCreateResponse,
+            TextGenerationParameters,
+            TextGenerationReturnOptions,
+        )
 
         texts = [x["source"] for x in dataset]
 
-        responses = tqdm(
-            self.client.text.generation.create(
-                model_id=self.model_name,
-                inputs=texts,
-                execution_options={"ordered": True},
-                parameters=TextGenerationParameters(
-                    max_new_tokens=1,
-                    return_options=TextGenerationReturnOptions(
-                        input_tokens=True, token_logprobs=True
+        responses: list[TextGenerationCreateResponse] = list(
+            tqdm(
+                self.client.text.generation.create(
+                    model_id=self.model_name,
+                    inputs=texts,
+                    execution_options={"ordered": True},
+                    parameters=TextGenerationParameters(
+                        max_new_tokens=1,
+                        return_options=TextGenerationReturnOptions(
+                            input_tokens=True, token_logprobs=True
+                        ),
+                        # random_seed=self.random_state
                     ),
                     # random_seed=self.random_state
                 ),
-            ),
-            total=len(texts),
-            desc="Completions",
+                total=len(texts),
+                desc="Getting option log probs with with BAM",
+            )
         )
 
-        scores = [
+        return [
             [
-                {"text": token.text, "logprob": token.logprob}
-                for token in response.results[0].input_tokens
+                {
+                    "text": token.text,
+                    "logprob": token.logprob if hasattr(token, "logprob") else None,
+                }
+                for i, token in enumerate(response.results[0].input_tokens)
             ]
             for response in responses
         ]
-
-        for instance, score in zip(dataset, scores):
-            instance["prediction"] = score[instance["task_data"]["token_count"] - 1 :]
-        return dataset
 
 
 class CredentialsOpenAi(TypedDict, total=False):
@@ -1482,7 +1513,6 @@ class OpenAiInferenceEngine(
         api_url = self.credentials.get(
             "api_url", os.environ.get(f"{self.label.upper()}_API_URL", None)
         )
-
         return {"api_key": api_key, "api_url": api_url}
 
     def get_default_headers(self) -> Dict[str, str]:
@@ -1516,7 +1546,12 @@ class OpenAiInferenceEngine(
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
+            try:
+                messages = json.loads(instance["source"])
+            except:
+                messages = []
+                messages.append({"role": "user", "content": instance["source"]})
+
             response = self.client.chat.completions.create(
                 messages=messages,
                 model=self.model_name,
@@ -1536,32 +1571,35 @@ class OpenAiInferenceEngine(
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            try:
+                messages = json.loads(instance["source"])
+            except:
+                messages = []
+                messages.append({"role": "user", "content": instance["source"]})
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
-            top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
+            outputs.append(
                 {
-                    "top_tokens": [
-                        {"text": obj.token, "logprob": obj.logprob}
-                        for obj in generated_token.top_logprobs
-                    ]
+                    "text": response.choices[0].message.content,
+                    "logprobs": response.choices[0].logprobs.content,
                 }
-                for generated_token in top_logprobs_response
-            ]
-            output = self.get_return_object(pred_output, response, return_meta_data)
-            outputs.append(output)
+            )
+
+            # top_logprobs_response = response.choices[0].logprobs.content
+            # pred_output = [
+            #     {
+            #         "top_tokens": [
+            #             {"text": obj.token, "logprob": obj.logprob}
+            #             for obj in generated_token.top_logprobs
+            #         ]
+            #     }
+            #     for generated_token in top_logprobs_response
+            # ]
+            # output = self.get_return_object(pred_output, response, return_meta_data)
+            # outputs.append(output)
         return outputs
 
     def get_return_object(self, predict_result, response, return_meta_data):
@@ -1580,26 +1618,93 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
 
 
-class RITSInferenceEngine(OpenAiInferenceEngine):
+class RITSInferenceEngine(
+    OpenAiInferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
+):
     label: str = "rits"
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
     def prepare_engine(self):
-        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
-        self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
-        logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
+        # inference endpoint need the '/v1' path
+        self.base_url = RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + '/v1'
+        logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
-    def _get_model_name_for_endpoint(self):
+    @staticmethod
+    def get_base_url_from_model_name(model_name: str):
+        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+        return base_url_template.format(RITSInferenceEngine._get_model_name_for_endpoint(model_name))
+
+    @staticmethod
+    def _get_model_name_for_endpoint(model_name: str):
         return (
-            self.model_name.split("/")[-1]
+            model_name.split("/")[-1]
             .lower()
             .replace("v0.1", "v01")
             .replace("vision-", "")
             .replace(".", "-")
         )
+
+    def request_single_token_count(self, prompt):
+        import requests
+
+        headers = {
+            "accept": "application/json",
+            "RITS_API_KEY": self.credentials["api_key"],
+            "Content-Type": "application/json",
+        }
+
+        payload = {
+            "model": self.model_name,
+            "prompt": prompt,
+        }
+        tokenize_url = self.base_url + "/tokenize"
+        return requests.post(
+            tokenize_url, headers=headers, json=payload, timeout=10
+        ).json()["count"]
+
+    def get_token_count(self, dataset) -> list[int]:
+        texts = [instance["source"] for instance in dataset]
+        return list(
+            tqdm(
+                [self.request_single_token_count(text) for text in texts],
+                desc="Tokenizing",
+                total=len(texts),
+            )
+        )
+
+    def get_options_log_probs(self, dataset) -> list[list[TokenLogProb]]:
+        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
+        texts = [x["source"] for x in dataset]
+        result = list(
+            tqdm(
+                [
+                    self.client.completions.create(
+                        model=self.model_name,
+                        prompt=text,
+                        logprobs=False,
+                        max_tokens=1,
+                        extra_body={"prompt_logprobs": 0},
+                    )
+                    for text in texts
+                ],
+                total=len(texts),
+                desc="Completions",
+            )
+        )
+        return [
+            [
+                {"text": token["decoded_token"], "logprob": token["logprob"]}
+                for token in [
+                    list(prompt_logprobs.values())[0]
+                    for prompt_logprobs in response.choices[0].prompt_logprobs[1:]
+                ]
+            ]
+            for response in result
+        ]
 
 
 class TogetherAiInferenceEngineParamsMixin(Artifact):
@@ -1992,19 +2097,19 @@ class WMLInferenceEngineBase(
     def get_model_details(self) -> Dict:
         return self._model.get_details()
 
-    def get_token_count(self, dataset):
+    def get_token_count(self, dataset) -> list[int]:
         if self._model is None:
             self._load_model()
 
         texts = [instance["source"] for instance in dataset]
-
+        token_counts = []
         for i in trange(len(texts), desc="Tokenizing"):
             response = self._model.tokenize(prompt=texts[i], return_tokens=True)[
                 "result"
             ]
-            dataset[i]["token_count"] = response["token_count"]
+            token_counts.append(response["token_count"])
 
-        return dataset
+        return token_counts
 
     def get_options_log_probs(self, dataset):
         """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
@@ -2027,24 +2132,22 @@ class WMLInferenceEngineBase(
                     },
                 ),
                 total=len(texts),
-                desc="Completions",
+                desc="Getting option log probs with with Watsonx",
             )
         )
 
-        scores = [
+        return [
             [
                 {
                     "text": token["text"],
-                    "logprob": token["logprob"] if "logprob" in token else 1,
+                    "logprob": token["logprob"]
+                    if "logprob" in token
+                    else [1, None][i > 0],
                 }
-                for token in response["results"][0]["input_tokens"]
+                for i, token in enumerate(response["results"][0]["input_tokens"])
             ]
             for response in responses
         ]
-
-        for instance, score in zip(dataset, scores):
-            instance["prediction"] = score[instance["task_data"]["token_count"] - 1 :]
-        return dataset
 
 
 class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMixin):
@@ -2378,6 +2481,85 @@ def get_text_without_images(instance, image_token="<image>"):
     return re.sub(regex, image_token, instance["source"])
 
 
+class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
+    model_name: str
+    max_new_tokens: int
+    lazy_load = True
+    image_token = "<image>"
+
+    _requirements_list = {
+        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
+        "torch": "Install torch, go on PyTorch website for mode details.",
+        "accelerate": "pip install accelerate",
+    }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_lava")
+
+    def _prepare_engine(self):
+        import torch
+        from transformers import AutoProcessor, LlavaForConditionalGeneration
+
+        self.device = torch.device(
+            "mps"
+            if torch.backends.mps.is_available()
+            else 0
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+
+        self.model = LlavaForConditionalGeneration.from_pretrained(
+            self.model_name,
+            torch_dtype=torch.float16,
+            low_cpu_mem_usage=True,
+        ).to(self.device)
+
+        self.processor = AutoProcessor.from_pretrained(self.model_name)
+
+    def prepare_engine(self):
+        if not self.lazy_load:
+            self._prepare_engine()
+
+    def _is_loaded(self):
+        return hasattr(self, "model") and self.model is not None
+
+    def _infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if not self._is_loaded():
+            self._prepare_engine()
+
+        import torch
+
+        results = []
+        for instance in tqdm(dataset):
+            text = get_text_without_images(instance, self.image_token)
+            images = get_images_without_text(instance)
+
+            if len(images) == 1:
+                images = images[0]
+
+            inputs = self.processor(images=images, text=text, return_tensors="pt").to(
+                self.device, torch.float16
+            )
+
+            input_len = len(inputs["input_ids"][0])
+            output = self.model.generate(
+                **inputs,
+                max_new_tokens=self.max_new_tokens,
+                do_sample=False,
+                pad_token_id=self.processor.tokenizer.eos_token_id,
+            )
+            result = self.processor.decode(
+                output[0][input_len:], skip_special_tokens=True
+            )
+            results.append(result)
+
+        return results
+
+
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
 ):
@@ -2616,8 +2798,12 @@ class AsyncTokenBucket:
 
 
 class LiteLLMInferenceEngine(
-    InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
+    InferenceEngine,
+    StandardAPIParamsMixin,
+    PackageRequirementsMixin,
+    OptionSelectingByLogProbsInferenceEngine,
 ):
+    label: str = "litellm"
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
@@ -2650,11 +2836,15 @@ class LiteLLMInferenceEngine(
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
             kwargs = self.to_dict([StandardAPIParamsMixin])
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
+            del kwargs["credentials"]
             try:
                 response = await self._completion(
                     messages=messages,
                     max_retries=self.max_retries,
                     caching=True,
+                    drop_params=False,
+                    **self.credentials,
                     **kwargs,
                 )
             except Exception as e:
@@ -2697,6 +2887,42 @@ class LiteLLMInferenceEngine(
 
         return [response.prediction for response in responses]
 
+    def get_token_count(self, dataset) -> list[int]:
+        from litellm import token_counter
+
+        token_counts = []
+        for i in trange(len(dataset), desc="Tokenizing"):
+            messages = self.to_messages(dataset[i])
+            token_count = token_counter(
+                messages=messages, model=self.model[self.model.index("/")]
+            )
+            token_counts.append(token_count)
+
+        return token_counts
+
+    def get_options_log_probs(self, dataset) -> list[list[TokenLogProb]]:
+        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
+        self.max_tokens = 1
+        self.logprobs = False
+        print("self.model")
+        print(self.model)
+        responses = asyncio.run(self._infer_async(dataset, prompt_logprobs=0, n=1))
+        print("responses[0]")
+        print(responses[0])
+
+        return [
+            [
+                {
+                    "text": token["text"],
+                    "logprob": token["logprob"]
+                    if "logprob" in token
+                    else [1, None][i > 0],
+                }
+                for i, token in enumerate(response["results"][0]["input_tokens"])
+            ]
+            for response in responses
+        ]
+
 
 _supported_apis = Literal[
     "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
@@ -2721,6 +2947,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             across different API backends.
     """
 
+    label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {

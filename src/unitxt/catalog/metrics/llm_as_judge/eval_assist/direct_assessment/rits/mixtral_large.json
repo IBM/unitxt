@@ -1,0 +1,12 @@
+{
+    "__type__": "eval_assist_llm_as_judge_direct",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "openai/mistralai/mistral-large-instruct-2407",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "option_selection_strategy": "PARSE_OPTION_LOGPROB",
+    "evaluator_name": "MIXTRAL_LARGE",
+    "model_family": "MIXTRAL"
+}
