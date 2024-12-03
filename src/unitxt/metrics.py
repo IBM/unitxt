@@ -2776,8 +2776,8 @@ class BertScore(HuggingfaceBulkMetric):
 
 
 class SentenceBert(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "sbert_score"
+    reduction_map = {"mean": [main_score]}
     batch_size: int = 32
 
     model_name: str
@@ -2823,12 +2823,12 @@ class SentenceBert(BulkInstanceMetric):
             refs_group_emb = refs_emb[ref_group_bounds[0] : ref_group_bounds[1]]
             scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
 
-        return [{"score": score} for score in scores]
+        return [{self.main_score: score} for score in scores]
 
 
 class Reward(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "reward_score"
+    reduction_map = {"mean": [main_score]}
     batch_size: int = 32
 
     model_name: str
@@ -2864,12 +2864,15 @@ class Reward(BulkInstanceMetric):
 
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
-        return self.pipe(inputs, batch_size=self.batch_size)
+        results = self.pipe(inputs, batch_size=self.batch_size)
+        for result in results:
+            result[self.main_score] = result["score"]
+        return results
 
 
 class Detector(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "detector_score"
+    reduction_map = {"mean": [main_score]}
     batch_size: int = 32
 
     prediction_type = str
@@ -2896,7 +2899,10 @@ class Detector(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         # compute the metric
         # add function_to_apply="none" to disable sigmoid
-        return self.pipe(predictions, batch_size=self.batch_size)
+        results = self.pipe(predictions, batch_size=self.batch_size)
+        for result in results:
+            result[self.main_score] = result["score"]
+        return results
 
 
 class RegardMetric(GlobalMetric):
@@ -3537,13 +3543,13 @@ class Perplexity(BulkInstanceMetric):
 
 
 class FaithfulnessHHEM(BulkInstanceMetric):
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "hhem_score"
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
     single_reference_per_prediction = True
     max_context_words = 4096
+    reduction_map = {"mean": [main_score]}
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
@@ -3587,7 +3593,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         for input_batch in tqdm(input_batches, "input batch"):
             batch_scores = self.model.predict(input_batch).cpu().tolist()
             scores.extend(batch_scores)
-        return [{"score": score} for score in scores]
+        return [{self.main_score: score} for score in scores]
 
 
 class Squad(HuggingfaceMetric):

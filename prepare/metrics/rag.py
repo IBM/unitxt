@@ -270,14 +270,17 @@ references = [
     ["foo bar foobar", "foo bar"],
 ]
 instance_targets = [
-    {"score": 0.71, "score_name": "score"},
-    {"score": 1.0, "score_name": "score"},
+    {"sbert_score": 0.71, "score": 0.71, "score_name": "sbert_score"},
+    {"sbert_score": 1.0, "score": 1.0, "score_name": "sbert_score"},
 ]
 global_target = {
+    "sbert_score": 0.86,
+    "sbert_score_ci_high": 1.0,
+    "sbert_score_ci_low": 0.71,
     "score": 0.86,
     "score_ci_high": 1.0,
     "score_ci_low": 0.71,
-    "score_name": "score",
+    "score_name": "sbert_score",
     "num_of_instances": 2,
 }
 test_metric(
@@ -291,14 +294,27 @@ metric = metrics["metrics.reward.deberta_v3_large_v2"]
 predictions = ["hello there General Dude", "foo bar foobar"]
 references = [["How do you greet General Dude"], ["What is your name?"]]
 instance_targets = [
-    {"label": "LABEL_0", "score": 0.14, "score_name": "score"},
-    {"label": "LABEL_0", "score": 0.03, "score_name": "score"},
+    {
+        "label": "LABEL_0",
+        "score": 0.14,
+        "score_name": "reward_score",
+        "reward_score": 0.14,
+    },
+    {
+        "label": "LABEL_0",
+        "score": 0.03,
+        "score_name": "reward_score",
+        "reward_score": 0.03,
+    },
 ]
 global_target = {
+    "reward_score": 0.09,
+    "reward_score_ci_high": 0.14,
+    "reward_score_ci_low": 0.03,
     "score": 0.09,
     "score_ci_high": 0.14,
     "score_ci_low": 0.03,
-    "score_name": "score",
+    "score_name": "reward_score",
     "num_of_instances": 2,
 }
 # test_metric(
