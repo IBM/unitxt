@@ -16,7 +16,7 @@ task_data = [{"contexts": [p[0]]} for p in pairs]
 ## 1. Regular unitxt flow: predictions are taken from model prediction and contexts appears in the task data
 ## 2. Running on external rag output: each instance contains field "answer" and field "contexts"
 metric = MetricPipeline(
-    main_score="score",
+    main_score="hhem_score",
     preprocess_steps=[
         Copy(
             field_to_field={"task_data/contexts": "references", "answer": "prediction"},
@@ -28,16 +28,19 @@ metric = MetricPipeline(
     __description__="Vectara's halucination detection model, HHEM2.1, compares contexts and generated answer to determine faithfulness.",
 )
 instance_targets = [
-    {"score": 0.01, "score_name": "score"},
-    {"score": 0.65, "score_name": "score"},
-    {"score": 0.13, "score_name": "score"},
+    {"score": 0.01, "score_name": "hhem_score", "hhem_score": 0.01},
+    {"score": 0.65, "score_name": "hhem_score", "hhem_score": 0.65},
+    {"score": 0.13, "score_name": "hhem_score", "hhem_score": 0.13},
 ]
 global_target = {
     "num_of_instances": 3,
     "score": 0.26,
-    "score_name": "score",
+    "score_name": "hhem_score",
     "score_ci_low": 0.05,
     "score_ci_high": 0.65,
+    "hhem_score": 0.26,
+    "hhem_score_ci_low": 0.05,
+    "hhem_score_ci_high": 0.65,
 }
 
 

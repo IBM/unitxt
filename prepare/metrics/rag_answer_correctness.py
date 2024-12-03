@@ -46,8 +46,8 @@ for new_catalog_name, base_catalog_name, main_score in [
         "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
         "recall",
     ),
-    ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "score"),
-    ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "score"),
+    ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
+    ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,
@@ -84,20 +84,25 @@ def test_answer_correctness_sentence_bert():
             "score": 0.64,
             "score_ci_high": 0.75,
             "score_ci_low": 0.53,
-            "score_name": "score",
+            "sbert_score": 0.64,
+            "sbert_score_ci_high": 0.75,
+            "sbert_score_ci_low": 0.53,
+            "score_name": "sbert_score",
             "num_of_instances": 2,
         },
         instance_targets=[
             {
+                "sbert_score": 0.75,
                 "score": 0.75,
-                "score_name": "score",
+                "score_name": "sbert_score",
             },
             {
+                "sbert_score": 0.53,
                 "score": 0.53,
-                "score_name": "score",
+                "score_name": "sbert_score",
             },
         ],
-        main_score="score",
+        main_score="sbert_score",
     )
 
     test_answer_correctness(
@@ -107,20 +112,25 @@ def test_answer_correctness_sentence_bert():
             "score": 0.17,
             "score_ci_high": 0.42,
             "score_ci_low": -0.08,
-            "score_name": "score",
+            "sbert_score": 0.17,
+            "sbert_score_ci_high": 0.42,
+            "sbert_score_ci_low": -0.08,
+            "score_name": "sbert_score",
             "num_of_instances": 2,
         },
         instance_targets=[
             {
+                "sbert_score": 0.42,
                 "score": 0.42,
-                "score_name": "score",
+                "score_name": "sbert_score",
             },
             {
+                "sbert_score": -0.08,
                 "score": -0.08,
-                "score_name": "score",
+                "score_name": "sbert_score",
             },
         ],
-        main_score="score",
+        main_score="sbert_score",
     )
 
 
