@@ -384,7 +384,10 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
     # if format is not directly set in constructor, choose according to the inference model
     def set_format_for_inference_engine(self):
         model_name = self.inference_model.get_engine_id()
-        if re.search("llama.?3.*instruct", model_name):
+        # TODO : better format resolution to support more chat_api options
+        if "rits" in model_name:
+            format_name = "formats.chat_api"
+        elif re.search("llama.?3.*instruct", model_name):
             format_name = "formats.llama3_instruct"
         else:
             format_name = "formats.empty"
