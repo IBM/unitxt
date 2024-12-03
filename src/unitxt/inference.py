@@ -1536,17 +1536,9 @@ class OpenAiInferenceEngine(
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
