@@ -65,12 +65,12 @@ class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if self.format and type(self.format) is not SystemFormat:
-                raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
-                    "not support formatting. Please remove the format definition from the recipe"
-                    " (OpenAi Chat API take care of the formatting automatically)."
-                )
+            # if self.format and type(self.format) is not SystemFormat:
+            #     raise ValueError(
+            #         "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+            #         "not support formatting. Please remove the format definition from the recipe"
+            #         " (OpenAi Chat API take care of the formatting automatically)."
+            #     )
             if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
