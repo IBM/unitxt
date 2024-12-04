@@ -9,6 +9,7 @@ from .metrics import MetricsList
 from .operator import InstanceOperator
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants
+from .templates import Template
 from .type_utils import (
     Type,
     get_args,
@@ -69,6 +70,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     prediction_type: Optional[Union[Type, str]] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
+    default_template: Template = None
 
     def prepare(self):
         super().prepare()

@@ -16,7 +16,7 @@ card = TaskCard(
         Set({"context_type": "table"}),
         Copy(field="table", to_field="context"),
     ],
-    task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
+    task="tasks.qa.with_context[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[
         MultiReferenceTemplate(
             input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",

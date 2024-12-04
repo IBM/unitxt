@@ -5,14 +5,18 @@ from typing import Any, Dict, List, Optional, Union
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .artifact import fetch_artifact
+from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
 from .inference import InferenceEngine, LogProbInferenceEngine
+from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
+from .metrics import Metric, MetricsList
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
+from .task import Task
 
 logger = get_logger()
 constants = get_constants()
@@ -84,6 +88,38 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
     return recipe
 
 
+def create_dataset(
+    task: str,
+    test_set: List[Dict[Any, Any]],
+    train_set: Optional[List[Dict[Any, Any]]] = None,
+    validation_set: Optional[List[Dict[Any, Any]]] = None,
+    **kwargs,
+):
+    """Creates dataset from input data based on a specific task.
+
+    Args:
+        task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
+        test_set : required list of instances
+        train_set : optional train_set
+        validation_set: optional validation set
+        **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
+
+    Returns:
+        DatasetDict
+
+    Example:
+        template = Template(...)
+        dataset = create_dataset(task="tasks.qa.open", template=template, format="formats.chatapi")
+    """
+    data = {"test": test_set}
+    if train_set is not None:
+        data["train"] = train_set
+    if validation_set is not None:
+        data["validation"] = validation_set
+    card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
+    return load_dataset(card=card, **kwargs)
+
+
 def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
@@ -138,7 +174,40 @@ def load_dataset(
     ).with_transform(loads_instance)
 
 
-def evaluate(predictions, data) -> List[Dict[str, Any]]:
+def evaluate(predictions, data):
+    return _compute(predictions=predictions, references=data)
+
+
+def create_and_evaluate_dataset(
+    predictions: List[Any],
+    data: List[Dict[str, Any]],
+    task: Task,
+    metrics: Optional[List[Union[Metric, MetricsList]]] = None,
+) -> List[Dict[str, Any]]:
+    """Creates and evaluates dataset from input data based on a specific Unitxt task.
+
+    Args:
+        predictions: The predictions from the model which are the input to evaluation.
+        The type of expected predictions is defined in the task's 'prediction_type' field.
+        task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
+        data : Required list of instances to evaluate.
+        metrics : Optional list of metrics to use.  If not specified, the default metrics defined in the task are used.
+
+    Returns:
+        output dataset with evaluated scores (see https://www.unitxt.ai/en/latest/docs/evaluating_datasets.html)
+
+    Example:
+        dataset = create_and_evaluate_dataset(task="tasks.qa.open", data)
+    """
+    task, _ = fetch_artifact(task)
+
+    if task.default_template is None:
+        raise Exception(
+            f"create_and_evaluate_dataset requires the given task ('{task.__id__}') to template set in the 'default_template' field "
+        )
+    data = create_dataset(
+        task=task, test_set=data, split="test", format="formats.empty", metrics=metrics
+    )
     return _compute(predictions=predictions, references=data)
 
 

@@ -10,7 +10,7 @@ card = TaskCard(
         Set({"context_type": "description"}),
         ListFieldValues(fields=["answer"], to_field="answers"),
     ],
-    task="tasks.qa.with_context.extractive",
+    task="tasks.qa.with_context[metrics=[metrics.squad]]",
     templates="templates.qa.with_context.all",
     __tags__={"region": "us"},
     __description__=(
