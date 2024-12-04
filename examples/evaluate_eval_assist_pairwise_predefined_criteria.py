@@ -13,7 +13,6 @@ data = {
     ]
 }
 
-
 criteria = "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature"
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
@@ -21,10 +20,7 @@ card = TaskCard(
         input_fields={"context": dict},
         reference_fields={},
         prediction_type=str,
-        metrics=[
-            f"metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.mixtrallarge[criteria_or_criterias={criteria}]",
-            f"metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.mixtrallarge[criteria_or_criterias={criteria}]",
-        ],
+        metrics=[f"metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.mixtral_large[criteria_or_criterias={criteria}]"],
     ),
 )
 

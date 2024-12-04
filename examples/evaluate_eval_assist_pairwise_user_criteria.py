@@ -24,7 +24,7 @@ card = TaskCard(
         input_fields={"context": dict, "criteria": dict},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.pairwise_comparison.llama3_1_70b"],
+        metrics=["metrics.llm_as_judge.eval_assist.pairwise_comparison.openai.gpt_4o"],
     ),
 )
 
