@@ -47,7 +47,7 @@ DATASET_WITH_LONG_EXAMPLES = {"wikitq"}
 # TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
 DEMOS_POOL_SIZE = 10
 MAX_PREDICTIONS = 100
-LOADER_LIMIT = 500
+LOADER_LIMIT = 10000
 TEMPERATURE = 0.05
 MAX_REQUESTS_PER_SECOND = 6
 COMB_SIZE_AUGMENT = 1
@@ -127,6 +127,12 @@ all_augment = (
 def get_recipes():
     recipes = {}
     for card in cards_parsed:
+        # TODO: Decide what to do about demos_pool_size
+        demos_pool_size = (
+            min(6, DEMOS_POOL_SIZE)
+            if "tablebench_visualization" in card
+            else DEMOS_POOL_SIZE
+        )
         for augment in all_augment:
             for serializer in serializers_parsed:
                 curr_num_demos = (
@@ -147,28 +153,16 @@ def get_recipes():
                     + str(curr_num_demos)
                 )
 
-                str_recipe = (
-                    f'card=cards.{card},'
-                    f'template_card_index=0,'
-                    f'serializer={"serializers.table." + serializer if serializer in SERIALIZERS and serializer != "csv" else None},'
-                    f'num_demos={curr_num_demos},'
-                    f'demos_pool_size={DEMOS_POOL_SIZE},'
-                    + (
-                        f"augmentor=[{', '.join(['augmentors.' + ('table.' if a in TABLE_AUGMENTORS else '') + str(a) for a in augment])}]"
-                        if augment
-                        else ""
-                    )
-                )
-
-                obj_recipe = StandardRecipe(
-                    card="cards." + card,
-                    template_card_index=0,
-                    serializer="serializers.table." + serializer
+                kwargs = {
+                    "card": "cards." + card,
+                    "template_card_index": 0,
+                    "serializer": "serializers.table." + serializer
                     if serializer in SERIALIZERS and serializer != "csv"
                     else None,
-                    num_demos=curr_num_demos,
-                    demos_pool_size=DEMOS_POOL_SIZE,
-                    augmentor=[
+                    "num_demos": curr_num_demos,
+                    "demos_pool_size": demos_pool_size,
+                    "loader_limit": LOADER_LIMIT,
+                    "augmentor": [
                         "augmentors."
                         + ("table." if a in TABLE_AUGMENTORS else "")
                         + str(a)
@@ -176,7 +170,19 @@ def get_recipes():
                     ]
                     if augment
                     else None,
+                }
+
+                def stringify_kwarg_value(value) -> str:
+                    if isinstance(value, list):
+                        return f"[{','.join(value)}]"
+                    return value
+
+                str_recipe = ",".join(
+                    f"{key}={stringify_kwarg_value(value)}"
+                    for key, value in kwargs.items()
                 )
+
+                obj_recipe = StandardRecipe(**kwargs)
 
                 recipes[subset_name] = str_recipe if recipes_only else obj_recipe
 
