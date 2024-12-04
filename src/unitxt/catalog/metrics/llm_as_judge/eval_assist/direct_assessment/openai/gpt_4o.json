@@ -7,6 +7,5 @@
         "seed": 42
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "GPT4",
-    "model_family": "GPT"
+    "evaluator_name": "GPT4"
 }

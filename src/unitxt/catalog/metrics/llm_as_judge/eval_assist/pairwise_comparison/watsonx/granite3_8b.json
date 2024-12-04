@@ -7,6 +7,5 @@
         "seed": 42
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "GRANITE3_8B",
-    "model_family": "GRANITE"
+    "evaluator_name": "GRANITE3_8B"
 }

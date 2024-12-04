@@ -5,6 +5,5 @@
         "model_name": "mock"
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "",
-    "model_family": ""
+    "evaluator_name": ""
 }
