@@ -175,7 +175,6 @@ class GetStringAfter(FieldOperator):
 
 
 class MatchClosestOption(InstanceFieldOperator):
-    __description__ :  str = "Note: this post processor only works with MultipleChoiceTemplate"
     options_field: str = "options"
 
     def process_instance_value(self, value: Any, instance: Dict[str, Any]):
