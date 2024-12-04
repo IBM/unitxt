@@ -17,6 +17,7 @@ from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
 from .task import Task
+from .type_utils import isoftype
 
 logger = get_logger()
 constants = get_constants()
@@ -205,6 +206,14 @@ def create_and_evaluate_dataset(
         raise Exception(
             f"create_and_evaluate_dataset requires the given task ('{task.__id__}') to template set in the 'default_template' field "
         )
+    # We assume the user provides predictions in the required format for the task.
+
+    for prediction in predictions:
+        if not isoftype(prediction, task.prediction_type):
+            raise Exception(
+                f"The prediction passed to 'create_and_evaluate_dataset' does not match the task's required prediction type of '{task.prediction_type}'. The prediction is : {prediction}"
+            )
+        task.default_template.postprocessors = []
     data = create_dataset(
         task=task, test_set=data, split="test", format="formats.empty", metrics=metrics
     )

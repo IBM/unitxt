@@ -21,5 +21,14 @@
     "prediction_type": "Dict[str, Any]",
     "augmentable_inputs": [
         "question"
-    ]
+    ],
+    "defaults": {
+        "question_id": "",
+        "metadata_field": "",
+        "reference_answers": [],
+        "reference_contexts": [],
+        "reference_context_ids": [],
+        "is_answerable_label": true
+    },
+    "default_template": "templates.rag.end_to_end.json_predictions"
 }
