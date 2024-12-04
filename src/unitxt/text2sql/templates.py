@@ -1,10 +1,20 @@
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from ..blocks import InputOutputTemplate
 from .data_utils import SQLData
 
 
 class Text2SQLInputOutputTemplate(InputOutputTemplate):
+    """Input Output template for Text-to-SQL tasks.
+
+    Attributes:
+        instruction (str): Instruction prefix for the model. Defaults to "".
+        num_samples (int): Number of samples to include from the tables in the prompt. Defaults to 0.
+        use_schema_linking (bool): Whether to use schema linking (table and column mentions). Defaults to True.
+        use_oracle_knowledge (bool): Whether to include oracle knowledge (evidence) in the prompt. Defaults to True.
+        db_type (str): Type of the database. Defaults to "sqlite".
+    """
+
     instruction: str = ""
     num_samples: int = 0
     use_schema_linking: bool = True
@@ -16,14 +26,18 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
     ) -> Tuple[str, List[str]]:
         return (outputs["sql"], [outputs["sql"]])
 
-    def input_fields_to_source(self, inputs: Dict[str, object]) -> str:
-        db_id = inputs["db_id"]
-        question = inputs["question"]
+    def input_fields_to_source(self, inputs: Dict[str, Any]) -> str:
+        db_id: str = inputs["db_id"]
+        question: str = inputs["question"]
         if self.use_schema_linking:
-            tables = inputs.get("table_mentions", None)
-            columns = inputs.get("column_mentions", None)
-        schema_text = SQLData().db_to_schema_text(
-            db_id, self.db_type, tables, columns, num_rows=self.num_samples
+            tables: Optional[List[str]] = inputs.get("table_mentions")
+            columns: Optional[List[str]] = inputs.get("column_mentions")
+        schema_text: str = SQLData().generate_schema_prompt(
+            db_id,
+            self.db_type,
+            tables,
+            columns,
+            num_rows_from_table_to_add=self.num_samples,
         )
 
         inputs.update(
@@ -38,7 +52,7 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
             evidence = inputs["evidence"]
             evidence = "; ".join(evidence) if isinstance(evidence, list) else evidence
             inputs["evidence"] = evidence
-
+            evidence: Union[str, List[str]] = inputs["evidence"]
         return self.apply_formatting(
             inputs,
             "input field",
