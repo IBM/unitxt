@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is a task corresponding to the response generation step of RAG pipeline. \nIt assumes the input for is a set of questions and already retrieved contexts (documents or passsages).\nThe model response answer is evaluated against a set of reference_answers and/or using referenceless metrics such as the faithfullness \nof the model answer to the provided context.\n\nThis task is similar to 'task.qa.with_context' , but supports multiple contexts and is focused only on text.\n\nFor details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.\n",
     "input_fields": {
         "contexts": "List[str]",
         "contexts_ids": "Union[List[int], List[str]]",
@@ -16,5 +17,10 @@
     "augmentable_inputs": [
         "contexts",
         "question"
-    ]
+    ],
+    "prediction_type": "str",
+    "defaults": {
+        "contexts_ids": [],
+        "reference_answers": []
+    }
 }

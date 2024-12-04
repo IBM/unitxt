@@ -1,10 +1,15 @@
-from typing import Any, Dict, List
+from typing import Any, List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
+from unitxt.types import RagResponse
 
 add_to_catalog(
     Task(
+        __description__="""This is a task corresponding to an end to end RAG evaluation.  It assumes the user provides a question, and
+        the RAG system returns an answer and a set of retrieved contexts (documents or passages).
+        For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.
+""",
         input_fields={
             "question": str,
             "question_id": Any,
@@ -13,7 +18,7 @@ add_to_catalog(
         reference_fields={
             "reference_answers": List[str],
             "reference_contexts": List[str],
-            "reference_context_ids": List[str],
+            "reference_context_ids": Union[List[int], List[str]],
             "is_answerable_label": bool,
         },
         metrics=[
@@ -23,7 +28,7 @@ add_to_catalog(
             "metrics.rag.end_to_end.context_correctness",
             "metrics.rag.end_to_end.context_relevance",
         ],
-        prediction_type=Dict[str, Any],
+        prediction_type=RagResponse,
         augmentable_inputs=["question"],
         defaults={
             "question_id": "",
