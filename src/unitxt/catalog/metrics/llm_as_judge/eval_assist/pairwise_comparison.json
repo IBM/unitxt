@@ -1,9 +1,0 @@
-{
-    "__type__": "eval_assist_llm_as_judge_pairwise",
-    "inference_engine": {
-        "__type__": "mock_inference_engine",
-        "model_name": "mock"
-    },
-    "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": ""
-}

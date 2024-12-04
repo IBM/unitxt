@@ -25,7 +25,7 @@ metrics_to_check = [
     "metrics.llm_as_judge.rating.llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn",
     "metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_generic_single_turn",
 ]
-x
+
 for metric_to_check in metrics_to_check:
     # The dataset used to evaluate the metrics based on its gold answers
     dataset = load_dataset(
