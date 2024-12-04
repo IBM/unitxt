@@ -537,17 +537,6 @@ class MultipleChoiceTemplate(InputFormatTemplate):
                 "XX",
             ]
 
-    def verify(self):
-        super().verify()
-        print(self.postprocessors[-1])
-        last_postprocessor = self.postprocessors[-1]
-        if isinstance(last_postprocessor, str):
-            assert last_postprocessor == "processors.match_closest_option", f"The last postprocessor of a 'MultipleChoiceTemplate' must be 'processors.match_closest_option'. Instead, it is {last_postprocessor}"
-        else:
-            assert isinstance(
-                last_postprocessor, MatchClosestOption
-            ), f"The last postprocessor of a 'MultipleChoiceTemplate' must be a 'MatchClosestOption' post processor. Instead, it is of type {type(self.postprocessors[-1])}"
-
     def inputs_to_choices(self, data: Dict[str, Any], choice_format: str) -> str:
         choices = data[self.choices_field]
         enumrated_choices = []
