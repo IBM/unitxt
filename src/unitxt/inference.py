@@ -151,10 +151,6 @@ class InferenceEngine(Artifact):
             return self._mock_infer(dataset)
         return self._infer(dataset, return_meta_data)
 
-    def infer_log_probs(self, dataset) -> str:
-        """Verifies instances of a dataset and performs inference."""
-        [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset)
 
     def _mock_infer(
         self,
@@ -1541,7 +1537,7 @@ class OpenAiInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
+        dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
@@ -1566,35 +1562,24 @@ class OpenAiInferenceEngine(
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            try:
-                messages = json.loads(instance["source"])
-            except:
-                messages = []
-                messages.append({"role": "user", "content": instance["source"]})
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
                 messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
-            outputs.append(
+            top_logprobs_response = response.choices[0].logprobs.content
+            pred_output = [
                 {
-                    "text": response.choices[0].message.content,
-                    "logprobs": response.choices[0].logprobs.content,
+                    "top_tokens": [
+                        {"text": obj.token, "logprob": obj.logprob}
+                        for obj in generated_token.top_logprobs
+                    ]
                 }
-            )
-
-            # top_logprobs_response = response.choices[0].logprobs.content
-            # pred_output = [
-            #     {
-            #         "top_tokens": [
-            #             {"text": obj.token, "logprob": obj.logprob}
-            #             for obj in generated_token.top_logprobs
-            #         ]
-            #     }
-            #     for generated_token in top_logprobs_response
-            # ]
-            # output = self.get_return_object(pred_output, response, return_meta_data)
-            # outputs.append(output)
+                for generated_token in top_logprobs_response
+            ]
+            output = self.get_return_object(pred_output, response, return_meta_data)
+            outputs.append(output)
         return outputs
 
     def get_return_object(self, predict_result, response, return_meta_data):
@@ -2474,86 +2459,6 @@ def get_images_without_text(instance):
 def get_text_without_images(instance, image_token="<image>"):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
-
-
-class HFLlavaInferenceEngine(InferenceEngine, LazyLoadMixin):
-    model_name: str
-    max_new_tokens: int
-    lazy_load = True
-    image_token = "<image>"
-
-    _requirements_list = {
-        "transformers": "Install huggingface package using 'pip install --upgrade transformers",
-        "torch": "Install torch, go on PyTorch website for mode details.",
-        "accelerate": "pip install accelerate",
-    }
-
-    def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, "hf_lava")
-
-    def _prepare_engine(self):
-        import torch
-        from transformers import AutoProcessor, LlavaForConditionalGeneration
-
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else 0
-            if torch.cuda.is_available()
-            else "cpu"
-        )
-
-        self.model = LlavaForConditionalGeneration.from_pretrained(
-            self.model_name,
-            torch_dtype=torch.float16,
-            low_cpu_mem_usage=True,
-        ).to(self.device)
-
-        self.processor = AutoProcessor.from_pretrained(self.model_name)
-
-    def prepare_engine(self):
-        if not self.lazy_load:
-            self._prepare_engine()
-
-    def _is_loaded(self):
-        return hasattr(self, "model") and self.model is not None
-
-    def _infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], DatasetDict],
-        return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if not self._is_loaded():
-            self._prepare_engine()
-
-        import torch
-
-        results = []
-        for instance in tqdm(dataset):
-            text = get_text_without_images(instance, self.image_token)
-            images = get_images_without_text(instance)
-
-            if len(images) == 1:
-                images = images[0]
-
-            inputs = self.processor(images=images, text=text, return_tensors="pt").to(
-                self.device, torch.float16
-            )
-
-            input_len = len(inputs["input_ids"][0])
-            output = self.model.generate(
-                **inputs,
-                max_new_tokens=self.max_new_tokens,
-                do_sample=False,
-                pad_token_id=self.processor.tokenizer.eos_token_id,
-            )
-            result = self.processor.decode(
-                output[0][input_len:], skip_special_tokens=True
-            )
-            results.append(result)
-
-        return results
-
 
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
