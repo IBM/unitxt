@@ -1541,17 +1541,12 @@ class OpenAiInferenceEngine(
 
     def _infer(
         self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
+        dataset: Union[List[Dict[str, Any]], DatasetDict],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            try:
-                messages = json.loads(instance["source"])
-            except:
-                messages = []
-                messages.append({"role": "user", "content": instance["source"]})
-
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
                 messages=messages,
                 model=self.model_name,

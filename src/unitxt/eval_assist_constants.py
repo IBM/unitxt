@@ -4,6 +4,7 @@ from typing import Optional
 from .artifact import Artifact
 from .inference import (
     LiteLLMInferenceEngine,
+    RITSInferenceEngine,
 )
 
 
@@ -30,15 +31,6 @@ class CriteriaWithOptions(Criteria):
 class EvaluatorTypeEnum(Enum):
     PAIRWISE_COMPARISON = "pairwise_comparison"
     DIRECT_ASSESSMENT = "direct_assessment"
-
-
-class ModelFamilyEnum(Enum):
-    MIXTRAL = "mixtral"
-    GRANITE = "granite"
-    LLAMA3 = "llama3"
-    PROMETHEUS = "prometheus"
-    GPT = "gpt"
-
 
 class EvaluatorNameEnum(Enum):
     MIXTRAL8_7b = "Mixtral8-7b"
@@ -77,6 +69,8 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE_13B: "ibm/granite-13b-instruct-v2",
     EvaluatorNameEnum.GRANITE3_2B: "ibm/granite-3-2b-instruct",
     EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
+    EvaluatorNameEnum.GRANITE_GUARDIAN_2B: "ibm/granite-guardian-3-2b",
+    EvaluatorNameEnum.GRANITE_GUARDIAN_8B: "ibm/granite-guardian-3-8b",
 }
 
 MODEL_RENAMINGS = {
@@ -92,67 +86,65 @@ MODEL_RENAMINGS = {
 INFERENCE_ENGINE_NAME_TO_CLASS = {
     ModelProviderEnum.WATSONX: LiteLLMInferenceEngine,
     ModelProviderEnum.OPENAI: LiteLLMInferenceEngine,
-    ModelProviderEnum.RITS: LiteLLMInferenceEngine,
+    ModelProviderEnum.RITS: RITSInferenceEngine,
 }
 
 PROVIDER_TO_STRATEGY = {
     ModelProviderEnum.WATSONX: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
     ModelProviderEnum.OPENAI: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
-    ModelProviderEnum.RITS: OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB,
+    ModelProviderEnum.RITS: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
 }
 
 
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
-    model_family: ModelFamilyEnum
     providers: list[ModelProviderEnum]
 
-    def __init__(self, name, model_family, providers):
+    def __init__(self, name, providers):
         self.name = name
-        self.model_family = model_family
         self.providers = providers
 
 
 EVALUATORS_METADATA = [
     EvaluatorMetadata(
         EvaluatorNameEnum.MIXTRAL8_7b,
-        ModelFamilyEnum.MIXTRAL,
         [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.MIXTRAL8_22b,
-        ModelFamilyEnum.MIXTRAL,
         [ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.MIXTRAL_LARGE,
-        ModelFamilyEnum.MIXTRAL,
         [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GRANITE3_8B,
-        ModelFamilyEnum.GRANITE,
         [ModelProviderEnum.WATSONX],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GPT4,
-        ModelFamilyEnum.GPT,
         [ModelProviderEnum.OPENAI],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_70B,
-        ModelFamilyEnum.LLAMA3,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_8B,
-        ModelFamilyEnum.LLAMA3,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_405B,
-        ModelFamilyEnum.LLAMA3,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GRANITE_GUARDIAN_2B,
+        [ModelProviderEnum.WATSONX],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GRANITE_GUARDIAN_8B,
+        [ModelProviderEnum.WATSONX],
     ),
 ]
 
@@ -177,7 +169,7 @@ class DirectCriteriaCatalogEnum(Enum):
                 "There is no numeriselected_providercal temperature reading in the response.",
             ),
         ],
-        {"Yes": 1.0, "No": 0.0, "Pass": 0.5},
+        {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
     )
 
     CONCISENESS = CriteriaWithOptions(

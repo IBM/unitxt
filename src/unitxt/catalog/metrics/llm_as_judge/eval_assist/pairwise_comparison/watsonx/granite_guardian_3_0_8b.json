@@ -1,11 +1,11 @@
 {
     "__type__": "eval_assist_llm_as_judge_pairwise",
     "inference_engine": {
-        "__type__": "rits_inference_engine",
-        "model_name": "mistralai/mixtral-8x22B-instruct-v0.1",
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/ibm/granite-guardian-3-8b",
         "max_tokens": 1024,
         "seed": 42
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "MIXTRAL8_22b"
+    "evaluator_name": "GRANITE_GUARDIAN_8B"
 }
