@@ -28,18 +28,18 @@ def get_evaluator(
 
     inference_params = {"max_tokens": 1024, "seed": 42}
     model_name = rename_model_if_required(EVALUATOR_TO_MODEL_ID[name], provider)
-    if provider != ModelProviderEnum.WATSONX:
+    if provider == ModelProviderEnum.WATSONX:
         model_name = f"watsonx/{model_name}"
-    elif provider in [ModelProviderEnum.OPENAI, ModelProviderEnum.RITS]:
+    elif provider == ModelProviderEnum.OPENAI:
         model_name = f"openai/{model_name}"
 
     params = {
-        "model": model_name,
+        f"{'model' if provider != ModelProviderEnum.RITS else 'model_name'}": model_name,
         **inference_params,
     }
 
-    if provider == ModelProviderEnum.RITS:
-        params['api_base'] = RITSInferenceEngine.get_base_url_from_model_name(model_name) + '/v1'
+    # if provider == ModelProviderEnum.RITS:
+    #     params['api_base'] = RITSInferenceEngine.get_base_url_from_model_name(model_name) + '/v1'
 
     inference_engine = INFERENCE_ENGINE_NAME_TO_CLASS[provider](**params)
 
@@ -47,7 +47,6 @@ def get_evaluator(
         "inference_engine": inference_engine,
         "option_selection_strategy": PROVIDER_TO_STRATEGY[provider].name,
         "evaluator_name": evaluator_metadata.name.name,
-        "model_family": evaluator_metadata.model_family.name,
     }
 
     evaluator_klass = (
@@ -114,7 +113,6 @@ for evaluator_type in [
         inference_engine=MockInferenceEngine(model_name="mock"),
         option_selection_strategy=OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name,
         evaluator_name="",
-        model_family="",
     )
 
     add_to_catalog(

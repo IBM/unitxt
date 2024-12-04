@@ -1,6 +1,3 @@
-import random
-import re
-
 from unitxt.eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 
 from .api import infer, select

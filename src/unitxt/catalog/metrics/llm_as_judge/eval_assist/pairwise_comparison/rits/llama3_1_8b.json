@@ -1,12 +1,11 @@
 {
     "__type__": "eval_assist_llm_as_judge_pairwise",
     "inference_engine": {
-        "__type__": "lite_llm_inference_engine",
-        "model": "openai/meta-llama/Llama-3.1-8B-Instruct",
+        "__type__": "rits_inference_engine",
+        "model_name": "meta-llama/Llama-3.1-8B-Instruct",
         "max_tokens": 1024,
         "seed": 42
     },
-    "option_selection_strategy": "PARSE_OPTION_LOGPROB",
-    "evaluator_name": "LLAMA3_1_8B",
-    "model_family": "LLAMA3"
+    "option_selection_strategy": "PARSE_OUTPUT_TEXT",
+    "evaluator_name": "LLAMA3_1_8B"
 }

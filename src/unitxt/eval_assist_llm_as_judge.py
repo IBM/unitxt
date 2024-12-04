@@ -9,7 +9,6 @@ from .eval_assist_constants import (
     Criteria,
     CriteriaWithOptions,
     EvaluatorNameEnum,
-    ModelFamilyEnum,
     OptionSelectionStrategyEnum,
 )
 from .eval_assist_utils import get_parsed_context
@@ -27,7 +26,6 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
     criteria_or_criterias: Criteria = None
     option_selection_strategy: OptionSelectionStrategyEnum = None
     evaluator_name: EvaluatorNameEnum = None
-    model_family: ModelFamilyEnum = None
     check_positional_bias = True
     use_score_prefix = False
 
@@ -44,8 +42,6 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
             ]
         if isinstance(self.evaluator_name, str):
             self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
-        if isinstance(self.model_family, str):
-            self.model_family = ModelFamilyEnum[self.model_family]
 
         self.format = "formats.chat_api"
 
