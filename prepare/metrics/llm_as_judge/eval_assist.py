@@ -98,25 +98,3 @@ for evaluator_metadata in EVALUATORS_METADATA:
                 f"metrics.llm_as_judge.eval_assist.{evaluator_type.value}.{provider.value.lower()}.{metric_name}",
                 overwrite=True,
             )
-
-for evaluator_type in [
-    EvaluatorTypeEnum.DIRECT_ASSESSMENT,
-    EvaluatorTypeEnum.PAIRWISE_COMPARISON,
-]:
-    evaluator_klass = (
-        EvalAssistLLMAsJudgeDirect
-        if evaluator_type == EvaluatorTypeEnum.DIRECT_ASSESSMENT
-        else EvalAssistLLMAsJudgePairwise
-    )
-
-    e = evaluator_klass(
-        inference_engine=MockInferenceEngine(model_name="mock"),
-        option_selection_strategy=OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name,
-        evaluator_name="",
-    )
-
-    add_to_catalog(
-        e,
-        f"metrics.llm_as_judge.eval_assist.{evaluator_type.value}",
-        overwrite=True,
-    )
