@@ -3,8 +3,6 @@ from abc import abstractmethod
 from random import random
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from unitxt.processors import MatchClosestOption
-
 from .artifact import Artifact
 from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
@@ -484,13 +482,6 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
             input_fields, reference_fields
         )
         return input_fields, reference_fields
-
-
-class OptionSelectionTemplate(InputOutputTemplate):
-    def post_process_instance(self, instance):
-        print('instance["input_fields"]["options"]')
-        print(instance["input_fields"]["options"])
-        return instance
 
 
 class MultipleChoiceTemplate(InputFormatTemplate):
