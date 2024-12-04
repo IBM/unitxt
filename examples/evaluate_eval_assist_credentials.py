@@ -1,6 +1,8 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
+from unitxt.eval_assist_constants import EvaluatorNameEnum, OptionSelectionStrategyEnum
+from unitxt.eval_assist_utils import CatalogDefinition, parse_catalog_definition
 from unitxt.loaders import LoadFromDictionary
 from unitxt.text_utils import print_dict
 
@@ -13,17 +15,37 @@ data = {
 }
 
 criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
-metrics = [
-    f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_8b[criteria_or_criterias={criteria},option_selection_strategy=PARSE_OUTPUT_TEXT,"
-    "inference_engine=engines.rits.llama_3_1_70b_instruct[model_name=openai/meta-llama/llama-3-1-70b-instruct,credentials={api_key=}]]"
-]
+
+inference_engine_catalog_definition: CatalogDefinition = {
+    'name': "engines.rits",
+    'params': {
+        'model_name': "mistralai/mistral-large-instruct-2407",
+        "max_tokens": 1024,
+        "seed": 42
+    }
+}
+
+metric_catalog_definition: CatalogDefinition = {
+    'name': 'metrics.llm_as_judge.eval_assist.direct_assessment',
+    'params': {
+        'inference_engine': inference_engine_catalog_definition,
+        "option_selection_strategy": OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name,
+        'evaluator_name': EvaluatorNameEnum.MIXTRAL_LARGE.name,
+        'criteria_or_criterias': "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
+    }
+}
+
+parsed_catalog_name = parse_catalog_definition(metric_catalog_definition)
+print('parsed_catalog_name')
+print(parsed_catalog_name)
+
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     task=Task(
         input_fields={"context": dict},
         reference_fields={},
         prediction_type=str,
-        metrics=metrics,
+        metrics=[parsed_catalog_name],
     ),
 )
 
