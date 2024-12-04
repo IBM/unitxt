@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Literal, Optional
 
 from .api import infer
 from .dataclass import Field
-from .formats import Format, SystemFormat
+from .formats import ChatAPIFormat, Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
@@ -65,17 +65,17 @@ class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if (
-                self.format
-                and type(self.format) is SystemFormat
-                and self.format.__id__ != "formats.empty"
-            ):
-                raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
-                    "not support formatting. Please remove the format definition from the recipe,"
-                    "or set the format to either 'formats.empty' or 'formats.chat_api'"
-                    " (OpenAi Chat API take care of the formatting automatically)."
-                )
+            if self.format and type(self.format) is not ChatAPIFormat:
+                if not (
+                    type(self.format) is SystemFormat
+                    and self.format.__id__ == "formats.empty"
+                ):
+                    raise ValueError(
+                        "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                        "not support formatting. Please remove the format definition from the recipe,"
+                        "or set the format to either 'formats.empty' or 'formats.chat_api'"
+                        " (OpenAi Chat API take care of the formatting automatically)."
+                    )
             if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
