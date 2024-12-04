@@ -1536,17 +1536,9 @@ class OpenAiInferenceEngine(
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         outputs = []
         for instance in tqdm(dataset, desc="Inferring with openAI API"):
+            messages = self.to_messages(instance)
             response = self.client.chat.completions.create(
-                messages=[
-                    # {
-                    #     "role": "system",
-                    #     "content": self.system_prompt,
-                    # },
-                    {
-                        "role": "user",
-                        "content": instance["source"],
-                    }
-                ],
+                messages=messages,
                 model=self.model_name,
                 **self._get_completion_kwargs(),
             )
@@ -2739,8 +2731,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
         },
         "together-ai": {
-            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
+            "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
+            "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
         },
         "aws": {
