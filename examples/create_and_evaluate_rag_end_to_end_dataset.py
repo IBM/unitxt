@@ -18,7 +18,7 @@ dataset = [
         "question_id": 0,
         "reference_answers": ["Austin"],
         "reference_contexts": [contexts[0]],
-        "reference_context_ids": ["0"],
+        "reference_context_ids": [0],
         "is_answerable_label": True,
     },
     {
@@ -26,7 +26,7 @@ dataset = [
         "question_id": 1,
         "reference_answers": ["Houston"],
         "reference_contexts": [contexts[1], contexts[2]],
-        "reference_context_ids": ["1", "2"],
+        "reference_context_ids": [1, 2],
         "is_answerable_label": True,
     },
 ]
@@ -35,13 +35,13 @@ predictions = [
     {
         "answer": "Houston",
         "contexts": [contexts[2]],
-        "context_ids": ["2"],
+        "context_ids": [2],
         "is_answerable": True,
     },
     {
         "answer": "Houston",
         "contexts": [contexts[2]],
-        "context_ids": ["2"],
+        "context_ids": [2],
         "is_answerable": True,
     },
 ]
