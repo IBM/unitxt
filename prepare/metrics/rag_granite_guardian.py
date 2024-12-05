@@ -39,4 +39,4 @@ for granite_risk_name in risk_names:
         ],
     )
 
-    add_to_catalog(metric, name=f"metrics.rag.{metric_name}", overwrite=True)
+    add_to_catalog(metric_pipeline, name=f"metrics.rag.{metric_name}", overwrite=True)

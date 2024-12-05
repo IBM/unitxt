@@ -1,5 +1,30 @@
 {
-    "__type__": "granite_guardian_wml_metric",
+    "__type__": "metric_pipeline",
     "main_score": "granite_guardian_answer_relevance",
-    "risk_name": "answer_relevance"
+    "metric": {
+        "__type__": "granite_guardian_wml_metric",
+        "main_score": "granite_guardian_answer_relevance",
+        "risk_name": "answer_relevance"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "task_data/contexts",
+                "answer": "task_data/answer",
+                "ground_truths": "task_data/ground_truths",
+                "question": "task_data/question"
+            },
+            "not_exist_ok": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
 }
