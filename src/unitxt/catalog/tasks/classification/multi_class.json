@@ -1,6 +1,6 @@
 {
     "__type__": "task",
-    "__description__": "This is multi class text classification task.  \n\nThe set of 'classes' we want to classify to is provided as a list of strings.\n\nThe 'text_type' is an optional field that defines the type of text we classify (e.g. \"document\", \"review\", etc.).\nThe 'type_of_class' is an oiptional field that the defines the type of classification we perform (e.g. \"sentiment\", \"harm\", \"risk\" etc..)\nThe 'text_type' and 'type_of_class' fields can be used by the template to customize the prompt.\n\nThe default reported metrics are the classical f1_micro (equivalent to accuracy for multi class classification), and f1_macro.\n\n",
+    "__description__": "This is multi class text classification task.\n\nThe set of 'classes' we want to classify to is provided as a list of strings.\n\nThe 'text_type' is an optional field that defines the type of text we classify (e.g. \"document\", \"review\", etc.).\nThe 'type_of_class' is an oiptional field that the defines the type of classification we perform (e.g. \"sentiment\", \"harm\", \"risk\" etc..)\nThe 'text_type' and 'type_of_class' fields can be used by the template to customize the prompt.\n\nThe default reported metrics are the classical f1_micro (equivalent to accuracy for multi class classification), and f1_macro.\n\n",
     "input_fields": {
         "text": "str",
         "text_type": "str",

@@ -1,6 +1,6 @@
 {
     "__type__": "task",
-    "__description__": "This is a special case of multi class text classification task, in which we classify a given text to a set of topics.\nThe only difference from 'tasks.classification.multi_class', is that the addition of 'classes_descriptions' field, \nwhich is used by the template to add a description for each class.\n",
+    "__description__": "This is a special case of multi class text classification task, in which we classify a given text to a set of topics.\nThe only difference from 'tasks.classification.multi_class', is that the addition of 'classes_descriptions' field,\nwhich is used by the template to add a description for each class.\n",
     "input_fields": {
         "text": "str",
         "text_type": "str",
