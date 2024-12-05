@@ -10,10 +10,10 @@
         {
             "__type__": "copy",
             "field_to_field": {
-                "contexts": "task_data/contexts",
+                "question": "task_data/question",
                 "answer": "task_data/answer",
                 "ground_truths": "task_data/ground_truths",
-                "question": "task_data/question"
+                "contexts": "task_data/contexts"
             },
             "not_exist_ok": true
         },
