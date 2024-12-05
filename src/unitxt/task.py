@@ -259,7 +259,13 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        verify_required_schema(self.input_fields, instance)
+        verify_required_schema(
+            self.input_fields,
+            instance,
+            class_name="Task",
+            id=self.__id__,
+            description=self.__description__,
+        )
         input_fields = {key: instance[key] for key in self.input_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
@@ -273,7 +279,13 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         if stream_name == constants.inference_stream:
             return result
 
-        verify_required_schema(self.reference_fields, instance)
+        verify_required_schema(
+            self.reference_fields,
+            instance,
+            class_name="Task",
+            id=self.__id__,
+            description=self.__description__,
+        )
         result["reference_fields"] = {
             key: instance[key] for key in self.reference_fields.keys()
         }

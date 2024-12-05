@@ -1032,8 +1032,11 @@ def to_float_or_default(v, failure_default=0):
 
 
 def verify_required_schema(
-    required_schema_dict: typing.Dict[str, type],
-    input_dict: typing.Dict[str, typing.Any],
+    required_schema_dict: Dict[str, type],
+    input_dict: Dict[str, Any],
+    class_name: str,
+    id: Optional[str] = "",
+    description: Optional[str] = "",
 ) -> None:
     """Verifies if passed input_dict has all required fields, and they are of proper types according to required_schema_dict.
 
@@ -1048,13 +1051,15 @@ def verify_required_schema(
         try:
             value = input_dict[field_name]
         except KeyError as e:
-            raise KeyError(
-                f"Unexpected field name: '{field_name}'. "
-                f"The available names: {list(input_dict.keys())}."
+            raise Exception(
+                f"The {class_name} ('{id}') expected a field '{field_name}' which the input instance did not contain.\n"
+                f"The input instance fields are  : {list(input_dict.keys())}.\n"
+                f"{class_name} description: {description}"
             ) from e
 
         if not isoftype(value, data_type):
             raise ValueError(
                 f"Passed value '{value}' of field '{field_name}' is not "
-                f"of required type: ({to_type_string(data_type)})."
+                f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
+                f"{class_name} description: {description}"
             )
