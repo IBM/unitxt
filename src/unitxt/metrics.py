@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import os
 import re
 import string
@@ -16,6 +17,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
+from transformers import AutoTokenizer
 
 from .artifact import Artifact
 from .collections import ListCollection
@@ -27,7 +29,11 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
-from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
+from .inference import (
+    HFPipelineBasedInferenceEngine,
+    InferenceEngine,
+    WMLInferenceEngineGeneration,
+)
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -5124,3 +5130,111 @@ class PredictionLength(InstanceMetric):
         task_data: List[Dict],
     ) -> dict:
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
+
+
+class GraniteGuardianWMLMetric(InstanceMetric):
+    """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
+
+    main_score = "granite_guardian"
+    reduction_map: dict[str, list[str]] = None
+    prediction_type = float
+
+    model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    safe_token = "No"
+    unsafe_token = "Yes"
+
+    inference_engine: WMLInferenceEngineGeneration = None
+    tokenizer: AutoTokenizer = None
+    generation_params: dict = None
+    risk_name: str = None
+
+    _requirements_list: List[str] = ["ibm_watsonx_ai"]
+
+    def prepare(self):
+        self.reduction_map = {"mean": [self.main_score]}
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        if self.tokenizer is None:
+            self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.model_name,
+            )
+            self.inference_engine._load_model()
+            self.model = self.inference_engine._model
+            self.generation_params = self.inference_engine._set_logprobs_params({})
+
+        messages = self.process_input_fields(task_data)
+        guardian_config = {"risk_name": self.risk_name}
+        processed_input = self.tokenizer.apply_chat_template(
+            messages,
+            guardian_config=guardian_config,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+        result = self.model.generate(
+            prompt=[processed_input],
+            params=self.generation_params,
+        )
+        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        label, prob_of_risk = self.parse_output(generated_tokens_list)
+        score = 1 - prob_of_risk if label is not None else np.nan
+        return {self.main_score: score}
+
+    def process_input_fields(self, task_data):
+        if self.risk_name == "groundedness":
+            messages = [
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "answer_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "context_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+            ]
+        else:
+            raise NotImplementedError()
+
+        return messages
+
+    def parse_output(self, generated_tokens_list):
+        top_tokens_list = [
+            generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
+        ]
+        prob = self.get_probabilities(top_tokens_list)
+        prob_of_risk = prob[1]
+
+        res = next(iter(generated_tokens_list))["text"].strip()
+
+        if self.unsafe_token.lower() == res.lower():
+            label = self.unsafe_token
+        elif self.safe_token.lower() == res.lower():
+            label = self.safe_token
+        else:
+            label = None
+
+        return label, prob_of_risk
+
+    def get_probabilities(self, top_tokens_list):
+        import torch
+
+        safe_token_prob = 1e-50
+        unsafe_token_prob = 1e-50
+
+        for top_tokens in top_tokens_list:
+            for token in top_tokens:
+                if token["text"].strip().lower() == self.safe_token.lower():
+                    safe_token_prob += math.exp(token["logprob"])
+                if token["text"].strip().lower() == self.unsafe_token.lower():
+                    unsafe_token_prob += math.exp(token["logprob"])
+
+        return torch.softmax(
+            torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
+            dim=0,
+        ).numpy()
