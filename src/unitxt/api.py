@@ -12,12 +12,12 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .metrics import Metric, MetricsList
-from .operator import SourceOperator
+from .operator import Operator, SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
 from .task import Task
-from .type_utils import isoftype
+from .type_utils import isoftype, to_type_string
 
 logger = get_logger()
 constants = get_constants()
@@ -184,6 +184,7 @@ def create_and_evaluate_dataset(
     data: List[Dict[str, Any]],
     task: Task,
     metrics: Optional[List[Union[Metric, MetricsList]]] = None,
+    postprocessors: Optional[List[Operator]] = None,
 ) -> List[Dict[str, Any]]:
     """Creates and evaluates dataset from input data based on a specific Unitxt task.
 
@@ -193,6 +194,7 @@ def create_and_evaluate_dataset(
         task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
         data : Required list of instances to evaluate.
         metrics : Optional list of metrics to use.  If not specified, the default metrics defined in the task are used.
+        postprocessors: Optional list of post processors to apply. If not specified, no post processing is done on the predictions.
 
     Returns:
         output dataset with evaluated scores (see https://www.unitxt.ai/en/latest/docs/evaluating_datasets.html)
@@ -213,7 +215,15 @@ def create_and_evaluate_dataset(
             raise Exception(
                 f"The prediction passed to 'create_and_evaluate_dataset' does not match the task's required prediction type of '{task.prediction_type}'. The prediction is : {prediction}"
             )
+    if postprocessors is not None:
+        if not isoftype(postprocessors, List[Union[Operator, str]]):
+            raise Exception(
+                f"The post processors passed to 'create_and_evaluate_dataset' is not a list of processors. Instead it is of type '{to_type_string(type(postprocessors))}'."
+            )
+        task.default_template.postprocessors = postprocessors
+    else:
         task.default_template.postprocessors = []
+
     data = create_dataset(
         task=task, test_set=data, split="test", format="formats.empty", metrics=metrics
     )
