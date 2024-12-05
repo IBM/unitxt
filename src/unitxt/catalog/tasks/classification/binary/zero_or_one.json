@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is binary text classification task where the labels are provided as 0 and 1.\n         \nThe 'class' is the name of the class we classifify and must be the same in all instances.\nThe 'text_type' is an optional field that defines the type of text we classify (e.g. \"document\", \"review\", etc.).\nThis can be used by the template to customize the prompt.\n\nThe default reported metrics are the classifical f1_micro (accuracy).\n        ",
     "input_fields": {
         "text": "str",
         "text_type": "str",
