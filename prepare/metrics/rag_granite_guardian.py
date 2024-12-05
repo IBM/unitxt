@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import GraniteGuardianWMLMetric, MetricPipeline
 from unitxt.operators import Copy, Set
 
-rag_fields = {"ground_truths", "answer", "contexts", "question"}
+rag_fields = ["ground_truths", "answer", "contexts", "question"]
 
 test_examples = [
     {
