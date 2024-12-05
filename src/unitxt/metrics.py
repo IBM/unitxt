@@ -5154,6 +5154,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     def prepare(self):
         self.reduction_map = {"mean": [self.main_score]}
 
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         if self.tokenizer is None:
             self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
@@ -5163,7 +5164,6 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self.model = self.inference_engine._model
             self.generation_params = self.inference_engine._set_logprobs_params({})
 
-    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         messages = self.process_input_fields(task_data)
         guardian_config = {"risk_name": self.risk_name}
         processed_input = self.tokenizer.apply_chat_template(
