@@ -3679,7 +3679,7 @@ class NDCG(GlobalMetric):
 
 
 class RetrievalMetric(InstanceMetric):
-    prediction_type = List[str]
+    prediction_type = Union[List[str], List[int]]
     single_reference_per_prediction = True
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
