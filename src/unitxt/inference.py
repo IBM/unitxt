@@ -2798,8 +2798,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
         },
         "together-ai": {
-            "llama-3-8b-instruct": "together_ai/togethercomputer/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "together_ai/togethercomputer/llama-3-70b-instruct",
+            "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
+            "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
         },
         "aws": {
@@ -2825,6 +2825,10 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
+        "vertex-ai": {
+            "llama-3-1-8b-instruct": "vertex_ai/meta/llama-3.1-8b-instruct-maas",
+            "llama-3-1-70b-instruct": "vertex_ai/meta/llama-3.1-70b-instruct-maas",
+        },
     }
 
     _provider_to_base_class = {
@@ -2832,6 +2836,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "open-ai": LiteLLMInferenceEngine,
         "together-ai": LiteLLMInferenceEngine,
         "aws": LiteLLMInferenceEngine,
+        "vertex-ai": LiteLLMInferenceEngine,
         "ollama": OllamaInferenceEngine,
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
