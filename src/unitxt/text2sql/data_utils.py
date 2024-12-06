@@ -73,13 +73,14 @@ class SQLData:
 
     def get_databases_folder(self):
         self.databases_folder = os.path.join(USER_DATABASES_CACHE, "bird")
-        snapshot_download(
-            repo_id="premai-io/birdbench",
-            repo_type="dataset",
-            local_dir=self.databases_folder,
-            force_download=False,
-            allow_patterns="*validation*",
-        )
+        if not os.path.join(USER_DATABASES_CACHE, "bird"):
+            snapshot_download(
+                repo_id="premai-io/birdbench",
+                repo_type="dataset",
+                local_dir=self.databases_folder,
+                force_download=False,
+                allow_patterns="*validation*",
+            )
         return self.databases_folder
 
     def get_db_file_path(self, db_name):
