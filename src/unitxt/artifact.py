@@ -359,7 +359,7 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
-        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        original_args = self.__class__(**self._init_dict).get_repr_dict()
         current_args = self.get_repr_dict()
         diffs = dict_diff_string(original_args, current_args)
         if diffs:
