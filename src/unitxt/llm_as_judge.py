@@ -48,6 +48,7 @@ class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
     reduction_map: Optional[Dict[str, List[str]]] = None
     batch_size: int = 32
     prediction_type = Any  # Because handled with multiple tasks
+    single_reference_per_prediction: bool = True
 
     def verify(self):
         if not isinstance(self.template, Template):

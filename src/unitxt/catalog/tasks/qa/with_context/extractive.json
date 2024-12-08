@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__deprecated_msg__": "This task is no longer used and was merged with 'tasks.qa.with_context'. It should be replaced with 'tasks.qa.with_context[metrics=[metrics.squad]]' to get the same behavior.",
     "input_fields": {
         "context": "Union[Text, Table, Dialog]",
         "context_type": "str",

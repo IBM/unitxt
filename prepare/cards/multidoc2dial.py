@@ -56,7 +56,7 @@ with settings.context(allow_unverified_code=True):
             ),
             Set({"context_type": "document"}),
         ],
-        task="tasks.qa.with_context.extractive",
+        task="tasks.qa.with_context[metrics=[metrics.squad]]",
         templates="templates.qa.with_context.all",
         __tags__={
             "annotations_creators": "crowdsourced",

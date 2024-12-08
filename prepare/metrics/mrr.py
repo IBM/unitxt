@@ -41,4 +41,22 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+predictions = [[1, 2, 3, 4, 5, 6], [7, 10, 11], [1, 2], [], [3]]
+
+references = [
+    [[3, 4]],  # third hit
+    [[7]],  # first hit
+    [[]],  # no hit
+    [[1]],  # no hit
+    [[2]],  # no hit
+]
+
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+
 add_to_catalog(metric, "metrics.mrr", overwrite=True)

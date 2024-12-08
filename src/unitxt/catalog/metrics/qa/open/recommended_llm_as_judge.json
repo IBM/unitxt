@@ -1,0 +1,6 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.llm_as_judge.rating.llama_3_70b_instruct.generic_single_turn"
+    ]
+}

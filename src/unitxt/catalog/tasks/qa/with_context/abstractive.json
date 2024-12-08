@@ -1,19 +1,5 @@
 {
-    "__type__": "task",
-    "input_fields": {
-        "context": "Union[Text, Image, Audio, Table, Dialog]",
-        "context_type": "str",
-        "question": "str"
-    },
-    "reference_fields": {
-        "answers": "List[str]"
-    },
-    "prediction_type": "str",
-    "metrics": [
-        "metrics.rouge"
-    ],
-    "augmentable_inputs": [
-        "context",
-        "question"
-    ]
+    "__type__": "artifact_link",
+    "artifact_linked_to": "tasks.qa.with_context",
+    "__deprecated_msg__": null
 }
