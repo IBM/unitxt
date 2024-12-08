@@ -41,6 +41,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
+from datasets import IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -51,7 +52,7 @@ from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
 from .settings_utils import get_settings
-from .stream import DynamicStream, MultiStream
+from .stream import MultiStream
 from .type_utils import isoftype
 from .utils import LRUCache
 
@@ -243,9 +244,6 @@ class LoadHF(Loader):
         if self.split is not None:
             dataset = {self.split: dataset}
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
-
         return dataset
 
     def load_dataset(self):
@@ -277,27 +275,9 @@ class LoadHF(Loader):
             for split in dataset.keys():
                 dataset[split] = dataset[split].to_iterable_dataset()
         else:
-            dataset = {self.split: dataset}
-
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+            dataset = {self.split: dataset.to_iterable_dataset()}
 
         return dataset
-
-    def split_limited_load(self, dataset, split_name):
-        yield from itertools.islice(dataset[split_name], self.get_limit())
-
-    def limited_load(self, dataset):
-        self.log_limited_loading()
-        return MultiStream(
-            {
-                name: DynamicStream(
-                    generator=self.split_limited_load,
-                    gen_kwargs={"dataset": dataset, "split_name": name},
-                )
-                for name in dataset.keys()
-            }
-        )
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
@@ -309,7 +289,7 @@ class LoadHF(Loader):
                 ["public"], "when loading from Huggingface hub"
             )
 
-    def load_iterables(self):
+    def load_iterables(self) -> IterableDatasetDict:
         try:
             dataset = self.stream_dataset()
         except (
@@ -317,10 +297,23 @@ class LoadHF(Loader):
         ):  # streaming is not supported for zipped files so we load without streaming
             dataset = self.load_dataset()
 
+        if self.filtering_lambda is not None:
+            dataset = self.filter_load(dataset)
+
         if self.get_limit() is not None:
-            return self.limited_load(dataset=dataset)
+            self.log_limited_loading()
+            return {
+                split_name: dataset[split_name].take(self.get_limit())
+                for split_name in dataset
+            }
 
         return dataset
+
+    # for LoadHF we separate the policy setter from the loader
+    def process(self) -> MultiStream:
+        # self._maybe_set_classification_policy()
+        # return self.add_data_classification(self.load_data())
+        return self.load_data()
 
 
 class LoadCSV(Loader):
@@ -914,3 +907,8 @@ class LoadFromHFSpace(LoadHF):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()
+
+    # for LoadFromHF, do the full process, including policy setter
+    def process(self) -> MultiStream:
+        self._maybe_set_classification_policy()
+        return self.add_data_classification(self.load_data())
