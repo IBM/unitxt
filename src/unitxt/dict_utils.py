@@ -24,29 +24,32 @@ def is_wildcard(string):
 # formal definition of qpath syntax by which a query is specified:
 # qpath -> A (/A)*
 # A -> name | * | non-neg-int
-# name -> name.matches()
-#  * matches ALL members (each and every) of a list or a dictionary element in input dictionary,
+# name -> a string satisfying is_name above.
+#  * -> ALL members (each and every) of a list or a dictionary element in the input dictionary,
 #
-# a path p in dictionary dic is said to match query qpath if it satisfies the following recursively
-# defined condition:
-# (1) the prefix of length 0 of p (i.e., pref = "") matches the whole of dic. Also denoted here: pref leads to dic.
-# (2) Denoting by el the element in dic lead to by prefix pref of qpath (el must be a list or dictionary),
-# and by A (as the definition above) the component, DIFFERENT from *, in qpath, that follows pref, the element
-# lead to by pref/A is el[A]. If el[A] is missing from dic, then no path in dic matches prefix pref/A of qpath,
+# A path p in dictionary dic, leading to element (aka subfield) el, is said to match query qpath
+# (alternatively said: query qpath matches path p in dic),
+# if the following recursively defined condition is satisfied:
+# (1) the prefix of length 0 of qpath (i.e., pref = "") matches the empty path in dic, the path leading to the whole of dic.
+# (2) Denoting by el the element in dic lead to by the path in dic that matches the prefix pref of qpath
+# (el must be a list or dictionary, since led to by a path matching a prefix of qpath, and not the whole of qpath),
+# and by A (as the definition above) the component, DIFFERENT from *, in qpath, that follows pref, then the element
+# lead to by the path in dic matching query pref/A is el[A]. If el[A] is missing from dic, then no path in dic matches
+# pref/A, that is either a longer prefix of qpath, or the whole of qpath,
 # and hence no path in dic matches query qpath. (E.g., when el is a list, A must match indx, and its
 # int value should be smaller than len(el) in order for the path in dic leading to element el[A] to match pref/A)
-# (3) Denoting as in (2), now with A == * : when el is a list, each and every element in the set:
+# (3) Denoting as in (2), now with A == * , then when el is a list, each and every element in the set:
 # {el[0], el[1], .. , el[len(el)-1]} is said to be lead to by a path matching pref/*
 # and when el is a dict, each and every element in the set {el[k] for k being a key in el} is said to be lead
 # to by a path matching pref/*
 #
 # An element el lead to by path p that matches qpath as a whole is thus either a list member (when indx.match the last
-# component of p, indexing into el) or a dictionary item (the key of which equals the last component of p). The value
-# of el (i.e. el[last component of p]) is returned (dic_get) or popped (dic_delete) or replaced by a new value (dic_set).
+# component of p) or a dictionary item (the key of which equals the last component of p). The value
+# of el is returned (dic_get) or el is popped (dic_delete) or el's value is replaced by a new value (dic_set).
 #
 # Thus, for a query with no *, dic contains at most one element the path to which matches the query.
 # If there is such one in dic - the function (either dict_get, dict_set, or dict_delete) operates on
-# that element according to its arguments, other than not_exist_ok
+# that element according to its arguments, other than not_exist_ok.
 # If there is not any such element in dic - the function throws or does not throw an exception, depending
 # on flag not_exist_ok.
 # For a query with *, there could be up to as many as there are values to match the *
@@ -54,9 +57,9 @@ def is_wildcard(string):
 # for more than one * in the query -- this effect multiplies)
 # Each of the three functions below (dict_get, dict_set, dict_delete) applies the requested
 # operation (read, set, or delete) to each and every element el in dic, the path to which matches the query in whole,
-# and reads a value from, or sets a new value to, or pops the value out from dic.
+# and reads a value from, or sets a new value to, or pops el out from dic.
 #
-# If no path in dic matches the query, then # if not_exist_ok=False, the function throws an exception;
+# If no path in dic matches the query, then if not_exist_ok=False, the function throws an exception;
 # but if not_exist_ok=True, the function returns a default value (dict_get) or does nothing (dict_delete)
 # or generates all the needed missing suffixes (dict_set, see details below).
 #
@@ -444,7 +447,9 @@ def dict_get(
     )
     if len(components) > 1:
         try:
-            success, values = get_values(dic, components, -1 * len(components))
+            success, values = get_values(
+                dic, components, -1 * len(components), allow_int_index=allow_int_index
+            )
             if success:
                 return values
         except Exception as e:

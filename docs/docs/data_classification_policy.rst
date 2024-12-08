@@ -41,7 +41,7 @@ If the `data_classification_policy` is not set, the component can handle all dat
 It is possible to override the `data_classification_policy` of a component with an environment variable.  See below.
 
 Adding `data_classification_policy` for data
-----------------------------
+--------------------------------------------
 
 Data classification information is added to streams of data by the use of Unitxt loaders.
 Existing loaders have default data classification policies. For example, LoadHF sets the policy to `['public']` for datasets
@@ -71,7 +71,7 @@ Example:
     assert dataset["test"][0]["data_classification_policy"] == ["public"]
 
 Adding `data_classification_policy` for components
-----------------------------
+--------------------------------------------------
 
 In case of Unitxt components, the parameter can be added by setting the attribute of a class in the code or by setting an environment variable.
 
@@ -102,7 +102,7 @@ Example:
     list(operator.process(stream))  # will not raise an error as the policy is included
 
 
-1. **Overriding default policy during environment variable **:
+1. **Overriding default policy during environment variable**:
 
 
 You can override the data classification of artifacts that was saved in the catalog by setting the `UNITXT_DATA_CLASSIFICATION_POLICY` env variable accordingly.
