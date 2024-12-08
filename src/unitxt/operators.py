@@ -39,6 +39,7 @@ General Operators List:
 ------------------------
 """
 
+import json
 import operator
 import uuid
 import warnings
@@ -277,6 +278,20 @@ class Set(InstanceOperator):
         return instance
 
 
+class SetEmptyDictIfDoesNotExist(InstanceOperator):
+    field: str
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if self.field not in instance:
+            instance[self.field] = {}
+        if not isinstance(instance[self.field], dict):
+            assert isinstance(instance[self.field], str)
+            instance[self.field] = json.loads(instance[self.field])
+        return instance
+
+
 @deprecation(version="2.0.0", alternative=Set)
 class AddFields(Set):
     pass
@@ -456,6 +471,7 @@ class InstanceFieldOperator(InstanceOperator):
                 raise ValueError(
                     f"Failed to get '{from_field}' from instance due to the exception above."
                 ) from e
+
             try:
                 if self.process_every_value:
                     new_value = [

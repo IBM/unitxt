@@ -1,11 +1,12 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import HuggingfaceMetric, MetricPipeline
-from unitxt.operators import Copy, MapInstanceValues
+from unitxt.operators import Copy, MapInstanceValues, SetEmptyDictIfDoesNotExist
 from unitxt.test_utils.metrics import test_metric
 
 metric = MetricPipeline(
     main_score="sacrebleu",
     preprocess_steps=[
+        SetEmptyDictIfDoesNotExist(field="task_data"),
         Copy(
             field="task_data/target_language",
             to_field="task_data/tokenize",

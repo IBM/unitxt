@@ -1,7 +1,7 @@
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Filter
-from unitxt.operators import ListFieldValues, MapValues
+from unitxt.operators import ListFieldValues, MapValues, SetEmptyDictIfDoesNotExist
 from unitxt.processors import LiteralEval, Lower
 from unitxt.splitters import RenameSplits
 from unitxt.string_operators import MapReplace
@@ -47,6 +47,7 @@ for name in config_names:
         ),
         preprocess_steps=[
             RenameSplits(mapper={"dev": "train", "validation": "test"}),
+            SetEmptyDictIfDoesNotExist(field="media"),
             ListFieldValues(
                 fields=[f"image_{i}" for i in range(1, 8)], to_field="media/images"
             ),

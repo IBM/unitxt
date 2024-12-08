@@ -3,6 +3,10 @@
     "main_score": "sacrebleu",
     "preprocess_steps": [
         {
+            "__type__": "set_empty_dict_if_does_not_exist",
+            "field": "task_data"
+        },
+        {
             "__type__": "copy",
             "field": "task_data/target_language",
             "to_field": "task_data/tokenize",

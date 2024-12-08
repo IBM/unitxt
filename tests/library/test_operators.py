@@ -733,10 +733,7 @@ class TestOperators(UnitxtTestCase):
         exception_texts = [
             "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
             "Failed to get 'label2' from instance due to the exception above.",
-            """query "label2" did not match any item in dict:
-label (str):
-    b
-""",
+            "query 'label2' did not match any item in dict:\nlabel (str):\n    b\n",
         ]
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
@@ -879,7 +876,7 @@ label (str):
         ]
 
         outputs = check_operator(
-            operator=Set(fields={"c/d": alist}, use_deepcopy=True),
+            operator=Set(fields={"c": {"d": alist}}, use_deepcopy=True),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -2152,21 +2149,22 @@ label (str):
             tester=self,
         )
 
-        # to field is structured:
-        check_operator(
-            operator=Rename(field_to_field={"b": "c/d"}),
-            inputs=inputs,
-            targets=[{"a": 1, "c": {"d": 2}}, {"a": 2, "c": {"d": 3}}],
-            tester=self,
-        )
+        # to a structured field, now throwing an exception, because
+        # requests to build a whole two-component path within the instance, not just
+        # one level:
+        with self.assertRaises(ValueError):
+            apply_operator(
+                operator=Rename(field_to_field={"b": "c/d"}),
+                inputs=inputs,
+            )
 
         # to field is structured, to stand in place of from field:
-        check_operator(
-            operator=Rename(field_to_field={"b": "b/d"}),
-            inputs=inputs,
-            targets=[{"a": 1, "b": {"d": 2}}, {"a": 2, "b": {"d": 3}}],
-            tester=self,
-        )
+        # fails, because a whole dict is to be added, not only one field in a dict or one element in a list
+        with self.assertRaises(ValueError):
+            apply_operator(
+                operator=Rename(field_to_field={"b": "b/d"}),
+                inputs=inputs,
+            )
 
         # to field is structured, to stand in place of from field, from field is deeper:
         check_operator(
@@ -2184,14 +2182,14 @@ label (str):
 
         # to field is structured, from field is structured too, different fields:
         check_operator(
-            operator=Rename(field_to_field={"b/c/e": "g/h"}),
+            operator=Rename(field_to_field={"b/c/e": "a/g"}),
             inputs=[
-                {"a": 1, "b": {"c": {"e": 2, "f": 20}}},
-                {"a": 2, "b": {"c": {"e": 3, "f": 30}}},
+                {"a": {"h": 1}, "b": {"c": {"e": 2, "f": 20}}},
+                {"a": {"h": 2}, "b": {"c": {"e": 3, "f": 30}}},
             ],
             targets=[
-                {"a": 1, "b": {"c": {"f": 20}}, "g": {"h": 2}},
-                {"a": 2, "b": {"c": {"f": 30}}, "g": {"h": 3}},
+                {"a": {"h": 1, "g": 2}, "b": {"c": {"f": 20}}},
+                {"a": {"h": 2, "g": 3}, "b": {"c": {"f": 30}}},
             ],
             tester=self,
         )
@@ -2200,7 +2198,7 @@ label (str):
         check_operator(
             operator=Rename(field_to_field={"a/b/c/d": "a/g/c/d"}),
             inputs=[
-                {"a": {"b": {"c": {"d": {"e": 1}}}}, "b": 2},
+                {"a": {"b": {"c": {"d": {"e": 1}}}, "g": {"c": {}}}, "b": 2},
             ],
             targets=[
                 {"a": {"g": {"c": {"d": {"e": 1}}}}, "b": 2},
@@ -2296,27 +2294,27 @@ label (str):
     def test_copy_string_to_string_error(self):
         inputs = [{"source": "hello", "task_data": 3}]
 
-        targets = [{"source": "hello", "task_data": {"source": "hello"}}]
-
-        check_operator(
+        check_operator_exception(
             operator=Copy(field="source", to_field="task_data/source"),
             inputs=inputs,
-            targets=targets,
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in Copy due to the exception above."
+            ],
             tester=self,
         )
 
-    def test_copy_paste_same_name2(self):
+    def test_copy_paste_same_name2_error(self):
         inputs = [
             {"a": "test"},
             {"a": "pest"},
         ]
 
-        targets = [{"a": {"x": "test"}}, {"a": {"x": "pest"}}]
-
-        check_operator(
+        check_operator_exception(
             operator=Copy(field="a", to_field="a/x"),
             inputs=inputs,
-            targets=targets,
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in Copy due to the exception above."
+            ],
             tester=self,
         )
 
@@ -2346,13 +2344,8 @@ label (str):
 
         inputs = [{"prediction": "red", "references": "blue"}]
         exception_texts = [
-            """Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.""",
-            """query \"references/*\" did not match any item in dict:
-prediction (str):
-    red
-references (str):
-    blue
-""",
+            "Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.",
+            "dict_get: query 'references/*' did not match any item in dict:\nprediction (str):\n    red\nreferences (str):\n    blue\n",
         ]
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),

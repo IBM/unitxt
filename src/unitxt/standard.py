@@ -9,7 +9,7 @@ from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
-from .operators import Set, StreamRefiner
+from .operators import Set, SetEmptyDictIfDoesNotExist, StreamRefiner
 from .recipe import Recipe
 from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
@@ -294,6 +294,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     StreamRefiner(max_instances=self.loader_limit)
                 )
 
+        self.metadata.steps.append(SetEmptyDictIfDoesNotExist(field="recipe_metadata"))
         self.metadata.steps.append(
             Set(
                 fields={
@@ -356,6 +357,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 )
                 self.verbalization.steps.append(
+                    SetEmptyDictIfDoesNotExist(field="recipe_metadata")
+                )
+                self.verbalization.steps.append(
                     Set(fields={"recipe_metadata/num_demos": self.num_demos})
                 )
 
@@ -367,6 +371,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
                     )
+                )
+                self.verbalization.steps.append(
+                    SetEmptyDictIfDoesNotExist(field="recipe_metadata")
                 )
                 self.verbalization.steps.append(
                     GetLength(field="demos", to_field="recipe_metadata/num_demos")
@@ -387,6 +394,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 )
         else:
+            self.verbalization.steps.append(
+                SetEmptyDictIfDoesNotExist(field="recipe_metadata")
+            )
             self.verbalization.steps.append(
                 Set(fields={"recipe_metadata/num_demos": 0})
             )
