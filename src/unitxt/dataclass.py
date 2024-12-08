@@ -533,6 +533,12 @@ class Dataclass(metaclass=DataclassMeta):
             if keep_empty or value is not None
         }
 
+    def get_repr_dict(self):
+        result = {}
+        for field in fields(self):
+            result[field.name] = getattr(self, field.name)
+        return result
+
     def __repr__(self) -> str:
         """String representation."""
         return f"{self.__class__.__name__}({', '.join([f'{field.name}={getattr(self, field.name)!r}' for field in fields(self)])})"
