@@ -308,19 +308,25 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
 
     Args:
          choice_a_field (str): The field which contains choice_a value
+
          choice_b_field (str): The field which contains choice_b value
+
          answer_field (str): The field which contains the answer value.
-           Should be of type Literal["choice_1", "choice_2", "tie"]
+         Should be of type Literal["choice_1", "choice_2", "tie"]
+
          choice_a_label (str): The label of choice A answer as it is verbalized in the template.
+
          choice_b_label (str): The label of choice B answer as it is verbalized in the template.
+
          choice_tie_label (str): The label of a tie answer as it should be verbalized in the template.
+
          shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
-     1) The values of choice_a_field and choice_b_field will be swapped.
-     2) If the values of answer_field is choice_a_label, set it to choice_b_label.
-         Else if the values of answer_field is choice_b_label, set it to choice_a_label.
-         Else if the value of answer_field is choice_tie_label, do nothing.
+     1. The values of choice_a_field and choice_b_field will be swapped.
+     2. If the values of answer_field is choice_a_label, set it to choice_b_label.
+        | Else if the values of answer_field is choice_b_label, set it to choice_a_label.
+        | Else if the value of answer_field is choice_tie_label, do nothing.
 
     """
 
@@ -433,14 +439,17 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
 
     Args:
          choice_a_field (str): The field which contains choice_a value
+
          choice_b_field (str): The field which contains choice_b value
+
          answer_field (str): The field which contains the answer value. The value should be an int.
-          Positive for preferring choice_a, and negative for preferring choice_b
+         Positive for preferring choice_a, and negative for preferring choice_b
+
          shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
-     1) The values of choice_a_field and choice_b_field will be swapped.
-     2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
+    | 1) The values of choice_a_field and choice_b_field will be swapped.
+    | 2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
 
     """
 

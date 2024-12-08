@@ -343,15 +343,18 @@ class Artifact(Dataclass):
 
         Args:
             instance (Dict[str, Any]): data which should contain its allowed data
-                classification policies under key 'data_classification_policy'.
+            classification policies under key 'data_classification_policy'.
+
             name (Optional[str]): name of artifact which should be used to retrieve
-                data classification from env. If not specified, then either __id__ or
-                 __class__.__name__, are used instead, respectively.
+            data classification from env. If not specified, then either ``__id__`` or
+            ``__class__.__name__``, are used instead, respectively.
 
         Returns:
             Dict[str, Any]: unchanged instance.
 
         Examples:
+        .. code-block:: python
+
             instance = {"x": "some_text", "data_classification_policy": ["pii"]}
 
             # Will raise an error as "pii" is not included policy
