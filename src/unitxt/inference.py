@@ -70,21 +70,26 @@ class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
 
     Args:
-    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
-    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
-    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
-    for this position and their probabilities.
-    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
-                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
-                ]
+        prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+        | If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+          the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+          for this position and their probabilities.
+        | For example: ``[ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+          {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]} ]``
 
-    input_tokens (int) : number of input tokens to the model.
-    output_tokens (int) : number of output tokens to the model.
-    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
-    seed (int): seed used by the model during generation.
-    input_text (str): input to the model.
-    model_name (str): the model_name as kept in the InferenceEngine.
-    inference_type (str): The label stating the type of the InferenceEngine.
+        input_tokens (int) : number of input tokens to the model.
+
+        output_tokens (int) : number of output tokens to the model.
+
+        stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+
+        seed (int): seed used by the model during generation.
+
+        input_text (str): input to the model.
+
+        model_name (str): the model_name as kept in the InferenceEngine.
+
+        inference_type (str): The label stating the type of the InferenceEngine.
     """
 
     prediction: Union[str, List[Dict[str, Any]]]
@@ -2046,27 +2051,29 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     Attributes:
         concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
-            which is also the maximum value.
+        which is also the maximum value.
 
     Examples:
-        from .api import load_dataset
+        .. code-block:: python
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngineGeneration(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
+            from .api import load_dataset
 
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "google/flan-t5-xxl"
+            wml_inference = WMLInferenceEngineGeneration(
+                credentials=wml_credentials,
+                model_name=model_name,
+                data_classification_policy=["public"],
+                top_p=0.5,
+                random_seed=123,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     concurrency_limit: int = 10
@@ -2174,31 +2181,33 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
     Attributes:
         image_encoder (EncodeImageToString, optional): operator which encodes images in
-            given format to base64 strings required by service. You should specify it when
-            you are using images in your inputs.
+        given format to base64 strings required by service. You should specify it when
+        you are using images in your inputs.
 
     Example:
-        from .api import load_dataset
-        from .image_operators
+        .. code-block:: python
 
-        image_encoder = EncodeImageToString(image_format="JPEG")
+            from .api import load_dataset
+            from .image_operators
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
-        wml_inference = WMLInferenceEngineChat(
-            credentials=wml_credentials,
-            model_name=model_name,
-            image_encoder=image_encoder,
-            data_classification_policy=["public"],
-            max_tokens=1024,
-        )
+            image_encoder = EncodeImageToString(image_format="JPEG")
 
-        dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+            wml_inference = WMLInferenceEngineChat(
+                credentials=wml_credentials,
+                model_name=model_name,
+                image_encoder=image_encoder,
+                data_classification_policy=["public"],
+                max_tokens=1024,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     image_encoder: Optional[EncodeImageToString] = None

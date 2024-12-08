@@ -966,11 +966,13 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
     InstanceMetric currently allows two reductions:
+
     1. 'mean', which calculates the mean of instance scores,
     2. 'group_mean', which first applies an aggregation function specified in the reduction_map
-        to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
-        of the group scores; if grouping_field is None, grouping is disabled.
-        See _validate_group_mean_reduction for formatting instructions.
+       to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
+       of the group scores; if grouping_field is None, grouping is disabled.
+       See _validate_group_mean_reduction for formatting instructions.
+
     """
 
     n_resamples: int = OptionalField(
@@ -1495,13 +1497,17 @@ class StringContainmentRatio(InstanceMetric):
 
     Attributes:
         field: The field from the task_data that contains the values to be checked for containment.
-               Example task:
-                    Task(
-                        input_fields={"question": str},
-                        reference_fields={"entities": str},
-                        prediction_type=str,
-                        metrics=["string_containment_ratio[field=entities]"],
-                    )
+
+    Example task that contains this metric:
+
+        .. code-block:: python
+
+            Task(
+                input_fields={"question": str},
+                reference_fields={"entities": str},
+                prediction_type=str,
+                metrics=["string_containment_ratio[field=entities]"],
+            )
     """
 
     reduction_map = {"mean": ["string_containment"]}
@@ -4031,18 +4037,21 @@ def performance_drop_rate(
 def interpret_effect_size(x: float):
     """Return a string rule-of-thumb interpretation of an effect size value, as defined by Cohen/Sawilowsky.
 
-    See https://en.wikipedia.org/wiki/Effect_size;
-    Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
-    Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
+    | See `Effect size <https://en.wikipedia.org/wiki/Effect_size>`_
+    | Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
+    | Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
 
     Value has interpretation of
-    - essentially 0 if |x| < 0.01
-    - very small if 0.01 <= |x| < 0.2
-    - small difference if 0.2 <= |x| < 0.5
-    - a medium difference if 0.5 <= |x| < 0.8
-    - a large difference if 0.8 <= |x| < 1.2
-    - a very large difference if 1.2 <= |x| < 2.0
-    - a huge difference if 2.0 <= |x|
+
+    .. code-block:: text
+
+        - essentially 0 if |x| < 0.01
+        - very small if 0.01 <= |x| < 0.2
+        - small difference if 0.2 <= |x| < 0.5
+        - a medium difference if 0.5 <= |x| < 0.8
+        - a large difference if 0.8 <= |x| < 1.2
+        - a very large difference if 1.2 <= |x| < 2.0
+        - a huge difference if 2.0 <= |x|
 
     Args:
         x: float effect size value
@@ -4078,7 +4087,7 @@ def normalized_cohens_h(
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
-    https://en.wikipedia.org/wiki/Cohen%27s_h
+    `Conhen's h <https://en.wikipedia.org/wiki/Cohen%27s_h>`_
 
     Cohen's h effect size metric between two proportions p2 and p1 is 2 * (arcsin(sqrt(p2)) - arcsin(sqrt(p1))).
     h in -pi, pi, with +/-pi representing the largest increase/decrease (p1=0, p2=1), or (p1=1, p2=0).
@@ -4089,6 +4098,9 @@ def normalized_cohens_h(
     Interpretation: the original unscaled Cohen's h can be interpreted according to function interpret_effect_size
 
     Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
+
+    .. code-block:: text
+
         - essentially 0 if |norm h| < 0.0031831
         - very small if 0.0031831 <= |norm h| < 0.06366198
         - small difference if 0.06366198 <= |norm h| < 0.15915494
@@ -4096,12 +4108,17 @@ def normalized_cohens_h(
         - a large difference if 0.25464791 <= |norm h| < 0.38197186
         - a very large difference if 0.38197186 <= |norm h| < 0.63661977
         - a huge difference if 0.63661977 <= |norm h|
+
     Args:
         subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
+
         control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
+
         comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
-            to be compared to the control group.
+        to be compared to the control group.
+
         interpret: boolean, whether to interpret the significance of the score or not
+
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """

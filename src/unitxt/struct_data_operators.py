@@ -2,17 +2,25 @@
 
 These operators are specialized in handling structured data like tables.
 For tables, expected input format is:
-{
-  "header": ["col1", "col2"],
-  "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-}
+
+.. code-block:: text
+
+    {
+        "header": ["col1", "col2"],
+        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+    }
 
 For triples, expected input format is:
-[[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
+
+.. code-block:: text
+
+    [[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
 
 For key-value pairs, expected input format is:
-{"key1": "value1", "key2": value2, "key3": "value3"}
-------------------------
+
+.. code-block:: text
+
+    {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
 import json
@@ -148,11 +156,15 @@ class SerializeTableAsMarkdown(SerializeTable):
 
     Markdown table format is used in GitHub code primarily.
     Format:
-    |col1|col2|col3|
-    |---|---|---|
-    |A|4|1|
-    |I|2|1|
-    ...
+
+    .. code-block:: text
+
+        |col1|col2|col3|
+        |---|---|---|
+        |A|4|1|
+        |I|2|1|
+        ...
+
     """
 
     # main method that serializes a table.
@@ -192,11 +204,14 @@ class SerializeTableAsDFLoader(SerializeTable):
 
     Pandas dataframe based code snippet format serializer.
     Format(Sample):
-    pd.DataFrame({
-        "name" : ["Alex", "Diana", "Donald"],
-        "age" : [26, 34, 39]
-    },
-    index=[0,1,2])
+
+    .. code-block:: python
+
+        pd.DataFrame({
+            "name" : ["Alex", "Diana", "Donald"],
+            "age" : [26, 34, 39]
+        },
+        index=[0,1,2])
     """
 
     # main method that serializes a table.
@@ -234,11 +249,14 @@ class SerializeTableAsJson(SerializeTable):
 
     Json format based serializer.
     Format(Sample):
-    {
-        "0":{"name":"Alex","age":26},
-        "1":{"name":"Diana","age":34},
-        "2":{"name":"Donald","age":39}
-    }
+
+    .. code-block:: json
+
+        {
+            "0":{"name":"Alex","age":26},
+            "1":{"name":"Diana","age":34},
+            "2":{"name":"Donald","age":39}
+        }
     """
 
     # main method that serializes a table.
@@ -264,15 +282,18 @@ class SerializeTableAsHTML(SerializeTable):
 
     HTML table format used for rendering tables in web pages.
     Format(Sample):
-    <table>
-        <thead>
-            <tr><th>name</th><th>age</th><th>sex</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Alice</td><td>26</td><td>F</td></tr>
-            <tr><td>Raj</td><td>34</td><td>M</td></tr>
-        </tbody>
-    </table>
+
+    .. code-block:: html
+
+        <table>
+            <thead>
+                <tr><th>name</th><th>age</th><th>sex</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Alice</td><td>26</td><td>F</td></tr>
+                <tr><td>Raj</td><td>34</td><td>M</td></tr>
+            </tbody>
+        </table>
     """
 
     # main method that serializes a table.
@@ -404,7 +425,7 @@ class TruncateTableRows(FieldOperator):
     """Limits table rows to specified limit by removing excess rows via random selection.
 
     Args:
-        rows_to_keep (int) - number of rows to keep.
+        rows_to_keep (int): number of rows to keep.
     """
 
     rows_to_keep: int = 10
@@ -563,16 +584,19 @@ class ListToKeyValPairs(InstanceOperator):
 class ConvertTableColNamesToSequential(FieldOperator):
     """Replaces actual table column names with static sequential names like col_0, col_1,...
 
-    Sample input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
-    Sample output:
-    {
-        "header": ["col_0", "col_1"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
+    .. code-block:: text
+
+        Sample input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
+
+        Sample output:
+        {
+            "header": ["col_0", "col_1"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -595,17 +619,19 @@ class ConvertTableColNamesToSequential(FieldOperator):
 class ShuffleTableRows(TypeDependentAugmentor):
     """Shuffles the input table rows randomly.
 
-    Sample Input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-    }
+    .. code-block:: text
 
-    Sample Output:
-    {
-        "header": ["name", "age"],
-        "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
-    }
+        Sample Input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+        }
+
+        Sample Output:
+        {
+            "header": ["name", "age"],
+            "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
+        }
     """
 
     augmented_type = Table
@@ -619,17 +645,19 @@ class ShuffleTableRows(TypeDependentAugmentor):
 class ShuffleTableColumns(TypeDependentAugmentor):
     """Shuffles the table columns randomly.
 
-    Sample Input:
-        {
-            "header": ["name", "age"],
-            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": ["age", "name"],
-            "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age"],
+                "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+            }
+
+        Sample Output:
+            {
+                "header": ["age", "name"],
+                "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
+            }
     """
 
     augmented_type = Table
@@ -662,11 +690,14 @@ class DumpJson(FieldOperator):
 class MapHTMLTableToJSON(FieldOperator):
     """Converts HTML table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     _requirements_list = ["bs4"]
@@ -701,11 +732,14 @@ class MapHTMLTableToJSON(FieldOperator):
 class MapTableListsToStdTableJSON(FieldOperator):
     """Converts lists table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -755,17 +789,20 @@ class ConstructTableFromRowsCols(InstanceOperator):
 class TransposeTable(TypeDependentAugmentor):
     """Transpose a table.
 
-    Sample Input:
-        {
-            "header": ["name", "age", "sex"],
-            "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": [" ", "0", "1", "2"],
-            "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age", "sex"],
+                "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+            }
+
+        Sample Output:
+            {
+                "header": [" ", "0", "1", "2"],
+                "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
+            }
+
     """
 
     augmented_type = Table
@@ -791,8 +828,9 @@ class DuplicateTableRows(TypeDependentAugmentor):
     """Duplicates specific rows of a table for the given number of times.
 
     Args:
-        row_indices (List[int]) - rows to be duplicated
-        times(int) - how many times to duplicate
+        row_indices (List[int]): rows to be duplicated
+
+        times(int): each row to be duplicated is to show that many times
     """
 
     augmented_type = Table
@@ -823,8 +861,9 @@ class DuplicateTableColumns(TypeDependentAugmentor):
     """Duplicates specific columns of a table for the given number of times.
 
     Args:
-        column_indices (List[int]) - columns to be duplicated
-        times(int) - how many times to duplicate
+        column_indices (List[int]): columns to be duplicated
+
+        times(int): each column to be duplicated is to show that many times
     """
 
     augmented_type = Table
