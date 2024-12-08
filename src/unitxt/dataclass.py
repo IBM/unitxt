@@ -536,7 +536,8 @@ class Dataclass(metaclass=DataclassMeta):
     def get_repr_dict(self):
         result = {}
         for field in fields(self):
-            result[field.name] = getattr(self, field.name)
+            if not field.internal:
+                result[field.name] = getattr(self, field.name)
         return result
 
     def __repr__(self) -> str:

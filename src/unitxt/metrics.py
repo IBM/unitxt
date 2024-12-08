@@ -1643,8 +1643,6 @@ class HuggingfaceMetric(GlobalMetric):
         default_factory=list
     )
 
-    experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
-
     def verify(self):
         if os.path.exists(self.hf_metric_name):
             UnitxtWarning(
@@ -1669,7 +1667,7 @@ class HuggingfaceMetric(GlobalMetric):
         import evaluate
 
         self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=self.experiment_id
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
 
     def compute(

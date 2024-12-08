@@ -559,5 +559,5 @@ class TestArtifact(UnitxtTestCase):
 
         self.assertEqual(
             str(e.exception),
-            "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed)",
+            "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed): 0 -> 1",
         )

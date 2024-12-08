@@ -54,9 +54,23 @@ def dict_diff_string(dict1, dict2):
         k: (dict1[k], dict2[k]) for k in keys_in_both if str(dict1[k]) != str(dict2[k])
     }
     result = []
-    result.extend(f" - {k} (added)" for k in added)
-    result.extend(f" - {k} (removed)" for k in removed)
-    result.extend(f" - {k} (changed)" for k in changed)
+
+    def format_with_value(k, value, label):
+        value_str = str(value)
+        return (
+            f" - {k} ({label}): {value_str}"
+            if len(value_str) <= 200
+            else f" - {k} ({label})"
+        )
+
+    result.extend(format_with_value(k, added[k], "added") for k in added)
+    result.extend(format_with_value(k, removed[k], "removed") for k in removed)
+    result.extend(
+        f" - {k} (changed): {dict1[k]!s} -> {dict2[k]!s}"
+        if len(str(dict1[k])) <= 200 and len(str(dict2[k])) <= 200
+        else f" - {k} (changed)"
+        for k in changed
+    )
 
     return "\n".join(result)
 
