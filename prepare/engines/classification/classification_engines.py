@@ -2,13 +2,14 @@ from unitxt import add_to_catalog
 from unitxt.inference import (
     IbmGenAiInferenceEngine,
     OpenAiInferenceEngine,
-    WMLInferenceEngine,
+    RITSInferenceEngine,
+    WMLInferenceEngineGeneration,
 )
 
 
 def get_inference_engine(model_name, framework_name):
     if framework_name == "ibm_wml":
-        return WMLInferenceEngine(
+        return WMLInferenceEngineGeneration(
             model_name=model_name,
             max_new_tokens=5,
             random_seed=42,
@@ -25,16 +26,20 @@ def get_inference_engine(model_name, framework_name):
         return OpenAiInferenceEngine(
             model_name=model_name, logprobs=True, max_tokens=5, temperature=0.0
         )
-
+    if framework_name == "rits":
+        return RITSInferenceEngine(
+            model_name=model_name, logprobs=True, max_tokens=5, temperature=0.0
+        )
     raise ValueError("Unsupported framework name " + framework_name)
 
 
 model_names_to_infer_framework = {
-    "meta-llama/llama-3-1-70b-instruct": ["ibm_wml"],
+    "meta-llama/llama-3-1-70b-instruct": ["ibm_wml", "rits"],
     "meta-llama/llama-3-70b-instruct": ["ibm_gen_ai"],
     "gpt-4-turbo": ["openai"],
-    "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "ibm_gen_ai"],
-    "meta-llama/llama-3-1-405b-instruct-fp8": ["ibm_gen_ai"],
+    "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "ibm_gen_ai", "rits"],
+    "meta-llama/llama-3-1-405b-instruct-fp8": ["ibm_gen_ai", "rits"],
+    "meta-llama/llama-3-405b-instruct": ["ibm_wml"],
 }
 
 for judge_model_name, infer_frameworks in model_names_to_infer_framework.items():

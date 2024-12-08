@@ -1,4 +1,3 @@
-from tqdm import tqdm
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine
@@ -33,7 +32,7 @@ with settings.context(
         # template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
         format="formats.models.llava_interleave",
         loader_limit=20,
-        augmentor="augmentors.image.to_rgb",
+        # augmentor="augmentors.image.to_rgb",
         streaming=True,
         metrics=["metrics.anls"]
     )
@@ -50,8 +49,8 @@ with settings.context(
     test_dataset = list(tqdm(dataset["test"], total=20))
     # test_dataset = list(tqdm(dataset["test"]))
 
-    predictions = inference_model.infer(test_dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    predictions = engine.infer(dataset)
+    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
     print_dict(
         evaluated_dataset[0],

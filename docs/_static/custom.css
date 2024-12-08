@@ -193,3 +193,12 @@ div.document div.documentwrapper {
       transform: rotate(360deg);
     }
   }
+
+.viewcode-link {
+    float: right;
+    margin-left: 10px;
+}
+
+.red {
+  color: red;
+}

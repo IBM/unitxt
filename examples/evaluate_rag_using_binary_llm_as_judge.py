@@ -46,11 +46,12 @@ if __name__ == "__main__":
     )
 
     # Select the desired metric(s).
-    # Each metric measures a certain aspect of the generated answer (e.g. correctness, faithfulness, answer relevance).
-    # All available metrics are under "catalog.metrics.llm_as_judge.binary"
+    # Each metric measures a certain aspect of the generated answer (answer_correctness, faithfulness,
+    # answer_relevance, context_relevance and correctness_holistic).
+    # All available metrics are under "catalog.metrics.rag"
     # Those with extension "logprobs" provide a real value prediction in [0,1], the others provide a binary prediction.
     # By default, all judges use llama_3_1_70b_instruct_wml. We will soon see how to change this.
-    metric_name = "metrics.llm_as_judge.binary.llama_3_1_70b_instruct_wml_answer_correctness_q_a_gt_loose_logprobs"
+    metric_name = "metrics.rag.answer_correctness.llama_3_1_70b_instruct_wml_q_a_gt_loose_logprobs"
 
     # The binary rag judges tasks expect the input fields among the following: "question", "contexts", "ground_truths".
     # In our generation task the ground truth are in the "reference_answers" field, so we need to inform the metric

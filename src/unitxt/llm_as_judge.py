@@ -1,13 +1,14 @@
+import re
 from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import infer
-from .artifact import fetch_artifact
 from .dataclass import Field
-from .formats import Format, SystemFormat
+from .formats import ChatAPIFormat, Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
 from .metrics import BulkInstanceMetric
 from .operator import SequentialOperator
+from .operators import ArtifactFetcherMixin
 from .settings_utils import get_settings
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .templates import Template
@@ -23,7 +24,7 @@ def get_task_data_dict(task_data):
     return json.loads(task_data) if isinstance(task_data, str) else task_data
 
 
-class LLMAsJudgeBase(BulkInstanceMetric):
+class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
     """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
 
     Attributes:
@@ -64,12 +65,17 @@ class LLMAsJudgeBase(BulkInstanceMetric):
             )
 
         if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if self.format and type(self.format) is not SystemFormat:
-                raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
-                    "not support formatting. Please remove the format definition from the recipe"
-                    " (OpenAi Chat API take care of the formatting automatically)."
-                )
+            if self.format and type(self.format) is not ChatAPIFormat:
+                if not (
+                    type(self.format) is SystemFormat
+                    and self.format.__id__ == "formats.empty"
+                ):
+                    raise ValueError(
+                        "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
+                        "not support formatting. Please remove the format definition from the recipe,"
+                        "or set the format to either 'formats.empty' or 'formats.chat_api'"
+                        " (OpenAi Chat API take care of the formatting automatically)."
+                    )
             if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
                 raise ValueError(
                     "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
@@ -156,7 +162,7 @@ class LLMAsJudge(LLMAsJudgeBase):
             instances = []
             for task_data_instance in task_data:
                 template = task_data_instance["metadata"]["template"]
-                template, _ = fetch_artifact(template)
+                template = self.get_artifact(template)
                 instance = SequentialOperator(
                     steps=[template, "formats.empty"]
                 ).process_instance(
@@ -176,6 +182,26 @@ class LLMAsJudge(LLMAsJudgeBase):
     def _get_instance_for_judge_model(
         self, input_instances: List[str], predictions: List, references: List
     ) -> List[Dict]:
+        string_input_instances = []
+
+        for input_instance in input_instances:
+            if isinstance(input_instance, str):
+                string_input_instances.append(input_instance)
+            if isinstance(input_instance, list):  # chat api
+                if len(input_instance) == 1:  # only user
+                    string_input_instances.append(input_instance[0]["content"])
+                if len(input_instance) == 2:  # only system and user
+                    string_input_instances.append(
+                        input_instance[0]["content"]
+                        + "\n"
+                        + input_instance[1]["content"]
+                    )
+                else:  # num demos > 0
+                    turns = []
+                    for turn in input_instance:
+                        turns.append(f'{turn["role"]}: {turn["content"]}')
+                    string_input_instances.append("\n".join(turns))
+
         if self.task == "rating.single_turn":
             instances = [
                 {
@@ -183,7 +209,7 @@ class LLMAsJudge(LLMAsJudgeBase):
                     "answer": prediction,
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         elif self.task == "rating.single_turn_with_reference":
@@ -194,7 +220,7 @@ class LLMAsJudge(LLMAsJudgeBase):
                     "reference_answer": reference[0],
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         elif self.task == "pairwise_comparative_rating.single_turn":
@@ -207,7 +233,7 @@ class LLMAsJudge(LLMAsJudgeBase):
                     "model_b": "baseline_model",
                 }
                 for input_instance, prediction, reference in zip(
-                    input_instances, predictions, references
+                    string_input_instances, predictions, references
                 )
             ]
         else:
@@ -276,9 +302,15 @@ class LLMAsJudge(LLMAsJudgeBase):
 
     def prepare_instances(self, references, predictions, task_data):
         input_instances = self._get_input_instances(task_data)
-        return self._get_instance_for_judge_model(
+        instances = self._get_instance_for_judge_model(
             input_instances, predictions, references
         )
+        # Copy the data classification policy from the original instance
+        for instance, single_task_data in zip(instances, task_data):
+            instance["data_classification_policy"] = single_task_data.get(
+                "metadata", {}
+            ).get("data_classification_policy")
+        return instances
 
 
 class TaskBasedLLMasJudge(LLMAsJudgeBase):
@@ -351,6 +383,20 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
         super().prepare()
         self.reduction_map = {"mean": [self.main_score]}
         self.score_prefix = f"{self.inference_model.get_engine_id()}_"
+        if not self.format:
+            self.set_format_for_inference_engine()
+
+    # if format is not directly set in constructor, choose according to the inference model
+    def set_format_for_inference_engine(self):
+        model_name = self.inference_model.get_engine_id()
+        # TODO : better format resolution to support more chat_api options
+        if "rits" in model_name:
+            format_name = "formats.chat_api"
+        elif re.search("llama.?3.*instruct", model_name):
+            format_name = "formats.llama3_instruct"
+        else:
+            format_name = "formats.empty"
+        self.format = self.get_artifact(format_name)
 
     def get_full_task_name(self):
         return self.task
@@ -394,6 +440,13 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             if self.prediction_field and prediction:
                 instance_task_data[self.prediction_field] = str(prediction)
             instance_task_data = judge_task.process(instance_task_data)["input_fields"]
+
+            data_classification_policy = input_instance.get("metadata", {}).get(
+                "data_classification_policy"
+            )
+            instance_task_data[
+                "data_classification_policy"
+            ] = data_classification_policy
             instances.append(instance_task_data)
 
         return instances

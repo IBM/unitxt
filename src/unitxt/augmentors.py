@@ -10,16 +10,13 @@ from typing import (
 from .operators import FieldOperator
 from .random_utils import new_random_generator
 from .type_utils import isoftype, parse_type_string, to_type_string
+from .types import Text
 
 
 class Augmentor(FieldOperator):
     """A stream operator that augments the values of either the task input fields before rendering with the template,  or the input passed to the model after rendering of the template."""
 
-    operator: FieldOperator
-
-    def process_value(self, value: Any) -> Any:
-        return self.operator.process_value(value)
-        return self.operator.process_value(value)
+    pass
 
 
 class TaskInputsAugmentor(Augmentor):
@@ -28,49 +25,38 @@ class TaskInputsAugmentor(Augmentor):
         self.field_to_field = {field: field for field in fields}
 
 
-class TypeDependentAugmenter(TaskInputsAugmentor):
+class TypeDependentAugmentor(TaskInputsAugmentor):
     augmented_type: object
 
-    def process_value(self, value: Any) -> Any:
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]):
         if not isoftype(value, self.augmented_type):
             return value
-        return self.operator.process_value(value)
+        return super().process_instance_value(value=value, instance=instance)
 
     @classmethod
     def process_data_after_load(cls, data):
-        data["augmented_type"] = parse_type_string(data["augmented_type"])
+        if "augmented_type" in data:
+            data["augmented_type"] = parse_type_string(data["augmented_type"])
         return data
 
     def process_data_before_dump(self, data):
-        data["augmented_type"] = to_type_string(data["augmented_type"])
+        if "augmented_type" in data:
+            data["augmented_type"] = to_type_string(data["augmented_type"])
         return data
 
 
-class FinalStateInputsAugmentor(Augmentor):
-    pass
+class TextAugmentor(TypeDependentAugmentor):
+    augmented_type = Text
 
 
-class ModelInputAugmentor(FinalStateInputsAugmentor):
-    field = "source"
+class NullAugmentor(TaskInputsAugmentor):
+    """Does not change the input string."""
 
-
-class ImagesAugmentor(FinalStateInputsAugmentor):
-    field = "media/images"
-    process_every_value = True
-
-
-class Identity(FieldOperator):
     def process_value(self, value: Any) -> Any:
         return value
 
 
-class NullAugmentor(Augmentor):
-    """Does not change the input string."""
-
-    operator = Identity()
-
-
-class AugmentWhitespace(FieldOperator):
+class AugmentWhitespace(TextAugmentor):
     """Augments the inputs by replacing existing whitespaces with other whitespaces.
 
     Currently, each whitespace is replaced by a random choice of 1-3 whitespace characters (space, tab, newline).
@@ -93,25 +79,27 @@ class AugmentWhitespace(FieldOperator):
         return new_value
 
 
-class AugmentPrefixSuffix(FieldOperator):
-    r"""Augments the input by prepending and appending randomly selected (typically, whitespace) patterns.
+class AugmentPrefixSuffix(TextAugmentor):
+    r"""Augments the input by prepending and appending randomly selected patterns (typically, whitespace).
 
     Args:
-     prefixes, suffixes (list or dict) : the potential (typically, whitespace) patterns to select from.
-        The dictionary version allows the specification relative weights for the different patterns.
-     prefix_len, suffix_len (positive int) : The added prefix or suffix will be of a certain length.
-     remove_existing_whitespaces : Clean any existing leading and trailing whitespaces.
-        The strings made of repetitions of the selected pattern(s) are then prepended and/or appended to the potentially
-        trimmed input.
-     If only either just prefixes or just suffixes are needed, set the other to None.
+       prefixes (list or dict or None): the potential patterns (typically, whitespace) to select prefix from. The dictionary version allows the specification of relative weights for the different patterns. Set to None if not needed (i.e., only suffixes are needed).
+
+       suffixes (list or dict or None): the potential patterns (typically, whitespace) to select suffix from. The dictionary version allows the specification of relative weights for the different patterns. Set to None if not needed (i.e., only prefixes are needed).
+
+       prefix_len (positive int): the length of the prefix to be added.
+
+       suffix_len (positive int): The length of the suffix to be added.
+
+       remove_existing_whitespaces (bool): Clean any existing leading and trailing whitespaces. The selected pattern(s) are then prepended and/or appended to the potentially trimmed input.
 
     Examples:
-        To prepend the input with a prefix made of 4 '\n'-s or '\t'-s, employ
-        AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)
-        To append the input with a suffix made of 3 '\n'-s or '\t'-s, with triple '\n' suffixes
-        being preferred over triple '\t', at 2:1 ratio, employ
-        AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)
-        which will append '\n'-s twice as often as '\t'-s.
+        To prepend the input with a prefix made of 4 ``\n``-s or ``\t``-s, employ
+        ``AugmentPrefixSuffix(augment_model_input=True, prefixes=['\n','\t'], prefix_len=4, suffixes = None)``.
+
+        To append the input with a suffix made of 3 ``\n``-s or ``\t``-s, with ``\n`` being preferred over ``\t``, at 2:1 ratio, employ
+        ``AugmentPrefixSuffix(augment_model_input=True, suffixes={'\n':2,'\t':1}, suffix_len=3, prefixes = None)``
+        which will append ``\n``-s twice as often as ``\t``-s.
 
     """
 

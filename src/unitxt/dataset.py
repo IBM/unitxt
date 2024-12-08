@@ -1,4 +1,5 @@
 import os
+from typing import Optional, Union
 
 import datasets
 
@@ -40,7 +41,7 @@ from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .schema import __file__ as _
+from .schema import loads_instance
 from .serializers import __file__ as _
 from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
@@ -60,15 +61,12 @@ from .types import __file__ as _
 from .utils import is_package_installed
 from .validate import __file__ as _
 from .version import __file__ as _
-from .version import version
 
 logger = get_logger()
 constants = get_constants()
 
 
 class Dataset(datasets.GeneratorBasedBuilder):
-    """TODO: Short description of my dataset."""
-
     VERSION = constants.version
 
     @property
@@ -109,4 +107,17 @@ class Dataset(datasets.GeneratorBasedBuilder):
     ):
         return super()._download_and_prepare(
             dl_manager, "no_checks", **prepare_splits_kwargs
+        )
+
+    def as_dataset(
+        self,
+        split: Optional[datasets.Split] = None,
+        run_post_process=True,
+        verification_mode: Optional[Union[datasets.VerificationMode, str]] = None,
+        in_memory=False,
+    ) -> Union[datasets.Dataset, datasets.DatasetDict]:
+        return (
+            super()
+            .as_dataset(split, run_post_process, verification_mode, in_memory)
+            .with_transform(loads_instance)
         )

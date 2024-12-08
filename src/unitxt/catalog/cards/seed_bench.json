@@ -6,14 +6,14 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "to_rgb",
-            "field": "image",
-            "process_every_value": true
-        },
-        {
             "__type__": "to_image",
             "field": "image",
             "to_field": "context",
+            "process_every_value": true
+        },
+        {
+            "__type__": "to_rgb",
+            "field": "context",
             "process_every_value": true
         },
         {

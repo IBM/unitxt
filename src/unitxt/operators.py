@@ -190,7 +190,7 @@ class MapInstanceValues(InstanceOperator):
             if value is not None:
                 if (self.process_every_value is True) and (not isinstance(value, list)):
                     raise ValueError(
-                        f"'process_every_field' == True is allowed only when all fields which have mappers, i.e., {list(self.mappers.keys())} are lists. Instance = {instance}"
+                        f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{key}' is '{value}'"
                     )
                 if isinstance(value, list) and self.process_every_value:
                     for i, val in enumerate(value):
@@ -211,7 +211,7 @@ class MapInstanceValues(InstanceOperator):
             return recursive_copy(mapper[val_as_str])
         if self.strict:
             raise KeyError(
-                f"value '{val}' in instance '{instance}' is not found in mapper '{mapper}', associated with field '{key}'."
+                f"value '{val_as_str}', the string representation of the value in field '{key}', is not found in mapper '{mapper}'"
             )
         return val
 
@@ -400,7 +400,7 @@ class InstanceFieldOperator(InstanceOperator):
         ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
         assert (
             len(self._field_to_field) > 0
-        ), f"'input argument 'field_to_field' should convey at least one field to process. Got {self.field_to_field}"
+        ), f"'input argument '{self.__class__.__name__}.field_to_field' should convey at least one field to process. Got {self.field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
@@ -450,11 +450,11 @@ class InstanceFieldOperator(InstanceOperator):
                 )
                 if old_value is default_place_holder:
                     if self.not_exist_do_nothing:
-                        return instance
+                        continue
                     old_value = self.get_default
             except Exception as e:
                 raise ValueError(
-                    f"Failed to get '{from_field}' from {instance} due to : {e}"
+                    f"Failed to get '{from_field}' from instance due to the exception above."
                 ) from e
             try:
                 if self.process_every_value:
@@ -466,7 +466,7 @@ class InstanceFieldOperator(InstanceOperator):
                     new_value = self.process_instance_value(old_value, instance)
             except Exception as e:
                 raise ValueError(
-                    f"Failed to process '{from_field}' from {instance} due to : {e}"
+                    f"Failed to process field '{from_field}' from instance due to the exception above."
                 ) from e
             dict_set(
                 instance,
@@ -977,7 +977,7 @@ class CastFields(InstanceOperator):
             if self.process_every_value:
                 assert isinstance(
                     value, list
-                ), f"'process_every_value' can be set to True only for fields that contain lists, whereas in instance {instance}, the contents of field '{field_name}' is of type '{type(value)}'"
+                ), f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{field_name}' is '{value}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
@@ -1039,10 +1039,10 @@ class ArtifactFetcherMixin:
 
     @classmethod
     def get_artifact(cls, artifact_identifier: str) -> Artifact:
-        if artifact_identifier not in cls._artifacts_cache:
-            artifact, artifactory = fetch_artifact(artifact_identifier)
-            cls._artifacts_cache[artifact_identifier] = artifact
-        return shallow_copy(cls._artifacts_cache[artifact_identifier])
+        if str(artifact_identifier) not in cls._artifacts_cache:
+            artifact, catalog = fetch_artifact(artifact_identifier)
+            cls._artifacts_cache[str(artifact_identifier)] = artifact
+        return shallow_copy(cls._artifacts_cache[str(artifact_identifier)])
 
 
 class ApplyOperatorsField(InstanceOperator):
@@ -1154,7 +1154,7 @@ class FilterByCondition(StreamOperator):
                 instance_key = dict_get(instance, key)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in instance."
                 ) from ve
             if self.condition == "in":
                 if instance_key not in value:
@@ -1194,13 +1194,13 @@ class FilterByConditionBasedOnFields(FilterByCondition):
                 instance_key = dict_get(instance, key)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{key}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{key}') in FilterByCondition is not found in instance"
                 ) from ve
             try:
                 instance_value = dict_get(instance, value)
             except ValueError as ve:
                 raise ValueError(
-                    f"Required filter field ('{value}') in FilterByCondition is not found in {instance}"
+                    f"Required filter field ('{value}') in FilterByCondition is not found in instance"
                 ) from ve
             if self.condition == "in":
                 if instance_key not in instance_value:
@@ -1551,7 +1551,7 @@ class SplitByNestedGroup(MultiStreamOperator):
             for instance in stream:
                 if self.field_name_of_group not in instance:
                     raise ValueError(
-                        f"Field {self.field_name_of_group} is missing from instance {instance}"
+                        f"Field {self.field_name_of_group} is missing from instance. Available fields: {instance.keys()}"
                     )
                 signature = (
                     stream_name
@@ -1617,7 +1617,7 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     calc_confidence_intervals: bool
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        from .metrics import Metric
+        from .metrics import Metric, MetricsList
 
         # Number of instances in input stream is assumed to be small. This is why
         # each metric consumes all of them and lays them in its main memory, and even generates
@@ -1646,18 +1646,25 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         if isinstance(metric_names, str):
             metric_names = [metric_names]
 
+        metrics_list = []
+        for metric_name in metric_names:
+            metric = self.get_artifact(metric_name)
+            if isinstance(metric, MetricsList):
+                metrics_list.extend(list(metric.items))
+            elif isinstance(metric, Metric):
+                metrics_list.append(metric)
+            else:
+                raise ValueError(
+                    f"Operator {metric_name} must be a Metric or MetricsList"
+                )
+
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set
         # by the first listed metric (as desired).
-        metric_names = list(reversed(metric_names))
+        metrics_list = list(reversed(metrics_list))
 
-        for metric_name in metric_names:
-            metric = self.get_artifact(metric_name)
-            assert isinstance(
-                metric, Metric
-            ), f"Operator {metric_name} must be a Metric"
-
+        for metric in metrics_list:
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
             multi_stream = MultiStream(
@@ -2113,4 +2120,59 @@ class DuplicateInstances(StreamOperator):
             raise ValueError(
                 f"If given, duplication_index_field must be a string. "
                 f"Got: {self.duplication_index_field}"
+            )
+
+
+class CollateInstances(StreamOperator):
+    """Operator which collates values from multiple instances to a single instance.
+
+    Each field becomes the list of values of corresponding field of collated `batch_size` of instances.
+
+    Attributes:
+        batch_size (int)
+
+    Example:
+        CollateInstances(batch_size=2)
+
+        Given inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 2},
+            {"a": 3, "b": 2},
+            {"a": 4, "b": 2},
+            {"a": 5, "b": 2}
+        ]
+
+        Returns targets = [
+            {"a": [1,2], "b": [2,2]},
+            {"a": [3,4], "b": [2,2]},
+            {"a": [5], "b": [2]},
+        ]
+
+
+    """
+
+    batch_size: int
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        stream = list(stream)
+        for i in range(0, len(stream), self.batch_size):
+            batch = stream[i : i + self.batch_size]
+            new_instance = {}
+            for a_field in batch[0]:
+                if a_field == "data_classification_policy":
+                    flattened_list = [
+                        classification
+                        for instance in batch
+                        for classification in instance[a_field]
+                    ]
+                    new_instance[a_field] = sorted(set(flattened_list))
+                else:
+                    new_instance[a_field] = [instance[a_field] for instance in batch]
+            yield new_instance
+
+    def verify(self):
+        if not isinstance(self.batch_size, int) or self.batch_size < 1:
+            raise ValueError(
+                f"batch_size must be an integer equal to or greater than 1. "
+                f"Got: {self.batch_size}."
             )

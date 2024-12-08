@@ -5,7 +5,8 @@
     "demos_taken_from": "train",
     "max_train_instances": 1000,
     "max_validation_instances": 1000,
-    "max_test_instances": 100,
+    "max_test_instances": 1000,
     "card": "cards.hellaswag",
-    "template": "templates.completion.multiple_choice.bluebench"
+    "template": "templates.completion.multiple_choice.bluebench",
+    "format": "formats.chat_api"
 }

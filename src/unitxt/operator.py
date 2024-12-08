@@ -427,7 +427,7 @@ class InstanceOperator(StreamOperator):
                 raise e
             else:
                 raise ValueError(
-                    f"Error processing instance '{_index}' from stream '{stream_name}' in {self.__class__.__name__} due to: {e}"
+                    f"Error processing instance '{_index}' from stream '{stream_name}' in {self.__class__.__name__} due to the exception above."
                 ) from e
 
     def _process_instance(

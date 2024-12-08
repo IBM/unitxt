@@ -11,14 +11,15 @@ dataset = load_dataset(
     ],
     num_demos=[0, 5],
     group_by=["template", "num_demos", ["template", "num_demos"]],
-    demos_pool_size=100,
+    demos_pool_size=10,
     loader_limit=200,
+    max_test_instances=10,
+    split="test",
 )
 
-test = dataset["test"].to_list()
-predictions = ["entailment" for _ in test]
+predictions = ["entailment" for _ in dataset]
 
-results = evaluate(predictions=predictions, data=test)
+results = evaluate(predictions=predictions, data=dataset)
 
 # Print the resulting scores per group.
 logger.info(results[0]["score"]["groups"])

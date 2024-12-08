@@ -1,0 +1,6 @@
+{
+    "__type__": "rits_inference_engine",
+    "model_name": "meta-llama/llama-3-1-70b-instruct",
+    "max_tokens": 2048,
+    "seed": 42
+}

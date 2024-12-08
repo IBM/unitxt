@@ -48,5 +48,5 @@ with settings.context(
 
     for subset in dataset.subsets:
         logger.info(
-            f"{subset.title()}: ", results[0]["score"]["subsets"][subset]["score"]
+            f'{subset.title()}: {results[0]["score"]["subsets"][subset]["score"]}'
         )

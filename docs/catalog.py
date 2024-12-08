@@ -1,9 +1,23 @@
-import json
 import os
+import re
+from functools import lru_cache
 from pathlib import Path
 
+from pygments import highlight
+from pygments.formatters import HtmlFormatter
+from pygments.lexers import YamlLexer
 from unitxt.artifact import Artifact
+from unitxt.text_utils import print_dict_as_yaml
 from unitxt.utils import load_json
+
+
+def dict_to_syntax_highlighted_html(nested_dict):
+    # Convert the dictionary to a YAML string with indentation
+    yaml_str = print_dict_as_yaml(nested_dict)
+    # Initialize the HTML formatter with no additional wrapper
+    formatter = HtmlFormatter(nowrap=True)
+    # Apply syntax highlighting
+    return highlight(yaml_str, YamlLexer(), formatter)
 
 
 def write_title(title, label):
@@ -48,37 +62,105 @@ def all_subtypes_of_artifact(artifact):
     return to_return
 
 
+def get_all_type_elements(nested_dict):
+    type_elements = set()
+
+    def recursive_search(d):
+        if isinstance(d, dict):
+            d.pop("__description__", None)
+            d.pop("__tags__", None)
+            for key, value in d.items():
+                if key == "__type__":
+                    type_elements.add(value)
+                elif isinstance(value, dict):
+                    recursive_search(value)
+                elif isinstance(value, list):
+                    for item in value:
+                        recursive_search(item)
+
+    recursive_search(nested_dict)
+    return list(type_elements)
+
+
+@lru_cache(maxsize=None)
+def artifact_type_to_link(artifact_type):
+    artifact_class = Artifact._class_register.get(artifact_type)
+    type_class_name = artifact_class.__name__
+    artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
+    return f'<a class="reference internal" href="../{artifact_class.__module__}.html#{artifact_class_id}" title="{artifact_class_id}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{type_class_name}</span></code></a>'
+
+
 # flake8: noqa: C901
 def make_content(artifact, label, all_labels):
     artifact_type = artifact["__type__"]
     artifact_class = Artifact._class_register.get(artifact_type)
     type_class_name = artifact_class.__name__
-    artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
     catalog_id = label.replace("catalog.", "")
+
     result = ""
+
     if "__description__" in artifact and artifact["__description__"] is not None:
-        split_description = artifact["__description__"].split("\n")
-        desc = "\n"
-        for split in split_description:
-            desc += "| " + split + "\n"
-        result += desc
-        # result += "\n" + artifact["__description__"] + "\n"
+        result += "\n" + artifact["__description__"] + "\n"
         result += "\n"
+        artifact.pop("__description__")  # to not show again in the yaml
+
     if "__tags__" in artifact and artifact["__tags__"] is not None:
         result += "\nTags: "
         tags = []
         for k, v in artifact["__tags__"].items():
             tags.append(f"``{k}:{v!s}``")
         result += ",  ".join(tags) + "\n\n"
-    result += f".. note:: ID: ``{catalog_id}``  |  Type: :class:`{type_class_name} <{artifact_class_id}>`\n\n"
+        artifact.pop("__tags__")  # to not show again in the yaml
 
-    result += "   .. code-block:: json\n\n      "
-    result += (
-        json.dumps(artifact, sort_keys=True, indent=4, ensure_ascii=False).replace(
-            "\n", "\n      "
+    result += ".. raw:: html\n\n   "
+
+    type_elements = get_all_type_elements(artifact)
+
+    html_for_dict = dict_to_syntax_highlighted_html(artifact)
+
+    pairs = []
+    references = []
+    for i, label in enumerate(all_labels):
+        label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
+        if label_no_catalog in html_for_dict:
+            html_for_dict = html_for_dict.replace(
+                label_no_catalog,
+                f"[[[[{i}]]]]",
+            )
+            pairs.append((f"[[[[{i}]]]]", label))
+            references.append(f":ref:`{label_no_catalog} <{label}>`")
+
+    for key, label in pairs:
+        label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
+        label_replace_dot_by_hyphen = label.replace(".", "-")
+        html_for_dict = html_for_dict.replace(
+            key,
+            f'<a class="reference internal" href="{label}.html#{label_replace_dot_by_hyphen}"><span class="std std-ref">{label_no_catalog}</span></a>',
         )
-        + "\n"
-    )
+
+    for type_name in type_elements:
+        source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
+        target = artifact_type_to_link(type_name)
+        html_for_dict = html_for_dict.replace(
+            source,
+            '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
+            + target,
+        )
+
+    pattern = r'(<span class="nt">)&quot;(.*?)&quot;(</span>)'
+
+    # Replacement function
+    html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
+    source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace('.','/')}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
+    html_for_dict = f"""<div class="admonition note">
+<p class="admonition-title">{catalog_id}</p>
+<div class="highlight-json notranslate">
+<div class="highlight"><pre>
+{html_for_dict.strip()}
+</pre>{source_link}</div></div>
+</div>""".replace("\n", "\n    ")
+
+    result += "    " + html_for_dict + "\n"
 
     if artifact_class.__doc__:
         explanation_str = f"Explanation about `{type_class_name}`"
@@ -98,11 +180,6 @@ def make_content(artifact, label, all_labels):
             result += "+" * len(explanation_str) + "\n\n"
             result += subtype_class.__doc__ + "\n"
 
-    references = []
-    for label in all_labels:
-        label_no_catalog = label[8:]  # skip over the prefix 'catalog.'
-        if f'"{label_no_catalog}"' in result:
-            references.append(f":ref:`{label_no_catalog} <{label}>`")
     if len(references) > 0:
         result += "\nReferences: " + ", ".join(references)
     return (
@@ -215,16 +292,31 @@ class CatalogEntry:
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         label = self.get_label()
-        content = make_content(artifact, label, all_labels)
+        deprecated_in_title = ""
+        deprecated_message = ""
+        role_red = ""
+        if (
+            "__deprecated_msg__" in artifact
+            and artifact["__deprecated_msg__"] is not None
+        ):
+            deprecated_in_title = " :red:`[deprecated]`"
+            deprecated_message = (
+                "**Deprecation message:** " + artifact["__deprecated_msg__"] + "\n\n"
+            )
+            role_red = ".. role:: red\n\n"
+            artifact.pop("__deprecated_msg__")
 
+        content = make_content(artifact, label, all_labels)
         title_char = "="
-        title = "📄 " + self.get_title()
+        title = "📄 " + self.get_title() + deprecated_in_title
         title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
+            f"{role_red}"
             f".. _{label}:\n\n"
             f"{title_wrapper}\n"
             f"{title}\n"
             f"{title_wrapper}\n\n"
+            f"{deprecated_message}"
             f"{content}\n\n"
             f"|\n"
             f"|\n\n"
@@ -262,6 +354,8 @@ class CatalogDocsBuilder:
             for catalog_entry in catalog_entries
             if catalog_entry.is_json()
         }
+
+        all_labels = sorted(all_labels, key=len, reverse=True)
 
         current_directory = os.path.dirname(os.path.abspath(__file__))
         for catalog_entry in catalog_entries:

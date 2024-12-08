@@ -1,5 +1,6 @@
 {
     "__type__": "benchmark",
+    "__description__": "BlueBench is an open-source benchmark developed by domain experts to represent required needs of Enterprise users.\n\n.. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/blue_bench_high_res_01.png\n   :alt: Optional alt text\n   :width: 30%\n   :align: center\n\nIt is constructed using state-of-the-art benchmarking methodologies to ensure validity, robustness, and efficiency by utilizing unitxt's abilities for dynamic and flexible text processing.\n\nAs a dynamic and evolving benchmark, BlueBench currently encompasses diverse domains such as legal, finance, customer support, and news. It also evaluates a range of capabilities, including RAG, pro-social behavior, summarization, and chatbot performance, with additional tasks and domains to be integrated over time.",
     "subsets": {
         "bias": {
             "__type__": "benchmark",
@@ -61,7 +62,7 @@
         "news_classification": {
             "__type__": "benchmark",
             "subsets": {
-                "20_newsgroups": "recipes.bluebench.news_classification.20_newsgroups"
+                "20_newsgroups_short": "recipes.bluebench.news_classification.20_newsgroups_short"
             }
         },
         "product_help": {
