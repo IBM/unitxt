@@ -1,5 +1,6 @@
 import json
 import os
+import tempfile
 
 from unitxt.artifact import (
     Artifact,
@@ -29,7 +30,31 @@ logger = get_logger()
 settings = get_settings()
 
 
+class ArtifactToReference(Artifact):
+    a: str
+
+
+class ArtifactReferencing(Artifact):
+    reference: ArtifactToReference
+
+
 class TestArtifact(UnitxtTestCase):
+    def test_artifact_loading_with_artifact_file_reference(self):
+        # Create a temporary directory
+        with tempfile.TemporaryDirectory() as temp_dir:
+            ArtifactToReference(a="0").save(os.path.join(temp_dir, "0.json"))
+
+            t = ArtifactReferencing(reference=os.path.join(temp_dir, "0.json"))
+
+        self.assertEqual(str(t.reference), str(ArtifactToReference(a="0")))
+
+    def test_artifact_loading_with_artifact_dict_reference(self):
+        t = ArtifactReferencing(
+            reference={"__type__": "artifact_to_reference", "a": "0"}
+        )
+
+        self.assertEqual(str(t.reference), str(ArtifactToReference(a="0")))
+
     def test_artifact_identifier_setter(self):
         artifact = Artifact()
         artifact_identifier = "artifact.id.dummy"
