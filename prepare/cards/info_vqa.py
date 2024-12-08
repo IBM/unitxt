@@ -5,6 +5,8 @@ from unitxt.image_operators import ToImage
 from unitxt.operators import Rename
 from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
+from unitxt.templates import MultiReferenceTemplate
+
 
 card = TaskCard(
     loader=LoadHF(path="vidore/infovqa_train"),
@@ -18,7 +20,8 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates="templates.qa.with_context.all",
+    templates=[MultiReferenceTemplate(input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+                                      references_field="answers")],
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",

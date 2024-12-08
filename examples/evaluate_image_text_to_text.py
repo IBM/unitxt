@@ -1,39 +1,54 @@
 from tqdm import tqdm
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine
+from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine
 from unitxt.text_utils import print_dict
-# from cvar_pyutils.debugging_tools import set_remote_debugger
-# set_remote_debugger('9.61.73.90', 55557)
+from cvar_pyutils.debugging_tools import set_remote_debugger
+set_remote_debugger('9.61.188.58', 55557)
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-    inference_model = HFLlavaInferenceEngine(
-        model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
-    )
-
-    dataset = load_dataset(
-        card="cards.ai2d",
-        template="templates.qa.multiple_choice.with_context.lmms_eval",
-        format="formats.models.llava_interleave",
-        # loader_limit=20,
-        # augmentor="augmentors.image.grey_scale",
-        augmentor="augmentors.image.rgb",
-        streaming=True,
-        metrics=["metrics.exact_match_mm"]
+    # inference_model = HFLlavaInferenceEngine(
+    #     model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
+    # )
+    inference_model = LMMSEvalInferenceEngine(
+        model_type="llava",
+        model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
+        max_new_tokens=32,
     )
     # dataset = load_dataset(
-    #     card="cards.doc_vqa.lmms_eval",
-    #     template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
-    #     format="formats.models.llava_interleave",
-    #     loader_limit=20,
+    #     card="cards.ai2d",
+    #     template="templates.qa.multiple_choice.with_context.lmms_eval",
+    #     format="formats.models.llava_interleave", Format should include the instruction from the dataset.
+    #     # system_prompt="system_prompts.models.llava1_5", # need to insert this into the format
+    #     # loader_limit=20,
     #     # augmentor="augmentors.image.grey_scale",
-    #     augmentor="augmentors.image.rgb",
+    #     augmentor="augmentors.image.to_rgb",
     #     streaming=True,
-    #     metrics=["metrics.anls"]
+    #     metrics=["metrics.exact_match_mm"]
     # )
-    # test_dataset = list(tqdm(dataset["test"], total=20))
-    test_dataset = list(tqdm(dataset["test"]))
+    dataset = load_dataset(
+        card="cards.info_vqa", # docvqa.lmms_eval
+        template_card_index=0, # not needed in  newer version
+        # template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
+        format="formats.models.llava_interleave",
+        loader_limit=20,
+        augmentor="augmentors.image.to_rgb",
+        streaming=True,
+        metrics=["metrics.anls"]
+    )
+    # dataset = load_dataset(
+    #     card="cards.chart_qa",
+    #     template="templates.qa.with_context.lmms_eval",
+    #     format="formats.models.llava_interleave",
+    #     # loader_limit=20,
+    #     # augmentor="augmentors.image.grey_scale",
+    #     augmentor="augmentors.image.to_rgb",
+    #     streaming=True,
+    #     metrics=["metrics.relaxed_correctness.json"]
+    # )
+    test_dataset = list(tqdm(dataset["test"], total=20))
+    # test_dataset = list(tqdm(dataset["test"]))
 
     predictions = inference_model.infer(test_dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

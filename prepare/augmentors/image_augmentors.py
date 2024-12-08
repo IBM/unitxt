@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.augmentors import (
     ImagesAugmentor,
 )
-from unitxt.image_operators import GrayScale, GridLines, Oldify, PixelNoise, RGB
+from unitxt.image_operators import GrayScale, GridLines, Oldify, PixelNoise, ToRGB
 
 operator = ImagesAugmentor(operator=GrayScale())
 
@@ -20,4 +20,6 @@ operator = ImagesAugmentor(operator=Oldify())
 
 add_to_catalog(operator, "augmentors.image.oldify", overwrite=True)
 
-add_to_catalog(operator, "augmentors.image.rgb", overwrite=True)operator = ImagesAugmentor(operator=RGB())
+operator = ImagesAugmentor(operator=ToRGB())
+
+add_to_catalog(operator, "augmentors.image.to_rgb", overwrite=True)

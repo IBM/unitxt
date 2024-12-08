@@ -37,7 +37,13 @@
         }
     ],
     "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    "templates": "templates.qa.with_context.all",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
+            "references_field": "answers"
+        }
+    ],
     "__tags__": {
         "license": "Unknown",
         "multilinguality": "monolingual",

@@ -1,11 +1,5 @@
 {
     "__type__": "multi_reference_template",
-    "instruction": "You are a helpful assistant.",
     "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
-    "output_format": "{answer}",
-    "target_prefix": "",
-    "references_field": "answers",
-    "title_fields": [
-        "context_type"
-    ]
+    "references_field": "answers"
 }

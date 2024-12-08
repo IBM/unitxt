@@ -1376,10 +1376,8 @@ class ExactMatchMM(InstanceMetric):
 class ANLS(InstanceMetric):
     main_score = "anls"
     reduction_map = {"mean": ["anls"]}
-    prediction_type = Any  # string representation is compared
-
+    prediction_type = str  # string representation is compared
     threshold: float = 0.5
-
     @staticmethod
     @lru_cache(maxsize=10000)
     def preprocess_text(text):
@@ -1394,10 +1392,10 @@ class ANLS(InstanceMetric):
         return 0.0 if length == 0 else float(dist) / float(length)
 
     def compute(
-        self,
-        references: List[Any],
-        prediction: Any,
-        task_data: List[Dict],
+            self,
+            references: List[Any],
+            prediction: Any,
+            task_data: List[Dict],
     ) -> dict:
         """ANLS image-text accuracy metric."""
         values = []
@@ -1433,6 +1431,96 @@ class ANLS(InstanceMetric):
                     )
             distances = distances_
         return distances[-1]
+
+class RelaxedCorrectness(GlobalMetric):
+    main_score = "relaxed_overall"
+    prediction_type = str  # string representation is compared
+    n_resamples = None
+
+    def compute(self,references: List[List[str]],
+                predictions: List[str],
+                task_data: List[Dict]) -> dict:
+        return_dict = {"relaxed_overall": [],  "relaxed_human_split": [], "relaxed_augmented_split": []}
+        for pred, ref, task_data_i in zip(predictions, references,  task_data):
+            type = task_data_i["type"]
+            score = self.relaxed_correctness(pred, ref[0])
+            score = 1.0 if score else 0.0
+            return_dict["relaxed_overall"].append(score)
+            if type == "human_test":
+                return_dict["relaxed_human_split"].append(score)
+            else:
+                return_dict["relaxed_augmented_split"].append(score)
+        return_dict = {key: sum(value)/len(value) for key, value in return_dict.items() if len(value)>0}
+        return return_dict
+
+    @staticmethod
+    def _to_float(text: str):
+        try:
+            if text.endswith("%"):
+                # Convert percentages to floats.
+                return float(text.rstrip("%")) / 100.0
+            else:
+                return float(text)
+        except ValueError:
+            return None
+
+    def relaxed_correctness(self, prediction, target, max_relative_change: float = 0.05) -> bool:
+        """Calculates relaxed correctness.
+
+        The correctness tolerates certain error ratio defined by max_relative_change.
+        See https://arxiv.org/pdf/2203.10244.pdf, end of section 5.1:
+        “Following Methani et al. (2020), we use a relaxed accuracy measure for the
+        numeric answers to allow a minor inaccuracy that may result from the automatic
+        data extraction process. We consider an answer to be correct if it is within
+        5% of the gold answer. For non-numeric answers, we still need an exact match
+        to consider an answer to be correct.”
+
+        This funcion is taken from https://github.com/QwenLM/Qwen-VL/blob/34b4c0ee7b07726371b960911f249fe61b362ca3/eval_mm/evaluate_vqa.py#L113
+        Args:
+          target: List of target string.
+          prediction: List of predicted string.
+          max_relative_change: Maximum relative change.
+
+        Returns:
+          Whether the prediction was correct given the specified tolerance.
+        """
+        prediction_float = self._to_float(prediction)
+        target_float = self._to_float(target)
+        if prediction_float is not None and target_float:
+            relative_change = abs(prediction_float - target_float) / abs(target_float)
+            return relative_change <= max_relative_change
+        else:
+            return prediction.lower() == target.lower()
+
+
+class WebsrcSquadF1(InstanceMetric):
+    main_score = "f1"
+    reduction_map = {"mean": ["f1"]}
+    prediction_type = Any  # string representation is compared
+
+    threshold: float = 0.5
+    def compute(
+            self,
+            references: List[Any],
+            prediction: Any,
+            task_data: List[Dict],
+    ) -> dict:
+        """ANLS image-text accuracy metric."""
+        values = []
+        for reference in references:
+            values.append(self.distance(prediction, reference))
+
+        question_result = 1.0 - min(values)
+
+        if question_result < self.threshold:
+            question_result = 0.0
+
+        result = {}
+        result["score"] = question_result
+        result[self.main_score] = question_result
+        result["score_name"] = self.main_score
+        return result
+
 
 
 class JaccardIndex(InstanceMetric):

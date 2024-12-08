@@ -17,10 +17,6 @@ global_target = {
     "exact_match_mm": 0.33,
     "score": 0.33,
     "score_name": "exact_match_mm",
-    # "anls_ci_low": 0.0,
-    # "anls_ci_high": 1.0,
-    # "score_ci_low": 0.0,
-    # "score_ci_high": 1.0,
 }
 
 outputs = test_metric(
