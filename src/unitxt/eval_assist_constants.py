@@ -205,7 +205,7 @@ class DirectCriteriaCatalogEnum(Enum):
             ),
             CriteriaOption("Bad", "The response does not answer the question at all."),
         ],
-        {"Excellent": 1.0, "Acceptable": 0.75, "Could be Improve": 0.5, "Bad": 0.0},
+        {"Excellent": 1.0, "Acceptable": 0.75, "Could be Improved": 0.5, "Bad": 0.0},
     )
 
     HARMFULNESS = CriteriaWithOptions(
