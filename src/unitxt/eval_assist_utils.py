@@ -16,8 +16,8 @@ def get_parsed_context(context: dict[str, str]):
     return (
         "\n".join([f"{key}: {value}" for key, value in context.items()])
         if len(context) > 1
-        or len(context) == 0
-        or list(context.keys())[0].lower() != "context"
+        or not (len(context) == 1
+        and list(context.keys())[0].lower() == "context")
         else context[list(context.keys())[0]]
     )
 
@@ -55,44 +55,24 @@ class CatalogDefinition(TypedDict):
     name: str
     params: dict[str, Union[str, dict[str, str], "CatalogDefinition"]]
 
+# def parse_catalog_definition(catalog_definition: CatalogDefinition):
+#     parsed_parts = []
+#     result = catalog_definition["name"]
+#     for key, value in catalog_definition["params"].items():
+#         if isinstance(value, dict) and "params" in value:
+#             parsed_parts.append(f"{key}={parse_catalog_definition(value)}")
+#         elif isinstance(value, dict):
+#             nested_parts = ",".join(f"{k}={v}" for k, v in value.items())
+#             parsed_parts.append(f"{key}={{{nested_parts}}}")
+#         else:
+#             parsed_parts.append(f"{key}={value}")
 
-def parse_catalog_definition(catalog_definition: CatalogDefinition):
-    parsed_parts = []
-    result = catalog_definition["name"]
-    for key, value in catalog_definition["params"].items():
-        if isinstance(value, dict) and "params" in value:
-            parsed_parts.append(f"{key}={parse_catalog_definition(value)}")
-        elif isinstance(value, dict):
-            nested_parts = ",".join(f"{k}={v}" for k, v in value.items())
-            parsed_parts.append(f"{key}={{{nested_parts}}}")
-        else:
-            parsed_parts.append(f"{key}={value}")
+#     result = f"{result}[{','.join(parsed_parts)}]"
 
-    result = f"{result}[{','.join(parsed_parts)}]"
-
-    return result
+#     return result
 
 
 def rename_model_if_required(model_name: str, provider: ModelProviderEnum) -> str:
     if provider in MODEL_RENAMINGS and model_name in MODEL_RENAMINGS[provider]:
         return MODEL_RENAMINGS[provider][model_name]
     return model_name
-
-
-if __name__ == "__main__":
-    # example of using a catalog definition object
-    catalog_definition: CatalogDefinition = {
-        "name": "metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_8b",
-        "params": {
-            "criteria_or_criterias": "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature",
-            "inference_engine": {
-                "name": "engines.ibm_wml.llama_3_70b_instruct",
-                "params": {
-                    "model_name": "meta-llama/llama-3-1-70b-instruct",
-                    "credentials": {"url": "", "project_id": "", "apikey": ""},
-                },
-            },
-        },
-    }
-    parsed = parse_catalog_definition(catalog_definition)
-    print(parsed)

@@ -16,7 +16,7 @@
         {
             "__type__": "criteria_option",
             "name": "Could be Improved",
-            "description": "The response relates to the questions but does not directly answer it."
+            "description": "The response relates to the question but does not directly answer it."
         },
         {
             "__type__": "criteria_option",
