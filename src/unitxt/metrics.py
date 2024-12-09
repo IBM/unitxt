@@ -3148,19 +3148,20 @@ class LlamaIndexLLMMetric(InstanceMetric):
     _requirements_list: List[str] = ["llama_index"]
 
     def prepare(self):
+        super().prepare()
         self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
         self.main_score: str = f"llama_index_by_{self.model_name_normalized}_judge"
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
-        if self.model_name in self.openai_models:
-            from llama_index.llms.openai import OpenAI
-
-            self.llm = OpenAI("gpt-3.5-turbo")
-        elif self.model_name in self.mock_models:
+        if settings.mock_inference_mode or self.model_name in self.mock_models:
             from llama_index.core.llms.mock import MockLLM
 
             self.llm = MockLLM(system_prompt="5")  # perfect score
+        elif self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            self.llm = OpenAI("gpt-3.5-turbo")
         else:
             raise NotImplementedError(
                 f"LlamaIndexLLM metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
