@@ -5152,7 +5152,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     main_score = "granite_guardian"
-    reduction_map: dict[str, list[str]] = None
+    reduction_map: Dict[str, List[str]] = None
     prediction_type = float
 
     model_name: str = "ibm/granite-guardian-3-8b"
@@ -5161,7 +5161,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     unsafe_token = "Yes"
 
     inference_engine: WMLInferenceEngineGeneration = None
-    generation_params: dict = None
+    generation_params: Dict = None
     risk_name: str = None
 
     _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
