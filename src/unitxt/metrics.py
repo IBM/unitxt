@@ -1872,7 +1872,7 @@ class F1(GlobalMetric):
     prediction_type = str
     single_reference_per_prediction = True
 
-    _requirements_list: List[str] = ["scikit-learn"]
+    _requirements_list: List[str] = ["scikit-learn<=1.5.2"]
 
     def prepare(self):
         super().prepare()
