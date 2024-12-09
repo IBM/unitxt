@@ -3145,7 +3145,7 @@ class LlamaIndexLLMMetric(InstanceMetric):
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
 
-    _requirements_list: List[str] = ["llama_index"]
+    _requirements_list: List[str] = ["llama-index-core", "llama-index-llms-openai"]
 
     def prepare(self):
         super().prepare()
@@ -3161,7 +3161,7 @@ class LlamaIndexLLMMetric(InstanceMetric):
         elif self.model_name in self.openai_models:
             from llama_index.llms.openai import OpenAI
 
-            self.llm = OpenAI("gpt-3.5-turbo")
+            self.llm = OpenAI(self.model_name)
         else:
             raise NotImplementedError(
                 f"LlamaIndexLLM metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
