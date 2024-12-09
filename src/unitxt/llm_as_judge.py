@@ -414,6 +414,8 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             format_name = "formats.chat_api"
         elif re.search("llama.?3.*instruct", model_name):
             format_name = "formats.llama3_instruct"
+        elif re.search("mixtral", model_name):
+            format_name = "formats.models.mistral.instruction"
         else:
             format_name = "formats.empty"
         self.format = self.get_artifact(format_name)
