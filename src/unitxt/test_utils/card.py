@@ -11,6 +11,7 @@ from ..metric import _compute
 from ..settings_utils import get_settings
 from ..standard import StandardRecipe
 from ..text_utils import construct_dict_str
+from ..utils import deep_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -272,6 +273,7 @@ def test_card(
 
 
     """
+    card = deep_copy(card)
     if full_mismatch_prediction_values is None:
         full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:
