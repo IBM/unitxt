@@ -27,7 +27,7 @@
     "option_map": {
         "Excellent": 1.0,
         "Acceptable": 0.75,
-        "Could be Improve": 0.5,
+        "Could be Improved": 0.5,
         "Bad": 0.0
     }
 }
