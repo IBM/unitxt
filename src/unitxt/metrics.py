@@ -130,8 +130,8 @@ class Metric(Artifact):
     #
     score_prefix: str = ""
 
-    def prepare(self):
-        super().prepare()
+    def prepare_args(self):
+        super().prepare_args()
         if isinstance(self.prediction_type, str):
             self.prediction_type = parse_string_types_instead_of_actual_objects(
                 self.prediction_type
@@ -1648,8 +1648,6 @@ class HuggingfaceMetric(GlobalMetric):
         default_factory=list
     )
 
-    experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
-
     def verify(self):
         if os.path.exists(self.hf_metric_name):
             UnitxtWarning(
@@ -1674,7 +1672,7 @@ class HuggingfaceMetric(GlobalMetric):
         import evaluate
 
         self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=self.experiment_id
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
 
     def compute(
@@ -1874,7 +1872,7 @@ class F1(GlobalMetric):
     prediction_type = str
     single_reference_per_prediction = True
 
-    _requirements_list: List[str] = ["scikit-learn"]
+    _requirements_list: List[str] = ["scikit-learn<=1.5.2"]
 
     def prepare(self):
         super().prepare()
@@ -3147,22 +3145,23 @@ class LlamaIndexLLMMetric(InstanceMetric):
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
 
-    _requirements_list: List[str] = ["llama_index"]
+    _requirements_list: List[str] = ["llama-index-core", "llama-index-llms-openai"]
 
     def prepare(self):
+        super().prepare()
         self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
         self.main_score: str = f"llama_index_by_{self.model_name_normalized}_judge"
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
-        if self.model_name in self.openai_models:
-            from llama_index.llms.openai import OpenAI
-
-            self.llm = OpenAI("gpt-3.5-turbo")
-        elif self.model_name in self.mock_models:
+        if settings.mock_inference_mode or self.model_name in self.mock_models:
             from llama_index.core.llms.mock import MockLLM
 
             self.llm = MockLLM(system_prompt="5")  # perfect score
+        elif self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            self.llm = OpenAI(self.model_name)
         else:
             raise NotImplementedError(
                 f"LlamaIndexLLM metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"

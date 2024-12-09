@@ -46,6 +46,35 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
+def dict_diff_string(dict1, dict2, max_diff=200):
+    keys_in_both = dict1.keys() & dict2.keys()
+    added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}
+    removed = {k: dict1[k] for k in dict1.keys() - dict2.keys()}
+    changed = {
+        k: (dict1[k], dict2[k]) for k in keys_in_both if str(dict1[k]) != str(dict2[k])
+    }
+    result = []
+
+    def format_with_value(k, value, label):
+        value_str = str(value)
+        return (
+            f" - {k} ({label}): {value_str}"
+            if len(value_str) <= max_diff
+            else f" - {k} ({label})"
+        )
+
+    result.extend(format_with_value(k, added[k], "added") for k in added)
+    result.extend(format_with_value(k, removed[k], "removed") for k in removed)
+    result.extend(
+        f" - {k} (changed): {dict1[k]!s} -> {dict2[k]!s}"
+        if len(str(dict1[k])) <= max_diff and len(str(dict2[k])) <= 200
+        else f" - {k} (changed)"
+        for k in changed
+    )
+
+    return "\n".join(result)
+
+
 class Catalogs:
     def __new__(cls):
         if not hasattr(cls, "instance"):
@@ -268,6 +297,9 @@ class Artifact(Dataclass):
         if self.__deprecated_msg__:
             warnings.warn(self.__deprecated_msg__, DeprecationWarning, stacklevel=2)
 
+    def prepare_args(self):
+        pass
+
     def verify(self):
         pass
 
@@ -302,6 +334,7 @@ class Artifact(Dataclass):
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
+        self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
             self.prepare()
             self.verify()
@@ -336,6 +369,13 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
+        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        current_args = self.get_repr_dict()
+        diffs = dict_diff_string(original_args, current_args)
+        if diffs:
+            raise UnitxtError(
+                f"Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n{diffs}"
+            )
         save_to_file(path, self.to_json())
 
     def verify_instance(

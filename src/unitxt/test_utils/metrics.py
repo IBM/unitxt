@@ -100,6 +100,7 @@ def test_metric(
     assert isoftype(references, List[Any]), "references must be a list"
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
+        metric = deepcopy(metric)
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
     outputs = apply_metric(metric, predictions, references, task_data)
 
