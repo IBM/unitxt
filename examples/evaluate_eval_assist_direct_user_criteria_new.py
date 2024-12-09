@@ -4,6 +4,7 @@ from unitxt.blocks import Task, TaskCard
 from unitxt.eval_assist_constants import (
     CriteriaOption,
     CriteriaWithOptions,
+    EvaluatorNameEnum,
 )
 from unitxt.eval_assist_llm_as_judge_direct import EvalAssistLLMAsJudgeDirect
 from unitxt.inference import LiteLLMInferenceEngine
@@ -43,7 +44,7 @@ metric = EvalAssistLLMAsJudgeDirect(
         model="watsonx/meta-llama/llama-3-1-70b-instruct", max_tokens=1024
     ),
     option_selection_strategy="PARSE_OUTPUT_TEXT",
-    evaluator_name="LLAMA3_1_70B",
+    evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     criteria_or_criterias=criteria,
 )
 card = TaskCard(
