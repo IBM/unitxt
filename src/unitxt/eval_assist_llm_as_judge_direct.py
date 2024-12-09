@@ -128,10 +128,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         else:
             criterias = self.criteria_or_criterias
 
-        contexts = [
-            get_parsed_context(context)
-            for context in [td["context"] for td in task_data]
-        ]
+        contexts = self.get_contexts(task_data)
         
         if self.check_positional_bias:
             criterias += [
@@ -201,13 +198,21 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             ]
         ]
 
-        summarization_output = infer(
+        summarization_outputs_dataset = infer(
             summarization_instances,
             task=self.summarization_task,
             engine=self.inference_engine,
             template=self.summarization_template,
             format=self.format,
+            return_data=True,
         )
+
+        summarization_prompts: list[str] = [
+            instance["source"] for instance in summarization_outputs_dataset
+        ]
+        summarization_outputs: list[str] = [
+            instance["prediction"] for instance in summarization_outputs_dataset
+        ]
 
         self.logger.info("The summary was generated successfully.")
 
@@ -287,10 +292,15 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     "positional_bias_assessment": assessment_outputs_dataset[i + evaluations_count]["prediction"] if self.check_positional_bias else None,
                     "option_selection_prompt": option_selection_prompts[i],
                     "posional_bias_option_selection_prompt": option_selection_prompts[i + evaluations_count],
-                    "summary": summarization_output[i],
-                    # "assessment_prompt": assessment_prompts[i],
-                    # "positional_bias_assessment_prompt": assessment_prompts[evaluations_count + i],
-                    "option_selection_completion": option_selection_outputs[i] if self.option_selection_strategy== OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT else None,
+                    "summary": summarization_outputs[i],
+                    "prompts": {
+                        "assessment": assessment_prompts[i],
+                        "positional_bias_assessment": assessment_prompts[evaluations_count + i],
+                        "summarization": summarization_prompts[i],
+                        "option_selection": option_selection_prompts[i],
+                        "posional_bias_option_selection": option_selection_prompts[i + evaluations_count],
+                    },
+                    "option_selection_completion": option_selection_outputs[i] if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT else None,
                     "positional_bias_option_selection_completion": option_selection_outputs[evaluations_count + i] if self.option_selection_strategy== OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT else None,
                     "option_selection_strategy": self.option_selection_strategy.name,
                 }.items()
