@@ -361,7 +361,7 @@ class LoadCSV(Loader):
                     file, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
-                self._cache[file] = pd.read_csv(file).to_dict("records")
+                self._cache[file] = pd.read_csv(file, sep=self.sep).to_dict("records")
 
         yield from self._cache[file]
 
