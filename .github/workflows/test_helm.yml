@@ -24,6 +24,7 @@ jobs:
           python-version: '3.9'
           cache: 'pip' # caching pip dependencies
       - run: pip install --upgrade 'crfm-helm[unitxt]>=0.5.3'
+      - run: pip install scikit-learn==1.5.2
 
       - name: Test Helm
         run: utils/run_helm.sh
