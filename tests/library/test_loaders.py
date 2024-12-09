@@ -13,6 +13,7 @@ from unitxt.loaders import (
     MultipleSourceLoader,
 )
 from unitxt.logging_utils import get_logger
+from unitxt.operators import Set
 
 from tests.utils import UnitxtTestCase
 
@@ -169,6 +170,12 @@ class TestLoaders(UnitxtTestCase):
     def test_load_from_HF(self):
         loader = LoadHF(path="sst2", loader_limit=10)
         ms = loader.process()
+        # add here the policy setter like in the recipe:
+        loader._maybe_set_classification_policy()  # update the loader with policy
+        policy_set_operator = Set(
+            fields={"data_classification_policy": loader.data_classification_policy}
+        )
+        ms = policy_set_operator(ms)
         dataset = ms.to_dataset()
         self.assertEqual(
             dataset["train"][0]["sentence"],
