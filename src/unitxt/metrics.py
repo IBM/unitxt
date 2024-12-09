@@ -131,8 +131,8 @@ class Metric(Artifact):
     #
     score_prefix: str = ""
 
-    def prepare(self):
-        super().prepare()
+    def prepare_args(self):
+        super().prepare_args()
         if isinstance(self.prediction_type, str):
             self.prediction_type = parse_string_types_instead_of_actual_objects(
                 self.prediction_type

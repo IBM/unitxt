@@ -297,6 +297,9 @@ class Artifact(Dataclass):
         if self.__deprecated_msg__:
             warnings.warn(self.__deprecated_msg__, DeprecationWarning, stacklevel=2)
 
+    def prepare_args(self):
+        pass
+
     def verify(self):
         pass
 
@@ -331,6 +334,7 @@ class Artifact(Dataclass):
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
+        self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
             self.prepare()
             self.verify()
