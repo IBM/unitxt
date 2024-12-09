@@ -24,8 +24,8 @@ jobs:
           python-version: '3.9'
 
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-      - run: uv pip install --upgrade --system -e "crfm-helm[unitxt]>=0.5.3"
-      - run: uv pip install --system -e "scikit-learn==1.5.2"
+      - run: uv pip install --upgrade --system "crfm-helm[unitxt]>=0.5.3"
+      - run: uv pip install --system "scikit-learn==1.5.2"
 
       - name: Test Helm
         run: utils/run_helm.sh
