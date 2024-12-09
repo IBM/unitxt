@@ -363,7 +363,9 @@ class LoadCSV(Loader):
                     file_path, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
-                iterables[split_name] = pd.read_csv(file_path).to_dict("records")
+                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
+                    "records"
+                )
         return iterables
 
 
