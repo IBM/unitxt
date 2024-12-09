@@ -46,7 +46,7 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
-def dict_diff_string(dict1, dict2):
+def dict_diff_string(dict1, dict2, max_diff=200):
     keys_in_both = dict1.keys() & dict2.keys()
     added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}
     removed = {k: dict1[k] for k in dict1.keys() - dict2.keys()}
@@ -59,7 +59,7 @@ def dict_diff_string(dict1, dict2):
         value_str = str(value)
         return (
             f" - {k} ({label}): {value_str}"
-            if len(value_str) <= 200
+            if len(value_str) <= max_diff
             else f" - {k} ({label})"
         )
 
@@ -67,7 +67,7 @@ def dict_diff_string(dict1, dict2):
     result.extend(format_with_value(k, removed[k], "removed") for k in removed)
     result.extend(
         f" - {k} (changed): {dict1[k]!s} -> {dict2[k]!s}"
-        if len(str(dict1[k])) <= 200 and len(str(dict2[k])) <= 200
+        if len(str(dict1[k])) <= max_diff and len(str(dict2[k])) <= 200
         else f" - {k} (changed)"
         for k in changed
     )
