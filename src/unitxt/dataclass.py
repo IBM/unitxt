@@ -375,8 +375,8 @@ class Dataclass(metaclass=DataclassMeta):
     7. MetaClass Usage: Uses a metaclass (DataclassMeta) for customization of class creation,
        allowing checks and alterations to be made at the time of class creation, providing more control.
 
-    Example:
-    .. highlight:: python
+    :Example:
+
     .. code-block:: python
 
         class Parent(Dataclass):
