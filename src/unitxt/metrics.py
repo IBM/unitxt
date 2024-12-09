@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
-from transformers import AutoTokenizer
 
 from .artifact import Artifact
 from .collections import ListCollection
@@ -5162,18 +5161,19 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     unsafe_token = "Yes"
 
     inference_engine: WMLInferenceEngineGeneration = None
-    tokenizer: AutoTokenizer = None
     generation_params: dict = None
     risk_name: str = None
 
-    _requirements_list: List[str] = ["ibm_watsonx_ai"]
+    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
 
     def prepare(self):
         self.reduction_map = {"mean": [self.main_score]}
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
-        if self.tokenizer is None:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+        from transformers import AutoTokenizer
+
+        if not hasattr(self, "_tokenizer") or self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.model_name,
             )
@@ -5183,7 +5183,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
 
         messages = self.process_input_fields(task_data)
         guardian_config = {"risk_name": self.risk_name}
-        processed_input = self.tokenizer.apply_chat_template(
+        processed_input = self._tokenizer.apply_chat_template(
             messages,
             guardian_config=guardian_config,
             tokenize=False,
