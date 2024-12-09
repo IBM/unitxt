@@ -93,31 +93,39 @@ def load_dataset(
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
 
-    If the 'dataset_query' argument is provided, then dataset is loaded from a card in local
-    catalog based on parameters specified in the query.
-    Alternatively, dataset is loaded from a provided card based on explicitly given parameters.
+    If the 'dataset_query' argument is provided, then dataset is loaded from a card
+    in local catalog based on parameters specified in the query.
+
+    Alternatively, dataset is loaded from a provided card based on explicitly
+    given parameters.
 
     Args:
         dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
-            For example:
-            "card=cards.wnli,template=templates.classification.multi_class.relation.default".
+        For example: ``"card=cards.wnli,template=templates.classification.multi_class.relation.default".``
+
         streaming (bool, False): When True yields the data as Unitxt streams dictionary
+
         split (str, optional): The split of the data to load
+
         disable_cache (str, optional): Disable caching process of the data
+
         **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
 
     Returns:
         DatasetDict
 
-    Examples:
-        dataset = load_dataset(
-            dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
-        )  # card must be present in local catalog
+    Example:
+        .. code-block:: python
 
-        card = TaskCard(...)
-        template = Template(...)
-        loader_limit = 10
-        dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
+            dataset = load_dataset(
+                dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
+            )  # card must be present in local catalog
+
+            card = TaskCard(...)
+            template = Template(...)
+            loader_limit = 10
+            dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
+
     """
     recipe = load_recipe(dataset_query, **kwargs)
 

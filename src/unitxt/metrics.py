@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 import os
 import re
 import string
@@ -27,7 +28,11 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
-from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
+from .inference import (
+    HFPipelineBasedInferenceEngine,
+    InferenceEngine,
+    WMLInferenceEngineGeneration,
+)
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -960,11 +965,13 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
     InstanceMetric currently allows two reductions:
+
     1. 'mean', which calculates the mean of instance scores,
     2. 'group_mean', which first applies an aggregation function specified in the reduction_map
-        to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
-        of the group scores; if grouping_field is None, grouping is disabled.
-        See _validate_group_mean_reduction for formatting instructions.
+       to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
+       of the group scores; if grouping_field is None, grouping is disabled.
+       See _validate_group_mean_reduction for formatting instructions.
+
     """
 
     n_resamples: int = OptionalField(
@@ -1489,13 +1496,17 @@ class StringContainmentRatio(InstanceMetric):
 
     Attributes:
         field: The field from the task_data that contains the values to be checked for containment.
-               Example task:
-                    Task(
-                        input_fields={"question": str},
-                        reference_fields={"entities": str},
-                        prediction_type=str,
-                        metrics=["string_containment_ratio[field=entities]"],
-                    )
+
+    Example task that contains this metric:
+
+        .. code-block:: python
+
+            Task(
+                input_fields={"question": str},
+                reference_fields={"entities": str},
+                prediction_type=str,
+                metrics=["string_containment_ratio[field=entities]"],
+            )
     """
 
     reduction_map = {"mean": ["string_containment"]}
@@ -4025,18 +4036,21 @@ def performance_drop_rate(
 def interpret_effect_size(x: float):
     """Return a string rule-of-thumb interpretation of an effect size value, as defined by Cohen/Sawilowsky.
 
-    See https://en.wikipedia.org/wiki/Effect_size;
-    Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
-    Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
+    | See `Effect size <https://en.wikipedia.org/wiki/Effect_size>`_
+    | Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
+    | Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
 
     Value has interpretation of
-    - essentially 0 if |x| < 0.01
-    - very small if 0.01 <= |x| < 0.2
-    - small difference if 0.2 <= |x| < 0.5
-    - a medium difference if 0.5 <= |x| < 0.8
-    - a large difference if 0.8 <= |x| < 1.2
-    - a very large difference if 1.2 <= |x| < 2.0
-    - a huge difference if 2.0 <= |x|
+
+    .. code-block:: text
+
+        - essentially 0 if |x| < 0.01
+        - very small if 0.01 <= |x| < 0.2
+        - small difference if 0.2 <= |x| < 0.5
+        - a medium difference if 0.5 <= |x| < 0.8
+        - a large difference if 0.8 <= |x| < 1.2
+        - a very large difference if 1.2 <= |x| < 2.0
+        - a huge difference if 2.0 <= |x|
 
     Args:
         x: float effect size value
@@ -4072,7 +4086,7 @@ def normalized_cohens_h(
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
-    https://en.wikipedia.org/wiki/Cohen%27s_h
+    `Conhen's h <https://en.wikipedia.org/wiki/Cohen%27s_h>`_
 
     Cohen's h effect size metric between two proportions p2 and p1 is 2 * (arcsin(sqrt(p2)) - arcsin(sqrt(p1))).
     h in -pi, pi, with +/-pi representing the largest increase/decrease (p1=0, p2=1), or (p1=1, p2=0).
@@ -4083,6 +4097,9 @@ def normalized_cohens_h(
     Interpretation: the original unscaled Cohen's h can be interpreted according to function interpret_effect_size
 
     Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
+
+    .. code-block:: text
+
         - essentially 0 if |norm h| < 0.0031831
         - very small if 0.0031831 <= |norm h| < 0.06366198
         - small difference if 0.06366198 <= |norm h| < 0.15915494
@@ -4090,12 +4107,17 @@ def normalized_cohens_h(
         - a large difference if 0.25464791 <= |norm h| < 0.38197186
         - a very large difference if 0.38197186 <= |norm h| < 0.63661977
         - a huge difference if 0.63661977 <= |norm h|
+
     Args:
         subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
+
         control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
+
         comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
-            to be compared to the control group.
+        to be compared to the control group.
+
         interpret: boolean, whether to interpret the significance of the score or not
+
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
@@ -5124,3 +5146,112 @@ class PredictionLength(InstanceMetric):
         task_data: List[Dict],
     ) -> dict:
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
+
+
+class GraniteGuardianWMLMetric(InstanceMetric):
+    """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
+
+    main_score = "granite_guardian"
+    reduction_map: Dict[str, List[str]] = None
+    prediction_type = float
+
+    model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    safe_token = "No"
+    unsafe_token = "Yes"
+
+    inference_engine: WMLInferenceEngineGeneration = None
+    generation_params: Dict = None
+    risk_name: str = None
+
+    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
+
+    def prepare(self):
+        self.reduction_map = {"mean": [self.main_score]}
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        from transformers import AutoTokenizer
+
+        if not hasattr(self, "_tokenizer") or self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.model_name,
+            )
+            self.inference_engine._load_model()
+            self.model = self.inference_engine._model
+            self.generation_params = self.inference_engine._set_logprobs_params({})
+
+        messages = self.process_input_fields(task_data)
+        guardian_config = {"risk_name": self.risk_name}
+        processed_input = self._tokenizer.apply_chat_template(
+            messages,
+            guardian_config=guardian_config,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+        result = self.model.generate(
+            prompt=[processed_input],
+            params=self.generation_params,
+        )
+        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        label, prob_of_risk = self.parse_output(generated_tokens_list)
+        score = 1 - prob_of_risk if label is not None else np.nan
+        return {self.main_score: score}
+
+    def process_input_fields(self, task_data):
+        if self.risk_name == "groundedness":
+            messages = [
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "answer_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "context_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+            ]
+        else:
+            raise NotImplementedError()
+
+        return messages
+
+    def parse_output(self, generated_tokens_list):
+        top_tokens_list = [
+            generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
+        ]
+        prob = self.get_probabilities(top_tokens_list)
+        prob_of_risk = prob[1]
+
+        res = next(iter(generated_tokens_list))["text"].strip()
+
+        if self.unsafe_token.lower() == res.lower():
+            label = self.unsafe_token
+        elif self.safe_token.lower() == res.lower():
+            label = self.safe_token
+        else:
+            label = None
+
+        return label, prob_of_risk
+
+    def get_probabilities(self, top_tokens_list):
+        import torch
+
+        safe_token_prob = 1e-50
+        unsafe_token_prob = 1e-50
+
+        for top_tokens in top_tokens_list:
+            for token in top_tokens:
+                if token["text"].strip().lower() == self.safe_token.lower():
+                    safe_token_prob += math.exp(token["logprob"])
+                if token["text"].strip().lower() == self.unsafe_token.lower():
+                    unsafe_token_prob += math.exp(token["logprob"])
+
+        return torch.softmax(
+            torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
+            dim=0,
+        ).numpy()

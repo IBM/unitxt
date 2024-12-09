@@ -89,16 +89,18 @@ class Catalogs:
         self.catalogs = []
 
 
-def map_values_in_place(object, mapper):
-    if isinstance(object, dict):
-        for key, value in object.items():
-            object[key] = mapper(value)
-        return object
-    if isinstance(object, list):
-        for i in range(len(object)):
-            object[i] = mapper(object[i])
-        return object
-    return mapper(object)
+def maybe_recover_artifacts_structure(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            obj[key] = maybe_recover_artifact(value)
+        return obj
+    if isinstance(obj, list):
+        for i in range(len(obj)):
+            obj[i] = maybe_recover_artifact(obj[i])
+        return obj
+    return obj
 
 
 def get_closest_artifact_type(type):
@@ -150,8 +152,12 @@ class Artifact(Dataclass):
     )
 
     @classmethod
-    def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "__type__" in d
+    def is_artifact_dict(cls, obj):
+        return isinstance(obj, dict) and "__type__" in obj
+
+    @classmethod
+    def is_possible_identifier(cls, obj):
+        return isinstance(obj, str) or cls.is_artifact_dict(obj)
 
     @classmethod
     def verify_artifact_dict(cls, d):
@@ -292,7 +298,7 @@ class Artifact(Dataclass):
                 field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]
             ):
                 value = getattr(self, field.name)
-                value = map_values_in_place(value, maybe_recover_artifact)
+                value = maybe_recover_artifacts_structure(value)
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
@@ -343,15 +349,18 @@ class Artifact(Dataclass):
 
         Args:
             instance (Dict[str, Any]): data which should contain its allowed data
-                classification policies under key 'data_classification_policy'.
+            classification policies under key 'data_classification_policy'.
+
             name (Optional[str]): name of artifact which should be used to retrieve
-                data classification from env. If not specified, then either __id__ or
-                 __class__.__name__, are used instead, respectively.
+            data classification from env. If not specified, then either ``__id__`` or
+            ``__class__.__name__``, are used instead, respectively.
 
         Returns:
             Dict[str, Any]: unchanged instance.
 
         Examples:
+        .. code-block:: python
+
             instance = {"x": "some_text", "data_classification_policy": ["pii"]}
 
             # Will raise an error as "pii" is not included policy
@@ -574,11 +583,10 @@ def reset_artifacts_json_cache():
     artifacts_json_cache.cache_clear()
 
 
-def maybe_recover_artifact(artifact):
-    if isinstance(artifact, str):
-        return verbosed_fetch_artifact(artifact)
-
-    return artifact
+def maybe_recover_artifact(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    return obj
 
 
 def register_all_artifacts(path):
