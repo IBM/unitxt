@@ -28,7 +28,7 @@ with settings.context(allow_unverified_code=True):
             ),
             preprocess_steps=[
                 Set({"context_type": "description"}),
-                Rename(field_to_field={"label": "answer"}),
+                Rename(field_to_field={"label": "answers"}),
                 ListFieldValues(fields=["ans0", "ans1", "ans2"], to_field="choices"),
             ],
             task="tasks.qa.multiple_choice.with_context",
