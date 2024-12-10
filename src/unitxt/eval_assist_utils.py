@@ -35,21 +35,6 @@ def get_evaluator_metadata(
         raise ValueError(f"An evaluator with id {name} matched several models.")
     return evaluator_search[0]
 
-
-def get_criteria(
-    type: EvaluatorTypeEnum,
-    name: DirectCriteriaCatalogEnum | PairwiseComparisonCriteriaCatalogEnum,
-):
-    try:
-        return (
-            DirectCriteriaCatalogEnum
-            if type == EvaluatorTypeEnum.DIRECT_ASSESSMENT
-            else PairwiseComparisonCriteriaCatalogEnum
-        )[name]
-    except:
-        raise Exception("The provided criteria type and name does not exist")
-
-
 class CatalogDefinition(TypedDict):
     name: str
     params: dict[str, Union[str, dict[str, str], "CatalogDefinition"]]
