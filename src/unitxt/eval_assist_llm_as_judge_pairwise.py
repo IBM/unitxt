@@ -1,7 +1,5 @@
 import itertools
 
-from unitxt.eval_assist_llm_as_judge import EvalAssistLLMAsJudge
-
 from .api import infer, select
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import pairwise_comparison_template_dict
@@ -9,7 +7,8 @@ from .eval_assist_constants import (
     Criteria,
     OptionSelectionStrategyEnum,
 )
-from .inference import NoInputLogProbsExeption
+from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
+from .inference import NoInputLogProbsError
 from .task import Task
 
 
@@ -299,7 +298,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 ]
                 selections = option_selection_outputs
                 # take the number of the response from 'Response n'
-            except NoInputLogProbsExeption as e:
+            except NoInputLogProbsError as e:
                 self.logger.error(f"An error occurred: {e}")
                 self.logger.warning(
                     f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
@@ -446,7 +445,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             per_response_results[key]["response_name"] = key
 
         # remove None values from the result dict, e.g. when positional_bias_check is False there is no positional_bias entry in the dict
-        result = [
+        return [
             {
                 metric_key: value
                 for metric_key, value in per_response_results[key].items()
@@ -454,5 +453,3 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             }
             for key in [f"{i+1}" for i in range(evaluations_count)]
         ]
-
-        return result

@@ -25,7 +25,7 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        if type(self.context_fields) == str:
+        if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
 
         self.format = "formats.chat_api"

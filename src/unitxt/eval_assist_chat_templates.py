@@ -1,4 +1,4 @@
-from unitxt.templates import InputOutputTemplate
+from .templates import InputOutputTemplate
 
 direct_assessment_template_dict = {
     "assessment": InputOutputTemplate(
