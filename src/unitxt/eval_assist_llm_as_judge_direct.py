@@ -1,5 +1,3 @@
-from unitxt.eval_assist_llm_as_judge import EvalAssistLLMAsJudge
-
 from .api import infer, select
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
@@ -7,7 +5,8 @@ from .eval_assist_constants import (
     CriteriaWithOptions,
     OptionSelectionStrategyEnum,
 )
-from .inference import NoInputLogProbsExeption
+from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
+from .inference import NoInputLogProbsError
 from .task import Task
 
 
@@ -247,7 +246,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     for instance in option_selection_outputs_dataset
                 ]
                 selections = option_selection_outputs
-            except NoInputLogProbsExeption as e:
+            except NoInputLogProbsError as e:
                 self.logger.error(f"An error occurred: {e}")
                 self.logger.warning(
                     f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
@@ -293,7 +292,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             for criteria, selection in zip(criterias, selections)
         ]
         # remove None values from the result dict, e.g. when positional_bias_check is False there is no positional_bias entry in the dict
-        results = [
+        return [
             {
                 key: value
                 for key, value in {
@@ -348,5 +347,3 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             }
             for i in range(evaluations_count)
         ]
-
-        return results

@@ -1,6 +1,6 @@
 from typing import TypedDict, Union
 
-from unitxt.eval_assist_constants import (
+from .eval_assist_constants import (
     EVALUATORS_METADATA,
     MODEL_RENAMINGS,
     DirectCriteriaCatalogEnum,
@@ -16,8 +16,8 @@ def get_parsed_context(context: dict[str, str]):
     return (
         "\n".join([f"{key}: {value}" for key, value in context.items()])
         if len(context) > 1
-        or not (len(context) == 1 and list(context.keys())[0].lower() == "context")
-        else context[list(context.keys())[0]]
+        or not (len(context) == 1 and next(iter(context.keys())).lower() == "context")
+        else context[next(iter(context.keys()))]
     )
 
 

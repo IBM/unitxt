@@ -1114,7 +1114,7 @@ class TokenLogProb(TypedDict):
     logprob: float
 
 
-class NoInputLogProbsExeption(Exception):
+class NoInputLogProbsError(Exception):
     pass
 
 
@@ -1160,7 +1160,7 @@ class OptionSelectingByLogProbsInferenceEngine:
         """
         token_counts = self.get_token_count(dataset)
 
-        task_datas = [
+        task_data = [
             self.get_task_data_dict(instance["task_data"]) for instance in dataset
         ]
         # pass in the token count so we only return the option score
@@ -1171,7 +1171,7 @@ class OptionSelectingByLogProbsInferenceEngine:
                 "task_data": {"token_count": token_count},
             }
             for instance, task_data, token_count in zip(
-                dataset, task_datas, token_counts
+                dataset, task_data, token_counts
             )
             for option in task_data["options"]
         ]
@@ -1182,20 +1182,20 @@ class OptionSelectingByLogProbsInferenceEngine:
         selections = []
         for i in range(dataset):
             tokens_with_logprob_list = []
-            task_data = task_datas[i]
+            task_data_instance = task_data[i]
             # get the input tokens for the completions of the current resp_idx
-            for _ in task_data["options"]:
+            for _ in task_data_instance["options"]:
                 tokens_with_logprob = next(options_logprobs_iterator)
                 tokens_with_logprob_list.append(tokens_with_logprob)
             # we start comparing all the options, e.g. if there are five options the value will be [0,1,2,3,4]
-            to_compare_indexes = list(range(len(task_data["options"])))
+            to_compare_indexes = list(range(len(task_data_instance["options"])))
             # token_with_logprob_comp is the logprobs and the text of the tokens
             # for each of the options at a specific index
             for i, token_with_logprob_comp in enumerate(zip(*tokens_with_logprob_list)):
                 tokens_comp = [t["text"] for t in token_with_logprob_comp]
                 logprobs_comp = [t["logprob"] for t in token_with_logprob_comp]
                 if any(logprob is None for logprob in logprobs_comp):
-                    raise NoInputLogProbsExeption(
+                    raise NoInputLogProbsError(
                         f"Input logprobs weren't provided. The logprobs being compared are "
                         f"{logprobs_comp} for tokens {tokens_comp} at position {i}. "
                         "Probably, this models doesn't support logprobs of input tokens."
@@ -1228,7 +1228,7 @@ class OptionSelectingByLogProbsInferenceEngine:
                 # multiple options are either equal or have the same token values prefix
                 # choose the first
                 index_max = to_compare_indexes[0]
-            selections.append(task_data["options"][index_max])
+            selections.append(task_data_instance["options"][index_max])
         return selections
 
 
@@ -1689,7 +1689,7 @@ class RITSInferenceEngine(
             [
                 {"text": token["decoded_token"], "logprob": token["logprob"]}
                 for token in [
-                    list(prompt_logprobs.values())[0]
+                    next(iter(prompt_logprobs.values()))
                     for prompt_logprobs in response.choices[0].prompt_logprobs[1:]
                 ]
             ]
@@ -2815,11 +2815,7 @@ class LiteLLMInferenceEngine(
         """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
         self.max_tokens = 1
         self.logprobs = False
-        print("self.model")
-        print(self.model)
         responses = asyncio.run(self._infer_async(dataset, prompt_logprobs=0, n=1))
-        print("responses[0]")
-        print(responses[0])
 
         return [
             [

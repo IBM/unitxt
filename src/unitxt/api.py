@@ -234,6 +234,5 @@ def select(
     predictions = engine.select(dataset)
     # predictions = post_process(raw_predictions, dataset)
     if return_data:
-        dataset = dataset.add_column("prediction", predictions)
-        return dataset
+        return dataset.add_column("prediction", predictions)
     return predictions
