@@ -5,21 +5,33 @@ from unitxt.inference import (
     IbmGenAiInferenceEngineParams,
 )
 from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.inference import (
+    CrossProviderInferenceEngine,
+)
 
 template_name = "templates.response_assessment.judges.completeness.v5"
 
+# inference_models = {
+#     "llama3_1_v1_ibmgenai": {
+#         "model_name": "llama3-1-70binstruct",
+#         "inference_model": IbmGenAiInferenceEngine(
+#             model_name="meta-llama/llama-3-1-70b-instruct",
+#             parameters=IbmGenAiInferenceEngineParams(max_new_tokens=256),
+#         ),
+#     },
+#     "generic_inference_engine": {
+#         "model_name": "generic",
+#         "inference_model": (GenericInferenceEngine()),
+#     },
+# }
+
 inference_models = {
     "llama3_1_v1_ibmgenai": {
-        "model_name": "llama3-1-70binstruct",
-        "inference_model": IbmGenAiInferenceEngine(
-            model_name="meta-llama/llama-3-1-70b-instruct",
-            parameters=IbmGenAiInferenceEngineParams(max_new_tokens=256),
-        ),
-    },
-    "generic_inference_engine": {
-        "model_name": "generic",
-        "inference_model": (GenericInferenceEngine()),
-    },
+         "model_name": "llama3-1-70b-instruct",
+         "inference_model": CrossProviderInferenceEngine(
+            model="llama-3-1-70b-instruct", provider="rits"
+        )
+    }
 }
 
 for label, inference_model in inference_models.items():
