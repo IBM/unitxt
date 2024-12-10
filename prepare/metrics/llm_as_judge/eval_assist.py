@@ -47,6 +47,7 @@ def get_evaluator(
         "inference_engine": inference_engine,
         "option_selection_strategy": PROVIDER_TO_STRATEGY[provider].name,
         "evaluator_name": evaluator_metadata.name.name,
+        "generate_summaries": False,
     }
 
     evaluator_klass = (

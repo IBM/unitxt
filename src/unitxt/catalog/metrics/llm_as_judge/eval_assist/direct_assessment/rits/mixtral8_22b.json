@@ -7,5 +7,6 @@
         "seed": 42
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "MIXTRAL8_22b"
+    "evaluator_name": "MIXTRAL8_22b",
+    "generate_summaries": false
 }

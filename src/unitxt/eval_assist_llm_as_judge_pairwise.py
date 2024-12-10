@@ -35,7 +35,7 @@ def rank_indexes(numbers):
 
 
 class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
-    criteria_or_criterias: Criteria = None
+    criteria: Criteria = None
     reduction_map = {"mean": ["winrate"]}
     main_score = "winrate"
 
@@ -78,6 +78,27 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             metrics=[],
         )
 
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
+            # TODO: implement verify to check that the criteria was provided
+            self.logger.info("Reading criteria from the task_data")
+            criteria_dicts = [
+                {**task_data_instance["criteria"], "__type__": "criteria"}
+                for task_data_instance in task_data
+            ]
+            criterias = [fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts]
+        # criteria is in passes in the constructor
+        elif isinstance(self.criteria, Criteria):
+            self.logger.info(
+                "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
+            )
+            criterias: list[Criteria] = [self.criteria] * eval_count
+        else:
+            self.logger.info("Reading criteria from self. Criteria is already a list")
+            criterias = self.criteria
+        self.logger.info(f"First criteria name is '{criterias[0].name}'")
+        return criterias
+    
     def compute(
         self,
         references: list[list[str]],
@@ -117,25 +138,11 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 [predictions[response_name_1], predictions[response_name_2]]
             )
             option_pairs.append([f"{response_name_1 + 1}", f"{response_name_2 + 1}"])
-        task_data = [task_data[0]] * contests_count
-        if self.criteria_or_criterias is None:
-            # TODO: implement verify to check that the criteria was provided
-            self.logger.info("Reading criteria from the task_data")
-            criteria_dicts = [
-                {**task_data_instance["criteria"], "__type__": "criteria"}
-                for task_data_instance in task_data
-            ]
-            criterias = [fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts]
-        # criteria is in passes in the constructor
-        elif isinstance(self.criteria_or_criterias, Criteria):
-            self.logger.info(
-                "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
-            )
-            criterias: list[Criteria] = [self.criteria_or_criterias] * contests_count
-        else:
-            self.logger.info("Reading criteria from self. Criteria is already a list")
-            criterias = self.criteria_or_criterias
 
+            
+        task_data = [task_data[0]] * contests_count
+        
+        criterias = self.get_criterias(task_data, contests_count)
         contexts = self.get_contexts(task_data)
 
         if self.check_positional_bias:
@@ -186,32 +193,32 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         self.logger.info("The assessment was generated successfully.")
 
         # Summarisation Stage
-        summarization_instances = [
-            {
-                "assessment": assessment_output,
-                "data_classification_policy": ["public"],
-            }
-            for assessment_output in assessment_outputs[assessment_for_summaries_slice]
-        ]
+        if self.generate_summaries:
+            summarization_instances = [
+                {
+                    "assessment": assessment_output,
+                    "data_classification_policy": ["public"],
+                }
+                for assessment_output in assessment_outputs[assessment_for_summaries_slice]
+            ]
 
-        summarization_outputs_dataset = infer(
-            summarization_instances,
-            task=self.summarization_task,
-            engine=self.inference_engine,
-            template=self.summarization_template,
-            format=self.format,
-            return_data=True,
-        )
+            summarization_outputs_dataset = infer(
+                summarization_instances,
+                task=self.summarization_task,
+                engine=self.inference_engine,
+                template=self.summarization_template,
+                format=self.format,
+                return_data=True,
+            )
 
-        summarization_prompts: list[str] = [
-            instance["source"] for instance in summarization_outputs_dataset
-        ]
-        summarization_outputs: list[str] = [
-            instance["prediction"] for instance in summarization_outputs_dataset
-        ]
+            summarization_prompts: list[str] = [
+                instance["source"] for instance in summarization_outputs_dataset
+            ]
+            summarization_outputs: list[str] = [
+                instance["prediction"] for instance in summarization_outputs_dataset
+            ]
 
-
-        self.logger.info("The summary was generated successfully.")
+            self.logger.info("The summary was generated successfully.")
 
         choose_response_instructions = [
             "".join(
@@ -327,15 +334,16 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             per_response_results[response_name_1]["compared_to"].append(f"{response_name_2}")
             per_response_results[response_name_2]["compared_to"].append(f"{response_name_1}")
 
-            # add summaries
-            per_response_results[response_name_1]["summaries"].append(summarization_outputs[i])
-            per_response_results[response_name_2]["summaries"].append(summarization_outputs[i])
+            if self.generate_summaries:
+                # add summaries
+                per_response_results[response_name_1]["prompts"]["summary"].append(summarization_prompts[i])
+                per_response_results[response_name_2]["prompts"]["summary"].append(summarization_prompts[i])
+                per_response_results[response_name_1]["summaries"].append(summarization_outputs[i])
+                per_response_results[response_name_2]["summaries"].append(summarization_outputs[i])
 
             per_response_results[response_name_1]["prompts"]["option_selection"].append(option_selection_prompts[i])
             per_response_results[response_name_2]["prompts"]["option_selection"].append(option_selection_prompts[i])
 
-            per_response_results[response_name_1]["prompts"]["summary"].append(summarization_prompts[i])
-            per_response_results[response_name_2]["prompts"]["summary"].append(summarization_prompts[i])
 
             ## add positional bias
             if self.check_positional_bias:

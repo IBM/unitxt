@@ -11,9 +11,9 @@ criteria_json = {
 
 data = {
     "test": [
-        {"context": {"Question": "How is the weather?"}},
-        {"context": {"Question": "How is the weather?"}},
-        {"context": {"Question": "How is the weather?"}},
+        {"question": "How is the weather?"},
+        {"question": "How is the weather?"},
+        {"question": "How is the weather?"},
     ]
 }
 
