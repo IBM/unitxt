@@ -388,17 +388,15 @@ class Artifact(Dataclass):
         proper way (for example when sending it to some external services).
 
         Args:
-            instance (Dict[str, Any]): data which should contain its allowed data
-            classification policies under key 'data_classification_policy'.
+            instance (Dict[str, Any]): data which should contain its allowed data classification policies under key 'data_classification_policy'.
 
-            name (Optional[str]): name of artifact which should be used to retrieve
-            data classification from env. If not specified, then either ``__id__`` or
-            ``__class__.__name__``, are used instead, respectively.
+            name (Optional[str]): name of artifact which should be used to retrieve data classification from env. If not specified, then either ``__id__`` or ``__class__.__name__``, are used instead, respectively.
 
         Returns:
             Dict[str, Any]: unchanged instance.
 
-        Examples:
+        :Examples:
+
         .. code-block:: python
 
             instance = {"x": "some_text", "data_classification_policy": ["pii"]}
@@ -415,6 +413,7 @@ class Artifact(Dataclass):
             UNITXT_DATA_CLASSIFICATION_POLICY = json.dumps({"metrics.accuracy": ["pii"]})
             metric = fetch_artifact("metrics.accuracy")
             metric.verify_instance(instance)
+
         """
         name = name or self.get_pretty_print_name()
         data_classification_policy = get_artifacts_data_classification(name)

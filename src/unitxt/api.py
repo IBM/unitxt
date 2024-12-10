@@ -100,27 +100,31 @@ def load_dataset(
     given parameters.
 
     Args:
-        dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
-        For example: ``"card=cards.wnli,template=templates.classification.multi_class.relation.default".``
-
-        streaming (bool, False): When True yields the data as Unitxt streams dictionary
-
-        split (str, optional): The split of the data to load
-
-        disable_cache (str, optional): Disable caching process of the data
-
-        **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
+        dataset_query (str, optional):
+            A string query which specifies a dataset to load from
+            local catalog or name of specific recipe or benchmark in the catalog. For
+            example, ``"card=cards.wnli,template=templates.classification.multi_class.relation.default"``.
+        streaming (bool, False):
+            When True yields the data as Unitxt streams dictionary
+        split (str, optional):
+            The split of the data to load
+        disable_cache (str, optional):
+            Disable caching process of the data
+        **kwargs:
+            Arguments used to load dataset from provided card, which is not present in local catalog.
 
     Returns:
         DatasetDict
 
-    Example:
+    :Example:
+
         .. code-block:: python
 
             dataset = load_dataset(
                 dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
-            )  # card must be present in local catalog
+            )  # card and template must be present in local catalog
 
+            # or built programmatically
             card = TaskCard(...)
             template = Template(...)
             loader_limit = 10
