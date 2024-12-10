@@ -16,8 +16,7 @@ def get_parsed_context(context: dict[str, str]):
     return (
         "\n".join([f"{key}: {value}" for key, value in context.items()])
         if len(context) > 1
-        or not (len(context) == 1
-        and list(context.keys())[0].lower() == "context")
+        or not (len(context) == 1 and list(context.keys())[0].lower() == "context")
         else context[list(context.keys())[0]]
     )
 
@@ -54,6 +53,7 @@ def get_criteria(
 class CatalogDefinition(TypedDict):
     name: str
     params: dict[str, Union[str, dict[str, str], "CatalogDefinition"]]
+
 
 # def parse_catalog_definition(catalog_definition: CatalogDefinition):
 #     parsed_parts = []

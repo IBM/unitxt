@@ -19,11 +19,11 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
     option_selection_strategy: OptionSelectionStrategyEnum = None
     evaluator_name: EvaluatorNameEnum = None
     check_positional_bias = True
-    context_fields: str = ['context']
+    context_fields: str = ["context"]
     generate_summaries: bool = True
     logger = get_logger()
 
-    def prepare(self):  
+    def prepare(self):
         super().prepare()
         if type(self.context_fields) == str:
             self.context_fields = [self.context_fields]
@@ -74,5 +74,13 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
             metrics=[],
         )
 
-    def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str,str]]:
-        return [get_parsed_context({context_field:td[context_field] for context_field in self.context_fields}) for td in task_data]
+    def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str, str]]:
+        return [
+            get_parsed_context(
+                {
+                    context_field: td[context_field]
+                    for context_field in self.context_fields
+                }
+            )
+            for td in task_data
+        ]

@@ -2,11 +2,11 @@ from unitxt.eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 
 from .api import infer, select
 from .artifact import fetch_artifact
+from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
     CriteriaWithOptions,
     OptionSelectionStrategyEnum,
 )
-from .eval_assist_chat_templates import direct_assessment_template_dict
 from .inference import NoInputLogProbsExeption
 from .task import Task
 
@@ -23,16 +23,16 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         self.option_selection_template = direct_assessment_template_dict["answer"]
 
         self.assessment_task = Task(
-                input_fields={
-                    "context_variables": str,
-                    "response": str,
-                    "criteria_description": str,
-                    "display_options_instruction": str,
-                },
-                reference_fields={},
-                prediction_type=str,
-                metrics=[],
-            )
+            input_fields={
+                "context_variables": str,
+                "response": str,
+                "criteria_description": str,
+                "display_options_instruction": str,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
 
         self.summarization_task = Task(
             input_fields={"assessment": str},
@@ -50,8 +50,8 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             reference_fields={},
             prediction_type=str,
             metrics=[],
-        ) 
-    
+        )
+
     def get_parsed_criteria(self, criteria: CriteriaWithOptions):
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
@@ -72,7 +72,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             display_options_instruction,
             score_option_instruction,
         )
-    
+
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
             self.logger.info("Reading criteria from the task_data")
@@ -93,9 +93,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             self.logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
             )
-            criterias: list[CriteriaWithOptions] = [
-                self.criteria
-            ] * eval_count
+            criterias: list[CriteriaWithOptions] = [self.criteria] * eval_count
         else:
             criterias = self.criteria
         self.logger.info(f"First criteria name is '{criterias[0].name}'")
@@ -128,7 +126,9 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             contexts += contexts
             predictions += predictions
 
-        parsed_criterias = [self.get_parsed_criteria(criteria) for criteria in criterias]
+        parsed_criterias = [
+            self.get_parsed_criteria(criteria) for criteria in criterias
+        ]
 
         (
             criteria_description_list,
@@ -172,7 +172,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         ]
 
         self.logger.info("The assessment was generated successfully.")
-        
+
         if self.generate_summaries:
             # Summarisation Stage
             summarization_instances = [
@@ -213,14 +213,22 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             for criteria_description, score_option_instruction, criteria_option_names in zip(
                 criteria_description_list,
                 score_option_instruction_list,
-                criteria_option_names_list
+                criteria_option_names_list,
             )
         ]
 
-        previous_messages = [[assessment_prompt[0], {'role': 'assistant', 'content': assessment_output}] for assessment_prompt, assessment_output in zip(assessment_prompts, assessment_outputs)]
+        previous_messages = [
+            [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
+            for assessment_prompt, assessment_output in zip(
+                assessment_prompts, assessment_outputs
+            )
+        ]
 
         parse_output_logprobs_failed = False
-        if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB:
+        if (
+            self.option_selection_strategy
+            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+        ):
             try:
                 option_selection_outputs_dataset = select(
                     selection_instances,
@@ -229,17 +237,28 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     template=self.option_selection_template,
                     format=self.format,
                     return_data=True,
-                    previous_messages=previous_messages
+                    previous_messages=previous_messages,
                 )
-                option_selection_prompts: list[str] = [instance["source"] for instance in option_selection_outputs_dataset]
-                option_selection_outputs: list[str] = [instance["prediction"] for instance in option_selection_outputs_dataset]
+                option_selection_prompts: list[str] = [
+                    instance["source"] for instance in option_selection_outputs_dataset
+                ]
+                option_selection_outputs: list[str] = [
+                    instance["prediction"]
+                    for instance in option_selection_outputs_dataset
+                ]
                 selections = option_selection_outputs
             except NoInputLogProbsExeption as e:
                 self.logger.error(f"An error occurred: {e}")
-                self.logger.warning(f'{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead.')
+                self.logger.warning(
+                    f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
+                )
                 parse_output_logprobs_failed = True
 
-        if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT or parse_output_logprobs_failed:
+        if (
+            self.option_selection_strategy
+            == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+            or parse_output_logprobs_failed
+        ):
             option_selection_outputs_dataset = infer(
                 selection_instances,
                 task=self.option_selection_task,
@@ -247,12 +266,19 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 template=self.option_selection_template,
                 format=self.format,
                 return_data=True,
-                previous_messages=previous_messages
+                previous_messages=previous_messages,
             )
-            option_selection_prompts: list[str] = [instance["source"] for instance in option_selection_outputs_dataset]
-            option_selection_outputs: list[str] = [instance["raw_prediction"] for instance in option_selection_outputs_dataset]
-            selections: list[str] = [instance["prediction"] for instance in option_selection_outputs_dataset]
-            
+            option_selection_prompts: list[str] = [
+                instance["source"] for instance in option_selection_outputs_dataset
+            ]
+            option_selection_outputs: list[str] = [
+                instance["raw_prediction"]
+                for instance in option_selection_outputs_dataset
+            ]
+            selections: list[str] = [
+                instance["prediction"] for instance in option_selection_outputs_dataset
+            ]
+
         self.logger.info("The selections were calculated successfully.")
 
         positional_bias = None
@@ -273,23 +299,49 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 for key, value in {
                     "score": scores[i],
                     "mapped_score": scores[i],
-                    "positional_bias": positional_bias[i] if self.check_positional_bias else None,
+                    "positional_bias": positional_bias[i]
+                    if self.check_positional_bias
+                    else None,
                     "selected_option": selections[i],
-                    "positional_bias_selected_option": selections[evaluations_count + i] if self.check_positional_bias else None,
+                    "positional_bias_selected_option": selections[evaluations_count + i]
+                    if self.check_positional_bias
+                    else None,
                     "assessment": assessment_outputs_dataset[i]["prediction"],
-                    "positional_bias_assessment": assessment_outputs_dataset[i + evaluations_count]["prediction"] if self.check_positional_bias else None,
+                    "positional_bias_assessment": assessment_outputs_dataset[
+                        i + evaluations_count
+                    ]["prediction"]
+                    if self.check_positional_bias
+                    else None,
                     "option_selection_prompt": option_selection_prompts[i],
-                    "posional_bias_option_selection_prompt": option_selection_prompts[i + evaluations_count],
-                    "summary": summarization_outputs[i] if self.generate_summaries else None,
+                    "posional_bias_option_selection_prompt": option_selection_prompts[
+                        i + evaluations_count
+                    ],
+                    "summary": summarization_outputs[i]
+                    if self.generate_summaries
+                    else None,
                     "prompts": {
                         "assessment": assessment_prompts[i],
-                        "positional_bias_assessment": assessment_prompts[evaluations_count + i],
-                        "summarization": summarization_prompts[i] if self.generate_summaries else None,
+                        "positional_bias_assessment": assessment_prompts[
+                            evaluations_count + i
+                        ],
+                        "summarization": summarization_prompts[i]
+                        if self.generate_summaries
+                        else None,
                         "option_selection": option_selection_prompts[i],
-                        "posional_bias_option_selection": option_selection_prompts[i + evaluations_count],
+                        "posional_bias_option_selection": option_selection_prompts[
+                            i + evaluations_count
+                        ],
                     },
-                    "option_selection_completion": option_selection_outputs[i] if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT else None,
-                    "positional_bias_option_selection_completion": option_selection_outputs[evaluations_count + i] if self.option_selection_strategy== OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT else None,
+                    "option_selection_completion": option_selection_outputs[i]
+                    if self.option_selection_strategy
+                    == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+                    else None,
+                    "positional_bias_option_selection_completion": option_selection_outputs[
+                        evaluations_count + i
+                    ]
+                    if self.option_selection_strategy
+                    == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+                    else None,
                     "option_selection_strategy": self.option_selection_strategy.name,
                 }.items()
                 if value is not None

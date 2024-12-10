@@ -1,17 +1,18 @@
+import statistics
+
 from unitxt import get_logger, get_settings, load_dataset
 from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
 from unitxt.text_utils import print_dict
-import statistics
 
 logger = get_logger()
 settings = get_settings()
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
-criterias = ['answer_relevance', 'coherence', 'conciseness']
+criterias = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b"
     "[context_fields=[context,question],"
@@ -41,7 +42,7 @@ about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 predictions = inference_model.infer(dataset)
 
-gold_answers = [d[0] for d in dataset['references']]
+gold_answers = [d[0] for d in dataset["references"]]
 
 # Evaluate the predictions using the defined metric.
 evaluated_predictions = evaluate(predictions=predictions, data=dataset)
@@ -64,17 +65,37 @@ print_dict(
 
 for criteria in criterias:
     logger.info(f"Scores for criteria '{criteria}'")
-    gold_answer_scores = [instance['score']['instance'][f'{criteria}_mapped_score'] for instance in evaluated_gold_answers]
-    gold_answer_position_bias = [int(instance['score']['instance'][f'{criteria}_positional_bias']) for instance in evaluated_gold_answers]
-    prediction_scores = [instance['score']['instance'][f'{criteria}_mapped_score'] for instance in evaluated_predictions]
-    prediction_position_bias = [int(instance['score']['instance'][f'{criteria}_positional_bias']) for instance in evaluated_predictions]
+    gold_answer_scores = [
+        instance["score"]["instance"][f"{criteria}_mapped_score"]
+        for instance in evaluated_gold_answers
+    ]
+    gold_answer_position_bias = [
+        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+        for instance in evaluated_gold_answers
+    ]
+    prediction_scores = [
+        instance["score"]["instance"][f"{criteria}_mapped_score"]
+        for instance in evaluated_predictions
+    ]
+    prediction_position_bias = [
+        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+        for instance in evaluated_predictions
+    ]
 
-    logger.info(f"Scores of gold answers: {statistics.mean(gold_answer_scores)} +/- {statistics.stdev(gold_answer_scores)}")
-    logger.info(f"Scores of predicted answers: {statistics.mean(prediction_scores)} +/- {statistics.stdev(prediction_scores)}")
-    logger.info(f"Positional bias occurrence on gold answers: {statistics.mean(gold_answer_position_bias)}")
-    logger.info(f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_position_bias)}\n")
+    logger.info(
+        f"Scores of gold answers: {statistics.mean(gold_answer_scores)} +/- {statistics.stdev(gold_answer_scores)}"
+    )
+    logger.info(
+        f"Scores of predicted answers: {statistics.mean(prediction_scores)} +/- {statistics.stdev(prediction_scores)}"
+    )
+    logger.info(
+        f"Positional bias occurrence on gold answers: {statistics.mean(gold_answer_position_bias)}"
+    )
+    logger.info(
+        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_position_bias)}\n"
+    )
 
-'''
+"""
 Output with 100 examples
 
 Scores for criteria 'answer_relevance'
@@ -94,4 +115,4 @@ Scores of gold answers: 1.0 +/- 0.0
 Scores of predicted answers: 0.34 +/- 0.47609522856952335
 Positional bias occurrence on gold answers: 0.03
 Positional bias occurrence on predicted answers: 0.01
-'''
+"""

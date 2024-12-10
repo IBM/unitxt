@@ -9,12 +9,10 @@ from unitxt.eval_assist_constants import (
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
-    OptionSelectionStrategyEnum,
 )
 from unitxt.eval_assist_llm_as_judge_direct import EvalAssistLLMAsJudgeDirect
 from unitxt.eval_assist_llm_as_judge_pairwise import EvalAssistLLMAsJudgePairwise
 from unitxt.eval_assist_utils import get_evaluator_metadata, rename_model_if_required
-from unitxt.inference import MockInferenceEngine, RITSInferenceEngine
 
 logger = get_logger()
 
