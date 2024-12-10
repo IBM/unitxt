@@ -35,7 +35,7 @@ criteria = CriteriaWithOptions(
 
 data = {
     "test": [
-        {"context": {"Question": "How is the weather?"}},
+        {"question": "How is the weather?"},
     ]
 }
 
@@ -45,13 +45,13 @@ metric = EvalAssistLLMAsJudgeDirect(
     ),
     option_selection_strategy="PARSE_OUTPUT_TEXT",
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
-    criteria_or_criterias=criteria,
+    criteria=criteria,
 )
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[],
     task=Task(
-        input_fields={"context": dict},
+        input_fields={"question": str},
         reference_fields={},
         prediction_type=str,
         metrics=[metric],

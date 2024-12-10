@@ -7,5 +7,6 @@
         "seed": 42
     },
     "option_selection_strategy": "PARSE_OUTPUT_TEXT",
-    "evaluator_name": "LLAMA3_1_8B"
+    "evaluator_name": "LLAMA3_1_8B",
+    "generate_summaries": false
 }

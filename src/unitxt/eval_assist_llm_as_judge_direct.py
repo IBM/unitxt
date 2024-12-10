@@ -7,16 +7,14 @@ from .eval_assist_constants import (
     OptionSelectionStrategyEnum,
 )
 from .eval_assist_chat_templates import direct_assessment_template_dict
-from .eval_assist_utils import get_parsed_context
-from .inference import NoInputLogProbsExeption, OptionSelectingByLogProbsInferenceEngine
+from .inference import NoInputLogProbsExeption
 from .task import Task
 
 
 class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
-    criteria_or_criterias: CriteriaWithOptions = None
+    criteria: CriteriaWithOptions = None
     reduction_map = {"mean": ["score"]}
     main_score = "score"
-
 
     def prepare(self):
         super().prepare()
@@ -52,23 +50,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             reference_fields={},
             prediction_type=str,
             metrics=[],
-        )
-
-    def verify(self):
-        super().verify()
-        if (
-            self.option_selection_strategy
-            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-            and not isinstance(
-                self.inference_engine, OptionSelectingByLogProbsInferenceEngine
-            )
-        ):
-            raise ValueError(
-                "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
-                f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
-                "to inherit from OptionSelectingByLogProbsInferenceEngine "
-            )
-        
+        ) 
     
     def get_parsed_criteria(self, criteria: CriteriaWithOptions):
         criteria_description = criteria.description
@@ -90,20 +72,9 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             display_options_instruction,
             score_option_instruction,
         )
-
-    def compute(
-        self,
-        references: list[list[str]],
-        predictions: list[str],
-        task_data: list[dict[str, any]],
-    ) -> dict:
-        self.logger.info(
-            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
-        )
-        evaluations_count = len(predictions)
-        # TODO: find out how to serialize and deserialize enums
-        
-        if self.criteria_or_criterias is None:
+    
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
             self.logger.info("Reading criteria from the task_data")
             criteria_dicts = [
                 {**task_data_instance["criteria"], "__type__": "criteria_with_options"}
@@ -118,18 +89,32 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts
             ]
         # criteria is in passes in the constructor
-        elif isinstance(self.criteria_or_criterias, CriteriaWithOptions):
+        elif isinstance(self.criteria, CriteriaWithOptions):
             self.logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
             )
             criterias: list[CriteriaWithOptions] = [
-                self.criteria_or_criterias
-            ] * evaluations_count
+                self.criteria
+            ] * eval_count
         else:
-            criterias = self.criteria_or_criterias
+            criterias = self.criteria
+        self.logger.info(f"First criteria name is '{criterias[0].name}'")
+        return criterias
 
+    def compute(
+        self,
+        references: list[list[str]],
+        predictions: list[str],
+        task_data: list[dict[str, any]],
+    ) -> dict:
+        self.logger.info(
+            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
+        )
+
+        evaluations_count = len(predictions)
+        # TODO: find out how to serialize and deserialize enums
+        criterias = self.get_criterias(task_data, evaluations_count)
         contexts = self.get_contexts(task_data)
-        
         if self.check_positional_bias:
             criterias += [
                 CriteriaWithOptions(
@@ -187,34 +172,36 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         ]
 
         self.logger.info("The assessment was generated successfully.")
-        # Summarisation Stage
-        summarization_instances = [
-            {
-                "assessment": assessment_output,
-                "data_classification_policy": ["public"],
-            }
-            for assessment_output in assessment_outputs[
-                assessment_for_summaries_slice
+        
+        if self.generate_summaries:
+            # Summarisation Stage
+            summarization_instances = [
+                {
+                    "assessment": assessment_output,
+                    "data_classification_policy": ["public"],
+                }
+                for assessment_output in assessment_outputs[
+                    assessment_for_summaries_slice
+                ]
             ]
-        ]
 
-        summarization_outputs_dataset = infer(
-            summarization_instances,
-            task=self.summarization_task,
-            engine=self.inference_engine,
-            template=self.summarization_template,
-            format=self.format,
-            return_data=True,
-        )
+            summarization_outputs_dataset = infer(
+                summarization_instances,
+                task=self.summarization_task,
+                engine=self.inference_engine,
+                template=self.summarization_template,
+                format=self.format,
+                return_data=True,
+            )
 
-        summarization_prompts: list[str] = [
-            instance["source"] for instance in summarization_outputs_dataset
-        ]
-        summarization_outputs: list[str] = [
-            instance["prediction"] for instance in summarization_outputs_dataset
-        ]
+            summarization_prompts: list[str] = [
+                instance["source"] for instance in summarization_outputs_dataset
+            ]
+            summarization_outputs: list[str] = [
+                instance["prediction"] for instance in summarization_outputs_dataset
+            ]
 
-        self.logger.info("The summary was generated successfully.")
+            self.logger.info("The summary was generated successfully.")
 
         selection_instances = [
             {
@@ -285,6 +272,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 key: value
                 for key, value in {
                     "score": scores[i],
+                    "mapped_score": scores[i],
                     "positional_bias": positional_bias[i] if self.check_positional_bias else None,
                     "selected_option": selections[i],
                     "positional_bias_selected_option": selections[evaluations_count + i] if self.check_positional_bias else None,
@@ -292,11 +280,11 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     "positional_bias_assessment": assessment_outputs_dataset[i + evaluations_count]["prediction"] if self.check_positional_bias else None,
                     "option_selection_prompt": option_selection_prompts[i],
                     "posional_bias_option_selection_prompt": option_selection_prompts[i + evaluations_count],
-                    "summary": summarization_outputs[i],
+                    "summary": summarization_outputs[i] if self.generate_summaries else None,
                     "prompts": {
                         "assessment": assessment_prompts[i],
                         "positional_bias_assessment": assessment_prompts[evaluations_count + i],
-                        "summarization": summarization_prompts[i],
+                        "summarization": summarization_prompts[i] if self.generate_summaries else None,
                         "option_selection": option_selection_prompts[i],
                         "posional_bias_option_selection": option_selection_prompts[i + evaluations_count],
                     },
@@ -308,9 +296,5 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             }
             for i in range(evaluations_count)
         ]
-
-        import json
-        print('results')
-        print(json.dumps(results, indent=4))
 
         return results
