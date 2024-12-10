@@ -1,7 +1,6 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.eval_assist_constants import OptionSelectionStrategyEnum
 from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import Set
 from unitxt.text_utils import print_dict
@@ -41,7 +40,9 @@ card = TaskCard(
         input_fields={"question": str, "criteria": dict},
         reference_fields={},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b"],
+        metrics=[
+            "metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b"
+        ],
     ),
 )
 

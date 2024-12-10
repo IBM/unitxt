@@ -151,7 +151,6 @@ class InferenceEngine(Artifact):
             return self._mock_infer(dataset)
         return self._infer(dataset, return_meta_data)
 
-
     def _mock_infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -1161,14 +1160,19 @@ class OptionSelectingByLogProbsInferenceEngine:
         """
         token_counts = self.get_token_count(dataset)
 
-        task_datas =  [self.get_task_data_dict(instance["task_data"]) for instance in dataset]
+        task_datas = [
+            self.get_task_data_dict(instance["task_data"]) for instance in dataset
+        ]
         # pass in the token count so we only return the option score
         dataset_with_options = [
             {
-                "source": instance["source"] + [{'role': 'assistant', 'content': option}],
+                "source": instance["source"]
+                + [{"role": "assistant", "content": option}],
                 "task_data": {"token_count": token_count},
             }
-            for instance, task_data, token_count in zip(dataset, task_datas, token_counts)
+            for instance, task_data, token_count in zip(
+                dataset, task_datas, token_counts
+            )
             for option in task_data["options"]
         ]
 
@@ -1609,14 +1613,20 @@ class RITSInferenceEngine(
 
     def prepare_engine(self):
         # inference endpoint need the '/v1' path
-        self.base_url = RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + '/v1'
+        self.base_url = (
+            RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + "/v1"
+        )
         logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
-        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
-        return base_url_template.format(RITSInferenceEngine._get_model_name_for_endpoint(model_name))
+        base_url_template = (
+            "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+        )
+        return base_url_template.format(
+            RITSInferenceEngine._get_model_name_for_endpoint(model_name)
+        )
 
     @staticmethod
     def _get_model_name_for_endpoint(model_name: str):
@@ -2459,6 +2469,7 @@ def get_images_without_text(instance):
 def get_text_without_images(instance, image_token="<image>"):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
     return re.sub(regex, image_token, instance["source"])
+
 
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin

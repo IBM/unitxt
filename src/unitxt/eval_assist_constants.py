@@ -32,6 +32,7 @@ class EvaluatorTypeEnum(Enum):
     PAIRWISE_COMPARISON = "pairwise_comparison"
     DIRECT_ASSESSMENT = "direct_assessment"
 
+
 class EvaluatorNameEnum(Enum):
     MIXTRAL8_7b = "Mixtral8-7b"
     MIXTRAL8_22b = "Mixtral8-22b"

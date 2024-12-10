@@ -9,7 +9,6 @@ from .eval_assist_constants import (
     Criteria,
     OptionSelectionStrategyEnum,
 )
-from .eval_assist_utils import get_parsed_context
 from .inference import NoInputLogProbsExeption
 from .task import Task
 
@@ -86,7 +85,9 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 {**task_data_instance["criteria"], "__type__": "criteria"}
                 for task_data_instance in task_data
             ]
-            criterias = [fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts]
+            criterias = [
+                fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts
+            ]
         # criteria is in passes in the constructor
         elif isinstance(self.criteria, Criteria):
             self.logger.info(
@@ -98,7 +99,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             criterias = self.criteria
         self.logger.info(f"First criteria name is '{criterias[0].name}'")
         return criterias
-    
+
     def compute(
         self,
         references: list[list[str]],
@@ -111,7 +112,9 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         evaluations_count = len(predictions)
         combination_indexes = list(itertools.combinations(range(evaluations_count), 2))
         contests_count = len(combination_indexes)
-        self.logger.info(f'The evaluation will perform {contests_count} pairwise comparisons')
+        self.logger.info(
+            f"The evaluation will perform {contests_count} pairwise comparisons"
+        )
         per_response_results = {
             f"{i+1}": {
                 "summaries": [],
@@ -122,7 +125,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 "positional_bias": [],
                 "positional_bias_completions": [],
                 "prompts": {
-                    "option_selection": [], 
+                    "option_selection": [],
                     "positional_bias_option_selection": [],
                     "summary": [],
                 },
@@ -139,9 +142,8 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             )
             option_pairs.append([f"{response_name_1 + 1}", f"{response_name_2 + 1}"])
 
-            
         task_data = [task_data[0]] * contests_count
-        
+
         criterias = self.get_criterias(task_data, contests_count)
         contexts = self.get_contexts(task_data)
 
@@ -199,7 +201,9 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                     "assessment": assessment_output,
                     "data_classification_policy": ["public"],
                 }
-                for assessment_output in assessment_outputs[assessment_for_summaries_slice]
+                for assessment_output in assessment_outputs[
+                    assessment_for_summaries_slice
+                ]
             ]
 
             summarization_outputs_dataset = infer(
@@ -272,7 +276,10 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         ]
 
         parse_output_logprobs_failed = False
-        if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB:
+        if (
+            self.option_selection_strategy
+            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+        ):
             try:
                 option_selection_outputs_dataset = select(
                     option_selection_instances,
@@ -283,16 +290,27 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                     format=self.format,
                     previous_messages=previous_messages,
                 )
-                option_selection_prompts: list[str] = [instance["source"] for instance in option_selection_outputs_dataset]
-                option_selection_outputs: list[str] = [instance["prediction"] for instance in option_selection_outputs_dataset]
+                option_selection_prompts: list[str] = [
+                    instance["source"] for instance in option_selection_outputs_dataset
+                ]
+                option_selection_outputs: list[str] = [
+                    instance["prediction"]
+                    for instance in option_selection_outputs_dataset
+                ]
                 selections = option_selection_outputs
                 # take the number of the response from 'Response n'
             except NoInputLogProbsExeption as e:
                 self.logger.error(f"An error occurred: {e}")
-                self.logger.warning(f'{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead.')
+                self.logger.warning(
+                    f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
+                )
                 parse_output_logprobs_failed = True
- 
-        if self.option_selection_strategy == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT or parse_output_logprobs_failed:
+
+        if (
+            self.option_selection_strategy
+            == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+            or parse_output_logprobs_failed
+        ):
             option_selection_outputs_dataset = infer(
                 option_selection_instances,
                 task=self.option_selection_task,
@@ -302,10 +320,17 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 format=self.format,
                 previous_messages=previous_messages,
             )
-            option_selection_prompts: list[str] = [instance["source"] for instance in option_selection_outputs_dataset]
-            option_selection_outputs: list[str] = [instance["raw_prediction"] for instance in option_selection_outputs_dataset]
-            selections: list[str] = [instance["prediction"] for instance in option_selection_outputs_dataset]
-        
+            option_selection_prompts: list[str] = [
+                instance["source"] for instance in option_selection_outputs_dataset
+            ]
+            option_selection_outputs: list[str] = [
+                instance["raw_prediction"]
+                for instance in option_selection_outputs_dataset
+            ]
+            selections: list[str] = [
+                instance["prediction"] for instance in option_selection_outputs_dataset
+            ]
+
         # Selections are of the form 'Response n', so we just keep n
         selections = [selection.split(" ")[-1] for selection in selections]
 
@@ -325,41 +350,83 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             response_name_2 = f"{idx_2+1}"
             # add contest results
             selected_response_name = selections[i]
-            per_response_results[response_name_1]["contest_results"].append(selected_response_name == response_name_1)
-            per_response_results[response_name_2]["contest_results"].append(selected_response_name == response_name_2)
-            per_response_results[response_name_1]["selections"].append(selected_response_name)
-            per_response_results[response_name_2]["selections"].append(selected_response_name)
+            per_response_results[response_name_1]["contest_results"].append(
+                selected_response_name == response_name_1
+            )
+            per_response_results[response_name_2]["contest_results"].append(
+                selected_response_name == response_name_2
+            )
+            per_response_results[response_name_1]["selections"].append(
+                selected_response_name
+            )
+            per_response_results[response_name_2]["selections"].append(
+                selected_response_name
+            )
 
             # add the response indexes to which the response was compared to
-            per_response_results[response_name_1]["compared_to"].append(f"{response_name_2}")
-            per_response_results[response_name_2]["compared_to"].append(f"{response_name_1}")
+            per_response_results[response_name_1]["compared_to"].append(
+                f"{response_name_2}"
+            )
+            per_response_results[response_name_2]["compared_to"].append(
+                f"{response_name_1}"
+            )
 
             if self.generate_summaries:
                 # add summaries
-                per_response_results[response_name_1]["prompts"]["summary"].append(summarization_prompts[i])
-                per_response_results[response_name_2]["prompts"]["summary"].append(summarization_prompts[i])
-                per_response_results[response_name_1]["summaries"].append(summarization_outputs[i])
-                per_response_results[response_name_2]["summaries"].append(summarization_outputs[i])
+                per_response_results[response_name_1]["prompts"]["summary"].append(
+                    summarization_prompts[i]
+                )
+                per_response_results[response_name_2]["prompts"]["summary"].append(
+                    summarization_prompts[i]
+                )
+                per_response_results[response_name_1]["summaries"].append(
+                    summarization_outputs[i]
+                )
+                per_response_results[response_name_2]["summaries"].append(
+                    summarization_outputs[i]
+                )
 
-            per_response_results[response_name_1]["prompts"]["option_selection"].append(option_selection_prompts[i])
-            per_response_results[response_name_2]["prompts"]["option_selection"].append(option_selection_prompts[i])
-
+            per_response_results[response_name_1]["prompts"]["option_selection"].append(
+                option_selection_prompts[i]
+            )
+            per_response_results[response_name_2]["prompts"]["option_selection"].append(
+                option_selection_prompts[i]
+            )
 
             ## add positional bias
             if self.check_positional_bias:
-                per_response_results[response_name_1]["positional_bias"].append(positional_bias[i])
-                per_response_results[response_name_2]["positional_bias"].append(positional_bias[i])
+                per_response_results[response_name_1]["positional_bias"].append(
+                    positional_bias[i]
+                )
+                per_response_results[response_name_2]["positional_bias"].append(
+                    positional_bias[i]
+                )
 
                 # add prompts
-                per_response_results[response_name_1]["prompts"]["positional_bias_option_selection"].append(option_selection_prompts[contests_count + i])
-                per_response_results[response_name_2]["prompts"]["positional_bias_option_selection"].append(option_selection_prompts[contests_count + i])
-            
-            if self.option_selection_strategy== OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT:
-                per_response_results[response_name_1]["completions"].append(option_selection_outputs[i])
-                per_response_results[response_name_2]["completions"].append(option_selection_outputs[i])
+                per_response_results[response_name_1]["prompts"][
+                    "positional_bias_option_selection"
+                ].append(option_selection_prompts[contests_count + i])
+                per_response_results[response_name_2]["prompts"][
+                    "positional_bias_option_selection"
+                ].append(option_selection_prompts[contests_count + i])
+
+            if (
+                self.option_selection_strategy
+                == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+            ):
+                per_response_results[response_name_1]["completions"].append(
+                    option_selection_outputs[i]
+                )
+                per_response_results[response_name_2]["completions"].append(
+                    option_selection_outputs[i]
+                )
                 if self.check_positional_bias:
-                    per_response_results[response_name_1]["positional_bias_completions"].append(option_selection_outputs[contests_count + i])
-                    per_response_results[response_name_2]["positional_bias_completions"].append(option_selection_outputs[contests_count + i])
+                    per_response_results[response_name_1][
+                        "positional_bias_completions"
+                    ].append(option_selection_outputs[contests_count + i])
+                    per_response_results[response_name_2][
+                        "positional_bias_completions"
+                    ].append(option_selection_outputs[contests_count + i])
 
         # add winrate
         for key in per_response_results:
@@ -385,6 +452,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 for metric_key, value in per_response_results[key].items()
                 if value is not None or (isinstance(value, list) and len(value) > 0)
             }
-            for key in [f"{i+1}" for i in range(evaluations_count)]]
+            for key in [f"{i+1}" for i in range(evaluations_count)]
+        ]
 
         return result
