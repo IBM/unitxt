@@ -82,6 +82,7 @@ The template also defines the post processing steps applied to the output predic
 Typically, the post processors applied both to the model prediction and to the references. 
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
 so the metric computation will ignore case. 
+
 .. code-block:: python
 
     from unitxt.templates import InputOutputTemplate

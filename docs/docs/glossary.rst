@@ -1,8 +1,8 @@
 .. _glossary:
 
-=========
+========
 Glossary
-=========
+========
 
 .. _artificat:
 
@@ -126,7 +126,7 @@ They also ensure that no sensitive data is passed to external services.
 .. _operator:
 
 Operator
----------
+--------
 
 An **Operator** is a class that takes multiple streams as input and produces multiple streams as output.
 Every modification of the data in the stream is done by an operator.
@@ -142,7 +142,7 @@ Examples: AddDictToEveryInstance, RenameField, etc.
 .. _post_processors:
 
 Post processors
-----------------
+---------------
 
 **Post Processors** are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
 and converts them to the types required by the :ref:`metrics <adding_metric>`.  Each :ref:`template <template>` defines the
@@ -152,7 +152,7 @@ template could remove trailing whitespace, take the first word, convert `Yes` to
 .. _prediction_and_processed_prediction:
 
 Prediction and Processed Prediction
-------------------------------------
+-----------------------------------
 
 A **Prediction** is the output of the model on the input provided to it.
 The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other
@@ -179,7 +179,7 @@ This includes :ref:`DataTask Card <data_task_card>`, :ref:`Template <template>`,
 .. _references:
 
 References and Processed References
-------------------------------------
+-----------------------------------
 
 **References** are the "correct answers" for the task of a given instance.
 They are stored as a list of strings in the `references` field of the generated Unitxt dataset.
@@ -200,14 +200,14 @@ contains an additional `processed_references` field with the references after po
 .. _target:
 
 Target
--------
+------
 The **Target** is one of the :ref:`references <references>`.
 It is used as the expected model output in in-context learning demonstrations.
 
 .. _stream:
 
 Stream
--------
+------
 
 A **Stream** is a sequence of data. It can be finite or infinite. It can be synchronous or asynchronous.
 Every instance in the stream is a simple python dictionary.
@@ -225,7 +225,7 @@ Every instance in the stream is a simple python dictionary.
 .. _system_prompt:
 
 System Prompt
--------
+-------------
 
 The **System Prompt** is the fixed text that is added to the model input by the :ref:`Format <format>` during
 the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>`
@@ -244,7 +244,7 @@ The catalog contains predefined tasks :ref:`here <dir_catalog.tasks>`.
 .. _template:
 
 Template
----------
+--------
 
 A Unitxt **Template** defines the verbalizations to be applied to the inputs and targets,
 as well as the de-verbalization operations over the model predictions.
@@ -254,7 +254,7 @@ In the other direction, template de-verbalization involves two steps.
 First, a general standardization of the output texts: taking only the first non-empty line of a model's predictions, lowercasing, stripping whitespaces, etc.
 The second step standardizes the output to the specific task at hand.
 For example, in Sentence Similarity, a prediction may be a quantized float number outputted as a string (e.g ``2.43''),
-or a verbally expressed numeric expression (e.g ``two and a half'').
+or a verbally expressed numeric expression (e.g ``two and a half``).
 This depends on the verbalization defined by the template and the in-context demonstrations it constructs.
 Both types of outputs should be standardized before evaluation begins -- e.g., to a float for sentence similarity.
 Having the de-verbalization steps defined within the template enables templates to be reused across different models and datasets.
@@ -268,7 +268,7 @@ The catalog contains predefined templates :ref:`here <dir_catalog.templates>`. :
 .. _verbalization:
 
 Verbalization
---------------
+-------------
 
 **Verbalization** is the process of taking the task fields and converting them into their
 textual representation, which is provided as input to the model.
@@ -287,7 +287,7 @@ The verbalization involves verbalizing the task input fields for the input, and 
 
 
 Serialization
---------------
+-------------
 
 Is the process of taking a specific field of a task a converting it into a string.
 This process is controlled by the :ref:`Serializer <types_and_serializers>`.

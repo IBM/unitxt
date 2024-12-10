@@ -46,6 +46,35 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
+def dict_diff_string(dict1, dict2, max_diff=200):
+    keys_in_both = dict1.keys() & dict2.keys()
+    added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}
+    removed = {k: dict1[k] for k in dict1.keys() - dict2.keys()}
+    changed = {
+        k: (dict1[k], dict2[k]) for k in keys_in_both if str(dict1[k]) != str(dict2[k])
+    }
+    result = []
+
+    def format_with_value(k, value, label):
+        value_str = str(value)
+        return (
+            f" - {k} ({label}): {value_str}"
+            if len(value_str) <= max_diff
+            else f" - {k} ({label})"
+        )
+
+    result.extend(format_with_value(k, added[k], "added") for k in added)
+    result.extend(format_with_value(k, removed[k], "removed") for k in removed)
+    result.extend(
+        f" - {k} (changed): {dict1[k]!s} -> {dict2[k]!s}"
+        if len(str(dict1[k])) <= max_diff and len(str(dict2[k])) <= 200
+        else f" - {k} (changed)"
+        for k in changed
+    )
+
+    return "\n".join(result)
+
+
 class Catalogs:
     def __new__(cls):
         if not hasattr(cls, "instance"):
@@ -89,16 +118,18 @@ class Catalogs:
         self.catalogs = []
 
 
-def map_values_in_place(object, mapper):
-    if isinstance(object, dict):
-        for key, value in object.items():
-            object[key] = mapper(value)
-        return object
-    if isinstance(object, list):
-        for i in range(len(object)):
-            object[i] = mapper(object[i])
-        return object
-    return mapper(object)
+def maybe_recover_artifacts_structure(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            obj[key] = maybe_recover_artifact(value)
+        return obj
+    if isinstance(obj, list):
+        for i in range(len(obj)):
+            obj[i] = maybe_recover_artifact(obj[i])
+        return obj
+    return obj
 
 
 def get_closest_artifact_type(type):
@@ -150,8 +181,12 @@ class Artifact(Dataclass):
     )
 
     @classmethod
-    def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "__type__" in d
+    def is_artifact_dict(cls, obj):
+        return isinstance(obj, dict) and "__type__" in obj
+
+    @classmethod
+    def is_possible_identifier(cls, obj):
+        return isinstance(obj, str) or cls.is_artifact_dict(obj)
 
     @classmethod
     def verify_artifact_dict(cls, d):
@@ -262,6 +297,9 @@ class Artifact(Dataclass):
         if self.__deprecated_msg__:
             warnings.warn(self.__deprecated_msg__, DeprecationWarning, stacklevel=2)
 
+    def prepare_args(self):
+        pass
+
     def verify(self):
         pass
 
@@ -292,10 +330,11 @@ class Artifact(Dataclass):
                 field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]
             ):
                 value = getattr(self, field.name)
-                value = map_values_in_place(value, maybe_recover_artifact)
+                value = maybe_recover_artifacts_structure(value)
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
+        self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
             self.prepare()
             self.verify()
@@ -330,6 +369,13 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
+        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        current_args = self.get_repr_dict()
+        diffs = dict_diff_string(original_args, current_args)
+        if diffs:
+            raise UnitxtError(
+                f"Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n{diffs}"
+            )
         save_to_file(path, self.to_json())
 
     def verify_instance(
@@ -342,16 +388,17 @@ class Artifact(Dataclass):
         proper way (for example when sending it to some external services).
 
         Args:
-            instance (Dict[str, Any]): data which should contain its allowed data
-                classification policies under key 'data_classification_policy'.
-            name (Optional[str]): name of artifact which should be used to retrieve
-                data classification from env. If not specified, then either __id__ or
-                 __class__.__name__, are used instead, respectively.
+            instance (Dict[str, Any]): data which should contain its allowed data classification policies under key 'data_classification_policy'.
+
+            name (Optional[str]): name of artifact which should be used to retrieve data classification from env. If not specified, then either ``__id__`` or ``__class__.__name__``, are used instead, respectively.
 
         Returns:
             Dict[str, Any]: unchanged instance.
 
-        Examples:
+        :Examples:
+
+        .. code-block:: python
+
             instance = {"x": "some_text", "data_classification_policy": ["pii"]}
 
             # Will raise an error as "pii" is not included policy
@@ -366,6 +413,7 @@ class Artifact(Dataclass):
             UNITXT_DATA_CLASSIFICATION_POLICY = json.dumps({"metrics.accuracy": ["pii"]})
             metric = fetch_artifact("metrics.accuracy")
             metric.verify_instance(instance)
+
         """
         name = name or self.get_pretty_print_name()
         data_classification_policy = get_artifacts_data_classification(name)
@@ -574,11 +622,10 @@ def reset_artifacts_json_cache():
     artifacts_json_cache.cache_clear()
 
 
-def maybe_recover_artifact(artifact):
-    if isinstance(artifact, str):
-        return verbosed_fetch_artifact(artifact)
-
-    return artifact
+def maybe_recover_artifact(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    return obj
 
 
 def register_all_artifacts(path):

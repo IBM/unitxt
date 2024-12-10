@@ -307,21 +307,22 @@ def infer_type_string(obj: typing.Any) -> str:
         obj:Any
 
     Returns:
-        a string representation of the type of the object. e.g. 'str', 'List[int]', 'Dict[str, Any]'
+      a string representation of the type of the object. e.g. ``"str"``, ``"List[int]"``, ``"Dict[str, Any]"``
 
-    formal definition of the returned string:
-    Type -> basic | List[Type] | Dict[Type, Type] | Union[Type (, Type)* | Tuple[Type (,Type)*]
-    basic -> bool,str,int,float,Any
-    no spaces at all.
+    | formal definition of the returned string:
+    | Type -> basic | List[Type] | Dict[Type, Type] | Union[Type(, Type)*] | Tuple[Type(, Type)*]
+    | basic -> ``bool`` | ``str`` | ``int`` | ``float`` | ``Any``
+
 
     Examples:
-        infer_type_string({"how_much": 7}) returns "Dict[str,int]"
-        infer_type_string([1, 2]) returns "List[int]"
-        infer_type_string([]) returns "List[Any]")    no contents to list to indicate any type
-        infer_type_string([[], [7]]) returns "List[List[int]]"  type of parent list indicated by the type
-                of the non-empty child list. The empty child list is indeed, by default, also of that type
-                of the non-empty child.
-        infer_type_string([[], 7, True]) returns "List[Union[List[Any],int]]"   because bool is also an int
+        | ``infer_type_string({"how_much": 7})`` returns ``"Dict[str,int]"``
+        | ``infer_type_string([1, 2])`` returns ``"List[int]"``
+        | ``infer_type_string([])`` returns ``"List[Any]")``    no contents to list to indicate any type
+        | ``infer_type_string([[], [7]])`` returns ``"List[List[int]]"``  type of parent list indicated
+          by the type of the non-empty child list. The empty child list is indeed, by default, also of
+          that type of the non-empty child.
+        | ``infer_type_string([[], 7, True])`` returns ``"List[Union[List[Any],int]]"``
+          because ``bool`` is also an ``int``
 
     """
 

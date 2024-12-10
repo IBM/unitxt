@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import HuggingfaceMetric, Meteor
 from unitxt.test_utils.metrics import test_metric
 
-metric = Meteor()
+metric = Meteor(n_resamples=3)
 
 predictions = [
     "It is a guide to action which ensures that the military always obeys the commands of the party",
@@ -39,7 +39,6 @@ global_target = {
     "num_of_instances": 4,
 }
 
-metric.n_resamples = 3
 # to match the setting to occur by testing on the global version, metric2, below
 
 outputs = test_metric(

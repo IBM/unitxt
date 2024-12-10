@@ -91,7 +91,7 @@ tests = [
     "nltk",
     "mecab-python3",
     "sacrebleu[ko]",
-    "scikit-learn",
+    "scikit-learn<=1.5.2",
     "jiwer",
     "conllu",
     "llama-index-core",

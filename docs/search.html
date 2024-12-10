@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<style>
+
+.search-container {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#searchQuery {
+    width: 100%;
+    padding: 8px;
+    font-size: 16px;
+    border: 1px solid #a2a1a1;
+    border-radius: 3px;
+    background: #fff;
+}
+
+.tag-filters {
+    margin: 10px 0;
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    padding: 5px 10px;
+    border: none;
+    cursor: pointer;
+    background: #eee;
+    color: #333;
+    border-radius: 3px;
+    font-size: 14px;
+}
+
+.tag-item:hover {
+    background: #ddd;
+}
+
+.tag-item.selected {
+    background: #007BFF;
+    color: #fff;
+}
+
+.tag-count {
+    display: inline-block;
+    background: #999;
+    border-radius: 50%;
+    padding: 2px 6px;
+    margin-left: 5px;
+    font-size: 12px;
+    color: #fff;
+    line-height: 1;
+    vertical-align: middle;
+}
+
+.results {
+    margin-top: 20px;
+}
+
+/* no position: relative here */
+.result-item {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+}
+
+.result-item h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.result-item p {
+    margin: 5px 0;
+}
+
+.no-results {
+    color: #999;
+}
+
+#loadMoreBtn, #loadMoreTagsBtn {
+    background: #fce2ff;
+    color: #141216;
+    padding: 8px 15px;
+    border: none;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-top: 10px;
+}
+
+#loadMoreBtn:hover, #loadMoreTagsBtn:hover {
+    background: #d1b3d1;
+}
+
+.show-more-content {
+    background: #fce2ff;
+    color: #141216;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 5px 10px;
+    border-radius: 3px;
+    margin-top: 5px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.show-more-content:hover {
+    background: #d1b3d1;
+}
+
+.content-container {
+    line-height: 1.4em;
+    max-height: 14em; /* truncated preview */
+    overflow: hidden;
+}
+
+.content-inner {
+    position: relative;
+    z-index: 1;
+}
+
+/* Removed any blur and ::after pseudo-element */
+mark {
+    background-color: yellow;
+    font-weight: bold;
+}
+</style>
+</head>
+<body>
+
+<div class="search-container">
+<input type="text" id="searchQuery" placeholder="Search Catalog..." />
+</div>
+
+<div class="tag-filters" id="tagContainer"></div>
+<button id="loadMoreTagsBtn" style="display:none;">Load More Tags</button>
+
+<div class="results" id="resultsContainer"></div>
+<button id="loadMoreBtn" style="display:none;">Load More Results</button>
+
+<script>
+let data = [];
+let sortedTags = [];
+let selectedTags = [];
+let currentResults = [];
+let currentIndex = 0;
+const PAGE_SIZE = 10;
+
+let displayedTagCount = 0;
+const TAG_PAGE_SIZE = 20;
+
+let debounceTimer = null;
+
+function flattenTags(tagDict) {
+    const result = [];
+    if (!tagDict || typeof tagDict !== 'object') return result;
+    for (const [key, val] of Object.entries(tagDict)) {
+        if (Array.isArray(val)) {
+            val.forEach(v => {
+                result.push(`${key}:${v}`.toLowerCase());
+            });
+        } else {
+            result.push(`${key}:${val}`.toLowerCase());
+        }
+    }
+    return result;
+}
+
+function searchItems(data, query = "", tags = []) {
+    const queryLower = query.toLowerCase().trim();
+    const hasQuery = queryLower.length > 0;
+    const hasTags = Array.isArray(tags) && tags.length > 0;
+
+    return data.filter(item => {
+        if (hasTags && !tags.every(tag => item.tagsLower.includes(tag))) {
+            return false;
+        }
+        if (!hasQuery) {
+            return true;
+        }
+        return item.titleLower.includes(queryLower) || item.contentLower.includes(queryLower);
+    });
+}
+
+function highlightText(text, query) {
+    if (!query) return text;
+    const escapedQuery = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(${escapedQuery})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+}
+
+function renderInitialTags() {
+    displayedTagCount = 0;
+    appendMoreTags();
+}
+
+function appendMoreTags() {
+    const container = document.getElementById('tagContainer');
+    const start = displayedTagCount;
+    const end = Math.min(start + TAG_PAGE_SIZE, sortedTags.length);
+    const visibleTags = sortedTags.slice(start, end);
+
+    visibleTags.forEach(t => {
+        const btn = document.createElement('button');
+        btn.className = 'tag-item';
+
+        const tagName = document.createElement('span');
+        tagName.textContent = t.tag;
+        btn.appendChild(tagName);
+
+        const countBubble = document.createElement('span');
+        countBubble.className = 'tag-count';
+        countBubble.textContent = t.count;
+        btn.appendChild(countBubble);
+
+        if (selectedTags.includes(t.tag)) {
+            btn.classList.add('selected');
+        }
+
+        btn.addEventListener('click', () => {
+            toggleTag(t.tag, btn);
+            performSearch();
+        });
+
+        container.appendChild(btn);
+    });
+
+    displayedTagCount = end;
+
+    const loadMoreTagsBtn = document.getElementById('loadMoreTagsBtn');
+    if (displayedTagCount < sortedTags.length) {
+        loadMoreTagsBtn.style.display = 'inline-block';
+    } else {
+        loadMoreTagsBtn.style.display = 'none';
+    }
+}
+
+function toggleTag(tag, buttonElement) {
+    const index = selectedTags.indexOf(tag);
+    if (index > -1) {
+        selectedTags.splice(index, 1);
+        buttonElement.classList.remove('selected');
+    } else {
+        selectedTags.push(tag);
+        buttonElement.classList.add('selected');
+    }
+}
+
+function performSearch() {
+    const query = document.getElementById('searchQuery').value;
+    currentResults = searchItems(data, query, selectedTags);
+    currentIndex = 0;
+    renderCurrentPage(query);
+}
+
+function renderCurrentPage(query) {
+    const container = document.getElementById('resultsContainer');
+
+    // If currentIndex is 0, clear container before adding new results
+    if (currentIndex === 0) {
+        container.innerHTML = '';
+    }
+
+    if (currentResults.length === 0) {
+        const noResultsDiv = document.createElement('div');
+        noResultsDiv.className = 'no-results';
+        noResultsDiv.textContent = 'No results found.';
+        container.appendChild(noResultsDiv);
+        document.getElementById('loadMoreBtn').style.display = 'none';
+        return;
+    }
+
+    const endIndex = Math.min(currentIndex + PAGE_SIZE, currentResults.length);
+    const visibleResults = currentResults.slice(currentIndex, endIndex);
+
+    visibleResults.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'result-item';
+
+        const highlightedContent = highlightText(item.content, query);
+
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'content-container';
+
+        const contentInner = document.createElement('div');
+        contentInner.className = 'content-inner';
+        contentInner.innerHTML = highlightedContent;
+        contentContainer.appendChild(contentInner);
+        itemDiv.appendChild(contentContainer);
+
+        const showMoreButton = document.createElement('button');
+        showMoreButton.className = 'show-more-content';
+        showMoreButton.textContent = 'Show More';
+        showMoreButton.addEventListener('click', () => {
+            contentContainer.style.maxHeight = 'none';
+            contentContainer.style.overflow = 'visible';
+            showMoreButton.style.display = 'none';
+        });
+
+        setTimeout(() => {
+            if (contentContainer.scrollHeight <= contentContainer.clientHeight) {
+                // No overflow, no need for "Show More"
+                showMoreButton.style.display = 'none';
+            }
+        }, 0);
+
+        itemDiv.appendChild(showMoreButton);
+
+        container.appendChild(itemDiv);
+    });
+
+    currentIndex = endIndex;
+
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (currentIndex < currentResults.length) {
+        loadMoreBtn.style.display = 'inline-block';
+    } else {
+        loadMoreBtn.style.display = 'none';
+    }
+}
+
+document.getElementById('loadMoreBtn').addEventListener('click', () => {
+    const query = document.getElementById('searchQuery').value;
+    renderCurrentPage(query);
+});
+
+document.getElementById('loadMoreTagsBtn').addEventListener('click', () => {
+    appendMoreTags();
+});
+
+document.getElementById('searchQuery').addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(performSearch, 500);
+});
+
+fetch('_static/data.js')
+.then(response => response.text())
+.then(text => {
+    const lines = text.trim().split('\n');
+    data = lines.map(line => {
+        const item = JSON.parse(line);
+        item.titleLower = (item.title || "").toLowerCase();
+        item.contentLower = (item.content || "").toLowerCase();
+        let tagsLower = [];
+        if (item.__tags__ && typeof item.__tags__ === 'object') {
+            tagsLower = flattenTags(item.__tags__);
+        }
+        item.tagsLower = tagsLower;
+        return item;
+    });
+
+    const tagFreq = {};
+    data.forEach(item => {
+        item.tagsLower.forEach(t => {
+            tagFreq[t] = (tagFreq[t] || 0) + 1;
+        });
+    });
+
+    sortedTags = Object.entries(tagFreq)
+    .map(([tag, count]) => ({ tag, count }))
+    .sort((a, b) => b.count - a.count);
+
+    renderInitialTags();
+    performSearch();
+})
+.catch(error => {
+    console.error("Error loading data:", error);
+    const container = document.getElementById('resultsContainer');
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'no-results';
+    errorDiv.textContent = 'Failed to load data.';
+    container.appendChild(errorDiv);
+});
+</script>
+
+</body>
+</html>

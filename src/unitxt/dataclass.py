@@ -375,8 +375,8 @@ class Dataclass(metaclass=DataclassMeta):
     7. MetaClass Usage: Uses a metaclass (DataclassMeta) for customization of class creation,
        allowing checks and alterations to be made at the time of class creation, providing more control.
 
-    Example:
-    .. highlight:: python
+    :Example:
+
     .. code-block:: python
 
         class Parent(Dataclass):
@@ -533,6 +533,13 @@ class Dataclass(metaclass=DataclassMeta):
             if keep_empty or value is not None
         }
 
+    def get_repr_dict(self):
+        result = {}
+        for field in fields(self):
+            if not field.internal:
+                result[field.name] = getattr(self, field.name)
+        return result
+
     def __repr__(self) -> str:
         """String representation."""
-        return f"{self.__class__.__name__}({', '.join([f'{field.name}={getattr(self, field.name)!r}' for field in fields(self)])})"
+        return f"{self.__class__.__name__}({', '.join([f'{key}={val!r}' for key, val in self.get_repr_dict().items()])})"

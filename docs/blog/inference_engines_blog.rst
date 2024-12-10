@@ -1,6 +1,8 @@
 .. title:: Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation
-.. authors:: Elron Bandel
-.. date:: 2024-11-19
+
+:Authors: Elron Bandel
+
+:Date: 2024-11-19
 
 =================================================================================================
 [19/11/2024] Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation

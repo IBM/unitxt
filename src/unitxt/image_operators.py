@@ -167,12 +167,14 @@ class GridLines(ImageAugmentor):
     """A class that overlays a fixed number of evenly spaced horizontal and vertical lines on an image.
 
     Attributes:
-    - num_lines (int): The number of horizontal and vertical lines to add.
-    - line_thickness (int): Thickness of each line in pixels.
-    - line_color (Tuple[int, int, int]): RGB color of the grid lines.
+        num_lines (int): The number of horizontal and vertical lines to add.
+
+        line_thickness (int): Thickness of each line in pixels.
+
+        line_color (Tuple[int, int, int]): RGB color of the grid lines.
 
     Methods:
-    - process_image(image): Adds grid lines to the provided image and returns the modified image.
+        process_image(image): Adds grid lines to the provided image and returns the modified image.
     """
 
     num_lines: int = 128
@@ -207,11 +209,12 @@ class PixelNoise(ImageAugmentor):
     """A class that overlays a mask of randomly colored nxn squares across an image based on a specified noise rate.
 
     Attributes:
-    - square_size (int): Size of each square in pixels.
-    - noise_rate (float): Proportion of the image that should be affected by noise (0 to 1).
+        square_size (int): Size of each square in pixels.
+
+        noise_rate (float): Proportion of the image that should be affected by noise (0 to 1).
 
     Methods:
-    - process_image(image): Adds the random square mask to the provided image and returns the modified image.
+        process_image(image): Adds the random square mask to the provided image and returns the modified image.
     """
 
     square_size: int = 1

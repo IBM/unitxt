@@ -32,8 +32,8 @@ class LRUCache:
 
     Attributes:
         max_size (int): The maximum number of items to store in the cache.
-            Items exceeding this limit are automatically removed based on least
-            recent usage.
+        Items exceeding this limit are automatically removed based on least
+        recent usage.
     """
 
     def __init__(self, max_size=10):

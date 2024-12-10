@@ -5,11 +5,13 @@ text that can be fed to the model.
 
 The format of the dialog is:
 
-dialog = [
-    {"user": "hello", "system": "hi"},
-    {"user": "kkk", "system": ""},
-    {"user": "kkk", "system": ""},
-]
+.. code-block:: text
+
+    dialog = [
+        {"user": "hello", "system": "hi"},
+        {"user": "kkk", "system": ""},
+        {"user": "kkk", "system": ""},
+    ]
 """
 from typing import Any, Dict, List, Optional
 
