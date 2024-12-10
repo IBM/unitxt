@@ -15,6 +15,6 @@
         "answers": []
     },
     "default_template": [
-        "templates.qa.open.title"
+        "templates.qa.open"
     ]
 }

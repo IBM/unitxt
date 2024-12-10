@@ -37,6 +37,17 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Answer the question.",
+        input_format="Question:\n{question}",
+        target_prefix="Answer:\n",
+        references_field="answers",
+    ),
+    "templates.qa.open",
+    overwrite=True,
+)
+
 # empty qa template
 add_to_catalog(
     InputOutputTemplate(
@@ -50,6 +61,7 @@ add_to_catalog(
 add_to_catalog(
     TemplatesList(
         [
+            "templates.qa.open",
             "templates.qa.open.simple",
             "templates.qa.open.simple2",
             "templates.qa.open.title",

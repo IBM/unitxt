@@ -52,6 +52,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
+        __deprecated_msg__="This template should be replaced with `templates.qa.with_context` as it adds an unnecessary instruction to the model to return a short answer.",
         instruction="Answer the question based on the information provided in the {context_type} given below. The answer should be a single word or a number or a short phrase of few words.",
         input_format="{context_type}:\n{context}\nQuestion:\n{question}",
         output_format="{answer}",
@@ -60,6 +61,32 @@ add_to_catalog(
         title_fields=["context_type"],
     ),
     "templates.qa.with_context.title",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Answer the question based on the information provided in the {context_type} given below.",
+        input_format="{context_type}:\n{context}\nQuestion:\n{question}",
+        output_format="{answer}",
+        target_prefix="Answer:\n",
+        references_field="answers",
+        title_fields=["context_type"],
+    ),
+    "templates.qa.with_context",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        instruction="Answer the question based on the information provided in the {context_type} given below. The answer should be an exact extracted text from the {context_type}.",
+        input_format="{context_type}:\n{context}\nQuestion:\n{question}",
+        output_format="{answer}",
+        target_prefix="Answer:\n",
+        references_field="answers",
+        title_fields=["context_type"],
+    ),
+    "templates.qa.extractive",
     overwrite=True,
 )
 
@@ -90,6 +117,8 @@ add_to_catalog(
 add_to_catalog(
     TemplatesList(
         [
+            "templates.qa.with_context",
+            "templates.qa.extractive",
             "templates.qa.with_context.simple",
             "templates.qa.with_context.simple2",
             "templates.qa.with_context.with_type",

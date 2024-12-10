@@ -18,7 +18,7 @@
             }
         }
     ],
-    "task": "tasks.qa.with_context[metrics=[metrics.squad]]",
+    "task": "tasks.qa.extractive",
     "templates": "templates.qa.with_context.all",
     "__tags__": {
         "annotations_creators": "crowdsourced",
