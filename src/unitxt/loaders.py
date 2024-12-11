@@ -162,14 +162,22 @@ class LoadHF(Loader):
 
     Args:
         path: The path or identifier of the dataset on the HuggingFace Hub.
+
         name: An optional dataset name.
+
         data_dir: Optional directory to store downloaded data.
+
         split: Optional specification of which split to load.
+
         data_files: Optional specification of particular data files to load.
+
         revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
-        streaming: Bool indicating if streaming should be used.
+
+        streaming (bool): indicating if streaming should be used.
+
         filtering_lambda: A lambda function for filtering the data after loading.
-        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
+
+        num_proc (int): Optional integer to specify the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset
@@ -355,7 +363,9 @@ class LoadCSV(Loader):
                     file_path, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
-                iterables[split_name] = pd.read_csv(file_path).to_dict("records")
+                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
+                    "records"
+                )
         return iterables
 
 
@@ -733,19 +743,24 @@ class LoadFromHFSpace(LoadHF):
 
     Args:
         space_name (str): Name of the HuggingFace Space to be accessed.
+
         data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
-            paths to files within a given repository. If given as a mapping, paths should
-            be values, while keys should represent the type of respective files
-            (training, testing etc.).
+        paths to files within a given repository. If given as a mapping, paths should
+        be values, while keys should represent the type of respective files
+        (training, testing etc.).
+
         path (str, optional): Absolute path to a directory where data should be downloaded.
+
         revision (str, optional): ID of a Git branch or commit to be used. By default, it is
-            set to None, thus data is downloaded from the main branch of the accessed
-            repository.
+        set to None, thus data is downloaded from the main branch of the accessed
+        repository.
+
         use_token (bool, optional): Whether a token is used for authentication when accessing
-            the HuggingFace Space. If necessary, the token is read from the HuggingFace
-            config folder.
+        the HuggingFace Space. If necessary, the token is read from the HuggingFace
+        config folder.
+
         token_env (str, optional): Key of an env variable which value will be used for
-            authentication when accessing the HuggingFace Space - if necessary.
+        authentication when accessing the HuggingFace Space - if necessary.
 
     Example:
         Loading from a HuggingFace Space
