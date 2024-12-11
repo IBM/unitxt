@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
-  verify-pre-commit-executed:
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

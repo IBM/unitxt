@@ -1,4 +1,5 @@
 from unitxt import add_to_catalog
+from unitxt.inference import GenericInferenceEngine
 from unitxt.llm_as_judge import (
     TaskBasedLLMasJudge,
 )
@@ -17,6 +18,12 @@ metric_type_to_template_dict = {
     "answer_relevance": {"q_a": "judge_answer_relevance"},
 }
 
+generic_engine_label = "generic_inference_engine"
+inference_models = {
+    "llama_3_1_70b_instruct_wml": "engines.classification.llama_3_1_70b_instruct_wml",
+    generic_engine_label: GenericInferenceEngine(),
+}
+
 
 def get_prediction_field(metric_type):
     return None if metric_type == "context_relevance" else "answer"
@@ -27,20 +34,32 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
         task_name = f"tasks.rag_eval.{metric_type}.binary"
 
         for use_logprobs in [True, False]:
-            logprobs_label = "_logprobs" if use_logprobs else ""
-            metric_label = f"{metric_type}_{template_short_name}{logprobs_label}"
-            metric = TaskBasedLLMasJudge(
-                inference_model="engines.classification.llama_3_1_70b_instruct_wml",
-                template=f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}",
-                task=task_name,
-                format="formats.empty",
-                main_score=metric_label,
-                prediction_field=get_prediction_field(metric_type),
-                infer_log_probs=use_logprobs,
-            )
+            for inf_label, inference_model in inference_models.items():
+                if (
+                    use_logprobs and inf_label == generic_engine_label
+                ):  # engine GenericInferenceEngine does not support logprobs
+                    continue
+                logprobs_label = "_logprobs" if use_logprobs else ""
+                metric_label = f"{metric_type}_{template_short_name}{logprobs_label}"
+                metric = TaskBasedLLMasJudge(
+                    inference_model=inference_model,
+                    template=f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}",
+                    task=task_name,
+                    format=None,
+                    main_score=metric_label,
+                    prediction_field=get_prediction_field(metric_type),
+                    infer_log_probs=use_logprobs,
+                )
 
-            add_to_catalog(
-                metric,
-                f"metrics.llm_as_judge.binary.llama_3_1_70b_instruct_wml_{metric_label}",
-                overwrite=True,
-            )
+                add_to_catalog(
+                    metric,
+                    f"metrics.rag.{metric_type}.{inf_label}_{template_short_name}{logprobs_label}",
+                    overwrite=True,
+                )
+
+                # for backwards compatibility: keep also legacy path to metrics
+                add_to_catalog(
+                    metric,
+                    f"metrics.llm_as_judge.binary.{inf_label}_{metric_label}",
+                    overwrite=True,
+                )

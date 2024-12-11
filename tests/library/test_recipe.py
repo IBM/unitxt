@@ -554,13 +554,6 @@ class TestRecipes(UnitxtTestCase):
         self.assertTrue(len(results) > 0)
 
     def test_standard_recipe_with_template_errors(self):
-        # Check some template was specified
-        with self.assertRaises(AssertionError) as cm:
-            StandardRecipeWithIndexes(card="cards.wnli")
-        self.assertEqual(
-            str(cm.exception), "Specify either template or template_card_index in card"
-        )
-
         # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
             StandardRecipeWithIndexes(
@@ -622,7 +615,7 @@ class TestRecipes(UnitxtTestCase):
     def test_standard_recipe_with_augmentor_on_task_input(self):
         recipe = StandardRecipeWithIndexes(
             card="cards.sst2",
-            augmentor="augmentors.augment_whitespace_task_input",
+            augmentor="augmentors.text.white_space",
             template_card_index=0,
             max_train_instances=0,
             max_test_instances=2,
@@ -643,33 +636,6 @@ class TestRecipes(UnitxtTestCase):
         assert (
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
-
-    def test_standard_recipe_with_augmentor_on_model_input(self):
-        recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
-            template_card_index=0,
-            max_train_instances=0,
-            max_test_instances=1,
-        )
-        original_source = next(iter(recipe()["test"]))["source"]
-
-        recipe = StandardRecipeWithIndexes(
-            card="cards.sst2",
-            augmentor="augmentors.augment_whitespace_model_input",
-            template_card_index=0,
-            max_train_instances=0,
-            max_test_instances=1,
-        )
-        augmented_source = next(iter(recipe()["test"]))["source"]
-
-        assert (
-            original_source != augmented_source
-        ), f"Augmented text '{augmented_source}' is equal to text without '{original_source}' and was not augmented"
-        normalized_augmented_source = augmented_source.split()
-        normalized_input_source = original_source.split()
-        assert (
-            normalized_augmented_source == normalized_input_source
-        ), f"{normalized_augmented_source} is not equal to f{normalized_input_source}"
 
     def test_standard_recipe_with_train_size_limit(self):
         recipe = StandardRecipeWithIndexes(

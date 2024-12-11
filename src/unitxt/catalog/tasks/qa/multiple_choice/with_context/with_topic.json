@@ -12,6 +12,10 @@
         "choices": "List[str]"
     },
     "prediction_type": "str",
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ],
     "metrics": [
         "metrics.accuracy"
     ]

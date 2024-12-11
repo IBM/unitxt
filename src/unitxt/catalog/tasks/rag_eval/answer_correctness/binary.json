@@ -29,6 +29,9 @@
         "is_correct": [
             "-"
         ],
-        "number_val": -1
+        "number_val": -1,
+        "contexts": [
+            "-"
+        ]
     }
 }

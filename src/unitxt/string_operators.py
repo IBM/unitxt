@@ -96,3 +96,17 @@ class MapReplace(FieldOperator):
         for key, val in self.mapping.items():
             value = value.replace(key, val)
         return value
+
+
+class RegexReplace(FieldOperator):
+    pattern: str  # A regex pattern
+    replacement: str  # The replacement string or template
+
+    def prepare(self):
+        super().prepare()
+        self.pattern = re.compile(self.pattern)
+
+    def process_value(self, value: Any) -> Any:
+        if isinstance(value, str):
+            return re.sub(self.pattern, self.replacement, value)
+        return value  # If not a string, return the value as is

@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
-  run-full-tests-suit:
+  unittests:
 
     runs-on: ubuntu-latest
     env:
@@ -26,7 +30,7 @@ jobs:
         python-version: '3.9'
 
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-    - run: uv pip install --system -e ".[tests]"
+    - run: uv pip install --system ".[tests]"
     - run: pip install coverage[toml]
 
     - name: Run Tests

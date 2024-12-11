@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [ main ]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
-  run-performance-tests:
+  performance:
 
     runs-on: ubuntu-latest
     env:
@@ -28,7 +32,7 @@ jobs:
     - name: Install Requirements
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
-        uv pip install --system -e ".[tests]"
+        uv pip install --system ".[tests]"
 
     - name: Prepare the dirs for performance evaluation in main
       run: |

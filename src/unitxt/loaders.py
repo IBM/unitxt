@@ -1,7 +1,7 @@
 """This section describes unitxt loaders.
 
 Loaders: Generators of Unitxt Multistreams from existing date sources
-==============================================================
+=====================================================================
 
 Unitxt is all about readily preparing of any given data source for feeding into any given language model, and then,
 post-processing the model's output, preparing it for any given evaluator.
@@ -16,14 +16,14 @@ All these loaders inherit from Loader, and hence, implementing a loader to expan
 straightforward.
 
 Available Loaders Overview:
-    - :ref:`LoadHF <unitxt.loaders.LoadHF>` - Loads data from HuggingFace Datasets.
-    - :ref:`LoadCSV <unitxt.loaders.LoadCSV>` - Imports data from CSV (Comma-Separated Values) files.
-    - :ref:`LoadFromKaggle <unitxt.loaders.LoadFromKaggle>` - Retrieves datasets from the Kaggle community site.
-    - :ref:`LoadFromIBMCloud <unitxt.loaders.LoadFromIBMCloud>` - Fetches datasets hosted on IBM Cloud.
-    - :ref:`LoadFromSklearn <unitxt.loaders.LoadFromSklearn>` - Loads datasets available through the sklearn library.
-    - :ref:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
-    - :ref:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
-    - :ref:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from HuggingFace Spaces.
+    - :class:`LoadHF <unitxt.loaders.LoadHF>` - Loads data from HuggingFace Datasets.
+    - :class:`LoadCSV <unitxt.loaders.LoadCSV>` - Imports data from CSV (Comma-Separated Values) files.
+    - :class:`LoadFromKaggle <unitxt.loaders.LoadFromKaggle>` - Retrieves datasets from the Kaggle community site.
+    - :class:`LoadFromIBMCloud <unitxt.loaders.LoadFromIBMCloud>` - Fetches datasets hosted on IBM Cloud.
+    - :class:`LoadFromSklearn <unitxt.loaders.LoadFromSklearn>` - Loads datasets available through the sklearn library.
+    - :class:`MultipleSourceLoader <unitxt.loaders.MultipleSourceLoader>` - Combines data from multiple different sources.
+    - :class:`LoadFromDictionary <unitxt.loaders.LoadFromDictionary>` - Loads data from a user-defined Python dictionary.
+    - :class:`LoadFromHFSpace <unitxt.loaders.LoadFromHFSpace>` - Downloads and loads data from HuggingFace Spaces.
 
 
 
@@ -38,14 +38,14 @@ import tempfile
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, List, Mapping, Optional, Sequence, Union
+from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from .dataclass import InternalField, OptionalField
+from .dataclass import OptionalField
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
@@ -53,7 +53,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import recursive_copy
+from .utils import LRUCache
 
 logger = get_logger()
 settings = get_settings()
@@ -81,7 +81,10 @@ class Loader(SourceOperator):
     streaming: bool = False
     num_proc: int = None
 
-    def get_limit(self):
+    # class level shared cache:
+    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
+
+    def get_limit(self) -> int:
         if settings.global_loader_limit is not None and self.loader_limit is not None:
             return min(int(settings.global_loader_limit), self.loader_limit)
         if settings.global_loader_limit is not None:
@@ -132,10 +135,22 @@ class Loader(SourceOperator):
             self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
-    def load_data(self):
+    def load_iterables(self) -> Dict[str, Iterable]:
         pass
 
+    def _maybe_set_classification_policy(self):
+        pass
+
+    def load_data(self) -> MultiStream:
+        iterables = self.__class__._loader_cache.get(str(self), None)
+        if iterables is None:
+            iterables = self.load_iterables()
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self)] = iterables
+        return MultiStream.from_iterables(iterables, copying=True)
+
     def process(self) -> MultiStream:
+        self._maybe_set_classification_policy()
         return self.add_data_classification(self.load_data())
 
 
@@ -147,14 +162,22 @@ class LoadHF(Loader):
 
     Args:
         path: The path or identifier of the dataset on the HuggingFace Hub.
+
         name: An optional dataset name.
+
         data_dir: Optional directory to store downloaded data.
+
         split: Optional specification of which split to load.
+
         data_files: Optional specification of particular data files to load.
+
         revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
-        streaming: Bool indicating if streaming should be used.
+
+        streaming (bool): indicating if streaming should be used.
+
         filtering_lambda: A lambda function for filtering the data after loading.
-        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading.
+
+        num_proc (int): Optional integer to specify the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset
@@ -175,7 +198,6 @@ class LoadHF(Loader):
     streaming: bool = True
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
-    _cache: dict = InternalField(default=None)
     requirements_list: List[str] = OptionalField(default_factory=list)
 
     def verify(self):
@@ -193,39 +215,33 @@ class LoadHF(Loader):
         return dataset.filter(eval(self.filtering_lambda))
 
     def stream_dataset(self):
-        if self._cache is None:
-            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                if settings.disable_hf_datasets_cache and not self.streaming:
-                    cache_dir = dir_to_be_deleted
-                else:
-                    cache_dir = None
-                try:
-                    dataset = hf_load_dataset(
-                        self.path,
-                        name=self.name,
-                        data_dir=self.data_dir,
-                        data_files=self.data_files,
-                        revision=self.revision,
-                        streaming=self.streaming,
-                        cache_dir=cache_dir,
-                        split=self.split,
-                        trust_remote_code=settings.allow_unverified_code,
-                        num_proc=self.num_proc,
-                    )
-                except ValueError as e:
-                    if "trust_remote_code" in str(e):
-                        raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                        ) from e
-                    raise e
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            if settings.disable_hf_datasets_cache and not self.streaming:
+                cache_dir = dir_to_be_deleted
+            else:
+                cache_dir = None
+            try:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    revision=self.revision,
+                    streaming=self.streaming,
+                    cache_dir=cache_dir,
+                    split=self.split,
+                    trust_remote_code=settings.allow_unverified_code,
+                    num_proc=self.num_proc,
+                )
+            except ValueError as e:
+                if "trust_remote_code" in str(e):
+                    raise ValueError(
+                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                    ) from e
+                raise e
 
-            if self.split is not None:
-                dataset = {self.split: dataset}
-
-            self._cache = dataset
-
-        else:
-            dataset = self._cache
+        if self.split is not None:
+            dataset = {self.split: dataset}
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
@@ -233,41 +249,35 @@ class LoadHF(Loader):
         return dataset
 
     def load_dataset(self):
-        if self._cache is None:
-            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                if settings.disable_hf_datasets_cache:
-                    cache_dir = dir_to_be_deleted
-                else:
-                    cache_dir = None
-                try:
-                    dataset = hf_load_dataset(
-                        self.path,
-                        name=self.name,
-                        data_dir=self.data_dir,
-                        data_files=self.data_files,
-                        streaming=False,
-                        keep_in_memory=True,
-                        cache_dir=cache_dir,
-                        split=self.split,
-                        trust_remote_code=settings.allow_unverified_code,
-                        num_proc=self.num_proc,
-                    )
-                except ValueError as e:
-                    if "trust_remote_code" in str(e):
-                        raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                        ) from e
-
-            if self.split is None:
-                for split in dataset.keys():
-                    dataset[split] = dataset[split].to_iterable_dataset()
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            if settings.disable_hf_datasets_cache:
+                cache_dir = dir_to_be_deleted
             else:
-                dataset = {self.split: dataset}
+                cache_dir = None
+            try:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    streaming=False,
+                    keep_in_memory=True,
+                    cache_dir=cache_dir,
+                    split=self.split,
+                    trust_remote_code=settings.allow_unverified_code,
+                    num_proc=self.num_proc,
+                )
+            except ValueError as e:
+                if "trust_remote_code" in str(e):
+                    raise ValueError(
+                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                    ) from e
 
-            self._cache = dataset
-
+        if self.split is None:
+            for split in dataset.keys():
+                dataset[split] = dataset[split].to_iterable_dataset()
         else:
-            dataset = self._cache
+            dataset = {self.split: dataset}
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
@@ -285,11 +295,11 @@ class LoadHF(Loader):
                     generator=self.split_limited_load,
                     gen_kwargs={"dataset": dataset, "split_name": name},
                 )
-                for name in self._cache.keys()
+                for name in dataset.keys()
             }
         )
 
-    def load_data(self):
+    def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
             self.sef_default_data_classification(
                 ["proprietary"], "when loading from local files"
@@ -298,6 +308,8 @@ class LoadHF(Loader):
             self.sef_default_data_classification(
                 ["public"], "when loading from Huggingface hub"
             )
+
+    def load_iterables(self):
         try:
             dataset = self.stream_dataset()
         except (
@@ -308,7 +320,7 @@ class LoadHF(Loader):
         if self.get_limit() is not None:
             return self.limited_load(dataset=dataset)
 
-        return MultiStream.from_iterables(dataset)
+        return dataset
 
 
 class LoadCSV(Loader):
@@ -333,58 +345,28 @@ class LoadCSV(Loader):
 
     files: Dict[str, str]
     chunksize: int = 1000
-    _cache = InternalField(default_factory=dict)
     loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
 
-    def stream_csv(self, file):
-        if self.get_limit() is not None:
-            self.log_limited_loading()
-            chunksize = min(self.get_limit(), self.chunksize)
-        else:
-            chunksize = self.chunksize
-
-        row_count = 0
-        for chunk in pd.read_csv(file, chunksize=chunksize, sep=self.sep):
-            for _, row in chunk.iterrows():
-                if self.get_limit() is not None and row_count >= self.get_limit():
-                    return
-                yield row.to_dict()
-                row_count += 1
-
-    def load_csv(self, file):
-        if file not in self._cache:
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-                self._cache[file] = pd.read_csv(
-                    file, nrows=self.get_limit(), sep=self.sep
-                ).to_dict("records")
-            else:
-                self._cache[file] = pd.read_csv(file).to_dict("records")
-
-        yield from self._cache[file]
-
-    def load_data(self):
+    def _maybe_set_classification_policy(self):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
-        if self.streaming:
-            return MultiStream(
-                {
-                    name: DynamicStream(
-                        generator=self.stream_csv, gen_kwargs={"file": file}
-                    )
-                    for name, file in self.files.items()
-                }
-            )
 
-        return MultiStream(
-            {
-                name: DynamicStream(generator=self.load_csv, gen_kwargs={"file": file})
-                for name, file in self.files.items()
-            }
-        )
+    def load_iterables(self):
+        iterables = {}
+        for split_name, file_path in self.files.items():
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+                iterables[split_name] = pd.read_csv(
+                    file_path, nrows=self.get_limit(), sep=self.sep
+                ).to_dict("records")
+            else:
+                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
+                    "records"
+                )
+        return iterables
 
 
 class LoadFromSklearn(Loader):
@@ -409,6 +391,8 @@ class LoadFromSklearn(Loader):
 
     _requirements_list: List[str] = ["scikit-learn", "pandas"]
 
+    data_classification_policy = ["public"]
+
     def verify(self):
         super().verify()
 
@@ -421,7 +405,7 @@ class LoadFromSklearn(Loader):
 
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
-    def load_data(self):
+    def load_iterables(self):
         with TemporaryDirectory() as temp_directory:
             for split in self.splits:
                 split_data = self.downloader(subset=split)
@@ -429,9 +413,7 @@ class LoadFromSklearn(Loader):
                 df = pd.DataFrame([split_data["data"], targets]).T
                 df.columns = ["data", "target"]
                 df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
-            dataset = hf_load_dataset(temp_directory, streaming=False)
-
-        return MultiStream.from_iterables(dataset)
+            return hf_load_dataset(temp_directory, streaming=False)
 
 
 class MissingKaggleCredentialsError(ValueError):
@@ -475,12 +457,10 @@ class LoadFromKaggle(Loader):
 
         self.downloader = download
 
-    def load_data(self):
+    def load_iterables(self):
         with TemporaryDirectory() as temp_directory:
             self.downloader(self.url, temp_directory)
-            dataset = hf_load_dataset(temp_directory, streaming=False)
-
-        return MultiStream.from_iterables(dataset)
+            return hf_load_dataset(temp_directory, streaming=False)
 
 
 class LoadFromIBMCloud(Loader):
@@ -595,13 +575,15 @@ class LoadFromIBMCloud(Loader):
         if self.streaming:
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
-    def load_data(self):
-        if not self.verified:
-            self.lazy_verify()
-            self.verified = True
+    def _maybe_set_classification_policy(self):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
+
+    def load_iterables(self):
+        if not self.verified:
+            self.lazy_verify()
+            self.verified = True
         import ibm_boto3
 
         cos = ibm_boto3.resource(
@@ -658,7 +640,7 @@ class LoadFromIBMCloud(Loader):
                 field=self.data_field,
             )
 
-        return MultiStream.from_iterables(dataset)
+        return dataset
 
 
 class MultipleSourceLoader(Loader):
@@ -691,6 +673,9 @@ class MultipleSourceLoader(Loader):
         if self.data_classification_policy is None:
             return multi_stream
         return super().add_data_classification(multi_stream)
+
+    def load_iterables(self):
+        pass
 
     def load_data(self):
         return FixedFusion(
@@ -741,11 +726,13 @@ class LoadFromDictionary(Loader):
                         f"instance {instance} has different fields different from {first_instance}"
                     )
 
-    def load_data(self) -> MultiStream:
+    def _maybe_set_classification_policy(self):
         self.sef_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
-        return MultiStream.from_iterables(recursive_copy(self.data))
+
+    def load_iterables(self) -> MultiStream:
+        return self.data
 
 
 class LoadFromHFSpace(LoadHF):
@@ -756,19 +743,24 @@ class LoadFromHFSpace(LoadHF):
 
     Args:
         space_name (str): Name of the HuggingFace Space to be accessed.
+
         data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
-            paths to files within a given repository. If given as a mapping, paths should
-            be values, while keys should represent the type of respective files
-            (training, testing etc.).
+        paths to files within a given repository. If given as a mapping, paths should
+        be values, while keys should represent the type of respective files
+        (training, testing etc.).
+
         path (str, optional): Absolute path to a directory where data should be downloaded.
+
         revision (str, optional): ID of a Git branch or commit to be used. By default, it is
-            set to None, thus data is downloaded from the main branch of the accessed
-            repository.
+        set to None, thus data is downloaded from the main branch of the accessed
+        repository.
+
         use_token (bool, optional): Whether a token is used for authentication when accessing
-            the HuggingFace Space. If necessary, the token is read from the HuggingFace
-            config folder.
+        the HuggingFace Space. If necessary, the token is read from the HuggingFace
+        config folder.
+
         token_env (str, optional): Key of an env variable which value will be used for
-            authentication when accessing the HuggingFace Space - if necessary.
+        authentication when accessing the HuggingFace Space - if necessary.
 
     Example:
         Loading from a HuggingFace Space
@@ -915,10 +907,12 @@ class LoadFromHFSpace(LoadHF):
                 f"Loader does not support input 'data_files' of type {type(self.data_files)}"
             )
 
-    def load_data(self):
+    def _maybe_set_classification_policy(self):
         self.sef_default_data_classification(
             ["public"], "when loading from Huggingface spaces"
         )
+
+    def load_data(self):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()

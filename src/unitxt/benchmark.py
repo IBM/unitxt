@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Dict, Union
 
 from .dataclass import NonPositionalField
@@ -15,6 +16,10 @@ class BaseBenchmark(SourceOperator):
     system_prompt: SystemPrompt = NonPositionalField(default=None)
     loader_limit: int = NonPositionalField(default=None)
 
+    @abstractmethod
+    def reset(self):
+        pass
+
 
 class Benchmark(BaseBenchmark):
     subsets: Dict[str, Union[StandardRecipe, BaseBenchmark]]
@@ -23,16 +28,23 @@ class Benchmark(BaseBenchmark):
     max_samples_per_subset: int = None
 
     def verify(self):
+        super().verify()
         if (
             self.max_total_samples is not None
             and self.max_samples_per_subset is not None
         ):
             raise ValueError("Set either max_total_samples or max_samples_per_subset")
 
-    def prepare(self):
-        for subset in self.subsets.values():
-            subset.loader_limit = self.loader_limit
-        if self.format is not None or self.num_demos is not None:
+    def prepare_args(self):
+        self.subsets = dict(self.subsets)
+
+    def reset(self):
+        if (
+            self.format is not None
+            or self.num_demos is not None
+            or self.system_prompt is not None
+            or self.loader_limit is not None
+        ):
             for subset in self.subsets.values():
                 if self.num_demos is not None:
                     subset.num_demos = self.num_demos
@@ -42,7 +54,13 @@ class Benchmark(BaseBenchmark):
                     subset.system_prompt = self.system_prompt
                 if self.loader_limit is not None:
                     subset.loader_limit = self.loader_limit
-                subset.prepare()
+
+                subset.reset()
+
+    def prepare(self):
+        super().prepare()
+
+        self.reset()
 
     def process(
         self,

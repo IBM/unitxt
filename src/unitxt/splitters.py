@@ -16,7 +16,7 @@ from .split_utils import (
 )
 from .stream import EmptyStreamError, FaultyStreamError, MultiStream
 from .type_utils import isoftype
-from .utils import recursive_shallow_copy
+from .utils import recursive_copy
 
 
 class Splitter(MultiStreamOperator):
@@ -230,21 +230,23 @@ class DiverseLabelsSampler(Sampler):
     The `choices` param is required and determines which values should be considered.
 
     Example:
-        If choices is ['dog,'cat'] , then the following combinations will be considered.
+        If choices is ['dog','cat'] , then the following combinations will be considered.
         ['']
         ['cat']
         ['dog']
         ['dog','cat']
 
         If the instance contains a value not in the 'choice' param, it is ignored. For example,
-        if choices is ['dog,'cat'] and the instance field is ['dog','cat','cow'], then 'cow' is ignored
+        if choices is ['dog','cat'] and the instance field is ['dog','cat','cow'], then 'cow' is ignored
         then the instance is considered as ['dog','cat'].
 
     Args:
-        sample_size - number of samples to extract
-        choices - name of input field that contains the list of values to balance on
-        labels - name of output field with labels that must be balanced
-
+        sample_size (int):
+            number of samples to extract
+        choices (str):
+            name of input field that contains the list of values to balance on
+        labels (str):
+            name of output field with labels that must be balanced
 
     """
 
@@ -353,9 +355,7 @@ class Sample(InstanceOperatorWithMultiStreamAccess):
         sample_size = self.get_sample_size(instance)
         try:
             if self.local_cache is None:
-                self.local_cache = recursive_shallow_copy(
-                    list(multi_stream[self.from_stream])
-                )
+                self.local_cache = recursive_copy(list(multi_stream[self.from_stream]))
 
             source_stream = self.local_cache
             source_stream = self.sampler.filter_source_by_instance(

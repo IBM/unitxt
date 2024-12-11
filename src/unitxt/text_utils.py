@@ -114,12 +114,72 @@ def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
     return res
 
 
+def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
+    """Constructs the lines of a dictionary formatted as yaml.
+
+    Args:
+        d: The element to be formatted.
+        indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 2.
+    """
+
+    def is_simple(val) -> bool:
+        # if can show in same line as dictionary's key
+        return not isinstance(val, (dict, list)) or (len(val) == 0)
+
+    indent_delta_str = " " * indent_delta
+    ticked_indent_delta_str = indent_delta_str[:-2] + "- "
+    assert (
+        indent_delta >= 2
+    ), f"Needs at least 2 position indentations, for the case of list elements, that are to be preceded each by ' -'. Got indent_delta={indent_delta}."
+    res = []  # conputed hereunder as a list of lines, that are indented only at the end
+
+    if isinstance(d, dict):
+        if len(d) == 0:
+            return ["{}"]
+        for key, val in d.items():
+            printable_key = f'"{key}"' if (" " in key) or (key == "") else key
+            res.append(printable_key + ": ")
+            yaml_for_val = construct_dict_as_yaml_lines(val, indent_delta=indent_delta)
+            assert len(yaml_for_val) > 0
+            if is_simple(val):
+                assert len(yaml_for_val) == 1
+                res[-1] += yaml_for_val[0]
+            else:
+                for line in yaml_for_val:
+                    res.append(indent_delta_str + line)
+        return res
+
+    if isinstance(d, list):
+        if len(d) == 0:
+            return ["[]"]
+        for val in d:
+            yaml_for_val = construct_dict_as_yaml_lines(val, indent_delta=indent_delta)
+            assert len(yaml_for_val) > 0
+            res.append(ticked_indent_delta_str + yaml_for_val[0])
+            for line in yaml_for_val[1:]:
+                res.append(indent_delta_str + line)
+        return res
+
+    # d1 = re.sub(r"(\n+)", r'"\1"', str(d))
+    d1 = str(d).replace("\n", "\\n").replace('"', '\\"')
+    if "\\n" in d1:
+        d1 = f'"{d1}"'
+    return [d1]
+
+
 def print_dict(
     d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None, log_level="info"
 ):
     dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
     getattr(logger, log_level)(dict_str)
+
+
+def print_dict_as_yaml(d: dict, indent_delta=2) -> str:
+    yaml_lines = construct_dict_as_yaml_lines(d)
+    # yaml_lines = [re.sub(r"(\n+)", r'"\1"', line) for line in yaml_lines]
+    # yaml_lines = [line.replace("\n", "\\n") for line in yaml_lines]
+    return "\n".join(yaml_lines)
 
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:

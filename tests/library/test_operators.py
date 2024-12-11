@@ -3,6 +3,7 @@ from collections import Counter
 from typing import Any
 
 from unitxt.formats import SystemFormat
+from unitxt.metrics import MetricsList
 from unitxt.operators import (
     AddConstant,
     Apply,
@@ -10,6 +11,7 @@ from unitxt.operators import (
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
     CastFields,
+    CollateInstances,
     Copy,
     DeterministicBalancer,
     DivideAllFieldsBy,
@@ -91,7 +93,10 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=inputs,
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: 'process_every_field' == True is allowed only when all fields which have mappers, i.e., ['a'] are lists. Instance = {'a': '1', 'b': '2'}",
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                "'process_every_field' == True is allowed only for fields whose values are lists, but value of field 'a' is '1'",
+            ],
             tester=self,
         )
 
@@ -99,7 +104,10 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=MapInstanceValues(mappers=mappers),
             inputs=[{"a": "3", "b": "4"}],
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': '3', 'b': '4'}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+            ],
             tester=self,
         )
 
@@ -127,7 +135,10 @@ class TestOperators(UnitxtTestCase):
         check_operator_exception(
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=[{"a": [1, 2, 3, 4], "b": 2}],
-            exception_text="Error processing instance '0' from stream 'test' in MapInstanceValues due to: \"value '3' in instance '{'a': ['hi', 'bye', 3, 4], 'b': 2}' is not found in mapper '{'1': 'hi', '2': 'bye'}', associated with field 'a'.\"",
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
+            ],
             tester=self,
         )
         # Test mapping of lists to lists
@@ -325,17 +336,19 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
-        exception_text = "Required filter field ('d') in FilterByCondition is not found in {'a': 1, 'b': {'c': 2}}"
+        exception_text = (
+            "Required filter field ('d') in FilterByCondition is not found in instance."
+        )
         check_operator_exception(
             operator=FilterByCondition(values={"d": "5"}, condition="eq"),
             inputs=inputs,
-            exception_text=exception_text,
+            exception_texts=[exception_text],
             tester=self,
         )
         check_operator_exception(
             operator=FilterByExpression(expression="d['e'] == 5"),
             inputs=inputs,
-            exception_text="name 'd' is not defined",
+            exception_texts=["name 'd' is not defined"],
             tester=self,
         )
 
@@ -445,7 +458,9 @@ class TestOperators(UnitxtTestCase):
                 error_on_filtered_all=True,
             ),
             inputs=inputs,
-            exception_text="FilterByExpression filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False",
+            exception_texts=[
+                "FilterByExpression filtered out every instance in stream 'test'. If this is intended set error_on_filtered_all=False"
+            ],
             tester=self,
         )
 
@@ -494,7 +509,7 @@ class TestOperators(UnitxtTestCase):
             )
         self.assertEqual(
             str(cm.exception),
-            "Required filter field ('c') in FilterByCondition is not found in {'a': 1, 'b': 2}",
+            "Required filter field ('c') in FilterByCondition is not found in instance.",
         )
         with self.assertRaises(Exception) as ne:
             check_operator(
@@ -532,16 +547,14 @@ class TestOperators(UnitxtTestCase):
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
         operator = ExecuteExpression(expression="f'{a} {b}'", to_field="c")
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
-        with self.assertRaises(ValueError) as ve:
-            check_operator(
-                operator=operator,
-                inputs=[{"x": 2, "y": 3}],
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            "Error processing instance '0' from stream 'test' in ExecuteExpression due to: name 'a' is not defined",
-            str(ve.exception),
+        check_operator_exception(
+            operator=operator,
+            inputs=[{"x": 2, "y": 3}],
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in ExecuteExpression due to the exception above.",
+                "name 'a' is not defined",
+            ],
+            tester=self,
         )
 
         inputs = [{"json_string": '{"A":"a_value", "B":"b_value"}'}]
@@ -610,11 +623,15 @@ class TestOperators(UnitxtTestCase):
         inputs = [
             {"label": "b"},
         ]
-        exception_text = "Error processing instance '0' from stream 'test' in Intersect due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in Intersect due to the exception above.",
+            "Failed to process field 'label' from instance due to the exception above.",
+            "The value in field is not a list but 'b'",
+        ]
         check_operator_exception(
             operator=Intersect(field="label", allowed_values=["c"]),
             inputs=inputs,
-            exception_text=exception_text,
+            exception_texts=exception_texts,
             tester=self,
         )
 
@@ -701,22 +718,30 @@ class TestOperators(UnitxtTestCase):
         inputs = [
             {"label": "b"},
         ]
-        exception_text = "Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to process 'label' from {'label': 'b'} due to : The value in field is not a list but 'b'"
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
+            "Failed to process field 'label' from instance due to the exception above.",
+            "The value in field is not a list but 'b'",
+        ]
         check_operator_exception(
             operator=RemoveValues(field="label", unallowed_values=["c"]),
             inputs=inputs,
-            exception_text=exception_text,
+            exception_texts=exception_texts,
             tester=self,
         )
 
-        exception_text = """Error processing instance '0' from stream 'test' in RemoveValues due to: Failed to get 'label2' from {'label': 'b'} due to : query "label2" did not match any item in dict:
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
+            "Failed to get 'label2' from instance due to the exception above.",
+            """query "label2" did not match any item in dict:
 label (str):
     b
-"""
+""",
+        ]
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
             inputs=inputs,
-            exception_text=exception_text,
+            exception_texts=exception_texts,
             tester=self,
         )
 
@@ -764,7 +789,11 @@ label (str):
         check_operator_exception(
             operator=ApplyOperatorsField(operators_field="d"),
             inputs=inputs,
-            exception_text="Error processing instance '0' from stream 'test' in ApplyOperatorsField due to: No operators found in field 'd', and no default operators provided.",
+            exception_texts=[
+                "Error processing instance '0' from stream 'test' in ApplyOperatorsField due to the exception above.",
+                "No operators found in field 'd', and no default operators provided.",
+            ],
+            tester=self,
         )
         # check default operators:
         inputs = [
@@ -2264,6 +2293,18 @@ label (str):
             tester=self,
         )
 
+    def test_copy_string_to_string_error(self):
+        inputs = [{"source": "hello", "task_data": 3}]
+
+        targets = [{"source": "hello", "task_data": {"source": "hello"}}]
+
+        check_operator(
+            operator=Copy(field="source", to_field="task_data/source"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
     def test_copy_paste_same_name2(self):
         inputs = [
             {"a": "test"},
@@ -2304,17 +2345,20 @@ label (str):
         )
 
         inputs = [{"prediction": "red", "references": "blue"}]
-        exception_text = """Error processing instance '0' from stream 'test' in EncodeLabels due to: query \"references/*\" did not match any item in dict:
+        exception_texts = [
+            """Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.""",
+            """query \"references/*\" did not match any item in dict:
 prediction (str):
     red
 references (str):
     blue
-"""
+""",
+        ]
         check_operator_exception(
             operator=EncodeLabels(fields=["references/*", "prediction"]),
             inputs=inputs,
             tester=self,
-            exception_text=exception_text,
+            exception_texts=exception_texts,
         )
 
     def test_join_str(self):
@@ -2561,6 +2605,32 @@ references (str):
             tester=self,
         )
 
+    def test_collate_instance(self):
+        inputs = [
+            {"a": 1, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 2, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 3, "b": 2, "data_classification_policy": ["public"]},
+            {"a": 4, "b": 2, "data_classification_policy": ["private"]},
+            {"a": 5, "b": 2, "data_classification_policy": ["public"]},
+        ]
+
+        targets = [
+            {"a": [1, 2], "b": [2, 2], "data_classification_policy": ["public"]},
+            {
+                "a": [3, 4],
+                "b": [2, 2],
+                "data_classification_policy": ["private", "public"],
+            },
+            {"a": [5], "b": [2], "data_classification_policy": ["public"]},
+        ]
+
+        check_operator(
+            operator=CollateInstances(batch_size=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
 
 class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(
@@ -2651,6 +2721,14 @@ class TestApplyMetric(UnitxtTestCase):
             expected_score_value=0.5,
         )
         self.assertAlmostEqual(global_metric_result["accuracy"], 0.5, delta=2)
+
+    def test_apply_metric_with_metrics_list(self):
+        global_metric_result = self._test_apply_metric(
+            metrics=[MetricsList(["metrics.accuracy", "metrics.f1_macro"])],
+            expected_score_name="accuracy",
+            expected_score_value=0.5,
+        )
+        self.assertAlmostEqual(global_metric_result["f1_macro"], 0.388, delta=2)
 
     def test_render_demonstrations(self):
         template = InputOutputTemplate(

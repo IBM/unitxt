@@ -2,11 +2,12 @@ import warnings
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
-from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
+from .metrics import MetricsList
 from .operator import InstanceOperator
+from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants
 from .type_utils import (
     Type,
@@ -35,29 +36,33 @@ def parse_string_types_instead_of_actual_objects(obj):
     return parse_type_string(obj)
 
 
-class Task(InstanceOperator):
+class Task(InstanceOperator, ArtifactFetcherMixin):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
     Attributes:
         input_fields (Union[Dict[str, str], List[str]]):
-            Dictionary with string names of instance input fields and types of respective values.
-            In case a list is passed, each type will be assumed to be Any.
+        Dictionary with string names of instance input fields and types of respective values.
+        In case a list is passed, each type will be assumed to be Any.
+
         reference_fields (Union[Dict[str, str], List[str]]):
-            Dictionary with string names of instance output fields and types of respective values.
-            In case a list is passed, each type will be assumed to be Any.
+        Dictionary with string names of instance output fields and types of respective values.
+        In case a list is passed, each type will be assumed to be Any.
+
         metrics (List[str]): List of names of metrics to be used in the task.
+
         prediction_type (Optional[str]):
-            Need to be consistent with all used metrics. Defaults to None, which means that it will
-            be set to Any.
+        Need to be consistent with all used metrics. Defaults to None, which means that it will
+        be set to Any.
+
         defaults (Optional[Dict[str, Any]]):
-            An optional dictionary with default values for chosen input/output keys. Needs to be
-            consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
-            Will not overwrite values if already provided in a given instance.
+        An optional dictionary with default values for chosen input/output keys. Needs to be
+        consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
+        Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
-        "input_fields" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
-        "reference_fields" -- for the fields listed in Arg "reference_fields".
-        "metrics" -- to contain the value of Arg 'metrics'
+        1. "input_fields" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
+        2. "reference_fields" -- for the fields listed in Arg "reference_fields".
+        3. "metrics" -- to contain the value of Arg 'metrics'
     """
 
     input_fields: Optional[Union[Dict[str, Type], Dict[str, str], List[str]]] = None
@@ -69,8 +74,9 @@ class Task(InstanceOperator):
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
 
-    def prepare(self):
-        super().prepare()
+    def prepare_args(self):
+        super().prepare_args()
+
         if self.input_fields is not None and self.inputs is not None:
             raise UnitxtError(
                 "Conflicting attributes: 'input_fields' cannot be set simultaneously with 'inputs'. Use only 'input_fields'",
@@ -97,6 +103,7 @@ class Task(InstanceOperator):
             self.reference_fields = parse_string_types_instead_of_actual_objects(
                 self.reference_fields
             )
+
         if isinstance(self.prediction_type, str):
             self.prediction_type = parse_string_types_instead_of_actual_objects(
                 self.prediction_type
@@ -184,33 +191,36 @@ class Task(InstanceOperator):
                 data["prediction_type"] = to_type_string(data["prediction_type"])
         return data
 
-    @staticmethod
+    @classmethod
     @lru_cache(maxsize=None)
-    def get_metric_prediction_type(metric_id: str):
-        metric = fetch_artifact(metric_id)[0]
-        return metric.prediction_type
+    def get_metrics_artifacts(cls, metric_id: str):
+        metric = cls.get_artifact(metric_id)
+        if isinstance(metric, MetricsList):
+            return metric.items
+        return [metric]
 
     def check_metrics_type(self) -> None:
         prediction_type = self.prediction_type
         for metric_id in self.metrics:
-            metric_prediction_type = Task.get_metric_prediction_type(metric_id)
+            metric_artifacts_list = Task.get_metrics_artifacts(metric_id)
+            for metric_artifact in metric_artifacts_list:
+                metric_prediction_type = metric_artifact.prediction_type
+                if (
+                    prediction_type == metric_prediction_type
+                    or prediction_type == Any
+                    or metric_prediction_type == Any
+                    or (
+                        get_origin(metric_prediction_type) is Union
+                        and prediction_type in get_args(metric_prediction_type)
+                    )
+                ):
+                    continue
 
-            if (
-                prediction_type == metric_prediction_type
-                or prediction_type == Any
-                or metric_prediction_type == Any
-                or (
-                    get_origin(metric_prediction_type) is Union
-                    and prediction_type in get_args(metric_prediction_type)
+                raise UnitxtError(
+                    f"The task's prediction type ({prediction_type}) and '{metric_id}' "
+                    f"metric's prediction type ({metric_prediction_type}) are different.",
+                    Documentation.ADDING_TASK,
                 )
-            ):
-                continue
-
-            raise UnitxtError(
-                f"The task's prediction type ({prediction_type}) and '{metric_id}' "
-                f"metric's prediction type ({metric_prediction_type}) are different.",
-                Documentation.ADDING_TASK,
-            )
 
     def verify_defaults(self):
         if self.defaults:

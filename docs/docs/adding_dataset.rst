@@ -55,7 +55,7 @@ We use the `bleu` metric for a reference-based evaluation.
         metrics=["metrics.bleu"],
     ),
 
-We have many predefined tasks in the catalog's :ref:`Tasks section <catalog.tasks>`.
+We have many predefined tasks in the catalog's :ref:`Tasks section <dir_catalog.tasks>`.
 
 If a catalogued task fits your use case, you may reference it by name:
 
@@ -117,11 +117,11 @@ The template also verbalizes the reference fields as gold references.  In Unitxt
 In this example, the `translation` field is taken, as is, as a gold reference.
 However, in other cases, the output field may undergo some transformations.
 
-If using a predefined task, you can choose from the corresponding templates available in the catalog's :ref:`Templates section <catalog.templates>`.
+If using a predefined task, you can choose from the corresponding templates available in the catalog's :ref:`Templates section <dir_catalog.templates>`.
 
 .. note::
 
-   Use the :ref:`comprehensive guide on templates  <templates>` for more templates features.
+   Use the :ref:`comprehensive guide on templates  <adding_template>` for more templates features.
 
 Alternatively, you can define your custom templates:
 
@@ -198,7 +198,7 @@ In the same way, you can save your custom templates and tasks, too.
 
    In order to automatically load from your new catalog, remember to
    register your new catalog by `unitxt.register_catalog('my_catalog')`
-   or by setting the `UNITXT_ARTIFACTORIES` environment variable to include your catalog.
+   or by setting the `UNITXT_CATALOGS` environment variable to include your catalog.
 
 
 Putting It All Together!

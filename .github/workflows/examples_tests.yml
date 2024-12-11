@@ -9,8 +9,12 @@ on:
   release:
     types: [published]
 
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
 jobs:
-   run-full-tests-suit:
+   examples:
 
      runs-on: ubuntu-latest
      env:
@@ -33,7 +37,7 @@ jobs:
          python-version: '3.10'
 
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-     - run: uv pip install --system ".[tests,watsonx]"
+     - run: uv pip install --system ".[tests,watsonx,inference_tests]"
      - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
      - name: Run Tests

@@ -3,7 +3,6 @@ import os
 import tempfile
 from unittest.mock import patch
 
-import ibm_boto3
 import pandas as pd
 from unitxt.loaders import (
     LoadCSV,
@@ -107,6 +106,8 @@ class TestLoaders(UnitxtTestCase):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
     def test_load_from_ibm_cos(self):
+        import ibm_boto3
+
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
         os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
@@ -126,6 +127,7 @@ class TestLoaders(UnitxtTestCase):
                     loader_limit=loader_limit,
                     data_classification_policy=["public"],
                 )
+
                 with patch.object(ibm_boto3, "resource", return_value=DummyS3()):
                     ms = loader()
                     ds = ms.to_dataset()

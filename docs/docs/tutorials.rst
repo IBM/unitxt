@@ -15,10 +15,12 @@ Tutorials ✨
    adding_operator
    adding_metric
    data_classification_policy
+   ../modules
    rag_support
    multimodality
    operators
    saving_and_loading_from_catalog
+   inference
    production
    debugging
    helm

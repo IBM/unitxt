@@ -1,29 +1,29 @@
 from typing import List, Optional, Union
 
-from .augmentors import (
-    Augmentor,
-    FinalStateInputsAugmentor,
-    NullAugmentor,
-    TaskInputsAugmentor,
-)
+from .artifact import fetch_artifact
+from .augmentors import Augmentor, NullAugmentor
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .logging_utils import get_logger
 from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
 from .operators import Set, StreamRefiner
 from .recipe import Recipe
-from .schema import Finalize
+from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
+from .type_utils import isoftype
+from .utils import LRUCache
 
 constants = get_constants()
+settings = get_settings()
 logger = get_logger()
 
 
@@ -38,7 +38,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     task: Task = None
     template: Union[Template, List[Template], TemplatesList] = None
     system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
-    format: Format = Field(default_factory=SystemFormat)
+    format: Format = None
     serializer: Union[SingleTypeSerializer, List[SingleTypeSerializer]] = None
 
     # Additional parameters
@@ -67,9 +67,12 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
-    augmentor: Augmentor = OptionalField(default_factory=NullAugmentor)
+    augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(default=None)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
+
+    # shared class cache
+    _demos_pool_cache = LRUCache(max_size=10)
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
@@ -137,9 +140,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 f"post processors must be a list of post processor.  Got postprocessors = {self.postprocessors}"
             )
 
+        if self.format is not None and not isinstance(self.format, Format):
+            raise ValueError(
+                f"format parameter must be a list of of class derived from Format.  Got format = {self.format}"
+            )
         if self.template is None:
             raise ValueError(
-                "You must set in the recipe either `template`, `template_card_index` or `templates`."
+                "You must set in the recipe either `template`, `template_card_index`."
             )
 
         if isinstance(self.template, list):
@@ -221,9 +228,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.verbalization, self.finalize]
-
-        self._demos_pool_cache = None
+        self.inference.steps = [self.metadata, self.verbalization, self.finalize]
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
@@ -231,11 +236,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
     def production_demos_pool(self):
         if self.use_demos:
-            if self._demos_pool_cache is None:
-                self._demos_pool_cache = list(
-                    self.inference_demos()[self.demos_pool_name]
-                )
-            return self._demos_pool_cache
+            demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
+            if demos_pool is None:
+                demos_pool = list(self.inference_demos()[self.demos_pool_name])
+                self.__class__._demos_pool_cache[str(self)] = demos_pool
+            return demos_pool
         return []
 
     @property
@@ -258,7 +263,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 
+    def reset(self):
+        self.reset_pipeline()
+
     def reset_pipeline(self):
+        if self.format is None:
+            if settings.default_format is not None:
+                self.format, _ = fetch_artifact(settings.default_format)
+            else:
+                self.format = SystemFormat()
+
         if self.card and self.card.preprocess_steps is None:
             self.card.preprocess_steps = []
 
@@ -294,9 +308,21 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.processing.steps.append(self.task)
 
-        if isinstance(self.augmentor, TaskInputsAugmentor):
-            self.augmentor.set_fields(self.card.task.augmentable_inputs)
-            self.processing.steps.append(self.augmentor)
+        if self.augmentor is not None and not isoftype(self.augmentor, NullAugmentor):
+            if (
+                self.card.task.augmentable_inputs is None
+                or len(self.task.augmentable_inputs) == 0
+            ):
+                raise UnitxtError(
+                    f"You specified augmentor in the recipe but the got task without augmentable_inputs: {self.task}"
+                )
+
+            if not isinstance(self.augmentor, list):
+                self.augmentor = [self.augmentor]
+
+            for augmentor in self.augmentor:
+                augmentor.set_fields(self.card.task.augmentable_inputs)
+                self.processing.steps.append(augmentor)
 
         if self.has_custom_demos_pool:
             self.processing.steps.append(
@@ -375,8 +401,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
-        if isinstance(self.augmentor, FinalStateInputsAugmentor):
-            self.verbalization.steps.append(self.augmentor)
 
         if self.postprocessors is not None:
             self.finalize.steps.append(
@@ -386,7 +410,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         if self.metrics is not None:
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
-        self.finalize.steps.append(Finalize(group_by=self.group_by))
+        self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
         if isinstance(self.template, TemplatesList):
@@ -401,9 +425,22 @@ class StandardRecipeWithIndexes(BaseRecipe):
         assert (
             self.template_card_index is None or self.template is None
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-        assert not (
-            self.template_card_index is None and self.template is None
-        ), "Specify either template or template_card_index in card"
+
+        if self.template_card_index is None and self.template is None:
+            if self.card is not None:
+                self.template_card_index = (
+                    0
+                    if isinstance(self.card.templates, list)
+                    else next(iter(self.card.templates.keys()))
+                )
+                logger.warning(
+                    "Template was not specified in recipe, using the first template from the card by default."
+                )
+            else:
+                raise ValueError(
+                    "Specify a template or template_card_index, or a card to get a default template from."
+                )
+
         if self.template_card_index is not None:
             try:
                 self.template = self.card.templates[self.template_card_index]
@@ -450,14 +487,12 @@ class StandardRecipe(StandardRecipeWithIndexes):
         sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
         steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional): Index of instruction card to be used
-            for preparing the recipe.
-        template_card_index (int, optional): Index of template card to be used for
-            preparing the recipe.
+        instruction_card_index (int, optional): Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional): Index of template card to be used for preparing the recipe.
 
     Methods:
         prepare(): This overridden method is used for preparing the recipe
-            by arranging all the steps, refiners, and renderers in a sequential manner.
+        by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
         AssertionError: If both template and template_card_index are specified at the same time.

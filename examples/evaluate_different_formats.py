@@ -1,14 +1,23 @@
 import pandas as pd
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
 
-model_name = "meta-llama/llama-3-8b-instruct"
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
+inference_model = CrossProviderInferenceEngine(
+    model="llama-3-8b-instruct", max_tokens=32, provider="bam"
+)
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+watsonx, bam, openai, azure, aws and more.
+
+For the arguments these inference engines can receive, please refer to the classes documentation or read
+about the the open ai api arguments the CrossProviderInferenceEngine follows.
+"""
+
 card = "cards.boolq.classification"
 template = "templates.classification.multi_class.relation.default"
 

@@ -1,8 +1,8 @@
 .. _glossary:
 
-=========
+========
 Glossary
-=========
+========
 
 .. _artificat:
 
@@ -17,7 +17,7 @@ Almost all Unitxt classes inherit from the Artifact class.
 Catalog
 -------
 All Unitxt artifacts -- recipes, data-task cards, templates, pre-processing operators, formats and metrics --
-can be stored in the **:ref:`Unitxt Catalog <catalog>`.**
+can be stored in the :ref:`Unitxt Catalog <dir_catalog>`.
 
 In addition to the open-source catalog, which can be found in the documentation, users can choose to define a private catalog.
 This enables teams and organizations to harness the open Unitxt Catalog while upholding organizational requirements for additional proprietary artifacts.
@@ -54,7 +54,7 @@ Data-Task Card
 Typically, it includes data wrangling actions, e.g., renaming fields,
 filtering data instances, modifying values, train/test/val splitting etc.
 
-The catalog contains predefined data-task cards for various datasets :ref:`here <catalog.cards>`.
+The catalog contains predefined data-task cards for various datasets :ref:`here <dir_catalog.cards>`.
 
 .. _data_evaluation_pipeline:
 
@@ -109,7 +109,7 @@ Following the example in the  :ref:`figure <prompt_structure>`, the Unitxt forma
 "**classify the sentence: ``I like toast''**", and adds three things: the system prompt "**<SYS>You are a helpful agent</SYS>**",
 the Instruction-User-Agent schema cues, and the two presented demonstrations.
 
-The catalog contains predefined formats :ref:`here <catalog.formats>`.
+The catalog contains predefined formats :ref:`here <dir_catalog.formats>`.
 
 .. _inference_engine:
 
@@ -126,7 +126,7 @@ They also ensure that no sensitive data is passed to external services.
 .. _operator:
 
 Operator
----------
+--------
 
 An **Operator** is a class that takes multiple streams as input and produces multiple streams as output.
 Every modification of the data in the stream is done by an operator.
@@ -142,24 +142,24 @@ Examples: AddDictToEveryInstance, RenameField, etc.
 .. _post_processors:
 
 Post processors
-----------------
+---------------
 
 **Post Processors** are a set of  :ref:`operators <operator>` that de-verbalizes both the string model predictions and string references,
-and converts them to the types required by the :ref:`metrics <metric>`.  Each :ref:`template <template>` defines the
+and converts them to the types required by the :ref:`metrics <adding_metric>`.  Each :ref:`template <template>` defines the
 set of post processors that are appropriate for it.   For example, post processors in a binary classification
 template could remove trailing whitespace, take the first word, convert `Yes` to `1` , and all other values to `0`.
 
 .. _prediction_and_processed_prediction:
 
 Prediction and Processed Prediction
-------------------------------------
+-----------------------------------
 
 A **Prediction** is the output of the model on the input provided to it.
 The inference process used to generated the prediction can be done with an Unitxt :ref:`Inference Engine <inference_engine>` or any other
 framework or code.  The predictions over all instances are  passed to the evaluation pipeline, together with the original dataset.
 
 The textual predictions returned by the model are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
-before being passed to the :ref:`Metrics <metric>`.  The post processors convert the textual prediction to the
+before being passed to the :ref:`Metrics <adding_metric>`.  The post processors convert the textual prediction to the
 type required by the metrics. For example, `Yes` and `No` values could be first normalized to `yes` and `no` and then converted
 into `0.0` and `1.0`.
 
@@ -179,7 +179,7 @@ This includes :ref:`DataTask Card <data_task_card>`, :ref:`Template <template>`,
 .. _references:
 
 References and Processed References
-------------------------------------
+-----------------------------------
 
 **References** are the "correct answers" for the task of a given instance.
 They are stored as a list of strings in the `references` field of the generated Unitxt dataset.
@@ -189,7 +189,7 @@ It is expect that the model will get a perfect score from the metrics if the mod
 is equal to one of the references.
 
 The textual references are processed by the :ref:`Template <template>`'s :ref:`Post Processors <post_processors>`
-before being passed to the :ref:`Metrics <metric>`.  The post processor converts the textual representation
+before being passed to the :ref:`Metrics <adding_metric>`.  The post processor converts the textual representation
 of the references to the type required by the metrics. For example, `Yes` and `No`
 values could be converted into `0.0` and `1`.
 
@@ -200,14 +200,14 @@ contains an additional `processed_references` field with the references after po
 .. _target:
 
 Target
--------
+------
 The **Target** is one of the :ref:`references <references>`.
 It is used as the expected model output in in-context learning demonstrations.
 
 .. _stream:
 
 Stream
--------
+------
 
 A **Stream** is a sequence of data. It can be finite or infinite. It can be synchronous or asynchronous.
 Every instance in the stream is a simple python dictionary.
@@ -225,7 +225,7 @@ Every instance in the stream is a simple python dictionary.
 .. _system_prompt:
 
 System Prompt
--------
+-------------
 
 The **System Prompt** is the fixed text that is added to the model input by the :ref:`Format <format>` during
 the verbalization process. It is specified by the `system_prompt` parameter of the :ref:`recipe <recipe>`
@@ -239,12 +239,12 @@ A Unitxt **Task** follows the formal definition of an NLP task, such as multi-la
 A task is defined by its standard interface -- namely, input and output fields -- and by its evaluation metrics.
 Given a dataset, its contents are standardized into the fields defined by an appropriate task by a :ref:`Data-Task Card <data_task_card>`.
 
-The catalog contains predefined tasks :ref:`here <catalog.tasks>`.
+The catalog contains predefined tasks :ref:`here <dir_catalog.tasks>`.
 
 .. _template:
 
 Template
----------
+--------
 
 A Unitxt **Template** defines the verbalizations to be applied to the inputs and targets,
 as well as the de-verbalization operations over the model predictions.
@@ -254,7 +254,7 @@ In the other direction, template de-verbalization involves two steps.
 First, a general standardization of the output texts: taking only the first non-empty line of a model's predictions, lowercasing, stripping whitespaces, etc.
 The second step standardizes the output to the specific task at hand.
 For example, in Sentence Similarity, a prediction may be a quantized float number outputted as a string (e.g ``2.43''),
-or a verbally expressed numeric expression (e.g ``two and a half'').
+or a verbally expressed numeric expression (e.g ``two and a half``).
 This depends on the verbalization defined by the template and the in-context demonstrations it constructs.
 Both types of outputs should be standardized before evaluation begins -- e.g., to a float for sentence similarity.
 Having the de-verbalization steps defined within the template enables templates to be reused across different models and datasets.
@@ -263,12 +263,12 @@ Having the de-verbalization steps defined within the template enables templates 
 The templates, datasets and tasks in Unitxt are not exclusively tied.
 Each task can harness multiple templates and a template can be used for different datasets.
 
-The catalog contains predefined templates :ref:`here <catalog.templates>`. :ref:`Tasks section <catalog.tasks>`
+The catalog contains predefined templates :ref:`here <dir_catalog.templates>`. :ref:`Tasks section <dir_catalog.tasks>`
 
 .. _verbalization:
 
 Verbalization
---------------
+-------------
 
 **Verbalization** is the process of taking the task fields and converting them into their
 textual representation, which is provided as input to the model.
@@ -287,9 +287,9 @@ The verbalization involves verbalizing the task input fields for the input, and 
 
 
 Serialization
---------------
+-------------
 
 Is the process of taking a specific field of a task a converting it into a string.
-This process is controlled by the :ref:`Serializer <serializers>`.
+This process is controlled by the :ref:`Serializer <types_and_serializers>`.
 Unlike the verbalization which is task specific, namely putting into words an input of a specific task, the serialization
 has nothing to do with task, and is just based on the type of the field.
