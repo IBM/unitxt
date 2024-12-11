@@ -319,6 +319,8 @@ class CatalogEntry:
         category = self.rel_path.split(os.path.sep)[0]
         if category.endswith("s"):
             category = category[:-1]
+        if category == "card":
+            category = "dataset"
         tags["category"] = category
         label = self.get_label()
         deprecated_in_title = ""
