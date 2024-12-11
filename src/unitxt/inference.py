@@ -2447,7 +2447,6 @@ class WMLInferenceEngineChat(
         messages_list = [instance["source"] for instance in dataset]
         result = []
         for i in trange(len(messages_list), desc="Options logprob"):
-            print(messages_list[i])
             response = self._model.chat(
                 messages=messages_list[i],
                 params={
@@ -2473,7 +2472,6 @@ class WMLInferenceEngineChat(
                     for i, token in enumerate(response["results"][0]["input_tokens"])
                 ]
             )
-        print(result)
         return result
 
 

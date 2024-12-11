@@ -12,6 +12,7 @@ from .inference import (
     LogProbInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 )
+from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
