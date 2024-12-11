@@ -162,6 +162,9 @@ class Artifact(Dataclass):
     _class_register = {}
 
     __type__: str = Field(default=None, final=True, init=False)
+    __title__: str = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
     __description__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
