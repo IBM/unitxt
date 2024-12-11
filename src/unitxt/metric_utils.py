@@ -29,6 +29,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
+from .type_utils import isoftype
 from .utils import recursive_copy
 
 constants = get_constants()
@@ -41,6 +42,11 @@ def nan_mean(scores):
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
     def zip(self, predictions, references):
         for prediction, original in zip(predictions, references):
+            if not isoftype(original, Dict[str, Any]):
+                raise Exception(
+                    f"The dataset passed for evaluation is not valid. Perhaps you passed a full dataset with multiple splits for evaluation instead of only the a single 'test' split. The offending instance: {original} "
+                )
+
             yield {**original, "prediction": prediction}
 
     def process(
@@ -440,7 +446,7 @@ class EvaluationResults(list):
 
 
 def _compute(
-    predictions: List[str],
+    predictions: List[Any],
     references: Iterable,
     flatten: bool = False,
     split_name: str = "all",

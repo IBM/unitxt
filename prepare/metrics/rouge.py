@@ -2,8 +2,12 @@ from unitxt import add_to_catalog
 from unitxt.metrics import Rouge
 from unitxt.test_utils.metrics import test_metric
 
-metric = Rouge()
-
+metric = Rouge(
+    __description__="""This is the classical NLP Rouge metric based on the RougeScorer library (https://github.com/google-research/google-research/tree/master/rouge).
+It computes metrics several metrics (rouge1, rouge2, roughL, and rougeLsum) based lexical (word) overlap between the prediction and the ground truth references."
+""",
+    __tags__={"flags": ["reference-based-metric", "cpu-metric"]},
+)
 predictions = ["hello there", "general kenobi"]
 references = [["hello", "there"], ["general kenobi", "general yoda"]]
 
@@ -54,7 +58,7 @@ outputs = test_metric(
 )
 add_to_catalog(metric, "metrics.rouge", overwrite=True)
 metric = Rouge(
-    __description__="This is deprecated. Use 'metrics.rouge' which also generate confidence intervals"
+    __deprecated_msg__=" Use 'metrics.rouge' which also generate confidence intervals"
 )
 
 add_to_catalog(

@@ -9,6 +9,7 @@ from .metrics import MetricsList
 from .operator import InstanceOperator
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants
+from .templates import Template
 from .type_utils import (
     Type,
     get_args,
@@ -73,6 +74,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     prediction_type: Optional[Union[Type, str]] = None
     augmentable_inputs: List[str] = []
     defaults: Optional[Dict[str, Any]] = None
+    default_template: Template = None
 
     def prepare_args(self):
         super().prepare_args()
@@ -85,6 +87,14 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         if self.reference_fields is not None and self.outputs is not None:
             raise UnitxtError(
                 "Conflicting attributes: 'reference_fields' cannot be set simultaneously with 'output'. Use only 'reference_fields'",
+                Documentation.ADDING_TASK,
+            )
+
+        if self.default_template is not None and not isoftype(
+            self.default_template, Template
+        ):
+            raise UnitxtError(
+                f"The task's 'default_template' attribute is not of type Template. The 'default_template' attribute is of type {type(self.default_template)}: {self.default_template}",
                 Documentation.ADDING_TASK,
             )
 
@@ -263,7 +273,13 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     ) -> Dict[str, Any]:
         instance = self.set_default_values(instance)
 
-        verify_required_schema(self.input_fields, instance)
+        verify_required_schema(
+            self.input_fields,
+            instance,
+            class_name="Task",
+            id=self.__id__,
+            description=self.__description__,
+        )
         input_fields = {key: instance[key] for key in self.input_fields.keys()}
         data_classification_policy = instance.get("data_classification_policy", [])
 
@@ -277,7 +293,13 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         if stream_name == constants.inference_stream:
             return result
 
-        verify_required_schema(self.reference_fields, instance)
+        verify_required_schema(
+            self.reference_fields,
+            instance,
+            class_name="Task",
+            id=self.__id__,
+            description=self.__description__,
+        )
         result["reference_fields"] = {
             key: instance[key] for key in self.reference_fields.keys()
         }

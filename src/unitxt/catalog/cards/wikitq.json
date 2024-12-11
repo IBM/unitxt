@@ -21,7 +21,7 @@
             "to_field": "context"
         }
     ],
-    "task": "tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
+    "task": "tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     "templates": [
         {
             "__type__": "multi_reference_template",

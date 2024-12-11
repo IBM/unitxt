@@ -5,8 +5,10 @@ from typing import Any, Dict, List, Optional, Union
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .artifact import fetch_artifact
+from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
 from .inference import InferenceEngine, LogProbInferenceEngine
+from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
@@ -82,6 +84,45 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
         recipe = _get_recipe_from_dict(kwargs)
 
     return recipe
+
+
+def create_dataset(
+    task: str,
+    test_set: List[Dict[Any, Any]],
+    train_set: Optional[List[Dict[Any, Any]]] = None,
+    validation_set: Optional[List[Dict[Any, Any]]] = None,
+    **kwargs,
+):
+    """Creates dataset from input data based on a specific task.
+
+    Args:
+        task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
+        test_set : required list of instances
+        train_set : optional train_set
+        validation_set: optional validation set
+        **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
+
+    Returns:
+        DatasetDict
+
+    Example:
+        template = Template(...)
+        dataset = create_dataset(task="tasks.qa.open", template=template, format="formats.chatapi")
+    """
+    data = {"test": test_set}
+    if train_set is not None:
+        data["train"] = train_set
+    if validation_set is not None:
+        data["validation"] = validation_set
+    task, _ = fetch_artifact(task)
+
+    if "template" not in kwargs and task.default_template is None:
+        raise Exception(
+            f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
+        )
+
+    card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
+    return load_dataset(card=card, **kwargs)
 
 
 def load_dataset(
