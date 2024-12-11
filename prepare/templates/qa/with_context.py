@@ -79,7 +79,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Answer the question directly based on the information provided in the {context_type}. Respond with the exact phrase within the {context_type} that provides the answer.",
+        instruction="Answer the question directly based on the information provided in the {context_type}. Extract the exact phrase from the {context_type} that directly answers the question, without any alterations.",
         input_format="{context_type}:\n{context}\nQuestion:\n{question}",
         output_format="{answer}",
         target_prefix="Answer:\n",
