@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
 <style>
-
 .search-container {
     margin-bottom: 20px;
     display: flex;
@@ -67,7 +66,6 @@
     margin-top: 20px;
 }
 
-/* no position: relative here */
 .result-item {
     border: 1px solid #ccc;
     padding: 10px;
@@ -132,7 +130,6 @@
     z-index: 1;
 }
 
-/* Removed any blur and ::after pseudo-element */
 mark {
     background-color: yellow;
     font-weight: bold;
@@ -202,8 +199,13 @@ function highlightText(text, query) {
     return text.replace(regex, '<mark>$1</mark>');
 }
 
-function renderInitialTags() {
+// Modified to recalculate tags each time
+function renderTags() {
+    const container = document.getElementById('tagContainer');
+    container.innerHTML = ''; // clear old tags
     displayedTagCount = 0;
+
+    // Append tags again
     appendMoreTags();
 }
 
@@ -263,13 +265,29 @@ function performSearch() {
     const query = document.getElementById('searchQuery').value;
     currentResults = searchItems(data, query, selectedTags);
     currentIndex = 0;
+
+    // Recalculate tag frequencies based on currentResults:
+    const tagFreq = {};
+    currentResults.forEach(item => {
+        item.tagsLower.forEach(t => {
+            // Only count if no selected tags or this tag doesn't contradict filters
+            tagFreq[t] = (tagFreq[t] || 0) + 1;
+        });
+    });
+
+    // Rebuild sortedTags for current state:
+    sortedTags = Object.entries(tagFreq)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count);
+
+    renderTags();  // Re-render tags with updated counts
+
     renderCurrentPage(query);
 }
 
 function renderCurrentPage(query) {
     const container = document.getElementById('resultsContainer');
 
-    // If currentIndex is 0, clear container before adding new results
     if (currentIndex === 0) {
         container.innerHTML = '';
     }
@@ -312,13 +330,11 @@ function renderCurrentPage(query) {
 
         setTimeout(() => {
             if (contentContainer.scrollHeight <= contentContainer.clientHeight) {
-                // No overflow, no need for "Show More"
                 showMoreButton.style.display = 'none';
             }
         }, 0);
 
         itemDiv.appendChild(showMoreButton);
-
         container.appendChild(itemDiv);
     });
 
@@ -362,6 +378,7 @@ fetch('_static/data.js')
         return item;
     });
 
+    // Initial full tagFreq from complete data
     const tagFreq = {};
     data.forEach(item => {
         item.tagsLower.forEach(t => {
@@ -370,10 +387,11 @@ fetch('_static/data.js')
     });
 
     sortedTags = Object.entries(tagFreq)
-    .map(([tag, count]) => ({ tag, count }))
-    .sort((a, b) => b.count - a.count);
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count);
 
-    renderInitialTags();
+    // Initial render
+    renderTags();
     performSearch();
 })
 .catch(error => {
