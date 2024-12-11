@@ -315,6 +315,10 @@ class CatalogEntry:
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
         tags = artifact.get("__tags__", {})
+        category = self.rel_path.split(os.path.sep)[0]
+        if category.endswith("s"):
+            category = category[:-1]
+        tags["category"] = category
         label = self.get_label()
         deprecated_in_title = ""
         deprecated_message = ""
