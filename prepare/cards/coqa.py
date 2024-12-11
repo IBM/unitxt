@@ -31,7 +31,7 @@ card = TaskCard(
             context_field="story",
         ),
     ],
-    task="tasks.qa.with_context.extractive",
+    task="tasks.qa.extractive",
     templates="templates.qa.with_context.all",
     __tags__={
         "annotations_creators": "crowdsourced",

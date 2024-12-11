@@ -11,21 +11,11 @@ Each example comes with a self contained python file that you can run and later 
 Basic Usage
 ------------
 
-
-Evaluate an existing dataset from the Unitxt catalog (No installation)
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-This example demonstrates how to evaluate an existing entailment dataset (wnli) using HuggingFace Datasets and Evaluate APIs, with no installation required.
-
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`__
-
-Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
-
-Evaluate an existing dataset from the Unitxt catalog (with Unitxt installation)
+Evaluate an existing dataset from the Unitxt catalog. 
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Demonstrates how to evaluate an existing entailment dataset (wnli) using Unitxt native APIs.
-This approach is faster than using Huggingface APIs.
+Demonstrates how to evaluate an existing entailment dataset using Unitxt.
+Unitxt is used to load the dataset, generate the input to the model, run inference and evaluate the results.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`__
 
@@ -51,6 +41,15 @@ It also shows how to use preprocessing steps to align the raw input of the datas
 
 Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open QA task in catalog <catalog.tasks.qa.open>`, :ref:`Open QA template in catalog <catalog.templates.qa.open.title>`, :ref:`Inference Engines <inference>`.
 
+Evaluate a custom dataset - with existing predictions
+=====================================================
+
+These examples demonstrate how to evaluate a datasets of different tasks when predictions are already available and no inference is required.
+
+`Example code for QA task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_qa_dataset_with_given_predictions.py>`__
+`Example code for classification task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_classification_dataset_with_given_predictions.py>`__  
+
+Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`
 
 Evaluation usecases
 -----------------------
@@ -228,6 +227,15 @@ and use the existing metrics to evaluate model results.
 
 Related documentation: :ref:`RAG Guide <rag_support>`, :ref:`Response generation task <catalog.tasks.rag.response_generation>`, :ref:`Inference Engines <inference>`.
 
+Evaluate RAG End to End - with existing predictions
+=====================================================
+
+This example demonstrates how to evaluate an end to end RAG system, given that the RAG system outputs are available.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_rag_end_to_end_dataset_with_given_predictions.py>`__
+
+Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`
+
 Multi-Modality
 --------------
 
@@ -258,7 +266,7 @@ Evaluate Image-Text to Text Models with different templates and explore the sens
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
 
-Types and Serializers
+Advanced topics
 ----------------------------
 
 Custom Types and Serializers
@@ -270,3 +278,12 @@ This example show how to define new data types as well as the way these data typ
 
 Related documentation: :ref:`Types and Serializers Guide <types_and_serializers>`, :ref:`Inference Engines <inference>`.
 
+
+Evaluate an existing dataset from the Unitxt catalog (No installation)
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to evaluate an existing entailment dataset (wnli) using HuggingFace Datasets and Evaluate APIs, with no installation required.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_no_install.py>`__
+
+Related documentation:  :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`WNLI dataset card in catalog <catalog.cards.wnli>`, :ref:`Relation template in catalog <catalog.templates.classification.multi_class.relation.default>`, :ref:`Inference Engines <inference>`.
