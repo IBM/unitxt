@@ -85,6 +85,14 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                 Documentation.ADDING_TASK,
             )
 
+        if self.default_template is not None and not isoftype(
+            self.default_template, Template
+        ):
+            raise UnitxtError(
+                f"The task's 'default_template' attribute is not of type Template. The 'default_template' attribute is of type {type(self.default_template)}: {self.default_template}",
+                Documentation.ADDING_TASK,
+            )
+
         self.input_fields = (
             self.input_fields if self.input_fields is not None else self.inputs
         )

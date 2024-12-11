@@ -20,7 +20,5 @@
     "defaults": {
         "answers": []
     },
-    "default_template": [
-        "templates.qa.with_context"
-    ]
+    "default_template": "templates.qa.with_context"
 }

@@ -14,7 +14,5 @@
     "defaults": {
         "answers": []
     },
-    "default_template": [
-        "templates.qa.open"
-    ]
+    "default_template": "templates.qa.open"
 }

@@ -22,5 +22,6 @@
     "defaults": {
         "text_type": "text",
         "type_of_classes": "classes"
-    }
+    },
+    "default_template": "templates.classification.multi_label.title"
 }
