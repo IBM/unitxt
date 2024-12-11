@@ -26,7 +26,7 @@ test_set = [
 dataset = create_dataset(
     task="tasks.qa.open",
     test_set=test_set,
-    template="templates.qa.open.title",
+    template="templates.qa.open",
     split="test",
     format="formats.chat_api",
 )
