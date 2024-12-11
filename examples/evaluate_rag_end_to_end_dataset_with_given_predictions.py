@@ -49,7 +49,7 @@ predictions = [
 dataset = create_dataset(
     task="tasks.rag.end_to_end",
     test_set=dataset,
-    # split="test",
+    split="test",
     postprocessors=[],
 )
 
