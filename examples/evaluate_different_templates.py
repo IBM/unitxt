@@ -89,16 +89,16 @@ for template in [
 
         predictions = inference_model.infer(dataset)
 
-        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
         logger.info(
             f"Sample input and output for template '{template}' and num_demos '{num_demos}':"
         )
         print_dict(
-            evaluated_dataset[0],
+            results.instance_scores[0],
             keys_to_print=["source", "prediction", "processed_prediction"],
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+        global_scores = results.global_scores
         print_dict(
             global_scores,
             keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],

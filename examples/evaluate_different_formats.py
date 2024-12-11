@@ -41,24 +41,23 @@ for format in [
             demos_pool_size=50,
             loader_limit=300,
             max_test_instances=100,
+            split="test",
         )
 
-        test_dataset = dataset["test"]
-
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+        predictions = inference_model.infer(dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
         logger.info(
             f"Sample input and output for format '{format}' and system prompt '{system_prompt}':"
         )
         print_dict(
-            evaluated_dataset[0],
+            results.instance_scores[0],
             keys_to_print=[
                 "source",
                 "prediction",
             ],
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+        global_scores = results.global_scores
         df.loc[len(df)] = [
             format,
             system_prompt,

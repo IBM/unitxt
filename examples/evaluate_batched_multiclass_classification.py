@@ -146,13 +146,10 @@ for provider in [
             """
             predictions = inference_model.infer(test_dataset)
 
-            evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-            # import pandas as pd
-            # result_df = pd.json_normalize(evaluated_dataset)
-            # result_df.to_csv(f"output.csv")
-            # Print results
+            results = evaluate(predictions=predictions, data=test_dataset)
+
             print_dict(
-                evaluated_dataset[0],
+                results.instance_scores[0],
                 keys_to_print=[
                     "source",
                     "prediction",
@@ -161,7 +158,7 @@ for provider in [
                 ],
             )
 
-            global_scores = evaluated_dataset[0]["score"]["global"]
+            global_scores = results.global_scores
             df.loc[len(df)] = [
                 provider,
                 model_name,

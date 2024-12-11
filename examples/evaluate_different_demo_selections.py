@@ -45,16 +45,16 @@ for num_demos in [1, 2]:
         )
 
         predictions = inference_model.infer(dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
         logger.info(
             f"Sample input and output for sampler {demo_sampler} and num_demos '{num_demos}':"
         )
         print_dict(
-            evaluated_dataset[0],
+            results.instance_scores[0],
             keys_to_print=["source", "prediction", "processed_prediction"],
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+        global_scores = results.global_scores
 
         df.loc[len(df)] = [
             num_demos,

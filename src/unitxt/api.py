@@ -8,7 +8,7 @@ from .artifact import fetch_artifact
 from .dataset_utils import get_dataset_artifact
 from .inference import InferenceEngine, LogProbInferenceEngine
 from .logging_utils import get_logger
-from .metric_utils import _compute, _inference_post_process
+from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
@@ -150,7 +150,7 @@ def load_dataset(
     ).with_transform(loads_instance)
 
 
-def evaluate(predictions, data) -> List[Dict[str, Any]]:
+def evaluate(predictions, data) -> EvaluationResults:
     return _compute(predictions=predictions, references=data)
 
 

@@ -3,7 +3,6 @@ from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 settings = get_settings()
@@ -37,15 +36,6 @@ with settings.context(allow_unverified_code=True):
     predictions = inference_model.infer(dataset)
 
     # Evaluate the predictions using the defined metric.
-    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+    print(results.instance_scores.to_df())

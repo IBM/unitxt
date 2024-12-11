@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from datasets import Features, Value
 
 from .dataclass import Dataclass
+from .error_utils import Documentation, UnitxtError
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -339,28 +340,103 @@ UNITXT_METRIC_SCHEMA = Features(
 )
 
 
-class EvaluationResults(list):
+class GlobalScores(dict):
     @property
-    def score(self):
-        return self[0]["score"]["global"]
+    def main_score(self):
+        self["score"]
 
     @property
-    def groups(self):
+    def main_score_name(self):
+        self["score_name"]
+
+    def to_df(self):
+        """Transforms a dictionary of results into a pandas dataframe.
+
+        Transforms a dictionary of results into a dataframe with score_name as the index,
+        and columns for score, ci_low, and ci_high. Handles cases where confidence intervals are missing.
+
+        Returns:
+            pd.DataFrame: A dataframe with the extracted information, indexed by score_name.
+        """
+        import pandas as pd
+
+        rows = []
+
+        # Extract data based on score names
+        for key, value in self.items():
+            if (
+                key.endswith("_ci_low")
+                or key.endswith("_ci_high")
+                or key == "score_name"
+            ):
+                continue  # Skip confidence interval keys for now
+
+            if isinstance(value, (int, float)):  # Only consider numerical scores
+                score_name = key
+                ci_low = self.get(f"{key}_ci_low", None)
+                ci_high = self.get(f"{key}_ci_high", None)
+
+                rows.append(
+                    {
+                        "score_name": score_name,
+                        "score": value,
+                        "ci_low": ci_low,
+                        "ci_high": ci_high,
+                    }
+                )
+
+        df = pd.DataFrame(rows)
+        return df.set_index("score_name")
+
+
+class InstanceScores(list):
+    def to_df(self):
+        """Transforms a list of instance results into a pandas dataframe.
+
+        Returns:
+            pd.DataFrame: A dataframe with the extracted information, indexed by score_name.
+        """
+        from pandas import DataFrame
+
+        return DataFrame(self)
+
+
+class EvaluationResults(list):
+    @property
+    def global_scores(self):
+        return GlobalScores(self[0]["score"]["global"])
+
+    @property
+    def instance_scores(self):
+        instance_scores = []
+        for instance in self:
+            instance = instance.copy()
+            scores = instance.pop("score")
+            instance_scores.append(
+                {
+                    **instance,
+                    **scores["instance"],
+                }
+            )
+        return InstanceScores(instance_scores)
+
+    @property
+    def groups_scores(self):
         if "groups" not in self[0]["score"]:
-            raise ValueError("Groups scores not found try using group_by in the recipe")
+            raise UnitxtError(
+                "Groups scores not found try using group_by in the recipe",
+                additional_info_id=Documentation.EVALUATION,
+            )
         return self[0]["score"]["groups"]
 
     @property
-    def subsets(self):
+    def subsets_scores(self):
         if "subsets" not in self[0]["score"]:
-            raise ValueError("Subsets scores not found try using Benchmark")
+            raise UnitxtError(
+                "Subsets scores not found try using Benchmark",
+                additional_info_id=Documentation.BENCHMARKS,
+            )
         return self[0]["score"]["subsets"]
-
-    def to_df(self):
-        import pandas as pd
-
-        # Flatten and load into DataFrame
-        return pd.json_normalize(self)
 
 
 def _compute(
