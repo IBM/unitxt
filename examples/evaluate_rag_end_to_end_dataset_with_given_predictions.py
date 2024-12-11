@@ -1,5 +1,5 @@
 from unitxt import get_logger
-from unitxt.api import create_and_evaluate_dataset
+from unitxt.api import create_dataset, evaluate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -46,12 +46,14 @@ predictions = [
     },
 ]
 
-evaluated_dataset = create_and_evaluate_dataset(
+dataset = create_dataset(
     task="tasks.rag.end_to_end",
-    predictions=predictions,
-    data=dataset,
+    test_set=dataset,
+    # split="test",
+    postprocessors=[],
 )
 
+evaluated_dataset = evaluate(predictions, dataset)
 # Print results
 for instance in evaluated_dataset:
     print_dict(

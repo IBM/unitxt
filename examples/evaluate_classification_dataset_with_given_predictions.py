@@ -1,5 +1,5 @@
 from unitxt import get_logger
-from unitxt.api import create_and_evaluate_dataset
+from unitxt.api import create_dataset, evaluate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -17,13 +17,13 @@ dataset = [
 
 predictions = ["Positive.", "negative.", "negative"]
 
-evaluated_dataset = create_and_evaluate_dataset(
+dataset = create_dataset(
     task="tasks.classification.multi_class",
-    predictions=predictions,
+    test_set=dataset,
     postprocessors=["processors.take_first_word", "processors.lower_case"],
-    data=dataset,
 )
 
+evaluated_dataset = evaluate(predictions, dataset["test"])
 # Print results
 for instance in evaluated_dataset:
     print_dict(

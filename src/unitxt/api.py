@@ -11,13 +11,10 @@ from .inference import InferenceEngine, LogProbInferenceEngine
 from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import _compute, _inference_post_process
-from .metrics import Metric, MetricsList
-from .operator import Operator, SourceOperator
+from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
-from .task import Task
-from .type_utils import isoftype, to_type_string
 
 logger = get_logger()
 constants = get_constants()
@@ -117,6 +114,13 @@ def create_dataset(
         data["train"] = train_set
     if validation_set is not None:
         data["validation"] = validation_set
+    task, _ = fetch_artifact(task)
+
+    if "template" not in kwargs and task.default_template is None:
+        raise Exception(
+            f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
+        )
+
     card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
     return load_dataset(card=card, **kwargs)
 
@@ -188,57 +192,6 @@ def load_dataset(
 
 
 def evaluate(predictions, data):
-    return _compute(predictions=predictions, references=data)
-
-
-def create_and_evaluate_dataset(
-    predictions: List[Any],
-    data: List[Dict[str, Any]],
-    task: Task,
-    metrics: Optional[List[Union[Metric, MetricsList]]] = None,
-    postprocessors: Optional[List[Operator]] = None,
-) -> List[Dict[str, Any]]:
-    """Creates and evaluates dataset from input data based on a specific Unitxt task.
-
-    Args:
-        predictions: The predictions from the model which are the input to evaluation.
-        The type of expected predictions is defined in the task's 'prediction_type' field.
-        task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
-        data : Required list of instances to evaluate.
-        metrics : Optional list of metrics to use.  If not specified, the default metrics defined in the task are used.
-        postprocessors: Optional list of post processors to apply. If not specified, no post processing is done on the predictions.
-
-    Returns:
-        output dataset with evaluated scores (see https://www.unitxt.ai/en/latest/docs/evaluating_datasets.html)
-
-    Example:
-        dataset = create_and_evaluate_dataset(task="tasks.qa.open", data)
-    """
-    task, _ = fetch_artifact(task)
-
-    if task.default_template is None:
-        raise Exception(
-            f"create_and_evaluate_dataset requires the given task ('{task.__id__}') to template set in the 'default_template' field "
-        )
-    # We assume the user provides predictions in the required format for the task.
-
-    for prediction in predictions:
-        if not isoftype(prediction, task.prediction_type):
-            raise Exception(
-                f"The prediction passed to 'create_and_evaluate_dataset' does not match the task's required prediction type of '{task.prediction_type}'. The prediction is : {prediction}"
-            )
-    if postprocessors is not None:
-        if not isoftype(postprocessors, List[Union[Operator, str]]):
-            raise Exception(
-                f"The post processors passed to 'create_and_evaluate_dataset' is not a list of processors. Instead it is of type '{to_type_string(type(postprocessors))}'."
-            )
-        task.default_template.postprocessors = postprocessors
-    else:
-        task.default_template.postprocessors = []
-
-    data = create_dataset(
-        task=task, test_set=data, split="test", format="formats.empty", metrics=metrics
-    )
     return _compute(predictions=predictions, references=data)
 
 
