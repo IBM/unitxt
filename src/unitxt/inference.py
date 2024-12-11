@@ -2709,15 +2709,20 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
     to enable seamless integration with various API providers. The supported APIs are
-    specified in `_supported_apis`, allowing users to interact with multiple models
-    from different sources. The `api_model_map` dictionary maps each API to
+    specified in ``_supported_apis``, allowing users to interact with multiple models
+    from different sources. The ``provider_model_map`` dictionary maps each API to
     specific model identifiers, enabling automatic configuration based on
     user requests.
 
-    Attributes:
-        provider: Optional; Specifies the current API in use. Must be one of the
+    Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
+    "bam", "watsonx-sdk", "rits"]
+
+    Args:
+        provider (Optional):
+            Specifies the current API in use. Must be one of the
             literals in `_supported_apis`.
-        provider_model_map: Dictionary mapping each supported API to a corresponding
+        provider_model_map (Dict[_supported_apis, Dict[str, str]]):
+            mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
     """
