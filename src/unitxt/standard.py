@@ -427,7 +427,11 @@ class StandardRecipeWithIndexes(BaseRecipe):
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
 
         if self.template_card_index is None and self.template is None:
-            if self.card is not None:
+            if (
+                self.card is not None
+                and self.card.templates is not None
+                and len(self.card.templates) > 0
+            ):
                 self.template_card_index = (
                     0
                     if isinstance(self.card.templates, list)
@@ -437,9 +441,11 @@ class StandardRecipeWithIndexes(BaseRecipe):
                     "Template was not specified in recipe, using the first template from the card by default."
                 )
             else:
-                raise ValueError(
-                    "Specify a template or template_card_index, or a card to get a default template from."
-                )
+                self.template = self.card.task.default_template
+                if self.template is None:
+                    raise ValueError(
+                        "No template was specified in the the 'template' or 'template_card_index' recipe arguments, and no default templates are defined the card or task"
+                    )
 
         if self.template_card_index is not None:
             try:

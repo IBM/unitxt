@@ -78,10 +78,13 @@ class GeneratorStream(Stream):
 
     This class provides methods for generating, caching, and manipulating streaming data.
 
-    Attributes:
-        generator (function): A generator function for streaming data. :no-index:
-        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. :no-index:
-        caching (bool): Whether the data is cached or not. :no-index:
+    Args:
+        generator (function):
+            A generator function for streaming data.
+        gen_kwargs (dict, optional):
+            A dictionary of keyword arguments for the generator function.
+        caching (bool):
+            Whether the data is cached or not.
     """
 
     generator: Callable

@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is a task corresponding to an end to end RAG evaluation.  It assumes the user provides a question, and\n        the RAG system returns an answer and a set of retrieved contexts (documents or passages).\n        For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.\n",
     "input_fields": {
         "question": "str",
         "question_id": "Any",
@@ -8,7 +9,7 @@
     "reference_fields": {
         "reference_answers": "List[str]",
         "reference_contexts": "List[str]",
-        "reference_context_ids": "List[str]",
+        "reference_context_ids": "Union[List[int], List[str]]",
         "is_answerable_label": "bool"
     },
     "metrics": [
@@ -18,8 +19,17 @@
         "metrics.rag.end_to_end.context_correctness",
         "metrics.rag.end_to_end.context_relevance"
     ],
-    "prediction_type": "Dict[str, Any]",
+    "prediction_type": "RagResponse",
     "augmentable_inputs": [
         "question"
-    ]
+    ],
+    "defaults": {
+        "question_id": "",
+        "metadata_field": "",
+        "reference_answers": [],
+        "reference_contexts": [],
+        "reference_context_ids": [],
+        "is_answerable_label": true
+    },
+    "default_template": "templates.rag.end_to_end.json_predictions"
 }

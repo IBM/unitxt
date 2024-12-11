@@ -392,7 +392,7 @@ class TestTemplates(UnitxtTestCase):
     def test_multi_reference_template_with_empty_references(self):
         self._test_multi_reference_template_with_exception(
             references=[],
-            expected_exception_message="No references found. MultiReferenceTemplate requires at least one reference.",
+            expected_exception_message="No references found in field 'answer' of instance. MultiReferenceTemplate requires at least one reference.",
         )
 
     def test_multi_reference_template_with_wrong_references_type(self):
