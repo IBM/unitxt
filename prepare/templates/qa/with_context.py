@@ -66,7 +66,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Answer the question based on the information provided in the {context_type} given below.",
+        instruction="Answer the question based on the information provided in the given {context_type}.",
         input_format="{context_type}:\n{context}\nQuestion:\n{question}",
         output_format="{answer}",
         target_prefix="Answer:\n",
