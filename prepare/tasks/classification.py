@@ -146,7 +146,7 @@ The default reported metrics are the classical f1_micro (equivalent to accuracy 
         metrics=["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         augmentable_inputs=["text_a", "text_b"],
         defaults={"text_a_type": "first text", "text_b_type": "second text"},
-        default_template="templates.classification.multi_class.relation.title",
+        default_template="templates.classification.multi_class.relation.default",
     ),
     "tasks.classification.multi_class.relation",
     overwrite=True,

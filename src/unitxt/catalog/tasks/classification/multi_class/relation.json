@@ -26,5 +26,5 @@
         "text_a_type": "first text",
         "text_b_type": "second text"
     },
-    "default_template": "templates.classification.multi_class.title"
+    "default_template": "templates.classification.multi_class.relation.default"
 }
