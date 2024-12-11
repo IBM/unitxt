@@ -21,7 +21,8 @@ card = TaskCard(
         reference_fields={},
         prediction_type=str,
         metrics=[
-            f"metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.mixtral_large[criteria={criteria}]"
+            "metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.mixtral_large"
+            f"[criteria={criteria}, context_fields=[question]]"
         ],
     ),
 )

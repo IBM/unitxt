@@ -2,6 +2,7 @@ from .api import infer, select
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
+    CriteriaOption,
     CriteriaWithOptions,
     OptionSelectionStrategyEnum,
 )
@@ -75,27 +76,48 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
             self.logger.info("Reading criteria from the task_data")
-            criteria_dicts = [
-                {**task_data_instance["criteria"], "__type__": "criteria_with_options"}
-                for task_data_instance in task_data
-            ]
-            for criteria_dict in criteria_dicts:
-                criteria_dict["options"] = [
-                    {**option, "__type__": "criteria_option"}
-                    for option in criteria_dict["options"]
-                ]
-            criterias = [
-                fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts
-            ]
-        # criteria is in passes in the constructor
-        elif isinstance(self.criteria, CriteriaWithOptions):
+            criterias = []
+            for task_data_criteria in [
+                task_data_instance["criteria"] for task_data_instance in task_data
+            ]:
+                if isinstance(task_data_criteria, dict):
+                    try:
+                        criteria = CriteriaWithOptions(
+                            name=task_data_criteria["name"],
+                            description=task_data_criteria["description"],
+                            options=[
+                                CriteriaOption(
+                                    name=option_dict["name"],
+                                    description=option_dict["description"],
+                                )
+                                for option_dict in task_data_criteria["options"]
+                            ],
+                        )
+                    except:
+                        raise Exception(
+                            "The criteria dict couldn't be parsed correctly. It has to have the json representation of CriteriaWithOptions"
+                        )
+                elif isinstance(task_data_criteria, str):
+                    criteria = fetch_artifact(task_data_criteria)[0]
+                else:
+                    raise Exception(
+                        f"The criteria needs to be of type str (criteria catalog name) or dict (criteria json representation). Instead, it is of type {type(task_data_criteria)}"
+                    )
+                criterias.append(criteria)
+        else:
             self.logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
             )
+            if not isinstance(self.criteria, CriteriaWithOptions):
+                raise Exception(
+                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
+                )
+
             criterias: list[CriteriaWithOptions] = [self.criteria] * eval_count
-        else:
-            criterias = self.criteria
-        self.logger.info(f"First criteria name is '{criterias[0].name}'")
+
+        self.logger.info(
+            f"Criteria names are '{', '.join([criteria.name for criteria in list(set(criterias))])}'"
+        )
         return criterias
 
     def compute(
@@ -105,7 +127,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         task_data: list[dict[str, any]],
     ) -> dict:
         self.logger.info(
-            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
+            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}" with strategy "{self.option_selection_strategy.name}"'
         )
 
         evaluations_count = len(predictions)
@@ -297,7 +319,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 key: value
                 for key, value in {
                     "score": scores[i],
-                    "mapped_score": scores[i],
+                    "llm_as_a_judge_score": scores[i],
                     "positional_bias": positional_bias[i]
                     if self.check_positional_bias
                     else None,
@@ -342,6 +364,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
                     else None,
                     "option_selection_strategy": self.option_selection_strategy.name,
+                    "criteria_name": criterias[i].name,
                 }.items()
                 if value is not None
             }

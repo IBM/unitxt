@@ -3,12 +3,9 @@ from typing import TypedDict, Union
 from .eval_assist_constants import (
     EVALUATORS_METADATA,
     MODEL_RENAMINGS,
-    DirectCriteriaCatalogEnum,
     EvaluatorMetadata,
     EvaluatorNameEnum,
-    EvaluatorTypeEnum,
     ModelProviderEnum,
-    PairwiseComparisonCriteriaCatalogEnum,
 )
 
 
@@ -34,6 +31,7 @@ def get_evaluator_metadata(
         # raise ValueError(f'A {evaluator_type} evaluator with id {name} matched several models.')
         raise ValueError(f"An evaluator with id {name} matched several models.")
     return evaluator_search[0]
+
 
 class CatalogDefinition(TypedDict):
     name: str

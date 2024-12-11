@@ -227,9 +227,17 @@ def select(
     engine: OptionSelectingByLogProbsInferenceEngine,
     dataset_query: Optional[str] = None,
     return_data: bool = False,
+    previous_messages: Optional[list[dict[str, str]]] = None,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    if previous_messages is not None:
+
+        def add_previous_messages(example, index):
+            example["source"] = previous_messages[index] + example["source"]
+            return example
+
+        dataset = dataset.map(add_previous_messages, with_indices=True)
     engine, _ = fetch_artifact(engine)
     predictions = engine.select(dataset)
     # predictions = post_process(raw_predictions, dataset)

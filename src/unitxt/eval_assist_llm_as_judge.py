@@ -1,13 +1,13 @@
 from . import get_logger
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
-    Criteria,
     EvaluatorNameEnum,
     OptionSelectionStrategyEnum,
 )
 from .eval_assist_utils import get_parsed_context
 from .inference import (
     InferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
 )
 from .metrics import BulkInstanceMetric
 from .task import Task
@@ -15,12 +15,13 @@ from .task import Task
 
 class EvalAssistLLMAsJudge(BulkInstanceMetric):
     inference_engine: InferenceEngine
-    criteria: Criteria = None
     option_selection_strategy: OptionSelectionStrategyEnum = None
     evaluator_name: EvaluatorNameEnum = None
     check_positional_bias = True
     context_fields: str = ["context"]
     generate_summaries: bool = True
+    format = "formats.chat_api"
+
     logger = get_logger()
 
     def prepare(self):
@@ -28,12 +29,11 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
         if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
 
-        self.format = "formats.chat_api"
-        if isinstance(self.option_selection_strategy, str):
+        if not isinstance(self.option_selection_strategy, OptionSelectionStrategyEnum):
             self.option_selection_strategy = OptionSelectionStrategyEnum[
                 self.option_selection_strategy
             ]
-        if isinstance(self.evaluator_name, str):
+        if not isinstance(self.evaluator_name, EvaluatorNameEnum):
             self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
 
         self.assessment_template = direct_assessment_template_dict["assessment"]
@@ -73,6 +73,21 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
             prediction_type=str,
             metrics=[],
         )
+
+    def verify(self):
+        super().verify()
+        if (
+            self.option_selection_strategy
+            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+            and not isinstance(
+                self.inference_engine, OptionSelectingByLogProbsInferenceEngine
+            )
+        ):
+            raise ValueError(
+                "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
+                f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
+                "to inherit from OptionSelectingByLogProbsInferenceEngine "
+            )
 
     def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str, str]]:
         return [

@@ -1,4 +1,4 @@
-from enum import Enum, auto
+from enum import Enum
 from typing import Optional
 
 from .artifact import Artifact
@@ -8,9 +8,9 @@ from .inference import (
 )
 
 
-class OptionSelectionStrategyEnum(Enum):
-    PARSE_OUTPUT_TEXT = auto()
-    PARSE_OPTION_LOGPROB = auto()
+class OptionSelectionStrategyEnum(str, Enum):
+    PARSE_OUTPUT_TEXT = "PARSE_OUTPUT_TEXT"
+    PARSE_OPTION_LOGPROB = "PARSE_OPTION_LOGPROB"
 
 
 class CriteriaOption(Artifact):
@@ -28,12 +28,12 @@ class CriteriaWithOptions(Criteria):
     option_map: Optional[dict[str, float]] = None
 
 
-class EvaluatorTypeEnum(Enum):
+class EvaluatorTypeEnum(str, Enum):
     PAIRWISE_COMPARISON = "pairwise_comparison"
     DIRECT_ASSESSMENT = "direct_assessment"
 
 
-class EvaluatorNameEnum(Enum):
+class EvaluatorNameEnum(str, Enum):
     MIXTRAL8_7b = "Mixtral8-7b"
     MIXTRAL8_22b = "Mixtral8-22b"
     MIXTRAL_LARGE = "Mixtral Large"
@@ -51,7 +51,7 @@ class EvaluatorNameEnum(Enum):
     GRANITE_GUARDIAN_8B = "Granite Guardian 3.0 8B"
 
 
-class ModelProviderEnum(Enum):
+class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
     OPENAI = "openai"
     RITS = "rits"

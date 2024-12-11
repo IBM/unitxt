@@ -16,7 +16,8 @@ data = {
 
 criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
 metrics = [
-    f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b[criteria={criteria}, context_fields=[question,jacob]]"
+    f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b"
+    f"[criteria={criteria}, context_fields=[question]]"
 ]
 
 card = TaskCard(

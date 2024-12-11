@@ -36,9 +36,6 @@ def get_evaluator(
         **inference_params,
     }
 
-    # if provider == ModelProviderEnum.RITS:
-    #     params['api_base'] = RITSInferenceEngine.get_base_url_from_model_name(model_name) + '/v1'
-
     inference_engine = INFERENCE_ENGINE_NAME_TO_CLASS[provider](**params)
 
     params = {

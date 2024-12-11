@@ -1638,7 +1638,7 @@ class RITSInferenceEngine(
             .replace(".", "-")
         )
 
-    def request_single_token_count(self, prompt):
+    def request_single_token_count(self, messages: list[str]):
         import requests
 
         headers = {
@@ -1649,7 +1649,7 @@ class RITSInferenceEngine(
 
         payload = {
             "model": self.model_name,
-            "prompt": prompt,
+            "prompt": messages,
         }
         tokenize_url = self.base_url + "/tokenize"
         return requests.post(
@@ -1657,12 +1657,15 @@ class RITSInferenceEngine(
         ).json()["count"]
 
     def get_token_count(self, dataset) -> list[int]:
-        texts = [instance["source"] for instance in dataset]
+        messages_list = [instance["source"] for instance in dataset]
         return list(
             tqdm(
-                [self.request_single_token_count(text) for text in texts],
+                [
+                    self.request_single_token_count(messages)
+                    for messages in messages_list
+                ],
                 desc="Tokenizing",
-                total=len(texts),
+                total=len(messages_list),
             )
         )
 
@@ -1873,7 +1876,6 @@ class WMLInferenceEngineBase(
     InferenceEngine,
     PackageRequirementsMixin,
     LogProbInferenceEngine,
-    OptionSelectingByLogProbsInferenceEngine,
 ):
     """Base for classes running inference using ibm-watsonx-ai.
 
@@ -2087,58 +2089,6 @@ class WMLInferenceEngineBase(
     def get_model_details(self) -> Dict:
         return self._model.get_details()
 
-    def get_token_count(self, dataset) -> list[int]:
-        if self._model is None:
-            self._load_model()
-
-        texts = [instance["source"] for instance in dataset]
-        token_counts = []
-        for i in trange(len(texts), desc="Tokenizing"):
-            response = self._model.tokenize(prompt=texts[i], return_tokens=True)[
-                "result"
-            ]
-            token_counts.append(response["token_count"])
-
-        return token_counts
-
-    def get_options_log_probs(self, dataset):
-        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
-        if self._model is None:
-            self._load_model()
-
-        texts = [x["source"] for x in dataset]
-
-        responses = list(
-            tqdm(
-                self._model.generate(
-                    prompt=texts,
-                    params={
-                        "decoding_method": "greedy",
-                        "max_new_tokens": 1,
-                        "return_options": {
-                            "input_tokens": True,
-                            "token_logprobs": True,
-                        },
-                    },
-                ),
-                total=len(texts),
-                desc="Getting option log probs with with Watsonx",
-            )
-        )
-
-        return [
-            [
-                {
-                    "text": token["text"],
-                    "logprob": token["logprob"]
-                    if "logprob" in token
-                    else [1, None][i > 0],
-                }
-                for i, token in enumerate(response["results"][0]["input_tokens"])
-            ]
-            for response in responses
-        ]
-
 
 class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMixin):
     """Generates text for textual inputs.
@@ -2257,7 +2207,9 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         return predict_result
 
 
-class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
+class WMLInferenceEngineChat(
+    WMLInferenceEngineBase, WMLChatParamsMixin, OptionSelectingByLogProbsInferenceEngine
+):
     """Creates chat session and returns a model's response.
 
     You can also include images in your inputs. If you use only textual input, it is
@@ -2449,6 +2401,71 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                 input_text=input_text,
             )
         return predict_result
+
+    def request_single_token_count(self, messages: list[str]):
+        response = self._model.chat(
+            messages=messages,
+            params={
+                "decoding_method": "greedy",
+                "max_new_tokens": 1,
+                "return_options": {
+                    "input_tokens": True,
+                    "token_logprobs": True,
+                    "top_logprobs": None,
+                },
+            },
+        )
+        return response["usage"]["prompt_tokens"]
+
+    def get_token_count(self, dataset) -> list[int]:
+        if self._model is None:
+            self._load_model()
+
+        messages_list = [instance["source"] for instance in dataset]
+
+        token_counts = []
+        for i in trange(len(messages_list), desc="Tokenizing"):
+            token_count = self.request_single_token_count(messages=messages_list[i])
+            token_counts.append(token_count)
+
+        return token_counts
+
+    def get_options_log_probs(self, dataset):
+        """Add to each instance in the data a "options_log_prob" field, which is a dict with str as key and a list of {text: str, logprob:float}."""
+        if self._model is None:
+            self._load_model()
+
+        messages_list = [instance["source"] for instance in dataset]
+        result = []
+        for i in trange(len(messages_list), desc="Options logprob"):
+            print(messages_list[i])
+            response = self._model.chat(
+                messages=messages_list[i],
+                params={
+                    "decoding_method": "greedy",
+                    "max_new_tokens": 1,
+                    "logprobs": True,
+                    "return_options": {
+                        "input_tokens": True,
+                        "token_logprobs": True,
+                        "top_logprobs": None,
+                    },
+                },
+            )
+
+            result.append(
+                [
+                    {
+                        "text": token["text"],
+                        "logprob": token["logprob"]
+                        if "logprob" in token
+                        else [1, None][i > 0],
+                    }
+                    for i, token in enumerate(response["results"][0]["input_tokens"])
+                ]
+            )
+        print(result)
+        return result
 
 
 @deprecation(

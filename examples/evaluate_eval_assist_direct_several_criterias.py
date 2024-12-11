@@ -1,8 +1,9 @@
+from typing import Any
+
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.loaders import LoadFromDictionary
-from unitxt.operators import Set
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -27,17 +28,21 @@ criteria_json = {
     "option_map": {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
 }
 
+criteria_from_catalog = (
+    "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.answer_relevance"
+)
+
 data = {
     "test": [
-        {"question": "How is the weather?"},
+        {"question": "How is the weather?", "criteria": criteria_json},
+        {"question": "How is the weather?", "criteria": criteria_from_catalog},
     ]
 }
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
-    preprocess_steps=[Set(fields={"criteria": criteria_json})],
     task=Task(
-        input_fields={"question": str, "criteria": dict},
+        input_fields={"question": str, "criteria": Any},
         reference_fields={},
         prediction_type=str,
         metrics=[
@@ -51,7 +56,6 @@ test_dataset = load_dataset(card=card, template="templates.empty")["test"]
 predictions = [
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
-    """On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
 ]
 
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)

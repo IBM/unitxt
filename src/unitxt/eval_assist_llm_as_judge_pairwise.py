@@ -1,7 +1,6 @@
 import itertools
 
 from .api import infer, select
-from .artifact import fetch_artifact
 from .eval_assist_chat_templates import pairwise_comparison_template_dict
 from .eval_assist_constants import (
     Criteria,
@@ -78,24 +77,35 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
-            # TODO: implement verify to check that the criteria was provided
-            self.logger.info("Reading criteria from the task_data")
-            criteria_dicts = [
-                {**task_data_instance["criteria"], "__type__": "criteria"}
-                for task_data_instance in task_data
-            ]
+            for criteria_dict in [
+                task_data_instance["criteria"] for task_data_instance in task_data
+            ]:
+                if not isinstance(criteria_dict, dict):
+                    raise Exception(
+                        f"The type of the criteria must be of type dict, instead it is of type '{type(criteria_dict)}'"
+                    )
+
             criterias = [
-                fetch_artifact(criteria_dict)[0] for criteria_dict in criteria_dicts
+                Criteria(
+                    name=criteria_dict["name"],
+                    description=criteria_dict["description"],
+                )
+                for criteria_dict in [
+                    task_data_instance["criteria"] for task_data_instance in task_data
+                ]
             ]
         # criteria is in passes in the constructor
-        elif isinstance(self.criteria, Criteria):
+        else:
             self.logger.info(
                 "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
             )
+            if not isinstance(self.criteria, Criteria):
+                raise Exception(
+                    f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
+                )
+
             criterias: list[Criteria] = [self.criteria] * eval_count
-        else:
-            self.logger.info("Reading criteria from self. Criteria is already a list")
-            criterias = self.criteria
+
         self.logger.info(f"First criteria name is '{criterias[0].name}'")
         return criterias
 
@@ -432,6 +442,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             contest_results = per_response_results[key]["contest_results"]
             winrate = sum(contest_results) / len(contest_results)
             per_response_results[key]["winrate"] = winrate
+            per_response_results[key]["llm_as_a_judge_score"] = winrate
         # calculate ranking
         ranking = rank_indexes(
             [result["winrate"] for result in per_response_results.values()]
