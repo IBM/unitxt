@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is a special case of multi class text classification task, in which we classify the relation between two texts.\nFor example, whether one text entails another.\nThe inputs are provided in \"text_a\" and \"text_a\"\nThe set of 'classes' is a list of option of the relationship (e.g. \"entailment\", \"contradiction\", \"neutral\")\nThe 'text_a_type' and 'text_type\" are optional fields that defines the type of text we classify (e.g. \"document\", \"review\", etc.).\nThe 'type_of_relation' is a required field that the defines the type of relation we identify (e.g. \"entailment\")\nThe 'text_a_type','text_b_type' and 'type_of_relation' fields can be used by the template to customize the prompt.\n\nThe default reported metrics are the classical f1_micro (equivalent to accuracy for multi class classification), and f1_macro.\n\n",
     "input_fields": {
         "text_a": "Union[Text, Image, Audio, Table, Dialog]",
         "text_a_type": "str",
@@ -24,5 +25,6 @@
     "defaults": {
         "text_a_type": "first text",
         "text_b_type": "second text"
-    }
+    },
+    "default_template": "templates.classification.multi_class.relation.default"
 }

@@ -791,7 +791,7 @@ class MultiReferenceTemplate(InputOutputTemplate):
             )
         if len(references) == 0:
             raise UnitxtError(
-                "No references found. MultiReferenceTemplate requires at least one reference.",
+                f"No references found in field '{self.references_field}' of instance. MultiReferenceTemplate requires at least one reference.",
                 Documentation.ADDING_TEMPLATE,
             )
 
