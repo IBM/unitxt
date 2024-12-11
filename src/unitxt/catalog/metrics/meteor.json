@@ -1,3 +1,4 @@
 {
-    "__type__": "meteor"
+    "__type__": "meteor",
+    "n_resamples": 3
 }

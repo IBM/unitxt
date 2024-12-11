@@ -116,6 +116,38 @@ class Dataset(datasets.GeneratorBasedBuilder):
         verification_mode: Optional[Union[datasets.VerificationMode, str]] = None,
         in_memory=False,
     ) -> Union[datasets.Dataset, datasets.DatasetDict]:
+        """Return a Dataset for the specified split.
+
+        Args:
+            split (`datasets.Split`):
+                Which subset of the data to return.
+            run_post_process (`bool`, defaults to `True`):
+                Whether to run post-processing dataset transforms and/or add
+                indexes.
+            verification_mode ([`VerificationMode`] or `str`, defaults to `BASIC_CHECKS`):
+                Verification mode determining the checks to run on the
+                downloaded/processed dataset information (checksums/size/splits/...).
+            in_memory (`bool`, defaults to `False`):
+                Whether to copy the data in-memory.
+
+        Returns:
+            datasets.Dataset
+
+        :Example:
+
+        .. code-block:: python
+
+            from datasets import load_dataset_builder
+            builder = load_dataset_builder('rotten_tomatoes')
+            builder.download_and_prepare()
+            ds = builder.as_dataset(split='train')
+            print(ds)
+            # prints:
+            # Dataset({
+            #     features: ['text', 'label'],
+            #     num_rows: 8530
+            # })
+        """
         return (
             super()
             .as_dataset(split, run_post_process, verification_mode, in_memory)

@@ -568,3 +568,21 @@ class TestArtifact(UnitxtTestCase):
                     tiny_card.preprocess_steps[i].to_dict(),
                     fetched_tiny_card_with_links.preprocess_steps[i].to_dict(),
                 )
+
+    def test_artifact_is_not_saving_if_artifact_has_changed(self):
+        with self.assertRaises(UnitxtError) as e:
+            args = {
+                "__type__": "standard_recipe",
+                "card": "cards.sst2",
+                "template_card_index": 0,
+                "demos_pool_size": 100,
+                "num_demos": 0,
+            }
+            a = Artifact.from_dict(args)
+            a.num_demos = 1
+            a.save("not_suppose_to_save.json")
+
+        self.assertEqual(
+            str(e.exception),
+            "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed): 0 -> 1",
+        )
