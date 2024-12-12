@@ -4,14 +4,12 @@
 Loading Datasets
 ===================================
 
-You can load a Unitxt dataset, using the HuggingFace Dataset API
-without installing the Unitxt package by using the following code:
 
 .. code-block:: python
 
-  from datasets import load_dataset
+  from unitxt import load_dataset
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=templates.classification.multi_class.relation.default',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli")
 
 .. code-block:: python
 
@@ -64,7 +62,8 @@ As example, here we load wnli in 3 shots format:
 
 .. code-block:: python
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=templates.classification.multi_class.relation.default,num_demos=3,demos_pool_size=100',trust_remote_code=True)
+  from unitxt import load_dataset
+  dataset = load_dataset(card="cards.wnli",template="templates.classification.multi_class.relation.default",num_demos=3,demos_pool_size=100)
 
 Now the source text (input to the model) of the first sample in the training set has in-context examples:
 
@@ -100,4 +99,4 @@ Here is an example of using random templates and a varying number of demonstrati
 
 .. code-block:: python
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],demos_pool_size=100',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],demos_pool_size=100)
