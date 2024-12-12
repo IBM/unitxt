@@ -23,8 +23,8 @@ Introducing Two Major Enhancements
 -----------------------------------
 
 1. **Producing Data in Chat API Format**
-   Unitxt now can produces data in the widely adopted Chat API format.
-   This ensures compatibility with popular LLM Provider APIs and avoid the need from custom per model formatting.
+   Unitxt can produce data in the widely adopted Chat API format.
+   This ensures compatibility with popular LLM Provider APIs and avoid the need for custom per model formatting.
    Additionally, the format supports multiple modalities such as text, images, and videos.
 
 2. **A Comprehensive Array of Inference Engines**

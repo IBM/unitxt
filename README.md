@@ -56,7 +56,7 @@ See more examples in examples subdirectory.
 
 ```python
 from unitxt import get_logger
-from unitxt.api import evaluate, load_dataset
+from unitxt.api import evaluate, create_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.inference import HFPipelineBasedInferenceEngine
 from unitxt.loaders import LoadFromDictionary
@@ -73,16 +73,12 @@ data = {
     ]
 }
 
-card = TaskCard(
-    # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources using different loaders.
-    loader=LoadFromDictionary(data=data),
-    # Define the QA task input and output and metrics.
-    task=Task(
-        input_fields={"question": str},
-        reference_fields={"answer": str},
-        prediction_type=str,
-        metrics=["metrics.accuracy"],
-    ),
+task=Task(
+    input_fields={"question": str},
+    reference_fields={"answer": str},
+    prediction_type=str,
+    metrics=["metrics.accuracy"],
+)
 )
 
 # Create a simple template that formats the input.
@@ -95,7 +91,7 @@ template = InputOutputTemplate(
     postprocessors=["processors.lower_case"],
 )
 # Verbalize the dataset using the template
-dataset = load_dataset(card=card, template=template)
+dataset = create_dataset(task=task, template=template, test_set=data)
 test_dataset = dataset["test"]
 
 
