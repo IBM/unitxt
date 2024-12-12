@@ -33,9 +33,10 @@
     "templates": [
         {
             "__type__": "multi_reference_template",
-            "input_format": "Answer the following question based on the provided {context_type}:dataset:\n**question:** {question}\n**{context_type}:** {context}\n**Answer:**",
+            "input_format": "Answer the following question based on the provided {context_type}. You should only output the final answer. Do not add any explanation or other information.\n**question:** {question}\n**{context_type}:** {context}\n**Answer:**",
             "references_field": "answers",
             "postprocessors": [
+                "processors.to_list_by_comma_space",
                 "processors.str_to_float_format"
             ]
         }

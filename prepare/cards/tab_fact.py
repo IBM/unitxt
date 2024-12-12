@@ -8,6 +8,7 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.settings_utils import get_settings
 from unitxt.splitters import SplitRandomMix
+from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
 settings = get_settings()
@@ -37,7 +38,17 @@ with settings.context(allow_unverified_code=True):
             ),
         ],
         task="tasks.classification.multi_class.relation",
-        templates="templates.classification.multi_class.relation.all",
+        templates=[
+            InputOutputTemplate(
+                input_format="{text_a_type}: {text_a}\n{text_b_type}: {text_b}",
+                output_format="{label}",
+                instruction="Given a {text_a_type} and {text_b_type} classify the {type_of_relation} of the {text_b_type} to one of {classes}. You should only output the result. Do not add any explanation or other information.",
+                postprocessors=[
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                ],
+            ),
+        ],
         __tags__={
             "arxiv": "1909.02164",
             "license": "cc-by-4.0",

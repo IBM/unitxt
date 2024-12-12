@@ -28,15 +28,13 @@ card = TaskCard(
     task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[
         MultiReferenceTemplate(
-            input_format="Answer the following question based on the provided {context_type}:"
-            "dataset:"
+            input_format="Answer the following question based on the provided {context_type}. You should only output the final answer. Do not add any explanation or other information."
             "\n**question:** {question}"
             "\n**{context_type}:** {context}"
             "\n**Answer:**",
-            # "Based on this {context_type}: {context}\nAnswer the question: {question}",
             references_field="answers",
             postprocessors=[
-                # "processors.to_list_by_comma_space",
+                "processors.to_list_by_comma_space",
                 "processors.str_to_float_format",
             ],
         ),
