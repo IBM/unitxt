@@ -23,7 +23,7 @@ with settings.context(allow_unverified_code=True):
     )
 
     # Infer a model to get predictions.
-    inference_model = CrossProviderInferenceEngine(
+    model = CrossProviderInferenceEngine(
         model="llama-3-2-1b-instruct", provider="watsonx"
     )
     """
@@ -33,7 +33,7 @@ with settings.context(allow_unverified_code=True):
     For the arguments these inference engines can receive, please refer to the classes documentation or read
     about the the open ai api arguments the CrossProviderInferenceEngine follows.
     """
-    predictions = inference_model.infer(dataset)
+    predictions = model.infer(dataset)
 
     # Evaluate the predictions using the defined metric.
     results = evaluate(predictions=predictions, data=dataset)

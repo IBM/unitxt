@@ -92,7 +92,7 @@ def create_dataset(
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     **kwargs,
-):
+) -> DatasetDict:
     """Creates dataset from input data based on a specific task.
 
     Args:

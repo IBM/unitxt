@@ -11,7 +11,6 @@ from unitxt.processors import PostProcess
 from unitxt.serializers import MultiTypeSerializer, SingleTypeSerializer
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
 from unitxt.type_utils import register_type
 
 logger = get_logger()
@@ -134,7 +133,7 @@ for provider in [
             test_dataset = dataset["test"]
             from unitxt.inference import CrossProviderInferenceEngine
 
-            inference_model = CrossProviderInferenceEngine(
+            model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
             """
@@ -144,18 +143,19 @@ for provider in [
             For the arguments these inference engines can receive, please refer to the classes documentation or read
             about the the open ai api arguments the CrossProviderInferenceEngine follows.
             """
-            predictions = inference_model.infer(test_dataset)
+            predictions = model.infer(test_dataset)
 
             results = evaluate(predictions=predictions, data=test_dataset)
 
-            print_dict(
-                results.instance_scores[0],
-                keys_to_print=[
-                    "source",
-                    "prediction",
-                    "processed_prediction",
-                    "processed_references",
-                ],
+            print(
+                results.instance_scores.to_df(
+                    columns=[
+                        "source",
+                        "prediction",
+                        "processed_prediction",
+                        "processed_references",
+                    ],
+                )
             )
 
             global_scores = results.global_scores

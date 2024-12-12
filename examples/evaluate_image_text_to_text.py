@@ -1,7 +1,6 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine
-from unitxt.text_utils import print_dict
 
 with settings.context(
     disable_hf_datasets_cache=False,
@@ -20,15 +19,18 @@ with settings.context(
     )
 
     predictions = engine.infer(dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "media",
-            "references",
-            "processed_prediction",
-            "score",
-        ],
+    print(results.global_scores)
+
+    print(
+        results.instance_scores.to_df(
+            columns=[
+                "source",
+                "media",
+                "references",
+                "processed_prediction",
+                "score",
+            ],
+        )
     )

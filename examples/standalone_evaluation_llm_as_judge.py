@@ -7,7 +7,6 @@ from unitxt.inference import (
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -57,7 +56,7 @@ judge_correctness_template = InputOutputTemplate(
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
-    inference_model=CrossProviderInferenceEngine(
+    model=CrossProviderInferenceEngine(
         model="llama-3-8b-instruct", max_tokens=1024, provider="watsonx"
     ),
     template=judge_correctness_template,
@@ -97,13 +96,12 @@ engine = HFPipelineBasedInferenceEngine(
 predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
+print(
+    results.instance_scores.to_df(
+        columns=[
             "source",
             "prediction",
             "processed_prediction",
@@ -111,3 +109,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+)

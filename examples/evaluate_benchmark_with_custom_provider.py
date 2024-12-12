@@ -1,6 +1,5 @@
 from unitxt import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.text_utils import print_dict
 
 data = load_dataset(
     "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api, system_prompt=system_prompts.general.be_concise]",
@@ -23,14 +22,16 @@ predictions = model.infer(data)
 
 results = evaluate(predictions=predictions, data=data)
 
-print_dict(
-    results.instance_scores[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "subset",
-    ],
+print(
+    results.instance_scores.to_df(
+        columns=[
+            "source",
+            "prediction",
+            "subset",
+        ]
+    )
 )
-print_dict(
+
+print(
     results.subsets_scores,
 )

@@ -396,15 +396,47 @@ class GlobalScores(dict):
 
 
 class InstanceScores(list):
-    def to_df(self):
-        """Transforms a list of instance results into a pandas dataframe.
+    def __init__(self, instances):
+        self.original_instances = instances
+        instance_scores = []
+        for instance in instances:
+            instance = instance.copy()
+            scores = instance.pop("score")
+            task_data = instance.pop("task_data")
+            instance_scores.append(
+                {
+                    **task_data,
+                    **instance,
+                    **scores["instance"],
+                }
+            )
+        super().__init__(instances)
+
+    def to_df(self, flatten=True, columns=None):
+        """Transforms the stored results into a pandas DataFrame.
+
+        Args:
+            flatten (bool, optional): Determines whether to use the flattened list of results (`self`)
+                or the original instances (`self.original_instances`). Defaults to True.
+            columns (list, optional): A list of column names to select from the resulting DataFrame.
+                If None, all columns are included. Defaults to None.
 
         Returns:
-            pd.DataFrame: A dataframe with the extracted information, indexed by score_name.
+            pandas.DataFrame: A DataFrame containing the transformed results. If `columns` is specified,
+            only the specified columns are included.
+
+        Raises:
+            KeyError: If any specified column in `columns` does not exist in the DataFrame.
         """
         from pandas import DataFrame
 
-        return DataFrame(self)
+        if flatten:
+            df = DataFrame(self)
+        else:
+            df = DataFrame(self.original_instances)
+        if columns is not None:
+            return df[columns]
+        return df
 
 
 class EvaluationResults(list):
@@ -414,17 +446,7 @@ class EvaluationResults(list):
 
     @property
     def instance_scores(self):
-        instance_scores = []
-        for instance in self:
-            instance = instance.copy()
-            scores = instance.pop("score")
-            instance_scores.append(
-                {
-                    **instance,
-                    **scores["instance"],
-                }
-            )
-        return InstanceScores(instance_scores)
+        return InstanceScores(self)
 
     @property
     def groups_scores(self):

@@ -3,7 +3,6 @@ from unitxt.api import create_dataset, evaluate
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -42,13 +41,12 @@ engine = HFPipelineBasedInferenceEngine(
 
 
 predictions = engine.infer(dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
+print(
+    results.instance_scores.to_df(
+        columns=[
             "source",
             "prediction",
             "processed_prediction",
@@ -56,3 +54,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+)

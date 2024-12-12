@@ -4,7 +4,6 @@ from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
 from unitxt.standard import StandardRecipe
-from unitxt.text_utils import print_dict
 
 benchmark = Benchmark(
     format="formats.user_agent",
@@ -48,9 +47,7 @@ test_dataset = list(benchmark()["test"])
 
 
 # Infere using llama-3-2-1b base using Watsonx API
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-2-1b-instruct", provider="watsonx"
-)
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -59,9 +56,9 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = inference_model.infer(test_dataset)
+predictions = model.infer(test_dataset)
 results = evaluate(predictions=predictions, data=test_dataset)
 
-print_dict(
+print(
     results.subsets_scores,
 )

@@ -4,7 +4,6 @@ from unitxt.blocks import TaskCard
 from unitxt.inference import WMLInferenceEngine
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import TemplatesDict
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -61,11 +60,11 @@ if __name__ == "__main__":
     )
     correctness_judge_metric_llama = f"{metric_name}[{mapping_override}]"
 
-    # We can also use another inference model by overriding the "inference_model" attribute of the metric.
+    # We can also use another inference model by overriding the "model" attribute of the metric.
     # all available models for this judge are under "catalog.engines.classification"
     mixtral_engine = "engines.classification.mixtral_8x7b_instruct_v01_wml"
     correctness_judge_metric_mixtral = (
-        f"{metric_name}[{mapping_override}, inference_model={mixtral_engine}]"
+        f"{metric_name}[{mapping_override}, model={mixtral_engine}]"
     )
 
     metrics = [correctness_judge_metric_llama, correctness_judge_metric_mixtral]
@@ -78,17 +77,16 @@ if __name__ == "__main__":
 
     # Infer using flan t5 xl using wml
     model_name = "google/flan-t5-xl"
-    inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
-    predictions = inference_model.infer(test_dataset)
+    model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
+    predictions = model.infer(test_dataset)
 
     # Evaluate the generated predictions using the selected metrics
-    evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    results = evaluate(predictions=predictions, data=test_dataset)
 
     # Print results
-    for instance in evaluated_dataset:
-        print_dict(
-            instance,
-            keys_to_print=[
+    print(
+        results.instance_scores.to_df(
+            columns=[
                 "source",
                 "prediction",
                 "processed_prediction",
@@ -96,3 +94,4 @@ if __name__ == "__main__":
                 "score",
             ],
         )
+    )
