@@ -134,6 +134,77 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         )
         return criterias
 
+    def get_results(
+        self,
+        assessment_prompts,
+        assessment_outputs,
+        summarization_prompts,
+        summarization_outputs,
+        option_selection_prompts,
+        option_selection_outputs,
+        selections,
+        evaluations_count,
+        criterias: list[CriteriaWithOptions],
+    ) -> list[dict[str, any]]:
+        positional_bias = None
+        if self.check_positional_bias:
+            positional_bias = [
+                selections[i] != selections[evaluations_count + i]
+                for i in range(evaluations_count)
+            ]
+
+        scores = [
+            criteria.option_map[selection] if criteria.option_map is not None else 1
+            for criteria, selection in zip(criterias, selections)
+        ]
+
+        return [
+            {
+                "score": scores[i],
+                "llm_as_a_judge_score": scores[i],
+                "positional_bias": positional_bias[i]
+                if self.check_positional_bias
+                else None,
+                "selected_option": selections[i],
+                "positional_bias_selected_option": selections[evaluations_count + i]
+                if self.check_positional_bias
+                else None,
+                "assessment": assessment_outputs[i],
+                "positional_bias_assessment": assessment_outputs[i + evaluations_count]
+                if self.check_positional_bias
+                else None,
+                "summary": summarization_outputs[i]
+                if self.generate_summaries
+                else None,
+                "prompts": {
+                    "assessment": assessment_prompts[i],
+                    "positional_bias_assessment": assessment_prompts[
+                        evaluations_count + i
+                    ],
+                    "summarization": summarization_prompts[i]
+                    if self.generate_summaries
+                    else None,
+                    "option_selection": option_selection_prompts[i],
+                    "posional_bias_option_selection": option_selection_prompts[
+                        i + evaluations_count
+                    ],
+                },
+                "option_selection_completion": option_selection_outputs[i]
+                if self.option_selection_strategy
+                == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+                else None,
+                "positional_bias_option_selection_completion": option_selection_outputs[
+                    evaluations_count + i
+                ]
+                if self.option_selection_strategy
+                == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+                else None,
+                "option_selection_strategy": self.option_selection_strategy.name,
+                "criteria_name": criterias[i].name,
+            }
+            for i in range(evaluations_count)
+        ]
+
     def compute(
         self,
         references: list[list[str]],
@@ -194,6 +265,8 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         )
         self.logger.info("The assessment was generated successfully.")
 
+        summarization_prompts = None
+        summarization_outputs = None
         if self.generate_summaries:
             # Summarisation Stage
             summarization_instances = [
@@ -284,67 +357,18 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         )
         self.logger.info("The selections were calculated successfully.")
 
-        positional_bias = None
-        if self.check_positional_bias:
-            positional_bias = [
-                selections[i] != selections[evaluations_count + i]
-                for i in range(evaluations_count)
-            ]
-
-        scores = [
-            criteria.option_map[selection] if criteria.option_map is not None else 1
-            for criteria, selection in zip(criterias, selections)
-        ]
-        # remove None values from the result dict, e.g. when positional_bias_check is False there is no positional_bias entry in the dict
+        results = self.get_results(
+            assessment_prompts,
+            assessment_outputs,
+            summarization_prompts,
+            summarization_outputs,
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+            evaluations_count,
+            criterias,
+        )
         return [
-            {
-                key: value
-                for key, value in {
-                    "score": scores[i],
-                    "llm_as_a_judge_score": scores[i],
-                    "positional_bias": positional_bias[i]
-                    if self.check_positional_bias
-                    else None,
-                    "selected_option": selections[i],
-                    "positional_bias_selected_option": selections[evaluations_count + i]
-                    if self.check_positional_bias
-                    else None,
-                    "assessment": assessment_outputs[i],
-                    "positional_bias_assessment": assessment_outputs[
-                        i + evaluations_count
-                    ]
-                    if self.check_positional_bias
-                    else None,
-                    "summary": summarization_outputs[i]
-                    if self.generate_summaries
-                    else None,
-                    "prompts": {
-                        "assessment": assessment_prompts[i],
-                        "positional_bias_assessment": assessment_prompts[
-                            evaluations_count + i
-                        ],
-                        "summarization": summarization_prompts[i]
-                        if self.generate_summaries
-                        else None,
-                        "option_selection": option_selection_prompts[i],
-                        "posional_bias_option_selection": option_selection_prompts[
-                            i + evaluations_count
-                        ],
-                    },
-                    "option_selection_completion": option_selection_outputs[i]
-                    if self.option_selection_strategy
-                    == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-                    else None,
-                    "positional_bias_option_selection_completion": option_selection_outputs[
-                        evaluations_count + i
-                    ]
-                    if self.option_selection_strategy
-                    == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-                    else None,
-                    "option_selection_strategy": self.option_selection_strategy.name,
-                    "criteria_name": criterias[i].name,
-                }.items()
-                if value is not None
-            }
-            for i in range(evaluations_count)
+            {key: value for key, value in result.items() if value is not None}
+            for result in results
         ]
