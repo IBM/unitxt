@@ -27,16 +27,14 @@ with settings.context(
 
     data = benchmark()["test"].to_dataset()
 
-    inference_model = LMMSEvalInferenceEngine(
+    model = LMMSEvalInferenceEngine(
         model_type="llava",
         model_args={"pretrained": "llava-hf/llava-v1.6-mistral-7b-hf"},
         max_new_tokens=2,
     )
 
-    predictions = inference_model.infer(data)
+    predictions = model.infer(data)
     results = evaluate(predictions=predictions, data=data)
 
-    for subset in benchmark.subsets:
-        logger.info(
-            f'{subset.title()}: {results[0]["score"]["subsets"][subset]["score"]}'
-        )
+    for subset, scores in results.subsets_scores.items():
+        print(f'{subset.title()}: {scores["score"]}')

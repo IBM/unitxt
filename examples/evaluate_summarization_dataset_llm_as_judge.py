@@ -30,13 +30,11 @@ judge_summary_rating_template = InputOutputTemplate(
 
 # Second, we define the inference engine we use for judge, with the preferred model and provider.
 # You can change the provider to any of: "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-8b-instruct", provider="watsonx"
-)
+model = CrossProviderInferenceEngine(model="llama-3-8b-instruct", provider="watsonx")
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
-    inference_model=inference_model,
+    model=model,
     template=judge_summary_rating_template,
     format="formats.chat_api",
     task="rating.single_turn",
@@ -104,7 +102,7 @@ judge_summary_rating_with_reference_template = InputOutputTemplate(
 )
 
 llm_judge_with_summary_metric = LLMAsJudge(
-    inference_model=inference_model,
+    model=model,
     template=judge_summary_rating_with_reference_template,
     task="rating.single_turn_with_reference",
     main_score="llm_judge_llama_3_2_1b_hf",
@@ -133,16 +131,17 @@ engine = HFPipelineBasedInferenceEngine(
 predictions = engine.infer(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
 # Print results
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "processed_prediction",
-        "references",
-        "score",
-    ],
+print(
+    results.instance_scores.to_df(
+        columns=[
+            "source",
+            "prediction",
+            "processed_prediction",
+            "references",
+            "score",
+        ],
+    )
 )

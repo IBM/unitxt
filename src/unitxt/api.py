@@ -10,7 +10,7 @@ from .dataset_utils import get_dataset_artifact
 from .inference import InferenceEngine, LogProbInferenceEngine
 from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
-from .metric_utils import _compute, _inference_post_process
+from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
@@ -92,7 +92,7 @@ def create_dataset(
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     **kwargs,
-):
+) -> DatasetDict:
     """Creates dataset from input data based on a specific task.
 
     Args:
@@ -191,7 +191,7 @@ def load_dataset(
     ).with_transform(loads_instance)
 
 
-def evaluate(predictions, data):
+def evaluate(predictions, data) -> EvaluationResults:
     return _compute(predictions=predictions, references=data)
 
 

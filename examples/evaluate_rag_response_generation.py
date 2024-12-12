@@ -9,7 +9,6 @@ from unitxt.inference import (
 from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import Rename, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesDict
-from unitxt.text_utils import print_dict
 
 # Assume the RAG data is proved in this format
 data = {
@@ -78,13 +77,12 @@ engine = HFPipelineBasedInferenceEngine(
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 predictions = engine.infer(dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
+print(
+    results.instance_scores.to_df(
+        columns=[
             "source",
             "prediction",
             "processed_prediction",
@@ -92,3 +90,4 @@ for instance in evaluated_dataset:
             "score",
         ],
     )
+)

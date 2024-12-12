@@ -8,6 +8,7 @@ from typing import Any, Dict, Iterable, List, Optional
 from datasets import Features, Value
 
 from .dataclass import Dataclass
+from .error_utils import Documentation, UnitxtError
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -345,6 +346,127 @@ UNITXT_METRIC_SCHEMA = Features(
 )
 
 
+class GlobalScores(dict):
+    @property
+    def main_score(self):
+        self["score"]
+
+    @property
+    def main_score_name(self):
+        self["score_name"]
+
+    def to_df(self):
+        """Transforms a dictionary of results into a pandas dataframe.
+
+        Transforms a dictionary of results into a dataframe with score_name as the index,
+        and columns for score, ci_low, and ci_high. Handles cases where confidence intervals are missing.
+
+        Returns:
+            pd.DataFrame: A dataframe with the extracted information, indexed by score_name.
+        """
+        import pandas as pd
+
+        rows = []
+
+        # Extract data based on score names
+        for key, value in self.items():
+            if (
+                key.endswith("_ci_low")
+                or key.endswith("_ci_high")
+                or key == "score_name"
+            ):
+                continue  # Skip confidence interval keys for now
+
+            if isinstance(value, (int, float)):  # Only consider numerical scores
+                score_name = key
+                ci_low = self.get(f"{key}_ci_low", None)
+                ci_high = self.get(f"{key}_ci_high", None)
+
+                rows.append(
+                    {
+                        "score_name": score_name,
+                        "score": value,
+                        "ci_low": ci_low,
+                        "ci_high": ci_high,
+                    }
+                )
+
+        df = pd.DataFrame(rows)
+        return df.set_index("score_name")
+
+
+class InstanceScores(list):
+    def __init__(self, instances):
+        self.original_instances = instances
+        instance_scores = []
+        for instance in instances:
+            instance = instance.copy()
+            scores = instance.pop("score")
+            task_data = instance.pop("task_data")
+            instance_scores.append(
+                {
+                    **task_data,
+                    **instance,
+                    **scores["instance"],
+                }
+            )
+        super().__init__(instances)
+
+    def to_df(self, flatten=True, columns=None):
+        """Transforms the stored results into a pandas DataFrame.
+
+        Args:
+            flatten (bool, optional): Determines whether to use the flattened list of results (`self`)
+                or the original instances (`self.original_instances`). Defaults to True.
+            columns (list, optional): A list of column names to select from the resulting DataFrame.
+                If None, all columns are included. Defaults to None.
+
+        Returns:
+            pandas.DataFrame: A DataFrame containing the transformed results. If `columns` is specified,
+            only the specified columns are included.
+
+        Raises:
+            KeyError: If any specified column in `columns` does not exist in the DataFrame.
+        """
+        from pandas import DataFrame
+
+        if flatten:
+            df = DataFrame(self)
+        else:
+            df = DataFrame(self.original_instances)
+        if columns is not None:
+            return df[columns]
+        return df
+
+
+class EvaluationResults(list):
+    @property
+    def global_scores(self):
+        return GlobalScores(self[0]["score"]["global"])
+
+    @property
+    def instance_scores(self):
+        return InstanceScores(self)
+
+    @property
+    def groups_scores(self):
+        if "groups" not in self[0]["score"]:
+            raise UnitxtError(
+                "Groups scores not found try using group_by in the recipe",
+                additional_info_id=Documentation.EVALUATION,
+            )
+        return self[0]["score"]["groups"]
+
+    @property
+    def subsets_scores(self):
+        if "subsets" not in self[0]["score"]:
+            raise UnitxtError(
+                "Subsets scores not found try using Benchmark",
+                additional_info_id=Documentation.BENCHMARKS,
+            )
+        return self[0]["score"]["subsets"]
+
+
 def _compute(
     predictions: List[Any],
     references: Iterable,
@@ -365,7 +487,7 @@ def _compute(
         multi_stream = operator(multi_stream)
 
     stream = multi_stream[split_name]
-    return list(stream)
+    return EvaluationResults(stream)
 
 
 """

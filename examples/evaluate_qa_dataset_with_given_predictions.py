@@ -1,6 +1,5 @@
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -21,13 +20,7 @@ dataset = create_dataset(
     ],
 )
 
-evaluated_dataset = evaluate(predictions, dataset["test"])
+results = evaluate(predictions, dataset["test"])
 
 # Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "score",
-        ],
-    )
+print(results.instance_scores.to_df(columns=["score"]))

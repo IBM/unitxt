@@ -3,12 +3,11 @@ from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
     LMMSEvalInferenceEngine,
 )
-from unitxt.text_utils import print_dict
 
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-    inference_model = LMMSEvalInferenceEngine(
+    model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
         model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
         max_new_tokens=2,
@@ -22,16 +21,17 @@ with settings.context(
         split="test",
     )
 
-    predictions = inference_model.infer(dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+    predictions = model.infer(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[7],
-        keys_to_print=[
-            "source",
-            "media",
-            "references",
-            "processed_prediction",
-            "score",
-        ],
+    print(
+        results.instance_scores.to_df(
+            columns=[
+                "source",
+                "prediction",
+                "processed_prediction",
+                "references",
+                "score",
+            ],
+        )
     )

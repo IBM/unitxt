@@ -1,11 +1,7 @@
 import pandas as pd
-from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.artifact import fetch_artifact
 from unitxt.formats import SystemFormat
-from unitxt.text_utils import print_dict
-
-logger = get_logger()
 
 df = pd.DataFrame(
     columns=[
@@ -65,27 +61,28 @@ for provider in [
 
             from unitxt.inference import CrossProviderInferenceEngine
 
-            inference_model = CrossProviderInferenceEngine(
+            model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
-            predictions = inference_model.infer(dataset)
+            predictions = model.infer(dataset)
 
-            evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+            results = evaluate(predictions=predictions, data=dataset)
             # import pandas as pd
             # result_df = pd.json_normalize(evaluated_dataset)
             # result_df.to_csv(f"output.csv")
             # Print results
-            print_dict(
-                evaluated_dataset[0],
-                keys_to_print=[
-                    "source",
-                    "prediction",
-                    "processed_prediction",
-                    "processed_references",
-                ],
+            print(
+                results.instance_scores.to_df(
+                    columns=[
+                        "source",
+                        "prediction",
+                        "processed_prediction",
+                        "processed_references",
+                    ],
+                )
             )
 
-            global_scores = evaluated_dataset[0]["score"]["global"]
+            global_scores = results.global_scores
             df.loc[len(df)] = [
                 provider,
                 model_name,
@@ -98,4 +95,4 @@ for provider in [
             ]
 
             df = df.round(decimals=2)
-            logger.info(df.to_markdown())
+            print(df.to_markdown())
