@@ -96,12 +96,28 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     except:
                         raise Exception(
                             "The criteria dict couldn't be parsed correctly. It has to have the json representation of CriteriaWithOptions"
-                        )
+                        ) from None
                 elif isinstance(task_data_criteria, str):
-                    criteria = fetch_artifact(task_data_criteria)[0]
+                    try:
+                        criteria = fetch_artifact(task_data_criteria)[0]
+                    except Exception:
+                        # Criteria can't be converted into an artifact
+                        # Use it a the description of a Yes/No criteria
+                        criteria = CriteriaWithOptions(
+                            name=f"Unknown ({task_data_criteria[:20]}...)",
+                            description=task_data_criteria,
+                            options=[
+                                CriteriaOption(name="Yes", description=""),
+                                CriteriaOption(name="No", description=""),
+                            ],
+                            option_map={
+                                "Yes": 1.0,
+                                "No": 0.0,
+                            },
+                        )
                 else:
                     raise Exception(
-                        f"The criteria needs to be of type str (criteria catalog name) or dict (criteria json representation). Instead, it is of type {type(task_data_criteria)}"
+                        f"The criteria needs to be of type str (criteria catalog name or yes/no-criteria description) or dict (criteria json representation). Instead, it is of type {type(task_data_criteria)}"
                     )
                 criterias.append(criteria)
         else:
@@ -333,10 +349,6 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     ]["prediction"]
                     if self.check_positional_bias
                     else None,
-                    "option_selection_prompt": option_selection_prompts[i],
-                    "posional_bias_option_selection_prompt": option_selection_prompts[
-                        i + evaluations_count
-                    ],
                     "summary": summarization_outputs[i]
                     if self.generate_summaries
                     else None,
