@@ -1,4 +1,6 @@
-from .api import infer, select
+from typing import Optional
+
+from .api import infer
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
@@ -7,8 +9,8 @@ from .eval_assist_constants import (
     OptionSelectionStrategyEnum,
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
-from .inference import NoInputLogProbsError
 from .task import Task
+from .templates import Template
 
 
 class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
@@ -136,6 +138,31 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         )
         return criterias
 
+    def perform_evaluation_step(
+        self,
+        instances: list,
+        task: Task,
+        template: Template,
+        previous_messages: Optional[list[dict[str, str]]] = None,
+    ):
+        outputs_dataset = infer(
+            instances,
+            task=task,
+            engine=self.inference_engine,
+            template=template,
+            format=self.format,
+            return_data=True,
+            previous_messages=previous_messages,
+        )
+        prompts: list[str] = [instance["source"] for instance in outputs_dataset]
+        raw_predictions: list[str] = [
+            instance["raw_prediction"] for instance in outputs_dataset
+        ]
+        predictions: list[str] = [
+            instance["prediction"] for instance in outputs_dataset
+        ]
+        return (prompts, raw_predictions, predictions)
+
     def compute(
         self,
         references: list[list[str]],
@@ -191,23 +218,9 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 display_options_instruction_list,
             )
         ]
-
-        assessment_outputs_dataset = infer(
-            assessment_instances,
-            task=self.assessment_task,
-            engine=self.inference_engine,
-            template=self.assessment_template,
-            format=self.format,
-            return_data=True,
+        assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
+            assessment_instances, self.assessment_task, self.assessment_template
         )
-        assessment_prompts: list[str] = [
-            instance["source"] for instance in assessment_outputs_dataset
-        ]
-
-        assessment_outputs: list[str] = [
-            instance["prediction"] for instance in assessment_outputs_dataset
-        ]
-
         self.logger.info("The assessment was generated successfully.")
 
         if self.generate_summaries:
@@ -221,26 +234,18 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     assessment_for_summaries_slice
                 ]
             ]
-
-            summarization_outputs_dataset = infer(
+            (
+                summarization_prompts,
+                summarization_outputs,
+                _,
+            ) = self.perform_evaluation_step(
                 summarization_instances,
-                task=self.summarization_task,
-                engine=self.inference_engine,
-                template=self.summarization_template,
-                format=self.format,
-                return_data=True,
+                self.summarization_task,
+                self.summarization_template,
             )
-
-            summarization_prompts: list[str] = [
-                instance["source"] for instance in summarization_outputs_dataset
-            ]
-            summarization_outputs: list[str] = [
-                instance["prediction"] for instance in summarization_outputs_dataset
-            ]
-
             self.logger.info("The summary was generated successfully.")
 
-        selection_instances = [
+        option_selection_instances = [
             {
                 "criteria_description": criteria_description,
                 "score_option_instruction": score_option_instruction,
@@ -261,60 +266,51 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             )
         ]
 
-        parse_output_logprobs_failed = False
-        if (
-            self.option_selection_strategy
-            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-        ):
-            try:
-                option_selection_outputs_dataset = select(
-                    selection_instances,
-                    engine=self.inference_engine,
-                    task=self.option_selection_task,
-                    template=self.option_selection_template,
-                    format=self.format,
-                    return_data=True,
-                    previous_messages=previous_messages,
-                )
-                option_selection_prompts: list[str] = [
-                    instance["source"] for instance in option_selection_outputs_dataset
-                ]
-                option_selection_outputs: list[str] = [
-                    instance["prediction"]
-                    for instance in option_selection_outputs_dataset
-                ]
-                selections = option_selection_outputs
-            except NoInputLogProbsError as e:
-                self.logger.error(f"An error occurred: {e}")
-                self.logger.warning(
-                    f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
-                )
-                parse_output_logprobs_failed = True
+        # parse_output_logprobs_failed = False
+        # if (
+        #     self.option_selection_strategy
+        #     == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+        # ):
+        #     try:
+        #         option_selection_outputs_dataset = select(
+        #             judgement_instances,
+        #             engine=self.inference_engine,
+        #             task=self.option_selection_task,
+        #             template=self.option_selection_template,
+        #             format=self.format,
+        #             return_data=True,
+        #             previous_messages=previous_messages,
+        #         )
+        #         option_selection_prompts: list[str] = [
+        #             instance["source"] for instance in option_selection_outputs_dataset
+        #         ]
+        #         option_selection_outputs: list[str] = [
+        #             instance["prediction"]
+        #             for instance in option_selection_outputs_dataset
+        #         ]
+        #         selections = option_selection_outputs
+        #     except NoInputLogProbsError as e:
+        #         self.logger.error(f"An error occurred: {e}")
+        #         self.logger.warning(
+        #             f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
+        #         )
+        #         parse_output_logprobs_failed = True
 
-        if (
-            self.option_selection_strategy
-            == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-            or parse_output_logprobs_failed
-        ):
-            option_selection_outputs_dataset = infer(
-                selection_instances,
-                task=self.option_selection_task,
-                engine=self.inference_engine,
-                template=self.option_selection_template,
-                format=self.format,
-                return_data=True,
-                previous_messages=previous_messages,
-            )
-            option_selection_prompts: list[str] = [
-                instance["source"] for instance in option_selection_outputs_dataset
-            ]
-            option_selection_outputs: list[str] = [
-                instance["raw_prediction"]
-                for instance in option_selection_outputs_dataset
-            ]
-            selections: list[str] = [
-                instance["prediction"] for instance in option_selection_outputs_dataset
-            ]
+        # if (
+        #     self.option_selection_strategy
+        #     == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+        #     or parse_output_logprobs_failed
+        # ):
+        (
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+        ) = self.perform_evaluation_step(
+            option_selection_instances,
+            self.option_selection_task,
+            self.option_selection_template,
+            previous_messages,
+        )
 
         self.logger.info("The selections were calculated successfully.")
 
@@ -343,10 +339,10 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     "positional_bias_selected_option": selections[evaluations_count + i]
                     if self.check_positional_bias
                     else None,
-                    "assessment": assessment_outputs_dataset[i]["prediction"],
-                    "positional_bias_assessment": assessment_outputs_dataset[
+                    "assessment": assessment_outputs[i],
+                    "positional_bias_assessment": assessment_outputs[
                         i + evaluations_count
-                    ]["prediction"]
+                    ]
                     if self.check_positional_bias
                     else None,
                     "summary": summarization_outputs[i]
