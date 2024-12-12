@@ -126,10 +126,14 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 "contest_results": [],
                 "selections": [],
                 "compared_to": [],
-                "completions": [],
+                "assessments": [],
+                "positional_bias_assessments": [],
+                "option_selection_outputs": [],
                 "positional_bias": [],
-                "positional_bias_completions": [],
+                "positional_bias_option_selection_outputs": [],
                 "prompts": {
+                    "assessment": [],
+                    "positional_bias_assessment": [],
                     "option_selection": [],
                     "positional_bias_option_selection": [],
                     "summary": [],
@@ -157,6 +161,18 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             per_response_results[response_name_2]["contest_results"].append(
                 selected_response_name == response_name_2
             )
+            per_response_results[response_name_1]["assessments"].append(
+                assessment_outputs[i]
+            )
+            per_response_results[response_name_1]["positional_bias_assessments"].append(
+                assessment_outputs[contests_count + i]
+            )
+            per_response_results[response_name_1]["selections"].append(
+                selected_response_name
+            )
+            per_response_results[response_name_2]["selections"].append(
+                selected_response_name
+            )
             per_response_results[response_name_1]["selections"].append(
                 selected_response_name
             )
@@ -171,7 +187,12 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             per_response_results[response_name_2]["compared_to"].append(
                 f"{response_name_1}"
             )
-
+            per_response_results[response_name_1]["prompts"]["assessment"].append(
+                assessment_prompts[i]
+            )
+            per_response_results[response_name_2]["prompts"]["assessment"].append(
+                assessment_prompts[i]
+            )
             if self.generate_summaries:
                 # add summaries
                 per_response_results[response_name_1]["prompts"]["summary"].append(
@@ -205,6 +226,12 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
                 # add prompts
                 per_response_results[response_name_1]["prompts"][
+                    "positional_bias_assessment"
+                ].append(assessment_prompts[contests_count + i])
+                per_response_results[response_name_2]["prompts"][
+                    "positional_bias_assessment"
+                ].append(assessment_prompts[contests_count + i])
+                per_response_results[response_name_1]["prompts"][
                     "positional_bias_option_selection"
                 ].append(option_selection_prompts[contests_count + i])
                 per_response_results[response_name_2]["prompts"][
@@ -215,18 +242,18 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 self.option_selection_strategy
                 == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
             ):
-                per_response_results[response_name_1]["completions"].append(
-                    option_selection_outputs[i]
-                )
-                per_response_results[response_name_2]["completions"].append(
-                    option_selection_outputs[i]
-                )
+                per_response_results[response_name_1][
+                    "option_selection_outputs"
+                ].append(option_selection_outputs[i])
+                per_response_results[response_name_2][
+                    "option_selection_outputs"
+                ].append(option_selection_outputs[i])
                 if self.check_positional_bias:
                     per_response_results[response_name_1][
-                        "positional_bias_completions"
+                        "positional_bias_option_selection_outputs"
                     ].append(option_selection_outputs[contests_count + i])
                     per_response_results[response_name_2][
-                        "positional_bias_completions"
+                        "positional_bias_option_selection_outputs"
                     ].append(option_selection_outputs[contests_count + i])
 
         # add winrate
