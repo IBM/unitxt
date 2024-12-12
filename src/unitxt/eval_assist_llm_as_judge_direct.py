@@ -1,6 +1,3 @@
-from typing import Optional
-
-from .api import infer
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
@@ -10,7 +7,6 @@ from .eval_assist_constants import (
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 from .task import Task
-from .templates import Template
 
 
 class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
@@ -137,31 +133,6 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             f"Criteria names are '{', '.join([criteria.name for criteria in list(set(criterias))])}'"
         )
         return criterias
-
-    def perform_evaluation_step(
-        self,
-        instances: list,
-        task: Task,
-        template: Template,
-        previous_messages: Optional[list[dict[str, str]]] = None,
-    ):
-        outputs_dataset = infer(
-            instances,
-            task=task,
-            engine=self.inference_engine,
-            template=template,
-            format=self.format,
-            return_data=True,
-            previous_messages=previous_messages,
-        )
-        prompts: list[str] = [instance["source"] for instance in outputs_dataset]
-        raw_predictions: list[str] = [
-            instance["raw_prediction"] for instance in outputs_dataset
-        ]
-        predictions: list[str] = [
-            instance["prediction"] for instance in outputs_dataset
-        ]
-        return (prompts, raw_predictions, predictions)
 
     def compute(
         self,
@@ -311,7 +282,6 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             self.option_selection_template,
             previous_messages,
         )
-
         self.logger.info("The selections were calculated successfully.")
 
         positional_bias = None

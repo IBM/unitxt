@@ -1,13 +1,11 @@
 import itertools
 
-from .api import infer, select
 from .eval_assist_chat_templates import pairwise_comparison_template_dict
 from .eval_assist_constants import (
     Criteria,
     OptionSelectionStrategyEnum,
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
-from .inference import NoInputLogProbsError
 from .task import Task
 
 
@@ -109,21 +107,19 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         self.logger.info(f"First criteria name is '{criterias[0].name}'")
         return criterias
 
-    def compute(
+    def get_results(
         self,
-        references: list[list[str]],
-        predictions: list[str],
-        task_data: list[dict[str, str]],
-    ) -> dict:
-        self.logger.info(
-            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
-        )
-        evaluations_count = len(predictions)
-        combination_indexes = list(itertools.combinations(range(evaluations_count), 2))
-        contests_count = len(combination_indexes)
-        self.logger.info(
-            f"The evaluation will perform {contests_count} pairwise comparisons"
-        )
+        assessment_prompts,
+        assessment_outputs,
+        summarization_prompts,
+        summarization_outputs,
+        option_selection_prompts,
+        option_selection_outputs,
+        selections,
+        evaluations_count,
+        contests_count,
+        combination_indexes,
+    ):
         per_response_results = {
             f"{i+1}": {
                 "summaries": [],
@@ -142,211 +138,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             for i in range(evaluations_count)
         }
 
-        response_pairs: list[list[str]] = []
-        option_pairs: list[list[str]] = []
-        for combination in combination_indexes:
-            (response_name_1, response_name_2) = combination
-            response_pairs.append(
-                [predictions[response_name_1], predictions[response_name_2]]
-            )
-            option_pairs.append([f"{response_name_1 + 1}", f"{response_name_2 + 1}"])
-
-        task_data = [task_data[0]] * contests_count
-
-        criterias = self.get_criterias(task_data, contests_count)
-        contexts = self.get_contexts(task_data)
-
-        if self.check_positional_bias:
-            criterias += criterias
-            contexts += contexts
-            predictions += predictions
-            response_pairs += [
-                list(reversed(response_pair)) for response_pair in response_pairs
-            ]
-            option_pairs += [
-                list(reversed(option_pair)) for option_pair in option_pairs
-            ]
-
-        assessment_for_summaries_slice = slice(0, contests_count)
-
-        assessment_instances = [
-            {
-                "context_variables": context,
-                "response_a": response_pair[0],
-                "response_b": response_pair[1],
-                "option_a": option_pair[0],
-                "option_b": option_pair[1],
-                "criteria_name": criteria.name,
-                "criteria_description": criteria.description,
-                "data_classification_policy": ["public"],
-            }
-            for context, criteria, response_pair, option_pair in zip(
-                contexts, criterias, response_pairs, option_pairs
-            )
-        ]
-
-        assessment_outputs_dataset = infer(
-            assessment_instances,
-            task=self.assessment_task,
-            engine=self.inference_engine,
-            template=self.assessment_template,
-            return_data=True,
-            format=self.format,
-        )
-
-        assessment_prompts: list[str] = [
-            instance["source"] for instance in assessment_outputs_dataset
-        ]
-        assessment_outputs: list[str] = [
-            instance["prediction"] for instance in assessment_outputs_dataset
-        ]
-
-        self.logger.info("The assessment was generated successfully.")
-
-        # Summarisation Stage
-        if self.generate_summaries:
-            summarization_instances = [
-                {
-                    "assessment": assessment_output,
-                    "data_classification_policy": ["public"],
-                }
-                for assessment_output in assessment_outputs[
-                    assessment_for_summaries_slice
-                ]
-            ]
-
-            summarization_outputs_dataset = infer(
-                summarization_instances,
-                task=self.summarization_task,
-                engine=self.inference_engine,
-                template=self.summarization_template,
-                format=self.format,
-                return_data=True,
-            )
-
-            summarization_prompts: list[str] = [
-                instance["source"] for instance in summarization_outputs_dataset
-            ]
-            summarization_outputs: list[str] = [
-                instance["prediction"] for instance in summarization_outputs_dataset
-            ]
-
-            self.logger.info("The summary was generated successfully.")
-
-        choose_response_instructions = [
-            "".join(
-                [
-                    f'Choose "{option}" if Response {option} is better quality.\n'
-                    for option in option_pair
-                ]
-            )
-            for option_pair in option_pairs
-        ]
-        assessment_instances = [
-            {
-                "context_variables": context,
-                "response": prediction,
-                "choose_response_instruction": choose_response_instruction,
-                "data_classification_policy": ["public"],
-            }
-            for context, prediction, choose_response_instruction in zip(
-                contexts, predictions, choose_response_instructions
-            )
-        ]
-        score_option_instruction_list = [
-            "".join(
-                [
-                    f'Choose "{option}" if Response {option} is better quality.\n'
-                    for option in option_pair
-                ]
-            )
-            for option_pair in option_pairs
-        ]
-
-        option_selection_instances = [
-            {
-                "choose_response_instruction": choose_response_instruction,
-                "options": [f"Response {option}" for option in option_pair],
-                "score_option_instruction": score_option_instruction,
-                "data_classification_policy": ["public"],
-            }
-            for choose_response_instruction, option_pair, score_option_instruction in zip(
-                choose_response_instructions,
-                option_pairs,
-                score_option_instruction_list,
-            )
-        ]
-
-        previous_messages = [
-            [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
-            for assessment_prompt, assessment_output in zip(
-                assessment_prompts, assessment_outputs
-            )
-        ]
-
-        parse_output_logprobs_failed = False
-        if (
-            self.option_selection_strategy
-            == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-        ):
-            try:
-                option_selection_outputs_dataset = select(
-                    option_selection_instances,
-                    engine=self.inference_engine,
-                    task=self.option_selection_task,
-                    template=self.option_selection_template,
-                    return_data=True,
-                    format=self.format,
-                    previous_messages=previous_messages,
-                )
-                option_selection_prompts: list[str] = [
-                    instance["source"] for instance in option_selection_outputs_dataset
-                ]
-                option_selection_outputs: list[str] = [
-                    instance["prediction"]
-                    for instance in option_selection_outputs_dataset
-                ]
-                selections = option_selection_outputs
-                # take the number of the response from 'Response n'
-            except NoInputLogProbsError as e:
-                self.logger.error(f"An error occurred: {e}")
-                self.logger.warning(
-                    f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
-                )
-                parse_output_logprobs_failed = True
-
-        if (
-            self.option_selection_strategy
-            == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-            or parse_output_logprobs_failed
-        ):
-            option_selection_outputs_dataset = infer(
-                option_selection_instances,
-                task=self.option_selection_task,
-                engine=self.inference_engine,
-                template=self.option_selection_template,
-                return_data=True,
-                format=self.format,
-                previous_messages=previous_messages,
-            )
-            option_selection_prompts: list[str] = [
-                instance["source"] for instance in option_selection_outputs_dataset
-            ]
-            option_selection_outputs: list[str] = [
-                instance["raw_prediction"]
-                for instance in option_selection_outputs_dataset
-            ]
-            selections: list[str] = [
-                instance["prediction"] for instance in option_selection_outputs_dataset
-            ]
-
-        # Selections are of the form 'Response n', so we just keep n
-        selections = [selection.split(" ")[-1] for selection in selections]
-
-        self.logger.info("The selections were calculated successfully.")
-
         ### process results
-
         positional_bias = None
         if self.check_positional_bias:
             positional_bias = [
@@ -455,6 +247,198 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             # add response name
             per_response_results[key]["response_name"] = key
 
+        return per_response_results
+
+    def compute(
+        self,
+        references: list[list[str]],
+        predictions: list[str],
+        task_data: list[dict[str, str]],
+    ) -> dict:
+        self.logger.info(
+            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
+        )
+        evaluations_count = len(predictions)
+        combination_indexes = list(itertools.combinations(range(evaluations_count), 2))
+        contests_count = len(combination_indexes)
+        self.logger.info(
+            f"The evaluation will perform {contests_count} pairwise comparisons"
+        )
+
+        response_pairs: list[list[str]] = []
+        option_pairs: list[list[str]] = []
+        for combination in combination_indexes:
+            (response_name_1, response_name_2) = combination
+            response_pairs.append(
+                [predictions[response_name_1], predictions[response_name_2]]
+            )
+            option_pairs.append([f"{response_name_1 + 1}", f"{response_name_2 + 1}"])
+
+        task_data = [task_data[0]] * contests_count
+
+        criterias = self.get_criterias(task_data, contests_count)
+        contexts = self.get_contexts(task_data)
+
+        if self.check_positional_bias:
+            criterias += criterias
+            contexts += contexts
+            predictions += predictions
+            response_pairs += [
+                list(reversed(response_pair)) for response_pair in response_pairs
+            ]
+            option_pairs += [
+                list(reversed(option_pair)) for option_pair in option_pairs
+            ]
+
+        assessment_for_summaries_slice = slice(0, contests_count)
+
+        assessment_instances = [
+            {
+                "context_variables": context,
+                "response_a": response_pair[0],
+                "response_b": response_pair[1],
+                "option_a": option_pair[0],
+                "option_b": option_pair[1],
+                "criteria_name": criteria.name,
+                "criteria_description": criteria.description,
+                "data_classification_policy": ["public"],
+            }
+            for context, criteria, response_pair, option_pair in zip(
+                contexts, criterias, response_pairs, option_pairs
+            )
+        ]
+        assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
+            assessment_instances, self.assessment_task, self.assessment_template
+        )
+        self.logger.info("The assessment was generated successfully.")
+
+        # Summarisation Stage
+        summarization_prompts = None
+        summarization_outputs = None
+        if self.generate_summaries:
+            summarization_instances = [
+                {
+                    "assessment": assessment_output,
+                    "data_classification_policy": ["public"],
+                }
+                for assessment_output in assessment_outputs[
+                    assessment_for_summaries_slice
+                ]
+            ]
+
+            (
+                summarization_prompts,
+                summarization_outputs,
+                _,
+            ) = self.perform_evaluation_step(
+                summarization_instances,
+                self.summarization_task,
+                self.summarization_template,
+            )
+            self.logger.info("The summary was generated successfully.")
+
+            self.logger.info("The summary was generated successfully.")
+
+        choose_response_instructions = [
+            "".join(
+                [
+                    f'Choose "{option}" if Response {option} is better quality.\n'
+                    for option in option_pair
+                ]
+            )
+            for option_pair in option_pairs
+        ]
+        score_option_instruction_list = [
+            "".join(
+                [
+                    f'Choose "{option}" if Response {option} is better quality.\n'
+                    for option in option_pair
+                ]
+            )
+            for option_pair in option_pairs
+        ]
+        option_selection_instances = [
+            {
+                "choose_response_instruction": choose_response_instruction,
+                "options": [f"Response {option}" for option in option_pair],
+                "score_option_instruction": score_option_instruction,
+                "data_classification_policy": ["public"],
+            }
+            for choose_response_instruction, option_pair, score_option_instruction in zip(
+                choose_response_instructions,
+                option_pairs,
+                score_option_instruction_list,
+            )
+        ]
+        previous_messages = [
+            [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
+            for assessment_prompt, assessment_output in zip(
+                assessment_prompts, assessment_outputs
+            )
+        ]
+
+        # parse_output_logprobs_failed = False
+        # if (
+        #     self.option_selection_strategy
+        #     == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+        # ):
+        #     try:
+        #         option_selection_outputs_dataset = select(
+        #             option_selection_instances,
+        #             engine=self.inference_engine,
+        #             task=self.option_selection_task,
+        #             template=self.option_selection_template,
+        #             return_data=True,
+        #             format=self.format,
+        #             previous_messages=previous_messages,
+        #         )
+        #         option_selection_prompts: list[str] = [
+        #             instance["source"] for instance in option_selection_outputs_dataset
+        #         ]
+        #         option_selection_outputs: list[str] = [
+        #             instance["prediction"]
+        #             for instance in option_selection_outputs_dataset
+        #         ]
+        #         selections = option_selection_outputs
+        #         # take the number of the response from 'Response n'
+        #     except NoInputLogProbsError as e:
+        #         self.logger.error(f"An error occurred: {e}")
+        #         self.logger.warning(
+        #             f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
+        #         )
+        #         parse_output_logprobs_failed = True
+
+        # if (
+        #     self.option_selection_strategy
+        #     == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+        #     or parse_output_logprobs_failed
+        # ):
+        (
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+        ) = self.perform_evaluation_step(
+            option_selection_instances,
+            self.option_selection_task,
+            self.option_selection_template,
+            previous_messages,
+        )
+        # Selections are of the form 'Response n', so we just keep n
+        selections = [selection.split(" ")[-1] for selection in selections]
+        self.logger.info("The selections were calculated successfully.")
+
+        per_response_results = self.get_results(
+            assessment_prompts,
+            assessment_outputs,
+            summarization_prompts,
+            summarization_outputs,
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+            evaluations_count,
+            contests_count,
+            combination_indexes,
+        )
         # remove None values from the result dict, e.g. when positional_bias_check is False there is no positional_bias entry in the dict
         return [
             {
