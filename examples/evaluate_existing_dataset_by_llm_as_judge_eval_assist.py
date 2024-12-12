@@ -66,7 +66,7 @@ print_dict(
 for criteria in criterias:
     logger.info(f"Scores for criteria '{criteria}'")
     gold_answer_scores = [
-        instance["score"]["instance"][f"{criteria}_mapped_score"]
+        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
         for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
@@ -74,7 +74,7 @@ for criteria in criterias:
         for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][f"{criteria}_mapped_score"]
+        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
         for instance in evaluated_predictions
     ]
     prediction_position_bias = [
