@@ -53,7 +53,7 @@ If you want to evaluate with few templates or few num_demos you can run:
 
 .. code-block:: python
 
-  dataset = load_dataset(card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],demos_pool_size=10,max_test_instances=100',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],demos_pool_size=10,max_test_instances=100)
 
 This will randomly sample from the templates and for each instance assign a random template from the list and run number of demonstration from the list.
 
@@ -63,6 +63,6 @@ add them all together ``group_by=["template", "num_demos", ["template", "num_dem
 
 .. code-block:: python
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],group_by=[template,num_demos,[template,num_demos]],demos_pool_size=10,max_test_instances=100',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],group_by=["template","num_demos",["template","num_demos"]],demos_pool_size=10,max_test_instances=100)
 
 The grouping can be done based on any field of the task or the metadata, so for classification task you can also group by label with ``group_by=["label"]``.
