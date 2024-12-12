@@ -383,11 +383,11 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
 
     # if format is not directly set in constructor, choose according to the inference model
     def set_format_for_inference_engine(self):
-        model_name = self.inference_model.get_engine_id()
-        if re.search("llama.?3.*instruct", model_name):
-            format_name = "formats.llama3_instruct"
-        else:
-            format_name = "formats.empty"
+        # model_name = self.inference_model.get_engine_id()
+        # if re.search("llama.?3.*instruct", model_name):
+        #     format_name = "formats.llama3_instruct"
+        # else:
+        format_name = "formats.empty"
         self.format = self.get_artifact(format_name)
 
     def get_full_task_name(self):
