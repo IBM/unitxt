@@ -93,8 +93,8 @@ Now the source text (input to the model) of the first sample in the training set
 Loading in Chat API format
 --------------------------
 
-Unitxt now can produces data in the widely adopted Chat API format.
-This ensures compatibility with popular LLM Provider APIs and avoid the need from custom per model formatting.
+Unitxt can now produce data in the widely adopted Chat API format.
+This ensures compatibility with popular LLM Provider APIs and avoid the need for custom per model formatting.
 Additionally, the format supports multiple modalities such as text, images, and videos.
 
 This is done by specifying `fromats.chat_api` in the format field, when loading the dataset.
