@@ -46,6 +46,7 @@ metric = EvalAssistLLMAsJudgeDirect(
     option_selection_strategy="PARSE_OUTPUT_TEXT",
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     criteria=criteria,
+    context_fields=["question"],
 )
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
