@@ -132,15 +132,7 @@ class ImageFieldOperator(FieldOperator, PillowMixin):
 
 
 class ImageAugmentor(TaskInputsAugmentor, PillowMixin):
-    """A super class for image processing classes.
-
-    Args:
-        augmented_type (any):
-            :class:`templates<unitxt.types.Image>`
-
-    """
-
-    augmented_type: Any = Image
+    augmented_type: object = Image
 
     @abstractmethod
     def process_image(self, image: Any):
