@@ -1,16 +1,6 @@
 from ..operators import FieldOperator
 
 
-def process_value(self, text: str) -> str:
-    text = text.strip()
-    text = text.removeprefix("```")
-    text = text.removeprefix("sql")
-    text = text.removesuffix("```")
-    if "```" in text:
-        text = text.split("```")[0]
-    return text
-
-
 class AddPrefix(FieldOperator):
     prefix: str
 
@@ -32,4 +22,16 @@ class GetSQL(FieldOperator):
             return text[text.find("SELECT") : text.find(";") + 1]
         if "SELECT" in text:
             return text[text.find("SELECT") :]
+        return text
+
+
+class StripCodeBlock(FieldOperator):
+    def process_value(self, text: str) -> str:
+        text = text.strip()
+        if text.startswith("```sql"):
+            text = text.replace("```sql", "", 1)
+        if text.endswith("```"):
+            text = text.replace("```", "", 1)
+        if "```" in text:
+            text = text.split("```")[0]
         return text
