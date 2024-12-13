@@ -4,7 +4,8 @@
         "id": "str",
         "utterance": "str",
         "db_id": "str",
-        "dbms": "str"
+        "dbms": "str",
+        "evidence": "str"
     },
     "reference_fields": {
         "query": "str"
