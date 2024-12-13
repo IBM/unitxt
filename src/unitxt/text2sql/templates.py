@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from ..blocks import InputOutputTemplate
 from .data_utils import SQLData
@@ -17,7 +17,7 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
 
     instruction: str = ""
     num_samples: int = 0
-    use_schema_linking: bool = True
+    # use_schema_linking: bool = True
     use_oracle_knowledge: bool = True
     db_type: str = "sqlite"
 
@@ -29,16 +29,16 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
     def input_fields_to_source(self, inputs: Dict[str, Any]) -> str:
         db_id: str = inputs["db_id"]
         question: str = inputs["utterance"]
-        if self.use_schema_linking:
-            tables: Optional[List[str]] = inputs.get("table_mentions")
-            columns: Optional[List[str]] = inputs.get("column_mentions")
-        else:
-            tables, columns = None, None
+        # if self.use_schema_linking:
+        #     tables: Optional[List[str]] = inputs.get("table_mentions")
+        #     columns: Optional[List[str]] = inputs.get("column_mentions")
+        # else:
+        #     tables, columns = None, None
         schema_text: str = SQLData().generate_schema_prompt(
             db_id,
             self.db_type,
-            tables,
-            columns,
+            # tables,
+            # columns,
             num_rows_from_table_to_add=self.num_samples,
         )
 
@@ -55,6 +55,7 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
             evidence = "; ".join(evidence) if isinstance(evidence, list) else evidence
             inputs["evidence"] = evidence
             evidence: Union[str, List[str]] = inputs["evidence"]
+
         return self.apply_formatting(
             inputs,
             "input field",
