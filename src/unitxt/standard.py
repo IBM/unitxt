@@ -203,7 +203,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.metadata,
             self.standardization,
             self.processing,
-            self.metadata,
             self.verbalization,
             self.finalize,
         ]
@@ -213,7 +212,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.inference_instance.steps = [
             self.metadata,
             self.processing,
-            self.metadata,
         ]
 
         self.inference_demos = SourceSequentialOperator()
@@ -223,7 +221,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.metadata,
             self.standardization,
             self.processing,
-            self.metadata,
         ]
 
         self.inference = SequentialOperator()
@@ -469,39 +466,66 @@ class StandardRecipe(StandardRecipeWithIndexes):
     with all necessary steps, refiners and renderers included. It allows to set various
     parameters and steps in a sequential manner for preparing the recipe.
 
-    Attributes:
-        card (TaskCard): TaskCard object associated with the recipe.
-        template (Template, optional): Template object to be used for the recipe.
-        system_prompt (SystemPrompt, optional): SystemPrompt object to be used for the recipe.
-        loader_limit (int, optional): Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
-        format (SystemFormat, optional): SystemFormat object to be used for the recipe.
-        metrics (List[str]): list of catalog metrics to use with this recipe.
-        postprocessors (List[str]): list of catalog processors to apply at post processing. (Not recommended to use from here)
-        group_by (List[Union[str, List[str]]]): list of task_data or metadata keys to group global scores by.
-        train_refiner (StreamRefiner, optional): Train refiner to be used in the recipe.
-        max_train_instances (int, optional): Maximum training instances for the refiner.
-        validation_refiner (StreamRefiner, optional): Validation refiner to be used in the recipe.
-        max_validation_instances (int, optional): Maximum validation instances for the refiner.
-        test_refiner (StreamRefiner, optional): Test refiner to be used in the recipe.
-        max_test_instances (int, optional): Maximum test instances for the refiner.
-        demos_pool_size (int, optional): Size of the demos pool.
-        num_demos (int, optional): Number of demos to be used.
-        demos_pool_name (str, optional): Name of the demos pool. Default is "demos_pool".
-        demos_taken_from (str, optional): Specifies from where the demos are taken. Default is "train".
-        demos_field (str, optional): Field name for demos. Default is "demos".
-        demos_removed_from_data (bool, optional): whether to remove the demos from the source data, Default is True
-        sampler (Sampler, optional): The Sampler used to select the demonstrations when num_demos > 0.
-        steps (List[StreamingOperator], optional): List of StreamingOperator objects to be used in the recipe.
-        augmentor (Augmentor) : Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional): Index of instruction card to be used for preparing the recipe.
-        template_card_index (int, optional): Index of template card to be used for preparing the recipe.
+    Args:
+        card (TaskCard):
+            TaskCard object associated with the recipe.
+        template (Template, optional):
+            Template object to be used for the recipe.
+        system_prompt (SystemPrompt, optional):
+            SystemPrompt object to be used for the recipe.
+        loader_limit (int, optional):
+            Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
+        format (SystemFormat, optional):
+            SystemFormat object to be used for the recipe.
+        metrics (List[str]):
+            list of catalog metrics to use with this recipe.
+        postprocessors (List[str]):
+            list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]):
+            list of task_data or metadata keys to group global scores by.
+        train_refiner (StreamRefiner, optional):
+            Train refiner to be used in the recipe.
+        max_train_instances (int, optional):
+            Maximum training instances for the refiner.
+        validation_refiner (StreamRefiner, optional):
+            Validation refiner to be used in the recipe.
+        max_validation_instances (int, optional):
+            Maximum validation instances for the refiner.
+        test_refiner (StreamRefiner, optional):
+            Test refiner to be used in the recipe.
+        max_test_instances (int, optional):
+            Maximum test instances for the refiner.
+        demos_pool_size (int, optional):
+            Size of the demos pool.
+        num_demos (int, optional):
+            Number of demos to be used.
+        demos_pool_name (str, optional):
+            Name of the demos pool. Default is "demos_pool".
+        demos_taken_from (str, optional):
+            Specifies from where the demos are taken. Default is "train".
+        demos_field (str, optional):
+            Field name for demos. Default is "demos".
+        demos_removed_from_data (bool, optional):
+            whether to remove the demos from the source data, Default is True
+        sampler (Sampler, optional):
+            The Sampler used to select the demonstrations when num_demos > 0.
+        steps (List[StreamingOperator], optional):
+            List of StreamingOperator objects to be used in the recipe.
+        augmentor (Augmentor) :
+            Augmentor to be used to pseudo randomly augment the source text
+        instruction_card_index (int, optional):
+            Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional):
+            Index of template card to be used for preparing the recipe.
 
     Methods:
-        prepare(): This overridden method is used for preparing the recipe
-        by arranging all the steps, refiners, and renderers in a sequential manner.
+        prepare():
+            This overridden method is used for preparing the recipe
+            by arranging all the steps, refiners, and renderers in a sequential manner.
 
     Raises:
-        AssertionError: If both template and template_card_index are specified at the same time.
+        AssertionError:
+            If both template and template_card_index are specified at the same time.
     """
 
     pass
