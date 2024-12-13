@@ -24,14 +24,16 @@ class Text2SQLInputOutputTemplate(InputOutputTemplate):
     def reference_fields_to_target_and_references(
         self, outputs: Dict[str, str]
     ) -> Tuple[str, List[str]]:
-        return (outputs["sql"], [outputs["sql"]])
+        return (outputs["query"], [outputs["query"]])
 
     def input_fields_to_source(self, inputs: Dict[str, Any]) -> str:
         db_id: str = inputs["db_id"]
-        question: str = inputs["question"]
+        question: str = inputs["utterance"]
         if self.use_schema_linking:
             tables: Optional[List[str]] = inputs.get("table_mentions")
             columns: Optional[List[str]] = inputs.get("column_mentions")
+        else:
+            tables, columns = None, None
         schema_text: str = SQLData().generate_schema_prompt(
             db_id,
             self.db_type,
