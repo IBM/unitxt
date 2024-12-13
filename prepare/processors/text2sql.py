@@ -11,4 +11,5 @@ add_to_catalog(
         ]
     ),
     "processors.text2sql.get_sql",
+    overwrite=True,
 )
