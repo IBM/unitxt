@@ -34,8 +34,7 @@ This example is based on this blog post explaining the prompt structure of the l
 
 So the actual template looks like this:
 
-.. Example
-::
+.. code-block:: text
 
    <s>[INST] <<SYS>>
    {{ system_prompt }}
@@ -45,8 +44,7 @@ So the actual template looks like this:
 
 An example for data point with the llama2 format and system prompt.
 
-.. Example
-::
+.. code-block:: text
 
    [INST] <<SYS>>
    You are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe.  Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.

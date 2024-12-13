@@ -58,6 +58,31 @@ in this case, the metrics calculate the accuracy of the sum of two integers, exp
 It is the responsibility of the templates, via its post processors to convert the model textual predictions
 into the `prediction_type`.
 
+A Task can define a `default_template` attribute that determines the default :ref:`Template <adding_template>` used to create the input to the model, 
+when the template is not explicitly specified by the user in the :ref:`Card <adding_dataset>` 
+definition or in the  :ref:`load_dataset <evaluating_datasets>` template argument.
+
+.. code-block:: python
+
+   from unitxt.blocks import Task
+   from unitxt.templates import InputOutputTemplate
+
+   template = InputOutputTemplate(
+         input_format="How much is {num1} plus {num2}?",
+         output_format="{sum}",
+   ) 
+    
+   task = Task(
+        input_fields={"num1" : int, "num2" : int},
+        reference_fields={"sum" : int},
+        prediction_type=int,
+        metrics=[
+            "metrics.sum_accuracy",
+            "metrics.sum_accuracy_approximate"
+        ],
+        default_template=template
+   )
+
 To register the task to the catalog
 
 .. code-block:: python

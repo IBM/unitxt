@@ -17,15 +17,23 @@ class Undefined:
 class Field:
     """An alternative to dataclasses.dataclass decorator for a more flexible field definition.
 
-    Attributes:
-        default (Any, optional): Default value for the field. Defaults to None.
-        name (str, optional): Name of the field. Defaults to None.
-        type (type, optional): Type of the field. Defaults to None.
-        default_factory (Any, optional): A function that returns the default value. Defaults to None.
-        final (bool, optional): A boolean indicating if the field is final (cannot be overridden). Defaults to False.
-        abstract (bool, optional): A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
-        required (bool, optional): A boolean indicating if the field is required. Defaults to False.
-        origin_cls (type, optional): The original class that defined the field. Defaults to None.
+    Args:
+        default (Any, optional):
+            Default value for the field. Defaults to None.
+        name (str, optional):
+            Name of the field. Defaults to None.
+        type (type, optional):
+            Type of the field. Defaults to None.
+        default_factory (Any, optional):
+            A function that returns the default value. Defaults to None.
+        final (bool, optional):
+            A boolean indicating if the field is final (cannot be overridden). Defaults to False.
+        abstract (bool, optional):
+            A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
+        required (bool, optional):
+            A boolean indicating if the field is required. Defaults to False.
+        origin_cls (type, optional):
+            The original class that defined the field. Defaults to None.
     """
 
     default: Any = Undefined
@@ -375,8 +383,8 @@ class Dataclass(metaclass=DataclassMeta):
     7. MetaClass Usage: Uses a metaclass (DataclassMeta) for customization of class creation,
        allowing checks and alterations to be made at the time of class creation, providing more control.
 
-    Example:
-    .. highlight:: python
+    :Example:
+
     .. code-block:: python
 
         class Parent(Dataclass):
@@ -533,6 +541,13 @@ class Dataclass(metaclass=DataclassMeta):
             if keep_empty or value is not None
         }
 
+    def get_repr_dict(self):
+        result = {}
+        for field in fields(self):
+            if not field.internal:
+                result[field.name] = getattr(self, field.name)
+        return result
+
     def __repr__(self) -> str:
         """String representation."""
-        return f"{self.__class__.__name__}({', '.join([f'{field.name}={getattr(self, field.name)!r}' for field in fields(self)])})"
+        return f"{self.__class__.__name__}({', '.join([f'{key}={val!r}' for key, val in self.get_repr_dict().items()])})"

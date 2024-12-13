@@ -1,37 +1,20 @@
 from unitxt import get_logger
-from unitxt.api import evaluate, load_dataset
-from unitxt.blocks import TaskCard
-from unitxt.collections_operators import Wrap
+from unitxt.api import create_dataset, evaluate
 from unitxt.inference import (
     HFPipelineBasedInferenceEngine,
 )
-from unitxt.loaders import LoadFromDictionary
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
 # Set up question answer pairs in a dictionary
-data = {
-    "test": [
-        {"question": "What is the capital of Texas?", "answer": "Austin"},
-        {"question": "What is the color of the sky?", "answer": "Blue"},
-    ]
-}
+test_set = [
+    {"question": "What is the capital of Texas?", "answers": ["Austin"]},
+    {"question": "What is the color of the sky?", "answers": ["Blue"]},
+]
 
-card = TaskCard(
-    # Load the data from the dictionary.  Data can be  also loaded from HF, CSV files, COS and other sources
-    # with different loaders.
-    loader=LoadFromDictionary(data=data),
-    # Use the standard open qa QA task input and output and metrics.
-    # It has "question" input field and "answers" output field.
-    # The default evaluation metric used is rouge.
-    task="tasks.qa.open",
-    # Because the standand QA tasks supports multiple references in the "answers" field,
-    # we wrap the raw dataset's "answer" field in a list and store in a the "answers" field.
-    preprocess_steps=[Wrap(field="answer", inside="list", to_field="answers")],
-)
 
-# Verbalize the dataset using the catalog template which adds an instructio "Answer the question.",
+# Verbalize the dataset using the catalog template which adds an instruction "Answer the question.",
 # and "Question:"/"Answer:" prefixes.
 #
 # "Answer the question.
@@ -39,21 +22,22 @@ card = TaskCard(
 #  What is the color of the sky?
 #  Answer:
 # "
-dataset = load_dataset(
-    card=card,
-    template="templates.qa.open.title",
-    format="formats.chat_api",
-    split="test",
-    max_test_instances=5,
-)
 
+dataset = create_dataset(
+    task="tasks.qa.open",
+    test_set=test_set,
+    template="templates.qa.open",
+    split="test",
+    format="formats.chat_api",
+)
 
 # Infer using Llama-3.2-1B base using HF API
 engine = HFPipelineBasedInferenceEngine(
     model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
-# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# from unitxt.inference import CrossProviderInferenceEngine
+# engine = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 
