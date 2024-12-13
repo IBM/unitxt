@@ -12,7 +12,7 @@ SQL_TIMEOUT = 100
 DOWNLOAD_LOCK_TIMEOUT = 1000
 
 # Path to the user's databases cache directory.
-USER_DATABASES_CACHE = os.environ.get("USER_DATASETS_CACHE", "cache/text2sql/databases")
+USER_DATABASES_CACHE = os.environ.get("DATABASES_CACHE", "cache/text2sql/databases")
 os.makedirs(USER_DATABASES_CACHE, exist_ok=True)
 
 # Base headers for HTTP requests.
@@ -31,7 +31,7 @@ class JSONCache:
 
     def __init__(self, filename):
         """Initializes the JSON cache."""
-        logger.info(f"Initializing JSON cache from: {filename}")
+        logger.debug(f"Initializing JSON cache from: {filename}")
         self.filename = filename
         self.cache = self.load_cache()
         self.lock_path = filename + ".lock"
