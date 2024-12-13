@@ -286,7 +286,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.loading,
             self.metadata,
             self.standardization,
-            self.processing,
+            # self.processing,
         ]
 
         self.inference = SequentialOperator()
@@ -297,14 +297,14 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
         return list(self.inference_instance(ms)[constants.inference_stream])
 
-    def production_demos_pool(self):
-        if self.use_demos:
-            demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
-            if demos_pool is None:
-                demos_pool = list(self.inference_demos()[self.demos_pool_name])
-                self.__class__._demos_pool_cache[str(self)] = demos_pool
-            return demos_pool
-        return []
+    # def production_demos_pool(self):
+    #     if self.use_demos:
+    #         demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
+    #         if demos_pool is None:
+    #             demos_pool = list(self.inference_demos()[self.demos_pool_name])
+    #             self.__class__._demos_pool_cache[str(self)] = demos_pool
+    #         return demos_pool
+    #     return []
 
     @property
     def has_custom_demos_pool(self):
@@ -317,12 +317,13 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def produce(self, task_instances):
         """Use the recipe in production to produce model ready query from standard task instance."""
         self.before_process_multi_stream()
-        streams = {
-            constants.inference_stream: self.production_preprocess(task_instances),
-        }
-        if self.use_demos:
-            streams[self.demos_pool_name] = self.production_demos_pool()
-        multi_stream = MultiStream.from_iterables(streams)
+
+        ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        # ms = self.metadata(ms)
+
+        streams = self.inference_demos()
+        streams[constants.inference_stream] = ms[constants.inference_stream]
+        multi_stream = self.processing(streams)
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 
