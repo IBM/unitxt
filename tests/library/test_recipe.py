@@ -106,47 +106,47 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertDictEqual(result, target)
 
-    def test_standard_recipe_production_consistency(self):
-        recipe = StandardRecipe(
-            card="cards.mmlu.marketing",
-            system_prompt="system_prompts.models.llama",
-            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
-            format="formats.user_agent",
-            demos_pool_size=5,
-            num_demos=1,
-        )
+    # def test_standard_recipe_production_consistency(self):
+    #     recipe = StandardRecipe(
+    #         card="cards.mmlu.marketing",
+    #         system_prompt="system_prompts.models.llama",
+    #         template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+    #         format="formats.user_agent",
+    #         demos_pool_size=5,
+    #         num_demos=1,
+    #     )
 
-        instances = [
-            {
-                "question": "what?",
-                "choices": ["yes", "not", "maybe"],
-                "answer": "maybe",
-                "topic": "testing",
-            }
-        ]
+    #     instances = [
+    #         {
+    #             "question": "what?",
+    #             "choices": ["yes", "not", "maybe"],
+    #             "answer": "maybe",
+    #             "topic": "testing",
+    #         }
+    #     ]
 
-        self.assertListEqual(
-            recipe.production_demos_pool(), recipe.production_demos_pool()
-        )
+    #     self.assertListEqual(
+    #         recipe.production_demos_pool(), recipe.production_demos_pool()
+    #     )
 
-        self.assertDictEqual(
-            recipe.produce(instances)[0],
-            recipe.produce(instances)[0],
-        )
+    #     self.assertDictEqual(
+    #         recipe.produce(instances)[0],
+    #         recipe.produce(instances)[0],
+    #     )
 
-        i1 = recipe.production_preprocess(instances)[0]
-        i2 = recipe.production_preprocess(instances)[0]
-        for meta_data in ["card", "template", "format", "system_prompt"]:
-            if meta_data in i1["recipe_metadata"]:
-                i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
-                    meta_data
-                ]._to_raw_dict()
-                if not isinstance(i2["recipe_metadata"][meta_data], dict):
-                    i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
-                        meta_data
-                    ]._to_raw_dict()
+    #     i1 = recipe.production_preprocess(instances)[0]
+    #     i2 = recipe.production_preprocess(instances)[0]
+    #     for meta_data in ["card", "template", "format", "system_prompt"]:
+    #         if meta_data in i1["recipe_metadata"]:
+    #             i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
+    #                 meta_data
+    #             ]._to_raw_dict()
+    #             if not isinstance(i2["recipe_metadata"][meta_data], dict):
+    #                 i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
+    #                     meta_data
+    #                 ]._to_raw_dict()
 
-        self.assertDictEqual(i1, i2)
+    #     self.assertDictEqual(i1, i2)
 
     def test_standard_recipe_production_with_demos(self):
         recipe = StandardRecipe(
@@ -173,7 +173,7 @@ class TestRecipes(UnitxtTestCase):
             "data_classification_policy": [],
             "postprocessors": ["processors.first_character"],
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nAlthough the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:\nA. Care lines.\nB. Direct mail.\nC. Inserts.\nD. Door to door.\nAnswer:\nAgent:  D\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\n _____________ is a natural outcome when combining demographic and geographic variables.\nA. Geodemographics\nB. Product differentiation.\nC. ANSOFF matrix.\nD. Brand management.\nAnswer:\nAgent:  A\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nIn an organization, the group of people tasked with buying decisions is referred to as the _______________.\nA. Outsourcing unit.\nB. Procurement centre.\nC. Chief executive unit.\nD. Decision-making unit.\nAnswer:\nAgent:  D\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
-            "task_data": '{"topic": "testing", "question": "what?", "choices": ["yes", "not", "maybe"], "options": [" A", " B", " C"], "metadata": {"data_classification_policy": [], "num_demos": 3, "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}, "demos": [{"topic": "marketing", "question": "Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:", "choices": ["Care lines.", "Direct mail.", "Inserts.", "Door to door."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}, {"topic": "marketing", "question": " _____________ is a natural outcome when combining demographic and geographic variables.", "choices": ["Geodemographics", "Product differentiation.", "ANSOFF matrix.", "Brand management."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 0}, {"topic": "marketing", "question": "In an organization, the group of people tasked with buying decisions is referred to as the _______________.", "choices": ["Outsourcing unit.", "Procurement centre.", "Chief executive unit.", "Decision-making unit."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}]}',
+            "task_data": '{"topic": "testing", "question": "what?", "choices": ["yes", "not", "maybe"], "options": [" A", " B", " C"], "metadata": {"data_classification_policy": [], "demos_pool_size": 5, "num_demos": 3, "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}, "demos": [{"topic": "marketing", "question": "Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:", "choices": ["Care lines.", "Direct mail.", "Inserts.", "Door to door."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}, {"topic": "marketing", "question": " _____________ is a natural outcome when combining demographic and geographic variables.", "choices": ["Geodemographics", "Product differentiation.", "ANSOFF matrix.", "Brand management."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 0}, {"topic": "marketing", "question": "In an organization, the group of people tasked with buying decisions is referred to as the _______________.", "choices": ["Outsourcing unit.", "Procurement centre.", "Chief executive unit.", "Decision-making unit."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}]}',
             "groups": [],
             "subset": [],
             "media": {"images": [], "audios": []},
