@@ -460,7 +460,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             else:
                 raise ValueError("num_demos must be int or List[int]")
-            # here for backward compatibility. to check
+
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(
@@ -483,15 +483,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             )
 
+            if isinstance(self.template, list):
+                self.verbalization.steps.append(
+                    ApplyRandomTemplate(templates=self.template)
+                )
+            else:
+                self.verbalization.steps.append(
+                    ApplySingleTemplate(template=self.template)
+                )
+
         # for backward compatibility, move the refiners here, after demos are taken from train
         self.prepare_refiners()
-
-        if isinstance(self.template, list):
-            self.verbalization.steps.append(
-                ApplyRandomTemplate(templates=self.template)
-            )
-        else:
-            self.verbalization.steps.append(ApplySingleTemplate(template=self.template))
 
         self.verbalization.steps.append(self.system_prompt)
         self.verbalization.steps.append(self.format)
