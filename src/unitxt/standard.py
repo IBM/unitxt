@@ -319,9 +319,18 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.before_process_multi_stream()
 
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
-        # ms = self.metadata(ms)
+        if not self.use_demos:
+            # go with task_instances all the way, it does not need other streams:
+            ms = self.inference_instance(ms)
+            ms = self.verbalization(ms)
+            ms = self.finalize(ms)
+            return list(ms[constants.inference_stream])
+
+        ms = self.metadata(ms)
+        # ready to join, as if passed loading and standardization
 
         streams = self.inference_demos()
+        # stopped before processing
         streams[constants.inference_stream] = ms[constants.inference_stream]
         multi_stream = self.processing(streams)
         multi_stream = self.inference(multi_stream)
@@ -389,6 +398,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 self.processing.steps.append(augmentor)
 
         # self.prepare_refiners()
+        # for backward compatibility move to after demos are taken from train
 
         if self.use_demos:
             if self.sampler is None:
@@ -450,7 +460,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
             else:
                 raise ValueError("num_demos must be int or List[int]")
-
+            # here for backward compatibility. to check
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(
