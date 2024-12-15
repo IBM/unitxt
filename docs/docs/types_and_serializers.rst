@@ -132,21 +132,11 @@ Now if you print the input of the first instance of the dataset by ``print(datas
 Adding a Serializer to a Template
 ------------------------------------
 
-Another option is to set a default serializer for a given template. When creating a template, we need to add all the serializers for all the types we want to support. For this purpose, we use a multi-type serializer that wraps all the serializers together.
-
+Another option is to set a default serializer for a given template per field. 
 .. code-block:: python
 
     from unitxt.serializers import (
-        MultiTypeSerializer, ImageSerializer, TableSerializer, DialogSerializer, ListSerializer,
-    )
-
-    serializer = MultiTypeSerializer(
-        serializers=[
-            ImageSerializer(),
-            TableSerializer(),
-            DialogSerializer(),
-            ListSerializer(),
-        ]
+        DialogSerializer
     )
 
 Now, we can add them to the template:
@@ -157,7 +147,21 @@ Now, we can add them to the template:
         instruction="Summarize the following dialog.",
         input_format="{dialog}",
         output_format="{summary}",
-        serializer=serializer
+        serializer={"dialog": DialogSerializer}
     )
 
-Important: Serializers are activated in the order they are defined, in a "first in, first serve" manner. This means that if you place the ``ListSerializer`` before the ``DialogSerializer``, the `ListSerializer` will serialize the dialog, as the ``Dialog`` is also a ``List`` and matches the type requirement of the ``ListSerializer``.
+As another example, we can use a customized ListSerializer, to format list of contexts with 
+two newlines separators, instead of the standard comma list separator. 
+
+.. code-block:: python
+
+    from unitxt.serializers import (
+        ListSerializer
+    )
+    template = MultiReferenceTemplate(
+        instruction="Answer the question based on the information provided in the document given below.\n\n",
+        input_format="Contexts:\n\n{contexts}\n\nQuestion: {question}",
+        references_field="reference_answers",
+        serializer={"contexts": ListSerializer(separator="\n\n")},
+    )
+
