@@ -39,7 +39,7 @@ dataset = create_dataset(
 
 # Infer using Llama-3.2-1B base using HF API
 engine = HFPipelineBasedInferenceEngine(
-    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # from unitxt.inference import CrossProviderInferenceEngine
@@ -59,6 +59,7 @@ print(
             "processed_prediction",
             "references",
             "score",
+            "score_name",
         ],
     )
 )
