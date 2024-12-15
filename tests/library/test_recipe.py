@@ -15,6 +15,7 @@ from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.text_utils import print_dict
 from unitxt.types import Table
+from unitxt.utils import recursive_copy
 
 from tests.utils import UnitxtTestCase
 
@@ -106,47 +107,33 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertDictEqual(result, target)
 
-    # def test_standard_recipe_production_consistency(self):
-    #     recipe = StandardRecipe(
-    #         card="cards.mmlu.marketing",
-    #         system_prompt="system_prompts.models.llama",
-    #         template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
-    #         format="formats.user_agent",
-    #         demos_pool_size=5,
-    #         num_demos=1,
-    #     )
+    def test_standard_recipe_production_consistency(self):
+        recipe = StandardRecipe(
+            card="cards.mmlu.marketing",
+            system_prompt="system_prompts.models.llama",
+            template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
+            format="formats.user_agent",
+            demos_pool_size=5,
+            num_demos=1,
+        )
 
-    #     instances = [
-    #         {
-    #             "question": "what?",
-    #             "choices": ["yes", "not", "maybe"],
-    #             "answer": "maybe",
-    #             "topic": "testing",
-    #         }
-    #     ]
+        instances = [
+            {
+                "question": "what?",
+                "choices": ["yes", "not", "maybe"],
+                "answer": "maybe",
+                "topic": "testing",
+            }
+        ]
 
-    #     self.assertListEqual(
-    #         recipe.production_demos_pool(), recipe.production_demos_pool()
-    #     )
+        self.assertDictEqual(
+            recipe.produce(recursive_copy(instances))[0],
+            recipe.produce(recursive_copy(instances))[0],
+        )
 
-    #     self.assertDictEqual(
-    #         recipe.produce(instances)[0],
-    #         recipe.produce(instances)[0],
-    #     )
-
-    #     i1 = recipe.production_preprocess(instances)[0]
-    #     i2 = recipe.production_preprocess(instances)[0]
-    #     for meta_data in ["card", "template", "format", "system_prompt"]:
-    #         if meta_data in i1["recipe_metadata"]:
-    #             i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
-    #                 meta_data
-    #             ]._to_raw_dict()
-    #             if not isinstance(i2["recipe_metadata"][meta_data], dict):
-    #                 i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
-    #                     meta_data
-    #                 ]._to_raw_dict()
-
-    #     self.assertDictEqual(i1, i2)
+        i1 = recipe.production_preprocess(recursive_copy(instances))[0]
+        i2 = recipe.production_preprocess(recursive_copy(instances))[0]
+        self.assertDictEqual(i1, i2)
 
     def test_standard_recipe_production_with_demos(self):
         recipe = StandardRecipe(

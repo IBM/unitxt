@@ -287,7 +287,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference_instance.steps = [
             self.metadata,
-            self.processing,
+            # self.processing,
         ]
 
         self.inference_demos = SourceSequentialOperator()
@@ -301,7 +301,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.metadata, self.verbalization, self.finalize]
+        self.inference.steps = [self.verbalization, self.finalize]
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
@@ -320,19 +320,19 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.before_process_multi_stream()
 
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        ms = self.inference_instance(ms)
         if not self.use_demos:
             # go with task_instances all the way, it does not need other streams:
-            ms = self.inference_instance(ms)
+            ms = self.processing(ms)
             ms = self.verbalization(ms)
             ms = self.finalize(ms)
             return list(ms[constants.inference_stream])
 
-        ms = self.metadata(ms)
-        # ready to join, as if passed loading and standardization
-
         streams = self.inference_demos()
-        # stopped before processing
+        # streams stopped before processing
+        # ms is ready to join, as if passed loading and standardization
         streams[constants.inference_stream] = ms[constants.inference_stream]
+        multi_stream = MultiStream(streams)
         multi_stream = self.processing(streams)
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
