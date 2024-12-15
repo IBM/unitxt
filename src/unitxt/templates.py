@@ -72,7 +72,11 @@ class Template(InstanceOperator):
         super().verify()
         assert isoftype(
             self.postprocessors, List[Union[Operator, str]]
-        ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
+        ), f"The template's 'post processors' field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
+        assert (
+            isoftype(self.serializer, Serializer)
+            or isoftype(self.serializer, Dict[str, Serializer])
+        ), f"The template's 'serializer' field '{self.serializer}' is not of type Serializer. Instead it is of type '{type(self.serializer)}'."
 
     def input_fields_to_instruction_and_target_prefix(self, input_fields):
         instruction = self.apply_formatting(
@@ -85,6 +89,22 @@ class Template(InstanceOperator):
             "target_prefix",
         )
         return instruction, target_prefix
+
+    def get_field_serializer(self, field: str):
+        if isoftype(self.serializer, Dict[str, Serializer]):
+            if field in self.serializer:
+                return self.serializer[field]
+        elif self.serializer is not None:
+            return self.serializer
+        return MultiTypeSerializer(
+            serializers=[
+                ImageSerializer(),
+                VideoSerializer(),
+                TableSerializer(),
+                DialogSerializer(),
+                ListSerializer(),
+            ]
+        )
 
     def preprocess_input_and_reference_fields(
         self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
@@ -162,7 +182,10 @@ class Template(InstanceOperator):
     def serialize(
         self, data: Dict[str, Any], instance: Dict[str, Any]
     ) -> Dict[str, str]:
-        return {k: self.serializer.serialize(v, instance) for k, v in data.items()}
+        return {
+            k: self.get_field_serializer(k).process_instance_value(v, instance)
+            for k, v in data.items()
+        }
 
     @abstractmethod
     def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
@@ -729,9 +752,6 @@ class KeyValTemplate(Template):
 
 
 class OutputQuantizingTemplate(InputOutputTemplate):
-    serializer: MultiTypeSerializer = NonPositionalField(
-        default_factory=MultiTypeSerializer
-    )
     quantum: Union[float, int] = 0.1
 
     def prepare(self):
@@ -766,7 +786,6 @@ class MultiLabelTemplate(InputOutputTemplate):
 class MultiReferenceTemplate(InputOutputTemplate):
     references_field: str = "references"
     random_reference: bool = False
-    serializer: Serializer = NonPositionalField(default_factory=MultiTypeSerializer)
 
     def serialize(
         self, data: Dict[str, Any], instance: Dict[str, Any]
@@ -774,9 +793,12 @@ class MultiReferenceTemplate(InputOutputTemplate):
         result = {}
         for k, v in data.items():
             if k == self.references_field:
-                v = [self.serializer.serialize(item, instance) for item in v]
+                v = [
+                    self.get_field_serializer(k).process_instance_value(item, instance)
+                    for item in v
+                ]
             else:
-                v = self.serializer.serialize(v, instance)
+                v = self.get_field_serializer(k).process_instance_value(v, instance)
             result[k] = v
         return result
 
