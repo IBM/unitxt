@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
-from .type_utils import isoftype
+from .type_utils import isoftype, to_type_string
 from .types import Dialog, Image, Number, Table, Video
 
 constants = get_constants()
@@ -26,27 +26,29 @@ class DefaultSerializer(Serializer):
         return str(value)
 
 
-class SingleTypeSerializer(Serializer):
+class SingleTypeSerializer(InstanceFieldOperator):
     serialized_type: object = AbstractField()
 
     def process_instance_value(self, value: Any, instance: Dict[str, Any]) -> str:
         if not isoftype(value, self.serialized_type):
             raise ValueError(
-                f"SingleTypeSerializer for type {self.serialized_type} should get this type. got {type(value)}. Value: {value}"
+                f"SingleTypeSerializer for type {self.serialized_type} should get this type. got {to_type_string(value)}"
             )
         return self.serialize(value, instance)
 
 
+class DefaultListSerializer(Serializer):
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        if isinstance(value, list):
+            return ", ".join(str(item) for item in value)
+        return str(value)
+
+
 class ListSerializer(SingleTypeSerializer):
     serialized_type = list
-    separator: str = ", "
-    prefix: str = ""
-    suffix: str = ""
 
     def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
-        return (
-            self.prefix + self.separator.join(str(item) for item in value) + self.suffix
-        )
+        return ", ".join(str(item) for item in value)
 
 
 class DialogSerializer(SingleTypeSerializer):

@@ -2,7 +2,6 @@ from typing import Dict, List, Tuple
 
 from unitxt.dataclass import RequiredFieldError
 from unitxt.error_utils import UnitxtError
-from unitxt.serializers import ListSerializer
 from unitxt.templates import (
     ApplyRandomTemplate,
     ApplySingleTemplate,
@@ -405,7 +404,7 @@ class TestTemplates(UnitxtTestCase):
         template = InputOutputTemplate(
             input_format="This is my text:'{text}'",
             output_format="{label}",
-            instruction="Classify sentiment into: {labels}.",
+            instruction="Classify sentiment into: {labels}.\n",
             target_prefix="Sentiment is: ",
         )
 
@@ -443,7 +442,7 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world'",
                 "target": "positive",
                 "references": ["positive"],
-                "instruction": "Classify sentiment into: positive, negative.",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
                 "postprocessors": ["processors.to_string_stripped"],
             },
@@ -456,7 +455,7 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive",
                 "references": ["positive"],
-                "instruction": "Classify sentiment into: positive, negative.",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
                 "postprocessors": ["processors.to_string_stripped"],
             },
@@ -469,26 +468,12 @@ class TestTemplates(UnitxtTestCase):
                 "source": "This is my text:'hello world\n, hell'",
                 "target": "positive, 1",
                 "references": ["positive, 1"],
-                "instruction": "Classify sentiment into: positive, negative.",
+                "instruction": "Classify sentiment into: positive, negative.\n",
                 "target_prefix": "Sentiment is: ",
                 "postprocessors": ["processors.to_string_stripped"],
             },
         ]
 
-        check_operator(template, inputs, targets, tester=self)
-        # Now format with a different list serializer
-        for target in targets:
-            target["instruction"] = "Classify sentiment into: [positive/negative]."
-
-        template = InputOutputTemplate(
-            input_format="This is my text:'{text}'",
-            output_format="{label}",
-            instruction="Classify sentiment into: {labels}.",
-            target_prefix="Sentiment is: ",
-            serializer={
-                "labels": ListSerializer(separator="/", prefix="[", suffix="]")
-            },
-        )
         check_operator(template, inputs, targets, tester=self)
 
         # if "source" and "target" and "instruction_format" and "target_prefix" in instance - instance is not modified
