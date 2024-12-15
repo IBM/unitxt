@@ -410,7 +410,7 @@ class InstanceScores(list):
                     **scores["instance"],
                 }
             )
-        super().__init__(instances)
+        super().__init__(instance_scores)
 
     def to_df(self, flatten=True, columns=None):
         """Transforms the stored results into a pandas DataFrame.
