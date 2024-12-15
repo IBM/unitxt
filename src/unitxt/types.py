@@ -11,6 +11,13 @@ class Turn(TypedDict):
     content: Text
 
 
+class RagResponse(TypedDict):
+    answer: str
+    contexts: List[str]
+    context_ids: Union[List[int], List[str]]
+    is_answerable: bool
+
+
 Dialog = NewType("Dialog", List[Turn])
 
 
@@ -39,3 +46,4 @@ register_type(Table)
 register_type(Audio)
 register_type(Image)
 register_type(Video)
+register_type(RagResponse)

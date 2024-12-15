@@ -1,14 +1,38 @@
+import json
 import os
 import re
 from functools import lru_cache
 from pathlib import Path
 
+from docutils.core import publish_parts
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import YamlLexer
 from unitxt.artifact import Artifact
 from unitxt.text_utils import print_dict_as_yaml
 from unitxt.utils import load_json
+
+
+def convert_rst_text_to_html(rst_text):
+    """Converts a string of reStructuredText (RST) to HTML.
+
+    :param rst_text: A string containing RST content.
+    :return: A string containing the HTML output.
+    """
+    # html_output = publish_string(rst_text, writer_name="html").decode("utf-8")
+
+    html_output_dict = publish_parts(
+        rst_text, settings_overrides={"line_length_limit": 100000}, writer_name="html"
+    )
+    html_output = html_output_dict["whole"]
+
+    match = re.search(r"<body.*?>(.*?)</body>", html_output, re.DOTALL)
+    if match:
+        return match.group(
+            1
+        ).strip()  # Return the body content, stripped of extra whitespace
+
+    raise ValueError("No <body> content found in the HTML output")
 
 
 def dict_to_syntax_highlighted_html(nested_dict):
@@ -188,6 +212,9 @@ def make_content(artifact, label, all_labels):
     )
 
 
+special_contents = {}
+
+
 class CatalogEntry:
     """A single catalog entry is an artifact json file, or a catalog directory."""
 
@@ -252,6 +279,7 @@ class CatalogEntry:
         title = self.get_title()
         label = self.get_label()
         dir_doc_content = write_title(title, label)
+        dir_doc_content += special_contents.get(self.rel_path, "")
         dir_doc_content += ".. toctree::\n   :maxdepth: 1\n\n"
 
         sub_catalog_entries = [
@@ -291,6 +319,14 @@ class CatalogEntry:
 
     def write_json_contents_to_rst(self, all_labels, destination_directory):
         artifact = load_json(self.path)
+        tags = artifact.get("__tags__", {})
+        raw_title = artifact.get("__title__", self.get_title())
+        category = self.rel_path.split(os.path.sep)[0]
+        if category.endswith("s"):
+            category = category[:-1]
+        if category == "card":
+            category = "dataset"
+        tags["category"] = category
         label = self.get_label()
         deprecated_in_title = ""
         deprecated_message = ""
@@ -308,7 +344,7 @@ class CatalogEntry:
 
         content = make_content(artifact, label, all_labels)
         title_char = "="
-        title = "📄 " + self.get_title() + deprecated_in_title
+        title = "📄 " + raw_title + deprecated_in_title
         title_wrapper = title_char * (len(title) + 1)
         artifact_doc_contents = (
             f"{role_red}"
@@ -327,6 +363,23 @@ class CatalogEntry:
         Path(artifact_doc_path).parent.mkdir(parents=True, exist_ok=True)
         with open(artifact_doc_path, "w+") as f:
             f.write(artifact_doc_contents)
+
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "_static", "data.js")
+        with open(file_path, "a+") as f:
+            f.write(
+                json.dumps(
+                    {
+                        "__tags__": tags,
+                        "title": self.get_title(),
+                        "content": convert_rst_text_to_html(
+                            artifact_doc_contents.replace(":ref:", "")
+                        ).replace('div class="document"', "div"),
+                        "url": f"https://www.unitxt.ai/en/latest/catalog/catalog.{artifact_doc_path}.html",
+                    }
+                )
+                + "\n"
+            )
 
 
 class CatalogDocsBuilder:
@@ -348,6 +401,12 @@ class CatalogDocsBuilder:
         ]
 
     def run(self):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        file_path = os.path.join(current_dir, "_static", "data.js")
+
+        with open(file_path, "w+"):
+            pass
+
         catalog_entries = self.create_catalog_entries()
         all_labels = {
             catalog_entry.get_label()
@@ -379,6 +438,18 @@ class CatalogDocsBuilder:
             destination_directory=current_directory,
             start_directory=self.start_directory,
         )
+
+        with open(os.path.join(current_dir, "search.html"), encoding="utf-8") as f:
+            search_html = "    " + "    ".join(f.readlines()).replace(
+                "_static/data.js", "../_static/data.js"
+            )
+
+        with open(
+            os.path.join(current_dir, "catalog", "catalog.__dir__.rst"), "a+"
+        ) as f:
+            f.write(
+                "\n\nSearch Catalog\n--------------\n\n.. raw:: html\n\n" + search_html
+            )
 
 
 def replace_in_file(source_str, target_str, file_path):
