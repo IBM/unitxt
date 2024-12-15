@@ -1,6 +1,5 @@
 from unitxt import get_logger
-from unitxt.api import evaluate, load_dataset
-from unitxt.blocks import Task, TaskCard
+from unitxt.api import create_dataset, evaluate
 from unitxt.eval_assist_constants import (
     CriteriaOption,
     CriteriaWithOptions,
@@ -8,7 +7,6 @@ from unitxt.eval_assist_constants import (
 )
 from unitxt.eval_assist_llm_as_judge_direct import EvalAssistLLMAsJudgeDirect
 from unitxt.inference import LiteLLMInferenceEngine
-from unitxt.loaders import LoadFromDictionary
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -33,11 +31,9 @@ criteria = CriteriaWithOptions(
     option_map={"Yes": 1.0, "No": 0.5, "Pass": 0.0},
 )
 
-data = {
-    "test": [
-        {"question": "How is the weather?"},
-    ]
-}
+data = [
+    {"question": "How is the weather?"},
+]
 
 metric = EvalAssistLLMAsJudgeDirect(
     inference_engine=LiteLLMInferenceEngine(
@@ -48,18 +44,10 @@ metric = EvalAssistLLMAsJudgeDirect(
     criteria=criteria,
     context_fields=["question"],
 )
-card = TaskCard(
-    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
-    preprocess_steps=[],
-    task=Task(
-        input_fields={"question": str},
-        reference_fields={},
-        prediction_type=str,
-        metrics=[metric],
-    ),
-)
 
-test_dataset = load_dataset(card=card, template="templates.empty")["test"]
+test_dataset = create_dataset(task="tasks.qa.open", test_set=data, metrics=[metric])[
+    "test"
+]
 
 predictions = [
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
