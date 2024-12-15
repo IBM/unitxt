@@ -790,10 +790,7 @@ class MultiReferenceTemplate(InputOutputTemplate):
                 Documentation.ADDING_TEMPLATE,
             )
         if len(references) == 0:
-            raise UnitxtError(
-                f"No references found in field '{self.references_field}' of instance. MultiReferenceTemplate requires at least one reference.",
-                Documentation.ADDING_TEMPLATE,
-            )
+            return "", []
 
         if self.random_reference:
             random_generator = new_random_generator(reference_fields)

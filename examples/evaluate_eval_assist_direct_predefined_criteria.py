@@ -1,36 +1,24 @@
 from unitxt import get_logger
-from unitxt.api import evaluate, load_dataset
-from unitxt.blocks import Task, TaskCard
-from unitxt.loaders import LoadFromDictionary
+from unitxt.api import create_dataset, evaluate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-data = {
-    "test": [
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-        {"question": "How is the weather?"},
-    ]
-}
+data = [
+    {"question": "How is the weather?"},
+    {"question": "How is the weather?"},
+    {"question": "How is the weather?"},
+]
+
 
 criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
 metrics = [
-    f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b"
-    f"[criteria={criteria}, context_fields=[question]]"
+    f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
 ]
 
-card = TaskCard(
-    loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
-    task=Task(
-        input_fields={"question": str},
-        reference_fields={},
-        prediction_type=str,
-        metrics=metrics,
-    ),
+test_dataset = create_dataset(
+    task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
 )
-
-test_dataset = load_dataset(card=card, template="templates.empty")["test"]
 
 predictions = [
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
