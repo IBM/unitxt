@@ -45,9 +45,9 @@ metric = EvalAssistLLMAsJudgeDirect(
     context_fields=["question"],
 )
 
-test_dataset = create_dataset(task="tasks.qa.open", test_set=data, metrics=[metric])[
-    "test"
-]
+test_dataset = create_dataset(
+    task="tasks.qa.open", test_set=data, metrics=[metric], split="test"
+)
 
 predictions = [
     """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
