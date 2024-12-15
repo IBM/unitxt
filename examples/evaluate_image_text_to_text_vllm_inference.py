@@ -1,7 +1,7 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
-    LMMSEvalInferenceEngine,
+    VLLMInferenceEngine,
 )
 from unitxt.text_utils import print_dict
 
@@ -10,18 +10,14 @@ with settings.context(
 ):
     dataset = load_dataset(
         card="cards.seed_bench",
-        template="templates.qa.multiple_choice.with_context.lmms_eval",
         format="formats.chat_api",
         loader_limit=30,
         split="test",
     )
 
-    inference_model = LMMSEvalInferenceEngine(
-        model_type="llava",
-        model_args={
-            "pretrained": "liuhaotian/llava-v1.5-7b",
-        },
-        max_new_tokens=2,
+    inference_model = VLLMInferenceEngine(
+        model="microsoft/Phi-3-vision-128k-instruct",  # microsoft/Phi-3.5-vision-instruct
+        max_tokens=2,
     )
 
     predictions = inference_model.infer(dataset)

@@ -2371,12 +2371,39 @@ class WMLInferenceEngine(WMLInferenceEngineGeneration):
 
 
 def get_images_without_text(instance):
-    return extract_images(instance["source"], instance)
+    if isinstance(instance["source"], str):
+        images = extract_images(instance["source"], instance)
+    elif isinstance(instance["source"], list):
+        images = []
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, list):
+                for sub_content in content:
+                    if sub_content["type"] == "image_url":
+                        image = data_url_to_image(sub_content["image_url"]["url"])
+                        images.append(image)
+
+    return [image.convert("RGB") for image in images]
 
 
 def get_text_without_images(instance, image_token="<image>"):
-    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
-    return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], str):
+        regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
+        return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], list):
+        text = ""
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, str):
+                text += content
+            else:
+                for sub_content in content:
+                    if sub_content["type"] == "text":
+                        text += sub_content["text"]
+                    if sub_content["type"].startswith("image"):
+                        text += image_token
+        return text
+    raise ValueError()
 
 
 class LMMSEvalBaseInferenceEngine(
@@ -2548,15 +2575,38 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
-class VLLMInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
-):
+class VLLMParamsMixin(Artifact):
+    model: str
+    n: int = 1
+    best_of: Optional[int] = None
+    _real_n: Optional[int] = None
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    repetition_penalty: float = 1.0
+    temperature: float = 1.0
+    top_p: float = 1.0
+    top_k: int = -1
+    min_p: float = 0.0
+    seed: Optional[int] = None
+    stop: Optional[Union[str, List[str]]] = None
+    stop_token_ids: Optional[List[int]] = None
+    bad_words: Optional[List[str]] = None
+    ignore_eos: bool = False
+    max_tokens: Optional[int] = 16
+    min_tokens: int = 0
+    logprobs: Optional[int] = None
+    prompt_logprobs: Optional[int] = None
+
+
+class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
         from vllm import LLM, SamplingParams
 
-        args = self.to_dict([StandardAPIParamsMixin])
+        args = self.to_dict([VLLMParamsMixin])
+        args.pop("model")
+
         self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model)
+        self.llm = LLM(model=self.model, trust_remote_code=True)
 
     def _infer(
         self,
