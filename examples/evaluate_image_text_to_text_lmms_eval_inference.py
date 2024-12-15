@@ -10,7 +10,6 @@ with settings.context(
 ):
     dataset = load_dataset(
         card="cards.seed_bench",
-        template="templates.qa.multiple_choice.with_context.lmms_eval",
         format="formats.chat_api",
         loader_limit=30,
         split="test",

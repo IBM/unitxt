@@ -16,7 +16,7 @@ with settings.context(
     )
 
     inference_model = VLLMInferenceEngine(
-        model="microsoft/Phi-3-vision-128k-instruct",  # microsoft/Phi-3.5-vision-instruct
+        model="microsoft/Phi-3-vision-128k-instruct",
         max_tokens=2,
     )
 

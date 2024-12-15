@@ -431,27 +431,27 @@ class StandardRecipeWithIndexes(BaseRecipe):
             if self.card.default_template is not None:
                 self.template = self.card.default_template
             else:
-                self.template = self.task.default_template
-
-            # Than try to infer the default
-            if (
-                self.template is None
-                and self.card is not None
-                and self.card.templates is not None
-                and len(self.card.templates) > 0
-            ):
-                self.template_card_index = (
-                    0
-                    if isinstance(self.card.templates, list)
-                    else next(iter(self.card.templates.keys()))
-                )
-                logger.warning(
-                    "Template was not specified in recipe, using the first template from the card by default."
-                )
-            else:
                 self.template = self.card.task.default_template
 
-        if self.template_card_index is not None:
+            # Than try to infer the default
+            if self.template is None:
+                if (
+                    self.card is not None
+                    and self.card.templates is not None
+                    and len(self.card.templates) > 0
+                ):
+                    self.template_card_index = (
+                        0
+                        if isinstance(self.card.templates, list)
+                        else next(iter(self.card.templates.keys()))
+                    )
+                    logger.warning(
+                        "Template was not specified in recipe, using the first template from the card by default."
+                    )
+                else:
+                    self.template = self.card.task.default_template
+
+        if self.template is None and self.template_card_index is not None:
             try:
                 self.template = self.card.templates[self.template_card_index]
             except Exception as e:
