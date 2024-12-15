@@ -56,7 +56,7 @@ judge_correctness_template = InputOutputTemplate(
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
-    model=CrossProviderInferenceEngine(
+    inference_model=CrossProviderInferenceEngine(
         model="llama-3-8b-instruct", max_tokens=1024, provider="watsonx"
     ),
     template=judge_correctness_template,
@@ -107,6 +107,7 @@ print(
             "processed_prediction",
             "references",
             "score",
+            "score_name",
         ],
     )
 )
