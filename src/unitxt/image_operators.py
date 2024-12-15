@@ -166,12 +166,13 @@ class GrayScale(ImageAugmentor):
 class GridLines(ImageAugmentor):
     """A class that overlays a fixed number of evenly spaced horizontal and vertical lines on an image.
 
-    Attributes:
-        num_lines (int): The number of horizontal and vertical lines to add.
-
-        line_thickness (int): Thickness of each line in pixels.
-
-        line_color (Tuple[int, int, int]): RGB color of the grid lines.
+    Args:
+        num_lines (int):
+            The number of horizontal and vertical lines to add.
+        line_thickness (int):
+            Thickness of each line in pixels.
+        line_color (Tuple[int, int, int]):
+            RGB color of the grid lines.
 
     Methods:
         process_image(image): Adds grid lines to the provided image and returns the modified image.

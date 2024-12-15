@@ -4,7 +4,7 @@ import re
 from functools import lru_cache
 from pathlib import Path
 
-from docutils.core import publish_string
+from docutils.core import publish_parts
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
 from pygments.lexers import YamlLexer
@@ -19,7 +19,12 @@ def convert_rst_text_to_html(rst_text):
     :param rst_text: A string containing RST content.
     :return: A string containing the HTML output.
     """
-    html_output = publish_string(rst_text, writer_name="html").decode("utf-8")
+    # html_output = publish_string(rst_text, writer_name="html").decode("utf-8")
+
+    html_output_dict = publish_parts(
+        rst_text, settings_overrides={"line_length_limit": 100000}, writer_name="html"
+    )
+    html_output = html_output_dict["whole"]
 
     match = re.search(r"<body.*?>(.*?)</body>", html_output, re.DOTALL)
     if match:

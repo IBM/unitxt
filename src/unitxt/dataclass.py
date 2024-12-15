@@ -17,15 +17,23 @@ class Undefined:
 class Field:
     """An alternative to dataclasses.dataclass decorator for a more flexible field definition.
 
-    Attributes:
-        default (Any, optional): Default value for the field. Defaults to None.
-        name (str, optional): Name of the field. Defaults to None.
-        type (type, optional): Type of the field. Defaults to None.
-        default_factory (Any, optional): A function that returns the default value. Defaults to None.
-        final (bool, optional): A boolean indicating if the field is final (cannot be overridden). Defaults to False.
-        abstract (bool, optional): A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
-        required (bool, optional): A boolean indicating if the field is required. Defaults to False.
-        origin_cls (type, optional): The original class that defined the field. Defaults to None.
+    Args:
+        default (Any, optional):
+            Default value for the field. Defaults to None.
+        name (str, optional):
+            Name of the field. Defaults to None.
+        type (type, optional):
+            Type of the field. Defaults to None.
+        default_factory (Any, optional):
+            A function that returns the default value. Defaults to None.
+        final (bool, optional):
+            A boolean indicating if the field is final (cannot be overridden). Defaults to False.
+        abstract (bool, optional):
+            A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
+        required (bool, optional):
+            A boolean indicating if the field is required. Defaults to False.
+        origin_cls (type, optional):
+            The original class that defined the field. Defaults to None.
     """
 
     default: Any = Undefined
