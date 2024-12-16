@@ -34,8 +34,8 @@ def get_inference_engine(model_name, framework_name):
 
 
 model_names_to_infer_framework = {
-    "meta-llama/llama-3-1-70b-instruct": ["ibm_wml", "rits"],
-    "meta-llama/llama-3-70b-instruct": ["ibm_gen_ai"],
+    "meta-llama/llama-3-1-70b-instruct": ["ibm_wml", "rits", "ibm_gen_ai"],
+    "meta-llama/llama-3-3-70b-instruct": ["ibm_wml", "rits"],
     "gpt-4-turbo": ["openai"],
     "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "ibm_gen_ai", "rits"],
     "meta-llama/llama-3-1-405b-instruct-fp8": ["ibm_gen_ai", "rits"],
