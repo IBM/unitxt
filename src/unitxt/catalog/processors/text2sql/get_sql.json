@@ -6,13 +6,13 @@
             "field": "prediction"
         },
         {
-            "__type__": "get_sql",
-            "field": "prediction"
-        },
-        {
             "__type__": "add_prefix",
             "field": "prediction",
             "prefix": "SELECT "
+        },
+        {
+            "__type__": "get_sql",
+            "field": "prediction"
         }
     ]
 }
