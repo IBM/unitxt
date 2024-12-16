@@ -1579,6 +1579,7 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
 
 class RITSInferenceEngine(OpenAiInferenceEngine):
     label: str = "rits"
+    data_classification_policy = ["public", "proprietary"]
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
