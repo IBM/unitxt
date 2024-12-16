@@ -33,7 +33,7 @@ with settings.context(allow_unverified_code=True):
     For the arguments these inference engines can receive, please refer to the classes documentation or read
     about the the open ai api arguments the CrossProviderInferenceEngine follows.
     """
-    predictions = model.infer(dataset)
+    predictions = model(dataset)
 
     # Evaluate the predictions using the defined metric.
     results = evaluate(predictions=predictions, data=dataset)

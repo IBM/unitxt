@@ -143,7 +143,7 @@ for provider in [
             For the arguments these inference engines can receive, please refer to the classes documentation or read
             about the the open ai api arguments the CrossProviderInferenceEngine follows.
             """
-            predictions = model.infer(test_dataset)
+            predictions = model(test_dataset)
 
             results = evaluate(predictions=predictions, data=test_dataset)
 

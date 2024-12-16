@@ -64,7 +64,7 @@ for provider in [
             model = CrossProviderInferenceEngine(
                 model=model_name, max_tokens=1024, provider=provider
             )
-            predictions = model.infer(dataset)
+            predictions = model(dataset)
 
             results = evaluate(predictions=predictions, data=dataset)
             # import pandas as pd

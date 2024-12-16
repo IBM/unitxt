@@ -82,7 +82,7 @@ for template in [
             split="test",
         )
 
-        predictions = model.infer(dataset)
+        predictions = model(dataset)
 
         results = evaluate(predictions=predictions, data=dataset)
 

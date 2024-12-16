@@ -20,7 +20,7 @@ with settings.context(
         max_tokens=2,
     )
 
-    predictions = inference_model.infer(dataset)
+    predictions = inference_model(dataset)
     results = evaluate(predictions=predictions, data=dataset)
 
     print_dict(results[0], keys_to_print=["prediction", "target", "references"])

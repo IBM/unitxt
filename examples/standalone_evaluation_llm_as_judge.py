@@ -90,10 +90,10 @@ dataset = create_dataset(
 )
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
 )
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
 results = evaluate(predictions=predictions, data=dataset)

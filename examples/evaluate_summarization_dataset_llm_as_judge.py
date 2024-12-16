@@ -52,14 +52,14 @@ dataset = load_dataset(
 )
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
 evaluated_dataset = evaluate(predictions=predictions, data=dataset)
@@ -121,14 +121,14 @@ dataset = load_dataset(
 )
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
 results = evaluate(predictions=predictions, data=dataset)

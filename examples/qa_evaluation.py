@@ -31,7 +31,7 @@ dataset = create_dataset(
 )
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
@@ -40,19 +40,8 @@ engine = HFPipelineBasedInferenceEngine(
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
 
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
 # Print results
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-            "score_name",
-        ],
-    )
-)
+print(results.instance_scores)

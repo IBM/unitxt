@@ -19,7 +19,7 @@ We are using a CrossProviderInferenceEngine inference engine that supply api acc
 watsonx, bam, openai, azure, aws and more.
 For more information, visit the :ref:`inference engines guide <inference>`
 """
-predictions = model.infer(dataset)
+predictions = model(dataset)
 
 results = evaluate(predictions=predictions, data=dataset)
 

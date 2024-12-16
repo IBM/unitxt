@@ -25,7 +25,7 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = model.infer(dataset)
+predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
 print(results.global_scores)

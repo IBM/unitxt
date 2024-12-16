@@ -33,7 +33,7 @@ with settings.context(
         max_new_tokens=2,
     )
 
-    predictions = model.infer(data)
+    predictions = model(data)
     results = evaluate(predictions=predictions, data=data)
 
     for subset, scores in results.subsets_scores.items():

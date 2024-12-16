@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # Infer using flan t5 xl using wml
     model_name = "google/flan-t5-xl"
     model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
-    predictions = model.infer(test_dataset)
+    predictions = model(test_dataset)
 
     # Evaluate the generated predictions using the selected metrics
     results = evaluate(predictions=predictions, data=test_dataset)
