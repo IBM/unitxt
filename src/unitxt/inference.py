@@ -2221,7 +2221,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
         images = [None]
         if "images" in instance["media"]:
-            images = extract_images(instance["source"], instance)
+            images = extract_images(instance)
 
         return question or instance["source"], images
 
