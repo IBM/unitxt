@@ -281,6 +281,8 @@ class Artifact(Dataclass):
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
+        with open(path) as f:
+            d = json_loads_with_artifacts(f.read())
         d = artifacts_json_cache(path)
         if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
             # d stands for an ArtifactLink
@@ -379,7 +381,9 @@ class Artifact(Dataclass):
             raise UnitxtError(
                 f"Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n{diffs}"
             )
-        save_to_file(path, self.to_json())
+        save_to_file(
+            path, json_dumps_with_artifacts(source=self, dump_source_as_dict=True)
+        )
 
     def verify_instance(
         self, instance: Dict[str, Any], name: Optional[str] = None
@@ -458,6 +462,29 @@ class Artifact(Dataclass):
             )
 
         return instance
+
+
+def json_dumps_with_artifacts(source, dump_source_as_dict=False):
+    def maybe_artifact_object_to_dict(obj):
+        if isinstance(obj, Artifact):
+            if (
+                dump_source_as_dict and obj.__id__ == source.__id__
+            ) or obj.__id__ is None:
+                return obj.to_dict()
+            return obj.__id__
+        return obj
+
+    return json.dumps(source, default=maybe_artifact_object_to_dict)
+
+
+def maybe_artifact_dict_to_object(d):
+    if Artifact.is_artifact_dict(d):
+        return Artifact.from_dict(d)
+    return d
+
+
+def json_loads_with_artifacts(s):
+    return json.loads(s, object_hook=maybe_artifact_dict_to_object)
 
 
 class ArtifactLink(Artifact):
@@ -671,7 +698,7 @@ def get_artifacts_data_classification(artifact: str) -> Optional[List[str]]:
     )
 
     try:
-        data_classification = json.loads(data_classification)
+        data_classification = json_loads_with_artifacts(data_classification)
     except json.decoder.JSONDecodeError as e:
         raise RuntimeError(error_msg) from e
 
