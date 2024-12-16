@@ -4,26 +4,24 @@
 Evaluating Datasets
 ===================================
 
-
-Evaluating a dataset can be done using the HuggingFace Metrics API without direct installation of Unitxt:
+Unitxt can be used to evaluate datasets from it's catalog and user defined datasets.
 
 .. code-block:: python
 
-  import evaluate
-  from transformers import pipeline
-  from datasets import load_dataset
+  from unitxt import load_dataset, evaluate
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=templates.classification.multi_class.relation.default,max_test_instances=100',trust_remote_code=True)
-  testset = dataset['test']
-  model_inputs = testset['source']
+  dataset = load_dataset(card="cards.wnli",format="formats.chat_api",max_test_instances=100,split="test")
 
-  # These two lines can be replaced by any inference engine that receives the model_input strings
-  # and returns model predictions as string.
-  model = pipeline(model='google/flan-t5-base')
-  predictions = [output['generated_text'] for output in model(model_inputs,max_new_tokens=30)]
+  # The following lines can be replaced by any inference engine that receives the model_input 
+  # (found in dataset['source']) and returns model predictions as string.
 
-  metric = evaluate.load('unitxt/metric')
-  dataset_with_scores = metric.compute(predictions=predictions,references=testset)
+  from unitxt.inference import HFPipelineBasedInferenceEngine
+  engine = HFPipelineBasedInferenceEngine(
+      model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
+  )
+  predictions = engine.infer(dataset)
+
+  dataset_with_scores = evaluate(predictions,dataset)
 
 The following prints the scores defined in WNLI task (f1_micro, f1_macro, accuracy, as well as their confidence intervals).
 
@@ -55,7 +53,7 @@ If you want to evaluate with few templates or few num_demos you can run:
 
 .. code-block:: python
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],demos_pool_size=10,max_test_instances=100',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],demos_pool_size=10,max_test_instances=100)
 
 This will randomly sample from the templates and for each instance assign a random template from the list and run number of demonstration from the list.
 
@@ -65,6 +63,6 @@ add them all together ``group_by=["template", "num_demos", ["template", "num_dem
 
 .. code-block:: python
 
-  dataset = load_dataset('unitxt/data', 'card=cards.wnli,template=[templates.classification.multi_class.relation.default,templates.key_val],num_demos=[0,1,3],group_by=[template,num_demos,[template,num_demos]],demos_pool_size=10,max_test_instances=100',trust_remote_code=True)
+  dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],group_by=["template","num_demos",["template","num_demos"]],demos_pool_size=10,max_test_instances=100)
 
 The grouping can be done based on any field of the task or the metadata, so for classification task you can also group by label with ``group_by=["label"]``.
