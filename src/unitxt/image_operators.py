@@ -83,9 +83,9 @@ class PillowMixin(PackageRequirementsMixin):
         self.filter = ImageFilter
 
 
-def extract_images(text, instance):
+def extract_images(instance):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']'
-    image_sources = re.findall(regex, text)
+    image_sources = re.findall(regex, instance["source"])
     images = []
     for image_source in image_sources:
         image = dict_get(instance, image_source)
