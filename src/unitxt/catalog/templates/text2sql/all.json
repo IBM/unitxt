@@ -2,6 +2,6 @@
     "__type__": "templates_list",
     "items": [
         "templates.text2sql.you_are_given",
-        "templates.text2sql.you_are_given_with_SL_OK"
+        "templates.text2sql.you_are_given_with_hint"
     ]
 }

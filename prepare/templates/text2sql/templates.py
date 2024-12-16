@@ -60,7 +60,7 @@ add_to_catalog(
     TemplatesList(
         [
             "templates.text2sql.you_are_given",
-            "templates.text2sql.you_are_given_with_SL_OK",
+            "templates.text2sql.you_are_given_with_hint",
         ]
     ),
     "templates.text2sql.all",
