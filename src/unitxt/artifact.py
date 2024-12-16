@@ -474,7 +474,7 @@ def json_dumps_with_artifacts(source, dump_source_as_dict=False):
             return obj.__id__
         return obj
 
-    return json.dumps(source, default=maybe_artifact_object_to_dict)
+    return json.dumps(source, default=maybe_artifact_object_to_dict, indent=4)
 
 
 def maybe_artifact_dict_to_object(d):
