@@ -1,7 +1,6 @@
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
-    CriteriaOption,
     CriteriaWithOptions,
     OptionSelectionStrategyEnum,
 )
@@ -74,50 +73,10 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
             self.logger.info("Reading criteria from the task_data")
-            criterias = []
-            for task_data_criteria in [
-                task_data_instance["criteria"] for task_data_instance in task_data
-            ]:
-                if isinstance(task_data_criteria, dict):
-                    try:
-                        criteria = CriteriaWithOptions(
-                            name=task_data_criteria["name"],
-                            description=task_data_criteria["description"],
-                            options=[
-                                CriteriaOption(
-                                    name=option_dict["name"],
-                                    description=option_dict["description"],
-                                )
-                                for option_dict in task_data_criteria["options"]
-                            ],
-                        )
-                    except:
-                        raise Exception(
-                            "The criteria dict couldn't be parsed correctly. It has to have the json representation of CriteriaWithOptions"
-                        ) from None
-                elif isinstance(task_data_criteria, str):
-                    try:
-                        criteria = fetch_artifact(task_data_criteria)[0]
-                    except Exception:
-                        # Criteria can't be converted into an artifact
-                        # Use it a the description of a Yes/No criteria
-                        criteria = CriteriaWithOptions(
-                            name=f"Unknown ({task_data_criteria[:20]}...)",
-                            description=task_data_criteria,
-                            options=[
-                                CriteriaOption(name="Yes", description=""),
-                                CriteriaOption(name="No", description=""),
-                            ],
-                            option_map={
-                                "Yes": 1.0,
-                                "No": 0.0,
-                            },
-                        )
-                else:
-                    raise Exception(
-                        f"The criteria needs to be of type str (criteria catalog name or yes/no-criteria description) or dict (criteria json representation). Instead, it is of type {type(task_data_criteria)}"
-                    )
-                criterias.append(criteria)
+            criterias = [
+                fetch_artifact(task_data_instance["criteria"])[0]
+                for task_data_instance in task_data
+            ]
         else:
             self.logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
@@ -126,12 +85,9 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 raise Exception(
                     f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
                 )
-
             criterias: list[CriteriaWithOptions] = [self.criteria] * eval_count
-
-        self.logger.info(
-            f"Criteria names are '{', '.join([criteria.name for criteria in list(set(criterias))])}'"
-        )
+        unique_criterias = list({criteria.name for criteria in criterias})
+        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
         return criterias
 
     def get_results(
@@ -214,7 +170,6 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
         self.logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}" with strategy "{self.option_selection_strategy.name}"'
         )
-
         evaluations_count = len(predictions)
         # TODO: find out how to serialize and deserialize enums
         criterias = self.get_criterias(task_data, evaluations_count)
