@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import sqlite3
+from typing import Optional
 
 import evaluate
 from filelock import FileLock
@@ -131,8 +132,8 @@ class SQLData:
         self,
         db_name: str,
         db_type: str = "sqlite",
-        select_tables: list[str] | None = None,
-        select_columns: list[str] | None = None,
+        select_tables: Optional[list[str]] = None,
+        select_columns: Optional[list[str]] = None,
         num_rows_from_table_to_add: int = 0,
     ) -> str:
         # extract create ddls
