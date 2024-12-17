@@ -1,7 +1,7 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
-    LMMSEvalInferenceEngine,
+    VLLMInferenceEngine,
 )
 from unitxt.text_utils import print_dict
 
@@ -15,12 +15,9 @@ with settings.context(
         split="test",
     )
 
-    inference_model = LMMSEvalInferenceEngine(
-        model_type="llava",
-        model_args={
-            "pretrained": "liuhaotian/llava-v1.5-7b",
-        },
-        max_new_tokens=2,
+    inference_model = VLLMInferenceEngine(
+        model="microsoft/Phi-3-vision-128k-instruct",
+        max_tokens=2,
     )
 
     predictions = inference_model.infer(dataset)
