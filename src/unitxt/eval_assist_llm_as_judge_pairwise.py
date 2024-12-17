@@ -270,7 +270,8 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             for metric in single_result.keys():
                 all_results[f"{response_name}_{metric}"] = single_result[metric]
 
-        all_results["score"] = 1
+        winrates = [r['winrate'] for r in per_response_results.values()]
+        all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
         return self.clean_results(all_results)
 
     def parse_prediction_to_dict(self, prediction: dict[str, str] | list[str]):
@@ -313,7 +314,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         ]
 
         self.logger.info(
-            f"The evaluation will perform {sum(contests_count_list)} ({' + '.join([f'{c}' for c in contests_count_list])}) pairwise comparisons"
+            f"The evaluation will perform {sum(contests_count_list) * [1,2][self.check_positional_bias]} ({' + '.join([f'{c * [1,2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
         )
 
         response_pairs_list: list[list[list[str]]] = []
@@ -352,11 +353,6 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 option_pairs += [
                     list(reversed(option_pair)) for option_pair in option_pairs
                 ]
-        # the slices used to get the assessment for each summary generation instance
-        # it will grab the whole assessment for a particular instance or half of it depending on the value of check_positional_bias
-        incremental_contests_count_list = [
-            sum(contests_count_list[: i + 1]) for i in range(len(contests_count_list))
-        ]
 
         assessment_instances = [
             {
@@ -369,7 +365,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 "criteria_description": criterias[i].description,
                 "data_classification_policy": ["public"],
             }
-            for i, (response_pair, option_pair) in enumerate(
+            for i, (response_pairs, option_pairs) in enumerate(
                 zip(response_pairs_list, option_pairs_list)
             )
             for response_pair, option_pair in zip(response_pairs, option_pairs)
@@ -379,17 +375,26 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         )
         self.logger.info("The assessment was generated successfully.")
 
+        # the slices used to get the assessment for each summary generation instance
+        # it will grab the whole assessment for a particular instance or half of it depending on the value of check_positional_bias
+        incremental_contests_count_list = [
+            sum(contests_count_list[: i + 1]) for i in range(len(contests_count_list))
+        ]
+
         # Summarisation Stage
         summarization_prompts = None
         summarization_outputs = None
         if self.generate_summaries:
+            incremental_contests_count_with_positional_bias_list = [
+                incremental_contests_count * [1,2][self.check_positional_bias] for incremental_contests_count in incremental_contests_count_list
+            ]
             assessment_for_summaries_slice_list = [
                 slice(
-                    incremental_contests_count_list[i - 1] if i > 0 else 0,
-                    (incremental_contests_count_list[i - 1] if i > 0 else 0)
-                    + incremental_contests_count_list[i],
+                    incremental_contests_count_with_positional_bias_list[i - 1] if i > 0 else 0,
+                    (incremental_contests_count_with_positional_bias_list[i - 1] if i > 0 else 0)
+                    + contests_count_list[i],
                 )
-                for i in range(len(incremental_contests_count_list))
+                for i in range(len(contests_count_list))
             ]
             summarization_instances = [
                 {
@@ -489,5 +494,5 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 combination_indexes_list[i],
             )
             results.append(instance_results)
-            slice_start = slice_end + 1
+            slice_start = slice_end
         return results

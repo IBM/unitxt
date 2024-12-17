@@ -14,6 +14,10 @@ data = {
             "question": "How is the weather?",
             "judgement": "The temperature is described in both Fahrenheit and Celsius.",
         },
+        {
+            "question": "Tell me a joke about cats",
+            "judgement": "Is the response funny?",
+        },
     ]
 }
 
@@ -29,7 +33,7 @@ card = TaskCard(
         reference_fields={},
         prediction_type=List[str],
         metrics=[
-            "metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.llama3_1_70b[context_fields=question,generate_summaries=True]"
+            "metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.llama3_1_70b[context_fields=question]"
         ],
     ),
 )
@@ -41,6 +45,10 @@ predictions = [
         """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
         """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
         """On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+    ],
+    [
+        """Why did the cat cross the road? To cat to the other side.""",
+        """Why did the cat sit on the computer? Because it wanted to keep an eye on the mouse!""",
     ],
 ]
 
