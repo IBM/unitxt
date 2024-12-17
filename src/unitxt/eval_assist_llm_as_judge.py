@@ -19,12 +19,15 @@ from .templates import Template
 
 class EvalAssistLLMAsJudge(BulkInstanceMetric):
     inference_engine: InferenceEngine
-    option_selection_strategy: OptionSelectionStrategyEnum = None
+    option_selection_strategy: OptionSelectionStrategyEnum = (
+        OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+    )
     evaluator_name: EvaluatorNameEnum = None
     check_positional_bias = True
     context_fields: str = ["context"]
     generate_summaries: bool = True
     format = "formats.chat_api"
+    include_prompts_in_result = False
 
     logger = get_logger()
 
@@ -128,3 +131,19 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
             instance["prediction"] for instance in outputs_dataset
         ]
         return (prompts, raw_predictions, predictions)
+
+    def clean_results(self, results: dict | list):
+        if isinstance(results, list):
+            return [self.clean_results(x) for x in results]
+        else:
+            cleaned = {
+                k: (v if not isinstance(v, dict) else self.clean_results(v))
+                for k, v in results.items()
+                if v is not None and not (isinstance(v, (list, dict)) and len(v) == 0)
+            }
+            # Remove the dictionary itself if it becomes empty
+            return {
+                k: v
+                for k, v in cleaned.items()
+                if not (isinstance(v, dict) and len(v) == 0)
+            }

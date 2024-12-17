@@ -2,7 +2,6 @@ from .artifact import fetch_artifact
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
     CriteriaWithOptions,
-    OptionSelectionStrategyEnum,
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 from .task import Task
@@ -144,18 +143,13 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     "posional_bias_option_selection": option_selection_prompts[
                         i + evaluations_count
                     ],
-                },
-                "option_selection_completion": option_selection_outputs[i]
-                if self.option_selection_strategy
-                == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+                }
+                if self.include_prompts_in_result
                 else None,
+                "option_selection_completion": option_selection_outputs[i],
                 "positional_bias_option_selection_completion": option_selection_outputs[
                     evaluations_count + i
-                ]
-                if self.option_selection_strategy
-                == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-                else None,
-                "option_selection_strategy": self.option_selection_strategy.name,
+                ],
                 "criteria_name": criterias[i].name,
             }
             for i in range(evaluations_count)
@@ -264,42 +258,6 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 assessment_prompts, assessment_outputs
             )
         ]
-
-        # parse_output_logprobs_failed = False
-        # if (
-        #     self.option_selection_strategy
-        #     == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-        # ):
-        #     try:
-        #         option_selection_outputs_dataset = select(
-        #             judgement_instances,
-        #             engine=self.inference_engine,
-        #             task=self.option_selection_task,
-        #             template=self.option_selection_template,
-        #             format=self.format,
-        #             return_data=True,
-        #             previous_messages=previous_messages,
-        #         )
-        #         option_selection_prompts: list[str] = [
-        #             instance["source"] for instance in option_selection_outputs_dataset
-        #         ]
-        #         option_selection_outputs: list[str] = [
-        #             instance["prediction"]
-        #             for instance in option_selection_outputs_dataset
-        #         ]
-        #         selections = option_selection_outputs
-        #     except NoInputLogProbsError as e:
-        #         self.logger.error(f"An error occurred: {e}")
-        #         self.logger.warning(
-        #             f"{self.option_selection_strategy.name} failed. trying {OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT.name} instead."
-        #         )
-        #         parse_output_logprobs_failed = True
-
-        # if (
-        #     self.option_selection_strategy
-        #     == OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-        #     or parse_output_logprobs_failed
-        # ):
         (
             option_selection_prompts,
             option_selection_outputs,
@@ -323,7 +281,4 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
             evaluations_count,
             criterias,
         )
-        return [
-            {key: value for key, value in result.items() if value is not None}
-            for result in results
-        ]
+        return self.clean_results(results)

@@ -1,5 +1,5 @@
 {
     "__type__": "criteria",
-    "name": "temperature",
+    "name": "temperature_in_celsius_and_fahrentheit",
     "description": "The temperature is described in both Fahrenheit and Celsius."
 }

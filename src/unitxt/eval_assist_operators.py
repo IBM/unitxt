@@ -2,7 +2,7 @@ import json
 from typing import Any
 
 from .artifact import fetch_artifact
-from .eval_assist_constants import CriteriaOption, CriteriaWithOptions
+from .eval_assist_constants import Criteria, CriteriaOption, CriteriaWithOptions
 from .operators import FieldOperator
 
 
@@ -45,4 +45,12 @@ class CreateYesNoCriteriaFromString(FieldOperator):
                 "Yes": 1.0,
                 "No": 0.0,
             },
+        )
+
+
+class CreatePairwiseComparisonCriteriaFromString(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return Criteria(
+            name=f"Unknown ({text[:20]}...)",
+            description=text,
         )

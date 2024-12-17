@@ -27,6 +27,20 @@ class CriteriaWithOptions(Criteria):
     options: list[CriteriaOption]
     option_map: Optional[dict[str, float]] = None
 
+    def from_json(self, c: dict):
+        return CriteriaWithOptions(
+            name=c["name"],
+            description=c["description"],
+            options=[
+                CriteriaOption(
+                    name=o["name"],
+                    description=o["description"],
+                )
+                for o in c["options"]
+            ],
+            option_map=c["option_map"],
+        )
+
 
 class EvaluatorTypeEnum(str, Enum):
     PAIRWISE_COMPARISON = "pairwise_comparison"
@@ -154,7 +168,7 @@ EVALUATORS_METADATA = [
 
 class DirectCriteriaCatalogEnum(Enum):
     TEMPERATURE = CriteriaWithOptions(
-        "temperature_in_both_celsius_and_fahrentheit",
+        "temperature_in_celsius_and_fahrentheit",
         "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
         [
             CriteriaOption(
@@ -305,7 +319,7 @@ DIRECT_ASSESSMENT_CRITERIAS = [c.value for c in DirectCriteriaCatalogEnum]
 
 class PairwiseComparisonCriteriaCatalogEnum(Enum):
     TEMPERATURE = Criteria(
-        name="temperature_in_both_celsius_and_fahrentheit",
+        name="temperature_in_celsius_and_fahrentheit",
         description="The temperature is described in both Fahrenheit and Celsius.",
     )
 
