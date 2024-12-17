@@ -30,16 +30,17 @@ card = TaskCard(
         ),
     ],
     task=Task(
-        input_fields={"question": str, "criteria": Any},
-        reference_fields={},
+        input_fields={"question": str},
+        reference_fields={"criteria": Any},
         prediction_type=List[str],
         metrics=[
             "metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.llama3_1_70b[context_fields=question]"
         ],
+        default_template=NullTemplate(),
     ),
 )
 
-test_dataset = load_dataset(card=card, template=NullTemplate())["test"]
+test_dataset = load_dataset(card=card, split="test")
 
 predictions = [
     [
