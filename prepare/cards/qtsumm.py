@@ -6,7 +6,6 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
-from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,13 +14,6 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "train": "train[50%]",
-                "validation": "train[50%]",
-                "test": "test+validation",
-            }
-        ),
         Set(
             fields={
                 "context_type": "table",

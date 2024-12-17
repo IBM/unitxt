@@ -4,7 +4,6 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy, Set
-from unitxt.splitters import SplitRandomMix
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
@@ -14,13 +13,6 @@ card = TaskCard(
         path="wikitablequestions", data_classification_policy=["public"], num_proc=10
     ),
     preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "train": "train[50%]",
-                "validation": "train[50%]",
-                "test": "test+validation",
-            }
-        ),
         Set({"context_type": "table"}),
         Copy(field="table", to_field="context"),
         # TruncateTableRows(field="table", to_field="context"),

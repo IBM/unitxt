@@ -7,7 +7,6 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.settings_utils import get_settings
-from unitxt.splitters import SplitRandomMix
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -19,13 +18,6 @@ with settings.context(allow_unverified_code=True):
             path="ibm/tab_fact", streaming=False, data_classification_policy=["public"]
         ),
         preprocess_steps=[
-            SplitRandomMix(
-                mix={
-                    "train": "train[50%]",
-                    "validation": "train[50%]",
-                    "test": "test+validation",
-                }
-            ),
             Rename(field_to_field={"table": "text_a", "statement": "text_b"}),
             MapInstanceValues(mappers={"label": {"0": "refuted", "1": "entailed"}}),
             Set(

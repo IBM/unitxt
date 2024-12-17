@@ -7,7 +7,6 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.operators import FilterByCondition
-from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,13 +14,6 @@ card = TaskCard(
         path="kasnerz/scigen", data_classification_policy=["public", "proprietary"]
     ),
     preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "train": "train[50%]",
-                "validation": "train[50%]",
-                "test": "test+validation",
-            }
-        ),
         FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
         ConstructTableFromRowsCols(
             fields=["table_column_names", "table_content_values"],

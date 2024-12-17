@@ -7,7 +7,6 @@ from unitxt.blocks import (
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Copy
-from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,13 +14,6 @@ card = TaskCard(
         path="kasnerz/numericnlg", data_classification_policy=["public", "proprietary"]
     ),
     preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "train": "train[50%]",
-                "validation": "train[50%]",
-                "test": "test+validation",
-            }
-        ),
         Set(
             fields={
                 "type_of_input_a": "table",

@@ -7,7 +7,6 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.splitters import SplitRandomMix
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
 
@@ -16,15 +15,7 @@ card = TaskCard(
         path="ibm/turl_table_col_type",
         data_classification_policy=["public", "proprietary"],
     ),
-    preprocess_steps=[
-        SplitRandomMix(
-            mix={
-                "train": "train[50%]",
-                "validation": "train[50%]",
-                "test": "test+validation",
-            }
-        ),
-    ],
+    preprocess_steps=[],
     task=Task(
         input_fields={
             "page_title": str,
