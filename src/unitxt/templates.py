@@ -687,6 +687,18 @@ class YesNoTemplate(InputFormatTemplate):
         return self.no_answer, [self.no_answer]
 
 
+class NullTemplate(Template):
+    """Templates that returns empty prompt and no references."""
+
+    postprocessors = []
+
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
+        return ""
+
+    def reference_fields_to_target_and_references(self, reference_fields):
+        return "", []
+
+
 class KeyValTemplate(Template):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 

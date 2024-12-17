@@ -6,6 +6,7 @@ from unitxt.eval_assist_operators import (
     CreatePairwiseComparisonCriteriaFromString,
 )
 from unitxt.loaders import LoadFromDictionary
+from unitxt.templates import NullTemplate
 from unitxt.text_utils import print_dict
 
 data = {
@@ -38,7 +39,7 @@ card = TaskCard(
     ),
 )
 
-test_dataset = load_dataset(card=card, template="templates.empty")["test"]
+test_dataset = load_dataset(card=card, template=NullTemplate())["test"]
 
 predictions = [
     [

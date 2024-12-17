@@ -1,5 +1,5 @@
-import ast
 import itertools
+from typing import List
 
 from .artifact import fetch_artifact
 from .eval_assist_chat_templates import pairwise_comparison_template_dict
@@ -35,6 +35,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
     criteria: Criteria = None
     reduction_map = {"mean": ["score"]}
     main_score = "score"
+    prediction_type = List[str]
 
     def prepare(self):
         super().prepare()
@@ -275,15 +276,15 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         return self.clean_results(all_results)
 
     def parse_prediction_to_dict(self, prediction: dict[str, str] | list[str]):
-        parsed_prediction = ast.literal_eval(prediction)
-        if isinstance(parsed_prediction, list):
-            return {f"{key + 1}": value for key, value in enumerate(parsed_prediction)}
-        elif isinstance(parsed_prediction, dict):
-            return parsed_prediction
-        else:
-            raise Exception(
-                f"Prediction may be a list or a dict. Instead got type {type(parsed_prediction)}"
-            )
+        if isinstance(prediction, list):
+            return {f"{key + 1}": value for key, value in enumerate(prediction)}
+
+        if isinstance(prediction, dict):
+            return prediction
+
+        raise Exception(
+            f"Prediction may be a list or a dict. Instead got type {type(prediction)}"
+        )
 
     def convert_predictions_to_dicts(
         self, predictions: list[dict[str, str] | list[str]]
@@ -299,12 +300,9 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         self.logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
         )
-        print("predictions")
-        print(type(predictions))
-        print(type(predictions[0]))
-        parsed_predictions = self.convert_predictions_to_dicts(predictions)
+        predictions = self.convert_predictions_to_dicts(predictions)
         instances_count = len(predictions)
-        predictions_count_list = [len(prediction) for prediction in parsed_predictions]
+        predictions_count_list = [len(prediction) for prediction in predictions]
         combination_indexes_list = [
             list(itertools.combinations(range(evaluations_count), 2))
             for evaluations_count in predictions_count_list
@@ -321,7 +319,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         option_pairs_list: list[list[list[str]]] = []
 
         for i, combination_indexes in enumerate(combination_indexes_list):
-            instance_predictions = parsed_predictions[i]
+            instance_predictions = predictions[i]
             instance_predictions_names = list(instance_predictions.keys())
             response_pairs: list[list[str]] = []
             option_pairs: list[list[str]] = []
@@ -478,7 +476,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 + incremental_contests_count,
             )
             instance_results = self.get_instance_results(
-                parsed_predictions[i],
+                predictions[i],
                 assessment_prompts[sli],
                 assessment_outputs[sli],
                 summarization_prompts[sli_summarization]
