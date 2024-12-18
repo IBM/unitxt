@@ -5,7 +5,6 @@ import sqlite3
 from typing import Optional
 
 import evaluate
-from filelock import FileLock
 from huggingface_hub import snapshot_download
 
 # Constants for SQL timeout and download lock timeout.
@@ -24,39 +23,39 @@ BASE_HEADERS = {"Content-Type": "application/json", "accept": "application/json"
 logger = evaluate.logging.get_logger(__name__)
 
 
-class JSONCache:
-    """A class for managing a JSON cache stored in a file."""
+# class JSONCache:
+#     """A class for managing a JSON cache stored in a file."""
 
-    def __init__(self, filename):
-        """Initializes the JSON cache."""
-        logger.debug(f"Initializing JSON cache from: {filename}")
-        self.filename = filename
-        self.cache = self.load_cache()
-        self.lock_path = filename + ".lock"
-        self.cache_lock_timeout = 5
+#     def __init__(self, filename):
+#         """Initializes the JSON cache."""
+#         logger.debug(f"Initializing JSON cache from: {filename}")
+#         self.filename = filename
+#         self.cache = self.load_cache()
+#         self.lock_path = filename + ".lock"
+#         self.cache_lock_timeout = 5
 
-    def load_cache(self):
-        cache = {}
-        if os.path.exists(self.filename):
-            with open(self.filename) as file:
-                for line in file:
-                    if line.strip():
-                        entry = json.loads(line)
-                        cache.update(entry)
-        return cache
+#     def load_cache(self):
+#         cache = {}
+#         if os.path.exists(self.filename):
+#             with open(self.filename) as file:
+#                 for line in file:
+#                     if line.strip():
+#                         entry = json.loads(line)
+#                         cache.update(entry)
+#         return cache
 
-    def add_to_cache(self, key, value):
-        self.cache[key] = value
-        self.append_to_file({key: value})
+#     def add_to_cache(self, key, value):
+#         self.cache[key] = value
+#         self.append_to_file({key: value})
 
-    def append_to_file(self, new_entry):
-        with open(self.filename, "a") as file, FileLock(
-            self.lock_path, timeout=self.cache_lock_timeout
-        ):
-            file.write(json.dumps(new_entry) + "\n")
+#     def append_to_file(self, new_entry):
+#         with open(self.filename, "a") as file, FileLock(
+#             self.lock_path, timeout=self.cache_lock_timeout
+#         ):
+#             file.write(json.dumps(new_entry) + "\n")
 
-    def get_from_cache(self, key):
-        return self.cache.get(key, None)
+#     def get_from_cache(self, key):
+#         return self.cache.get(key, None)
 
 
 class SQLData:
@@ -75,11 +74,11 @@ class SQLData:
         os.makedirs(self.databases_folder, exist_ok=True)
 
         self.tables_json = None
-        self.prompt_cache = JSONCache(self.prompt_cache_location)
-        self.databases_downloaded = False
+        # self.prompt_cache = JSONCache(self.prompt_cache_location)
 
     def download_database(self):
-        if not self.databases_downloaded:
+        done_file_path = os.path.join(self.databases_folder, "download_done")
+        if not os.path.exists(done_file_path):
             snapshot_download(
                 repo_id="premai-io/birdbench",
                 repo_type="dataset",
@@ -87,7 +86,7 @@ class SQLData:
                 force_download=False,
                 allow_patterns="*validation*",
             )
-            self.databases_downloaded = True
+            open(os.path.join(self.databases_folder, "download_done"), "w")
 
     def get_db_file_path(self, db_name):
         self.download_database()
