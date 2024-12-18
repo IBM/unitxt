@@ -24,12 +24,15 @@ class Criteria(Artifact):
 
     @staticmethod
     def from_jsons(s: str):
-        criteria_dict = json.loads(s)
+        return Criteria.from_obj(json.loads(s))
+
+    @staticmethod
+    def from_obj(criteria_dict: dict):
         return Criteria(
             name=criteria_dict["name"],
             description=criteria_dict["description"],
         )
-
+    
 
 class CriteriaWithOptions(Criteria):
     options: list[CriteriaOption]
@@ -37,7 +40,10 @@ class CriteriaWithOptions(Criteria):
 
     @staticmethod
     def from_jsons(s: str):
-        criteria_dict = json.loads(s)
+        return CriteriaWithOptions.from_obj(json.loads(s))
+
+    @staticmethod
+    def from_obj(criteria_dict: dict):
         return CriteriaWithOptions(
             name=criteria_dict["name"],
             description=criteria_dict["description"],
@@ -48,7 +54,7 @@ class CriteriaWithOptions(Criteria):
                 )
                 for o in criteria_dict["options"]
             ],
-            option_map=criteria_dict["option_map"],
+            option_map=criteria_dict['option_map'] if 'option_map' in criteria_dict else None
         )
 
 
@@ -341,6 +347,11 @@ class PairwiseComparisonCriteriaCatalogEnum(Enum):
     INCLUSIVITY = Criteria(
         name="inclusivity",
         description="An inclusive response is gender-inclusive and does not exhibit any gender bias",
+    )
+
+    FUNNY_JOKE = Criteria(
+        name="funny_joke",
+        description="Is the response funny?",
     )
 
 

@@ -6,30 +6,19 @@ from .eval_assist_constants import Criteria, CriteriaOption, CriteriaWithOptions
 from .operators import FieldOperator
 
 
-class LoadCriteria(FieldOperator):
-    def process_value(self, text: Any) -> Any:
+class LoadCriteriaWithOptions(FieldOperator):
+    def process_value(self, text: Any) -> CriteriaWithOptions:
         return fetch_artifact(text)[0]
 
 
-class CreateCriteriaFromDict(FieldOperator):
-    def process_value(self, text: Any) -> Any:
-        return CriteriaWithOptions(
-            name=text["name"],
-            description=text["description"],
-            options=[
-                CriteriaOption(
-                    name=option_dict["name"],
-                    description=option_dict["description"],
-                )
-                for option_dict in text["options"]
-            ],
-        )
+class CreateCriteriaWithOptionsFromDict(FieldOperator):
+    def process_value(self, criteria_dict: dict) -> Any:
+        return CriteriaWithOptions.from_obj(criteria_dict)
 
 
-class CreateCriteriaFromJson(CreateCriteriaFromDict):
-    def process_value(self, text: Any) -> Any:
-        dict = json.loads(text)
-        return super().process_value(dict)
+class CreateCriteriaWithOptionsFromJson(FieldOperator):
+    def process_value(self, text: str) -> Any:
+        return CriteriaWithOptions.from_jsons(text)
 
 
 class CreateYesNoCriteriaFromString(FieldOperator):
@@ -48,8 +37,40 @@ class CreateYesNoCriteriaFromString(FieldOperator):
         )
 
 
-class CreatePairwiseComparisonCriteriaFromString(FieldOperator):
-    def process_value(self, text: Any) -> Any:
+class CreateYesNoPartiallyCriteriaFromString(FieldOperator):
+    def process_value(self, text: str) -> Any:
+        return CriteriaWithOptions(
+            name=f"Unknown ({text[:20]}...)",
+            description=text,
+            options=[
+                CriteriaOption(name="Yes", description=""),
+                CriteriaOption(name="Partially", description=""),
+                CriteriaOption(name="No", description=""),
+            ],
+            option_map={
+                "Yes": 1.0,
+                "Partially": 0.5,
+                "No": 0.0,
+            },
+        )
+
+class LoadCriteria(FieldOperator):
+    def process_value(self, text: Any) -> Criteria:
+        return fetch_artifact(text)[0]
+
+
+class CreateCriteriaFromDict(FieldOperator):
+    def process_value(self, criteria_dict: dict) -> Any:
+        return Criteria.from_obj(criteria_dict)
+
+
+class CreateCriteriaFromJson(FieldOperator):
+    def process_value(self, text: str) -> Any:
+        return Criteria.from_jsons(text)
+    
+
+class CreateCriteriaFromString(FieldOperator):
+    def process_value(self, text: str) -> Any:
         return Criteria(
             name=f"Unknown ({text[:20]}...)",
             description=text,
