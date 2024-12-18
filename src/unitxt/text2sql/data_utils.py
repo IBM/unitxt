@@ -72,7 +72,7 @@ class SQLData:
         self.databases_folder = None
         self.prompt_cache = JSONCache(self.prompt_cache_location)
 
-    def get_databases_folder(self):
+    def get_db_file_path(self, db_name):
         self.databases_folder = os.path.join(USER_DATABASES_CACHE, "bird")
         snapshot_download(
             repo_id="premai-io/birdbench",
@@ -81,17 +81,13 @@ class SQLData:
             force_download=False,
             allow_patterns="*validation*",
         )
-        return self.databases_folder
 
-    def get_db_file_path(self, db_name):
-        databases_folder = self.get_databases_folder()
-
-        db_file_pattern = os.path.join(databases_folder, "**", db_name + ".sqlite")
+        db_file_pattern = os.path.join(self.databases_folder, "**", db_name + ".sqlite")
         db_file_paths = glob.glob(db_file_pattern, recursive=True)
 
         if len(db_file_paths) == 0:
             raise FileNotFoundError(
-                f"Database file {db_name} not found. You can try deleting folder {databases_folder} and running again."
+                f"Database file {db_name} not found. You can try deleting folder {self.databases_folder} and running again."
             )
         if not len(db_file_paths) == 1:
             raise FileExistsError(f"More than one files matched for {db_name}")
