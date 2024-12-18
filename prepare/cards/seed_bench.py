@@ -2,6 +2,7 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.image_operators import ToImage, ToRGB
 from unitxt.operators import ListFieldValues, MapValues
+from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -17,6 +18,13 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context",
     templates="templates.qa.multiple_choice.with_context.no_intro.all",
+    default_template=MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+        __description__="lmms-evals default template for seed bench.",
+    ),
     __tags__={},
     __description__=(
         "SEED-Bench-1 consists of 19K multiple-choice questions with accurate human annotations, covering 12 evaluation dimensions including both the spatial and temporal understanding."

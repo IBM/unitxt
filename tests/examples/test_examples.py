@@ -33,6 +33,7 @@ _excluded_files = [
     "evaluate_using_metrics_ensemble.py",
     "evaluate_existing_dataset_no_install.py",
     "evaluate_existing_dataset_by_llm_as_judge.py",
+    "evaluate_image_text_to_text_vllm_inference.py"
     # "evaluate_ensemble_judge.py",
     # "evaluate_benchmark.py",
     # "evaluate_image_text_to_text.py",
