@@ -135,21 +135,27 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                     "assessment": assessment_prompts[i],
                     "positional_bias_assessment": assessment_prompts[
                         evaluations_count + i
-                    ],
+                    ]
+                    if self.check_positional_bias
+                    else None,
                     "summarization": summarization_prompts[i]
                     if self.generate_summaries
                     else None,
                     "option_selection": option_selection_prompts[i],
                     "posional_bias_option_selection": option_selection_prompts[
                         i + evaluations_count
-                    ],
+                    ]
+                    if self.check_positional_bias
+                    else None,
                 }
                 if self.include_prompts_in_result
                 else None,
                 "option_selection_completion": option_selection_outputs[i],
                 "positional_bias_option_selection_completion": option_selection_outputs[
                     evaluations_count + i
-                ],
+                ]
+                if self.check_positional_bias
+                else None,
                 "criteria": criterias[i].to_json(),
             }
             for i in range(evaluations_count)
