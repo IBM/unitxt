@@ -7,8 +7,7 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "card=cards.text2sql.bird"
-        ",template=templates.text2sql.you_are_given_with_hint",
+        "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint,loader_limit=50",
         split="validation",
     )
 
@@ -17,8 +16,6 @@ inference_model = CrossProviderInferenceEngine(
     model="llama-3-70b-instruct",
     max_tokens=256,
 )
-
-test_dataset = test_dataset.select(range(50))
 
 predictions = inference_model.infer(test_dataset)
 
