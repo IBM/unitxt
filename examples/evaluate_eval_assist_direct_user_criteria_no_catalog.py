@@ -46,6 +46,7 @@ metric = EvalAssistLLMAsJudgeDirect(
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     criteria=criteria,
     context_fields=["question"],
+    criteria_field="criteria"
 )
 
 test_dataset = create_dataset(

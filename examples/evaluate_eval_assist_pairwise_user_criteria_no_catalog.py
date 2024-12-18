@@ -1,34 +1,43 @@
-from typing import List
+from typing import Any, List
 from unitxt import get_logger
-from unitxt.api import create_dataset, evaluate, load_dataset
+from unitxt.api import evaluate, load_dataset
 from unitxt.card import TaskCard, Task
 from unitxt.eval_assist_constants import (
     Criteria,
     EvaluatorNameEnum,
 )
 from unitxt.eval_assist_llm_as_judge_pairwise import EvalAssistLLMAsJudgePairwise
+from unitxt.eval_assist_operators import CreateCriteriaFromJson
 from unitxt.inference import LiteLLMInferenceEngine
 from unitxt.loaders import LoadFromDictionary
+from unitxt.templates import NullTemplate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-criteria = Criteria.from_jsons(s="""
+temperature_criteria_json = """
 {
     "name": "Temperature in Fahrenheit and Celsius",
     "description": "The temperature is described in both Fahrenheit and Celsius."
 }
-""")
+"""
 
-print(criteria)
+funny_criteria_json = """
+{
+    "name": "Funny joke",
+    "description": "Is the response funny?"
+}
+"""
 
 data = {
     "test": [
         {
             "question": "How is the weather?",
+            "judgement": temperature_criteria_json
         },
         {
             "question": "Tell me a joke about cats",
+            "judgement": funny_criteria_json
         },
     ]
 }
@@ -38,18 +47,24 @@ metric = EvalAssistLLMAsJudgePairwise(
         model="watsonx/meta-llama/llama-3-1-70b-instruct", max_tokens=1024
     ),
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
-    criteria=criteria,
     context_fields=["question"],
+    criteria_field="criteria"
 )
 
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
+    preprocess_steps=[
+        CreateCriteriaFromJson(
+            field="judgement", to_field="criteria"
+        ),
+    ],
     task=Task(
         input_fields={"question": str},
-        reference_fields={},
+        reference_fields={"criteria": Any},
         prediction_type=List[str],
         metrics=[metric],
+        default_template=NullTemplate(),
     ),
 )
 
@@ -62,10 +77,11 @@ predictions = [
     [
         """Why did the cat cross the road? To cat to the other side.""",
         """Why did the cat sit on the computer? Because it wanted to keep an eye on the mouse!""",
+        """What is red, yellow and green? A traffic light.""",
     ],
 ]
 
-test_dataset = load_dataset(card=card, template="templates.empty")["test"]
+test_dataset = load_dataset(card=card)["test"]
 
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 

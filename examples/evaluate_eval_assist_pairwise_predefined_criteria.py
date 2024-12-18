@@ -1,9 +1,11 @@
-from typing import List
+from typing import Any, List
 
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
+from unitxt.eval_assist_operators import LoadCriteria
 from unitxt.loaders import LoadFromDictionary
+from unitxt.templates import NullTemplate
 from unitxt.text_utils import print_dict
 
 logger = get_logger()
@@ -11,28 +13,34 @@ data = {
     "test": [
         {
             "question": "How is the weather?",
+            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature_in_celsius_and_fahrentheit"
         },
         {
             "question": "Tell me a joke about cats",
+            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.funny_joke"
         },
     ]
 }
 
-criteria = "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature_in_celsius_and_fahrentheit"
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
+    preprocess_steps=[
+        LoadCriteria(
+            field="criteria", to_field="criteria"
+        ),
+    ],
     task=Task(
         input_fields={"question": str},
-        reference_fields={},
+        reference_fields={"criteria": Any},
         prediction_type=List[str],
         metrics=[
-            "metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.llama3_1_70b"
-            f"[criteria={criteria}, context_fields=[question]]"
+            "metrics.llm_as_judge.eval_assist.pairwise_comparison.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
         ],
+        default_template=NullTemplate(),
     ),
 )
 
-test_dataset = load_dataset(card=card, template="templates.empty")["test"]
+test_dataset = load_dataset(card=card)["test"]
 
 predictions = [
     [
@@ -43,6 +51,7 @@ predictions = [
     [
         """Why did the cat cross the road? To cat to the other side.""",
         """Why did the cat sit on the computer? Because it wanted to keep an eye on the mouse!""",
+        """What is red, yellow and green? A traffic light.""",
     ],
 ]
 

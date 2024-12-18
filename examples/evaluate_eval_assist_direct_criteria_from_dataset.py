@@ -25,11 +25,11 @@ card = TaskCard(
         CreateYesNoCriteriaFromString(field="judgement", to_field="criteria"),
     ],
     task=Task(
-        input_fields={"question": str, "criteria": Any},
-        reference_fields={},
+        input_fields={"question": str},
+        reference_fields={"criteria": Any},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.eval_assist.direct_assessment.watsonx.llama3_1_70b[context_fields=question]"
+            "metrics.llm_as_judge.eval_assist.direct_assessment.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
         ],
     ),
 )

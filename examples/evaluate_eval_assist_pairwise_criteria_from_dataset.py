@@ -3,7 +3,7 @@ from typing import Any, List
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.eval_assist_operators import (
-    CreatePairwiseComparisonCriteriaFromString,
+    CreateCriteriaFromString,
 )
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
@@ -25,7 +25,7 @@ data = {
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[
-        CreatePairwiseComparisonCriteriaFromString(
+        CreateCriteriaFromString(
             field="judgement", to_field="criteria"
         ),
     ],

@@ -11,7 +11,7 @@ data = [
 ]
 
 
-criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature"
+criteria = "metrics.llm_as_judge.eval_assist.direct_assessment.criterias.temperature_in_celsius_and_fahrentheit"
 metrics = [
     f"metrics.llm_as_judge.eval_assist.direct_assessment.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
 ]
