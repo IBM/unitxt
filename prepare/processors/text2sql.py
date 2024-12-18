@@ -1,13 +1,12 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
-from unitxt.text2sql.processors import AddPrefix, GetSQL, StripCodeBlock
+from unitxt.text2sql.processors import GetSQL
 
 add_to_catalog(
     SequentialOperator(
         steps=[
-            StripCodeBlock(field="prediction"),
-            AddPrefix(field="prediction", prefix="SELECT "),
             GetSQL(field="prediction"),
+            # AddPrefix(field="prediction""),
         ]
     ),
     "processors.text2sql.get_sql",
