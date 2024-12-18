@@ -1,5 +1,6 @@
 import itertools
-from typing import Generator, List, Optional, Union
+import json
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .augmentors import Augmentor, NullAugmentor
@@ -24,7 +25,6 @@ from .settings_utils import get_constants, get_settings
 from .splitters import (
     ConstantSizeSample,
     RandomSizeSample,
-    Sample,
     Sampler,
 )
 from .stream import MultiStream
@@ -32,7 +32,7 @@ from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
 from .type_utils import isoftype
-from .utils import LRUCache
+from .utils import LRUCache, recursive_copy
 
 constants = get_constants()
 settings = get_settings()
@@ -40,36 +40,76 @@ logger = get_logger()
 
 
 # Used to give meaningful name to recipe steps
-class CreateDemosPoolAndSpreadDemos(MultiStreamOperator):
-    from_stream: str
-    demos_pool_size: int
-    remove_targets_from_source_split: bool
-    sample: Sample
+class CreateDemosPool(MultiStreamOperator):
+    given_demos_pool: List[Dict[str, Any]] = None
+    from_stream: str = None
+    demos_pool_size: int = None
+    remove_targets_from_source_split: bool = None
+    to_field: str = "_demos_pool_"
+
+    def verify(self):
+        assert (
+            self.given_demos_pool is not None
+            and isoftype(self.given_demos_pool, List[Dict[str, Any]])
+        ) != (
+            self.from_stream is not None
+            and self.demos_pool_size is not None
+            and self.remove_targets_from_source_split is not None
+        ), (
+            "The demos_pool must be specified by exactly one of two ways: explicitly, as parameter "
+            + "given_demos_pool, or via parameters from_stream, demos_pool_size, and remove_targets_from_source_split, "
+            + "that together direct its production."
+        )
 
     # flake8: noqa: B007
     def process(self, multi_stream: MultiStream) -> MultiStream:
-        if self.from_stream not in multi_stream:
-            raise ValueError(
-                f"Input multi-stream is missing a stream named '{self.from_stream}' to take demo instances from for the demos_pool."
-            )
-        from_stream = multi_stream[self.from_stream]
-        demos_pool = []
-        not_selected_from_from_stream = []
-        for num_scanned, instance in enumerate(from_stream):
-            if "input_fields" not in instance:
-                raise ValueError(f"'input_fields' field is missing from '{instance}'.")
-            for item in demos_pool:
-                if item["input_fields"] == instance["input_fields"]:
+        if not self.given_demos_pool:
+            # generate the demos_pool as a selection of demos_pool_size distinct instances
+            # (distinct by their "input_fields" field). The selection is taken from stream named from_stream.
+            # The selected instances are later treated as ordinary instances or not, depending on parameter
+            # remove_targets_from_source_split.
+            # The selection of instances is done from the first instances of the stream named from_stream.
+            # instances that are not distinct from previously selected demo instances, are kept aside, to be later
+            # treated like all the remaining instances of stream from_stream.
+            if self.from_stream not in multi_stream:
+                raise ValueError(
+                    f"Input multi-stream is missing a stream named '{self.from_stream}' to take demo instances from for the demos_pool."
+                )
+            from_stream = multi_stream[self.from_stream]
+            demos_pool = []
+            input_fields_of_demos_pool = []
+            not_selected_from_from_stream = []
+            for num_scanned, instance in enumerate(from_stream):
+                if "input_fields" not in instance:
+                    raise ValueError(
+                        f"'input_fields' field is missing from '{instance}'."
+                    )
+                input_fields_signature = json.dumps(
+                    instance["input_fields"], sort_keys=True
+                )
+                if input_fields_signature in input_fields_of_demos_pool:
                     not_selected_from_from_stream.append(instance)
+                    continue
+                demos_pool.append(instance)
+                input_fields_of_demos_pool.append(input_fields_signature)
+                if len(demos_pool) >= self.demos_pool_size:
                     break
-            demos_pool.append(instance)
-            if len(demos_pool) >= self.demos_pool_size:
-                break
 
-        if len(demos_pool) < self.demos_pool_size:
-            raise ValueError(
-                f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool"
-            )
+            if len(demos_pool) < self.demos_pool_size:
+                raise ValueError(
+                    f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool."
+                    + "Please consider increasing loader_limit or a less strict stream filtering."
+                )
+
+            # to avoid endless recursion in case of not demos_removed_from_data
+            demos_pool = recursive_copy(demos_pool)
+
+        else:
+            demos_pool = self.given_demos_pool
+
+        set_demos_pool = Set(fields={self.to_field: demos_pool})
+        if self.given_demos_pool or not self.remove_targets_from_source_split:
+            return set_demos_pool(multi_stream)
 
         def from_stream_generator(
             first_layer: list, ms: MultiStream, stream_name: str, start: int
@@ -79,9 +119,7 @@ class CreateDemosPoolAndSpreadDemos(MultiStreamOperator):
 
         new_streams = {}
         for stream_name in multi_stream:
-            if (
-                stream_name == self.from_stream
-            ) and self.remove_targets_from_source_split:
+            if stream_name == self.from_stream:
                 new_streams[stream_name] = ReusableGenerator(
                     generator=from_stream_generator,
                     gen_kwargs={
@@ -102,10 +140,8 @@ class CreateDemosPoolAndSpreadDemos(MultiStreamOperator):
                     },
                 )
 
-        if self.sample is None:
-            return MultiStream.from_generators(new_streams)
-        self.sample.demos_pool = demos_pool
-        return self.sample(new_streams)
+        ms = MultiStream.from_generators(new_streams)
+        return set_demos_pool(ms)
 
 
 class BaseRecipe(Recipe, SourceSequentialOperator):
@@ -135,10 +171,11 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
+    given_demos_pool: List[Dict[str, Any]] = None
     num_demos: Optional[Union[int, List[int]]] = 0
     demos_removed_from_data: bool = True
+    demos_pool_field_name: str = "_demos_pool_"
 
-    demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
     demos_field: str = "demos"
     sampler: Sampler = None
@@ -177,9 +214,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 raise ValueError(
                     "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
-            if self.demos_pool_size < self.max_demos_size:
+            if self.demos_pool_size < self.max_demos_size + 1:
                 raise ValueError(
-                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
+                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size - 1 (got: {self.demos_pool_size}), (-1: to always allow filtering of a demo identical to the processed instance)."
                 )
             if self.loader_limit and self.demos_pool_size > self.loader_limit:
                 raise ValueError(
@@ -287,7 +324,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
 
         self.inference_instance.steps = [
             self.metadata,
-            # self.processing,
+            self.processing,
         ]
 
         self.inference_demos = SourceSequentialOperator()
@@ -296,16 +333,15 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.loading,
             self.metadata,
             self.standardization,
-            # self.processing,
         ]
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.verbalization, self.finalize]
+        self.inference.steps = [self.processing, self.verbalization, self.finalize]
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
-        return list(self.inference_instance(ms)[constants.inference_stream])
+        return list(self.metadata(ms)[constants.inference_stream])
 
     @property
     def has_custom_demos_pool(self):
@@ -320,20 +356,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.before_process_multi_stream()
 
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
-        ms = self.inference_instance(ms)
+        ms = self.metadata(ms)
         if not self.use_demos:
             # go with task_instances all the way, it does not need other streams:
-            ms = self.processing(ms)
-            ms = self.verbalization(ms)
-            ms = self.finalize(ms)
+            ms = self.inference(ms)
             return list(ms[constants.inference_stream])
 
         streams = self.inference_demos()
         # streams stopped before processing
-        # ms is ready to join, as if passed loading and standardization
+        # ms is ready to join, it will get the demos from streams
         streams[constants.inference_stream] = ms[constants.inference_stream]
         multi_stream = MultiStream(streams)
-        multi_stream = self.processing(streams)
         multi_stream = self.inference(multi_stream)
         return list(multi_stream[constants.inference_stream])
 
@@ -398,15 +431,24 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 augmentor.set_fields(self.card.task.augmentable_inputs)
                 self.processing.steps.append(augmentor)
 
-        # self.prepare_refiners()
-        # for backward compatibility move refiners to after demos are taken from train
-
         # for backward compatibility, consume the demos instances even if not pushed into demos field of the ordinary instances,
-        # to use the very same ordinary instances as in back releases.
+        # in order to use the very same ordinary instances as in back releases.
         # one example of consume but not used, and indeed skips over a problematic (json-wise) input:
         # prepare/cards/rag/end_to_end/clapnq.py
-        # if self.use_demos:
         if self.has_custom_demos_pool:
+            self.processing.steps.append(
+                CreateDemosPool(
+                    given_demos_pool=self.given_demos_pool,
+                    from_stream=self.demos_taken_from,
+                    demos_pool_size=self.demos_pool_size
+                    if self.given_demos_pool is None
+                    else None,
+                    remove_targets_from_source_split=self.demos_removed_from_data,
+                    to_field=self.demos_pool_field_name,
+                )
+            )
+
+        if self.use_demos:
             if self.sampler is None:
                 if self.card.sampler is None:
                     raise ValueError(
@@ -415,84 +457,48 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                     )
                 self.sampler = self.card.sampler
 
-            # going to select from from_stream distinct instances to become the demo_pool instances.
-            # because when setting a sample of num_demos of these to the ordinary instances a
-            # filtering is done to not set a demo instance with same input_fields as the processed ordinary instance,
-            # we prepare a demo_pool of at least num_demos +1 instances
-            demos_pool_size = self.demos_pool_size
-            if self.use_demos:
-                if demos_pool_size < self.max_demos_size + 1:
-                    demos_pool_size = self.max_demos_size + 1
+        self.prepare_refiners()
 
-            if self.use_demos:
-                if isinstance(self.num_demos, int):
-                    sample = ConstantSizeSample(
+        if self.use_demos:
+            if isinstance(self.num_demos, int):
+                self.verbalization.steps.append(
+                    ConstantSizeSample(
+                        from_field=self.demos_pool_field_name,
                         to_field=self.demos_field,
                         sampler=self.sampler,
                         sample_size=self.num_demos,
                     )
-                    self.verbalization.steps.append(
-                        Set(
-                            fields={
-                                "recipe_metadata/num_demos": self.num_demos,
-                                "recipe_metadata/demos_pool_size": demos_pool_size,
-                            }
-                        )
-                    )
-
-                elif isinstance(self.num_demos, list):
-                    sample = RandomSizeSample(
-                        to_field=self.demos_field,
-                        sampler=self.sampler,
-                        sample_sizes=self.num_demos,
-                    )
-
-                    self.verbalization.steps.append(
-                        GetLength(field="demos", to_field="recipe_metadata/num_demos")
-                    )
-                    self.verbalization.steps.append(
-                        Set(fields={"recipe_metadata/demos_pool_size": demos_pool_size})
-                    )
-
-                else:
-                    raise ValueError("num_demos must be int or List[int]")
-
-            else:
-                # consume demos pool, but does not want to push anything to demos field of the ordinary distances
-                sample = None
+                )
                 self.verbalization.steps.append(
                     Set(
                         fields={
-                            "recipe_metadata/num_demos": 0,
-                            "recipe_metadata/demos_pool_size": demos_pool_size,
+                            "recipe_metadata/num_demos": self.num_demos,
+                            "recipe_metadata/demos_pool_size": self.demos_pool_size,
                         }
                     )
                 )
 
-            # here we have the sample suiting self.num_demos
-            self.processing.steps.append(
-                CreateDemosPoolAndSpreadDemos(
-                    from_stream=self.demos_taken_from,
-                    demos_pool_size=demos_pool_size,
-                    remove_targets_from_source_split=self.demos_removed_from_data,
-                    sample=sample,
+            elif isinstance(self.num_demos, list):
+                self.verbalization.steps.append(
+                    RandomSizeSample(
+                        from_field=self.demos_pool_field_name,
+                        to_field=self.demos_field,
+                        sampler=self.sampler,
+                        sample_sizes=self.num_demos,
+                    )
                 )
-            )
-
-        else:
-            self.verbalization.steps.append(
-                Set(
-                    fields={
-                        "recipe_metadata/num_demos": 0,
-                        "recipe_metadata/demos_pool_size": 0,
-                    }
+                self.verbalization.steps.append(
+                    GetLength(field="demos", to_field="recipe_metadata/num_demos")
                 )
-            )
+                self.verbalization.steps.append(
+                    Set(
+                        fields={"recipe_metadata/demos_pool_size": self.demos_pool_size}
+                    )
+                )
 
-        # for backward compatibility, move the refiners here, after demos are taken from train
-        self.prepare_refiners()
+            else:
+                raise ValueError("num_demos must be int or List[int]")
 
-        if self.has_custom_demos_pool and self.use_demos:
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(
@@ -507,6 +513,14 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 )
 
         else:
+            self.verbalization.steps.append(
+                Set(
+                    fields={
+                        "recipe_metadata/num_demos": 0,
+                        "recipe_metadata/demos_pool_size": 0,
+                    }
+                )
+            )
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
                     ApplyRandomTemplate(templates=self.template)
@@ -530,6 +544,15 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
+        if self.use_demos:
+            if (self.demos_pool_size is None) == (self.given_demos_pool is None):
+                raise ValueError(
+                    f"When using demonstrations, exactly one of either demos_pool_size or given_demos_pool must be set. Got both {'' if self.demos_pool_size else 'not '}set."
+                )
+            # now set self.demos_pool_size for the checks of verify
+            if self.given_demos_pool:
+                self.demos_pool_size = len(self.given_demos_pool)
+
         if isinstance(self.template, TemplatesList):
             self.template = self.template.items
         self.reset_pipeline()

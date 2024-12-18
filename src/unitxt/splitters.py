@@ -337,7 +337,7 @@ class DiverseLabelsSampler(Sampler):
 
 
 class Sample(InstanceOperator):
-    demos_pool: List[Dict[str, Any]] = None
+    from_field: str
     to_field: str
     sampler: Sampler
 
@@ -352,10 +352,9 @@ class Sample(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], multi_stream: MultiStream
     ) -> Dict[str, Any]:
+        demos_pool = instance[self.from_field]
         sample_size = self.get_sample_size(instance)
-        source_stream = self.sampler.filter_source_by_instance(
-            self.demos_pool, instance
-        )
+        source_stream = self.sampler.filter_source_by_instance(demos_pool, instance)
         if len(source_stream) < sample_size:
             raise ValueError(
                 f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {sample_size}."
@@ -364,6 +363,7 @@ class Sample(InstanceOperator):
             sample_size=sample_size, instances_pool=source_stream, instance=instance
         )
         instance[self.to_field] = recursive_copy(sampled_instances)
+        instance.pop(self.from_field)  # pop the field pointing to the demos_pool
         return instance
 
 

@@ -172,6 +172,71 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(result, target)
         self.assertDictEqual(target_task_data, result_task_data)
 
+    def test_standard_recipe_with_given_demos(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+        )
+        for_demos = recipe.inference_demos()
+        for_demos = recipe.processing(for_demos)
+        for_demos = recursive_copy(list(for_demos["validation"]))
+
+        recipe2 = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            given_demos_pool=for_demos,
+        )
+
+        trains = list(recipe2()["train"])
+        assert "The entailment class is entailment" not in trains[0]["source"]
+
+        recipe3 = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            given_demos_pool=for_demos,
+            num_demos=3,
+        )
+
+        trains = list(recipe3()["train"])
+        assert "The entailment class is entailment" in trains[0]["source"]
+
+    def test_standard_recipe_not_duplicating_demos_pool(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+        )
+        for_demos = recipe.inference_demos()
+        for_demos = recipe.processing(for_demos)
+        for_demos = recursive_copy(list(for_demos["validation"]))
+
+        recipe3 = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            given_demos_pool=for_demos,
+            num_demos=3,
+        )
+
+        ms = recipe3.inference_demos()
+        ms = recipe3.processing(ms)
+        # here the ms stopped before verbalizing, after processing so it still has "_demos_pool_" field
+        trains = list(ms["train"])
+        assert "_demos_pool_" in trains[0]
+        first_demo_of_first_instance = trains[0]["_demos_pool_"][0]
+        first_demo_of_second_instance = trains[1]["_demos_pool_"][0]
+        self.assertDictEqual(
+            first_demo_of_first_instance, first_demo_of_second_instance
+        )
+        self.assertEqual(
+            first_demo_of_first_instance["input_fields"]["text_a_type"], "premise"
+        )
+
+        # change just the demos in the first instance
+        first_demo_of_first_instance["input_fields"]["text_a_type"] = "hallelujah"
+        # verify that the demos in the second instance change as well
+        self.assertEqual(
+            first_demo_of_second_instance["input_fields"]["text_a_type"], "hallelujah"
+        )
+
     def test_standard_recipe_with_indexes_with_catalog(self):
         recipe = StandardRecipe(
             card="cards.wnli",
@@ -533,7 +598,7 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(
             str(cm.exception),
-            "num_demos (got: 30) should not exceed demos_pool_size (got: 10)",
+            "num_demos (got: 30) should not exceed demos_pool_size - 1 (got: 10), (-1: to always allow filtering of a demo identical to the processed instance).",
         )
 
     def test_standard_recipe_with_no_test(self):
