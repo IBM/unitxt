@@ -1,6 +1,7 @@
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 from unitxt.text2sql.metrics import ExecutionAccuracy  # noqa
+from unitxt.text2sql.types import SQLSchema
 
 add_to_catalog(
     Task(
@@ -10,6 +11,7 @@ add_to_catalog(
             "db_id": str,
             "dbms": str,
             "evidence": str,
+            "schema": SQLSchema,
         },
         reference_fields={"query": str},
         prediction_type=str,

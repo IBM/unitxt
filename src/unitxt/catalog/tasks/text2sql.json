@@ -5,7 +5,8 @@
         "utterance": "str",
         "db_id": "str",
         "dbms": "str",
-        "evidence": "str"
+        "evidence": "str",
+        "schema": "SQLSchema"
     },
     "reference_fields": {
         "query": "str"
