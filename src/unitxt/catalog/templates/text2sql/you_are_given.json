@@ -1,10 +1,7 @@
 {
-    "__type__": "text2_sql_input_output_template",
-    "input_format": "You are given the following SQL schema\n\n```sql\n{schema_text}```\n\nand question:\n\n{utterance}\n\n",
+    "__type__": "input_output_template",
+    "input_format": "You are given the following question:\n\n{utterance}\n\nAn SQL schema\n\n```sql\n{schema}\n```\n\nAnswer the following question:\n\n{utterance}\n\n",
     "instruction": "You are a Text2SQL generation model, in your answer, only have SQL code",
-    "num_samples": 0,
-    "use_oracle_knowledge": false,
-    "db_type": "sqlite",
     "target_prefix": "```sql\nSELECT ",
     "output_format": "{query}",
     "postprocessors": [
