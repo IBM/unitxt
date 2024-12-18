@@ -34,7 +34,7 @@ card = TaskCard(
         reference_fields={"criteria": Any},
         prediction_type=List[str],
         metrics=[
-            "metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.llama3_1_70b[context_fields=question]"
+            "metrics.llm_as_judge.eval_assist.pairwise_comparison.rits.llama3_1_70b[context_fields=question,criteria_field=criteria]"
         ],
         default_template=NullTemplate(),
     ),

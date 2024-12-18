@@ -1,7 +1,9 @@
 import itertools
+from difflib import get_close_matches
 from typing import List
 
 from .artifact import fetch_artifact
+from .error_utils import UnitxtError
 from .eval_assist_chat_templates import pairwise_comparison_template_dict
 from .eval_assist_constants import (
     Criteria,
@@ -33,6 +35,7 @@ def rank_indexes(numbers):
 
 class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
     criteria: Criteria = None
+    criteria_field: str = None
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     prediction_type = List[str]
@@ -75,11 +78,23 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             metrics=[],
         )
 
+    def verify(self):
+        if self.criteria is None and self.criteria_field is None:
+            raise UnitxtError(
+                f"You must set either the 'Criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
+            )
+
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
-            self.logger.info("Reading criteria from the task_data")
+            if self.criteria_field not in task_data[0]:
+                raise UnitxtError(
+                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
+                )
+            self.logger.info(
+                f"Reading criteria from the task_data field f{self.criteria_field}"
+            )
             criterias = [
-                fetch_artifact(task_data_instance["criteria"])[0]
+                fetch_artifact(task_data_instance[self.criteria_field])[0]
                 for task_data_instance in task_data
             ]
         else:
@@ -87,7 +102,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
             )
             if not isinstance(self.criteria, Criteria):
-                raise Exception(
+                raise UnitxtError(
                     f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
                 )
 
