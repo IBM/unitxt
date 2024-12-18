@@ -51,6 +51,7 @@ predictions = [
     [
         """Why did the cat cross the road? To cat to the other side.""",
         """Why did the cat sit on the computer? Because it wanted to keep an eye on the mouse!""",
+        """What is red, yellow and green? A traffic light.""",
     ],
 ]
 

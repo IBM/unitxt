@@ -271,7 +271,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             for metric in single_result.keys():
                 all_results[f"{response_name}_{metric}"] = single_result[metric]
 
-        winrates = [r['winrate'] for r in per_response_results.values()]
+        winrates = [r["winrate"] for r in per_response_results.values()]
         all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
         return self.clean_results(all_results)
 
@@ -302,6 +302,13 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         )
         predictions = self.convert_predictions_to_dicts(predictions)
         instances_count = len(predictions)
+        self.reduction_map["mean"].extend(
+            [f"{key}_winrate" for key in predictions[0].keys()]
+        )
+        self.reduction_map["mean"].extend(
+            [f"{key}_ranking" for key in predictions[0].keys()]
+        )
+
         predictions_count_list = [len(prediction) for prediction in predictions]
         combination_indexes_list = [
             list(itertools.combinations(range(evaluations_count), 2))
@@ -317,10 +324,15 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
         response_pairs_list: list[list[list[str]]] = []
         option_pairs_list: list[list[list[str]]] = []
-
+        predictions_names = set(predictions[0].keys())
         for i, combination_indexes in enumerate(combination_indexes_list):
             instance_predictions = predictions[i]
             instance_predictions_names = list(instance_predictions.keys())
+            if set(instance_predictions_names) != predictions_names:
+                raise Exception(
+                    f"The set of prediction names is different between instance 0 and instance {i}. In prediction 0, it is {sorted(predictions_names)}. In prediction {i}, it is {sorted(instance_predictions_names)}. Make sure the same number of predictions is passed for all instances."
+                )
+
             response_pairs: list[list[str]] = []
             option_pairs: list[list[str]] = []
             for combination in combination_indexes:
@@ -384,12 +396,19 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         summarization_outputs = None
         if self.generate_summaries:
             incremental_contests_count_with_positional_bias_list = [
-                incremental_contests_count * [1,2][self.check_positional_bias] for incremental_contests_count in incremental_contests_count_list
+                incremental_contests_count * [1, 2][self.check_positional_bias]
+                for incremental_contests_count in incremental_contests_count_list
             ]
             assessment_for_summaries_slice_list = [
                 slice(
-                    incremental_contests_count_with_positional_bias_list[i - 1] if i > 0 else 0,
-                    (incremental_contests_count_with_positional_bias_list[i - 1] if i > 0 else 0)
+                    incremental_contests_count_with_positional_bias_list[i - 1]
+                    if i > 0
+                    else 0,
+                    (
+                        incremental_contests_count_with_positional_bias_list[i - 1]
+                        if i > 0
+                        else 0
+                    )
                     + contests_count_list[i],
                 )
                 for i in range(len(contests_count_list))
