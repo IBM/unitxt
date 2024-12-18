@@ -237,6 +237,62 @@ class TestRecipes(UnitxtTestCase):
             first_demo_of_second_instance["input_fields"]["text_a_type"], "hallelujah"
         )
 
+    def test_standard_recipe_with_demoed_instances(self):
+        recipe = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+        )
+        ms = recipe.loading()
+        ms = recipe.metadata(ms)
+        ms = recipe.standardization(ms)
+        a_standardized_input_instance = next(iter(ms["test"]))
+        self.assertNotIn("demos", a_standardized_input_instance)
+
+        ms = recipe.loading()
+        ms = recipe.metadata(ms)
+        ms = recipe.standardization(ms)
+        ms = recipe.task(ms)
+        a_tasked_input_instance = next(iter(ms["validation"]))
+        self.assertIn(
+            "I took the water bottle out of the backpack ",
+            a_tasked_input_instance["input_fields"]["text_a"],
+        )
+
+        a_standardized_input_instance["demos"] = [a_tasked_input_instance]
+        demoed_standardized_input_instance = recursive_copy(
+            a_standardized_input_instance
+        )
+
+        recipe2 = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=3,
+            num_demos=1,
+            skip_demoed_instances=True,
+        )
+
+        processed_input_instance = recipe2.produce([a_standardized_input_instance])[0]
+        self.assertIn(
+            "premise: I took the water bottle out of the backpack ",
+            processed_input_instance["source"],
+        )
+
+        recipe3 = StandardRecipe(
+            card="cards.wnli",
+            template_card_index=0,
+            demos_pool_size=3,
+            num_demos=1,
+            skip_demoed_instances=False,
+        )
+
+        processed_input_instance = recipe3.produce(
+            [demoed_standardized_input_instance]
+        )[0]
+        self.assertNotIn(
+            "premise: I took the water bottle out of the backpack ",
+            processed_input_instance["source"],
+        )
+
     def test_standard_recipe_with_indexes_with_catalog(self):
         recipe = StandardRecipe(
             card="cards.wnli",

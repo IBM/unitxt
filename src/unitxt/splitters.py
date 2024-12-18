@@ -340,6 +340,7 @@ class Sample(InstanceOperator):
     from_field: str
     to_field: str
     sampler: Sampler
+    skip_demoed_instances: bool = False
 
     def prepare(self):
         self.local_cache = None
@@ -352,6 +353,11 @@ class Sample(InstanceOperator):
     def process(
         self, instance: Dict[str, Any], multi_stream: MultiStream
     ) -> Dict[str, Any]:
+        if self.skip_demoed_instances and self.to_field in instance:
+            if self.from_field in instance:
+                instance.pop(self.from_field)
+            return instance
+
         demos_pool = instance[self.from_field]
         sample_size = self.get_sample_size(instance)
         source_stream = self.sampler.filter_source_by_instance(demos_pool, instance)

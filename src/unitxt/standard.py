@@ -180,6 +180,9 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     demos_field: str = "demos"
     sampler: Sampler = None
 
+    # do not push demos to instances whose "demos" field is already populated
+    skip_demoed_instances: bool = False
+
     augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(default=None)
 
     steps: List[StreamingOperator] = InternalField(default_factory=list)
@@ -356,6 +359,8 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.before_process_multi_stream()
 
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        # does not hurt to set metadata
+        # task_instances are assumed to be as if passed through self.standardization
         ms = self.metadata(ms)
         if not self.use_demos:
             # go with task_instances all the way, it does not need other streams:
@@ -467,6 +472,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         to_field=self.demos_field,
                         sampler=self.sampler,
                         sample_size=self.num_demos,
+                        skip_demoed_instances=self.skip_demoed_instances,
                     )
                 )
                 self.verbalization.steps.append(
@@ -485,6 +491,7 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         to_field=self.demos_field,
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
+                        skip_demoed_instances=self.skip_demoed_instances,
                     )
                 )
                 self.verbalization.steps.append(
@@ -649,6 +656,8 @@ class StandardRecipe(StandardRecipeWithIndexes):
             Maximum test instances for the refiner.
         demos_pool_size (int, optional):
             Size of the demos pool.
+        given_demos_pool(List[Dict[str, Any]], optional):
+            a list of instances to make the demos_pool
         num_demos (int, optional):
             Number of demos to be used.
         demos_pool_name (str, optional):
@@ -657,10 +666,16 @@ class StandardRecipe(StandardRecipeWithIndexes):
             Specifies from where the demos are taken. Default is "train".
         demos_field (str, optional):
             Field name for demos. Default is "demos".
+        demos_pool_field_name (str, optional):
+            field name to maintain the demos_pool, until sampled from, to make the demos.
+            Defaults to "_demos_pool_".
         demos_removed_from_data (bool, optional):
             whether to remove the demos from the source data, Default is True
         sampler (Sampler, optional):
             The Sampler used to select the demonstrations when num_demos > 0.
+        skip_demoed_instances (bool, optional):
+            whether to skip pushing demos to an instance whose demos_field is
+            already populated. Defaults to False.
         steps (List[StreamingOperator], optional):
             List of StreamingOperator objects to be used in the recipe.
         augmentor (Augmentor) :
