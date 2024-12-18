@@ -13,15 +13,12 @@ SQL_TIMEOUT = 100
 DOWNLOAD_LOCK_TIMEOUT = 1000
 
 # Path to the user's databases cache directory.
-USER_DATABASES_CACHE = os.environ.get("DATABASES_CACHE", "cache/text2sql/databases")
-os.makedirs(USER_DATABASES_CACHE, exist_ok=True)
+
 
 # Base headers for HTTP requests.
 BASE_HEADERS = {"Content-Type": "application/json", "accept": "application/json"}
 # Path to the prompt cache file.
-PROMPT_CACHE_LOCATION = os.path.join(
-    USER_DATABASES_CACHE, "user_cache/text2sql_requests_cache.jsonl"
-)
+
 
 # Logger instance.
 logger = evaluate.logging.get_logger(__name__)
@@ -65,22 +62,35 @@ class JSONCache:
 class SQLData:
     def __init__(self, prompt_cache_location=None):
         # self.base_headers = base_headers if base_headers else BASE_HEADERS
-        self.prompt_cache_location = (
-            prompt_cache_location if prompt_cache_location else PROMPT_CACHE_LOCATION
+
+        self.prompt_cache_location = os.path.join(
+            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"),
+            "user_cache",
+            "text2sql_requests_cache.jsonl",
         )
+
+        self.databases_folder = os.path.join(
+            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
+        )
+        os.makedirs(self.databases_folder, exist_ok=True)
+
         self.tables_json = None
-        self.databases_folder = None
         self.prompt_cache = JSONCache(self.prompt_cache_location)
+        self.databases_downloaded = False
+
+    def download_database(self):
+        if not self.databases_downloaded:
+            snapshot_download(
+                repo_id="premai-io/birdbench",
+                repo_type="dataset",
+                local_dir=self.databases_folder,
+                force_download=False,
+                allow_patterns="*validation*",
+            )
+            self.databases_downloaded = True
 
     def get_db_file_path(self, db_name):
-        self.databases_folder = os.path.join(USER_DATABASES_CACHE, "bird")
-        snapshot_download(
-            repo_id="premai-io/birdbench",
-            repo_type="dataset",
-            local_dir=self.databases_folder,
-            force_download=False,
-            allow_patterns="*validation*",
-        )
+        self.download_database()
 
         db_file_pattern = os.path.join(self.databases_folder, "**", db_name + ".sqlite")
         db_file_paths = glob.glob(db_file_pattern, recursive=True)
@@ -96,12 +106,12 @@ class SQLData:
 
     def get_tables_json(self):
         if not self.tables_json:
-            databases_folder = self.get_databases_folder()
-            db_tables_json_file = os.path.join(databases_folder, "tables.json")
+            self.download_database()
+            db_tables_json_file = os.path.join(self.databases_folder, "tables.json")
             if not os.path.exists(db_tables_json_file):
                 raise FileNotFoundError(
                     f"tables.json file not found {db_tables_json_file}. "
-                    f"You can try deleting folder {databases_folder} and running again."
+                    f"You can try deleting folder {self.databases_folder} and running again."
                 )
             self.tables_json = json.load(open(db_tables_json_file))
         return self.tables_json
