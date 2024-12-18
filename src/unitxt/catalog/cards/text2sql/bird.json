@@ -11,14 +11,33 @@
             "field_to_field": {
                 "question_id": "id",
                 "question": "utterance",
-                "SQL": "query"
+                "SQL": "query",
+                "db_id": "db_id"
             }
         },
         {
             "__type__": "set",
             "fields": {
-                "dbms": "sqlite"
+                "dbms": "sqlite",
+                "db_type": "sqlite",
+                "use_oracle_knowledge": true,
+                "num_table_rows_to_add": 0
             }
+        },
+        {
+            "__type__": "copy",
+            "field": "db_id",
+            "to_field": "schema/db_id"
+        },
+        {
+            "__type__": "copy",
+            "field": "db_type",
+            "to_field": "schema/db_type"
+        },
+        {
+            "__type__": "copy",
+            "field": "num_table_rows_to_add",
+            "to_field": "schema/num_table_rows_to_add"
         }
     ],
     "task": "tasks.text2sql",
