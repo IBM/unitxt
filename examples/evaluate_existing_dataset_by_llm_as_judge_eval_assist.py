@@ -23,8 +23,8 @@ metrics = [
 dataset = load_dataset(
     card="cards.squad",
     metrics=metrics,
-    loader_limit=100,
-    max_test_instances=100,
+    loader_limit=10,
+    max_test_instances=10,
     split="test",
 )
 
