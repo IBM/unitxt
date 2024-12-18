@@ -150,7 +150,7 @@ class EvalAssistLLMAsJudgeDirect(EvalAssistLLMAsJudge):
                 "positional_bias_option_selection_completion": option_selection_outputs[
                     evaluations_count + i
                 ],
-                "criteria_name": criterias[i].name,
+                "criteria": criterias[i].to_json(),
             }
             for i in range(evaluations_count)
         ]

@@ -108,7 +108,8 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
             criterias: list[Criteria] = [self.criteria] * eval_count
 
-        self.logger.info(f"First criteria name is '{criterias[0].name}'")
+        unique_criterias = list({criteria.name for criteria in criterias})
+        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")        
         return criterias
 
     def get_instance_results(
@@ -288,6 +289,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
         winrates = [r["winrate"] for r in per_response_results.values()]
         all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
+        all_results['criteria'] = criteria.to_json()
         return self.clean_results(all_results)
 
     def parse_prediction_to_dict(self, prediction: dict[str, str] | list[str]):
@@ -524,6 +526,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 selections[sli],
                 contests_count_list[i],
                 combination_indexes_list[i],
+                criterias[i]
             )
             results.append(instance_results)
             slice_start = slice_end
