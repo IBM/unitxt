@@ -11,7 +11,7 @@ from .eval_assist_constants import (
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 from .task import Task
-
+import json
 
 def rank_indexes(numbers):
     # Generate the initial list of indices
@@ -34,8 +34,6 @@ def rank_indexes(numbers):
 
 
 class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
-    criteria: Criteria = None
-    criteria_field: str = None
     reduction_map = {"mean": ["score"]}
     main_score = "score"
     prediction_type = List[str]
@@ -78,11 +76,6 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             metrics=[],
         )
 
-    def verify(self):
-        if self.criteria is None and self.criteria_field is None:
-            raise UnitxtError(
-                f"You must set either the 'Criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
-            )
 
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
@@ -124,6 +117,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         selections,
         contests_count,
         combination_indexes,
+        criteria: Criteria
     ):
         response_names = list(instance_predictions.keys())
         per_response_results = {

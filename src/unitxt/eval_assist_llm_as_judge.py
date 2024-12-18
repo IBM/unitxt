@@ -1,9 +1,12 @@
 from typing import Optional
 
+from unitxt.error_utils import UnitxtError
+
 from . import get_logger
 from .api import infer
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
+    Criteria,
     EvaluatorNameEnum,
     OptionSelectionStrategyEnum,
 )
@@ -23,12 +26,13 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
         OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
     )
     evaluator_name: EvaluatorNameEnum = None
-    check_positional_bias = True
+    check_positional_bias: bool = True
     context_fields: str = ["context"]
     generate_summaries: bool = True
     format = "formats.chat_api"
-    include_prompts_in_result = False
-
+    include_prompts_in_result: bool = False
+    criteria_field: str = None
+    criteria: Criteria = None
     logger = get_logger()
 
     def prepare(self):
@@ -94,6 +98,10 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
                 "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
                 f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
                 "to inherit from OptionSelectingByLogProbsInferenceEngine "
+            )
+        if self.criteria is None and self.criteria_field is None:
+            raise UnitxtError(
+                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
             )
 
     def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str, str]]:
