@@ -105,7 +105,7 @@ tests = [
     "tenacity==8.3.0",
     "accelerate",
     "spacy", 
-    "func_timeout",
+    "func_timeout==4.3.5",
 ]
 ui = [
     "gradio",
