@@ -297,14 +297,14 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         )
 
     def convert_predictions_to_dicts(
-        self, predictions: list[dict[str, str] | list[str]]
+        self, predictions: Union[list[dict[str, str],list[str]]]
     ):
         return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
         references: list[list[str]],
-        predictions: list[dict[str, str] | list[str]],
+        predictions: Union[list[dict[str, str],list[str]]],
         task_data: list[dict[str, str]],
     ) -> dict:
         self.logger.info(
