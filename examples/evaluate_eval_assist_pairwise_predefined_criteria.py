@@ -13,11 +13,11 @@ data = {
     "test": [
         {
             "question": "How is the weather?",
-            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature_in_celsius_and_fahrentheit"
+            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.temperature_in_celsius_and_fahrentheit",
         },
         {
             "question": "Tell me a joke about cats",
-            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.funny_joke"
+            "criteria": "metrics.llm_as_judge.eval_assist.pairwise_comparison.criterias.funny_joke",
         },
     ]
 }
@@ -25,9 +25,7 @@ data = {
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[
-        LoadCriteria(
-            field="criteria", to_field="criteria"
-        ),
+        LoadCriteria(field="criteria", to_field="criteria"),
     ],
     task=Task(
         input_fields={"question": str},

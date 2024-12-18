@@ -10,7 +10,8 @@ from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-criteria = CriteriaWithOptions.from_jsons(s="""
+criteria = CriteriaWithOptions.from_jsons(
+    s="""
 {
     "name": "Temperature in Fahrenheit and Celsius",
     "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
@@ -30,7 +31,8 @@ criteria = CriteriaWithOptions.from_jsons(s="""
     ],
     "option_map": {"Yes": 1.0, "No": 0.5, "Pass": 0.0}
 }
-""")
+"""
+)
 
 
 data = [
@@ -46,7 +48,7 @@ metric = EvalAssistLLMAsJudgeDirect(
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     criteria=criteria,
     context_fields=["question"],
-    criteria_field="criteria"
+    criteria_field="criteria",
 )
 
 test_dataset = create_dataset(

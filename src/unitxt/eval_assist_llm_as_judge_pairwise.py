@@ -12,6 +12,7 @@ from .eval_assist_constants import (
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 from .task import Task
 
+
 def rank_indexes(numbers):
     # Generate the initial list of indices
     indices = list(range(len(numbers)))
@@ -75,7 +76,6 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             metrics=[],
         )
 
-
     def get_criterias(self, task_data, eval_count):
         if self.criteria is None:
             if self.criteria_field not in task_data[0]:
@@ -101,7 +101,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
             criterias: list[Criteria] = [self.criteria] * eval_count
 
         unique_criterias = list({criteria.name for criteria in criterias})
-        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")        
+        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
         return criterias
 
     def get_instance_results(
@@ -116,7 +116,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         selections,
         contests_count,
         combination_indexes,
-        criteria: Criteria
+        criteria: Criteria,
     ):
         response_names = list(instance_predictions.keys())
         per_response_results = {
@@ -282,10 +282,10 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
         winrates = [r["winrate"] for r in per_response_results.values()]
         all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
-        all_results['criteria'] = criteria.to_json()
+        all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
-    def parse_prediction_to_dict(self, prediction: Union[dict[str, str],list[str]]):
+    def parse_prediction_to_dict(self, prediction: Union[dict[str, str], list[str]]):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
 
@@ -297,14 +297,14 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         )
 
     def convert_predictions_to_dicts(
-        self, predictions: Union[list[dict[str, str],list[str]]]
+        self, predictions: Union[list[dict[str, str], list[str]]]
     ):
         return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
         references: list[list[str]],
-        predictions: Union[list[dict[str, str],list[str]]],
+        predictions: Union[list[dict[str, str], list[str]]],
         task_data: list[dict[str, str]],
     ) -> dict:
         self.logger.info(
@@ -519,7 +519,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
                 selections[sli],
                 contests_count_list[i],
                 combination_indexes_list[i],
-                criterias[i]
+                criterias[i],
             )
             results.append(instance_results)
             slice_start = slice_end

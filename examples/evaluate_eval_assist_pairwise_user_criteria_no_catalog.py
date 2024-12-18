@@ -1,9 +1,9 @@
 from typing import Any, List
+
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.card import TaskCard, Task
+from unitxt.card import Task, TaskCard
 from unitxt.eval_assist_constants import (
-    Criteria,
     EvaluatorNameEnum,
 )
 from unitxt.eval_assist_llm_as_judge_pairwise import EvalAssistLLMAsJudgePairwise
@@ -31,14 +31,8 @@ funny_criteria_json = """
 
 data = {
     "test": [
-        {
-            "question": "How is the weather?",
-            "judgement": temperature_criteria_json
-        },
-        {
-            "question": "Tell me a joke about cats",
-            "judgement": funny_criteria_json
-        },
+        {"question": "How is the weather?", "judgement": temperature_criteria_json},
+        {"question": "Tell me a joke about cats", "judgement": funny_criteria_json},
     ]
 }
 
@@ -48,16 +42,14 @@ metric = EvalAssistLLMAsJudgePairwise(
     ),
     evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     context_fields=["question"],
-    criteria_field="criteria"
+    criteria_field="criteria",
 )
 
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[
-        CreateCriteriaFromJson(
-            field="judgement", to_field="criteria"
-        ),
+        CreateCriteriaFromJson(field="judgement", to_field="criteria"),
     ],
     task=Task(
         input_fields={"question": str},

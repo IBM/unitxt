@@ -1,9 +1,8 @@
 from typing import Optional, Union
 
-from unitxt.error_utils import UnitxtError
-
 from . import get_logger
 from .api import infer
+from .error_utils import UnitxtError
 from .eval_assist_chat_templates import direct_assessment_template_dict
 from .eval_assist_constants import (
     Criteria,
@@ -140,18 +139,17 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
         ]
         return (prompts, raw_predictions, predictions)
 
-    def clean_results(self, results: Union[dict,list]):
+    def clean_results(self, results: Union[dict, list]):
         if isinstance(results, list):
             return [self.clean_results(x) for x in results]
-        else:
-            cleaned = {
-                k: (v if not isinstance(v, dict) else self.clean_results(v))
-                for k, v in results.items()
-                if v is not None and not (isinstance(v, (list, dict)) and len(v) == 0)
-            }
-            # Remove the dictionary itself if it becomes empty
-            return {
-                k: v
-                for k, v in cleaned.items()
-                if not (isinstance(v, dict) and len(v) == 0)
-            }
+        cleaned = {
+            k: (v if not isinstance(v, dict) else self.clean_results(v))
+            for k, v in results.items()
+            if v is not None and not (isinstance(v, (list, dict)) and len(v) == 0)
+        }
+        # Remove the dictionary itself if it becomes empty
+        return {
+            k: v
+            for k, v in cleaned.items()
+            if not (isinstance(v, dict) and len(v) == 0)
+        }

@@ -1,4 +1,3 @@
-import json
 from typing import Any
 
 from .artifact import fetch_artifact
@@ -54,6 +53,7 @@ class CreateYesNoPartiallyCriteriaFromString(FieldOperator):
             },
         )
 
+
 class LoadCriteria(FieldOperator):
     def process_value(self, text: Any) -> Criteria:
         return fetch_artifact(text)[0]
@@ -67,7 +67,7 @@ class CreateCriteriaFromDict(FieldOperator):
 class CreateCriteriaFromJson(FieldOperator):
     def process_value(self, text: str) -> Any:
         return Criteria.from_jsons(text)
-    
+
 
 class CreateCriteriaFromString(FieldOperator):
     def process_value(self, text: str) -> Any:

@@ -25,9 +25,7 @@ data = {
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[
-        CreateCriteriaFromString(
-            field="judgement", to_field="criteria"
-        ),
+        CreateCriteriaFromString(field="judgement", to_field="criteria"),
     ],
     task=Task(
         input_fields={"question": str},

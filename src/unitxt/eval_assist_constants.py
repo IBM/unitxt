@@ -1,3 +1,4 @@
+import json
 from enum import Enum
 from typing import Optional
 
@@ -6,7 +7,7 @@ from .inference import (
     LiteLLMInferenceEngine,
     RITSInferenceEngine,
 )
-import json
+
 
 class OptionSelectionStrategyEnum(str, Enum):
     PARSE_OUTPUT_TEXT = "PARSE_OUTPUT_TEXT"
@@ -32,7 +33,7 @@ class Criteria(Artifact):
             name=criteria_dict["name"],
             description=criteria_dict["description"],
         )
-    
+
 
 class CriteriaWithOptions(Criteria):
     options: list[CriteriaOption]
@@ -54,7 +55,9 @@ class CriteriaWithOptions(Criteria):
                 )
                 for o in criteria_dict["options"]
             ],
-            option_map=criteria_dict['option_map'] if 'option_map' in criteria_dict else None
+            option_map=criteria_dict["option_map"]
+            if "option_map" in criteria_dict
+            else None,
         )
 
 
