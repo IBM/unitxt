@@ -38,23 +38,6 @@ class CatalogDefinition(TypedDict):
     params: dict[str, Union[str, dict[str, str], "CatalogDefinition"]]
 
 
-# def parse_catalog_definition(catalog_definition: CatalogDefinition):
-#     parsed_parts = []
-#     result = catalog_definition["name"]
-#     for key, value in catalog_definition["params"].items():
-#         if isinstance(value, dict) and "params" in value:
-#             parsed_parts.append(f"{key}={parse_catalog_definition(value)}")
-#         elif isinstance(value, dict):
-#             nested_parts = ",".join(f"{k}={v}" for k, v in value.items())
-#             parsed_parts.append(f"{key}={{{nested_parts}}}")
-#         else:
-#             parsed_parts.append(f"{key}={value}")
-
-#     result = f"{result}[{','.join(parsed_parts)}]"
-
-#     return result
-
-
 def rename_model_if_required(model_name: str, provider: ModelProviderEnum) -> str:
     if provider in MODEL_RENAMINGS and model_name in MODEL_RENAMINGS[provider]:
         return MODEL_RENAMINGS[provider][model_name]

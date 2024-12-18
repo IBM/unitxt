@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Union
 
 from unitxt.error_utils import UnitxtError
 
@@ -140,7 +140,7 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
         ]
         return (prompts, raw_predictions, predictions)
 
-    def clean_results(self, results: dict | list):
+    def clean_results(self, results: Union[dict,list]):
         if isinstance(results, list):
             return [self.clean_results(x) for x in results]
         else:

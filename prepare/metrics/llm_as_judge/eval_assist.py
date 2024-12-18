@@ -1,3 +1,4 @@
+from typing import Union
 from unitxt import add_to_catalog, get_logger
 from unitxt.eval_assist_constants import (
     DIRECT_ASSESSMENT_CRITERIAS,
@@ -21,7 +22,7 @@ def get_evaluator(
     name: EvaluatorNameEnum,
     evaluator_type: EvaluatorTypeEnum,
     provider: ModelProviderEnum,
-) -> EvalAssistLLMAsJudgeDirect | EvalAssistLLMAsJudgePairwise:
+) -> Union[EvalAssistLLMAsJudgeDirect, EvalAssistLLMAsJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
 
     inference_params = {"max_tokens": 1024, "seed": 42}

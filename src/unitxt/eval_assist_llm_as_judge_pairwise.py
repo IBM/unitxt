@@ -1,6 +1,6 @@
 import itertools
 from difflib import get_close_matches
-from typing import List
+from typing import List, Union
 
 from .artifact import fetch_artifact
 from .error_utils import UnitxtError
@@ -11,7 +11,6 @@ from .eval_assist_constants import (
 )
 from .eval_assist_llm_as_judge import EvalAssistLLMAsJudge
 from .task import Task
-import json
 
 def rank_indexes(numbers):
     # Generate the initial list of indices
@@ -286,7 +285,7 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
         all_results['criteria'] = criteria.to_json()
         return self.clean_results(all_results)
 
-    def parse_prediction_to_dict(self, prediction: dict[str, str] | list[str]):
+    def parse_prediction_to_dict(self, prediction: Union[dict[str, str],list[str]]):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
 
