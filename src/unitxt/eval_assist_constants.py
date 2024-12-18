@@ -6,7 +6,7 @@ from .inference import (
     LiteLLMInferenceEngine,
     RITSInferenceEngine,
 )
-
+import json
 
 class OptionSelectionStrategyEnum(str, Enum):
     PARSE_OUTPUT_TEXT = "PARSE_OUTPUT_TEXT"
@@ -22,23 +22,33 @@ class Criteria(Artifact):
     name: str
     description: str
 
+    @staticmethod
+    def from_jsons(s: str):
+        criteria_dict = json.loads(s)
+        return Criteria(
+            name=criteria_dict["name"],
+            description=criteria_dict["description"],
+        )
+
 
 class CriteriaWithOptions(Criteria):
     options: list[CriteriaOption]
     option_map: Optional[dict[str, float]] = None
 
-    def from_json(self, c: dict):
+    @staticmethod
+    def from_jsons(s: str):
+        criteria_dict = json.loads(s)
         return CriteriaWithOptions(
-            name=c["name"],
-            description=c["description"],
+            name=criteria_dict["name"],
+            description=criteria_dict["description"],
             options=[
                 CriteriaOption(
                     name=o["name"],
                     description=o["description"],
                 )
-                for o in c["options"]
+                for o in criteria_dict["options"]
             ],
-            option_map=c["option_map"],
+            option_map=criteria_dict["option_map"],
         )
 
 

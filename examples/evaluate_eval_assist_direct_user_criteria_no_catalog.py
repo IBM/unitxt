@@ -10,27 +10,27 @@ from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-criteria = CriteriaWithOptions.from_json(
-    {
-        "name": "Temperature in Farenheit and Celcius",
-        "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
-        "options": [
-            {
-                "name": "Yes",
-                "description": "The temperature reading is provided in both Fahrenheit and Celsius.",
-            },
-            {
-                "name": "No",
-                "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both.",
-            },
-            {
-                "name": "Pass",
-                "description": "There is no numerical temperature reading in the response.",
-            },
-        ],
-        "option_map": {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
-    }
-)
+criteria = CriteriaWithOptions.from_jsons(s="""
+{
+    "name": "Temperature in Fahrenheit and Celsius",
+    "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+    "options": [
+        {
+            "name": "Yes",
+            "description": "The temperature reading is provided in both Fahrenheit and Celsius."
+        },
+        {
+            "name": "No",
+            "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both."
+        },
+        {
+            "name": "Pass",
+            "description": "There is no numerical temperature reading in the response."
+        }
+    ],
+    "option_map": {"Yes": 1.0, "No": 0.5, "Pass": 0.0}
+}
+""")
 
 
 data = [
