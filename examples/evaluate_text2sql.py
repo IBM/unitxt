@@ -1,15 +1,14 @@
 from unitxt import evaluate, load_dataset, settings
-from unitxt.inference import (
-    CrossProviderInferenceEngine,
-)
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.text_utils import print_dict
 
 with settings.context(
-    disable_hf_datasets_cache=True,
+    disable_hf_datasets_cache=False,
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint",
+        "card=cards.text2sql.bird"
+        ",template=templates.text2sql.you_are_given_with_hint",
         split="validation",
     )
 
@@ -18,15 +17,11 @@ inference_model = CrossProviderInferenceEngine(
     model="llama-3-70b-instruct",
     max_tokens=256,
 )
-"""
-We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
-watsonx, bam, openai, azure, aws and more.
 
-For the arguments these inference engines can receive, please refer to the classes documentation or read
-about the the open ai api arguments the CrossProviderInferenceEngine follows.
-"""
+test_dataset = test_dataset.select(range(50))
 
 predictions = inference_model.infer(test_dataset)
+
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 print_dict(
@@ -47,3 +42,30 @@ print_dict(
 #     0.46870925684485004
 
 # like GPT4 (rank 40 in the benchmark https://bird-bench.github.io/)
+
+# with format:
+
+# num_of_instances (int):
+#     1534
+# execution_accuracy (float):
+#     0.47131681877444587
+
+
+# from transformers import AutoModelForCausalLM, AutoTokenizer
+
+# DEBUG_NUM_EXAMPLES = 2
+# model_name = "meta-llama/Llama-3.2-1B-Instruct"
+# model = AutoModelForCausalLM.from_pretrained(model_name)
+# tokenizer = AutoTokenizer.from_pretrained(model_name)
+# tokenizer.pad_token = tokenizer.eos_token
+# test_dataset = test_dataset.select(range(DEBUG_NUM_EXAMPLES))
+# predictions = tokenizer.batch_decode(
+#     model.generate(
+#         **tokenizer.batch_encode_plus(
+#             test_dataset["source"], return_tensors="pt", padding=True
+#         ),
+#         max_length=2048,
+#     ),
+#     skip_special_tokens=True,
+#     clean_up_tokenization_spaces=True,
+# )
