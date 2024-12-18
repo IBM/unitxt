@@ -10,7 +10,7 @@ from unitxt.card import TaskCard
 from unitxt.formats import SystemFormat
 from unitxt.loaders import LoadFromDictionary
 from unitxt.serializers import SingleTypeSerializer, TableSerializer
-from unitxt.standard import StandardRecipe, StandardRecipeWithIndexes
+from unitxt.standard import DatasetRecipe
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.text_utils import print_dict
@@ -21,8 +21,8 @@ from tests.utils import UnitxtTestCase
 
 
 class TestRecipes(UnitxtTestCase):
-    def test_standard_recipe(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template=InputOutputTemplate(
                 input_format="{text_a}",
@@ -59,8 +59,8 @@ class TestRecipes(UnitxtTestCase):
             )
             break
 
-    def test_standard_recipe_with_catalog(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_with_catalog_mmlu(self):
+        recipe = DatasetRecipe(
             card="cards.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
@@ -75,8 +75,8 @@ class TestRecipes(UnitxtTestCase):
             print_dict(instance)
             break
 
-    def test_standard_recipe_production_without_demos(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_production_without_demos(self):
+        recipe = DatasetRecipe(
             card="cards.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
@@ -107,8 +107,8 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertDictEqual(result, target)
 
-    def test_standard_recipe_production_consistency(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_production_consistency(self):
+        recipe = DatasetRecipe(
             card="cards.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
@@ -135,8 +135,8 @@ class TestRecipes(UnitxtTestCase):
         i2 = recipe.production_preprocess(recursive_copy(instances))[0]
         self.assertDictEqual(i1, i2)
 
-    def test_standard_recipe_production_with_demos(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_production_with_demos(self):
+        recipe = DatasetRecipe(
             card="cards.mmlu.marketing",
             system_prompt="system_prompts.models.llama",
             template="templates.qa.multiple_choice.with_topic.lm_eval_harness",
@@ -172,8 +172,8 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(result, target)
         self.assertDictEqual(target_task_data, result_task_data)
 
-    def test_standard_recipe_with_given_demos(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_with_given_demos(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
         )
@@ -181,7 +181,7 @@ class TestRecipes(UnitxtTestCase):
         for_demos = recipe.processing(for_demos)
         for_demos = recursive_copy(list(for_demos["validation"]))
 
-        recipe2 = StandardRecipe(
+        recipe2 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             given_demos_pool=for_demos,
@@ -190,7 +190,7 @@ class TestRecipes(UnitxtTestCase):
         trains = list(recipe2()["train"])
         assert "The entailment class is entailment" not in trains[0]["source"]
 
-        recipe3 = StandardRecipe(
+        recipe3 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             given_demos_pool=for_demos,
@@ -200,8 +200,8 @@ class TestRecipes(UnitxtTestCase):
         trains = list(recipe3()["train"])
         assert "The entailment class is entailment" in trains[0]["source"]
 
-    def test_standard_recipe_not_duplicating_demos_pool(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_not_duplicating_demos_pool(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
         )
@@ -209,7 +209,7 @@ class TestRecipes(UnitxtTestCase):
         for_demos = recipe.processing(for_demos)
         for_demos = recursive_copy(list(for_demos["validation"]))
 
-        recipe3 = StandardRecipe(
+        recipe3 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             given_demos_pool=for_demos,
@@ -237,8 +237,8 @@ class TestRecipes(UnitxtTestCase):
             first_demo_of_second_instance["input_fields"]["text_a_type"], "hallelujah"
         )
 
-    def test_standard_recipe_with_demoed_instances(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_with_demoed_instances(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
         )
@@ -263,7 +263,7 @@ class TestRecipes(UnitxtTestCase):
             a_standardized_input_instance
         )
 
-        recipe2 = StandardRecipe(
+        recipe2 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             demos_pool_size=3,
@@ -277,7 +277,7 @@ class TestRecipes(UnitxtTestCase):
             processed_input_instance["source"],
         )
 
-        recipe3 = StandardRecipe(
+        recipe3 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             demos_pool_size=3,
@@ -293,8 +293,8 @@ class TestRecipes(UnitxtTestCase):
             processed_input_instance["source"],
         )
 
-    def test_standard_recipe_with_indexes_with_catalog(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_with_catalog_wnli(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template_card_index=0,
@@ -309,8 +309,8 @@ class TestRecipes(UnitxtTestCase):
             print_dict(instance)
             break
 
-    def test_standard_recipe_with_demos_not_removed_from_data(self):
-        recipe = StandardRecipe(
+    def test_dataset_recipe_with_demos_not_removed_from_data(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             demos_pool_size=100,
@@ -325,7 +325,7 @@ class TestRecipes(UnitxtTestCase):
             "demos_pool_size"
         ]
 
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
             demos_pool_size=100,
@@ -346,7 +346,7 @@ class TestRecipes(UnitxtTestCase):
         self.assertEqual(n_demos_keep_demos, n_demos_remove_demos)
 
     def test_empty_template(self):
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.empty",
@@ -378,7 +378,7 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(target_task_data, result_task_data)
 
     def test_key_val_template(self):
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -456,7 +456,7 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(target_task_data, result_task_data)
 
     def test_random_template(self):
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template=[
@@ -497,7 +497,7 @@ class TestRecipes(UnitxtTestCase):
                 "templates.classification.multi_class.relation.truthfulness.flan_5",
             ]
         )
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template=templates,
@@ -529,7 +529,7 @@ class TestRecipes(UnitxtTestCase):
         self.assertDictEqual(result, target)
 
     def test_random_num_demos(self):
-        recipe = StandardRecipeWithIndexes(
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -547,8 +547,8 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(len(lengths), 4)
 
-    def test_standard_recipe_with_balancer(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_balancer(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -565,8 +565,8 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(counts["entailment"], counts["not entailment"])
 
-    def test_standard_recipe_with_loader_limit(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_loader_limit(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -582,9 +582,9 @@ class TestRecipes(UnitxtTestCase):
         )  # 5 elements were moved to demo pool
         self.assertEqual(len(list(stream["test"])), 10)
 
-    def test_standard_recipe_with_loader_limit_errors(self):
+    def test_dataset_recipe_with_loader_limit_errors(self):
         with self.assertRaises(ValueError):
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 card="cards.wnli",
                 template="templates.key_val",
                 max_test_instances=10,
@@ -592,14 +592,14 @@ class TestRecipes(UnitxtTestCase):
             )
 
         with self.assertRaises(ValueError):
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 card="cards.wnli",
                 template="templates.key_val",
                 max_train_instances=10,
                 loader_limit=9,
             )
         with self.assertRaises(ValueError):
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 template="templates.key_val",
                 card="cards.wnli",
                 max_validation_instances=10,
@@ -607,7 +607,7 @@ class TestRecipes(UnitxtTestCase):
             )
 
         with self.assertRaises(ValueError):
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 template="templates.key_val",
                 card="cards.wnli",
                 num_demos=3,
@@ -615,8 +615,8 @@ class TestRecipes(UnitxtTestCase):
                 loader_limit=9,
             )
 
-    def test_standard_recipe_with_no_demos_to_take(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_no_demos_to_take(self):
+        recipe = DatasetRecipe(
             template="templates.key_val",
             card="cards.xwinogrande.pt",
             num_demos=3,
@@ -632,7 +632,7 @@ class TestRecipes(UnitxtTestCase):
         )
 
         with self.assertRaises(Exception) as cm:
-            recipe = StandardRecipeWithIndexes(
+            recipe = DatasetRecipe(
                 template="templates.key_val",
                 card="cards.xwinogrande.pt",
                 num_demos=3,
@@ -645,7 +645,7 @@ class TestRecipes(UnitxtTestCase):
         )
 
         with self.assertRaises(Exception) as cm:
-            recipe = StandardRecipeWithIndexes(
+            recipe = DatasetRecipe(
                 template="templates.key_val",
                 card="cards.xwinogrande.pt",
                 num_demos=30,
@@ -657,8 +657,8 @@ class TestRecipes(UnitxtTestCase):
             "num_demos (got: 30) should not exceed demos_pool_size - 1 (got: 10), (-1: to always allow filtering of a demo identical to the processed instance).",
         )
 
-    def test_standard_recipe_with_no_test(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_no_test(self):
+        recipe = DatasetRecipe(
             template="templates.key_val",
             card="cards.xwinogrande.pt",
             num_demos=3,
@@ -668,10 +668,10 @@ class TestRecipes(UnitxtTestCase):
         results = list(recipe()["test"])
         self.assertTrue(len(results) > 0)
 
-    def test_standard_recipe_with_template_errors(self):
+    def test_dataset_recipe_with_template_errors(self):
         # Check either template or template index was specified , but not both
         with self.assertRaises(AssertionError) as cm:
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 card="cards.wnli", template="templates.key_val", template_card_index=100
             )
         self.assertTrue(
@@ -684,7 +684,7 @@ class TestRecipes(UnitxtTestCase):
 
         # Also check if string index is used
         with self.assertRaises(AssertionError) as cm:
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 card="cards.wnli",
                 template="templates.key_val",
                 template_card_index="illegal_template",
@@ -699,17 +699,15 @@ class TestRecipes(UnitxtTestCase):
 
         # Return an error if index is not found in card
         with self.assertRaises(ValueError) as cm:
-            StandardRecipeWithIndexes(
-                card="cards.wnli", template_card_index="illegal_template"
-            )
+            DatasetRecipe(card="cards.wnli", template_card_index="illegal_template")
         self.assertTrue("not defined in card." in str(cm.exception))
 
         with self.assertRaises(ValueError) as cm:
-            StandardRecipeWithIndexes(card="cards.wnli", template_card_index=100)
+            DatasetRecipe(card="cards.wnli", template_card_index=100)
         self.assertTrue("not defined in card." in str(cm.exception))
 
-    def test_standard_recipe_with_balancer_and_size_limit(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_balancer_and_size_limit(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -728,8 +726,8 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertEqual(counts["entailment"], counts["not entailment"], 10)
 
-    def test_standard_recipe_with_augmentor_on_task_input(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_augmentor_on_task_input(self):
+        recipe = DatasetRecipe(
             card="cards.sst2",
             augmentor="augmentors.text.white_space",
             template_card_index=0,
@@ -753,8 +751,8 @@ class TestRecipes(UnitxtTestCase):
             normalized_output_source == normalized_input_source
         ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
 
-    def test_standard_recipe_with_train_size_limit(self):
-        recipe = StandardRecipeWithIndexes(
+    def test_dataset_recipe_with_train_size_limit(self):
+        recipe = DatasetRecipe(
             card="cards.wnli",
             system_prompt="system_prompts.models.llama",
             template="templates.key_val",
@@ -775,7 +773,7 @@ class TestRecipes(UnitxtTestCase):
 
         d = load_dataset(
             dataset_file,
-            "__type__=standard_recipe_with_indexes,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
+            "__type__=dataset_recipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
             streaming=True,
             trust_remote_code=True,
         )
@@ -795,12 +793,12 @@ class TestRecipes(UnitxtTestCase):
         first_inst = next(iterator)
         self.assertListEqual(["metrics.accuracy"], first_inst["metrics"])
 
-    def test_standard_recipe_with_a_missing_sampler(self):
+    def test_dataset_recipe_with_a_missing_sampler(self):
         """Check that initializing a recipe with a card that does not have a sampler raises an exception."""
         task_card, _ = copy.deepcopy(fetch_artifact("cards.sst2"))
         task_card.sampler = None
         with self.assertRaises(ValueError) as e:
-            StandardRecipeWithIndexes(
+            DatasetRecipe(
                 card=task_card,
                 template_card_index=0,
                 max_train_instances=0,
@@ -849,7 +847,7 @@ class TestRecipes(UnitxtTestCase):
             task=task,
         )
 
-        recipe = StandardRecipe(
+        recipe = DatasetRecipe(
             card=card,
             template=template,
             serializer=TableSerializer(),
@@ -858,7 +856,7 @@ class TestRecipes(UnitxtTestCase):
         target = "Solve: col1,col2\nval1,val2\nval3\nval4\nAnswer: \n"
         self.assertEqual(result, target)
 
-        recipe = StandardRecipe(
+        recipe = DatasetRecipe(
             card=card,
             template=template,
             serializer=MyTableSerializer(),

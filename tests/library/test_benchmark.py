@@ -1,5 +1,5 @@
 from unitxt.benchmark import Benchmark
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 from tests.utils import UnitxtTestCase
 
@@ -11,11 +11,11 @@ class TestBenchmark(UnitxtTestCase):
             max_samples_per_subset=2,
             loader_limit=300,
             subsets={
-                "cola": StandardRecipe(
+                "cola": DatasetRecipe(
                     card="cards.cola",
                     template="templates.classification.multi_class.instruction",
                 ),
-                "wnli": StandardRecipe(
+                "wnli": DatasetRecipe(
                     card="cards.wnli",
                     template="templates.classification.multi_class.relation.default",
                 ),
@@ -109,18 +109,18 @@ class TestBenchmark(UnitxtTestCase):
                     max_samples_per_subset=1,
                     loader_limit=300,
                     subsets={
-                        "cola": StandardRecipe(
+                        "cola": DatasetRecipe(
                             card="cards.cola",
                             template="templates.classification.multi_class.instruction",
                         ),
-                        "wnli": StandardRecipe(
+                        "wnli": DatasetRecipe(
                             card="cards.wnli",
                             format="formats.empty",
                             template="templates.classification.multi_class.relation.default",
                         ),
                     },
                 ),
-                "wnli": StandardRecipe(
+                "wnli": DatasetRecipe(
                     card="cards.wnli",
                     template="templates.classification.multi_class.relation.default",
                 ),
