@@ -66,6 +66,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -81,7 +82,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import DynamicStream, ListStream, Stream
+from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import (
@@ -1635,23 +1636,17 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricsList
 
-        # Number of instances in input stream is assumed to be small. This is why
-        # each metric consumes all of them and lays them in its main memory, and even generates
-        # some 1000 copies thereof for the sake of CI.
-        # So we start with deep copying here, to make a 'frozen' status of the stream, having
-        # passed the preprocess_steps of the task, and inference, and now getting to be evaluated,
-        # a frozen status to be fed into each of the metrics listed in metric_field,
-        # so that the evaluation of one does not affect the evaluation of another
-        # (typically, affecting via change of instance as part of
-        # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
+        def update_scores_of_stream_instances(
+            stream: Stream, scores: List[dict]
+        ) -> Generator:
+            for instance, score in zip(stream, scores):
+                instance["score"] = recursive_copy(score)
+                yield instance
 
-        instances_upon_entrance_to_metrics_evaluations = []
-        for instance in stream:
-            instances_upon_entrance_to_metrics_evaluations.append(
-                recursive_copy(instance)
-            )
+        # to be populated only when two or more metrics
+        accumulated_scores = []
 
-        first_instance = instances_upon_entrance_to_metrics_evaluations[0]
+        first_instance = stream.peek()
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1680,26 +1675,28 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        for metric in metrics_list:
+        for metric_no, metric in enumerate(metrics_list):
             if not self.calc_confidence_intervals:
                 metric.disable_confidence_interval_calculation()
-            multi_stream = MultiStream(
-                {
-                    "tmp": ListStream(
-                        instances_list=instances_upon_entrance_to_metrics_evaluations,
-                        copying=True,  # ensures deep copy when iterating over instances
-                    )
-                }
-            )
-            multi_stream = metric(multi_stream)
-            for evaluated_instance, freezed_instance in zip(
-                multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
-            ):
-                freezed_instance["score"] = recursive_shallow_copy(
-                    evaluated_instance["score"]
-                )
 
-        yield from instances_upon_entrance_to_metrics_evaluations
+            if metric_no > 0:
+                # update input stream with accumulated scores
+                reusable_generator = ReusableGenerator(
+                    generator=update_scores_of_stream_instances,
+                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
+                )
+                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+            else:
+                multi_stream = MultiStream.from_iterables({"tmp": stream})
+            multi_stream = metric(multi_stream)
+            if metric_no < len(metrics_list) - 1:
+                # not the last metric, so prepare for the next metric by
+                # updating accumulated_scores
+                accumulated_scores = []
+                for inst in multi_stream["tmp"]:
+                    accumulated_scores.append(recursive_copy(inst["score"]))
+
+        yield from multi_stream["tmp"]
 
 
 class MergeStreams(MultiStreamOperator):
