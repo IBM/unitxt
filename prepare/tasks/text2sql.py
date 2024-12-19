@@ -15,7 +15,7 @@ add_to_catalog(
         },
         reference_fields={"query": str},
         prediction_type=str,
-        metrics=["metrics.text2sql.execution_accuracy"],
+        metrics=["metrics.text2sql.execution_accuracy", "metrics.anls"],
     ),
     "tasks.text2sql",
     overwrite=True,
