@@ -1,7 +1,11 @@
+import sys
+
 from unitxt import add_to_catalog
 from unitxt.blocks import Copy, Rename, Set, TaskCard
 from unitxt.loaders import LoadHF
-from unitxt.text2sql.metrics import ExecutionAccuracy  # noqa
+from unitxt.operators import Shuffle
+
+# from unitxt.text2sql.metrics import ExecutionAccuracy
 
 # add_to_catalog(
 #     Task(
@@ -43,6 +47,7 @@ from unitxt.text2sql.metrics import ExecutionAccuracy  # noqa
 card = TaskCard(
     loader=LoadHF(path="premai-io/birdbench", split="validation"),
     preprocess_steps=[
+        Shuffle(page_size=sys.maxsize),
         Rename(
             field_to_field={
                 "question_id": "id",

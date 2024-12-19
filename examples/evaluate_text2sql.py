@@ -7,13 +7,13 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint,loader_limit=50",
+        "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint",
         split="validation",
     )
 
 # Infer
 inference_model = CrossProviderInferenceEngine(
-    model="llama-3-70b-instruct",
+    model="llama-3-70b-instruct",  # "llama-3-2-1b-instruct",  # "llama-3-70b-instruct",
     max_tokens=256,
 )
 
@@ -36,17 +36,9 @@ print_dict(
 # num_of_instances (int):
 #     1534
 # execution_accuracy (float):
-#     0.46870925684485004
+#     0.475
 
 # like GPT4 (rank 40 in the benchmark https://bird-bench.github.io/)
-
-# with format:
-
-# num_of_instances (int):
-#     1534
-# execution_accuracy (float):
-#     0.47131681877444587
-
 
 # from transformers import AutoModelForCausalLM, AutoTokenizer
 
