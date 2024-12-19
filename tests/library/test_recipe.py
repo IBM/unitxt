@@ -15,6 +15,7 @@ from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
 from unitxt.text_utils import print_dict
 from unitxt.types import Table
+from unitxt.utils import recursive_copy
 
 from tests.utils import UnitxtTestCase
 
@@ -125,27 +126,13 @@ class TestRecipes(UnitxtTestCase):
             }
         ]
 
-        self.assertListEqual(
-            recipe.production_demos_pool(), recipe.production_demos_pool()
-        )
-
         self.assertDictEqual(
-            recipe.produce(instances)[0],
-            recipe.produce(instances)[0],
+            recipe.produce(recursive_copy(instances))[0],
+            recipe.produce(recursive_copy(instances))[0],
         )
 
-        i1 = recipe.production_preprocess(instances)[0]
-        i2 = recipe.production_preprocess(instances)[0]
-        for meta_data in ["card", "template", "format", "system_prompt"]:
-            if meta_data in i1["recipe_metadata"]:
-                i1["recipe_metadata"][meta_data] = i1["recipe_metadata"][
-                    meta_data
-                ]._to_raw_dict()
-                if not isinstance(i2["recipe_metadata"][meta_data], dict):
-                    i2["recipe_metadata"][meta_data] = i2["recipe_metadata"][
-                        meta_data
-                    ]._to_raw_dict()
-
+        i1 = recipe.production_preprocess(recursive_copy(instances))[0]
+        i2 = recipe.production_preprocess(recursive_copy(instances))[0]
         self.assertDictEqual(i1, i2)
 
     def test_standard_recipe_production_with_demos(self):
@@ -173,7 +160,7 @@ class TestRecipes(UnitxtTestCase):
             "data_classification_policy": [],
             "postprocessors": ["processors.first_character"],
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nAlthough the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:\nA. Care lines.\nB. Direct mail.\nC. Inserts.\nD. Door to door.\nAnswer:\nAgent:  D\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\n _____________ is a natural outcome when combining demographic and geographic variables.\nA. Geodemographics\nB. Product differentiation.\nC. ANSOFF matrix.\nD. Brand management.\nAnswer:\nAgent:  A\n\nUser: The following are multiple choice questions (with answers) about marketing.\n\nIn an organization, the group of people tasked with buying decisions is referred to as the _______________.\nA. Outsourcing unit.\nB. Procurement centre.\nC. Chief executive unit.\nD. Decision-making unit.\nAnswer:\nAgent:  D\n\n\nUser:The following are multiple choice questions (with answers) about testing.\n\nwhat?\nA. yes\nB. not\nC. maybe\nAnswer:\nAgent:",
-            "task_data": '{"topic": "testing", "question": "what?", "choices": ["yes", "not", "maybe"], "options": [" A", " B", " C"], "metadata": {"data_classification_policy": [], "num_demos": 3, "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}, "demos": [{"topic": "marketing", "question": "Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:", "choices": ["Care lines.", "Direct mail.", "Inserts.", "Door to door."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}, {"topic": "marketing", "question": " _____________ is a natural outcome when combining demographic and geographic variables.", "choices": ["Geodemographics", "Product differentiation.", "ANSOFF matrix.", "Brand management."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 0}, {"topic": "marketing", "question": "In an organization, the group of people tasked with buying decisions is referred to as the _______________.", "choices": ["Outsourcing unit.", "Procurement centre.", "Chief executive unit.", "Decision-making unit."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}]}',
+            "task_data": '{"topic": "testing", "question": "what?", "choices": ["yes", "not", "maybe"], "options": [" A", " B", " C"], "metadata": {"data_classification_policy": [], "demos_pool_size": 5, "num_demos": 3, "template": "templates.qa.multiple_choice.with_topic.lm_eval_harness"}, "demos": [{"topic": "marketing", "question": "Although the content and quality can be as controlled as direct mail, response rates of this medium are lower because of the lack of a personal address mechanism. This media format is known as:", "choices": ["Care lines.", "Direct mail.", "Inserts.", "Door to door."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}, {"topic": "marketing", "question": " _____________ is a natural outcome when combining demographic and geographic variables.", "choices": ["Geodemographics", "Product differentiation.", "ANSOFF matrix.", "Brand management."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 0}, {"topic": "marketing", "question": "In an organization, the group of people tasked with buying decisions is referred to as the _______________.", "choices": ["Outsourcing unit.", "Procurement centre.", "Chief executive unit.", "Decision-making unit."], "options": [" A", " B", " C", " D"], "metadata": {"data_classification_policy": ["public"]}, "answer": 3}]}',
             "groups": [],
             "subset": [],
             "media": {"images": [], "audios": []},
@@ -211,8 +198,11 @@ class TestRecipes(UnitxtTestCase):
         )
 
         stream = recipe()
-        n_trains_remove_demos = len(list(stream["train"]))
-        n_demos_remove_demos = len(list(stream["demos_pool"]))
+        trains = list(stream["train"])
+        n_trains_remove_demos = len(trains)
+        n_demos_remove_demos = json.loads(trains[0]["task_data"])["metadata"][
+            "demos_pool_size"
+        ]
 
         recipe = StandardRecipeWithIndexes(
             card="cards.wnli",
@@ -223,8 +213,11 @@ class TestRecipes(UnitxtTestCase):
         )
 
         stream = recipe()
-        n_trains_keep_demos = len(list(stream["train"]))
-        n_demos_keep_demos = len(list(stream["demos_pool"]))
+        trains = list(stream["train"])
+        n_trains_keep_demos = len(trains)
+        n_demos_keep_demos = json.loads(trains[0]["task_data"])["metadata"][
+            "demos_pool_size"
+        ]
 
         self.assertEqual(
             n_trains_keep_demos, n_trains_remove_demos + n_demos_remove_demos
@@ -249,7 +242,7 @@ class TestRecipes(UnitxtTestCase):
             "target": "not entailment",
             "references": ["not entailment"],
             "source": "<<SYS>>\nYou are a helpful, respectful and honest assistant. Always answer as helpfully as possible, while being safe. Your answers should not include any harmful, unethical, racist, sexist, toxic, dangerous, or illegal content. Please ensure that your responses are socially unbiased and positive in nature.\n\nIf a question does not make any sense, or is not factually coherent, explain why instead of answering something not correct. If you don't know the answer to a question, please don't share false information.\n<</SYS>>\n\n\n\n\nUser: Emma did not pass the ball to Janie although she was open., premise, She saw that Janie was open., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: The foxes are getting in at night and attacking the chickens. I shall have to kill them., premise, I shall have to kill The foxes., hypothesis, entailment, not entailment, entailment\nAgent: not entailment\n\nUser: Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old., premise, When Fred first saw my father, My father was twelve years old., hypothesis, entailment, not entailment, entailment\nAgent: entailment\n\n\nUser:Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her., premise, The sweater looks dowdy on her., hypothesis, entailment, not entailment, entailment\nAgent:",
-            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"], "num_demos": 3, "template": "templates.empty"}, "label": "not entailment", "demos": [{"text_a": "Emma did not pass the ball to Janie although she was open.", "text_a_type": "premise", "text_b": "She saw that Janie was open.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "not entailment"}, {"text_a": "The foxes are getting in at night and attacking the chickens. I shall have to kill them.", "text_a_type": "premise", "text_b": "I shall have to kill The foxes.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "not entailment"}, {"text_a": "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.", "text_a_type": "premise", "text_b": "When Fred first saw my father, My father was twelve years old.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
+            "task_data": '{"text_a": "Grace was happy to trade me her sweater for my jacket. She thinks it looks dowdy on her.", "text_a_type": "premise", "text_b": "The sweater looks dowdy on her.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"], "num_demos": 3, "demos_pool_size": 100, "template": "templates.empty"}, "label": "not entailment", "demos": [{"text_a": "Emma did not pass the ball to Janie although she was open.", "text_a_type": "premise", "text_b": "She saw that Janie was open.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "not entailment"}, {"text_a": "The foxes are getting in at night and attacking the chickens. I shall have to kill them.", "text_a_type": "premise", "text_b": "I shall have to kill The foxes.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "not entailment"}, {"text_a": "Fred is the only man alive who still remembers my father as an infant. When Fred first saw my father, he was twelve years old.", "text_a_type": "premise", "text_b": "When Fred first saw my father, My father was twelve years old.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
             "groups": [],
             "subset": [],
         }
@@ -294,6 +287,7 @@ class TestRecipes(UnitxtTestCase):
             "type_of_relation": "entailment",
             "metadata": {
                 "data_classification_policy": ["public"],
+                "demos_pool_size": 100,
                 "num_demos": 3,
                 "template": "templates.key_val",
             },
@@ -512,7 +506,7 @@ class TestRecipes(UnitxtTestCase):
 
         self.assertTrue(
             str(cm.exception).startswith(
-                "Unable to fetch instances from 'demos_pool' to 'demos'"
+                "Input multi-stream is missing a stream named 'train' to take demo instances from for the demos_pool."
             )
         )
 
@@ -607,7 +601,8 @@ class TestRecipes(UnitxtTestCase):
 
         stream = recipe()
         counts = collections.Counter()
-        for instance in stream["train"]:
+        trains = list(stream["train"])
+        for instance in trains:
             counts[instance["target"]] += 1
 
         self.assertEqual(counts["entailment"], counts["not entailment"], 10)

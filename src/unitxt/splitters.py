@@ -1,11 +1,11 @@
 import itertools
 from abc import abstractmethod
 from difflib import get_close_matches
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .artifact import Artifact
 from .dict_utils import dict_get
-from .operator import InstanceOperatorWithMultiStreamAccess, MultiStreamOperator
+from .operator import InstanceOperator, MultiStreamOperator
 from .random_utils import new_random_generator
 from .split_utils import (
     parse_random_mix_string,
@@ -14,7 +14,7 @@ from .split_utils import (
     rename_split,
     slice_streams,
 )
-from .stream import EmptyStreamError, FaultyStreamError, MultiStream
+from .stream import MultiStream
 from .type_utils import isoftype
 from .utils import recursive_copy
 
@@ -118,14 +118,14 @@ class Sampler(Artifact):
     def sample(
         self,
         sample_size: int,
-        instances_pool: List[Dict[str, object]],
-        instance: Dict[str, object],
-    ) -> List[Dict[str, object]]:
+        instances_pool: List[Dict[str, Any]],
+        instance: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
         pass
 
     def filter_source_by_instance(
-        self, instances_pool: List[Dict[str, object]], instance: Dict[str, object]
-    ) -> List[Dict[str, object]]:
+        self, instances_pool: List[Dict[str, Any]], instance: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         if "input_fields" not in instance:
             raise ValueError(f"'input_fields' field is missing from '{instance}'.")
         try:
@@ -336,8 +336,8 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class Sample(InstanceOperatorWithMultiStreamAccess):
-    from_stream: str
+class Sample(InstanceOperator):
+    demos_pool: List[Dict[str, Any]] = None
     to_field: str
     sampler: Sampler
 
@@ -350,30 +350,21 @@ class Sample(InstanceOperatorWithMultiStreamAccess):
         pass
 
     def process(
-        self, instance: Dict[str, object], multi_stream: MultiStream
-    ) -> Dict[str, object]:
+        self, instance: Dict[str, Any], multi_stream: MultiStream
+    ) -> Dict[str, Any]:
         sample_size = self.get_sample_size(instance)
-        try:
-            if self.local_cache is None:
-                self.local_cache = recursive_copy(list(multi_stream[self.from_stream]))
-
-            source_stream = self.local_cache
-            source_stream = self.sampler.filter_source_by_instance(
-                source_stream, instance
+        source_stream = self.sampler.filter_source_by_instance(
+            self.demos_pool, instance
+        )
+        if len(source_stream) < sample_size:
+            raise ValueError(
+                f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {sample_size}."
             )
-            if len(source_stream) < sample_size:
-                raise ValueError(
-                    f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {self.sampler.sample_size}."
-                )
-            sampled_instances = self.sampler.sample(
-                sample_size=sample_size, instances_pool=source_stream, instance=instance
-            )
-            instance[self.to_field] = sampled_instances
-            return instance
-        except FaultyStreamError as e:
-            raise EmptyStreamError(
-                f"Unable to fetch instances from '{self.from_stream}' to '{self.to_field}', due to {e.__class__.__name__}: {e}"
-            ) from e
+        sampled_instances = self.sampler.sample(
+            sample_size=sample_size, instances_pool=source_stream, instance=instance
+        )
+        instance[self.to_field] = recursive_copy(sampled_instances)
+        return instance
 
 
 class ConstantSizeSample(Sample):
