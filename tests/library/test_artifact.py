@@ -588,8 +588,6 @@ class TestArtifact(UnitxtTestCase):
         )
 
     def test_artifact_is_fetched_first_hand(self):
-        from unitxt.artifact import fetch_artifact
-
         card1, _ = fetch_artifact("cards.banking77")
         self.assertListEqual(
             card1.task.metrics,
