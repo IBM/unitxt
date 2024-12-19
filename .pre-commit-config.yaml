@@ -8,7 +8,12 @@ repos:
       # Run the linter on all files except the specific one
       - id: ruff
         args: [--fix]
-        exclude: src/unitxt/metrics.py|examples/evaluate_existing_dataset_no_install.py
+        exclude: src/unitxt/metrics.py|examples/evaluate_existing_dataset_no_install.py|src/unitxt/eval_assist_llm_as_judge_pairwise.py
+      # Run the linter on the specific file with the ignore flag
+      - id: ruff
+        name: ruff (src/unitxt/eval_assist_llm_as_judge_pairwise.py)
+        files: src/unitxt/eval_assist_llm_as_judge_pairwise.py
+        args: [--fix, --ignore, C901]
       # Run the linter on the specific file with the ignore flag
       - id: ruff
         name: ruff (src/unitxt/metrics.py)

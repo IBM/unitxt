@@ -389,11 +389,13 @@ class TestTemplates(UnitxtTestCase):
             template.process(instance)
         self.assertIn(expected_exception_message, str(e.exception))
 
-    def test_multi_reference_template_with_empty_references(self):
-        self._test_multi_reference_template_with_exception(
-            references=[],
-            expected_exception_message="No references found in field 'answer' of instance. MultiReferenceTemplate requires at least one reference.",
-        )
+    # We now allow multi_reference templates without references
+    # to more simply support LLM as Judges
+    # def test_multi_reference_template_with_empty_references(self):
+    #    self._test_multi_reference_template_with_exception(
+    #        references=[],
+    #        expected_exception_message="No references found in field 'answer' of instance. MultiReferenceTemplate requires at least one reference.",
+    #    )
 
     def test_multi_reference_template_with_wrong_references_type(self):
         self._test_multi_reference_template(
