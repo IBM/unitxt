@@ -19,8 +19,9 @@ Answer the following question:
 {utterance}
 
 """,
-        instruction="You are a Text2SQL generation model, in your answer, only have SQL code",
-        target_prefix="```sql\nSELECT ",
+        instruction="You are a Text2SQL generation model, in your answer, only have SQL code.\n"
+        "Start your query with 'SELECT' and end it with ';'\n\n",
+        target_prefix="",
         output_format="{query}",
         postprocessors=["processors.text2sql.get_sql"],
         # serializer="serializers.text2sql.schema",
@@ -50,8 +51,9 @@ Answer the following question:
 {utterance}
 
 """,
-        instruction="You are a Text2SQL generation model, in your answer, only have SQL code",
-        target_prefix="```sql\nSELECT ",
+        instruction="You are a Text2SQL generation model, in your answer, only have SQL code.\n"
+        "Make sure you start your query with 'SELECT' and end it with ';'\n\n",
+        target_prefix="",
         output_format="{query}",
         postprocessors=["processors.text2sql.get_sql"],
     ),
