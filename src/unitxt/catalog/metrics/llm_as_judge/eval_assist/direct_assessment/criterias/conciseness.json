@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "conciseness",
+    "description": "Is the response concise and to the point?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The response is short, succinct and directly addresses the point at hand."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The response lacks brevity and clarity, failing to directly address the point at hand."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}
