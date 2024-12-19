@@ -208,12 +208,12 @@ class EvalAssistLLMAsJudgePairwise(EvalAssistLLMAsJudge):
 
             ## add positional bias
             if self.check_positional_bias:
-                per_response_results[response_name_1]["positional_bias_assessments"].append(
-                    assessment_outputs[positional_bias_i]
-                )
-                per_response_results[response_name_2]["positional_bias_assessments"].append(
-                    assessment_outputs[positional_bias_i]
-                )
+                per_response_results[response_name_1][
+                    "positional_bias_assessments"
+                ].append(assessment_outputs[positional_bias_i])
+                per_response_results[response_name_2][
+                    "positional_bias_assessments"
+                ].append(assessment_outputs[positional_bias_i])
                 positional_bias = selections[i] != selections[positional_bias_i]
 
                 per_response_results[response_name_1]["positional_bias"].append(
