@@ -19,11 +19,12 @@ with settings.context(
                 subsets[f"{card} {enumerator} {augmentor}"] = StandardRecipe(
                     card=card,
                     template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
-                    loader_limit=100,
+                    format="formats.chat_api",
+                    loader_limit=30,
                     augmentor=augmentor,
                 )
 
-    benchmark = Benchmark(subsets=subsets)
+    benchmark = Benchmark(subsets=subsets, max_samples_per_subset=5)
 
     data = benchmark()["test"].to_dataset()
 
@@ -36,5 +37,5 @@ with settings.context(
     predictions = model(data)
     results = evaluate(predictions=predictions, data=data)
 
-    for subset, scores in results.subsets_scores.items():
-        print(f'{subset.title()}: {scores["score"]}')
+    print("Subsets scores:")
+    print(results.subsets_scores.summary)

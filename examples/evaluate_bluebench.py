@@ -6,8 +6,9 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
     allow_unverified_code=True,
+    mock_inference_mode=True,
 ):
-    test_dataset = load_dataset("benchmarks.bluebench", split="test")
+    test_dataset = load_dataset("benchmarks.bluebench[loader_limit=30]", split="test")
 
 # Infer
 model = CrossProviderInferenceEngine(
@@ -25,5 +26,7 @@ about the the open ai api arguments the CrossProviderInferenceEngine follows.
 predictions = model(test_dataset)
 results = evaluate(predictions=predictions, data=test_dataset)
 
+print("Global scores:")
 print(results.global_scores.summary)
-print(results.subsets_scores)
+print("Subsets scores:")
+print(results.subsets_scores.summary)
