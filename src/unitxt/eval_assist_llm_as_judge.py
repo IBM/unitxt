@@ -1,6 +1,5 @@
 from typing import Optional, Union
 
-from . import get_logger
 from .api import infer
 from .error_utils import UnitxtError
 from .eval_assist_chat_templates import direct_assessment_template_dict
@@ -14,6 +13,7 @@ from .inference import (
     InferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
 )
+from .logging_utils import get_logger
 from .metrics import BulkInstanceMetric
 from .task import Task
 from .templates import Template
