@@ -586,3 +586,33 @@ class TestArtifact(UnitxtTestCase):
             str(e.exception),
             "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed): 0 -> 1",
         )
+
+    def test_artifact_is_fetched_first_hand(self):
+        from unitxt.artifact import fetch_artifact
+        from unitxt.catalog import get_from_catalog
+
+        card1, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card1.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card2.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+
+        card3 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card3.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card3.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card3.task.metrics, ["metrics.accuracy"])
+        card4 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card4.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
