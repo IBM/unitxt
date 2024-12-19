@@ -5,7 +5,7 @@ from unitxt.inference import (
     LMMSEvalInferenceEngine,
 )
 from unitxt.logging_utils import get_logger
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 logger = get_logger()
 
@@ -16,17 +16,17 @@ with settings.context(
 
     dataset = Benchmark(
         subsets={
-            "capitals": StandardRecipe(
+            "capitals": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=capitals]",
                 loader_limit=20,
             ),
-            "lowercase": StandardRecipe(
+            "lowercase": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=lowercase]",
                 loader_limit=20,
             ),
-            "capitals-greyscale": StandardRecipe(
+            "capitals-greyscale": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=capitals]",
                 loader_limit=20,
