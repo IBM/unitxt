@@ -98,10 +98,17 @@ class EvalAssistLLMAsJudge(BulkInstanceMetric):
                 f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
                 "to inherit from OptionSelectingByLogProbsInferenceEngine "
             )
+
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        # We check the criteria here and not in verify(), because we want catalog
+        # may contain a partially initialized object, and verify() method
+        # is called when creating the object and not when using it.
         if self.criteria is None and self.criteria_field is None:
             raise UnitxtError(
                 f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
             )
+        return
 
     def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str, str]]:
         return [
