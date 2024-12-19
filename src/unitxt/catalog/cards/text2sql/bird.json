@@ -1,0 +1,49 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "premai-io/birdbench",
+        "split": "validation"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "question_id": "id",
+                "question": "utterance",
+                "SQL": "query",
+                "db_id": "db_id"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "dbms": "sqlite",
+                "db_type": "sqlite",
+                "use_oracle_knowledge": true,
+                "num_table_rows_to_add": 0
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "db_id",
+            "to_field": "schema/db_id"
+        },
+        {
+            "__type__": "copy",
+            "field": "db_type",
+            "to_field": "schema/db_type"
+        },
+        {
+            "__type__": "copy",
+            "field": "num_table_rows_to_add",
+            "to_field": "schema/num_table_rows_to_add"
+        }
+    ],
+    "task": "tasks.text2sql",
+    "templates": "templates.text2sql.all"
+}

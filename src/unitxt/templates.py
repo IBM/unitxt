@@ -21,6 +21,7 @@ from .serializers import (
     VideoSerializer,
 )
 from .settings_utils import get_constants
+from .text2sql.serializers import SQLSchemaSerializer
 from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
@@ -64,6 +65,7 @@ class Template(InstanceOperator):
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
+                SQLSchemaSerializer(),
             ]
         )
     )
