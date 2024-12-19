@@ -992,7 +992,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
-    def _validate_group_mean_reduction(self, instances: List[dict]):
+    def _validate_group_mean_task_data(self, instance):
+        # instances need to all have task_data field with field group_id
+        assert "task_data" in instance, "each instance must have an task_data field"
+        assert isinstance(
+            instance["task_data"], dict
+        ), "each instance must have an task_data field that is a dict"
+        assert (
+            "group_id" in instance["task_data"]
+        ), "each instance task_data dict must have a key group_id"
+
+    def _validate_group_mean_reduction(self):
         """Ensure that group_mean reduction_map is properly formatted.
 
         Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
@@ -1042,17 +1052,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             1           'How do I repair my engine?'                 'paraphrase'
             2           'Why are ants eating my food?'               'original'
         """
-        # instances need to all have task_data field with field group_id
-        assert all(
-            "task_data" in instance for instance in instances
-        ), "each instance must have an task_data field"
-        assert all(
-            isinstance(instance["task_data"], dict) for instance in instances
-        ), "each instance must have an task_data field that is a dict"
-        assert all(
-            "group_id" in instance["task_data"] for instance in instances
-        ), "each instance task_data dict must have a key group_id"
-
         # validate the reduction_map
         assert (
             "group_mean" in self.reduction_map
@@ -1081,13 +1080,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-        # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
-        # this field exists
-        if self.subgroup_column is not None:
-            assert all(
-                self.subgroup_column in instance["task_data"] for instance in instances
-            ), f"each instance task_data dict must have a key {self.subgroup_column}"
-
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         instances = self.compute_instance_scores(stream)
         global_score = {"num_of_instances": len(instances)}
@@ -1111,7 +1103,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 scores_to_resample = instances
             elif reduction_type == "group_mean":
                 aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction(instances=instances)
+                self._validate_group_mean_reduction()
                 reduction_fields = (
                     [self.main_score]
                     if "score_fields" not in reduction_params
@@ -1179,6 +1171,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in stream:
             instance = self.verify_instance(instance)
+
+            if "group_mean" in self.reduction_map:
+                self._validate_group_mean_task_data(instance)
+
+            # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
+            # this field exists
+            if self.subgroup_column is not None:
+                assert (
+                    "task_data" in instance
+                    and self.subgroup_column in instance["task_data"]
+                ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
             task_data = instance["task_data"] if "task_data" in instance else {}
 
