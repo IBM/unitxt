@@ -1162,7 +1162,10 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
 
         for instance in instances:
             self.update_and_adjust_global_score(instance, global_score)
-        yield from instances
+
+        for i, instance in enumerate(stream):
+            instance["score"] = instances[i]["score"]
+            yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
@@ -1217,7 +1220,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instance_score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
+            task_data = {}
+            if "task_data" in instance:
+                if "group_id" in instance["task_data"]:
+                    task_data["group_id"] = instance["task_data"]["group_id"]
+                if self.subgroup_column in instance["task_data"]:
+                    task_data[self.subgroup_column] = instance["task_data"][
+                        self.subgroup_column
+                    ]
+
+            instances.append({"score": instance["score"], "task_data": task_data})
 
         return instances
 
