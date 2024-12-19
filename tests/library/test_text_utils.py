@@ -215,25 +215,5 @@ class TestTextUtils(UnitxtTestCase):
         result = to_pretty_string(df, max_chars=50)
         self.assertEqual(
             result,
-            """   Short  \\\n
-0      1
-1      2
-
-   A_very_long_column_name_to_force_wrapping  \
-0                                          3
-1                                          4
-
-   Another_extremely_long_column_name_that_will_ex
-ceed_width  \
-0
-         5
-1
-         6
-
-   Yet_another_long_column_to_ensure_wrapping_occu
-rs_properly
-0
-          7
-1
-          8""",
+            "   Short  \\\n0      1\n1      2\n\n   A_very_long_column_name_to_force_wrapping  \\\n0                                          3\n1                                          4\n\n   Another_extremely_long_column_name_that_will_ex\nceed_width  \\\n0\n         5\n1\n         6\n\n   Yet_another_long_column_to_ensure_wrapping_occu\nrs_properly\n0\n          7\n1\n          8\n",
         )
