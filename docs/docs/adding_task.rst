@@ -89,7 +89,5 @@ To register the task to the catalog
 
    from unitxt import add_to_catalog
 
-   add_to_local_catalog(task,"tasks.calculator.sum")
-
-
+   add_to_catalog(task,"tasks.calculator.sum")
 
