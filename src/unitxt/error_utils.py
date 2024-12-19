@@ -14,6 +14,8 @@ class Documentation:
     MULTIPLE_METRICS_OUTPUTS = (
         "docs/adding_metric.html#metric-outputs-with-multiple-metrics"
     )
+    EVALUATION = "docs/evaluating_datasets.html"
+    BENCHMARKS = "docs/benchmark.html"
     DATA_CLASSIFICATION_POLICY = "docs/data_classification_policy.html"
     CATALOG = "docs/saving_and_loading_from_catalog.html"
 

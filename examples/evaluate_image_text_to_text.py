@@ -1,7 +1,6 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine
-from unitxt.text_utils import print_dict
 
 with settings.context(
     disable_hf_datasets_cache=False,
@@ -15,20 +14,15 @@ with settings.context(
         split="test",
     )
 
-    engine = HFLlavaInferenceEngine(
+    model = HFLlavaInferenceEngine(
         model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
     )
 
-    predictions = engine.infer(dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+    predictions = model(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "media",
-            "references",
-            "processed_prediction",
-            "score",
-        ],
-    )
+    print("Global Results:")
+    print(results.global_scores.summary)
+
+    print("Instance Results:")
+    print(results.instance_scores.summary)

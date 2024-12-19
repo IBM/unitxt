@@ -10,7 +10,7 @@ from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
 from ..standard import StandardRecipe
-from ..text_utils import construct_dict_str
+from ..text_utils import to_pretty_string
 from ..utils import deep_copy
 
 logger = get_logger()
@@ -111,7 +111,7 @@ def print_recipe_output(
                 f"Showing up to {num_examples} examples from stream '{stream_name}':"
             )
             for example, _ in zip(stream, range(num_examples)):
-                dict_message = construct_dict_str(example)
+                dict_message = to_pretty_string(example)
                 logger.info(dict_message)
                 logger.info("\n")
                 examples.append(example)

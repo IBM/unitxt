@@ -1,6 +1,5 @@
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -17,17 +16,14 @@ dataset = create_dataset(
     test_set=dataset,
     metrics=[
         "metrics.qa.open.recommended_no_gpu",
-        "metrics.qa.open.recommended_llm_as_judge",
+        # "metrics.qa.open.recommended_llm_as_judge",
     ],
 )
 
-evaluated_dataset = evaluate(predictions, dataset["test"])
+results = evaluate(predictions, dataset["test"])
 
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "score",
-        ],
-    )
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

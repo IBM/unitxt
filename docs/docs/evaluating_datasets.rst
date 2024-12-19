@@ -12,22 +12,22 @@ Unitxt can be used to evaluate datasets from it's catalog and user defined datas
 
   dataset = load_dataset(card="cards.wnli",format="formats.chat_api",max_test_instances=100,split="test")
 
-  # The following lines can be replaced by any inference engine that receives the model_input 
+  # The following lines can be replaced by any inference engine that receives the model_input
   # (found in dataset['source']) and returns model predictions as string.
 
   from unitxt.inference import HFPipelineBasedInferenceEngine
-  engine = HFPipelineBasedInferenceEngine(
+  model = HFPipelineBasedInferenceEngine(
       model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
   )
-  predictions = engine.infer(dataset)
+  predictions = model(dataset)
 
-  dataset_with_scores = evaluate(predictions,dataset)
+  results = evaluate(predictions, dataset)
 
 The following prints the scores defined in WNLI task (f1_micro, f1_macro, accuracy, as well as their confidence intervals).
 
 .. code-block:: python
 
-    [print(item) for item in dataset_with_scores[0]['score']['global'].items()]
+    print(results.global_scores.summary)
 
 
 .. code-block::

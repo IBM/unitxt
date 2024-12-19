@@ -129,6 +129,13 @@ class InferenceEngine(Artifact):
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
 
+    def __call__(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self.infer(dataset=dataset, return_meta_data=return_meta_data)
+
     def infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],

@@ -33,7 +33,7 @@ if __name__ == "__main__":
     test_data = dataset["test"]
 
     # Performing inference:
-    predictions = wml_inference.infer(test_data)
+    predictions = wml_inference(test_data)
     for inp, prediction in zip(test_data, predictions):
         result = {**inp, "prediction": prediction}
         print_dict(result, keys_to_print=["source", "prediction"])

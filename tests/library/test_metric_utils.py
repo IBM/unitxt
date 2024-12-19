@@ -802,7 +802,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
                 {
@@ -832,7 +836,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
                 {
@@ -862,7 +870,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
             ],
@@ -995,7 +1007,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.5,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.5, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.5,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.5,
+                        },
                     },
                 },
                 {
@@ -1029,7 +1045,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.5,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.5, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.5,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.5,
+                        },
                     },
                 },
             ],
@@ -1301,7 +1321,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
                 {
@@ -1372,7 +1396,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
                 {
@@ -1443,7 +1471,11 @@ class TestMetricUtils(UnitxtTestCase):
                             "score": 0.75,
                             "score_name": "subsets_mean",
                         },
-                        "global": {"score": 0.75, "score_name": "subsets_mean"},
+                        "global": {
+                            "score": 0.75,
+                            "score_name": "subsets_mean",
+                            "subsets_mean": 0.75,
+                        },
                     },
                 },
             ],

@@ -37,13 +37,13 @@ with settings.context(
 
     data = list(dataset()["test"])
 
-    inference_model = LMMSEvalInferenceEngine(
+    model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
         model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
         max_new_tokens=2,
     )
 
-    predictions = inference_model.infer(data)
+    predictions = model(data)
     results = evaluate(predictions=predictions, data=data)
 
     for subset in dataset.subsets:

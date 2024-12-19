@@ -59,28 +59,17 @@ Next, you can evaluate this benchmark by:
 
 .. code-block:: python
 
-    test_dataset = list(benchmark()["test"])
+    dataset = list(benchmark()["test"])
 
     # Inference using Flan-T5 Base via Hugging Face API
-    model_name = "google/flan-t5-base"
-    inference_model = HFPipelineBasedInferenceEngine(
-        model_name=model_name, max_new_tokens=32
+    model = HFPipelineBasedInferenceEngine(
+        model_name="google/flan-t5-base", max_new_tokens=32
     )
 
-    predictions = inference_model.infer(test_dataset)
-    evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    predictions = model(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[0],
-            keys_to_print=[
-            "source",
-            "prediction",
-            "subset",
-        ]
-    )
-    print_dict(
-        evaluated_dataset[0]["score"]["subsets"],
-    )
+    print(results.subsets_scores.summary)
 
 The result will contain the score per subset as well as the final global result:
 
