@@ -67,6 +67,8 @@ watsonx, bam, openai, azure, aws and more.
 
 For the arguments these inference engines can receive, please refer to the classes documentation or read
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
+
+This makes authentication problems. testing to see if on github as well
 """
 
 df = pd.DataFrame(columns=["template", "num_demos", "f1_micro", "ci_low", "ci_high"])
