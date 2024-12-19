@@ -18,13 +18,6 @@ from .deprecation_utils import __file__ as _
 from .dialog_operators import __file__ as _
 from .dict_utils import __file__ as _
 from .error_utils import __file__ as _
-from .eval_assist_chat_templates import __file__ as _
-from .eval_assist_constants import __file__ as _
-from .eval_assist_llm_as_judge import __file__ as _
-from .eval_assist_llm_as_judge_direct import __file__ as _
-from .eval_assist_llm_as_judge_pairwise import __file__ as _
-from .eval_assist_operators import __file__ as _
-from .eval_assist_utils import __file__ as _
 from .eval_utils import __file__ as _
 from .file_utils import __file__ as _
 from .formats import __file__ as _
