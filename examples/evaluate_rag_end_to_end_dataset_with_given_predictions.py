@@ -53,8 +53,11 @@ dataset = create_dataset(
 )
 
 results = evaluate(predictions, dataset)
-# Print results
-print("Overall scores:")
-print(results.global_scores.to_df())
-print("\n\nPer instance scores:")
-print(results.instance_scores.to_df(columns=["question", "score", "score_name"]))
+
+# Print Results:
+
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

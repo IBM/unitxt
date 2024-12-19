@@ -22,16 +22,9 @@ predictions = model(data)
 
 results = evaluate(predictions=predictions, data=data)
 
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "source",
-            "prediction",
-            "subset",
-        ]
-    )
-)
+# Print Results:
+print("Global Results:")
+print(results.global_scores.summary)
 
-print(
-    results.subsets_scores,
-)
+print("Instance Results:")
+print(results.instance_scores.summary)

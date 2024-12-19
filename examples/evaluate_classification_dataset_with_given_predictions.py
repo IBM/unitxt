@@ -18,13 +18,13 @@ dataset = create_dataset(
 
 results = evaluate(predictions, dataset["test"])
 
-print(results.global_scores)
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "prediction",
-            "references",
-            "score",
-        ]
-    )
-)
+# Print Results:
+
+print(f"Final Score ({results.global_scores.score_name}):")
+print(results.global_scores.score)
+
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

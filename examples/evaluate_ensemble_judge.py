@@ -45,4 +45,8 @@ card = TaskCard(
 test_dataset = load_dataset(card=card, template_card_index="simple")["test"]
 results = evaluate(predictions=predictions, data=test_dataset)
 
-print(results.instance_scores.to_df())
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

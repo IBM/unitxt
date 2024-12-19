@@ -25,4 +25,5 @@ about the the open ai api arguments the CrossProviderInferenceEngine follows.
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
-print(results.global_scores)
+# Print Results:
+print(results.global_scores.summary)

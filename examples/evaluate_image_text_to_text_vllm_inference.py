@@ -3,7 +3,6 @@ from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
     VLLMInferenceEngine,
 )
-from unitxt.text_utils import print_dict
 
 with settings.context(
     disable_hf_datasets_cache=False,
@@ -23,7 +22,8 @@ with settings.context(
     predictions = inference_model(dataset)
     results = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(results[0], keys_to_print=["prediction", "target", "references"])
-    print_dict(
-        results[0]["score"]["global"],
-    )
+    print("Global Results:")
+    print(results.global_scores.summary)
+
+    print("Instance Results:")
+    print(results.instance_scores.summary)

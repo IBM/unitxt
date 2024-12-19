@@ -38,4 +38,8 @@ with settings.context(allow_unverified_code=True):
     # Evaluate the predictions using the defined metric.
     results = evaluate(predictions=predictions, data=dataset)
 
-    print(results.instance_scores.to_df())
+    print("Global Results:")
+    print(results.global_scores.summary)
+
+    print("Instance Results:")
+    print(results.instance_scores.summary)

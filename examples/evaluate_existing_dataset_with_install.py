@@ -23,14 +23,8 @@ predictions = model(dataset)
 
 results = evaluate(predictions=predictions, data=dataset)
 
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ]
-    )
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

@@ -21,16 +21,8 @@ with settings.context(
     predictions = model(dataset)
     results = evaluate(predictions=predictions, data=dataset)
 
-    print(results.global_scores)
+    print("Global Results:")
+    print(results.global_scores.summary)
 
-    print(
-        results.instance_scores.to_df(
-            columns=[
-                "source",
-                "media",
-                "references",
-                "processed_prediction",
-                "score",
-            ],
-        )
-    )
+    print("Instance Results:")
+    print(results.instance_scores.summary)

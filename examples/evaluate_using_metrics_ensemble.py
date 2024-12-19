@@ -40,18 +40,8 @@ predictions = model(dataset)
 # Evaluate the predictions using the defined metric.
 results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "question",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "ensemble_0_llama_3_70b_instruct_template_generic_single_turn",
-            "ensemble_1_llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn",
-            "score",
-            "score_name",
-        ],
-    )
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

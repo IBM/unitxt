@@ -6,7 +6,6 @@ from unitxt.inference import (
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -62,19 +61,13 @@ model = HFPipelineBasedInferenceEngine(
 predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "processed_prediction",
-        "references",
-        "score",
-    ],
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)
 
 
 logger.info(
@@ -133,15 +126,8 @@ predictions = model(dataset)
 # Evaluate the predictions using the defined metric.
 results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-print(
-    results.instance_scores.to_df(
-        columns=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

@@ -8,7 +8,7 @@ from unitxt.standard import StandardRecipe
 benchmark = Benchmark(
     format="formats.user_agent",
     max_samples_per_subset=5,
-    loader_limit=300,
+    loader_limit=30,
     subsets={
         "cola": StandardRecipe(
             card="cards.cola",
@@ -46,7 +46,7 @@ benchmark = Benchmark(
 test_dataset = list(benchmark()["test"])
 
 
-# Infere using llama-3-2-1b base using Watsonx API
+# Infer using llama-3-2-1b base using Watsonx API
 model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
@@ -59,6 +59,8 @@ about the the open ai api arguments the CrossProviderInferenceEngine follows.
 predictions = model(test_dataset)
 results = evaluate(predictions=predictions, data=test_dataset)
 
-print(
-    results.subsets_scores,
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Subsets Results:")
+print(results.subsets_scores.summary)

@@ -28,6 +28,5 @@ predictions = ["entailment" for _ in dataset]
 metric = evaluate.load("unitxt/metric")
 results = metric.compute(predictions=predictions, references=dataset)
 
-# print the aggregated scores dictionary.
-print("\nScores:")
-print(json.dumps(results.global_scores, indent=4))
+print("Global Results:")
+print(results.global_scores.summary)

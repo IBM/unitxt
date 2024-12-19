@@ -5,6 +5,7 @@ from functools import lru_cache
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional
 
+import pandas as pd
 from datasets import Features, Value
 
 from .dataclass import Dataclass
@@ -29,6 +30,7 @@ from .schema import UNITXT_DATASET_SCHEMA
 from .settings_utils import get_constants, get_settings
 from .stream import DynamicStream, MultiStream
 from .struct_data_operators import LoadJson
+from .text_utils import to_pretty_string
 from .type_utils import isoftype
 from .utils import recursive_copy
 
@@ -267,6 +269,7 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                 score["global"] = {
                     "score": score["subsets"]["score"],
                     "score_name": score["subsets"]["score_name"],
+                    "subsets_mean": score["subsets"]["score"],
                 }
                 if "num_of_instances" in score["subsets"]:
                     score["global"]["num_of_instances"] = score["subsets"][
@@ -347,13 +350,24 @@ UNITXT_METRIC_SCHEMA = Features(
 
 
 class GlobalScores(dict):
-    @property
-    def main_score(self):
-        self["score"]
+    """GlobalScores is a dictionary-based class designed to handle and transform metric results into a structured format.
+
+    Attributes:
+        score (float): The main score value.
+        score_name (str): The name of the main score.
+
+    Methods:
+        to_df():
+            Transforms the dictionary of results into a pandas DataFrame with score_name as the index,
+    """
 
     @property
-    def main_score_name(self):
-        self["score_name"]
+    def score(self):
+        return self["score"]
+
+    @property
+    def score_name(self):
+        return self["score_name"]
 
     def to_df(self):
         """Transforms a dictionary of results into a pandas dataframe.
@@ -370,11 +384,7 @@ class GlobalScores(dict):
 
         # Extract data based on score names
         for key, value in self.items():
-            if (
-                key.endswith("_ci_low")
-                or key.endswith("_ci_high")
-                or key == "score_name"
-            ):
+            if key.endswith("_ci_low") or key.endswith("_ci_high"):
                 continue  # Skip confidence interval keys for now
 
             if isinstance(value, (int, float)):  # Only consider numerical scores
@@ -393,6 +403,162 @@ class GlobalScores(dict):
 
         df = pd.DataFrame(rows)
         return df.set_index("score_name")
+
+    def __repr__(self):
+        return to_pretty_string(self, float_format=".2g")
+
+    @property
+    def summary(self):
+        df = self.to_df().round(2).fillna("")
+        df = df.sort_index()
+        df = df.drop("num_of_instances", axis=0)
+        df = df.reset_index()
+        score_name = self["score_name"]
+        num_of_instances = self["num_of_instances"]
+        return (
+            df.to_markdown(index=False)
+            + f"\nMain Score: {score_name}\nNum Instances: {num_of_instances}"
+        )
+
+
+class SubsetsScores(dict):
+    def __repr__(self):
+        return to_pretty_string(self, float_format=".2g")
+
+    @property
+    def summary(self):
+        rows = []
+        data = self
+        rows = []
+        all_group_types = set()
+
+        def walk_subsets(node, subset_path):
+            # Check if this node represents a subset level by checking "score" and "score_name"
+            is_subset_node = "score" in node and "score_name" in node
+
+            # Extract subset-level info if this is a subset node
+            if is_subset_node:
+                subset_score = node.get("score", "")
+                subset_score_name = node.get("score_name", "")
+                subset_ci_low = node.get("score_ci_low", "")
+                subset_ci_high = node.get("score_ci_high", "")
+                subset_num_instances = node.get("num_of_instances", "")
+
+                # Check for groups at this level
+                groups = node.get("groups", {})
+
+                if groups:
+                    # If there are groups, we create one row per group entry
+                    for group_type, group_dict in groups.items():
+                        for group_name, group_metrics in group_dict.items():
+                            g_score = group_metrics.get("score", subset_score)
+                            g_score_name = group_metrics.get(
+                                "score_name", subset_score_name
+                            )
+                            g_ci_low = group_metrics.get("score_ci_low", subset_ci_low)
+                            g_ci_high = group_metrics.get(
+                                "score_ci_high", subset_ci_high
+                            )
+                            g_num_instances = group_metrics.get(
+                                "num_of_instances", subset_num_instances
+                            )
+
+                            all_group_types.add(group_type)
+
+                            row = {
+                                "subset": ".".join(subset_path)
+                                if subset_path
+                                else "ALL",
+                                "score": g_score,
+                                "score_name": g_score_name,
+                                "score_ci_low": g_ci_low,
+                                "score_ci_high": g_ci_high,
+                                "num_of_instances": g_num_instances,
+                                group_type: str(group_name),
+                            }
+                            rows.append(row)
+                else:
+                    # No groups, just one row for this subset node
+                    row = {
+                        "subset": ".".join(subset_path) if subset_path else "ALL",
+                        "score": subset_score,
+                        "score_name": subset_score_name,
+                        "score_ci_low": subset_ci_low,
+                        "score_ci_high": subset_ci_high,
+                        "num_of_instances": subset_num_instances,
+                    }
+                    rows.append(row)
+
+            # Now check for deeper subsets: any key in node that leads to another dict with "score" and "score_name"
+            # or even if it doesn't have score, we still recurse to find deeper subsets.
+            for k, v in node.items():
+                if isinstance(v, dict) and k != "groups":
+                    # If v is a dict, recurse
+                    # We'll attempt to go deeper since subsets can be arbitrary depth
+                    # We do not require v to have score/score_name at this time, recursion can find deeper ones.
+                    walk_subsets(v, [*subset_path, k])
+
+        # Start recursion from top-level
+        walk_subsets(data, [])
+
+        # Convert to DataFrame
+        df = pd.DataFrame(rows)
+
+        # Ensure columns exist for all group types
+        for gt in all_group_types:
+            if gt not in df.columns:
+                df[gt] = ""
+
+        # Replace NaN with ""
+        df = df.fillna("")
+
+        # Remove columns that are all empty strings
+        df = df.drop(columns=[col for col in df.columns if df[col].eq("").all()])
+
+        # Attempt to order columns in a logical manner:
+        # subset first, then any group type columns, then score fields
+        fixed_cols = [
+            "subset",
+            "score",
+            "score_name",
+            "score_ci_low",
+            "score_ci_high",
+            "num_of_instances",
+        ]
+        group_type_cols = [
+            c for c in df.columns if c not in fixed_cols and c != "subset"
+        ]
+        order = [
+            "subset",
+            *group_type_cols,
+            "score",
+            "score_name",
+            "score_ci_low",
+            "score_ci_high",
+            "num_of_instances",
+        ]
+        order = [c for c in order if c in df.columns]
+        df = df[order]
+
+        return df.to_markdown(index=False)
+
+
+class GroupsScores(dict):
+    """A dictionary subclass to store and manage group scores.
+
+    This class provides a property to summarize the scores and a custom
+    string representation for pretty-printing.
+
+    Attributes:
+        summary (property): A property to get a summary of the group scores.
+    """
+
+    @property
+    def summary(self):
+        pass
+
+    def __repr__(self):
+        return to_pretty_string(self, float_format=".2g")
 
 
 class InstanceScores(list):
@@ -438,6 +604,26 @@ class InstanceScores(list):
             return df[columns]
         return df
 
+    @property
+    def summary(self):
+        return to_pretty_string(
+            self.to_df()
+            .head()
+            .drop(
+                columns=[
+                    "metadata",
+                    "media",
+                    "data_classification_policy",
+                    "groups",
+                    "subset",
+                ]
+            ),
+            float_format=".2g",
+        )
+
+    def __repr__(self):
+        return to_pretty_string(self, float_format=".2g")
+
 
 class EvaluationResults(list):
     @property
@@ -445,7 +631,7 @@ class EvaluationResults(list):
         return GlobalScores(self[0]["score"]["global"])
 
     @property
-    def instance_scores(self):
+    def instance_scores(self) -> InstanceScores:
         return InstanceScores(self)
 
     @property
@@ -455,7 +641,7 @@ class EvaluationResults(list):
                 "Groups scores not found try using group_by in the recipe",
                 additional_info_id=Documentation.EVALUATION,
             )
-        return self[0]["score"]["groups"]
+        return GroupsScores(self[0]["score"]["groups"])
 
     @property
     def subsets_scores(self):
@@ -464,7 +650,7 @@ class EvaluationResults(list):
                 "Subsets scores not found try using Benchmark",
                 additional_info_id=Documentation.BENCHMARKS,
             )
-        return self[0]["score"]["subsets"]
+        return SubsetsScores(self[0]["score"]["subsets"])
 
 
 def _compute(
