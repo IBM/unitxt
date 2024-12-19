@@ -7,7 +7,8 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint",
+        "card=cards.text2sql.bird"
+        ",template=templates.text2sql.you_are_given_with_hint",
         split="validation",
     )
 
