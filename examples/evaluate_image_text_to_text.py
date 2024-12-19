@@ -2,8 +2,11 @@ from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine
 from unitxt.text_utils import print_dict
+from tqdm import tqdm
+
 from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.61.188.58', 55557)
+# set_remote_debugger('9.61.188.58', 55557)
+
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
@@ -28,8 +31,8 @@ with settings.context(
     # )
     dataset = load_dataset(
         card="cards.info_vqa", # docvqa.lmms_eval
-        template_card_index=0, # not needed in  newer version
-        # template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
+        # template_card_index=0, # not needed in  newer version
+        template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
         format="formats.models.llava_interleave",
         loader_limit=20,
         # augmentor="augmentors.image.to_rgb",
@@ -49,7 +52,7 @@ with settings.context(
     test_dataset = list(tqdm(dataset["test"], total=20))
     # test_dataset = list(tqdm(dataset["test"]))
 
-    predictions = engine.infer(dataset)
+    predictions = inference_model.infer(dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
     print_dict(
