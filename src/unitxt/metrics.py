@@ -48,7 +48,7 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy
+from .utils import deep_copy, recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -1164,7 +1164,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             self.update_and_adjust_global_score(instance, global_score)
 
         for i, instance in enumerate(stream):
-            instance["score"] = instances[i]["score"]
+            instance["score"] = recursive_copy(instances[i]["score"])
             yield instance
 
     def compute_instance_scores(
