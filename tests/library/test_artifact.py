@@ -589,7 +589,6 @@ class TestArtifact(UnitxtTestCase):
 
     def test_artifact_is_fetched_first_hand(self):
         from unitxt.artifact import fetch_artifact
-        from unitxt.catalog import get_from_catalog
 
         card1, _ = fetch_artifact("cards.banking77")
         self.assertListEqual(
@@ -604,15 +603,16 @@ class TestArtifact(UnitxtTestCase):
             ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         )
 
-        card3 = get_from_catalog("cards.banking77")
+    def test_artifact_is_gotten_from_catalog_first_hand(self):
+        card1 = get_from_catalog("cards.banking77")
         self.assertListEqual(
-            card3.task.metrics,
+            card1.task.metrics,
             ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         )
-        card3.task.metrics = ["metrics.accuracy"]
-        self.assertListEqual(card3.task.metrics, ["metrics.accuracy"])
-        card4 = get_from_catalog("cards.banking77")
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2 = get_from_catalog("cards.banking77")
         self.assertListEqual(
-            card4.task.metrics,
+            card2.task.metrics,
             ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         )
