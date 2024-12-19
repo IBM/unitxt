@@ -2,6 +2,8 @@ import re
 import shutil
 from typing import List, Tuple
 
+import pandas as pd
+
 from .logging_utils import get_logger
 
 logger = get_logger()
@@ -69,48 +71,116 @@ def camel_to_snake_case(s):
     return s.lower()
 
 
-def construct_dict_str(d, indent=0, indent_delta=4, max_chars=None, keys=None):
-    """Constructs a formatted string of a dictionary.
+def to_pretty_string(
+    value,
+    indent=0,
+    indent_delta=4,
+    max_chars=None,
+    keys=None,
+    item_label=None,
+    float_format=None,
+):
+    """Constructs a formatted string representation of various data structures (dicts, lists, tuples, and DataFrames).
 
     Args:
-        d (dict): The dictionary to be formatted.
+        value: The Python data structure to be formatted.
         indent (int, optional): The current level of indentation. Defaults to 0.
-        indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 4.
-        max_chars (int, optional): The maximum number of characters for each line. Defaults to terminal width - 10.
-        keys (List[Str], optional): the list of fields to print
+        indent_delta (int, optional): Amount of spaces to add per indentation level. Defaults to 4.
+        max_chars (int, optional): Max characters per line before wrapping. Defaults to terminal width - 10.
+        keys (List[str], optional): For dicts, optionally specify keys and order.
+        item_label (str, optional): Internal parameter for labeling items.
+        float_format (str, optional): Format string for float values (e.g., ".2f"). Defaults to None.
     """
     max_chars = max_chars or shutil.get_terminal_size()[0] - 10
     indent_str = " " * indent
-    indent_delta_str = " " * indent_delta
     res = ""
 
-    if keys is None:
-        keys = d.keys()
-    for key in keys:
-        if key not in d.keys():
-            raise ValueError(
-                f"Dictionary does not contain field {key} specified in 'keys' argument. The available keys are {d.keys()}"
+    if isinstance(value, dict):
+        keys_to_print = keys if keys is not None else list(value.keys())
+
+        for k in keys_to_print:
+            if k not in value:
+                raise ValueError(
+                    f"Dictionary does not contain field '{k}' specified in 'keys' argument. "
+                    f"The available keys are {list(value.keys())}"
+                )
+
+        for k in keys_to_print:
+            v = value[k]
+            item_header = f"{k} ({type(v).__name__})"
+            res += f"{indent_str}{item_header}:\n"
+            res += to_pretty_string(
+                v,
+                indent=indent + indent_delta,
+                indent_delta=indent_delta,
+                max_chars=max_chars,
+                float_format=float_format,
             )
-        value = d[key]
-        if isinstance(value, dict):
-            res += f"{indent_str}{key}:\n"
-            res += construct_dict_str(value, indent + indent_delta, max_chars=max_chars)
+
+    elif isinstance(value, (list, tuple)):
+        for i, v in enumerate(value):
+            label = f"[{i}]" if isinstance(value, list) else f"({i})"
+            item_header = f"{label} ({type(v).__name__})"
+            res += f"{indent_str}{item_header}:\n"
+            res += to_pretty_string(
+                v,
+                indent=indent + indent_delta,
+                indent_delta=indent_delta,
+                max_chars=max_chars,
+                float_format=float_format,
+            )
+
+    elif isinstance(value, pd.DataFrame):
+        line_width = max_chars - indent
+        options = [
+            "display.max_rows",
+            None,
+            "display.max_columns",
+            None,
+            "display.max_colwidth",
+            None,
+            "display.width",
+            line_width,
+            # 'display.colheader_justify', 'left'
+        ]
+        if float_format is not None:
+            options.extend(
+                ["display.float_format", ("{:," + float_format + "}").format]
+            )
+        with pd.option_context(*options):
+            df_str = repr(value)
+
+        lines = df_str.split("\n")
+        for line in lines:
+            if len(line) + len(indent_str) > line_width:
+                start = 0
+                while start < len(line):
+                    wrap_chunk = line[start : start + line_width].rstrip()
+                    res += f"{indent_str}{wrap_chunk}\n"
+                    start += line_width
+            else:
+                res += f"{indent_str}{line.rstrip()}\n"
+
+    else:
+        # Handle scalar values, including floats
+        if isinstance(value, float) and float_format:
+            formatted_value = f"{value:{float_format}}"
         else:
-            str_value = str(value)
-            str_value = re.sub(r"\w+=None, ", "", str_value)
-            str_value = re.sub(r"\w+={}, ", "", str_value)
-            str_value = re.sub(r"\w+=\[\], ", "", str_value)
-            line_width = max_chars - indent
-            lines = str_value.split("\n")
-            res += f"{indent_str}{key} ({type(value).__name__}):\n"
-            for line in lines:
-                if len(line) + len(indent_str) + indent_delta > line_width:
-                    res += f"{indent_str}{indent_delta_str}{line[:line_width]}\n"
-                    for i in range(line_width, len(line), line_width):
-                        res += f"{indent_str}{indent_delta_str}{line[i:i+line_width]}\n"
-                else:
-                    res += f"{indent_str}{indent_delta_str}{line}\n"
-                key = ""  # Empty the key for lines after the first one
+            formatted_value = str(value)
+
+        # Wrap lines according to max_chars
+        line_width = max_chars - indent
+        lines = formatted_value.split("\n")
+        for line in lines:
+            if len(line) + len(indent_str) > line_width:
+                start = 0
+                while start < len(line):
+                    wrap_chunk = line[start : start + line_width].rstrip()
+                    res += f"{indent_str}{wrap_chunk}\n"
+                    start += line_width
+            else:
+                res += f"{indent_str}{line.rstrip()}\n"
+
     return res
 
 
@@ -170,7 +240,7 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
 def print_dict(
     d, indent=0, indent_delta=4, max_chars=None, keys_to_print=None, log_level="info"
 ):
-    dict_str = construct_dict_str(d, indent, indent_delta, max_chars, keys_to_print)
+    dict_str = to_pretty_string(d, indent, indent_delta, max_chars, keys_to_print)
     dict_str = "\n" + dict_str
     getattr(logger, log_level)(dict_str)
 

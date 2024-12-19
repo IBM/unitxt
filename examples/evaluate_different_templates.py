@@ -2,13 +2,10 @@ import os
 import tempfile
 
 import pandas as pd
-from unitxt import add_to_catalog, get_logger, register_local_catalog
+from unitxt import add_to_catalog, register_local_catalog
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
-
-logger = get_logger()
 
 
 # Register a local catalog
@@ -58,9 +55,7 @@ add_to_catalog(
 )
 
 # Run inference on mnli (entailment task) on the two templates with both 0 and 3 shot in context learning.
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-2-1b-instruct", max_tokens=32
-)
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", max_tokens=32)
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -87,22 +82,21 @@ for template in [
             split="test",
         )
 
-        predictions = inference_model.infer(dataset)
+        predictions = model(dataset)
 
-        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
-        logger.info(
+        print(
             f"Sample input and output for template '{template}' and num_demos '{num_demos}':"
         )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=["source", "prediction", "processed_prediction"],
+        print(
+            results.instance_scores.to_df(
+                columns=["source", "prediction", "processed_prediction"]
+            ),
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
-        print_dict(
-            global_scores,
-            keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
-        )
+
+        global_scores = results.global_scores
+
         df.loc[len(df)] = [
             template,
             num_demos,
@@ -112,4 +106,4 @@ for template in [
         ]
 
 df = df.round(decimals=2)
-logger.info(df.to_markdown())
+print(df.to_markdown())

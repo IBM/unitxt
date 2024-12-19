@@ -9,7 +9,6 @@ from unitxt.inference import (
 from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import Rename, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesDict
-from unitxt.text_utils import print_dict
 
 # Assume the RAG data is proved in this format
 data = {
@@ -70,25 +69,18 @@ dataset = load_dataset(
 
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
 
-predictions = engine.infer(dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+predictions = model(dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

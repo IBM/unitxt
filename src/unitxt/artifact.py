@@ -459,6 +459,11 @@ class Artifact(Dataclass):
 
         return instance
 
+    def __repr__(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return super().__repr__()
+
 
 class ArtifactLink(Artifact):
     # the artifact linked to, expressed by its catalog id

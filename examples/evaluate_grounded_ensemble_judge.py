@@ -1,11 +1,7 @@
-from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import InputOutputTemplate, TemplatesDict
-from unitxt.text_utils import print_dict
-
-logger = get_logger()
 
 data = {
     "test": [
@@ -51,17 +47,11 @@ card = TaskCard(
     ),
 )
 
-test_dataset = load_dataset(card=card, template_card_index="simple")["test"]
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+dataset = load_dataset(card=card, template_card_index="simple", split="test")
+results = evaluate(predictions=predictions, data=dataset)
 
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

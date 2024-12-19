@@ -126,12 +126,13 @@ class Loader(SourceOperator):
         self, default_data_classification_policy, additional_info
     ):
         if self.data_classification_policy is None:
-            logger.info(
-                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
-                f"{default_data_classification_policy} by default {additional_info}.\n"
-                "To use a different value or remove this message, explicitly set the "
-                "`data_classification_policy` attribute of the loader.\n"
-            )
+            if additional_info is not None:
+                logger.info(
+                    f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
+                    f"{default_data_classification_policy} by default {additional_info}.\n"
+                    "To use a different value or remove this message, explicitly set the "
+                    "`data_classification_policy` attribute of the loader.\n"
+                )
             self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
@@ -306,7 +307,8 @@ class LoadHF(Loader):
             )
         else:
             self.sef_default_data_classification(
-                ["public"], "when loading from Huggingface hub"
+                ["public"],
+                None,  # No warning when loading from public hub
             )
 
     def load_iterables(self):
