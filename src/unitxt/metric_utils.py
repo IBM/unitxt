@@ -555,7 +555,78 @@ class GroupsScores(dict):
 
     @property
     def summary(self):
-        pass
+        data = self
+        # Desired metric columns
+        metric_cols = [
+            "score",
+            "score_name",
+            "score_ci_low",
+            "score_ci_high",
+            "num_of_instances",
+        ]
+        output_lines = []
+
+        for scenario_key, scenario_data in data.items():
+            # scenario_key could be a single string or a tuple of strings
+            if isinstance(scenario_key, tuple):
+                scenario_groups = scenario_key
+            else:
+                scenario_groups = (scenario_key,)
+
+            # Build rows for this scenario
+            rows = []
+            for group_name_key, metrics in scenario_data.items():
+                # group_name_key should match the structure of scenario_groups
+                if isinstance(group_name_key, tuple):
+                    group_names = group_name_key
+                else:
+                    group_names = (group_name_key,)
+
+                # Create a row with group columns and metric columns
+                row = {}
+                for g_type, g_name in zip(scenario_groups, group_names):
+                    row[g_type] = str(g_name)
+
+                # Add desired metrics
+                for mcol in metric_cols:
+                    row[mcol] = metrics.get(mcol, "")
+
+                rows.append(row)
+
+            # Convert this scenario's rows to a DataFrame
+            if rows:
+                df = pd.DataFrame(rows)
+            else:
+                # No rows means empty DataFrame
+                df = pd.DataFrame(columns=list(scenario_groups) + metric_cols)
+
+            # Fill NaN with ""
+            df = df.fillna("")
+
+            # Remove columns that are entirely empty
+            df = df.drop(columns=[col for col in df.columns if df[col].eq("").all()])
+
+            # Order columns: group types first (in the order they appear in scenario_groups), then metrics
+            final_cols = [col for col in scenario_groups if col in df.columns] + [
+                col for col in metric_cols if col in df.columns
+            ]
+            df = df[final_cols]
+
+            # Title for this scenario
+            if len(scenario_groups) == 1:
+                title = f"# Group By: {scenario_groups[0]}"
+            else:
+                title = "# Group By: " + ", ".join(scenario_groups)
+            output_lines.append(title)
+
+            if not df.empty:
+                output_lines.append(df.to_markdown(index=False))
+            else:
+                output_lines.append("_No matching rows_")
+
+            output_lines.append("")
+
+        return "\n".join(output_lines)
 
     def __repr__(self):
         return to_pretty_string(self, float_format=".2g")
