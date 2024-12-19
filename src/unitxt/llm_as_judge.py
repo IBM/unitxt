@@ -3,6 +3,7 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Literal, Optional
 
 from .api import infer
+from .artifact import json_loads_with_artifacts
 from .dataclass import Field
 from .formats import ChatAPIFormat, Format, SystemFormat
 from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
@@ -17,11 +18,13 @@ settings = get_settings()
 
 
 def get_task_data_dict(task_data):
-    import json
-
     # seems like the task data sometimes comes as a string, not a dict
     # this fixes it
-    return json.loads(task_data) if isinstance(task_data, str) else task_data
+    return (
+        json_loads_with_artifacts(task_data)
+        if isinstance(task_data, str)
+        else task_data
+    )
 
 
 class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
