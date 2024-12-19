@@ -28,26 +28,26 @@ class Format(InstanceOperator):
 def apply_capital_new_line_notation(text: str) -> str:
     r"""Transforms a given string by applying the Capital New Line Notation.
 
-    The Capital New Line Notation (\N) is designed to manage newline behavior in a string efficiently.
-    This custom notation aims to consolidate multiple newline characters (\n) into a single newline under
+    The Capital New Line Notation ``(\N)`` is designed to manage newline behavior in a string efficiently.
+    This custom notation aims to consolidate multiple newline characters ``(\n)`` into a single newline under
     specific conditions, with tailored handling based on whether there's preceding text. The function
     distinguishes between two primary scenarios:
 
-    1. If there's text (referred to as a prefix) followed by any number of \n characters and then one or
-    more \N, the entire sequence is replaced with a single \n. This effectively simplifies multiple
+    1. If there's text (referred to as a prefix) followed by any number of ``\n`` characters and then one or
+    more ``\N``, the entire sequence is replaced with a single ``\n``. This effectively simplifies multiple
     newlines and notation characters into a single newline when there's preceding text.
-    2. If the string starts with \n characters followed by \N without any text before this sequence, or if
-    \N is at the very beginning of the string, the sequence is completely removed. This case is
+
+    2. If the string starts with ``\n`` characters followed by ``\N`` without any text before this sequence, or if
+    ``\N`` is at the very beginning of the string, the sequence is completely removed. This case is
     applicable when the notation should not introduce any newlines due to the absence of preceding text.
 
     Args:
-        text (str): The input string to be transformed, potentially containing the Capital New Line Notation
-                        (\N) mixed with actual newline characters (\n).
+        text (str): The input string to be transformed, potentially containing the Capital New Line Notation ``(\N)`` mixed with actual newline characters ``(\n)``.
 
     Returns:
-        str: The string after applying the Capital New Line Notation rules, which either consolidates multiple
-            newlines and notation characters into a single newline when text precedes them, or removes the
-            notation and any preceding newlines entirely if no text is present before the notation.
+        The string after applying the Capital New Line Notation rules, which either consolidates multiple
+        newlines and notation characters into a single newline when text precedes them, or removes the
+        notation and any preceding newlines entirely if no text is present before the notation.
 
     Examples:
         >>> apply_capital_new_line_notation("Hello World\\n\\n\N")
@@ -131,27 +131,26 @@ class BaseFormat(Format):
 class SystemFormat(BaseFormat):
     r"""Generates the whole input to the model, from constant strings that are given as args, and from values found in specified fields of the instance.
 
-    Important: formats can use '\N' notations that means new-line if no new-line before and no empty string before.
+    Important: formats can use ``'\N'`` notations that means new-line if no new-line before and no empty string before.
 
     SystemFormat expects the input instance to contain:
     1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task-independent opening text.
     2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
     from the source dataset), in the context of the underlying task.
     3. A field named "instruction" that contains a (non-None) string.
-    4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
+    4. A field named with the value in arg ``'demos_field'``, containing a list of dicts, each dict with fields "source"
     and "target", representing a single demo.
     5. A field named "target_prefix" that contains a string to prefix the target in each demo, and to end the whole generated prompt
 
-    SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
-    field "source" of the instance. Formatting is driven by two args: 'demo_format' and 'model_input_format'.
+    SystemFormat formats the above fields into a single string to be input to the model. This string overwrites
+    field "source" of the instance. Formatting is driven by two args: ``'demo_format'`` and ``'model_input_format'``.
     SystemFormat also pops fields "system_prompt", "instruction", "target_prefix",  and the field containing the demos out from the input instance.
 
     Args:
         demos_field (str): the name of the field that contains the demos, being a list of dicts, each with "source" and "target" keys
         demo_format (str): formatting string for a single demo, combining fields "source" and "target"
-        model_input_format (str) overall product format, combining instruction and source (as read from fields "instruction"
-        and "source" of the input instance), together with demos (as formatted into one string)
-        format_args: Dict[str,str]: additional format args to be used when formatting the different format strings
+        model_input_format (str): overall product format, combining instruction and source (as read from fields "instruction" and "source" of the input instance), together with demos (as formatted into one string)
+        format_args (Dict[str,str]): additional format args to be used when formatting the different format strings
 
     Example:
         when input instance:
@@ -423,24 +422,13 @@ class ChatAPIFormat(BaseFormat):
 class HFSystemFormat(ChatAPIFormat):
     r"""Formats the complete input for the model using the HuggingFace chat template of a given model.
 
-    HFSystemFormat expects the input instance to contain:
-    1. A field named "system_prompt" whose value is a string (potentially empty) that delivers a task-independent opening text.
-    2. A field named "source" whose value is a string verbalizing the original values in the instance (as read
-    from the source dataset), in the context of the underlying task.
-    3. A field named "instruction" that contains a (non-None) string.
-    4. A field named with the value in arg 'demos_field', containing a list of dicts, each dict with fields "source"
-    and "target", representing a single demo.
-    5. A field named "target_prefix" that contains a string to prefix the target in each demo, and to end the whole generated prompt.
-
-    SystemFormat formats the above fields into a single string to be inputted to the model. This string overwrites
+    HFSystemFormat formats instance fields into a single string to be inputted to the model. This string overwrites
     field "source" of the instance.
 
     Example:
-        HFSystemFormat(model_name="HuggingFaceH4/zephyr-7b-beta")
+        ``HFSystemFormat(model_name="HuggingFaceH4/zephyr-7b-beta")``  Uses the template defined the in tokenizer_config.json of the model:
 
-        Uses the template defined the in tokenizer_config.json of the model:
-
-        "chat_template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
+        ``"chat_template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] + eos_token }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n'  + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}"``
 
         See more details in https://huggingface.co/docs/transformers/main/en/chat_templating
 

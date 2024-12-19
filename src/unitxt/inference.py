@@ -70,21 +70,26 @@ class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
 
     Args:
-    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
-    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
-    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
-    for this position and their probabilities.
-    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
-                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
-                ]
+        prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+        | If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+          the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+          for this position and their probabilities.
+        | For example: ``[ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+          {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]} ]``
 
-    input_tokens (int) : number of input tokens to the model.
-    output_tokens (int) : number of output tokens to the model.
-    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
-    seed (int): seed used by the model during generation.
-    input_text (str): input to the model.
-    model_name (str): the model_name as kept in the InferenceEngine.
-    inference_type (str): The label stating the type of the InferenceEngine.
+        input_tokens (int) : number of input tokens to the model.
+
+        output_tokens (int) : number of output tokens to the model.
+
+        stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+
+        seed (int): seed used by the model during generation.
+
+        input_text (str): input to the model.
+
+        model_name (str): the model_name as kept in the InferenceEngine.
+
+        inference_type (str): The label stating the type of the InferenceEngine.
     """
 
     prediction: Union[str, List[Dict[str, Any]]]
@@ -2046,27 +2051,29 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     Attributes:
         concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
-            which is also the maximum value.
+        which is also the maximum value.
 
     Examples:
-        from .api import load_dataset
+        .. code-block:: python
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngineGeneration(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
+            from .api import load_dataset
 
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "google/flan-t5-xxl"
+            wml_inference = WMLInferenceEngineGeneration(
+                credentials=wml_credentials,
+                model_name=model_name,
+                data_classification_policy=["public"],
+                top_p=0.5,
+                random_seed=123,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     concurrency_limit: int = 10
@@ -2174,31 +2181,33 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
     Attributes:
         image_encoder (EncodeImageToString, optional): operator which encodes images in
-            given format to base64 strings required by service. You should specify it when
-            you are using images in your inputs.
+        given format to base64 strings required by service. You should specify it when
+        you are using images in your inputs.
 
     Example:
-        from .api import load_dataset
-        from .image_operators
+        .. code-block:: python
 
-        image_encoder = EncodeImageToString(image_format="JPEG")
+            from .api import load_dataset
+            from .image_operators
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
-        wml_inference = WMLInferenceEngineChat(
-            credentials=wml_credentials,
-            model_name=model_name,
-            image_encoder=image_encoder,
-            data_classification_policy=["public"],
-            max_tokens=1024,
-        )
+            image_encoder = EncodeImageToString(image_format="JPEG")
 
-        dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+            wml_inference = WMLInferenceEngineChat(
+                credentials=wml_credentials,
+                model_name=model_name,
+                image_encoder=image_encoder,
+                data_classification_policy=["public"],
+                max_tokens=1024,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     image_encoder: Optional[EncodeImageToString] = None
@@ -2212,7 +2221,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
         images = [None]
         if "images" in instance["media"]:
-            images = extract_images(instance["source"], instance)
+            images = extract_images(instance)
 
         return question or instance["source"], images
 
@@ -2362,12 +2371,39 @@ class WMLInferenceEngine(WMLInferenceEngineGeneration):
 
 
 def get_images_without_text(instance):
-    return extract_images(instance["source"], instance)
+    if isinstance(instance["source"], str):
+        images = extract_images(instance["source"], instance)
+    elif isinstance(instance["source"], list):
+        images = []
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, list):
+                for sub_content in content:
+                    if sub_content["type"] == "image_url":
+                        image = data_url_to_image(sub_content["image_url"]["url"])
+                        images.append(image)
+
+    return [image.convert("RGB") for image in images]
 
 
 def get_text_without_images(instance, image_token="<image>"):
-    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
-    return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], str):
+        regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
+        return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], list):
+        text = ""
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, str):
+                text += content
+            else:
+                for sub_content in content:
+                    if sub_content["type"] == "text":
+                        text += sub_content["text"]
+                    if sub_content["type"].startswith("image"):
+                        text += image_token
+        return text
+    raise ValueError()
 
 
 class LMMSEvalBaseInferenceEngine(
@@ -2539,15 +2575,38 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
-class VLLMInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
-):
+class VLLMParamsMixin(Artifact):
+    model: str
+    n: int = 1
+    best_of: Optional[int] = None
+    _real_n: Optional[int] = None
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    repetition_penalty: float = 1.0
+    temperature: float = 1.0
+    top_p: float = 1.0
+    top_k: int = -1
+    min_p: float = 0.0
+    seed: Optional[int] = None
+    stop: Optional[Union[str, List[str]]] = None
+    stop_token_ids: Optional[List[int]] = None
+    bad_words: Optional[List[str]] = None
+    ignore_eos: bool = False
+    max_tokens: Optional[int] = 16
+    min_tokens: int = 0
+    logprobs: Optional[int] = None
+    prompt_logprobs: Optional[int] = None
+
+
+class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
         from vllm import LLM, SamplingParams
 
-        args = self.to_dict([StandardAPIParamsMixin])
+        args = self.to_dict([VLLMParamsMixin])
+        args.pop("model")
+
         self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model)
+        self.llm = LLM(model=self.model, trust_remote_code=True)
 
     def _infer(
         self,
@@ -2700,15 +2759,20 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
     to enable seamless integration with various API providers. The supported APIs are
-    specified in `_supported_apis`, allowing users to interact with multiple models
-    from different sources. The `api_model_map` dictionary maps each API to
+    specified in ``_supported_apis``, allowing users to interact with multiple models
+    from different sources. The ``provider_model_map`` dictionary maps each API to
     specific model identifiers, enabling automatic configuration based on
     user requests.
 
-    Attributes:
-        provider: Optional; Specifies the current API in use. Must be one of the
+    Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
+    "bam", "watsonx-sdk", "rits"]
+
+    Args:
+        provider (Optional):
+            Specifies the current API in use. Must be one of the
             literals in `_supported_apis`.
-        provider_model_map: Dictionary mapping each supported API to a corresponding
+        provider_model_map (Dict[_supported_apis, Dict[str, str]]):
+            mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
     """

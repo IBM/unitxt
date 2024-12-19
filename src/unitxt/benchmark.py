@@ -35,6 +35,9 @@ class Benchmark(BaseBenchmark):
         ):
             raise ValueError("Set either max_total_samples or max_samples_per_subset")
 
+    def prepare_args(self):
+        self.subsets = dict(self.subsets)
+
     def reset(self):
         if (
             self.format is not None

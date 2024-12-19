@@ -157,3 +157,5 @@ src/unitxt/catalog/processors/example/to_string.json
 prod_env/*
 benchmark_output/*
 .litellm_cache
+
+docs/_static/data.js
