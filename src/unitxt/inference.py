@@ -1153,11 +1153,6 @@ class OptionSelectingByLogProbsInferenceEngine:
             list[list[TokenLogProb]]: a list of TokenLogProb for each instance in the dataset
         """
 
-    def get_task_data_dict(self, task_data):
-        # seems like the task data sometimes comes as a string, not a dict
-        # this fixes it
-        return json.loads(task_data) if isinstance(task_data, str) else task_data
-
     def select(self, dataset: Dataset) -> List[Dict[str, Any]]:
         """Calculate most likely labels based on log probabilities for a set of fixed completions.
 
@@ -1165,9 +1160,7 @@ class OptionSelectingByLogProbsInferenceEngine:
         """
         token_counts = self.get_token_count(dataset)
 
-        task_data = [
-            self.get_task_data_dict(instance["task_data"]) for instance in dataset
-        ]
+        task_data = [instance["task_data"] for instance in dataset]
         # pass in the token count so we only return the option score
         dataset_with_options = [
             {
