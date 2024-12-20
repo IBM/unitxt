@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/meta-llama/llama-3-405b-instruct",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "LLAMA3_1_405B",
+    "generate_summaries": false
+}

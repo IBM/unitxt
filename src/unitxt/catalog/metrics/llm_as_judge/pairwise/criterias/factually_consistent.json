@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "factually_consistent",
+    "description": "A factually consistent response contains only statements that are entailed by the source document."
+}

@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "rits_inference_engine",
+        "model_name": "mistralai/mixtral-8x22B-instruct-v0.1",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "MIXTRAL8_22b",
+    "generate_summaries": false
+}

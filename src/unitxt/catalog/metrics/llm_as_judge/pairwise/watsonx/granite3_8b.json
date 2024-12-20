@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/ibm/granite-3-8b-instruct",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "GRANITE3_8B",
+    "generate_summaries": false
+}

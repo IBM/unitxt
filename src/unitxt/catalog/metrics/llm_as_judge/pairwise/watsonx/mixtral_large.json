@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/mistralai/mistral-large",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "MIXTRAL_LARGE",
+    "generate_summaries": false
+}

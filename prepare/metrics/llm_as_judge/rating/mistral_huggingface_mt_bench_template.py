@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.inference import HFPipelineBasedInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge_from_template import LLMAsJudge
 
 model_list = ["mistralai/Mistral-7B-Instruct-v0.2"]
 format = "formats.models.mistral.instruction"
