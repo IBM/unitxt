@@ -95,6 +95,7 @@ class CreateDemosPool(MultiStreamOperator):
                 raise ValueError(
                     f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool. "
                     + "Please consider increasing loader_limit or a less strict stream filtering."
+                    + f"len(demos_pool) = {len(demos_pool)}, not_selected_from_from_stream = {not_selected_from_from_stream}, len(not_selected_from_from_stream) = {len(not_selected_from_from_stream)}"
                 )
 
             # to avoid endless recursion in case of not demos_removed_from_data
