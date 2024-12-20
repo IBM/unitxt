@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.inference import GenericInferenceEngine
 from unitxt.llm_as_judge import (
-    TaskBasedLLMAsJudge,
+    TaskBasedLLMasJudge,
 )
 
 metric_type_to_template_dict = {
@@ -41,7 +41,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                     continue
                 logprobs_label = "_logprobs" if use_logprobs else ""
                 metric_label = f"{metric_type}_{template_short_name}{logprobs_label}"
-                metric = TaskBasedLLMAsJudge(
+                metric = TaskBasedLLMasJudge(
                     inference_model=inference_model,
                     template=f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}",
                     task=task_name,

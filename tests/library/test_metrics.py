@@ -2,7 +2,7 @@ from math import isnan
 from typing import Dict, List
 
 from unitxt.inference import MockInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge, TaskBasedLLMAsJudge
+from unitxt.llm_as_judge import LLMAsJudge, TaskBasedLLMasJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
     NER,
@@ -1575,7 +1575,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
         model_label = inference_model.get_engine_id()
         template_label = template.split(".")[-1]
         metric_label = f"answer_correctness_{template_label}"
-        metric = TaskBasedLLMAsJudge(
+        metric = TaskBasedLLMasJudge(
             inference_model=inference_model,
             template=template,
             task=task,

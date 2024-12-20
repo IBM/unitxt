@@ -322,7 +322,7 @@ class LLMAsJudge(LLMAsJudgeBase):
         return instances
 
 
-class TaskBasedLLMAsJudge(LLMAsJudgeBase):
+class TaskBasedLLMasJudge(LLMAsJudgeBase):
     """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
 
     This class can use any task and matching template to evaluate the predictions. All

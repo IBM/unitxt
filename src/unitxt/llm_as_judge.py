@@ -28,7 +28,7 @@ from .llm_as_judge_constants import (
     # OptionSelectionStrategyEnum,
     PairwiseCriteriaCatalogEnum,
 )
-from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMAsJudge
+from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMasJudge
 from .llm_as_judge_operators import (
     CreateCriteriaFromDict,
     CreateCriteriaFromJson,
