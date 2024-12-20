@@ -18,7 +18,7 @@ from .operators import (
 )
 from .processors import ToString, ToStringStripped
 from .recipe import SequentialRecipe
-from .splitters import RandomSampler, Sample, SliceSplit, SplitRandomMix
+from .splitters import AssignDemosToInstance, RandomSampler, SliceSplit, SplitRandomMix
 from .stream import MultiStream
 from .struct_data_operators import (
     ConstructTableFromRowsCols,

@@ -18,7 +18,6 @@ from .operator import (
     StreamingOperator,
 )
 from .operators import Set, StreamRefiner
-from .recipe import Recipe
 from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants, get_settings
@@ -137,7 +136,83 @@ class CreateDemosPool(MultiStreamOperator):
         return set_demos_pool(ms)
 
 
-class BaseRecipe(Recipe, SourceSequentialOperator):
+class BaseRecipe(SourceSequentialOperator):
+    """This class represents a standard recipe for data processing and preparation.
+
+    This class can be used to prepare a recipe.
+    with all necessary steps, refiners and renderers included. It allows to set various
+    parameters and steps in a sequential manner for preparing the recipe.
+
+    Args:
+        card (TaskCard):
+            TaskCard object associated with the recipe.
+        template (Template, optional):
+            Template object to be used for the recipe.
+        system_prompt (SystemPrompt, optional):
+            SystemPrompt object to be used for the recipe.
+        loader_limit (int, optional):
+            Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
+        format (SystemFormat, optional):
+            SystemFormat object to be used for the recipe.
+        metrics (List[str]):
+            list of catalog metrics to use with this recipe.
+        postprocessors (List[str]):
+            list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]):
+            list of task_data or metadata keys to group global scores by.
+        train_refiner (StreamRefiner, optional):
+            Train refiner to be used in the recipe.
+        max_train_instances (int, optional):
+            Maximum training instances for the refiner.
+        validation_refiner (StreamRefiner, optional):
+            Validation refiner to be used in the recipe.
+        max_validation_instances (int, optional):
+            Maximum validation instances for the refiner.
+        test_refiner (StreamRefiner, optional):
+            Test refiner to be used in the recipe.
+        max_test_instances (int, optional):
+            Maximum test instances for the refiner.
+        demos_pool_size (int, optional):
+            Size of the demos pool.
+        given_demos_pool(List[Dict[str, Any]], optional):
+            a list of instances to make the demos_pool
+        num_demos (int, optional):
+            Number of demos to be used.
+        demos_pool_name (str, optional):
+            Name of the demos pool. Default is "demos_pool".
+        demos_taken_from (str, optional):
+            Specifies from where the demos are taken. Default is "train".
+        demos_field (str, optional):
+            Field name for demos. Default is "demos".
+        demos_pool_field_name (str, optional):
+            field name to maintain the demos_pool, until sampled from, to make the demos.
+            Defaults to "_demos_pool_".
+        demos_removed_from_data (bool, optional):
+            whether to remove the demos from the source data, Default is True
+        sampler (Sampler, optional):
+            The Sampler used to select the demonstrations when num_demos > 0.
+        skip_demoed_instances (bool, optional):
+            whether to skip pushing demos to an instance whose demos_field is
+            already populated. Defaults to False.
+        steps (List[StreamingOperator], optional):
+            List of StreamingOperator objects to be used in the recipe.
+        augmentor (Augmentor) :
+            Augmentor to be used to pseudo randomly augment the source text
+        instruction_card_index (int, optional):
+            Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional):
+            Index of template card to be used for preparing the recipe.
+
+    Methods:
+        prepare():
+            This overridden method is used for preparing the recipe
+            by arranging all the steps, refiners, and renderers in a sequential manner.
+
+    Raises:
+        AssertionError:
+            If both template and template_card_index are specified at the same time.
+    """
+
     # Base parameters
     card: TaskCard = None
     task: Task = None
@@ -544,24 +619,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
         self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
-        if self.use_demos:
-            if (self.demos_pool_size is None) == (self.given_demos_pool is None):
-                raise ValueError(
-                    f"When using demonstrations, exactly one of either demos_pool_size or given_demos_pool must be set. Got both {'' if self.demos_pool_size else 'not '}set."
-                )
-            # now set self.demos_pool_size for the checks of verify
-            if self.given_demos_pool:
-                self.demos_pool_size = len(self.given_demos_pool)
-
-        if isinstance(self.template, TemplatesList):
-            self.template = self.template.items
-        self.reset_pipeline()
-
-
-class StandardRecipeWithIndexes(BaseRecipe):
-    template_card_index: int = None
-
-    def prepare(self):
         assert (
             self.template_card_index is None or self.template is None
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
@@ -607,85 +664,23 @@ class StandardRecipeWithIndexes(BaseRecipe):
             raise ValueError(
                 "No template was specified in the the 'template' or 'template_card_index' recipe arguments, and no default templates are defined the card or task"
             )
+        if self.use_demos:
+            if (self.demos_pool_size is None) == (self.given_demos_pool is None):
+                raise ValueError(
+                    f"When using demonstrations, exactly one of either demos_pool_size or given_demos_pool must be set. Got both {'' if self.demos_pool_size else 'not '}set."
+                )
+            # now set self.demos_pool_size for the checks of verify
+            if self.given_demos_pool:
+                self.demos_pool_size = len(self.given_demos_pool)
 
-        super().prepare()
+        if isinstance(self.template, TemplatesList):
+            self.template = self.template.items
+        self.reset_pipeline()
+
+
+class StandardRecipeWithIndexes(BaseRecipe):
+    pass
 
 
 class StandardRecipe(StandardRecipeWithIndexes):
-    """This class represents a standard recipe for data processing and preparation.
-
-    This class can be used to prepare a recipe.
-    with all necessary steps, refiners and renderers included. It allows to set various
-    parameters and steps in a sequential manner for preparing the recipe.
-
-    Args:
-        card (TaskCard):
-            TaskCard object associated with the recipe.
-        template (Template, optional):
-            Template object to be used for the recipe.
-        system_prompt (SystemPrompt, optional):
-            SystemPrompt object to be used for the recipe.
-        loader_limit (int, optional):
-            Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
-        format (SystemFormat, optional):
-            SystemFormat object to be used for the recipe.
-        metrics (List[str]):
-            list of catalog metrics to use with this recipe.
-        postprocessors (List[str]):
-            list of catalog processors to apply at post processing. (Not recommended to use from here)
-        group_by (List[Union[str, List[str]]]):
-            list of task_data or metadata keys to group global scores by.
-        train_refiner (StreamRefiner, optional):
-            Train refiner to be used in the recipe.
-        max_train_instances (int, optional):
-            Maximum training instances for the refiner.
-        validation_refiner (StreamRefiner, optional):
-            Validation refiner to be used in the recipe.
-        max_validation_instances (int, optional):
-            Maximum validation instances for the refiner.
-        test_refiner (StreamRefiner, optional):
-            Test refiner to be used in the recipe.
-        max_test_instances (int, optional):
-            Maximum test instances for the refiner.
-        demos_pool_size (int, optional):
-            Size of the demos pool.
-        given_demos_pool(List[Dict[str, Any]], optional):
-            a list of instances to make the demos_pool
-        num_demos (int, optional):
-            Number of demos to be used.
-        demos_pool_name (str, optional):
-            Name of the demos pool. Default is "demos_pool".
-        demos_taken_from (str, optional):
-            Specifies from where the demos are taken. Default is "train".
-        demos_field (str, optional):
-            Field name for demos. Default is "demos".
-        demos_pool_field_name (str, optional):
-            field name to maintain the demos_pool, until sampled from, to make the demos.
-            Defaults to "_demos_pool_".
-        demos_removed_from_data (bool, optional):
-            whether to remove the demos from the source data, Default is True
-        sampler (Sampler, optional):
-            The Sampler used to select the demonstrations when num_demos > 0.
-        skip_demoed_instances (bool, optional):
-            whether to skip pushing demos to an instance whose demos_field is
-            already populated. Defaults to False.
-        steps (List[StreamingOperator], optional):
-            List of StreamingOperator objects to be used in the recipe.
-        augmentor (Augmentor) :
-            Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional):
-            Index of instruction card to be used for preparing the recipe.
-        template_card_index (int, optional):
-            Index of template card to be used for preparing the recipe.
-
-    Methods:
-        prepare():
-            This overridden method is used for preparing the recipe
-            by arranging all the steps, refiners, and renderers in a sequential manner.
-
-    Raises:
-        AssertionError:
-            If both template and template_card_index are specified at the same time.
-    """
-
     pass
