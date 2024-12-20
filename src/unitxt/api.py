@@ -14,7 +14,7 @@ from .metric_utils import _compute, _inference_post_process
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
-from .standard import StandardRecipe
+from .standard import DatasetRecipe
 
 logger = get_logger()
 constants = get_constants()
@@ -30,7 +30,7 @@ def load(source: Union[SourceOperator, str]):
     return source().to_dataset()
 
 
-def _get_recipe_from_query(dataset_query: str) -> StandardRecipe:
+def _get_recipe_from_query(dataset_query: str) -> DatasetRecipe:
     dataset_query = dataset_query.replace("sys_prompt", "instruction")
     try:
         dataset_stream, _ = fetch_artifact(dataset_query)
@@ -39,14 +39,14 @@ def _get_recipe_from_query(dataset_query: str) -> StandardRecipe:
     return dataset_stream
 
 
-def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> StandardRecipe:
-    recipe_attributes = list(StandardRecipe.__dict__["__fields__"].keys())
+def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> DatasetRecipe:
+    recipe_attributes = list(DatasetRecipe.__dict__["__fields__"].keys())
     for param in dataset_params.keys():
         assert param in recipe_attributes, (
             f"The parameter '{param}' is not an attribute of the 'StandardRecipe' class. "
             f"Please check if the name is correct. The available attributes are: '{recipe_attributes}'."
         )
-    return StandardRecipe(**dataset_params)
+    return DatasetRecipe(**dataset_params)
 
 
 def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None):
@@ -71,8 +71,8 @@ def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None)
         )
 
 
-def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe:
-    if isinstance(dataset_query, StandardRecipe):
+def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
+    if isinstance(dataset_query, DatasetRecipe):
         return dataset_query
 
     _verify_dataset_args(dataset_query, kwargs)

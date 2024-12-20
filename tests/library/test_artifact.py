@@ -572,7 +572,7 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_is_not_saving_if_artifact_has_changed(self):
         with self.assertRaises(UnitxtError) as e:
             args = {
-                "__type__": "standard_recipe",
+                "__type__": "dataset_recipe",
                 "card": "cards.sst2",
                 "template_card_index": 0,
                 "demos_pool_size": 100,
