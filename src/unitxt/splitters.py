@@ -363,7 +363,7 @@ class Sample(InstanceOperator):
         source_stream = self.sampler.filter_source_by_instance(demos_pool, instance)
         if len(source_stream) < sample_size:
             raise ValueError(
-                f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {sample_size}."
+                f"Size of population to sample from: {len(source_stream)} is smaller than the needed sample_size: {sample_size}. Please consider increasing increasing the demos pool, for which you may need to increase loader_limit or employ a less strict stream filtering."
             )
         sampled_instances = self.sampler.sample(
             sample_size=sample_size, instances_pool=source_stream, instance=instance

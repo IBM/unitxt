@@ -91,10 +91,8 @@ class CreateDemosPool(MultiStreamOperator):
                 if len(demos_pool) >= self.demos_pool_size:
                     break
 
-            if len(demos_pool) < self.demos_pool_size:
-                logger.critical(
-                    f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool. Please consider increasing loader_limit or a less strict stream filtering. len(demos_pool) = {len(demos_pool)}, not_selected_from_from_stream = {not_selected_from_from_stream}, len(not_selected_from_from_stream) = {len(not_selected_from_from_stream)}, num_scanned= {num_scanned}."
-                )
+                # for backward compatibility, do not throw exception here if demos pool is smaller than expected.
+                # Delay that for the event (if occurs) that Sample is not be able to sample num_demos demos.
 
             # to avoid endless recursion in case of not demos_removed_from_data
             demos_pool = recursive_copy(demos_pool)
@@ -135,7 +133,7 @@ class CreateDemosPool(MultiStreamOperator):
                     },
                 )
 
-        ms = MultiStream.from_generators(new_streams, copying=True)
+        ms = MultiStream.from_generators(new_streams)
         return set_demos_pool(ms)
 
 
