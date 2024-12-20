@@ -9,8 +9,8 @@ from ..collections import Collection
 from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
-from ..standard import StandardRecipe
-from ..text_utils import to_pretty_string
+from ..standard import DatasetRecipe
+from ..text_utils import construct_dict_str
 from ..utils import deep_copy
 
 logger = get_logger()
@@ -46,10 +46,10 @@ def test_loading_from_catalog(card):
         ), "Card loaded is not equal to card stored"
 
 
-def load_examples_from_standard_recipe(card, template_card_index, debug, **kwargs):
+def load_examples_from_dataset_recipe(card, template_card_index, debug, **kwargs):
     if settings.test_card_disable:
         logger.info(
-            "load_examples_from_standard_recipe() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
+            "load_examples_from_dataset_recipe() functionality is disabled because unitxt.settings.test_card_disable=True or UNITXT_TEST_CARD_DISABLE environment variable is set"
         )
         return None
 
@@ -58,7 +58,7 @@ def load_examples_from_standard_recipe(card, template_card_index, debug, **kwarg
         kwargs["loader_limit"] = 30
     kwargs["template_card_index"] = template_card_index
 
-    recipe = StandardRecipe(card=card, **kwargs)
+    recipe = DatasetRecipe(card=card, **kwargs)
     logger.info(f"Using these card recipe parameters: {kwargs}")
 
     if debug:
@@ -292,7 +292,7 @@ def test_card(
         template_card_indices = range(len(card.templates))
 
     for template_card_index in template_card_indices:
-        examples = load_examples_from_standard_recipe(
+        examples = load_examples_from_dataset_recipe(
             card, template_card_index=template_card_index, debug=debug, **kwargs
         )
         if test_exact_match_score_when_predictions_equal_references:

@@ -682,5 +682,5 @@ class StandardRecipeWithIndexes(BaseRecipe):
     pass
 
 
-class StandardRecipe(StandardRecipeWithIndexes):
+class DatasetRecipe(StandardRecipeWithIndexes):
     pass

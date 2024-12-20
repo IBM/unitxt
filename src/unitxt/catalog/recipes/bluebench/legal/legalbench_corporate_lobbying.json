@@ -1,5 +1,5 @@
 {
-    "__type__": "standard_recipe",
+    "__type__": "dataset_recipe",
     "demos_pool_size": 10,
     "num_demos": 1,
     "demos_taken_from": "test",
