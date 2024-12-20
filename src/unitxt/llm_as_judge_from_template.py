@@ -389,7 +389,7 @@ class TaskBasedLLMAsJudge(LLMAsJudgeBase):
             self.inference_model, LogProbInferenceEngine
         ):
             raise NotImplementedError(
-                f"Error in TaskBasedLLMasJudge: return_log_probs set to True but supplied engine "
+                f"Error in TaskBasedLLMAsJudge: return_log_probs set to True but supplied engine "
                 f"{self.inference_model.__class__.__name__} does not support logprobs."
             )
         if self.include_meta_data and not hasattr(
