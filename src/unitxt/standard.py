@@ -136,7 +136,7 @@ class CreateDemosPool(MultiStreamOperator):
         return set_demos_pool(ms)
 
 
-class BaseRecipe(SourceSequentialOperator):
+class DatasetRecipe(SourceSequentialOperator):
     """This class represents a standard recipe for data processing and preparation.
 
     This class can be used to prepare a recipe.
@@ -676,11 +676,3 @@ class BaseRecipe(SourceSequentialOperator):
         if isinstance(self.template, TemplatesList):
             self.template = self.template.items
         self.reset_pipeline()
-
-
-class StandardRecipeWithIndexes(BaseRecipe):
-    pass
-
-
-class DatasetRecipe(StandardRecipeWithIndexes):
-    pass
