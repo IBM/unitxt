@@ -130,6 +130,9 @@ class FinalizeDataset(InstanceOperatorValidator):
         )
 
         task_data["metadata"]["num_demos"] = instance["recipe_metadata"]["num_demos"]
+        task_data["metadata"]["demos_pool_size"] = instance["recipe_metadata"][
+            "demos_pool_size"
+        ]
         task_data["metadata"]["template"] = self.artifact_to_jsonable(
             instance["recipe_metadata"]["template"]
         )
