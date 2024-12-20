@@ -294,6 +294,7 @@ class LoadHF(Loader):
                 name: DynamicStream(
                     generator=self.split_limited_load,
                     gen_kwargs={"dataset": dataset, "split_name": name},
+                    copying=True,
                 )
                 for name in dataset.keys()
             }
