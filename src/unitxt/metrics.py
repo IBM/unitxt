@@ -1081,8 +1081,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             assert isinstance(fields["score_fields"], list)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(instances)}
+        thin_instances = self.compute_instance_scores(stream)
+        global_score = {"num_of_instances": len(thin_instances)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1095,12 +1095,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 aggregation_function = self.average_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = thin_instances
             elif reduction_type == "max":
                 aggregation_function = self.max_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = thin_instances
             elif reduction_type == "group_mean":
                 aggregation_function = self.average_item_scores
                 self._validate_group_mean_reduction()
@@ -1119,7 +1119,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances,
+                    thin_instances,
                     reduction_params,
                     reduction_fields,
                 )
@@ -1160,17 +1160,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
                 global_score.update(confidence_interval)
 
-        for instance in instances:
+        for instance in thin_instances:
             self.update_and_adjust_global_score(instance, global_score)
 
         for i, instance in enumerate(stream):
-            instance["score"] = recursive_copy(instances[i]["score"])
+            instance["score"] = recursive_copy(thin_instances[i]["score"])
             yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        instances = []
+        thin_instances = []
 
         for instance in stream:
             instance = self.verify_instance(instance)
@@ -1229,9 +1229,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                         self.subgroup_column
                     ]
 
-            instances.append({"score": instance["score"], "task_data": task_data})
+            thin_instances.append({"score": instance["score"], "task_data": task_data})
 
-        return instances
+        return thin_instances
 
     def get_group_scores(
         self,
