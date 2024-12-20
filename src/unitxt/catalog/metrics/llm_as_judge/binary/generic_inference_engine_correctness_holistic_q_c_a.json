@@ -1,5 +1,5 @@
 {
-    "__type__": "task_based_ll_mas_judge",
+    "__type__": "task_based_llm_as_judge",
     "inference_model": {
         "__type__": "generic_inference_engine"
     },
