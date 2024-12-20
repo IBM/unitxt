@@ -93,7 +93,7 @@ class CreateDemosPool(MultiStreamOperator):
 
             if len(demos_pool) < self.demos_pool_size:
                 raise ValueError(
-                    f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool."
+                    f"Unable to fetch enough ({self.demos_pool_size}) instances from stream {self.from_stream} for the demos_pool. "
                     + "Please consider increasing loader_limit or a less strict stream filtering."
                 )
 
