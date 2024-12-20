@@ -136,7 +136,7 @@ class CreateDemosPool(MultiStreamOperator):
                     },
                 )
 
-        ms = MultiStream.from_generators(new_streams)
+        ms = MultiStream.from_generators(new_streams, copying=True)
         return set_demos_pool(ms)
 
 
