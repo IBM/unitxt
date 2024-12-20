@@ -336,7 +336,7 @@ class DiverseLabelsSampler(Sampler):
         return result
 
 
-class Sample(InstanceOperator):
+class AssignDemosToInstance(InstanceOperator):
     from_field: str
     to_field: str
     sampler: Sampler
@@ -373,14 +373,14 @@ class Sample(InstanceOperator):
         return instance
 
 
-class ConstantSizeSample(Sample):
+class ConstantSizeSample(AssignDemosToInstance):
     sample_size: int
 
     def get_sample_size(self, instance) -> int:
         return self.sample_size
 
 
-class RandomSizeSample(Sample):
+class RandomSizeSample(AssignDemosToInstance):
     sample_sizes: List[int]
 
     def get_sample_size(self, instance) -> int:
