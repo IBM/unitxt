@@ -32,6 +32,12 @@ template_details = [
         "You are a Text2SQL generation model, in your answer, only have SQL code.\nMake sure you start your query with 'SELECT' and end it with ';'\n\n",
         "",
     ),
+    (
+        "templates.text2sql.you_are_given_with_hint_answer_sql_prefix_no_inst",
+        "Question:\nYou are given the following SQL schema\n\n```sql\n{schema}\n```\n\n{utterance}\n\n",
+        "",
+        "Answer:\n```sql\n",
+    ),
 ]
 
 template_names = []
