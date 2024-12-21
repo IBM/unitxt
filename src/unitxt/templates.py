@@ -307,26 +307,27 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
      The answer field value should be of type Literal["choice_a", "choice_b", "tie"]
 
     Args:
-         choice_a_field (str): The field which contains choice_a value
-
-         choice_b_field (str): The field which contains choice_b value
-
-         answer_field (str): The field which contains the answer value.
-         Should be of type Literal["choice_1", "choice_2", "tie"]
-
-         choice_a_label (str): The label of choice A answer as it is verbalized in the template.
-
-         choice_b_label (str): The label of choice B answer as it is verbalized in the template.
-
-         choice_tie_label (str): The label of a tie answer as it should be verbalized in the template.
-
-         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+         choice_a_field (str):
+            The field which contains choice_a value
+         choice_b_field (str):
+            The field which contains choice_b value
+         answer_field (str):
+            The field which contains the answer value.
+            Should be of type Literal["choice_1", "choice_2", "tie"]
+         choice_a_label (str):
+            The label of choice A answer as it is verbalized in the template.
+         choice_b_label (str):
+            The label of choice B answer as it is verbalized in the template.
+         choice_tie_label (str):
+            The label of a tie answer as it should be verbalized in the template.
+         shuffle (bool):
+            whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
      1. The values of choice_a_field and choice_b_field will be swapped.
      2. If the values of answer_field is choice_a_label, set it to choice_b_label.
-        | Else if the values of answer_field is choice_b_label, set it to choice_a_label.
-        | Else if the value of answer_field is choice_tie_label, do nothing.
+        Else if the values of answer_field is choice_b_label, set it to choice_a_label.
+        Else if the value of answer_field is choice_tie_label, do nothing.
 
     """
 
@@ -636,21 +637,22 @@ class MultipleChoiceTemplate(InputFormatTemplate):
 class YesNoTemplate(InputFormatTemplate):
     """A template for generating binary Yes/No questions asking whether an input text is of a specific class.
 
-    input_format:
-        Defines the format of the question.
-    class_field:
-        Defines the field that contains the name of the class that this template
-        asks of.
-    label_field:
-        Defines the field which contains the true label of the input text. If a gold label is equal to the
-        value in class_name, then the correct output is self.yes_answer (by default, "Yes").
-        Otherwise the correct output is self.no_answer (by default, "No").
-    yes_answer:
-        The output value for when the gold label equals self.class_name.
-        Defaults to "Yes".
-    no_answer:
-        The output value for when the gold label differs from self.class_name.
-        Defaults to "No".
+    Args:
+        input_format:
+            Defines the format of the question.
+        class_field:
+            Defines the field that contains the name of the class that this template
+            asks of.
+        label_field:
+            Defines the field which contains the true label of the input text. If a gold label is equal to the
+            value in class_name, then the correct output is self.yes_answer (by default, "Yes").
+            Otherwise the correct output is self.no_answer (by default, "No").
+        yes_answer:
+            The output value for when the gold label equals self.class_name.
+            Defaults to "Yes".
+        no_answer:
+            The output value for when the gold label differs from self.class_name.
+            Defaults to "No".
     """
 
     input_format: str = None

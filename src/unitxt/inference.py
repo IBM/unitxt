@@ -1807,16 +1807,19 @@ class WMLInferenceEngineBase(
 ):
     """Base for classes running inference using ibm-watsonx-ai.
 
-    Attributes:
-        credentials (Dict[str, str], optional): By default, it is created by a class
+    Args:
+        credentials (Dict[str, str], optional):
+            By default, it is created by a class
             instance which tries to retrieve proper environment variables
             ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
             However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
             "username", "password".
             can be directly provided instead.
-        model_name (str, optional): ID of a model to be used for inference. Mutually
+        model_name (str, optional):
+            ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
-        deployment_id (str, optional): Deployment ID of a tuned model to be used for
+        deployment_id (str, optional):
+            Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
         parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
             Defines inference parameters and their values. Deprecated attribute, please pass respective
@@ -2077,9 +2080,10 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
 
-    Attributes:
-        concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
-        which is also the maximum value.
+    Args:
+        concurrency_limit (int):
+            Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value.
 
     Examples:
         .. code-block:: python
@@ -2207,10 +2211,11 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     concatenate images within an instance into a single image and adjust your query
     accordingly (if necessary).
 
-    Attributes:
-        image_encoder (EncodeImageToString, optional): operator which encodes images in
-        given format to base64 strings required by service. You should specify it when
-        you are using images in your inputs.
+    Args:
+        image_encoder (EncodeImageToString, optional):
+            operator which encodes images in
+            given format to base64 strings required by service. You should specify it when
+            you are using images in your inputs.
 
     Example:
         .. code-block:: python
