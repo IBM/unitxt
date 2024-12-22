@@ -460,6 +460,7 @@ class TestFusion(UnitxtTestCase):
                 "global": {
                     "score": 0.161,
                     "score_name": "subsets_mean",
+                    "subsets_mean": 0.161,
                     "num_of_instances": 30,
                 },
             },

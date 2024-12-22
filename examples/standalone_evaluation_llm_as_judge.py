@@ -7,7 +7,6 @@ from unitxt.inference import (
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -91,23 +90,16 @@ dataset = create_dataset(
 )
 
 # Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
+model = HFPipelineBasedInferenceEngine(
     model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
 )
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

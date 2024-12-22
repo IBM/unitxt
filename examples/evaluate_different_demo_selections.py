@@ -3,7 +3,6 @@ from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.splitters import CloseTextSampler, FixedIndicesSampler, RandomSampler
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -13,9 +12,7 @@ logger = get_logger()
 # CloseTextSampler - select the lexically closest amples from the demo pool for each test instance
 # FixedIndicesSampler - selec the same fixed set of demo examples for all instances
 
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-2-1b-instruct", max_tokens=32
-)
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", max_tokens=32)
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -44,17 +41,19 @@ for num_demos in [1, 2]:
             split="test",
         )
 
-        predictions = inference_model.infer(dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+        predictions = model(dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
         logger.info(
             f"Sample input and output for sampler {demo_sampler} and num_demos '{num_demos}':"
         )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=["source", "prediction", "processed_prediction"],
+        print(
+            results.instance_scores.to_df(
+                columns=["source", "prediction", "processed_prediction"]
+            )
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+
+        global_scores = results.global_scores
 
         df.loc[len(df)] = [
             num_demos,
