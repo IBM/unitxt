@@ -58,7 +58,7 @@ See more examples in examples subdirectory.
 # Import required components
 from unitxt import evaluate, create_dataset
 from unitxt.blocks import Task, InputOutputTemplate
-from unitxt.inference import HFPipelineBasedInferenceEngine
+from unitxt.inference import HFAutoModelInferenceEngine
 
 # Question-answer dataset
 data = [
@@ -92,8 +92,8 @@ dataset = create_dataset(
 )
 
 # Set up the model (supports Hugging Face, WatsonX, OpenAI, etc.)
-model = HFPipelineBasedInferenceEngine(
-    model_name="google/flan-t5-base", max_new_tokens=32
+model = HFAutoModelInferenceEngine(
+    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
 )
 
 # Generate predictions and evaluate

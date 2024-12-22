@@ -536,6 +536,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
+        if isinstance(data[0], list):
+            data = self.processor.apply_chat_template(
+                data, tokenize=False, add_generation_prompt=True
+            )
         return self.processor(
             data,
             padding=True,
@@ -589,7 +593,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
         return self._infer_fn(dataset, return_meta_data, False)
 
     def _infer_log_probs(
