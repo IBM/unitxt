@@ -1,5 +1,6 @@
 import glob
 import os
+import sys
 import time
 from datetime import timedelta
 
@@ -76,7 +77,14 @@ class TestExamples(UnitxtExamplesTestCase):
             start_time = time.time()
             with self.subTest(file=file_name):
                 try:
+                    _original_stdout = sys.stdout
+                    sys.stdout = open(os.devnull, "w")
+
                     import_module_from_file(file)
+
+                    sys.stdout.close()
+                    sys.stdout = _original_stdout
+
                     logger.info(f"Testing example file: {file_name} passed")
                     self.assertTrue(True)
                 except Exception as e:
