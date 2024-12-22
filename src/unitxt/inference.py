@@ -1,7 +1,6 @@
 import abc
 import asyncio
 import dataclasses
-import json
 import logging
 import os
 import re
@@ -27,7 +26,7 @@ from datasets import Dataset, DatasetDict
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
-from .artifact import Artifact
+from .artifact import Artifact, json_loads_with_artifacts
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
@@ -2216,7 +2215,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
         task_data = instance["task_data"]
         if isinstance(task_data, str):
-            task_data = json.loads(task_data)
+            task_data = json_loads_with_artifacts(task_data)
         question = task_data.get("question")
 
         images = [None]
@@ -2545,7 +2544,7 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
             task_data = instance["task_data"]
 
             if isinstance(task_data, str):
-                task_data = json.loads(task_data)
+                task_data = json_loads_with_artifacts(task_data)
 
             for option in task_data["options"]:
                 requests.append(
