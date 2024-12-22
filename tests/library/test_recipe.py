@@ -181,24 +181,36 @@ class TestRecipes(UnitxtTestCase):
         for_demos = recipe.processing(for_demos)
         for_demos = recursive_copy(list(for_demos["validation"]))
 
+        # for_demos is a list of instances, taken from stream 'validation' of the source of 'cards.wnli'.
+        # Having passed the steps of preprocessing, each of them complies now with the format of 'cards.wnli.task'
+
+        # we now run a recipe with this for_demos, and see stream 'train' coming out with them as demos
+
         recipe2 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
-            given_demos_pool=for_demos,
+            demos_pool=for_demos[0:5],
+            num_demos=3,
         )
 
         trains = list(recipe2()["train"])
-        assert "The entailment class is entailment" not in trains[0]["source"]
+        source_demos_input = trains[0]["source"]
+
+        # the same result as when creating the demos while processing the recipe:
 
         recipe3 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
-            given_demos_pool=for_demos,
+            demos_taken_from="validation",
+            demos_pool_size=5,
+            demos_removed_from_data=True,
             num_demos=3,
         )
 
         trains = list(recipe3()["train"])
-        assert "The entailment class is entailment" in trains[0]["source"]
+        source_demos_selected = trains[0]["source"]
+
+        self.assertEqual(source_demos_input, source_demos_selected)
 
     def test_dataset_recipe_not_duplicating_demos_pool(self):
         recipe = DatasetRecipe(
@@ -212,7 +224,7 @@ class TestRecipes(UnitxtTestCase):
         recipe3 = DatasetRecipe(
             card="cards.wnli",
             template_card_index=0,
-            given_demos_pool=for_demos,
+            demos_pool=for_demos,
             num_demos=3,
         )
 

@@ -186,6 +186,7 @@ if Constants.is_uninitilized():
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
     constants.image_tag = "unitxt-img"
+    constants.demos_pool_field = "_demos_pool_"
 
 
 def get_settings() -> Settings:
