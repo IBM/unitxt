@@ -31,7 +31,12 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
-from .image_operators import EncodeImageToString, data_url_to_image, extract_images
+from .image_operators import (
+    EncodeImageToString,
+    ImageDataString,
+    data_url_to_image,
+    extract_images,
+)
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
@@ -130,6 +135,13 @@ class InferenceEngine(Artifact):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
+
+    def __call__(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
     def infer(
         self,
@@ -526,6 +538,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
+        if isinstance(data[0], list):
+            data = self.processor.apply_chat_template(
+                data, tokenize=False, add_generation_prompt=True
+            )
         return self.processor(
             data,
             padding=True,
@@ -579,7 +595,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
         return self._infer_fn(dataset, return_meta_data, False)
 
     def _infer_log_probs(
@@ -771,9 +786,6 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             self.model.to(self.device)
 
 
-@deprecation(
-    version="2.0.0", msg=" Use non-pipeline-based 'HFInferenceEngine' instead."
-)
 class HFPipelineBasedInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
 ):
@@ -2278,7 +2290,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": "data:image/jpeg;base64," + encoded_image,
+                            "url": ImageDataString(
+                                "data:image/jpeg;base64," + encoded_image
+                            ),
                         },
                     }
                 )

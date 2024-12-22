@@ -1,6 +1,5 @@
 from unitxt import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.text_utils import print_dict
 
 data = load_dataset(
     "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api, system_prompt=system_prompts.general.be_concise]",
@@ -19,18 +18,12 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = model.infer(data)
+predictions = model(data)
 
-evaluated_dataset = evaluate(predictions=predictions, data=data)
+results = evaluate(predictions=predictions, data=data)
 
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "subset",
-    ],
-)
-print_dict(
-    evaluated_dataset[0]["score"]["subsets"],
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

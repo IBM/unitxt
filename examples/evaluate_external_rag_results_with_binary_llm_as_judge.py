@@ -81,7 +81,7 @@ if __name__ == "__main__":
         for model_name in model_names:
             # override the metric with the inference model. the default model is llama_3_1_70b_instruct_wml so
             # no need to override when using it.
-            llmaj_metric_name = f"{metric_name}[inference_model={model_name}]"
+            llmaj_metric_name = f"{metric_name}[model={model_name}]"
 
             # apply the metric over the input
             metrics_operator = SequentialOperator(steps=[llmaj_metric_name])

@@ -504,7 +504,7 @@ class MetricWithConfidenceInterval(Metric):
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
-                    logger.info(f"Warning in {self.__class__.__name__}", e)
+                    logger.warning(f"Warning in {self.__class__.__name__}: {e}")
                     return np.nan
 
             # resample the instance scores, and then return the global score each time
@@ -3059,11 +3059,12 @@ class SafetyMetric(GlobalMetric):
         else:
             device = -1  # CPU
 
-        self.model = pipeline(
-            "text-classification",
-            model=self.reward_name,
-            device=device,
-        )
+        if not settings.mock_inference_mode:
+            self.model = pipeline(
+                "text-classification",
+                model=self.reward_name,
+                device=device,
+            )
 
     def _evaluate_harmlessness_using_preference_model(
         self, predictions: List[str], inputs: List[str]
@@ -3077,7 +3078,8 @@ class SafetyMetric(GlobalMetric):
             {"text": input_text, "text_pair": pred_text}
             for input_text, pred_text in zip(inputs, predictions)
         ]
-
+        if settings.mock_inference_mode:
+            return [0.5 for result in paired_texts]
         results = self.model(paired_texts, batch_size=self.batch_size)
         return [result["score"] for result in results]
 
