@@ -33,7 +33,7 @@ model = CrossProviderInferenceEngine(model="llama-3-8b-instruct", provider="wats
 
 # Third, We define the metric as LLM as a judge, with the desired platform and model.
 llm_judge_metric = LLMAsJudge(
-    model=model,
+    inference_model=model,
     template=judge_summary_rating_template,
     format="formats.chat_api",
     task="rating.single_turn",
@@ -95,7 +95,7 @@ judge_summary_rating_with_reference_template = InputOutputTemplate(
 )
 
 llm_judge_with_summary_metric = LLMAsJudge(
-    model=model,
+    inference_model=model,
     template=judge_summary_rating_with_reference_template,
     task="rating.single_turn_with_reference",
     main_score="llm_judge_llama_3_2_1b_hf",
