@@ -30,7 +30,9 @@ def _image_to_bytes(image, format="JPEG"):
 
 class ImageDataString(str):
     def __repr__(self) -> str:
-        return '"' + self[:30] + '..."'
+        if len(self) > 30:
+            return '<ImageDataString "' + self[:30] + '...">'
+        return super().__repr__()
 
 
 def image_to_data_url(image: Image, default_format="JPEG"):

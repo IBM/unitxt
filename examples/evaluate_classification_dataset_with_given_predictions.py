@@ -12,6 +12,7 @@ predictions = ["Positive.", "negative.", "negative"]
 
 dataset = create_dataset(
     task="tasks.classification.multi_class",
+    format="formats.chat_api",
     test_set=dataset,
     postprocessors=["processors.take_first_word", "processors.lower_case"],
 )
