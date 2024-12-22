@@ -52,9 +52,11 @@ card = TaskCard(
     templates=[
         InputOutputTemplate(
             input_format="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
+            output_format="```python\nimport pandas as pd \nimport matplotlib.pyplot as plt\ndf = pd.read_csv('table.csv')\n{answers}\nplt.show()\n```",
             target_prefix="Final Answer: ",
-            output_format="{answers}",
             postprocessors=[
+                "processors.remove_substrings",
+                "processors.filter_python_comment_lines",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",
@@ -72,5 +74,6 @@ card = TaskCard(
     },
 )
 
-test_card(card, strict=False, loader_limit=200)
+
+test_card(card, strict=False, loader_limit=200, demos_pool_size=5, num_demos=2)
 add_to_catalog(card, "cards.tablebench_visualization", overwrite=True)

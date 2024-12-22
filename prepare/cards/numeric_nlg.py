@@ -26,7 +26,7 @@ card = TaskCard(
         Rename(field="description", to_field="output"),
         Rename(field="caption", to_field="input_b"),
     ],
-    task="tasks.generation.from_pair",
+    task="tasks.generation.from_pair[metrics=[metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.bleu,metrics.meteor]]",
     templates=[
         "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
     ],

@@ -397,3 +397,26 @@ class RemovePunctuations(FieldOperator):
 class FixWhiteSpace(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return " ".join(text.split())
+
+
+class FilterPythonCommentLines(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        parts = str(text).strip().split("\n")
+        non_comment_lines = [
+            line.strip()
+            for line in parts
+            if line.strip() and not line.strip().startswith("#")
+        ]
+        return "\n".join(non_comment_lines)
+
+
+class RemoveSubstrings(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        substrs = [
+            "```python\nimport pandas as pd \nimport matplotlib.pyplot as plt\ndf = pd.read_csv('table.csv')",
+            "plt.show()\n```",
+        ]
+
+        for substr in substrs:
+            text = text.replace(substr, "")
+        return text

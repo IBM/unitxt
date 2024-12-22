@@ -41,8 +41,12 @@ DESCRIPTIVE_DATASETS = {
     "scigen",
     "numeric_nlg",
     "qtsumm",
+    "tablebench_visualization",
+    "tablebench_data_analysis",
 }  # for making max pred tokens bigger
-DATASET_WITH_LONG_EXAMPLES = {"wikitq"}
+DATASET_WITH_LONG_EXAMPLES = {
+    # "wikitq"
+}
 
 # TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
 DEMOS_POOL_SIZE = 10

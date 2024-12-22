@@ -85,9 +85,11 @@
         {
             "__type__": "input_output_template",
             "input_format": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
+            "output_format": "```python\nimport pandas as pd \nimport matplotlib.pyplot as plt\ndf = pd.read_csv('table.csv')\n{answers}\nplt.show()\n```",
             "target_prefix": "Final Answer: ",
-            "output_format": "{answers}",
             "postprocessors": [
+                "processors.remove_substrings",
+                "processors.filter_python_comment_lines",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",

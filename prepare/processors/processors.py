@@ -10,6 +10,7 @@ from unitxt.processors import (
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
     ExtractWithRegex,
+    FilterPythonCommentLines,
     FirstCharacter,
     FixWhiteSpace,
     GetStringAfter,
@@ -22,6 +23,7 @@ from unitxt.processors import (
     RegexParser,
     RemoveArticles,
     RemovePunctuations,
+    RemoveSubstrings,
     StanceToProCon,
     StringEquals,
     StrToFloatFormat,
@@ -255,5 +257,17 @@ add_to_catalog(
 add_to_catalog(
     PostProcess(FixWhiteSpace()),
     "processors.fix_whitespace",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(FilterPythonCommentLines()),
+    "processors.filter_python_comment_lines",
+    overwrite=True,
+)
+
+add_to_catalog(
+    PostProcess(RemoveSubstrings()),
+    "processors.remove_substrings",
     overwrite=True,
 )
