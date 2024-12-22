@@ -288,6 +288,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
             "media": instance.get("media", {}),
+            "recipe_metadata": instance.get("recipe_metadata", {}),
         }
 
         if stream_name == constants.inference_stream:
