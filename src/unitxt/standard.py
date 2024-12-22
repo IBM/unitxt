@@ -689,10 +689,10 @@ class BaseRecipe(DatasetRecipe):
 
 
 @deprecation(version="2.0.0", alternative=DatasetRecipe)
-class StandardRecipeWithIndexes(BaseRecipe):
+class StandardRecipeWithIndexes(DatasetRecipe):
     pass
 
 
 @deprecation(version="2.0.0", alternative=DatasetRecipe)
-class StandardRecipe(StandardRecipeWithIndexes):
+class StandardRecipe(DatasetRecipe):
     pass
