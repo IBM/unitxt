@@ -784,9 +784,6 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             self.model.to(self.device)
 
 
-@deprecation(
-    version="2.0.0", msg=" Use non-pipeline-based 'HFInferenceEngine' instead."
-)
 class HFPipelineBasedInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
 ):
