@@ -28,6 +28,11 @@ def _image_to_bytes(image, format="JPEG"):
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
+class ImageDataString(str):
+    def __repr__(self) -> str:
+        return '"' + self[:30] + '..."'
+
+
 def image_to_data_url(image: Image, default_format="JPEG"):
     """Convert an image to a data URL.
 
@@ -35,7 +40,7 @@ def image_to_data_url(image: Image, default_format="JPEG"):
     """
     image_format = image["format"] if image["format"] else default_format
     base64_image = _image_to_bytes(image["image"], format=image_format.upper())
-    return f"data:image/{image_format.lower()};base64,{base64_image}"
+    return ImageDataString(f"data:image/{image_format.lower()};base64,{base64_image}")
 
 
 def _bytes_to_image(b64_string):
@@ -99,7 +104,7 @@ class EncodeImageToString(FieldOperator):
     def encode_image_to_base64(self, image):
         buffer = io.BytesIO()
         image.save(buffer, format=self.image_format)
-        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+        return ImageDataString(base64.b64encode(buffer.getvalue()).decode("utf-8"))
 
     def process_value(self, value: Any) -> Any:
         return {"image": self.encode_image_to_base64(value)}

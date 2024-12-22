@@ -31,7 +31,12 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
-from .image_operators import EncodeImageToString, data_url_to_image, extract_images
+from .image_operators import (
+    EncodeImageToString,
+    ImageDataString,
+    data_url_to_image,
+    extract_images,
+)
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
@@ -2269,7 +2274,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": "data:image/jpeg;base64," + encoded_image,
+                            "url": ImageDataString(
+                                "data:image/jpeg;base64," + encoded_image
+                            ),
                         },
                     }
                 )
