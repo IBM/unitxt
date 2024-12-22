@@ -1081,8 +1081,8 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             assert isinstance(fields["score_fields"], list)
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        thin_instances = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(thin_instances)}
+        instance_scores = self.compute_instance_scores(stream)
+        global_score = {"num_of_instances": len(instance_scores)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1095,12 +1095,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 aggregation_function = self.average_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = thin_instances
+                scores_to_resample = instance_scores
             elif reduction_type == "max":
                 aggregation_function = self.max_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = thin_instances
+                scores_to_resample = instance_scores
             elif reduction_type == "group_mean":
                 aggregation_function = self.average_item_scores
                 self._validate_group_mean_reduction()
@@ -1119,7 +1119,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    thin_instances,
+                    instance_scores,
                     reduction_params,
                     reduction_fields,
                 )
@@ -1160,17 +1160,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
                 global_score.update(confidence_interval)
 
-        for instance in thin_instances:
+        for instance in instance_scores:
             self.update_and_adjust_global_score(instance, global_score)
 
         for i, instance in enumerate(stream):
-            instance["score"] = recursive_copy(thin_instances[i]["score"])
+            instance["score"] = recursive_copy(instance_scores[i]["score"])
             yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        thin_instances = []
+        instance_scores = []
 
         for instance in stream:
             instance = self.verify_instance(instance)
@@ -1229,9 +1229,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                         self.subgroup_column
                     ]
 
-            thin_instances.append({"score": instance["score"], "task_data": task_data})
+            instance_scores.append({"score": instance["score"], "task_data": task_data})
 
-        return thin_instances
+        return instance_scores
 
     def get_group_scores(
         self,
@@ -1243,12 +1243,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
         Args:
-            instances: List of observation instances with instance-level scores (fields) computed.
-            score_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
+            instances (list):
+                List of observation instances with instance-level scores (fields) computed.
+            score_names (list):
+                List of instance score names in each instance to apply the aggregation function.
+            group_aggregation_func (Callable):
+                aggregation function accepting a list of numeric scores;
                 or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
                 callable function returns a single score for the group
-            prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
+            prepend_score_prefix (bool):
+                if True - prepend the score_prefix to the score names in the returned dicts. Set to False
                 if down the stream such a prepending is expected.
 
         Returns:
