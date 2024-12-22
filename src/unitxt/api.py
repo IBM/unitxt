@@ -15,6 +15,7 @@ from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import StandardRecipe
+from .task import Task
 
 logger = get_logger()
 constants = get_constants()
@@ -87,12 +88,13 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
 
 
 def create_dataset(
-    task: str,
+    task: Union[str, Task],
     test_set: List[Dict[Any, Any]],
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
+    split: Optional[str] = None,
     **kwargs,
-) -> DatasetDict:
+) -> DatasetDict | IterableDatasetDict | Dataset | IterableDataset:
     """Creates dataset from input data based on a specific task.
 
     Args:
@@ -100,6 +102,7 @@ def create_dataset(
         test_set : required list of instances
         train_set : optional train_set
         validation_set: optional validation set
+        split: optional one split to choose
         **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
 
     Returns:
@@ -122,7 +125,7 @@ def create_dataset(
         )
 
     card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
-    return load_dataset(card=card, **kwargs)
+    return load_dataset(card=card, split=split, **kwargs)
 
 
 def load_dataset(

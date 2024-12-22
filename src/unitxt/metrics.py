@@ -504,7 +504,7 @@ class MetricWithConfidenceInterval(Metric):
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
-                    logger.info(f"Warning in {self.__class__.__name__}", e)
+                    logger.warning(f"Warning in {self.__class__.__name__}: {e}")
                     return np.nan
 
             # resample the instance scores, and then return the global score each time

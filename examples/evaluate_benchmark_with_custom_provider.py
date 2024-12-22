@@ -22,7 +22,6 @@ predictions = model(data)
 
 results = evaluate(predictions=predictions, data=data)
 
-# Print Results:
 print("Global Results:")
 print(results.global_scores.summary)
 
