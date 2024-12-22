@@ -187,7 +187,7 @@ EVALUATORS_METADATA = [
 
 class DirectCriteriaCatalogEnum(Enum):
     TEMPERATURE = CriteriaWithOptions(
-        "temperature_in_celsius_and_fahrentheit",
+        "temperature_in_celsius_and_fahrenheit",
         "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
         [
             CriteriaOption(
@@ -338,7 +338,7 @@ DIRECT_CRITERIAS = [c.value for c in DirectCriteriaCatalogEnum]
 
 class PairwiseCriteriaCatalogEnum(Enum):
     TEMPERATURE = Criteria(
-        name="temperature_in_celsius_and_fahrentheit",
+        name="temperature_in_celsius_and_fahrenheit",
         description="The temperature is described in both Fahrenheit and Celsius.",
     )
 

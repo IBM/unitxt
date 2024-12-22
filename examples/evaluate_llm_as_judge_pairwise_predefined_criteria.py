@@ -10,7 +10,7 @@ data = {
     "test": [
         {
             "question": "How is the weather?",
-            "criteria": "metrics.llm_as_judge.pairwise.criterias.temperature_in_celsius_and_fahrentheit",
+            "criteria": "metrics.llm_as_judge.pairwise.criterias.temperature_in_celsius_and_fahrenheit",
         },
         {
             "question": "Tell me a joke about cats",
