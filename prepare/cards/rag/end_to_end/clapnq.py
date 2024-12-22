@@ -29,7 +29,7 @@ card = TaskCard(
             "train": ClapNqBenchmark.TRAIN_RAW_FILE_URL,
             "test": ClapNqBenchmark.TEST_RAW_FILE_URL,
         },
-        data_classification_policy=["public"]
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         Copy(
@@ -78,8 +78,11 @@ add_to_catalog(card, "cards.rag.benchmark.clap_nq.en", overwrite=True)
 
 # Documents
 card = TaskCard(
-    loader=LoadCSV(sep="\t", files={"train": ClapNqDocuments.RAW_FILE_URL},
-                   data_classification_policy=["public"]),
+    loader=LoadCSV(
+        sep="\t",
+        files={"train": ClapNqDocuments.RAW_FILE_URL},
+        data_classification_policy=["public"],
+    ),
     preprocess_steps=[
         Copy(
             field_to_field={
