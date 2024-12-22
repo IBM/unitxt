@@ -94,7 +94,7 @@ def create_dataset(
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     split: Optional[str] = None,
     **kwargs,
-) -> DatasetDict | IterableDatasetDict | Dataset | IterableDataset:
+) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Creates dataset from input data based on a specific task.
 
     Args:
