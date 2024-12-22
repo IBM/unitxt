@@ -4,7 +4,6 @@ from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
 from unitxt.standard import DatasetRecipe
-from unitxt.text_utils import print_dict
 
 benchmark = Benchmark(
     format="formats.user_agent",

@@ -19,6 +19,7 @@ from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
+from .task import Task
 
 logger = get_logger()
 constants = get_constants()
@@ -47,7 +48,7 @@ def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> DatasetRecipe:
     recipe_attributes = list(DatasetRecipe.__dict__["__fields__"].keys())
     for param in dataset_params.keys():
         assert param in recipe_attributes, (
-            f"The parameter '{param}' is not an attribute of the 'StandardRecipe' class. "
+            f"The parameter '{param}' is not an attribute of the 'DatasetRecipe' class. "
             f"Please check if the name is correct. The available attributes are: '{recipe_attributes}'."
         )
     return DatasetRecipe(**dataset_params)

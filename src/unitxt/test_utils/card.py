@@ -10,7 +10,7 @@ from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
 from ..standard import DatasetRecipe
-from ..text_utils import construct_dict_str
+from ..text_utils import to_pretty_string
 from ..utils import deep_copy
 
 logger = get_logger()

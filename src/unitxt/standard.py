@@ -7,6 +7,7 @@ from .augmentors import Augmentor, NullAugmentor
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
 from .generator_utils import ReusableGenerator
@@ -680,3 +681,18 @@ class DatasetRecipe(SourceSequentialOperator):
         if isinstance(self.template, TemplatesList):
             self.template = self.template.items
         self.reset_pipeline()
+
+
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class BaseRecipe(DatasetRecipe):
+    pass
+
+
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class StandardRecipeWithIndexes(BaseRecipe):
+    pass
+
+
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class StandardRecipe(StandardRecipeWithIndexes):
+    pass
