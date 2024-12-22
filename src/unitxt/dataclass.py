@@ -243,6 +243,10 @@ def fields_names(cls):
     return list(getattr(cls, _FIELDS).keys())
 
 
+def external_fields_names(cls):
+    return [field.name for field in fields(cls) if not field.internal]
+
+
 def final_fields(cls):
     return [field for field in fields(cls) if field.final]
 
@@ -473,7 +477,7 @@ class Dataclass(metaclass=DataclassMeta):
 
             if len(unexpected_kwargs) > 0:
                 raise UnexpectedArgumentError(
-                    f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+                    f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {external_fields_names(self)}"
                 )
 
         for name, arg in zip(_init_positional_fields_names, argv):

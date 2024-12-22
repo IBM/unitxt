@@ -8,7 +8,9 @@ with settings.context(
     allow_unverified_code=True,
     mock_inference_mode=True,
 ):
-    test_dataset = load_dataset("benchmarks.bluebench[loader_limit=30]", split="test")
+    test_dataset = load_dataset(
+        "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]", split="test"
+    )
 
 # Infer
 model = CrossProviderInferenceEngine(
