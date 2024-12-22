@@ -76,7 +76,9 @@ class LLMJudge(BulkInstanceMetric):
         #     self.option_selection_strategy = OptionSelectionStrategyEnum[
         #         self.option_selection_strategy
         #     ]
-        if not isinstance(self.evaluator_name, EvaluatorNameEnum):
+        if self.evaluator_name is None:
+            self.evaluator_name = self.inference_engine.get_engine_id()
+        elif not isinstance(self.evaluator_name, EvaluatorNameEnum):
             self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
 
         self.assessment_template = direct_template_dict["assessment"]

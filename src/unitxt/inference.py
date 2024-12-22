@@ -2819,6 +2819,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
+            "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",

@@ -3,31 +3,21 @@ from typing import Any, List
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.card import Task, TaskCard
-from unitxt.inference import LiteLLMInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.llm_as_judge import LLMJudgePairwise
-from unitxt.llm_as_judge_constants import (
-    EvaluatorNameEnum,
-)
-from unitxt.llm_as_judge_operators import CreateCriteriaFromJson
+from unitxt.llm_as_judge_operators import CreateCriteriaFromDict
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
-temperature_criteria_json = """
-{
+temperature_criteria_json = {
     "name": "Temperature in Fahrenheit and Celsius",
-    "description": "The temperature is described in both Fahrenheit and Celsius."
+    "description": "The temperature is described in both Fahrenheit and Celsius.",
 }
-"""
 
-funny_criteria_json = """
-{
-    "name": "Funny joke",
-    "description": "Is the response funny?"
-}
-"""
+
+funny_criteria_json = {"name": "Funny joke", "description": "Is the response funny?"}
 
 data = {
     "test": [
@@ -37,10 +27,9 @@ data = {
 }
 
 metric = LLMJudgePairwise(
-    inference_engine=LiteLLMInferenceEngine(
-        model="watsonx/meta-llama/llama-3-1-70b-instruct", max_tokens=1024
+    inference_engine=CrossProviderInferenceEngine(
+        model="llama-3-1-70b-instruct", max_tokens=1024
     ),
-    evaluator_name=EvaluatorNameEnum.LLAMA3_1_70B.name,
     context_fields=["question"],
     criteria_field="criteria",
 )
@@ -49,7 +38,7 @@ metric = LLMJudgePairwise(
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
     preprocess_steps=[
-        CreateCriteriaFromJson(field="judgement", to_field="criteria"),
+        CreateCriteriaFromDict(field="judgement", to_field="criteria"),
     ],
     task=Task(
         input_fields={"question": str},
@@ -73,18 +62,12 @@ predictions = [
     ],
 ]
 
-test_dataset = load_dataset(card=card)["test"]
+dataset = load_dataset(card=card, split="test")
 
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            # "processed_prediction",
-            # "references",
-            "score",
-        ],
-    )
+print("Global Scores:")
+print(results.global_scores.summary)
+
+print("Instance Scores:")
+print(results.instance_scores.summary)

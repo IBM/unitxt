@@ -1,14 +1,11 @@
 from typing import Any, List
 
-from unitxt import get_logger
-from unitxt.api import evaluate, load_dataset
+from unitxt import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
 from unitxt.llm_as_judge_operators import LoadCriteria
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
-from unitxt.text_utils import print_dict
 
-logger = get_logger()
 data = {
     "test": [
         {
@@ -38,7 +35,7 @@ card = TaskCard(
     ),
 )
 
-test_dataset = load_dataset(card=card)["test"]
+dataset = load_dataset(card=card, split="test")
 
 predictions = [
     [
@@ -53,16 +50,10 @@ predictions = [
     ],
 ]
 
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print("Global Scores:")
+print(results.global_scores.summary)
+
+print("Instance Scores:")
+print(results.instance_scores.summary)
