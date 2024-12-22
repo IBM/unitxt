@@ -39,15 +39,15 @@ _excluded_files = [
     "evaluate_grounded_ensemble_judge.py",
     "evaluate_rag_response_generation.py",
     # uncleared:
-    # "evaluate_idk_judge.py",
-    # "evaluate_existing_dataset_with_install.py",
-    # "evaluate_rag.py",
+    "evaluate_idk_judge.py",
+    "evaluate_existing_dataset_with_install.py",
+    "evaluate_rag.py",
     # "robustness_testing_for_vision_text_models.py",
-    # "evaluate_a_model_using_arena_hard.py",
+    "evaluate_a_model_using_arena_hard.py",
+    # cleared:
     "evaluate_bluebench.py",
     "evaluate_image_text_to_text_lmms_eval_inference.py",
     "evaluate_different_demo_selections.py",
-    # cleared:
     "inference_using_ibm_watsonx_ai.py",
     "evaluate_image_text_to_text.py",
     "qa_evaluation.py",
