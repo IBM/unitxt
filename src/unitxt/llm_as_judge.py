@@ -740,14 +740,14 @@ class LLMJudgePairwise(LLMJudge):
         )
 
     def convert_predictions_to_dicts(
-        self, predictions: Union[List[Dict[str, str], List[str]]]
+        self, predictions: Union[List[Dict[str, str]], List[str]]
     ):
         return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
         references: List[List[str]],
-        predictions: Union[List[Dict[str, str], List[str]]],
+        predictions: Union[List[Dict[str, str]], List[str]],
         task_data: List[Dict[str, str]],
     ) -> dict:
         self.logger.info(
