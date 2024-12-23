@@ -26,7 +26,7 @@ jobs:
             python-version: '3.8'
 
         - run: curl -LsSf https://astral.sh/uv/install.sh | sh
-        - run: uv pip install --system ".[tests,docs]"
+        - run: uv pip install --system ".[docs]"
 
         - name: Compile Docs
           run: make docs
