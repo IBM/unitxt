@@ -15,8 +15,14 @@ for new_catalog_name, base_catalog_name, main_score in [
     metric = MetricPipeline(
         main_score=main_score,
         preprocess_steps=[
-            Copy(field="contexts", to_field="references"),
-            Copy(field="question", to_field="prediction"),
+            Copy(
+                field_to_field={
+                    "task_data/contexts": "references",
+                    "question": "prediction",
+                },
+                not_exist_do_nothing=True,
+            ),
+            Copy(field_to_field={"contexts": "references"}, not_exist_do_nothing=True),
         ],
         metric=base_catalog_name,
     )
