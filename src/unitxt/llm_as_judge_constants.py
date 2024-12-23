@@ -1,6 +1,6 @@
 import json
 from enum import Enum
-from typing import Optional
+from typing import Dict, List, Optional
 
 from .artifact import Artifact
 from .inference import (
@@ -36,15 +36,15 @@ class Criteria(Artifact):
 
 
 class CriteriaWithOptions(Criteria):
-    options: list[CriteriaOption]
-    option_map: Optional[dict[str, float]] = None
+    options: List[CriteriaOption]
+    option_map: Optional[Dict[str, float]] = None
 
     @staticmethod
     def from_jsons(s: str):
         return CriteriaWithOptions.from_obj(json.loads(s))
 
     @staticmethod
-    def from_obj(criteria_dict: dict):
+    def from_obj(criteria_dict: Dict):
         return CriteriaWithOptions(
             name=criteria_dict["name"],
             description=criteria_dict["description"],
@@ -132,7 +132,7 @@ PROVIDER_TO_STRATEGY = {
 
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
-    providers: list[ModelProviderEnum]
+    providers: List[ModelProviderEnum]
 
     def __init__(self, name, providers):
         self.name = name

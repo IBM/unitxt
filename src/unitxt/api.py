@@ -230,7 +230,7 @@ def infer(
     return_data: bool = False,
     return_log_probs: bool = False,
     return_meta_data: bool = False,
-    previous_messages: Optional[list[dict[str, str]]] = None,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
@@ -283,7 +283,7 @@ def select(
     engine: OptionSelectingByLogProbsInferenceEngine,
     dataset_query: Optional[str] = None,
     return_data: bool = False,
-    previous_messages: Optional[list[dict[str, str]]] = None,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)

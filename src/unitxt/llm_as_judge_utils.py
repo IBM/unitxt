@@ -1,3 +1,5 @@
+from typing import Dict
+
 from .llm_as_judge_constants import (
     EVALUATORS_METADATA,
     MODEL_RENAMINGS,
@@ -7,7 +9,7 @@ from .llm_as_judge_constants import (
 )
 
 
-def get_parsed_context(context: dict[str, str]):
+def get_parsed_context(context: Dict[str, str]):
     return (
         "\n".join([f"{key}: {value}" for key, value in context.items()])
         if len(context) > 1
