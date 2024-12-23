@@ -1,6 +1,6 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine
+from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine, VLLMInferenceEngine
 from unitxt.text_utils import print_dict
 from tqdm import tqdm
 
@@ -13,10 +13,14 @@ with settings.context(
     # inference_model = HFLlavaInferenceEngine(
     #     model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
     # )
-    inference_model = LMMSEvalInferenceEngine(
-        model_type="llava",
-        model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
-        max_new_tokens=32,
+    # inference_model = LMMSEvalInferenceEngine(
+    #     model_type="llava",
+    #     model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
+    #     max_new_tokens=32,
+    # )
+    inference_model = VLLMInferenceEngine(
+        model="llava-hf/llava-1.5-7b-hf",
+        max_tokens=32,
     )
     # dataset = load_dataset(
     #     card="cards.ai2d",
@@ -37,6 +41,7 @@ with settings.context(
         loader_limit=20,
         # augmentor="augmentors.image.to_rgb",
         streaming=True,
+        split="test",
         metrics=["metrics.anls"]
     )
     # dataset = load_dataset(
@@ -49,7 +54,7 @@ with settings.context(
     #     streaming=True,
     #     metrics=["metrics.relaxed_correctness.json"]
     # )
-    test_dataset = list(tqdm(dataset["test"], total=20))
+    # test_dataset = list(tqdm(dataset["test"], total=20))
     # test_dataset = list(tqdm(dataset["test"]))
 
     predictions = inference_model.infer(dataset)
