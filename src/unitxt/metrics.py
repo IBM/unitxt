@@ -1586,6 +1586,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        if hasattr(self, "score_prefix") and self.score_prefix:
+            self.metric.score_prefix = self.score_prefix
         has_postpreprocess = (
             hasattr(self, "postpreprocess_steps")
             and self.postpreprocess_steps is not None
