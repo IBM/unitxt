@@ -290,7 +290,7 @@ class LLMJudgeDirect(LLMJudge):
         selections,
         evaluations_count,
         criterias: List[CriteriaWithOptions],
-    ) -> list[dict[str, any]]:
+    ) -> List[Dict[str, Any]]:
         positional_bias = None
         if self.check_positional_bias:
             positional_bias = [
