@@ -5,7 +5,10 @@
         "sep": "\t",
         "files": {
             "train": "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
-        }
+        },
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

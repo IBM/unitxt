@@ -60,13 +60,8 @@ with settings.context(
     predictions = inference_model.infer(dataset)
     evaluated_dataset = evaluate(predictions=predictions, data=dataset)
 
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "media",
-            "references",
-            "processed_prediction",
-            "score",
-        ],
-    )
+    print("Global Results:")
+    print(results.global_scores.summary)
+
+    print("Instance Results:")
+    print(results.instance_scores.summary)
