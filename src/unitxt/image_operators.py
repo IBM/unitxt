@@ -28,6 +28,13 @@ def _image_to_bytes(image, format="JPEG"):
         return base64.b64encode(buffer.getvalue()).decode("utf-8")
 
 
+class ImageDataString(str):
+    def __repr__(self) -> str:
+        if len(self) > 30:
+            return '<ImageDataString "' + self[:30] + '...">'
+        return super().__repr__()
+
+
 def image_to_data_url(image: Image, default_format="JPEG"):
     """Convert an image to a data URL.
 
@@ -35,7 +42,7 @@ def image_to_data_url(image: Image, default_format="JPEG"):
     """
     image_format = image["format"] if image["format"] else default_format
     base64_image = _image_to_bytes(image["image"], format=image_format.upper())
-    return f"data:image/{image_format.lower()};base64,{base64_image}"
+    return ImageDataString(f"data:image/{image_format.lower()};base64,{base64_image}")
 
 
 def _bytes_to_image(b64_string):
@@ -83,9 +90,9 @@ class PillowMixin(PackageRequirementsMixin):
         self.filter = ImageFilter
 
 
-def extract_images(text, instance):
+def extract_images(instance):
     regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']'
-    image_sources = re.findall(regex, text)
+    image_sources = re.findall(regex, instance["source"])
     images = []
     for image_source in image_sources:
         image = dict_get(instance, image_source)
@@ -99,7 +106,7 @@ class EncodeImageToString(FieldOperator):
     def encode_image_to_base64(self, image):
         buffer = io.BytesIO()
         image.save(buffer, format=self.image_format)
-        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+        return ImageDataString(base64.b64encode(buffer.getvalue()).decode("utf-8"))
 
     def process_value(self, value: Any) -> Any:
         return {"image": self.encode_image_to_base64(value)}
@@ -166,12 +173,13 @@ class GrayScale(ImageAugmentor):
 class GridLines(ImageAugmentor):
     """A class that overlays a fixed number of evenly spaced horizontal and vertical lines on an image.
 
-    Attributes:
-        num_lines (int): The number of horizontal and vertical lines to add.
-
-        line_thickness (int): Thickness of each line in pixels.
-
-        line_color (Tuple[int, int, int]): RGB color of the grid lines.
+    Args:
+        num_lines (int):
+            The number of horizontal and vertical lines to add.
+        line_thickness (int):
+            Thickness of each line in pixels.
+        line_color (Tuple[int, int, int]):
+            RGB color of the grid lines.
 
     Methods:
         process_image(image): Adds grid lines to the provided image and returns the modified image.

@@ -168,9 +168,9 @@ Welcome!
 
    docs/introduction
    docs/demo
+   docs/installation
    docs/loading_datasets
    docs/evaluating_datasets
-   docs/installation
    docs/tutorials
    docs/examples
    blog/index

@@ -126,12 +126,13 @@ class Loader(SourceOperator):
         self, default_data_classification_policy, additional_info
     ):
         if self.data_classification_policy is None:
-            logger.info(
-                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
-                f"{default_data_classification_policy} by default {additional_info}.\n"
-                "To use a different value or remove this message, explicitly set the "
-                "`data_classification_policy` attribute of the loader.\n"
-            )
+            if additional_info is not None:
+                logger.info(
+                    f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
+                    f"{default_data_classification_policy} by default {additional_info}.\n"
+                    "To use a different value or remove this message, explicitly set the "
+                    "`data_classification_policy` attribute of the loader.\n"
+                )
             self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
@@ -209,7 +210,7 @@ class LoadHF(Loader):
     def filter_load(self, dataset):
         if not settings.allow_unverified_code:
             raise ValueError(
-                f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
             )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return dataset.filter(eval(self.filtering_lambda))
@@ -306,7 +307,8 @@ class LoadHF(Loader):
             )
         else:
             self.sef_default_data_classification(
-                ["public"], "when loading from Huggingface hub"
+                ["public"],
+                None,  # No warning when loading from public hub
             )
 
     def load_iterables(self):
@@ -363,7 +365,9 @@ class LoadCSV(Loader):
                     file_path, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
-                iterables[split_name] = pd.read_csv(file_path).to_dict("records")
+                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
+                    "records"
+                )
         return iterables
 
 

@@ -10,7 +10,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="glue", name="wnli"),
+    loader=LoadHF(path="glue", name="wnli", data_classification_policy=["public"]),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[95%]", "validation": "train[5%]", "test": "validation"}

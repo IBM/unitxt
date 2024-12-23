@@ -91,7 +91,7 @@ tests = [
     "nltk",
     "mecab-python3",
     "sacrebleu[ko]",
-    "scikit-learn",
+    "scikit-learn<=1.5.2",
     "jiwer",
     "conllu",
     "llama-index-core",
@@ -190,6 +190,7 @@ target-version = "py38"
 "utils/hf/prepare_metric.py" = ["T201"]
 "utils/compare_unitxt_datasets_between_versions.py" = ["C901"]
 "performance/*.py" = ["T201"]
+"examples/*.py" = ["T201"]
 
 [tool.ruff.lint]
 extend-select = [

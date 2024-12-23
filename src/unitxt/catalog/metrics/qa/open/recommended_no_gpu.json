@@ -1,0 +1,6 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rouge"
+    ]
+}

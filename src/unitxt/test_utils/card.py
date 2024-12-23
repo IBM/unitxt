@@ -10,7 +10,8 @@ from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
 from ..standard import StandardRecipe
-from ..text_utils import construct_dict_str
+from ..text_utils import to_pretty_string
+from ..utils import deep_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -110,7 +111,7 @@ def print_recipe_output(
                 f"Showing up to {num_examples} examples from stream '{stream_name}':"
             )
             for example, _ in zip(stream, range(num_examples)):
-                dict_message = construct_dict_str(example)
+                dict_message = to_pretty_string(example)
                 logger.info(dict_message)
                 logger.info("\n")
                 examples.append(example)
@@ -237,20 +238,21 @@ def test_card(
     It also shows the processed predictions and references, after the template's post processors
     are applied.  Thus wayit is possible to debug and see that the inputs to the metrics are as expected.
 
-    Parameters:
-        1. `card`: The `Card` object to be tested.
-        2. `debug`: A boolean value indicating whether to enable debug mode. In debug mode, the data processing pipeline is executed step by step, printing a representative output of each step.  Default is False.
-        3. `strict`: A boolean value indicating whether to fail if scores do not match the expected ones.
+    :Parameters:
+
+        1. **card** : The `Card` object to be tested.
+        2. **debug** : A boolean value indicating whether to enable debug mode. In debug mode, the data processing pipeline is executed step by step, printing a representative output of each step.  Default is False.
+        3. **strict** : A boolean value indicating whether to fail if scores do not match the expected ones.
            Default is True.
-        4. `test_exact_match_score_when_predictions_equal_references`: A boolean value indicating whether to test the exact match score when predictions equal references. Default is True.
-        5. `test_full_mismatch_score_with_full_mismatch_prediction_values`: A boolean value indicating whether to test the full mismatch score with full mismatch prediction values.
+        4. **test_exact_match_score_when_predictions_equal_references** : A boolean value indicating whether to test the exact match score when predictions equal references. Default is True.
+        5. **test_full_mismatch_score_with_full_mismatch_prediction_values** : A boolean value indicating whether to test the full mismatch score with full mismatch prediction values.
            The potential mismatched predeiction values are specified in full_mismatch_prediction_values`.
            Default is True.
-        6. `exact_match_score`: The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
-        7. `maximum_full_mismatch_score`: The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
-        8. `full_mismatch_prediction_values`: An optional list of prediction values to use for testing full mismatches. Default is None.
+        6. **exact_match_score** : The expected score to be returned when predictions are equal the gold reference. Default is 1.0.
+        7. **maximum_full_mismatch_score** : The maximum score allowed to be returned when predictions are full mismatched. Default is 0.0.
+        8. **full_mismatch_prediction_values** : An optional list of prediction values to use for testing full mismatches. Default is None.
            If not set, a default set of values: ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
-        9. `**kwargs` : Additional keyword arguments to be passed to the recipe.
+        9. ****kwargs** : Additional keyword arguments to be passed to the recipe.
 
     Examples:
         .. code-block:: python
@@ -272,6 +274,7 @@ def test_card(
 
 
     """
+    card = deep_copy(card)
     if full_mismatch_prediction_values is None:
         full_mismatch_prediction_values = ["a1s", "bfsdf", "dgdfgs", "gfjgfh", "ghfjgh"]
     if settings.test_card_disable:
