@@ -172,11 +172,11 @@ class LLMJudge(BulkInstanceMetric):
             return_data=True,
             previous_messages=previous_messages,
         )
-        prompts: list[str] = [instance["source"] for instance in outputs_dataset]
-        raw_predictions: list[str] = [
+        prompts: List[str] = [instance["source"] for instance in outputs_dataset]
+        raw_predictions: List[str] = [
             instance["raw_prediction"] for instance in outputs_dataset
         ]
-        predictions: list[str] = [
+        predictions: List[str] = [
             instance["prediction"] for instance in outputs_dataset
         ]
         return (prompts, raw_predictions, predictions)
@@ -274,7 +274,7 @@ class LLMJudgeDirect(LLMJudge):
                 raise Exception(
                     f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
                 )
-            criterias: list[CriteriaWithOptions] = [self.criteria] * eval_count
+            criterias: List[CriteriaWithOptions] = [self.criteria] * eval_count
         unique_criterias = list({criteria.name for criteria in criterias})
         self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
         return criterias
@@ -289,7 +289,7 @@ class LLMJudgeDirect(LLMJudge):
         option_selection_outputs,
         selections,
         evaluations_count,
-        criterias: list[CriteriaWithOptions],
+        criterias: List[CriteriaWithOptions],
     ) -> list[dict[str, any]]:
         positional_bias = None
         if self.check_positional_bias:
@@ -545,7 +545,7 @@ class LLMJudgePairwise(LLMJudge):
                     f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
                 )
 
-            criterias: list[Criteria] = [self.criteria] * eval_count
+            criterias: List[Criteria] = [self.criteria] * eval_count
 
         unique_criterias = list({criteria.name for criteria in criterias})
         self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
@@ -728,7 +728,7 @@ class LLMJudgePairwise(LLMJudge):
         all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
-    def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], list[str]]):
+    def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], List[str]]):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
 
@@ -740,15 +740,15 @@ class LLMJudgePairwise(LLMJudge):
         )
 
     def convert_predictions_to_dicts(
-        self, predictions: Union[list[Dict[str, str], list[str]]]
+        self, predictions: Union[List[Dict[str, str], List[str]]]
     ):
         return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
-        references: list[list[str]],
-        predictions: Union[list[Dict[str, str], list[str]]],
-        task_data: list[Dict[str, str]],
+        references: List[List[str]],
+        predictions: Union[List[Dict[str, str], List[str]]],
+        task_data: List[Dict[str, str]],
     ) -> dict:
         self.logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
@@ -775,8 +775,8 @@ class LLMJudgePairwise(LLMJudge):
             f"The evaluation will perform {sum(contests_count_list) * [1,2][self.check_positional_bias]} ({' + '.join([f'{c * [1,2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
         )
 
-        response_pairs_list: list[list[list[str]]] = []
-        option_pairs_list: list[list[list[str]]] = []
+        response_pairs_list: List[List[List[str]]] = []
+        option_pairs_list: List[List[List[str]]] = []
         predictions_names = set(predictions[0].keys())
         for i, combination_indexes in enumerate(combination_indexes_list):
             instance_predictions = predictions[i]
@@ -786,8 +786,8 @@ class LLMJudgePairwise(LLMJudge):
                     f"The set of prediction names is different between instance 0 and instance {i}. In prediction 0, it is {sorted(predictions_names)}. In prediction {i}, it is {sorted(instance_predictions_names)}. Make sure the same number of predictions is passed for all instances."
                 )
 
-            response_pairs: list[list[str]] = []
-            option_pairs: list[list[str]] = []
+            response_pairs: List[List[str]] = []
+            option_pairs: List[List[str]] = []
             for combination in combination_indexes:
                 (idx_1, idx_2) = combination
                 response_name_1 = instance_predictions_names[idx_1]
