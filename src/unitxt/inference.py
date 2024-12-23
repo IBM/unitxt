@@ -63,8 +63,8 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
-    credentials: Optional[dict[str, str]] = {}
-    extra_headers: Optional[dict[str, str]] = None
+    credentials: Optional[Dict[str, str]] = {}
+    extra_headers: Optional[Dict[str, str]] = None
 
 
 def get_model_and_label_id(model_name, label):
@@ -1171,8 +1171,8 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: list[
-            list[dict[str, float | str]]
+        dataset_with_options_logprobs: List[
+            List[Dict[str, Union[float, str]]]
         ] = self.get_options_log_probs(dataset_with_options)
 
         dataset_iterator = iter(dataset_with_options_logprobs)

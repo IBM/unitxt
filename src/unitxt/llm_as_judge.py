@@ -1,6 +1,6 @@
 import itertools
 from difflib import get_close_matches
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from .api import infer
 from .artifact import fetch_artifact
@@ -145,7 +145,7 @@ class LLMJudge(BulkInstanceMetric):
             )
         return
 
-    def get_contexts(self, task_data: list[dict[str, any]]) -> list[dict[str, str]]:
+    def get_contexts(self, task_data: List[Dict[str, Any]]) -> List[Dict[str, str]]:
         return [
             get_parsed_context(
                 {
@@ -161,7 +161,7 @@ class LLMJudge(BulkInstanceMetric):
         instances: list,
         task: Task,
         template: Template,
-        previous_messages: Optional[list[dict[str, str]]] = None,
+        previous_messages: Optional[List[Dict[str, str]]] = None,
     ):
         outputs_dataset = infer(
             instances,
@@ -353,9 +353,9 @@ class LLMJudgeDirect(LLMJudge):
 
     def compute(
         self,
-        references: list[list[str]],
-        predictions: list[str],
-        task_data: list[dict[str, any]],
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict[str, Any]],
     ) -> dict:
         self.logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
@@ -553,7 +553,7 @@ class LLMJudgePairwise(LLMJudge):
 
     def get_instance_results(
         self,
-        instance_predictions: dict[str, str],
+        instance_predictions: Dict[str, str],
         assessment_prompts,
         assessment_outputs,
         summarization_prompts,
@@ -728,7 +728,7 @@ class LLMJudgePairwise(LLMJudge):
         all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
-    def parse_prediction_to_dict(self, prediction: Union[dict[str, str], list[str]]):
+    def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], list[str]]):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
 
@@ -740,15 +740,15 @@ class LLMJudgePairwise(LLMJudge):
         )
 
     def convert_predictions_to_dicts(
-        self, predictions: Union[list[dict[str, str], list[str]]]
+        self, predictions: Union[list[Dict[str, str], list[str]]]
     ):
         return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
         references: list[list[str]],
-        predictions: Union[list[dict[str, str], list[str]]],
-        task_data: list[dict[str, str]],
+        predictions: Union[list[Dict[str, str], list[str]]],
+        task_data: list[Dict[str, str]],
     ) -> dict:
         self.logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
