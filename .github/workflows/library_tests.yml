@@ -36,6 +36,7 @@ jobs:
     - name: Run Tests
       run: coverage run -m unittest discover -s tests/library -p "test_*.py"
 
+    - run: coverage report
     - run: coverage xml
     - run: rm .coverage
     - run: cat coverage.xml
