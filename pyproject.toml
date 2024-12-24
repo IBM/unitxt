@@ -243,7 +243,10 @@ regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=
 skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*cards/attaq_500*,*cards/cohere_for_ai*,*egg-info*,*/logs/*'
 
 [tool.coverage.run]
-source = ["src/unitxt"]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
 omit = [
     "src/unitxt/inference.py",
     "src/unitxt/ui/*",
@@ -253,3 +256,6 @@ omit = [
     "src/unitxt/metric.py",
     "src/unitxt/blocks.py",
 ]
+
+[tool.coverage.xml]
+output = "coverage.xml"
