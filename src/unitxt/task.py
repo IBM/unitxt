@@ -287,6 +287,9 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             "media": instance.get("media", {}),
             "recipe_metadata": instance.get("recipe_metadata", {}),
         }
+        if "demos" in instance:
+            # for the case of recipe.skip_demoed_instances
+            result["demos"] = instance["demos"]
 
         if stream_name == constants.inference_stream:
             return result

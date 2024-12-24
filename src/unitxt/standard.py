@@ -1,26 +1,35 @@
-from typing import List, Optional, Union
+import itertools
+import json
+import sys
+from typing import Any, Dict, Generator, List, Optional, Union
 
 from .artifact import fetch_artifact
 from .augmentors import Augmentor, NullAugmentor
 from .card import TaskCard
 from .collections_operators import GetLength
 from .dataclass import Field, InternalField, NonPositionalField, OptionalField
+from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
+from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
-from .operator import SequentialOperator, SourceSequentialOperator, StreamingOperator
+from .operator import (
+    MultiStreamOperator,
+    SequentialOperator,
+    SourceSequentialOperator,
+    StreamingOperator,
+)
 from .operators import Set, StreamRefiner
-from .recipe import Recipe
 from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants, get_settings
-from .splitters import ConstantSizeSample, RandomSizeSample, Sampler, SeparateSplit
+from .splitters import ConstantSizeSample, RandomSizeSample, Sampler
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
 from .type_utils import isoftype
-from .utils import LRUCache
+from .utils import LRUCache, recursive_copy
 
 constants = get_constants()
 settings = get_settings()
@@ -28,11 +37,205 @@ logger = get_logger()
 
 
 # Used to give meaningful name to recipe steps
-class CreateDemosPool(SeparateSplit):
-    pass
+class CreateDemosPool(MultiStreamOperator):
+    from_stream: str = None
+    demos_pool_size: int = None
+    demos_removed_from_data: bool = None
+    to_field: str = constants.demos_pool_field
+
+    # flake8: noqa: B007
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        # generate the demos_pool as a selection of demos_pool_size distinct instances
+        # (distinct by their "input_fields" field). The selection is taken from stream named from_stream.
+        # The selected instances are later treated as ordinary instances or not, depending on parameter
+        # demos_removed_from_data.
+        # The selection of instances is done from the first instances of the stream named from_stream.
+        # instances that are not distinct from previously selected demo instances, are kept aside, to be later
+        # treated like all the remaining instances of stream from_stream.
+        if self.from_stream not in multi_stream:
+            raise ValueError(
+                f"Input multi-stream is missing a stream named '{self.from_stream}' to take demo instances from for the demos_pool."
+            )
+        if (
+            self.demos_removed_from_data is not None
+            and self.demos_removed_from_data is True
+            and (self.demos_pool_size == sys.maxsize)
+        ):
+            # going to consume the whole of input stream named self.from_stream for demo instances,
+            # and not let demos instances to behave as regular instances. so self.from_stream
+            # ends here its life as an input stream that is expected to reach the end of the recipe
+            if len(multi_stream) == 1:
+                raise ValueError(
+                    f"The single input stream, '{self.from_stream}' is to be wholly consumed for generating demos, and no instance is left to use these demos."
+                )
+        from_stream = multi_stream[self.from_stream]
+        demos_pool = []
+        input_fields_of_demos_pool = []
+        not_selected_from_from_stream = []
+        for num_scanned, instance in enumerate(from_stream):
+            if "input_fields" not in instance:
+                raise ValueError(f"'input_fields' field is missing from '{instance}'.")
+            input_fields_signature = json.dumps(
+                instance["input_fields"], sort_keys=True
+            )
+            if input_fields_signature in input_fields_of_demos_pool:
+                not_selected_from_from_stream.append(instance)
+                continue
+            demos_pool.append(instance)
+            input_fields_of_demos_pool.append(input_fields_signature)
+            if len(demos_pool) >= self.demos_pool_size:
+                break
+
+            # for backward compatibility, do not throw exception here if demos pool is smaller than expected.
+            # Delay that for the event (if occurs) that Sample is not be able to sample num_demos demos.
+
+        # to avoid endless recursion in case of not demos_removed_from_data
+        demos_pool = recursive_copy(demos_pool)
+
+        set_demos_pool = Set(fields={self.to_field: demos_pool})
+        if (
+            self.demos_removed_from_data is not None
+            and self.demos_removed_from_data is False
+        ):
+            # all input instances go out. No one is "killed" because selected as demo
+            return set_demos_pool(multi_stream)
+
+        if (
+            self.demos_removed_from_data is not None
+            and self.demos_removed_from_data is True
+        ):
+            if self.demos_pool_size == sys.maxsize:
+                # consume the whole of input stream self.from_stream, just for demos, and do not
+                # take any of its instances to behave as a non-demo instance, i.e., a regular instance
+                # that consume the demos
+                out_ms = MultiStream(
+                    {
+                        stream_name: multi_stream[stream_name]
+                        for stream_name in multi_stream
+                        if stream_name != self.from_stream
+                    }
+                )
+                return set_demos_pool(out_ms)
+
+        #  self.demos_removed_from_data and not consume the whole of self.from_stream just for demos
+        def from_stream_generator(
+            first_layer: list, ms: MultiStream, stream_name: str, start: int
+        ) -> Generator:
+            yield from first_layer
+            yield from itertools.islice(ms[stream_name], start, None)
+
+        new_streams = {}
+        for stream_name in multi_stream:
+            if stream_name == self.from_stream:
+                new_streams[stream_name] = ReusableGenerator(
+                    generator=from_stream_generator,
+                    gen_kwargs={
+                        "first_layer": not_selected_from_from_stream,
+                        "ms": multi_stream,
+                        "stream_name": self.from_stream,
+                        "start": num_scanned + 1,
+                    },
+                )
+            else:
+                new_streams[stream_name] = ReusableGenerator(
+                    generator=from_stream_generator,
+                    gen_kwargs={
+                        "first_layer": [],
+                        "ms": multi_stream,
+                        "stream_name": stream_name,
+                        "start": 0,
+                    },
+                )
+
+        ms = MultiStream.from_generators(new_streams)
+        return set_demos_pool(ms)
 
 
-class BaseRecipe(Recipe, SourceSequentialOperator):
+class AddDemosPool(MultiStreamOperator):
+    demos_pool: List[Dict[str, Any]]
+    demos_pool_field_name: str = constants.demos_pool_field
+
+    def process(self, multi_stream: MultiStream) -> MultiStream:
+        set_demos_pool = Set(fields={self.demos_pool_field_name: self.demos_pool})
+        return set_demos_pool(multi_stream)
+
+
+class DatasetRecipe(SourceSequentialOperator):
+    """This class represents a standard recipe for data processing and preparation.
+
+    This class can be used to prepare a recipe.
+    with all necessary steps, refiners and renderers included. It allows to set various
+    parameters and steps in a sequential manner for preparing the recipe.
+
+    Args:
+        card (TaskCard):
+            TaskCard object associated with the recipe.
+        template (Template, optional):
+            Template object to be used for the recipe.
+        system_prompt (SystemPrompt, optional):
+            SystemPrompt object to be used for the recipe.
+        loader_limit (int, optional):
+            Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
+        format (SystemFormat, optional):
+            SystemFormat object to be used for the recipe.
+        metrics (List[str]):
+            list of catalog metrics to use with this recipe.
+        postprocessors (List[str]):
+            list of catalog processors to apply at post processing. (Not recommended to use from here)
+        group_by (List[Union[str, List[str]]]):
+            list of task_data or metadata keys to group global scores by.
+        train_refiner (StreamRefiner, optional):
+            Train refiner to be used in the recipe.
+        max_train_instances (int, optional):
+            Maximum training instances for the refiner.
+        validation_refiner (StreamRefiner, optional):
+            Validation refiner to be used in the recipe.
+        max_validation_instances (int, optional):
+            Maximum validation instances for the refiner.
+        test_refiner (StreamRefiner, optional):
+            Test refiner to be used in the recipe.
+        max_test_instances (int, optional):
+            Maximum test instances for the refiner.
+        demos_pool_size (int, optional):
+            Size of the demos pool. -1 for taking the whole of stream 'demos_taken_from'.
+        demos_pool(List[Dict[str, Any]], optional):
+            a list of instances to make the demos_pool
+        num_demos (int, optional):
+            Number of demos to add to each instance, to become part of the source to be generated for this instance.
+        demos_taken_from (str, optional):
+            Specifies the stream from where the demos are taken. Default is "train".
+        demos_field (str, optional):
+            Field name for demos. Default is "demos".
+            The num_demos demos selected for an instance are stored in this field of that instance.
+        demos_pool_field_name (str, optional):
+            field name to maintain the demos_pool, until sampled from, in order to make the demos.
+            Defaults to constants.demos_pool_field.
+        demos_removed_from_data (bool, optional):
+            whether to remove the demos taken to demos_pool from the source data, Default is True
+        sampler (Sampler, optional):
+            The Sampler used to select the demonstrations when num_demos > 0.
+        skip_demoed_instances (bool, optional):
+            whether to skip pushing demos to an instance whose demos_field is
+            already populated. Defaults to False.
+        steps (List[StreamingOperator], optional):
+            List of StreamingOperator objects to be used in the recipe.
+        augmentor (Augmentor) :
+            Augmentor to be used to pseudo randomly augment the source text
+        instruction_card_index (int, optional):
+            Index of instruction card to be used for preparing the recipe.
+        template_card_index (int, optional):
+            Index of template card to be used for preparing the recipe.
+
+    Methods:
+        prepare():
+            This overridden method is used for preparing the recipe
+            by arranging all the steps, refiners, and renderers in a sequential manner.
+
+    Raises:
+        AssertionError:
+            If both template and template_card_index are specified at the same time.
+    """
+
     # Base parameters
     card: TaskCard = None
     task: Task = None
@@ -59,13 +262,17 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     test_refiner: StreamRefiner = OptionalField(default_factory=StreamRefiner)
 
     demos_pool_size: int = None
+    demos_pool: List[Dict[str, Any]] = None
     num_demos: Optional[Union[int, List[int]]] = 0
     demos_removed_from_data: bool = True
+    demos_pool_field_name: str = constants.demos_pool_field
 
-    demos_pool_name: str = "demos_pool"
     demos_taken_from: str = "train"
     demos_field: str = "demos"
     sampler: Sampler = None
+
+    # do not push demos to instances whose "demos" field is already populated
+    skip_demoed_instances: bool = False
 
     augmentor: Union[Augmentor, List[Augmentor]] = OptionalField(default=None)
 
@@ -101,11 +308,16 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 raise ValueError(
                     "When using demonstrations both num_demos and demos_pool_size should be assigned with positive integers."
                 )
-            if self.demos_pool_size < self.max_demos_size:
+            if self.demos_pool_size < self.max_demos_size + 1:
                 raise ValueError(
-                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size (got: {self.demos_pool_size})"
+                    f"num_demos (got: {self.max_demos_size}) should not exceed demos_pool_size - 1 (got: {self.demos_pool_size}), (-1: to always allow filtering of a demo identical to the processed instance)."
                 )
-            if self.loader_limit and self.demos_pool_size > self.loader_limit:
+            if (
+                (not self.demos_pool)
+                and (self.demos_pool_size != sys.maxsize)
+                and self.loader_limit
+                and (self.demos_pool_size > self.loader_limit)
+            ):
                 raise ValueError(
                     f"demos_pool_size should not exceed loader_limit ({self.loader_limit}), Got demos_pool_size={self.demos_pool_size}"
                 )
@@ -220,29 +432,21 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.loading,
             self.metadata,
             self.standardization,
-            self.processing,
         ]
 
         self.inference = SequentialOperator()
 
-        self.inference.steps = [self.metadata, self.verbalization, self.finalize]
+        self.inference.steps = [self.processing, self.verbalization, self.finalize]
 
     def production_preprocess(self, task_instances):
         ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
-        return list(self.inference_instance(ms)[constants.inference_stream])
-
-    def production_demos_pool(self):
-        if self.use_demos:
-            demos_pool = self.__class__._demos_pool_cache.get(str(self), None)
-            if demos_pool is None:
-                demos_pool = list(self.inference_demos()[self.demos_pool_name])
-                self.__class__._demos_pool_cache[str(self)] = demos_pool
-            return demos_pool
-        return []
+        return list(self.metadata(ms)[constants.inference_stream])
 
     @property
     def has_custom_demos_pool(self):
-        return self.demos_pool_size is not None and self.demos_pool_size > 0
+        return self.demos_pool_size is not None and (
+            self.demos_pool_size > 0 or self.demos_pool_size == -1
+        )
 
     @property
     def use_demos(self):
@@ -251,13 +455,22 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
     def produce(self, task_instances):
         """Use the recipe in production to produce model ready query from standard task instance."""
         self.before_process_multi_stream()
-        streams = {
-            constants.inference_stream: self.production_preprocess(task_instances),
-        }
-        if self.use_demos:
-            streams[self.demos_pool_name] = self.production_demos_pool()
-        multi_stream = MultiStream.from_iterables(streams)
-        multi_stream = self.inference(multi_stream)
+
+        ms = MultiStream.from_iterables({constants.inference_stream: task_instances})
+        # does not hurt to set metadata
+        # task_instances are assumed to be as if passed through self.standardization
+        ms = self.metadata(ms)
+        if not self.use_demos:
+            # go with task_instances all the way, it does not need other streams:
+            ms = self.inference(ms)
+            return list(ms[constants.inference_stream])
+
+        streams = self.inference_demos()
+        # streams stopped before processing
+        # ms is ready to join, it will get the demos from streams
+        streams[constants.inference_stream] = ms[constants.inference_stream]
+        # multi_stream = MultiStream(streams)
+        multi_stream = self.inference(streams)
         return list(multi_stream[constants.inference_stream])
 
     def reset(self):
@@ -321,15 +534,29 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                 augmentor.set_fields(self.card.task.augmentable_inputs)
                 self.processing.steps.append(augmentor)
 
+        # for backward compatibility, consume the demos instances even if not pushed into demos field of the ordinary instances,
+        # in order to use the very same ordinary instances as in back releases.
+        # one example of consume but not used, and indeed skips over a problematic (json-wise) input:
+        # prepare/cards/rag/end_to_end/clapnq.py
         if self.has_custom_demos_pool:
-            self.processing.steps.append(
-                CreateDemosPool(
-                    from_split=self.demos_taken_from,
-                    to_split_names=[self.demos_pool_name, self.demos_taken_from],
-                    to_split_sizes=[int(self.demos_pool_size)],
-                    remove_targets_from_source_split=self.demos_removed_from_data,
+            if self.demos_pool:
+                self.processing.steps.append(
+                    AddDemosPool(
+                        demos_pool=self.demos_pool,
+                        demos_pool_field_name=self.demos_pool_field_name,
+                    )
                 )
-            )
+            else:
+                self.processing.steps.append(
+                    CreateDemosPool(
+                        from_stream=self.demos_taken_from,
+                        demos_pool_size=self.demos_pool_size
+                        if self.demos_pool is None
+                        else None,
+                        demos_removed_from_data=self.demos_removed_from_data,
+                        to_field=self.demos_pool_field_name,
+                    )
+                )
 
         if self.use_demos:
             if self.sampler is None:
@@ -346,28 +573,41 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             if isinstance(self.num_demos, int):
                 self.verbalization.steps.append(
                     ConstantSizeSample(
-                        from_stream=self.demos_pool_name,
+                        from_field=self.demos_pool_field_name,
                         to_field=self.demos_field,
                         sampler=self.sampler,
                         sample_size=self.num_demos,
+                        skip_demoed_instances=self.skip_demoed_instances,
                     )
                 )
                 self.verbalization.steps.append(
-                    Set(fields={"recipe_metadata/num_demos": self.num_demos})
+                    Set(
+                        fields={
+                            "recipe_metadata/num_demos": self.num_demos,
+                            "recipe_metadata/demos_pool_size": self.demos_pool_size,
+                        }
+                    )
                 )
 
             elif isinstance(self.num_demos, list):
                 self.verbalization.steps.append(
                     RandomSizeSample(
-                        from_stream=self.demos_pool_name,
+                        from_field=self.demos_pool_field_name,
                         to_field=self.demos_field,
                         sampler=self.sampler,
                         sample_sizes=self.num_demos,
+                        skip_demoed_instances=self.skip_demoed_instances,
                     )
                 )
                 self.verbalization.steps.append(
                     GetLength(field="demos", to_field="recipe_metadata/num_demos")
                 )
+                self.verbalization.steps.append(
+                    Set(
+                        fields={"recipe_metadata/demos_pool_size": self.demos_pool_size}
+                    )
+                )
+
             else:
                 raise ValueError("num_demos must be int or List[int]")
 
@@ -383,9 +623,15 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
                         template=self.template, demos_field=self.demos_field
                     )
                 )
+
         else:
             self.verbalization.steps.append(
-                Set(fields={"recipe_metadata/num_demos": 0})
+                Set(
+                    fields={
+                        "recipe_metadata/num_demos": 0,
+                        "recipe_metadata/demos_pool_size": 0,
+                    }
+                )
             )
             if isinstance(self.template, list):
                 self.verbalization.steps.append(
@@ -408,15 +654,6 @@ class BaseRecipe(Recipe, SourceSequentialOperator):
             self.finalize.steps.append(Set(fields={"metrics": self.metrics}))
 
         self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
-
-    def prepare(self):
-        if isinstance(self.template, TemplatesList):
-            self.template = self.template.items
-        self.reset_pipeline()
-
-
-class StandardRecipeWithIndexes(BaseRecipe):
-    template_card_index: int = None
 
     def prepare(self):
         assert (
@@ -464,77 +701,41 @@ class StandardRecipeWithIndexes(BaseRecipe):
             raise ValueError(
                 "No template was specified in the the 'template' or 'template_card_index' recipe arguments, and no default templates are defined the card or task"
             )
+        if self.use_demos:
+            assert (
+                self.demos_pool is not None
+                and isoftype(self.demos_pool, List[Dict[str, Any]])
+            ) != (
+                self.demos_taken_from is not None
+                and self.demos_pool_size is not None
+                and self.demos_removed_from_data is not None
+            ), (
+                "The demos_pool must be specified by exactly one of two ways: explicitly, as a list of instances coming through parameter "
+                + "'demos_pool', or via parameters 'demos_taken_from', 'demos_pool_size', and 'demos_removed_from_data', "
+                + "that together direct its production."
+            )
 
-        super().prepare()
+        # now set self.demos_pool_size for the checks done by verify
+        if self.demos_pool:
+            self.demos_pool_size = len(self.demos_pool)
+        if self.demos_pool_size is not None and self.demos_pool_size == -1:
+            self.demos_pool_size = sys.maxsize
+
+        if isinstance(self.template, TemplatesList):
+            self.template = self.template.items
+        self.reset_pipeline()
 
 
-class StandardRecipe(StandardRecipeWithIndexes):
-    """This class represents a standard recipe for data processing and preparation.
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class BaseRecipe(DatasetRecipe):
+    pass
 
-    This class can be used to prepare a recipe.
-    with all necessary steps, refiners and renderers included. It allows to set various
-    parameters and steps in a sequential manner for preparing the recipe.
 
-    Args:
-        card (TaskCard):
-            TaskCard object associated with the recipe.
-        template (Template, optional):
-            Template object to be used for the recipe.
-        system_prompt (SystemPrompt, optional):
-            SystemPrompt object to be used for the recipe.
-        loader_limit (int, optional):
-            Specifies the maximum number of instances per stream to be returned from the loader (used to reduce loading time in large datasets)
-        format (SystemFormat, optional):
-            SystemFormat object to be used for the recipe.
-        metrics (List[str]):
-            list of catalog metrics to use with this recipe.
-        postprocessors (List[str]):
-            list of catalog processors to apply at post processing. (Not recommended to use from here)
-        group_by (List[Union[str, List[str]]]):
-            list of task_data or metadata keys to group global scores by.
-        train_refiner (StreamRefiner, optional):
-            Train refiner to be used in the recipe.
-        max_train_instances (int, optional):
-            Maximum training instances for the refiner.
-        validation_refiner (StreamRefiner, optional):
-            Validation refiner to be used in the recipe.
-        max_validation_instances (int, optional):
-            Maximum validation instances for the refiner.
-        test_refiner (StreamRefiner, optional):
-            Test refiner to be used in the recipe.
-        max_test_instances (int, optional):
-            Maximum test instances for the refiner.
-        demos_pool_size (int, optional):
-            Size of the demos pool.
-        num_demos (int, optional):
-            Number of demos to be used.
-        demos_pool_name (str, optional):
-            Name of the demos pool. Default is "demos_pool".
-        demos_taken_from (str, optional):
-            Specifies from where the demos are taken. Default is "train".
-        demos_field (str, optional):
-            Field name for demos. Default is "demos".
-        demos_removed_from_data (bool, optional):
-            whether to remove the demos from the source data, Default is True
-        sampler (Sampler, optional):
-            The Sampler used to select the demonstrations when num_demos > 0.
-        steps (List[StreamingOperator], optional):
-            List of StreamingOperator objects to be used in the recipe.
-        augmentor (Augmentor) :
-            Augmentor to be used to pseudo randomly augment the source text
-        instruction_card_index (int, optional):
-            Index of instruction card to be used for preparing the recipe.
-        template_card_index (int, optional):
-            Index of template card to be used for preparing the recipe.
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class StandardRecipeWithIndexes(DatasetRecipe):
+    pass
 
-    Methods:
-        prepare():
-            This overridden method is used for preparing the recipe
-            by arranging all the steps, refiners, and renderers in a sequential manner.
 
-    Raises:
-        AssertionError:
-            If both template and template_card_index are specified at the same time.
-    """
-
+@deprecation(version="2.0.0", alternative=DatasetRecipe)
+class StandardRecipe(DatasetRecipe):
     pass

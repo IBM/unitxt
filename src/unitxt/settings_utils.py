@@ -138,7 +138,7 @@ if Settings.is_uninitilized():
     settings.max_log_message_size = (int, 100000)
     settings.catalogs = None
     settings.artifactories = None
-    settings.default_recipe = "standard_recipe"
+    settings.default_recipe = "dataset_recipe"
     settings.default_verbosity = "info"
     settings.use_eager_execution = False
     settings.remote_metrics = []
@@ -186,6 +186,7 @@ if Constants.is_uninitilized():
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
     constants.image_tag = "unitxt-img"
+    constants.demos_pool_field = "_demos_pool_"
 
 
 def get_settings() -> Settings:
