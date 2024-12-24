@@ -37,10 +37,6 @@ jobs:
       run: coverage run -m unittest discover -s tests/library -p "test_*.py"
 
     - run: coverage report
-    - run: coverage xml
-    - run: rm .coverage
-    - run: cat coverage.xml
+
     - name: Upload Coverage to Coveralls
       uses: coverallsapp/github-action@v2
-      with:
-        file: ./coverage.xml
