@@ -2,14 +2,17 @@ import collections
 import copy
 import json
 import re
+import sys
 from typing import Any, Dict
 
 from unitxt import dataset_file
 from unitxt.artifact import fetch_artifact
 from unitxt.card import TaskCard
+from unitxt.catalog import get_from_catalog
 from unitxt.formats import SystemFormat
 from unitxt.loaders import LoadFromDictionary
 from unitxt.serializers import SingleTypeSerializer, TableSerializer
+from unitxt.splitters import SplitRandomMix
 from unitxt.standard import DatasetRecipe
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate, TemplatesList
@@ -304,6 +307,69 @@ class TestRecipes(UnitxtTestCase):
             "premise: I took the water bottle out of the backpack ",
             processed_input_instance["source"],
         )
+
+    # flake8: noqa: C416
+    def test_dataset_recipe_with_whole_stream_to_become_demos(self):
+        # glue.wnli has: train: 635 instances, validation: 71  and test: 146 (together: 852)
+        # take the whole of validation tobecome demos_pool
+        recipe = DatasetRecipe(
+            card="cards.wnli",
+            system_prompt="system_prompts.models.llama",
+            template_card_index=0,
+            format="formats.user_agent",
+            demos_taken_from="validation",
+            demos_pool_size=-1,
+            num_demos=3,
+        )
+        ms = recipe()
+
+        # assert 'validation' is wholly consumed for demos, not showing at the end of recipe
+        self.assertSetEqual({stream_name for stream_name in ms}, {"train", "test"})
+
+        tests = list(ms["test"])
+        task_data = json.loads(tests[0]["task_data"])
+        # assert maxsize is written as demos_pool_size
+        self.assertEqual(task_data["metadata"]["demos_pool_size"], sys.maxsize)
+
+    # flake8: noqa: C400
+    def test_dataset_recipe_with_whole_stream_to_become_demos_and_no_stream_left(self):
+        # tweaking wnli to become a card going through preprocess_steps with just one stream: 'validation'
+        wnli_card = get_from_catalog("cards.wnli")
+        wnli_card.preprocess_steps[0] = SplitRandomMix({"validation": "train[5%]"})
+
+        # now consume that single stream wholly for demos
+        with self.assertRaises(ValueError) as ve:
+            recipe = DatasetRecipe(
+                card=wnli_card,
+                system_prompt="system_prompts.models.llama",
+                template_card_index=0,
+                format="formats.user_agent",
+                demos_taken_from="validation",
+                demos_pool_size=-1,
+                num_demos=3,
+            )
+            ms = recipe()
+        # error: no instance is left to use the demos_pool made of the wholly consumed single input stream
+        self.assertEqual(
+            "The single input stream, 'validation' is to be wholly consumed for generating demos, and no instance is left to use these demos.",
+            str(ve.exception),
+        )
+
+        # but if recipe.demos_removed_from_data is false, that very stream will use the demos_pool
+        # and reach the end
+        recipe = DatasetRecipe(
+            card=wnli_card,
+            system_prompt="system_prompts.models.llama",
+            template_card_index=0,
+            format="formats.user_agent",
+            demos_taken_from="validation",
+            demos_pool_size=-1,
+            num_demos=3,
+            demos_removed_from_data=False,
+        )
+        ms = recipe()
+        self.assertListEqual(["validation"], [stream_name for stream_name in ms])
+        self.assertEqual(10, len(list(ms["validation"])))
 
     def test_dataset_recipe_with_catalog_wnli(self):
         recipe = DatasetRecipe(
