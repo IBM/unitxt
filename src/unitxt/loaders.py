@@ -162,23 +162,24 @@ class LoadHF(Loader):
     and it can filter datasets upon loading.
 
     Args:
-        path: The path or identifier of the dataset on the HuggingFace Hub.
-
-        name: An optional dataset name.
-
-        data_dir: Optional directory to store downloaded data.
-
-        split: Optional specification of which split to load.
-
-        data_files: Optional specification of particular data files to load.
-
-        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
-
-        streaming (bool): indicating if streaming should be used.
-
-        filtering_lambda: A lambda function for filtering the data after loading.
-
-        num_proc (int): Optional integer to specify the number of processes to use for parallel dataset loading.
+        path:
+            The path or identifier of the dataset on the HuggingFace Hub.
+        name:
+            An optional dataset name.
+        data_dir (optional):
+            directory to store downloaded data.
+        split (optional):
+            specification of which split to load.
+        data_files (optional):
+            specification of particular data files to load.
+        revision (optional):
+            The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
+        streaming (bool):
+            indicating if streaming should be used.
+        filtering_lambda (optional):
+            A lambda function for filtering the data after loading.
+        num_proc (int, optional):
+            specify the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset

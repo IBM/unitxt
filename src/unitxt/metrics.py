@@ -4929,14 +4929,18 @@ class IsCodeMixed(BulkInstanceMetric):
 class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
     """Metrics Ensemble class for creating ensemble of given metrics.
 
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        metrics (List[Union[Metric, str]]): List of metrics that will be ensemble.
-        weights (List[float]): Weight of each the metrics
-        InstanceMetric currently allows two reductions:
-        reduction_map (Dict[str, List[str]]. Parameter for specifying the redaction method of the global score.
-                                             (see it definition at InstanceMetric class). This class define its default
-                                             value to reduce by the mean of the main score.
+    Args:
+        main_score (str):
+            The main score label used for evaluation.
+        metrics (List[Union[Metric, str]]):
+            List of metrics that will be ensemble.
+        weights (List[float]):
+            Weight of each the metrics
+        reduction_map (Dict[str, List[str]]):
+            Specifies the redaction method of the global score.
+            InstanceMetric currently allows two reductions
+            (see it definition at InstanceMetric class).
+            This class define its default value to reduce by the mean of the main score.
 
     """
 
