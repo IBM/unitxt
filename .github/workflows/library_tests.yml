@@ -37,4 +37,7 @@ jobs:
       run:  coverage run --omit=*/preparation -m unittest discover -s tests/library -p "test_*.py"
 
     - name: Upload Coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v5
+      with:
+        fail_ci_if_error: true
+        root_dir: /home/runner/work/unitxt/unitxt
