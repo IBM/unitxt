@@ -2309,6 +2309,11 @@ class Rouge(InstanceMetric, NLTKMixin):
         self.rouge_scorer = rouge_scorer
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        if len(references) == 0:
+            raise Exception(
+                f"No references passed passed for Rouge metric.  Rouge expects at least one reference answer per instance. The corresponding prediction is: {prediction}"
+            )
+
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
             prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))

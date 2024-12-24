@@ -687,6 +687,18 @@ class YesNoTemplate(InputFormatTemplate):
         return self.no_answer, [self.no_answer]
 
 
+class NullTemplate(Template):
+    """Templates that returns empty prompt and no references."""
+
+    postprocessors = []
+
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
+        return ""
+
+    def reference_fields_to_target_and_references(self, reference_fields):
+        return "", []
+
+
 class KeyValTemplate(Template):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
@@ -790,10 +802,7 @@ class MultiReferenceTemplate(InputOutputTemplate):
                 Documentation.ADDING_TEMPLATE,
             )
         if len(references) == 0:
-            raise UnitxtError(
-                f"No references found in field '{self.references_field}' of instance. MultiReferenceTemplate requires at least one reference.",
-                Documentation.ADDING_TEMPLATE,
-            )
+            return "", []
 
         if self.random_reference:
             random_generator = new_random_generator(reference_fields)

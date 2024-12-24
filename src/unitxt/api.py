@@ -7,7 +7,11 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from .artifact import fetch_artifact
 from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
-from .inference import InferenceEngine, LogProbInferenceEngine
+from .inference import (
+    InferenceEngine,
+    LogProbInferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
+)
 from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
@@ -226,9 +230,17 @@ def infer(
     return_data: bool = False,
     return_log_probs: bool = False,
     return_meta_data: bool = False,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    if previous_messages is not None:
+
+        def add_previous_messages(example, index):
+            example["source"] = previous_messages[index] + example["source"]
+            return example
+
+        dataset = dataset.map(add_previous_messages, with_indices=True)
     engine, _ = fetch_artifact(engine)
     if return_log_probs:
         if not isinstance(engine, LogProbInferenceEngine):
@@ -263,4 +275,28 @@ def infer(
             dataset = dataset.add_column("infer_meta_data", infer_output_list)
         dataset = dataset.add_column("prediction", predictions)
         return dataset.add_column("raw_prediction", raw_predictions)
+    return predictions
+
+
+def select(
+    instance_or_instances,
+    engine: OptionSelectingByLogProbsInferenceEngine,
+    dataset_query: Optional[str] = None,
+    return_data: bool = False,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
+    **kwargs,
+):
+    dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    if previous_messages is not None:
+
+        def add_previous_messages(example, index):
+            example["source"] = previous_messages[index] + example["source"]
+            return example
+
+        dataset = dataset.map(add_previous_messages, with_indices=True)
+    engine, _ = fetch_artifact(engine)
+    predictions = engine.select(dataset)
+    # predictions = post_process(raw_predictions, dataset)
+    if return_data:
+        return dataset.add_column("prediction", predictions)
     return predictions

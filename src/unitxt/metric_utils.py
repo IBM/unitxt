@@ -291,6 +291,7 @@ class PostProcessRecipe(SequentialOperatorInitializer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            LoadJson(field="task_data"),
             _post_process_steps,
         ]
 
