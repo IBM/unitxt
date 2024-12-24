@@ -38,7 +38,7 @@ jobs:
 
     - run: coverage xml
     - run: rm .coverage
-
+    - run: cat coverage.xml
     - name: Upload Coverage to Coveralls
       uses: coverallsapp/github-action@v2
       with:
