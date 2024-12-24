@@ -244,8 +244,12 @@ skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*
 
 [tool.coverage.run]
 source = ["src/unitxt"]
-
-[tool.coverage.report]
 omit = [
-    "src/unitxt/inference.py"
+    "src/unitxt/inference.py",
+    "src/unitxt/ui/*",
+    "src/unitxt/service/*",
+    "src/unitxt/test_utils/*",
+    "src/unitxt/dataset.py",
+    "src/unitxt/metric.py",
+    "src/unitxt/blocks.py",
 ]
