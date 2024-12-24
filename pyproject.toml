@@ -243,9 +243,9 @@ regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=
 skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*cards/attaq_500*,*cards/cohere_for_ai*,*egg-info*,*/logs/*'
 
 [tool.coverage.run]
-source = ["src"]
+source = ["src/unitxt"]
 
 [tool.coverage.report]
 omit = [
-    "src/inference.py"
+    "src/unitxt/inference.py"
 ]
