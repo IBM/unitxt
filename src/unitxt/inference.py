@@ -1588,7 +1588,7 @@ class OpenAiInferenceEngine(
 
 
 class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
-    label: str = "AZURE_OPENAI"
+    label: str = "azure_openai"
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
         api_key_var_name = f"{self.label.upper()}_API_KEY"
