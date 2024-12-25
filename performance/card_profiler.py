@@ -75,7 +75,7 @@ class CardProfiler:
         ms = recipe.verbalization.process(ms)
         return recipe.finalize.process(ms)
 
-    def profiler_print_first_dicts(self, ms: MultiStream, card_name: str):
+    def profiler_list_all_streams(self, ms: MultiStream, card_name: str):
         logger.info(
             f"The multistream generated for card '{card_name}' has {len(ms)} streams of the following lengths:"
         )
@@ -83,12 +83,13 @@ class CardProfiler:
             logger.info(f"{stream_name} is of length {len(list(ms[stream_name]))}")
 
     def profiler_do_the_profiling(self, card_name: str, **kwargs):
+        logger.info(f"\nProfiling card {card_name}")
         recipe = self.profiler_instantiate_recipe(**kwargs)
         ms = self.profiler_load_by_recipe(recipe)
         ms = self.profiler_metadata_and_standardization(ms, recipe)
         ms = self.profiler_processing_demos_metadata(ms, recipe)
         ms = self.profiler_verbalize_and_finalize(ms, recipe)
-        self.profiler_print_first_dicts(ms, card_name)
+        self.profiler_list_all_streams(ms, card_name)
 
 
 def profile_from_cards():
@@ -113,7 +114,21 @@ def profile_from_cards():
         )
 
 
-cards = ["cards.cola", "cards.dart"]  # the benchmark
+def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
+    relevant_lines = list(
+        filter(
+            lambda x: f"({func_name})" in x and file_name in x,
+            pst_printout.split("\n")[7:],
+        )
+    )
+    if len(relevant_lines) == 0:
+        return 0.0
+    return sum(
+        round(float(relevant_line.split()[3]), 3) for relevant_line in relevant_lines
+    )
+
+
+cards = ["cards.cola", "cards.wnli"]  # the benchmark
 
 
 def main():
@@ -143,19 +158,23 @@ def main():
         pst = pstats.Stats(temp_prof_file_path, stream=f)
         pst.strip_dirs()
         pst.sort_stats("name")  # sort by function name
-        pst.print_stats("profiler_do_the_profiling|profiler_load_by_recipe")
+        pst.print_stats(
+            "profiler_do_the_profiling|profiler_load_by_recipe|load_data|stream_dataset|load_dataset|load_iterables"
+        )
         s = f.getvalue()
         assert s.split("\n")[7].split()[3] == "cumtime"
-        assert "profiler_do_the_profiling" in s.split("\n")[8]
-        tot_time = round(float(s.split("\n")[8].split()[3]), 3)
-        assert "profiler_load_by_recipe" in s.split("\n")[9]
-        load_time = round(float(s.split("\n")[9].split()[3]), 3)
-        diff = round(tot_time - load_time, 3)
+        tot_time = find_cummtime_of("profiler_do_the_profiling", "card_profiler.py", s)
+        load_time = find_cummtime_of("profiler_load_by_recipe", "card_profiler.py", s)
+        just_load_no_initial_ms_time = find_cummtime_of(
+            "load_iterables", "loaders.py", s
+        )
+        diff = round(tot_time - just_load_no_initial_ms_time, 3)
 
         # Data to be written
         dictionary = {
             "total_time": tot_time,
             "load_time": load_time,
+            "load_time_no_initial_ms": just_load_no_initial_ms_time,
             "net_time": diff,
             "cards_tested": cards,
             "used_eager_mode": settings.use_eager_execution,

@@ -39,31 +39,9 @@ jobs:
         mkdir -p performance_action
         mkdir -p performance_action/logs
         echo "" > performance_action/__init__.py
-        echo " " > performance_action/logs/cards_benchmark.prof
-        echo " " > performance_action/logs/cards_benchmark.json
-        cp performance/card_profiler.py performance_action/card_profiler.py
-        cp performance/compare_performance_results.py performance_action/compare_performance_results.py
+        echo " " > performance_action/logs/bluebench.json.json
+        cp performance/bluebench.py performance_action/bluebench.py
 
-    - name: Checkout main branch
-      uses: actions/checkout@v4
-      with:
-        ref: main
-        clean: false
-
-    - name: Run performance on main branch
+    - name: Run performance profiler on PR branch
       run: |
-        python performance_action/card_profiler.py --output_file performance_action/main_results.json
-
-    - name: Checkout PR branch
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.head_ref }}
-        clean: false
-
-    - name: Run performance on PR branch
-      run: |
-        python performance_action/card_profiler.py --output_file performance_action/pr_results.json
-
-    - name: Compare main and PR performance results
-      run: |
-        python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
+        python performance_action/bluebench.py --output_file performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
