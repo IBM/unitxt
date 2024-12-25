@@ -54,7 +54,7 @@ class BlueBenchProfiler:
     to use from another computer in order to view results shown by that server)
 
     In the browser window, look (ctrl-F) for methods named  profiler_...  to read profiling data for the major steps in the process.
-    You will find the total time of each step, accumulated over all cards in the benchmark.
+    You will find the total time of each step, accumulated over all recipes in the benchmark.
     """
 
     def profiler_instantiate_benchmark_recipe(
@@ -116,8 +116,10 @@ dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]
 
 
 def profile_benchmark_blue_bench():
-    card_profiler = BlueBenchProfiler()
-    card_profiler.profiler_do_the_profiling(dataset_query=dataset_query, split="test")
+    bluebench_profiler = BlueBenchProfiler()
+    bluebench_profiler.profiler_do_the_profiling(
+        dataset_query=dataset_query, split="test"
+    )
 
 
 def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
@@ -129,14 +131,15 @@ def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float
     )
     if len(relevant_lines) == 0:
         return 0.0
-    return sum(
+    sumtimes = sum(
         round(float(relevant_line.split()[3]), 3) for relevant_line in relevant_lines
     )
+    return round(sumtimes, 3)
 
 
 def main():
     # Parse command-line arguments
-    parser = argparse.ArgumentParser(description="Card Profiler")
+    parser = argparse.ArgumentParser(description="Bluebench Profiler")
     parser.add_argument(
         "--output_file",
         type=str,
