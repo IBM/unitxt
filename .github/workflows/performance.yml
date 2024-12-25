@@ -51,6 +51,11 @@ jobs:
         echo " " > performance_action/logs/bluebench.json.json
         cp performance/bluebench_profiler.py performance_action/bluebench_profiler.py
         cp performance/compare_benchmark_performance_results.py performance_action/compare_benchmark_performance_results.py
+    
+    - name: Run performance on PR just to warm the cache, output will be overwritten
+      run : |
+        python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json
+
     - name: Checkout main branch
       uses: actions/checkout@v4
       with:
