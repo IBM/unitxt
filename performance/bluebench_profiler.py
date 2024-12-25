@@ -80,7 +80,7 @@ class BlueBenchProfiler:
             # to charge here for the time of generating all instances
             return list(dataset)
 
-    def profiler_instantiate_model() -> InferenceEngine:
+    def profiler_instantiate_model(self) -> InferenceEngine:
         return CrossProviderInferenceEngine(
             model="llama-3-8b-instruct",
             max_tokens=30,
