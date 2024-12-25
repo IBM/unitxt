@@ -33,14 +33,14 @@ ratio2 = pr_perf["evaluation_time"] / main_perf["evaluation_time"]
 
 line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
 line2 = "--------------------|-------------|-------------|---------------\n"
-line3 = f" Total time         | {main_perf['total_time']:<11} | {pr_perf['total_time']:<11} | {pr_perf['total_time']/main_perf['total_time']:.2f}\n"
-line4 = f" Load time          | {main_perf['load_time_no_initial_ms']:<11} | {pr_perf['load_time_no_initial_ms']:<11} | {pr_perf['load_time_no_initial_ms']/main_perf['load_time_no_initial_ms']:.2f}\n"
-line5 = f" DS Gen. inc. Load  | {main_perf['generate_benchmark_dataset_time']:<11} | {pr_perf['generate_benchmark_dataset_time']:<11} | {pr_perf['generate_benchmark_dataset_time']/main_perf['generate_benchmark_dataset_time']:.2f}\n"
-line6 = f" DS Gen. exc. Load  | {main_perf['generate_benchmark_dataset_time']-main_perf['load_time_no_initial_ms']:<11} | {pr_perf['generate_benchmark_dataset_time']-pr_perf['load_time_no_initial_ms']:<11} | {ratio1:.2f}\n"
-line7 = f" Inference time     | {main_perf['inference_time']:<11} | {pr_perf['inference_time']:<11} | {pr_perf['inference_time']/main_perf['inference_time']:.2f}\n"
-line8 = f" Evaluate  time     | {main_perf['evaluation_time']:<11} | {pr_perf['evaluation_time']:<11} | {ratio2:.2f}\n"
-line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:<11} | {pr_perf['instantiate_benchmark_time']:<11} | {pr_perf['instantiate_benchmark_time']/main_perf['instantiate_benchmark_time']:.2f}\n"
-line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:<11} | {pr_perf['instantiate_model_time']:<11} | {pr_perf['instantiate_model_time']/main_perf['instantiate_model_time']:.2f}\n"
+line3 = f" Total time         | {main_perf['total_time']:>11} | {pr_perf['total_time']:>11} | {pr_perf['total_time']/main_perf['total_time']:.2f}\n"
+line4 = f" Load time          | {main_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']/main_perf['load_time_no_initial_ms']:.2f}\n"
+line5 = f" DS Gen. inc. Load  | {main_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time']/main_perf['generate_benchmark_dataset_time']:.2f}\n"
+line6 = f" DS Gen. exc. Load  | {round(main_perf['generate_benchmark_dataset_time']-main_perf['load_time_no_initial_ms'], 3):>11} | {round(pr_perf['generate_benchmark_dataset_time']-pr_perf['load_time_no_initial_ms'], 3):>11} | {ratio1:.2f}\n"
+line7 = f" Inference time     | {main_perf['inference_time']:>11} | {pr_perf['inference_time']:>11} | {pr_perf['inference_time']/main_perf['inference_time']:.2f}\n"
+line8 = f" Evaluate  time     | {main_perf['evaluation_time']:>11} | {pr_perf['evaluation_time']:>11} | {ratio2:.2f}\n"
+line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']/main_perf['instantiate_benchmark_time']:.2f}\n"
+line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']/main_perf['instantiate_model_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
 print(line1 + line2 + line3 + line4 + line5 + line6 + line7 + line8 + line9 + line10)
