@@ -19,7 +19,7 @@ with open(args.main_perf_file) as openfile:
 with open(args.pr_perf_file) as openfile:
     pr_perf = json.load(openfile)
 
-print(f"dataset_query = {main_perf['dataset_query']}")
+print(f"dataset_query = \"{main_perf['dataset_query']}\"")
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 
