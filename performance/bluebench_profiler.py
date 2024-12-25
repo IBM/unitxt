@@ -7,7 +7,6 @@ import tempfile
 from io import StringIO
 from typing import Any, Dict, List, Union
 
-from datasets import DatasetDict
 from unitxt.api import evaluate, load_recipe
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
@@ -33,14 +32,14 @@ class BlueBenchProfiler:
 
     from unitxt root dir, run the following linux commands:
 
-    python performance/card_profiler.py --output_file=<path_to_a_json_file>
+    python performance/bluebench_profiler.py --output_file=<path_to_a_json_file>
 
     The script computes the total runtime of the benchmark, and the time spent in loading the datasets,
+    prepare it for inference (running throughout the recipes)
     then the inference of the overall dataset (made by grouping the many recipes products), and then
-    the evaluation, and wraps all results into a json output_file,
-    which is written in the path provided.
+    the evaluation, and wraps all results into a json output_file, which is written in the path provided.
 
-    If --output_file cmd line argument is not provided, the default path is taken to be 'performance/logs/cards.json'.
+    If --output_file cmd line argument is not provided, the default path is taken to be 'performance/logs/bluebench.json'.
 
     In addition, the script generates a binary file named xxx.prof, as specified in field
     "performance.prof file" of the json output_file,
@@ -87,7 +86,7 @@ class BlueBenchProfiler:
         )
 
     def profiler_infer_predictions(
-        self, model: InferenceEngine, dataset: DatasetDict
+        self, model: InferenceEngine, dataset: List[Dict[str, Any]]
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return model.infer(dataset=dataset)
 
@@ -110,10 +109,10 @@ class BlueBenchProfiler:
         evaluation_result = self.profiler_evaluate_predictions(
             predictions=predictions, dataset=dataset
         )
-        print(json.dumps(evaluation_result))
+        logger.critical(f"length of evaluation_result: {len(evaluation_result)}")
 
 
-dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=6]"
+dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"
 
 
 def profile_benchmark_blue_bench():
@@ -208,8 +207,6 @@ def main():
             json.dump(dictionary, outfile)
 
         logger.info(f"JSON output saved to: {args.output_file}")
-
-        print(json.dumps(dictionary))
 
 
 if __name__ == "__main__":
