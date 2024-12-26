@@ -537,12 +537,11 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int, List[str]]]):
         all_classes = intermediates[0][2]
         num_classes = len(all_classes)
 
-        # Build lists of true (y_true) and predicted (y_pred) indices
         y_true = []
         y_pred = []
-        for pred_idx, ref_idx, classes in intermediates:
-            y_pred.append(pred_idx if 0 <= pred_idx < num_classes else -1)
-            y_true.append(ref_idx if 0 <= ref_idx < num_classes else -1)
+        for pred_idx, ref_idx, _ in intermediates:
+            y_pred.append(pred_idx)
+            y_true.append(ref_idx)
 
         # Compute F1 scores
         f1_macro = self._metric(
