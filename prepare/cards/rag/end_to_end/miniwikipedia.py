@@ -82,10 +82,7 @@ card = TaskCard(
                 "id": "document_id",
             },
         ),
-        ListFieldValues(
-            fields=["passage"],
-            to_field="passages",
-        ),
+        Wrap(field="passage", inside="list", to_field="passages"),
         Set(
             fields={
                 "metadata_field": "",
