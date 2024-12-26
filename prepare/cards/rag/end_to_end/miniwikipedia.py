@@ -35,10 +35,7 @@ card = TaskCard(
                 "metadata_field": "",
             }
         ),
-        ListFieldValues(
-            fields=["answer"],
-            to_field="reference_answers",
-        ),
+        Wrap(field="answer", inside="list", to_field="reference_answers"),
     ],
     task="tasks.rag.end_to_end",
     # templates=["templates.empty"],
