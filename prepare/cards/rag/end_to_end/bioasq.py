@@ -21,9 +21,11 @@ card = TaskCard(
                 "id": "question_id",
             },
         ),
-        ExecuteExpression(
-            expression="[str(d) for d in relevant_passage_ids]",
+        Cast(
+            field="relevant_passage_ids",
+            to="str",
             to_field="reference_context_ids",
+            process_every_value=True
         ),
         Set(
             fields={
