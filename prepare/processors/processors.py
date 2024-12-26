@@ -28,6 +28,7 @@ from unitxt.processors import (
     Substring,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
+    TakeLastNonEmptyLine,
     ToYesOrNone,
     YesNoToInt,
     YesToOneElseZero,
@@ -69,6 +70,12 @@ def add_processor_and_operator_to_catalog(
 add_processor_and_operator_to_catalog(
     artifact_name="take_first_non_empty_line",
     operator=TakeFirstNonEmptyLine(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="take_last_non_empty_line",
+    operator=TakeLastNonEmptyLine(),
     overwrite=True,
 )
 

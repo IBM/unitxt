@@ -132,6 +132,14 @@ class TakeFirstNonEmptyLine(FieldOperator):
         return parts[0].strip()
 
 
+class TakeLastNonEmptyLine(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        parts = str(text).strip().split("\n")
+        if len(parts) == 0:
+            return ""
+        return parts[-1].strip()
+
+
 class ConvertToBoolean(FieldOperator):
     def process_value(self, text: Any) -> Any:
         clean_instance = str(text).strip().lower()
