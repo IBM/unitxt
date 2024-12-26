@@ -10,7 +10,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict, namedtuple
 from dataclasses import field
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import numpy
 import numpy as np
@@ -396,6 +396,7 @@ class MapReduceMetric(
     ConfidenceIntervalMixin,
     Generic[PredictionType, IntermediateType],
 ):
+    score_prefix = ""
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
@@ -417,9 +418,12 @@ class MapReduceMetric(
     def disable_confidence_interval_calculation(self):
         self.n_resamples = None
 
-    def annotate_main_score(self, scores):
-        scores["score_name"] = self.main_score
-        scores["score"] = scores[self.main_score]
+    def annotate_scores(self, scores):
+        scores = {
+            **{self.score_prefix + key: val for key, val in scores.items()},
+            "score_name": self.score_prefix + self.main_score,
+            "score": scores[self.main_score],
+        }
         for level in ["high", "low"]:
             if f"{self.main_score}_ci_{level}" in scores:
                 scores[f"score_ci_{level}"] = scores[f"{self.main_score}_ci_{level}"]
@@ -497,11 +501,13 @@ class MapReduceMetric(
         instances_scores = []
         for intermediate in intermediates_list:
             instance_score = self.reduce_one(intermediate)
-            instance_score = self.annotate_main_score(instance_score)
+            instance_score = self.annotate_scores(instance_score)
             instances_scores.append(instance_score)
 
         global_scores = self.reduce_and_bootstrap(intermediates_list)
-        global_scores = self.annotate_main_score(global_scores)
+        global_scores = self.annotate_scores(global_scores)
+
+        global_scores["num_of_instances"] = len(intermediates_list)
 
         return instances_scores, global_scores
 
@@ -575,6 +581,12 @@ class AccuracyFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
 class F1Fast(MapReduceMetric[str, Tuple[int, int, List[str]]]):
     main_score = "f1"
+    averages: List[Literal["f1", "macro", "micro", "per_class"]] = [
+        "f1",
+        "micro",
+        "macro",
+        "per_class",
+    ]
 
     def prepare(self):
         super().prepare()
@@ -603,28 +615,47 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int, List[str]]]):
             y_pred.append(pred_idx)
             y_true.append(ref_idx)
 
-        # Compute F1 scores
-        f1_macro = self._metric(
-            y_true, y_pred, average="macro", labels=range(num_classes), zero_division=0
-        )
-        f1_micro = self._metric(
-            y_true, y_pred, average="micro", labels=range(num_classes), zero_division=0
-        )
-        # For per-class F1, average=None returns an array of F1 for each label
-        f1_per_class = self._metric(
-            y_true, y_pred, average=None, labels=range(num_classes), zero_division=0
-        )
+        result = {}
 
-        # Create a flat dict of all metrics
-        result = {
-            "f1": float(f1_macro),  # Use macro-F1 as the "main_score"
-            "f1_macro": float(f1_macro),
-            "f1_micro": float(f1_micro),
-        }
+        if "f1" in self.averages:
+            result["f1"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=range(num_classes),
+                    zero_division=0,
+                )
+            )
 
-        # Add class-wise F1 using "f1_class_<class_name>" keys
-        for class_name, score in zip(all_classes, f1_per_class):
-            result[f"f1_{class_name}"] = float(score)
+        if "micro" in self.averages:
+            result["f1_micro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="micro",
+                    labels=range(num_classes),
+                    zero_division=0,
+                )
+            )
+
+        if "macro" in self.averages:
+            result["f1_macro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=range(num_classes),
+                    zero_division=0,
+                )
+            )
+
+        if "per_class" in self.averages:
+            f1_per_class = self._metric(
+                y_true, y_pred, average=None, labels=range(num_classes), zero_division=0
+            )
+            for class_name, score in zip(all_classes, f1_per_class):
+                result[f"f1_{class_name}"] = float(score)
 
         return result
 
@@ -2149,17 +2180,13 @@ class HuggingfaceInstanceMetric(InstanceMetric):
         return score
 
 
-class Meteor(InstanceMetric):
+class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "meteor"
-    ci_scores = ["meteor"]
-    reduction_map = {"mean": ["meteor"]}
-    prediction_type = str
-
-    _requirements_list: List[str] = ["nltk"]
+    reduction = MeanReduction()
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
     alpha: float = 0.9
     beta: int = 3
     gamma: float = 0.5
-    # unitxt uses nltk version >= 3.8
 
     def prepare(self):
         super().prepare()
@@ -2173,15 +2200,41 @@ class Meteor(InstanceMetric):
         self.word_tokenize = word_tokenize
         self.meteor_score = meteor_score
 
-    def verify(self):
-        import importlib.metadata as importlib_metadata
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {self.main_score: score}
 
-        from datasets.config import version
 
-        nltk_version = version.parse(importlib_metadata.version("nltk"))
-        assert nltk_version >= version.Version(
-            "3.6.6"
-        ), "nltk version must be at least 3.6.6"
+class Meteor(InstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = str
+
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
 
     def compute(self, references, prediction, task_data):
         score = self.meteor_score.meteor_score(

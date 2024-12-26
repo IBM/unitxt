@@ -383,6 +383,53 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def test_f1_micro_map_reduce_with_prefix(self):
+        metric = F1Fast(main_score="f1_micro", averages=["micro"], score_prefix="my_")
+
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+        task_data = [
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+        ]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
+        )
+
+        expected_global_result = {
+            "my_f1_micro": 5 / 6,
+            "score": 5 / 6,
+            "score_name": "my_f1_micro",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 0.0, "score": 0.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
     def test_f1_errors(self):
         metric = F1Micro()
 
@@ -628,7 +675,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
     def test_f1_macro_fast(self):
-        metric = F1Fast(main_score="f1_macro")
+        metric = F1Fast(main_score="f1_macro", averages=["macro", "per_class"])
         references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
         predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
         task_data = [
