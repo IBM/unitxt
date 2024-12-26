@@ -32,6 +32,7 @@ from .dataclass import (
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
 from .inference import (
+    AzureOpenAIInferenceEngine,
     HFPipelineBasedInferenceEngine,
     IbmGenAiInferenceEngine,
     InferenceEngine,
@@ -4895,6 +4896,13 @@ class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
     generation_kwargs = {"logprobs": True, "max_tokens": 5, "temperature": 0.0}
     _requirements_list: list[str] = ["openai"]
     inference_engine_class = OpenAiInferenceEngine
+    host_name = "openai"
+
+
+class GenerativeBinaryJudgeOpenAiAzure(GenerativeBinaryJudge):
+    generation_kwargs = {"logprobs": True, "max_tokens": 5, "temperature": 0.0}
+    _requirements_list: list[str] = ["openai"]
+    inference_engine_class = AzureOpenAIInferenceEngine
     host_name = "openai"
 
 

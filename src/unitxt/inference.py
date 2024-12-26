@@ -401,6 +401,44 @@ class OpenAiInferenceEngine(
         return outputs
 
 
+class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
+    label: str = "azure_openai"
+
+    def _prepare_credentials(self):
+        api_key_var_name = f"{self.label.upper()}_API_KEY"
+        api_key = self.credentials.get(
+            "api_key", os.environ.get(api_key_var_name, None)
+        )
+        assert api_key, (
+            f"Error while trying to run {self.label}. "
+            f"Please set the env variable: '{api_key_var_name}'"
+        )
+
+        azure_openapi_host = self.credentials.get(
+            "azure_openapi_host", os.environ.get(f"{self.label.upper()}_HOST", None)
+        )
+
+        api_version = self.credentials.get(
+            "api_version", os.environ.get("OPENAI_API_VERSION", None)
+        )
+        assert (
+            api_version and azure_openapi_host
+        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
+
+        return {"api_key": api_key, "api_url": api_url}
+
+    def create_client(self):
+        from openai import AzureOpenAI
+
+        self.credentials = self._prepare_credentials()
+        return AzureOpenAI(
+            api_key=self.credentials["api_key"],
+            base_url=self.credentials["api_url"],
+            default_headers=self.get_default_headers(),
+        )
+
+
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     def create_client(self):
         from openai import OpenAI

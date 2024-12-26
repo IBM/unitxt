@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import (
     GenerativeBinaryJudgeBAM,
-    GenerativeBinaryJudgeOpenAi,
+    GenerativeBinaryJudgeOpenAiAzure,
     GenerativeBinaryJudgeVLLM,
     GenerativeBinaryJudgeWML,
     MetricPipeline,
@@ -28,7 +28,7 @@ metric_type_to_template = {
 model_names_to_metric_classes = {
     "meta-llama/llama-3-1-70b-instruct": [GenerativeBinaryJudgeWML],
     "meta-llama/llama-3-70b-instruct": [GenerativeBinaryJudgeBAM],
-    "gpt-4-turbo": [GenerativeBinaryJudgeOpenAi],
+    "gpt-4-turbo": [GenerativeBinaryJudgeOpenAiAzure],
     "mistralai/mixtral-8x7b-instruct-v01": [
         GenerativeBinaryJudgeWML,
         GenerativeBinaryJudgeBAM,
@@ -95,7 +95,15 @@ def add_judge_metrics():
                             ),
                         ],
                     )
-
+                    # test that the metric works
+                    # multi_stream = MultiStream.from_iterables(
+                    #     {"test": test_examples}, copying=True
+                    # )
+                    # exs = list(metric_pipeline(multi_stream)["test"])
+                    # metric_outputs = [
+                    #     ex["score"]["instance"][metric_name] for ex in exs
+                    # ]
+                    # m = metric_outputs[0]
                     add_to_catalog(
                         metric_pipeline,
                         name=f"metrics.rag.{metric_type}.{metric_name}",
