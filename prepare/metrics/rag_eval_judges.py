@@ -28,7 +28,7 @@ metric_type_to_template = {
 model_names_to_metric_classes = {
     "meta-llama/llama-3-1-70b-instruct": [GenerativeBinaryJudgeWML],
     "meta-llama/llama-3-70b-instruct": [GenerativeBinaryJudgeBAM],
-    "gpt-4-turbo": [GenerativeBinaryJudgeOpenAiAzure],
+    "gpt-4-turbo-2024-04-09": [GenerativeBinaryJudgeOpenAiAzure],
     "mistralai/mixtral-8x7b-instruct-v01": [
         GenerativeBinaryJudgeWML,
         GenerativeBinaryJudgeBAM,
