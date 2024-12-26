@@ -76,7 +76,7 @@ card = TaskCard(
                 "train": "passages[100%]",
             }
         ),
-        CastFields(fields={"id": "str"}),
+        Cast(field="id", to="str"}),
         Copy(
             field_to_field={
                 "id": "document_id",
