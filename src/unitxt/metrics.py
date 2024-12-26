@@ -4900,7 +4900,12 @@ class GenerativeBinaryJudgeOpenAi(GenerativeBinaryJudge):
 
 
 class GenerativeBinaryJudgeOpenAiAzure(GenerativeBinaryJudge):
-    generation_kwargs = {"logprobs": True, "max_tokens": 5, "temperature": 0.0}
+    generation_kwargs = {
+        "logprobs": True,
+        "max_tokens": 5,
+        "temperature": 0.0,
+        "top_logprobs": 5,
+    }
     _requirements_list: list[str] = ["openai"]
     inference_engine_class = AzureOpenAIInferenceEngine
     host_name = "openai"
