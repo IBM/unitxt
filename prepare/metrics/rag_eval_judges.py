@@ -54,7 +54,14 @@ def add_judge_metrics():
                     input_fields_str,
                     template_name,
                 ) in input_fields_to_template_name.items():
-                    metric_name = f"""{metric_type}_{input_fields_str}_judge_{judge_model_name.split("/")[-1].replace("-","_")}"""
+                    model_short_name = (
+                        judge_model_name.split("/")[-1]
+                        .split("-2024")[0]
+                        .replace("-", "_")
+                    )
+                    metric_name = (
+                        f"""{metric_type}_{input_fields_str}_judge_{model_short_name}"""
+                    )
 
                     if judge_metric_class == GenerativeBinaryJudgeBAM:
                         metric_name += "_bam"
