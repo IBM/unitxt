@@ -17,6 +17,7 @@ jobs:
     env:
       OS: ubuntu-latest
       UNITXT_DEFAULT_VERBOSITY: error
+      UNITXT_MOCK_INFERENCE_MODE: "True"
       DATASETS_VERBOSITY: error
       HF_HUB_VERBOSITY: error
       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
@@ -40,7 +41,7 @@ jobs:
         curl -LsSf https://astral.sh/uv/install.sh | sh
         uv pip install --system ".[tests,watsonx,inference-tests]"
         uv pip install --system litellm
-        uv pip install --system diskcache 
+        uv pip install --system diskcache
         huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
 
     - name: Prepare the dirs for performance evaluation in main
@@ -51,7 +52,7 @@ jobs:
         echo " " > performance_action/logs/bluebench.json.json
         cp performance/bluebench_profiler.py performance_action/bluebench_profiler.py
         cp performance/compare_benchmark_performance_results.py performance_action/compare_benchmark_performance_results.py
-    
+
     - name: Run performance on PR just to warm the cache, output will be overwritten
       run : |
         python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json
