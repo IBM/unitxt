@@ -2,9 +2,9 @@
     "__type__": "metric_pipeline",
     "main_score": "answer_correctness_q_a_gt_judge_gpt_4_turbo",
     "metric": {
-        "__type__": "generative_binary_judge_open_ai",
+        "__type__": "generative_binary_judge_open_ai_azure",
         "main_score": "answer_correctness_q_a_gt_judge_gpt_4_turbo",
-        "model_name": "gpt-4-turbo",
+        "model_name": "gpt-4-turbo-2024-04-09",
         "task_name": "tasks.rag_eval.answer_correctness.binary",
         "template_name": "templates.rag_eval.answer_correctness.judge_loose_match_no_context_logprobs",
         "model_format_name": "formats.empty"
