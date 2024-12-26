@@ -30,6 +30,7 @@ from unitxt.processors import (
     TakeFirstWord,
     TakeLastNonEmptyLine,
     ToYesOrNone,
+    Upper,
     YesNoToInt,
     YesToOneElseZero,
 )
@@ -98,6 +99,10 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="lower_case", operator=Lower(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="upper_case", operator=Upper(), overwrite=True
 )
 
 add_processor_and_operator_to_catalog(

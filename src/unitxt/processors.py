@@ -165,6 +165,11 @@ class Lower(FieldOperator):
         return text.lower()
 
 
+class Upper(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).upper()
+
+
 @deprecation("2.0.0", alternative=Lower)
 class LowerCase(Lower):
     pass
