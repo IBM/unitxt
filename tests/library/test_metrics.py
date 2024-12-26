@@ -13,6 +13,7 @@ from unitxt.metrics import (
     Detector,
     F1Binary,
     F1BinaryPosOnly,
+    F1Fast,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
@@ -581,6 +582,41 @@ class TestMetrics(UnitxtTestCase):
 
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_macro_fast(self):
+        metric = F1Fast(main_score="f1_macro")
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+        task_data = [
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+            {"classes": ["dog", "cat"]},
+        ]
+        # recall class 'dog'  = 2/3  = 0.666        precision= 2/2 = 1    f1 = 0.8
+        # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75 f1 = 0.857142857143
+        # macro f1 = (0.8+0.847)/2
+        global_target = 0.82857142
+        global_target_dog = 0.8
+        global_target_cat = 0.857142857143
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=task_data,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertAlmostEqual(
