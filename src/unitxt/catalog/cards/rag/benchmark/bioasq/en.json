@@ -1,0 +1,44 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "enelpol/rag-mini-bioasq",
+        "name": "question-answer-passages",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "id": "question_id"
+            }
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "[str(d) for d in relevant_passage_ids]",
+            "to_field": "reference_context_ids"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "reference_contexts": [],
+                "is_answerable_label": true,
+                "metadata_field": ""
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "answer"
+            ],
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.end_to_end",
+    "templates": {
+        "default": "templates.rag.end_to_end.json_predictions"
+    }
+}
