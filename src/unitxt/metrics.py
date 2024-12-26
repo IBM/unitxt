@@ -361,7 +361,8 @@ class ConfidenceIntervalMixin(Artifact):
             confidence_level=self.confidence_level,
             random_state=new_random_generator(),
             paired=False,
-            vectorized=False,
+            vectorized=False,  # set to True if your statistic function is vectorized
+            method="BCa",
         ).confidence_interval
 
         result = {}
