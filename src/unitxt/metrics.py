@@ -513,6 +513,66 @@ def get_index_or_default(lst, item, default=-1):
         return default
 
 
+class AggregationReduction(Artifact, Generic[IntermediateType]):
+    def reduce(self, intermidates: List[IntermediateType]) -> Dict[str, Any]:
+        pass
+
+
+class DictReduction(AggregationReduction[Dict[str, float]]):
+    def reduce_list(self, lst: List[float]):
+        pass
+
+    def reduce(self, intermidates: List[Dict[str, float]]):
+        lists = {}
+        for intermidate in intermidates:
+            for key, val in intermidate.items():
+                if key not in lists:
+                    lists[key] = []
+                lists[key].append(val)
+
+        result = {}
+        for key, val_list in lists.items():
+            result[key] = self.reduce_list(val_list)
+        return result
+
+
+class MeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return float(nan_mean(lst))
+
+
+class MaxReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return float(nan_max(lst))
+
+
+class ReductionInstanceMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    reduction: AggregationReduction[IntermediateType]
+
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        return self.reduction.reduce(intermediates)
+
+    def reduce_one(self, intermidate: IntermediateType):
+        return recursive_copy(intermidate)
+
+
+class AccuracyFast(ReductionInstanceMetric[str, Dict[str, float]]):
+    main_score = "accuracy"
+    reduction = MeanReduction()
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: float(
+                str(prediction) in [str(reference) for reference in references]
+            )
+        }
+
+
 class F1Fast(MapReduceMetric[str, Tuple[int, int, List[str]]]):
     main_score = "f1"
 
