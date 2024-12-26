@@ -403,8 +403,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultipleChoiceTemplate(
-        input_format="{context}\n{question}\n{choices}",
-        target_prefix="Answer with the option's letter from the given choices directly.",
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
         choices_separator="\n",
         target_field="answer",
         enumerator="capitals",

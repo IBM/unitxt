@@ -10,7 +10,7 @@ from unitxt.api import load_recipe
 from unitxt.artifact import fetch_artifact
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 from unitxt.stream import MultiStream
 from unitxt.templates import TemplatesDict, TemplatesList
 
@@ -49,28 +49,28 @@ class CardProfiler:
     You will find the total time of each step, accumulated over all cards in the benchmark.
     """
 
-    def profiler_instantiate_recipe(self, **kwargs) -> StandardRecipe:
+    def profiler_instantiate_recipe(self, **kwargs) -> DatasetRecipe:
         return load_recipe(**kwargs)
 
-    def profiler_load_by_recipe(self, recipe: StandardRecipe) -> MultiStream:
+    def profiler_load_by_recipe(self, recipe: DatasetRecipe) -> MultiStream:
         ms = recipe.loading.process()
         assert isinstance(ms, MultiStream)
         return ms
 
     def profiler_metadata_and_standardization(
-        self, ms: MultiStream, recipe: StandardRecipe
+        self, ms: MultiStream, recipe: DatasetRecipe
     ) -> MultiStream:
         ms = recipe.metadata.process(ms)
         return recipe.standardization.process(ms)
 
     def profiler_processing_demos_metadata(
-        self, ms: MultiStream, recipe: StandardRecipe
+        self, ms: MultiStream, recipe: DatasetRecipe
     ) -> MultiStream:
         ms = recipe.processing.process(ms)
         return recipe.metadata.process(ms)
 
     def profiler_verbalize_and_finalize(
-        self, ms: MultiStream, recipe: StandardRecipe
+        self, ms: MultiStream, recipe: DatasetRecipe
     ) -> MultiStream:
         ms = recipe.verbalization.process(ms)
         return recipe.finalize.process(ms)

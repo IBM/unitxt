@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.inference import IbmGenAiInferenceEngine
-from unitxt.llm_as_judge import LLMAsJudge
+from unitxt.llm_as_judge_from_template import LLMAsJudge
 from unitxt.random_utils import get_seed
 
 model_list = [

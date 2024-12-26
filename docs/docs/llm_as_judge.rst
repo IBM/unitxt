@@ -111,13 +111,13 @@ The following code performs the desired evaluation:
                            card,
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
-    inference_model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32, use_fp16=True)
-    predictions = inference_model.infer(dataset)
+    model = HFPipelineBasedInferenceEngine(model_name="google/flan-t5-small", max_new_tokens=32, use_fp16=True)
+    predictions = model(dataset)
 
     # 3. create a metric and evaluate the results.
-    scores = evaluate(predictions=predictions, data=dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    [print(item) for item in scores[0]["score"]["global"].items()]
+    print(results.global_scores.summary)
 
 
 
@@ -352,14 +352,14 @@ and run it.
                            card,
                            split='test')
     # 2. use inference module to infer based on the dataset inputs.
-    inference_model = HFPipelineBasedInferenceEngine(model_name="mistralai/Mistral-7B-Instruct-v0.2",
+    model = HFPipelineBasedInferenceEngine(model_name="mistralai/Mistral-7B-Instruct-v0.2",
                                                      max_new_tokens=256,
                                                      use_fp16=True)
-    predictions = inference_model.infer(dataset)
+    predictions = model(dataset)
     # 3. create a metric and evaluate the results.
-    scores = evaluate(predictions=predictions, data=dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-    [print(item) for item in scores[0]["score"]["global"].items()]
+    print(results.global_scores.summary)
 
 The output of this code is:
 

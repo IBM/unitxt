@@ -30,10 +30,11 @@ class LRUCache:
     This implementation is thread-safe, using a lock to ensure that only one
     thread can modify or access the cache at any time.
 
-    Attributes:
-        max_size (int): The maximum number of items to store in the cache.
-        Items exceeding this limit are automatically removed based on least
-        recent usage.
+    Args:
+        max_size (int):
+            The maximum number of items to store in the cache.
+            Items exceeding this limit are automatically removed based on least
+            recent usage.
     """
 
     def __init__(self, max_size=10):

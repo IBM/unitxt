@@ -568,3 +568,49 @@ class TestArtifact(UnitxtTestCase):
                     tiny_card.preprocess_steps[i].to_dict(),
                     fetched_tiny_card_with_links.preprocess_steps[i].to_dict(),
                 )
+
+    def test_artifact_is_not_saving_if_artifact_has_changed(self):
+        with self.assertRaises(UnitxtError) as e:
+            args = {
+                "__type__": "dataset_recipe",
+                "card": "cards.sst2",
+                "template_card_index": 0,
+                "demos_pool_size": 100,
+                "num_demos": 0,
+            }
+            a = Artifact.from_dict(args)
+            a.num_demos = 1
+            a.save("not_suppose_to_save.json")
+
+        self.assertEqual(
+            str(e.exception),
+            "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed): 0 -> 1",
+        )
+
+    def test_artifact_is_fetched_first_hand(self):
+        card1, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card1.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card2.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+
+    def test_artifact_is_gotten_from_catalog_first_hand(self):
+        card1 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card1.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card2.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )

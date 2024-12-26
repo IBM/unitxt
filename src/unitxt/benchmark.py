@@ -5,7 +5,7 @@ from .dataclass import NonPositionalField
 from .formats import Format
 from .fusion import FixedFusion, WeightedFusion
 from .operator import SourceOperator
-from .standard import StandardRecipe
+from .standard import DatasetRecipe
 from .stream import MultiStream
 from .system_prompts import SystemPrompt
 
@@ -22,7 +22,7 @@ class BaseBenchmark(SourceOperator):
 
 
 class Benchmark(BaseBenchmark):
-    subsets: Dict[str, Union[StandardRecipe, BaseBenchmark]]
+    subsets: Dict[str, Union[DatasetRecipe, BaseBenchmark]]
 
     max_total_samples: int = None
     max_samples_per_subset: int = None
@@ -34,6 +34,9 @@ class Benchmark(BaseBenchmark):
             and self.max_samples_per_subset is not None
         ):
             raise ValueError("Set either max_total_samples or max_samples_per_subset")
+
+    def prepare_args(self):
+        self.subsets = dict(self.subsets)
 
     def reset(self):
         if (

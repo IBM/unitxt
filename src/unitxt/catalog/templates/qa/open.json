@@ -1,0 +1,7 @@
+{
+    "__type__": "multi_reference_template",
+    "instruction": "Answer the question.",
+    "input_format": "Question:\n{question}",
+    "target_prefix": "Answer:\n",
+    "references_field": "answers"
+}

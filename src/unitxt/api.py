@@ -5,14 +5,21 @@ from typing import Any, Dict, List, Optional, Union
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .artifact import fetch_artifact
+from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
-from .inference import InferenceEngine, LogProbInferenceEngine
+from .inference import (
+    InferenceEngine,
+    LogProbInferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
+)
+from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
-from .metric_utils import _compute, _inference_post_process
+from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
 from .schema import UNITXT_DATASET_SCHEMA, loads_instance
 from .settings_utils import get_constants, get_settings
-from .standard import StandardRecipe
+from .standard import DatasetRecipe
+from .task import Task
 
 logger = get_logger()
 constants = get_constants()
@@ -28,7 +35,7 @@ def load(source: Union[SourceOperator, str]):
     return source().to_dataset()
 
 
-def _get_recipe_from_query(dataset_query: str) -> StandardRecipe:
+def _get_recipe_from_query(dataset_query: str) -> DatasetRecipe:
     dataset_query = dataset_query.replace("sys_prompt", "instruction")
     try:
         dataset_stream, _ = fetch_artifact(dataset_query)
@@ -37,14 +44,14 @@ def _get_recipe_from_query(dataset_query: str) -> StandardRecipe:
     return dataset_stream
 
 
-def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> StandardRecipe:
-    recipe_attributes = list(StandardRecipe.__dict__["__fields__"].keys())
+def _get_recipe_from_dict(dataset_params: Dict[str, Any]) -> DatasetRecipe:
+    recipe_attributes = list(DatasetRecipe.__dict__["__fields__"].keys())
     for param in dataset_params.keys():
         assert param in recipe_attributes, (
-            f"The parameter '{param}' is not an attribute of the 'StandardRecipe' class. "
+            f"The parameter '{param}' is not an attribute of the 'DatasetRecipe' class. "
             f"Please check if the name is correct. The available attributes are: '{recipe_attributes}'."
         )
-    return StandardRecipe(**dataset_params)
+    return DatasetRecipe(**dataset_params)
 
 
 def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None):
@@ -69,8 +76,8 @@ def _verify_dataset_args(dataset_query: Optional[str] = None, dataset_args=None)
         )
 
 
-def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe:
-    if isinstance(dataset_query, StandardRecipe):
+def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> DatasetRecipe:
+    if isinstance(dataset_query, DatasetRecipe):
         return dataset_query
 
     _verify_dataset_args(dataset_query, kwargs)
@@ -82,6 +89,47 @@ def load_recipe(dataset_query: Optional[str] = None, **kwargs) -> StandardRecipe
         recipe = _get_recipe_from_dict(kwargs)
 
     return recipe
+
+
+def create_dataset(
+    task: Union[str, Task],
+    test_set: List[Dict[Any, Any]],
+    train_set: Optional[List[Dict[Any, Any]]] = None,
+    validation_set: Optional[List[Dict[Any, Any]]] = None,
+    split: Optional[str] = None,
+    **kwargs,
+) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
+    """Creates dataset from input data based on a specific task.
+
+    Args:
+        task:  The name of the task from the Unitxt Catalog (https://www.unitxt.ai/en/latest/catalog/catalog.tasks.__dir__.html)
+        test_set : required list of instances
+        train_set : optional train_set
+        validation_set: optional validation set
+        split: optional one split to choose
+        **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
+
+    Returns:
+        DatasetDict
+
+    Example:
+        template = Template(...)
+        dataset = create_dataset(task="tasks.qa.open", template=template, format="formats.chatapi")
+    """
+    data = {"test": test_set}
+    if train_set is not None:
+        data["train"] = train_set
+    if validation_set is not None:
+        data["validation"] = validation_set
+    task, _ = fetch_artifact(task)
+
+    if "template" not in kwargs and task.default_template is None:
+        raise Exception(
+            f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
+        )
+
+    card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
+    return load_dataset(card=card, split=split, **kwargs)
 
 
 def load_dataset(
@@ -100,27 +148,31 @@ def load_dataset(
     given parameters.
 
     Args:
-        dataset_query (str, optional): A string query which specifies a dataset to load from local catalog or name of specific recipe or benchmark in the catalog.
-        For example: ``"card=cards.wnli,template=templates.classification.multi_class.relation.default".``
-
-        streaming (bool, False): When True yields the data as Unitxt streams dictionary
-
-        split (str, optional): The split of the data to load
-
-        disable_cache (str, optional): Disable caching process of the data
-
-        **kwargs: Arguments used to load dataset from provided card, which is not present in local catalog.
+        dataset_query (str, optional):
+            A string query which specifies a dataset to load from
+            local catalog or name of specific recipe or benchmark in the catalog. For
+            example, ``"card=cards.wnli,template=templates.classification.multi_class.relation.default"``.
+        streaming (bool, False):
+            When True yields the data as Unitxt streams dictionary
+        split (str, optional):
+            The split of the data to load
+        disable_cache (str, optional):
+            Disable caching process of the data
+        **kwargs:
+            Arguments used to load dataset from provided card, which is not present in local catalog.
 
     Returns:
         DatasetDict
 
-    Example:
+    :Example:
+
         .. code-block:: python
 
             dataset = load_dataset(
                 dataset_query="card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5"
-            )  # card must be present in local catalog
+            )  # card and template must be present in local catalog
 
+            # or built programmatically
             card = TaskCard(...)
             template = Template(...)
             loader_limit = 10
@@ -146,7 +198,7 @@ def load_dataset(
     ).with_transform(loads_instance)
 
 
-def evaluate(predictions, data) -> List[Dict[str, Any]]:
+def evaluate(predictions, data) -> EvaluationResults:
     return _compute(predictions=predictions, references=data)
 
 
@@ -178,9 +230,17 @@ def infer(
     return_data: bool = False,
     return_log_probs: bool = False,
     return_meta_data: bool = False,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
     **kwargs,
 ):
     dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    if previous_messages is not None:
+
+        def add_previous_messages(example, index):
+            example["source"] = previous_messages[index] + example["source"]
+            return example
+
+        dataset = dataset.map(add_previous_messages, with_indices=True)
     engine, _ = fetch_artifact(engine)
     if return_log_probs:
         if not isinstance(engine, LogProbInferenceEngine):
@@ -215,4 +275,28 @@ def infer(
             dataset = dataset.add_column("infer_meta_data", infer_output_list)
         dataset = dataset.add_column("prediction", predictions)
         return dataset.add_column("raw_prediction", raw_predictions)
+    return predictions
+
+
+def select(
+    instance_or_instances,
+    engine: OptionSelectingByLogProbsInferenceEngine,
+    dataset_query: Optional[str] = None,
+    return_data: bool = False,
+    previous_messages: Optional[List[Dict[str, str]]] = None,
+    **kwargs,
+):
+    dataset = produce(instance_or_instances, dataset_query, **kwargs)
+    if previous_messages is not None:
+
+        def add_previous_messages(example, index):
+            example["source"] = previous_messages[index] + example["source"]
+            return example
+
+        dataset = dataset.map(add_previous_messages, with_indices=True)
+    engine, _ = fetch_artifact(engine)
+    predictions = engine.select(dataset)
+    # predictions = post_process(raw_predictions, dataset)
+    if return_data:
+        return dataset.add_column("prediction", predictions)
     return predictions

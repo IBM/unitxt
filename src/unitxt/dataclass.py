@@ -17,15 +17,23 @@ class Undefined:
 class Field:
     """An alternative to dataclasses.dataclass decorator for a more flexible field definition.
 
-    Attributes:
-        default (Any, optional): Default value for the field. Defaults to None.
-        name (str, optional): Name of the field. Defaults to None.
-        type (type, optional): Type of the field. Defaults to None.
-        default_factory (Any, optional): A function that returns the default value. Defaults to None.
-        final (bool, optional): A boolean indicating if the field is final (cannot be overridden). Defaults to False.
-        abstract (bool, optional): A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
-        required (bool, optional): A boolean indicating if the field is required. Defaults to False.
-        origin_cls (type, optional): The original class that defined the field. Defaults to None.
+    Args:
+        default (Any, optional):
+            Default value for the field. Defaults to None.
+        name (str, optional):
+            Name of the field. Defaults to None.
+        type (type, optional):
+            Type of the field. Defaults to None.
+        default_factory (Any, optional):
+            A function that returns the default value. Defaults to None.
+        final (bool, optional):
+            A boolean indicating if the field is final (cannot be overridden). Defaults to False.
+        abstract (bool, optional):
+            A boolean indicating if the field is abstract (must be implemented by subclasses). Defaults to False.
+        required (bool, optional):
+            A boolean indicating if the field is required. Defaults to False.
+        origin_cls (type, optional):
+            The original class that defined the field. Defaults to None.
     """
 
     default: Any = Undefined
@@ -235,6 +243,10 @@ def fields_names(cls):
     return list(getattr(cls, _FIELDS).keys())
 
 
+def external_fields_names(cls):
+    return [field.name for field in fields(cls) if not field.internal]
+
+
 def final_fields(cls):
     return [field for field in fields(cls) if field.final]
 
@@ -375,8 +387,8 @@ class Dataclass(metaclass=DataclassMeta):
     7. MetaClass Usage: Uses a metaclass (DataclassMeta) for customization of class creation,
        allowing checks and alterations to be made at the time of class creation, providing more control.
 
-    Example:
-    .. highlight:: python
+    :Example:
+
     .. code-block:: python
 
         class Parent(Dataclass):
@@ -465,7 +477,7 @@ class Dataclass(metaclass=DataclassMeta):
 
             if len(unexpected_kwargs) > 0:
                 raise UnexpectedArgumentError(
-                    f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {fields_names(self)}"
+                    f"Unexpected keyword argument(s) {unexpected_kwargs} for class {self.__class__.__name__}.\nShould be one of: {external_fields_names(self)}"
                 )
 
         for name, arg in zip(_init_positional_fields_names, argv):
