@@ -40,9 +40,6 @@ jobs:
     - name: Prepare the dirs for performance evaluation in main
       run: |
         mkdir -p performance_action
-        mkdir -p performance_action/logs
-        echo "" > performance_action/__init__.py
-        echo " " > performance_action/logs/bluebench.json.json
         cp performance/bluebench_profiler.py performance_action/bluebench_profiler.py
         cp performance/compare_benchmark_performance_results.py performance_action/compare_benchmark_performance_results.py
 
