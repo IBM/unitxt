@@ -6,7 +6,15 @@
         "answer_b": "str"
     },
     "reference_fields": {
-        "winner": "str"
+        "winner": "Literal['choice_a', 'choice_b', 'tie']",
+        "classes": "List[Literal['choice_a', 'choice_b', 'tie']]"
+    },
+    "defaults": {
+        "classes": [
+            "choice_a",
+            "choice_b",
+            "tie"
+        ]
     },
     "metrics": [
         "metrics.accuracy",

@@ -294,10 +294,16 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
 
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
+    options = {
+        "A": "choice_a",
+        "B": "choice_b",
+        "C": "tie",
+    }
+
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([^\]]+)\]\]", text)
         try:
-            return str(match.group(1))
+            return self.options.get(str(match.group(1)), "None")
         except:
             return "None"
 
