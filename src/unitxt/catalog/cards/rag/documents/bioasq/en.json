@@ -10,29 +10,25 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
-            "mix": {
-                "train": "test[100%]"
+            "__type__": "rename_splits",
+            "mapper": {
+                "test": "train"
             }
         },
         {
-            "__type__": "cast_fields",
-            "fields": {
-                "id": "str"
-            }
+            "__type__": "cast",
+            "field": "id",
+            "to": "str"
         },
         {
             "__type__": "copy",
-            "field_to_field": {
-                "id": "document_id"
-            }
+            "field": "id",
+            "to_field": "document_id"
         },
         {
-            "__type__": "list_field_values",
-            "fields": [
-                "passage"
-            ],
-            "to_field": "passages"
+            "__type__": "wrap",
+            "field": "passage",
+            "inside": "list"
         },
         {
             "__type__": "set",
@@ -49,5 +45,6 @@
             "input_format": "",
             "output_format": ""
         }
-    }
+    },
+    "__description__": "This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.\n\nIt is derived from rag-datasets/rag-mini-bioasq.\n\nModifications include:\n\nfilling in missing passages (some of them contained \"nan\" instead of actual text),\nchanging relevant_passage_ids' type from string to sequence of ints,\ndeduplicating the passages (removed 40 duplicates) and fixing the relevant_passage_ids in QAP triplets to point to the corrected, deduplicated passages' ids,\nsplitting QAP triplets into train and test splits.\n"
 }

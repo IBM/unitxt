@@ -17,9 +17,11 @@
             }
         },
         {
-            "__type__": "execute_expression",
-            "expression": "[str(d) for d in relevant_passage_ids]",
-            "to_field": "reference_context_ids"
+            "__type__": "cast",
+            "field": "relevant_passage_ids",
+            "to": "str",
+            "to_field": "reference_context_ids",
+            "process_every_value": true
         },
         {
             "__type__": "set",
@@ -30,15 +32,15 @@
             }
         },
         {
-            "__type__": "list_field_values",
-            "fields": [
-                "answer"
-            ],
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
             "to_field": "reference_answers"
         }
     ],
     "task": "tasks.rag.end_to_end",
     "templates": {
         "default": "templates.rag.end_to_end.json_predictions"
-    }
+    },
+    "__description__": "This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.\n\nIt is derived from rag-datasets/rag-mini-bioasq.\n\nModifications include:\n\nfilling in missing passages (some of them contained \"nan\" instead of actual text),\nchanging relevant_passage_ids' type from string to sequence of ints,\ndeduplicating the passages (removed 40 duplicates) and fixing the relevant_passage_ids in QAP triplets to point to the corrected, deduplicated passages' ids,\nsplitting QAP triplets into train and test splits.\n"
 }
