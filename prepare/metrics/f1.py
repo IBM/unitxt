@@ -14,7 +14,7 @@ from unitxt.metrics import (
 metric = F1Fast(main_score="f1_macro", averages=["macro", "per_class"])
 add_to_catalog(metric, "metrics.f1_macro", overwrite=True)
 
-metric = F1Fast(main_score="f1_micro", averages=["micro", "per_class"])
+metric = F1Fast(main_score="f1_micro", averages=["micro"])
 add_to_catalog(metric, "metrics.f1_micro", overwrite=True)
 
 metric = F1MacroMultiLabel()

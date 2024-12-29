@@ -2,7 +2,6 @@
     "__type__": "f1_fast",
     "main_score": "f1_micro",
     "averages": [
-        "micro",
-        "per_class"
+        "micro"
     ]
 }

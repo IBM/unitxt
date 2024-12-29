@@ -391,7 +391,13 @@ class EvaluationInput(tuple, Generic[PredictionType]):
 
 
 def is_original_key(key):
-    if key.endswith("_ci_low") or key.endswith("_ci_high") or key == "score":
+    if (
+        key.endswith("_ci_low")
+        or key.endswith("_ci_high")
+        or key == "score"
+        or key == "num_of_instances"
+        or key == "score_name"
+    ):
         return False
     return True
 
@@ -496,18 +502,19 @@ class MapReduceMetric(
 
     def process(self, stream: Stream, stream_name: Optional[str] = None):
         instances_scores, global_scores = self.compute(stream, stream_name)
-        for instance, instance_scores in zip(stream, instances_scores):
+        for i, (instance, instance_scores) in enumerate(zip(stream, instances_scores)):
             previous_score = instance.get("score", {"global": {}, "instance": {}})
 
-            for key in global_scores:
-                if is_original_key(key) and key in previous_score["global"]:
-                    UnitxtWarning(
-                        message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
-                        f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
-                        f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
-                        f"which will yield, in this case, a score named: 'my_second_{key}')",
-                        additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
-                    )
+            if i == 0:
+                for key in global_scores:
+                    if is_original_key(key) and key in previous_score["global"]:
+                        UnitxtWarning(
+                            message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                            f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                            f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                            f"which will yield, in this case, a score named: 'my_second_{key}')",
+                            additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                        )
 
             global_scores = {**previous_score["global"], **global_scores}
             instance_scores = {**previous_score["instance"], **instance_scores}
