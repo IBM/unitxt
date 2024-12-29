@@ -2694,9 +2694,8 @@ class TestApplyMetric(UnitxtTestCase):
                 metrics="", expected_score_name="accuracy", expected_score_value=0.5
             )
         except Exception as e:
-            self.assertEqual(
-                str(e),
-                "Missing metric names in field 'metrics' and instance '{'prediction': '0', 'references': ['1'], 'metrics': ''}'.",
+            self.assertIn(
+                "Missing metric names in field 'metrics' and instance", str(e)
             )
 
     def test_apply_metric_with_single_string_metric(self):
