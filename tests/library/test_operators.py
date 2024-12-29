@@ -2641,10 +2641,30 @@ class TestApplyMetric(UnitxtTestCase):
         calc_confidence_intervals=False,
     ):
         inputs = [
-            {"prediction": "0", "references": ["1"], "metrics": metrics},
-            {"prediction": "1", "references": ["1"], "metrics": metrics},
-            {"prediction": "0", "references": ["2"], "metrics": metrics},
-            {"prediction": "0", "references": ["0"], "metrics": metrics},
+            {
+                "prediction": "0",
+                "references": ["1"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "1",
+                "references": ["1"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "0",
+                "references": ["2"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "0",
+                "references": ["0"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
         ]
         output = apply_operator(
             operator=ApplyMetric(

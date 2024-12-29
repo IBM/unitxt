@@ -250,7 +250,7 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
                             all_num_of_instances.append(score["num_of_instances"])
                         result[k] = score
 
-                result["score"] = nan_mean(all_scores)
+                result["score"] = float(nan_mean(all_scores))
                 result["score_name"] = "subsets_mean"
                 if all_num_of_instances:
                     result["num_of_instances"] = sum(all_num_of_instances)
@@ -267,9 +267,9 @@ class JoinSubsetsAndGroups(MultiStreamOperator):
             if "subsets" in score:
                 score["subsets"] = recursive_mean(score["subsets"])
                 score["global"] = {
-                    "score": score["subsets"]["score"],
+                    "score": float(score["subsets"]["score"]),
                     "score_name": score["subsets"]["score_name"],
-                    "subsets_mean": score["subsets"]["score"],
+                    "subsets_mean": float(score["subsets"]["score"]),
                 }
                 if "num_of_instances" in score["subsets"]:
                     score["global"]["num_of_instances"] = score["subsets"][

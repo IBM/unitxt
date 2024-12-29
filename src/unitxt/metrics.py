@@ -390,6 +390,12 @@ class EvaluationInput(tuple, Generic[PredictionType]):
         return super().__new__(cls, (prediction, references, task_data))
 
 
+def is_original_key(key):
+    if key.endswith("_ci_low") or key.endswith("_ci_high") or key == "score":
+        return False
+    return True
+
+
 class MapReduceMetric(
     StreamOperator,
     Metric,
@@ -437,6 +443,8 @@ class MapReduceMetric(
     ) -> Dict[str, Any]:
         scores = self.reduce(intermediates)
         score_names = [k for k, v in scores.items() if isinstance(v, float)]
+        if self.n_resamples is None:
+            return scores
         intervals = self.bootstrap(intermediates, score_names)
         return {**scores, **intervals}
 
@@ -489,6 +497,21 @@ class MapReduceMetric(
     def process(self, stream: Stream, stream_name: Optional[str] = None):
         instances_scores, global_scores = self.compute(stream, stream_name)
         for instance, instance_scores in zip(stream, instances_scores):
+            previous_score = instance.get("score", {"global": {}, "instance": {}})
+
+            for key in global_scores:
+                if is_original_key(key) and key in previous_score["global"]:
+                    UnitxtWarning(
+                        message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                        f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                        f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                        f"which will yield, in this case, a score named: 'my_second_{key}')",
+                        additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                    )
+
+            global_scores = {**previous_score["global"], **global_scores}
+            instance_scores = {**previous_score["instance"], **instance_scores}
+
             yield {
                 **instance,
                 "score": {"global": global_scores, "instance": instance_scores},
@@ -783,11 +806,11 @@ class MetricWithConfidenceInterval(Metric):
                 random_state=self.new_random_generator(),
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
-            result[f"{full_score_name}_ci_low"] = ci.low
-            result[f"{full_score_name}_ci_high"] = ci.high
+            result[f"{full_score_name}_ci_low"] = float(ci.low)
+            result[f"{full_score_name}_ci_high"] = float(ci.high)
             if score_name == self.score_prefix + self.main_score:
-                result["score_ci_low"] = ci.low
-                result["score_ci_high"] = ci.high
+                result["score_ci_low"] = float(ci.low)
+                result["score_ci_high"] = float(ci.high)
         return result
 
     def resample_from_non_nan(self, values):
@@ -882,10 +905,10 @@ class MetricWithConfidenceInterval(Metric):
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
                 ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            result["score_ci_low"] = float(ci.low)
+            result["score_ci_high"] = float(ci.high)
+            result[f"{score_name}_ci_low"] = float(ci.low)
+            result[f"{score_name}_ci_high"] = float(ci.high)
         return result
 
 
