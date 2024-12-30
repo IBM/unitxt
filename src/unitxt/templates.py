@@ -633,6 +633,115 @@ class MultipleChoiceTemplate(InputFormatTemplate):
         )
         return instance
 
+class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
+    """
+    Multiple choice template with configurable answer ordering functionality.
+    Supports various ordering methods like sorting by length, alphabetically,
+    placing correct answer at specific position, etc.
+    """
+    choices_order: Optional[Dict[str, Any]] = None
+
+    def _get_correct_answer_info(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any])-> Tuple[str, List[str], int]:
+        """
+        Helper method to get common information about the correct answer.
+
+        Returns:
+            tuple: (correct_answer, original_choices, target_index)
+        """
+        target_index = self.outputs_to_target_index(reference_fields)
+        correct_answer = reference_fields[self.choices_field][target_index]
+        choices = input_fields[self.choices_field].copy()  # Create a copy to avoid modifying original
+        return correct_answer, choices, target_index
+
+    def _update_fields(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], new_choices, correct_answer)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Helper method to update both input and reference fields.
+        """
+        input_fields[self.choices_field] = new_choices
+        reference_fields[self.choices_field] = new_choices
+        reference_fields[self.target_field] = new_choices.index(correct_answer)
+        return input_fields, reference_fields
+
+    def place_correct_at(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], target_position: int = 0)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Modifies the choices array by moving the correct answer to the specified position.
+        """
+        correct_answer, choices, _ = self._get_correct_answer_info(input_fields, reference_fields)
+
+        # Validate target position
+        if not 0 <= target_position < len(choices):
+            raise ValueError(
+                f"Target position {target_position} is out of range. Must be between 0 and {len(choices) - 1}")
+
+        # Reorder choices
+        choices.remove(correct_answer)
+        choices.insert(target_position, correct_answer)
+
+        return self._update_fields(input_fields, reference_fields, choices, correct_answer)
+
+    def sort_by_length(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], reverse: bool = False)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Sorts the choices array by the length of each answer.
+        """
+        correct_answer, choices, _ = self._get_correct_answer_info(input_fields, reference_fields)
+
+        # Sort choices
+        sorted_choices = sorted(choices, key=len, reverse=reverse)
+
+        return self._update_fields(input_fields, reference_fields, sorted_choices, correct_answer)
+
+    def shuffle_choices_with_seed(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], random_seed: Optional[int] = None)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Shuffles the choices using a random seed.
+        """
+        correct_answer, choices, _ = self._get_correct_answer_info(input_fields, reference_fields)
+
+        # Generate and apply shuffle
+        random_generator = new_random_generator(random_seed or input_fields)
+        random_generator.shuffle(choices)
+
+        return self._update_fields(input_fields, reference_fields, choices, correct_answer)
+
+    def sort_alphabetically(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], reverse: bool = False)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+        """
+        Sorts the choices alphabetically.
+        """
+        correct_answer, choices, _ = self._get_correct_answer_info(input_fields, reference_fields)
+        sorted_choices = sorted(choices, reverse=reverse)
+        return self._update_fields(input_fields, reference_fields, sorted_choices, correct_answer)
+
+    def preprocess_input_and_reference_fields(
+            self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if self.choices_order is not None:
+            try:
+                ALLOWED_PARAMS = {
+                    'place_correct_at': {'target_position'},
+                    'sort_by_length': {'reverse'},
+                    'shuffle_choices_with_seed': {'random_seed'},
+                    'sort_alphabetically': {'reverse'}
+                }
+
+                function_name = self.choices_order["method"]
+                if hasattr(self, function_name):
+                    function = getattr(self, function_name)
+                    allowed_params = ALLOWED_PARAMS.get(function_name, set())
+                    params = {
+                        k: v for k, v in self.choices_order.get("params", {}).items()
+                        if k in allowed_params
+                    }
+
+                    input_fields, reference_fields = function(
+                        input_fields=input_fields,
+                        reference_fields=reference_fields,
+                        **params
+                    )
+                else:
+                    raise ValueError(f"Unknown ordering method: {function_name}")
+            except (KeyError, AttributeError) as e:
+                raise ValueError(f"Invalid choices_order configuration: {str(e)}")
+
+        return input_fields, reference_fields
 
 class YesNoTemplate(InputFormatTemplate):
     """A template for generating binary Yes/No questions asking whether an input text is of a specific class.
