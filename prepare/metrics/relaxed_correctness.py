@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import RelaxedCorrectness
 from unitxt.test_utils.metrics import test_metric
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.61.188.58', 55557)
+# from cvar_pyutils.debugging_tools import set_remote_debugger
+# set_remote_debugger('9.61.188.58', 55557)
 metric = RelaxedCorrectness()
 
 predictions = ["10", "30"]

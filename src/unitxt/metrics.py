@@ -1455,11 +1455,12 @@ class RelaxedCorrectness(GlobalMetric):
     prediction_type = str  # string representation is compared
     n_resamples = None
 
-    def compute(self,references: List[List[str]],
+    def compute(self, references: List[List[str]],
                 predictions: List[str],
                 task_data: List[Dict]) -> dict:
-        return_dict = {"relaxed_overall": [],  "relaxed_human_split": [], "relaxed_augmented_split": []}
+        return_dict = {self.main_score: [],  "relaxed_human_split": [], "relaxed_augmented_split": []}
         for pred, ref, task_data_i in zip(predictions, references,  task_data):
+            print(task_data_i)
             type = task_data_i["type"]
             score = self.relaxed_correctness(pred, ref[0])
             score = 1.0 if score else 0.0
@@ -1511,34 +1512,88 @@ class RelaxedCorrectness(GlobalMetric):
             return prediction.lower() == target.lower()
 
 
-class WebsrcSquadF1(InstanceMetric):
-    main_score = "f1"
-    reduction_map = {"mean": ["f1"]}
+class WebsrcSquadF1(GlobalMetric):
+    main_score = "websrc_f1"
+    reduction_map = {"mean": ["websrc_f1"]}
     prediction_type = Any  # string representation is compared
 
     threshold: float = 0.5
+    DOMAINS = ["auto", "book", "camera", "game", "jobs", "movie", "phone", "restaurant","sports", "university", "hotel"]
     def compute(
             self,
             references: List[Any],
-            prediction: Any,
+            predictions: Any,
             task_data: List[Dict],
     ) -> dict:
         """ANLS image-text accuracy metric."""
-        values = []
-        for reference in references:
-            values.append(self.distance(prediction, reference))
+        evaluation_result = {}
+        # Group results by domain
+        subset_to_eval_samples = defaultdict(list)
+        for pred, ref, task_data_i in zip(predictions, references,  task_data):
+            subset_to_eval_samples[task_data_i["domain"]].append([pred, ref])
+        # Evaluate each domain
+        for subset, sub_eval_samples in subset_to_eval_samples.items():
+            judge_dict, metric_dict = self.evaluate_websrc(sub_eval_samples)
+            metric_dict.update({"num_example": len(sub_eval_samples)})
+            evaluation_result[subset] = metric_dict
 
-        question_result = 1.0 - min(values)
+        # Aggregate results for all domains
+        printable_results = {}
+        for domain in self.DOMAINS:
+            if domain not in evaluation_result:
+                continue
+            printable_results[domain] = {
+                "num": int(evaluation_result[domain]["num_example"]),
+                "f1": round(evaluation_result[domain]["f1"], 3),
+            }
+        all_ins_f1 = np.sum([cat_results["f1"] * cat_results["num_example"] for cat_results in evaluation_result.values()]) / sum([cat_results["num_example"] for cat_results in evaluation_result.values()])
+        printable_results["Overall"] = {
+            "num": sum([cat_results["num_example"] for cat_results in evaluation_result.values()]),
+            "f1": round(all_ins_f1, 3),
+        }
+        return {self.main_score: printable_results["Overall"]["f1"]}
 
-        if question_result < self.threshold:
-            question_result = 0.0
+    def evaluate_websrc(self, samples):
+        def _normalize_str(string):
+            # lower it
+            string = string.lower()
 
-        result = {}
-        result["score"] = question_result
-        result[self.main_score] = question_result
-        result["score_name"] = self.main_score
-        return result
+            # strip leading and trailing whitespaces
+            string = string.strip()
 
+            return string
+
+        def _tokenize(text):
+            # Regex pattern to match words and isolate punctuation
+            pattern = r"\w+|[^\w\s]"
+            tokens = re.findall(pattern, text)
+            return tokens
+
+        def _compute_f1(sa, sb):
+            sa = _normalize_str(sa)
+            sb = _normalize_str(sb)
+
+            sa = _tokenize(sa)
+            sb = _tokenize(sb)
+
+            sa = set(sa)
+            sb = set(sb)
+
+            if len(sa) == 0 or len(sb) == 0:
+                return 0.0
+
+            comm = sa.intersection(sb)
+            prec = len(comm) / len(sb)
+            rec = len(comm) / len(sa)
+            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
+            return f1
+
+        judge_list = []
+        for sample in samples:
+            judge_list.append(_compute_f1(sample["answer"], sample["parsed_pred"]))
+
+        f1 = np.mean(judge_list)
+        return judge_list, {"f1": f1}
 
 
 class JaccardIndex(InstanceMetric):
