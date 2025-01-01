@@ -2,12 +2,14 @@ from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
 from unitxt.operators import (
     Apply,
+    Cast,
     Copy,
     FilterByCondition,
     Rename,
     SelectFields,
     Set,
 )
+from unitxt.processors import Lower
 from unitxt.splitters import RenameSplits
 from unitxt.stream_operators import DeleteSplits, JoinStreams
 
@@ -54,30 +56,18 @@ arena_hard_hf_space_processing_steps = SequentialOperator(
             apply_to_streams=["judgment"],
         ),
         Set(fields={"model_1": "gpt-4-0314"}, apply_to_streams=["judgment"]),
-        Apply(
-            "judge_input_model_1_ordered_first",
-            function="str",
-            to_field="judge_input_model_1_ordered_first",
+        Cast(
+            field="judge_input_model_1_ordered_first",
+            to="str",
             apply_to_streams=["judgment"],
         ),
-        Apply(
-            "judge_input_model_2_ordered_first",
-            function="str",
-            to_field="judge_input_model_2_ordered_first",
+        Cast(
+            field="judge_input_model_2_ordered_first",
+            to="str",
             apply_to_streams=["judgment"],
         ),
-        Apply(
-            "model_1",
-            function="str.lower",
-            to_field="model_1",
-            apply_to_streams=["judgment"],
-        ),
-        Apply(
-            "model_2",
-            function="str.lower",
-            to_field="model_2",
-            apply_to_streams=["judgment"],
-        ),
+        Lower(field="model_1", apply_to_streams=["judgment"]),
+        Lower(field="model_2", apply_to_streams=["judgment"]),
         FilterByCondition(
             values={
                 "score_model_1_ordered_first": arena_hard_scores,

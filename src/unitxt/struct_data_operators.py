@@ -679,7 +679,7 @@ class LoadJson(FieldOperator):
             except json.JSONDecodeError:
                 return self.failure_value
         else:
-            return json.loads(value)
+            return json.loads(value, strict=False)
 
 
 class DumpJson(FieldOperator):

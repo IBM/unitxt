@@ -74,47 +74,33 @@
             ]
         },
         {
-            "__type__": "apply",
-            "function": "str",
-            "to_field": "judge_input_model_1_ordered_first",
+            "__type__": "cast",
+            "field": "judge_input_model_1_ordered_first",
+            "to": "str",
             "apply_to_streams": [
                 "judgment"
-            ],
-            "_argv": [
-                "judge_input_model_1_ordered_first"
             ]
         },
         {
-            "__type__": "apply",
-            "function": "str",
-            "to_field": "judge_input_model_2_ordered_first",
+            "__type__": "cast",
+            "field": "judge_input_model_2_ordered_first",
+            "to": "str",
             "apply_to_streams": [
                 "judgment"
-            ],
-            "_argv": [
-                "judge_input_model_2_ordered_first"
             ]
         },
         {
-            "__type__": "apply",
-            "function": "str.lower",
-            "to_field": "model_1",
+            "__type__": "lower",
+            "field": "model_1",
             "apply_to_streams": [
                 "judgment"
-            ],
-            "_argv": [
-                "model_1"
             ]
         },
         {
-            "__type__": "apply",
-            "function": "str.lower",
-            "to_field": "model_2",
+            "__type__": "lower",
+            "field": "model_2",
             "apply_to_streams": [
                 "judgment"
-            ],
-            "_argv": [
-                "model_2"
             ]
         },
         {
