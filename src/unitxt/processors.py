@@ -170,6 +170,27 @@ class Upper(FieldOperator):
         return str(text).upper()
 
 
+class Title(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).title()
+
+
+class TakeUntilPunc(FieldOperator):
+    _requirements_list = ["regex"]
+
+    def prepare(self):
+        super().prepare()
+        import regex
+
+        self.pattern = regex.compile(r"\p{P}+")
+
+    def process_value(self, text: Any) -> Any:
+        match = self.pattern.search(text)
+        if match:
+            text = text[: match.start()]
+        return text
+
+
 @deprecation("2.0.0", alternative=Lower)
 class LowerCase(Lower):
     pass
@@ -294,10 +315,16 @@ class ExtractMtBenchRatingJudgment(FieldOperator):
 
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
+    options = {
+        "A": "choice_a",
+        "B": "choice_b",
+        "C": "tie",
+    }
+
     def process_value(self, text: Any) -> Any:
         match = re.search(r"\[\[([^\]]+)\]\]", text)
         try:
-            return str(match.group(1))
+            return self.options.get(str(match.group(1)), "None")
         except:
             return "None"
 

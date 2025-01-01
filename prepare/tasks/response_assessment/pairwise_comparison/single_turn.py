@@ -1,3 +1,5 @@
+from typing import List, Literal
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 
@@ -9,9 +11,12 @@ add_to_catalog(
             "answer_b": str,
         },
         reference_fields={
-            "winner": str
-        },  # TODO: Support and change to "Literal['choice_a', 'choice_b', 'tie']"
+            "winner": Literal["choice_a", "choice_b", "tie"],
+            "classes": List[Literal["choice_a", "choice_b", "tie"]],
+        },
+        defaults={"classes": ["choice_a", "choice_b", "tie"]},
         metrics=["metrics.accuracy", "metrics.f1_micro", "metrics.f1_macro"],
+        prediction_type=str,
     ),
     "tasks.response_assessment.pairwise_comparison.single_turn",
     overwrite=True,

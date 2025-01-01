@@ -98,7 +98,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-
 add_to_catalog(
     TemplatesList(
         [
@@ -114,6 +113,7 @@ add_to_catalog(
     "templates.classification.multi_class.all",
     overwrite=True,
 )
+
 
 add_to_catalog(
     TemplatesList(

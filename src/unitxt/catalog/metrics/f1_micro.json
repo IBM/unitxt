@@ -1,3 +1,7 @@
 {
-    "__type__": "f1_micro"
+    "__type__": "f1_fast",
+    "main_score": "f1_micro",
+    "averages": [
+        "micro"
+    ]
 }
