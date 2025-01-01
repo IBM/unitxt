@@ -170,6 +170,27 @@ class Upper(FieldOperator):
         return str(text).upper()
 
 
+class Title(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).title()
+
+
+class TakeUntilPunc(FieldOperator):
+    _requirements_list = ["regex"]
+
+    def prepare(self):
+        super().prepare()
+        import regex
+
+        self.pattern = regex.compile(r"\p{P}+")
+
+    def process_value(self, text: Any) -> Any:
+        match = self.pattern.search(text)
+        if match:
+            text = text[: match.start()]
+        return text
+
+
 @deprecation("2.0.0", alternative=Lower)
 class LowerCase(Lower):
     pass
