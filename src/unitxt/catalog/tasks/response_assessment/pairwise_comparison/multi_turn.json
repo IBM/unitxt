@@ -5,11 +5,20 @@
         "dialog_b": "List[Tuple[str, str]]"
     },
     "reference_fields": {
-        "winner": "str"
+        "winner": "Literal['choice_a', 'choice_b', 'tie']",
+        "classes": "List[Literal['choice_a', 'choice_b', 'tie']]"
+    },
+    "defaults": {
+        "classes": [
+            "choice_a",
+            "choice_b",
+            "tie"
+        ]
     },
     "metrics": [
         "metrics.accuracy",
         "metrics.f1_micro",
         "metrics.f1_macro"
-    ]
+    ],
+    "prediction_type": "str"
 }
