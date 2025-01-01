@@ -1,6 +1,0 @@
-{
-    "__type__": "images_augmentor",
-    "operator": {
-        "__type__": "to_rgb"
-    }
-}

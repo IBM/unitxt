@@ -16,7 +16,3 @@ add_to_catalog(operator, "augmentors.image.white_noise", overwrite=True)
 operator = Oldify()
 
 add_to_catalog(operator, "augmentors.image.oldify", overwrite=True)
-
-operator = ImagesAugmentor(operator=ToRGB())
-
-add_to_catalog(operator, "augmentors.image.to_rgb", overwrite=True)
