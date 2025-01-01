@@ -44,6 +44,12 @@
             "references_field": "answers"
         }
     ],
+    "default_template": {
+        "__type__": "multi_reference_template",
+        "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
+        "references_field": "answers",
+        "__description__": "lmms-evals default template for info_vqa."
+    },
     "__tags__": {
         "license": "Unknown",
         "multilinguality": "monolingual",
