@@ -617,22 +617,41 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int, List[str]]]):
         "macro",
         "per_class",
     ]
+    ignore_punc: bool = True
+    ignore_case: bool = True
+    _requirements_list = ["scikit-learn", "regex"]
 
     def prepare(self):
         super().prepare()
         from sklearn.metrics import f1_score
 
         self._metric = f1_score
+        import regex
+        from functools import partial
+
+        self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
 
     def map(
         self, prediction: str, references: List[str], task_data: Dict[str, Any]
     ) -> Tuple[int, int, List[str]]:
         assert "classes" in task_data, "F1Fast has to have classes"
         classes: List[str] = task_data["classes"]
-        prediction_index = get_index_or_default(classes, prediction)
-        reference_index = get_index_or_default(classes, references[0])
+        reference = references[0]
 
-        return prediction_index, reference_index, classes
+        if self.ignore_punc:
+            classes = [self.remove_punc(cls) for cls in classes]
+            reference = self.remove_punc(reference)
+            prediction = self.remove_punc(prediction)
+
+        if self.ignore_case:
+            classes = [cls.lower() for cls in classes]
+            reference = reference.lower()
+            prediction = prediction.lower()
+
+        prediction_index = get_index_or_default(classes, prediction)
+        reference_index = get_index_or_default(classes, reference)
+
+        return prediction_index, reference_index, task_data["classes"]
 
     def reduce(self, intermediates: List[Tuple[int, int, List[str]]]) -> Dict[str, Any]:
         # All classes are assumed to be the same set for each intermediate

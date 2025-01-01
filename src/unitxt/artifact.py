@@ -122,13 +122,15 @@ def maybe_recover_artifacts_structure(obj):
     if Artifact.is_possible_identifier(obj):
         return verbosed_fetch_artifact(obj)
     if isinstance(obj, dict):
+        result = {}
         for key, value in obj.items():
-            obj[key] = maybe_recover_artifact(value)
-        return obj
+            result[key] = maybe_recover_artifact(value)
+        return type(obj)(result)
     if isinstance(obj, list):
-        for i in range(len(obj)):
-            obj[i] = maybe_recover_artifact(obj[i])
-        return obj
+        result = []
+        for item in obj:
+            result.append(maybe_recover_artifact(item))
+        return type(obj)(result)
     return obj
 
 

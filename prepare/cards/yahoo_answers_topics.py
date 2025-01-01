@@ -27,7 +27,7 @@ classes = [
     "Politics & Government",
 ]
 
-mappers = {str(i): cls.lower() for i, cls in enumerate(classes)}
+mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
     loader=LoadHF(path=f"{dataset_name}"),
@@ -43,7 +43,7 @@ card = TaskCard(
             to_field="text",
         ),
         JoinStr(separator=" ", field="text", to_field="text"),
-        Set(fields={"classes": [c.lower() for c in classes]}),
+        Set(fields={"classes": classes}),
     ],
     task="tasks.classification.multi_class.topic_classification",
     templates="templates.classification.multi_class.all",

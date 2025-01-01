@@ -22,11 +22,11 @@
             "fields": {
                 "text_type": "products",
                 "classes": [
-                    "Generic",
-                    "Descriptive",
-                    "Suggestive",
-                    "Arbitrary",
-                    "Fanciful"
+                    "generic",
+                    "descriptive",
+                    "suggestive",
+                    "arbitrary",
+                    "fanciful"
                 ],
                 "type_of_class": "type of mark",
                 "classes_descriptions": "A mark is generic if it is the common name for the product. A mark is descriptive if it describes a purpose, nature, or attribute of the product. A mark is suggestive if it suggests or implies a quality or characteristic of the product. A mark is arbitrary if it is a real English word that has no relation to the product. A mark is fanciful if it is an invented word."
@@ -44,8 +44,7 @@
             "title_fields": [],
             "postprocessors": [
                 "processors.strip",
-                "processors.take_until_punc",
-                "processors.title"
+                "processors.take_until_punc"
             ]
         }
     },

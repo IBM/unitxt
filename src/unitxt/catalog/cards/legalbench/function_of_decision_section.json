@@ -48,8 +48,7 @@
             ],
             "postprocessors": [
                 "processors.strip",
-                "processors.take_until_punc",
-                "processors.title"
+                "processors.take_until_punc"
             ]
         }
     },

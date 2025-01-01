@@ -16,12 +16,12 @@ card = TaskCard(
         ),
         MapInstanceValues(
             mappers={
-                "label": {"0": "world", "1": "sports", "2": "business", "3": "sci/tech"}
+                "label": {"0": "World", "1": "Sports", "2": "Business", "3": "Sci/Tech"}
             }
         ),
         Set(
             fields={
-                "classes": ["world", "sports", "business", "sci/tech"],
+                "classes": ["World", "Sports", "Business", "Sci/Tech"],
                 "text_type": "sentence",
             }
         ),

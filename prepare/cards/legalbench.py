@@ -20,7 +20,7 @@ task_cfgs = {
         "classes_descriptions": "A mark is generic if it is the common name for the product. A mark is descriptive if it describes a purpose, nature, or attribute of the product. A mark is suggestive if it suggests or implies a quality or characteristic of the product. A mark is arbitrary if it is a real English word that has no relation to the product. A mark is fanciful if it is an invented word.",
         "type_of_class": "type of mark",
         "text_type": "products",
-        "classes": ["Generic", "Descriptive", "Suggestive", "Arbitrary", "Fanciful"],
+        "classes": ["generic", "descriptive", "suggestive", "arbitrary", "fanciful"],
         "instruction": "{classes_descriptions}\n\nLabel the {type_of_class} for the following {text_type}:\n",
         "input_format": "Q: {text} What is the {type_of_class}?",
         "target_prefix": "A: ",
@@ -141,7 +141,6 @@ for task_name, task_cfg in task_cfgs.items():
                 postprocessors=[
                     "processors.strip",
                     "processors.take_until_punc",
-                    "processors.title",
                 ],
             ),
         },
