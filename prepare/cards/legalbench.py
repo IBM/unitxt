@@ -164,7 +164,3 @@ for task_name, task_cfg in task_cfgs.items():
 
     test_card(card, format="formats.textual_assistant")
     add_to_catalog(card, f"cards.legalbench.{task_name}", overwrite=True)
-
-
-# from unitxt import load_dataset
-# ds = load_dataset("card=cards.legalbench.proa,template_card_index=default")

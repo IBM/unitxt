@@ -98,32 +98,22 @@ add_to_catalog(
     overwrite=True,
 )
 
-all_templates = [
-    "templates.classification.multi_class.default",
-    "templates.classification.multi_class.instruction",
-    "templates.classification.multi_class.title",
-    "templates.classification.multi_class.empty",
-    "templates.classification.multi_class.instruct_question_selects",
-    "templates.classification.multi_class.instruct_question_select_i_think",
-    "templates.classification.multi_class.instruct_select_question",
-]
-
 add_to_catalog(
-    TemplatesList(all_templates),
+    TemplatesList(
+        [
+            "templates.classification.multi_class.default",
+            "templates.classification.multi_class.instruction",
+            "templates.classification.multi_class.title",
+            "templates.classification.multi_class.empty",
+            "templates.classification.multi_class.instruct_question_selects",
+            "templates.classification.multi_class.instruct_question_select_i_think",
+            "templates.classification.multi_class.instruct_select_question",
+        ]
+    ),
     "templates.classification.multi_class.all",
     overwrite=True,
 )
 
-add_to_catalog(
-    TemplatesList(
-        [
-            template + "[postprocessors=[processors.strip,processors.take_until_punc]]"
-            for template in all_templates
-        ]
-    ),
-    "templates.classification.multi_class.all_no_lower",
-    overwrite=True,
-)
 
 add_to_catalog(
     TemplatesList(
