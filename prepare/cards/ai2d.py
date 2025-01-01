@@ -3,6 +3,8 @@ from unitxt.catalog import add_to_catalog
 from unitxt.image_operators import ToImage
 from unitxt.operators import Cast, Rename
 from unitxt.test_utils.card import test_card
+from unitxt.templates import MultipleChoiceTemplate
+
 
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/ai2d"),
@@ -14,6 +16,12 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context[metrics=[metrics.exact_match_mm]]",
     templates="templates.qa.multiple_choice.with_context.no_intro.all",
+    default_template=MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+    ),
     __tags__={},
     __description__=(
         "AI2 Diagrams (AI2D) is a dataset of over 5000 grade school science diagrams with over 150000 rich annotations, their ground truth syntactic parses, and more than 15000 corresponding multiple choice questions."
