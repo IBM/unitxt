@@ -4,6 +4,8 @@ from unitxt.collections_operators import Wrap
 from unitxt.image_operators import DecodeImage, ToImage
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
+from unitxt.templates import MultiReferenceTemplate
+
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc"),
@@ -15,8 +17,13 @@ card = TaskCard(
         ToImage(field="context"),
         Set(fields={"context_type": "image"}),
     ],
-    task="tasks.qa.with_context.abstractive",
+    task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
     templates="templates.qa.with_context.all",
+    default_template=MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
@@ -32,3 +39,4 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.websrc", overwrite=True)
+
