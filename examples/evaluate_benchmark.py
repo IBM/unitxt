@@ -3,40 +3,40 @@ from unitxt.benchmark import Benchmark
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 benchmark = Benchmark(
     format="formats.user_agent",
     max_samples_per_subset=5,
     loader_limit=30,
     subsets={
-        "cola": StandardRecipe(
+        "cola": DatasetRecipe(
             card="cards.cola",
             template="templates.classification.multi_class.instruction",
         ),
-        "mnli": StandardRecipe(
+        "mnli": DatasetRecipe(
             card="cards.mnli",
             template="templates.classification.multi_class.relation.default",
         ),
-        "mrpc": StandardRecipe(
+        "mrpc": DatasetRecipe(
             card="cards.mrpc",
             template="templates.classification.multi_class.relation.default",
         ),
-        "qnli": StandardRecipe(
+        "qnli": DatasetRecipe(
             card="cards.qnli",
             template="templates.classification.multi_class.relation.default",
         ),
-        "rte": StandardRecipe(
+        "rte": DatasetRecipe(
             card="cards.rte",
             template="templates.classification.multi_class.relation.default",
         ),
-        "sst2": StandardRecipe(
+        "sst2": DatasetRecipe(
             card="cards.sst2", template="templates.classification.multi_class.title"
         ),
-        "stsb": StandardRecipe(
+        "stsb": DatasetRecipe(
             card="cards.stsb", template="templates.regression.two_texts.title"
         ),
-        "wnli": StandardRecipe(
+        "wnli": DatasetRecipe(
             card="cards.wnli",
             template="templates.classification.multi_class.relation.default",
         ),

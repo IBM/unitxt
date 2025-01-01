@@ -131,7 +131,6 @@ dmypy.json
 .pyre/
 
 .idea/*
-.github/
 
 **/natural_instruction_tasks/*
 **/intermidates_cards/*

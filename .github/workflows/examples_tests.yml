@@ -1,0 +1,44 @@
+name: Test Code Examples
+on:
+  pull_request:
+    paths:
+      - 'examples/*'
+      - 'tests/examples/*.py'
+      - '.github/workflows/inference_examples.yml'
+
+  release:
+    types: [published]
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+    cancel-in-progress: true
+
+jobs:
+   examples:
+
+     runs-on: ubuntu-latest
+     env:
+       OS: ubuntu-latest
+       UNITXT_DEFAULT_VERBOSITY: error
+       DATASETS_VERBOSITY: error
+       HF_HUB_VERBOSITY: error
+       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+       TQDM_DISABLE: "True"
+       WML_URL: ${{ secrets.WML_URL }}
+       WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
+       WML_APIKEY: ${{ secrets.WML_APIKEY }}
+       GENAI_KEY: ${{ secrets.GENAI_KEY }}
+
+     steps:
+     - uses: actions/checkout@v4
+
+     - uses: actions/setup-python@v5
+       with:
+         python-version: '3.10'
+
+     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+     - run: uv pip install --system ".[tests,watsonx,inference_tests]"
+     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
+
+     - name: Run Tests
+       run: python -m unittest discover -s tests/examples -p "test_*.py"

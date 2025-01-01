@@ -5,7 +5,7 @@ from unitxt.inference import (
     LMMSEvalInferenceEngine,
 )
 from unitxt.logging_utils import get_logger
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 logger = get_logger()
 
@@ -16,7 +16,7 @@ with settings.context(
     for card in ["cards.seed_bench", "cards.ai2d"]:
         for enumerator in ["capitals", "lowercase"]:
             for augmentor in [None, "augmentors.image.white_noise"]:
-                subsets[f"{card} {enumerator} {augmentor}"] = StandardRecipe(
+                subsets[f"{card} {enumerator} {augmentor}"] = DatasetRecipe(
                     card=card,
                     template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
                     format="formats.chat_api",

@@ -27,10 +27,12 @@ def additional_info(path: str) -> str:
 class UnitxtError(Exception):
     """Exception raised for Unitxt errors.
 
-    Attributes:
-        message : str -- explanation of the error
-        additional_info_id : Optional[str] -- relative path to additional documentation on web
-        If set, should be one of the DOCUMENATION_* constants in the error_utils.py file.
+    Args:
+        message (str):
+            explanation of the error
+        additional_info_id (Optional[str]):
+            relative path to additional documentation on web
+            If set, should be one of the DOCUMENATION_* constants in the error_utils.py file.
 
     """
 
@@ -43,10 +45,12 @@ class UnitxtError(Exception):
 class UnitxtWarning:
     """Object to format warning message to log.
 
-    Attributes:
-        message -- explanation of the warning
-        additional_info_id : Optional[str] -- relative path to additional documentation on web
-        If set, should be one of the DOCUMENATION_* constants in the error_utils.py file.
+    Args:
+        message (str):
+            explanation of the warning
+        additional_info_id (Optional[str]):
+            relative path to additional documentation on web
+            If set, should be one of the DOCUMENATION_* constants in the error_utils.py file.
     """
 
     def __init__(self, message: str, additional_info_id: Optional[str] = None):
