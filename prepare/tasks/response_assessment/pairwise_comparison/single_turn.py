@@ -16,6 +16,7 @@ add_to_catalog(
         },
         defaults={"classes": ["choice_a", "choice_b", "tie"]},
         metrics=["metrics.accuracy", "metrics.f1_micro", "metrics.f1_macro"],
+        prediction_type=str,
     ),
     "tasks.response_assessment.pairwise_comparison.single_turn",
     overwrite=True,

@@ -2,7 +2,10 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "ag_news"
+        "path": "ag_news",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
@@ -17,10 +20,10 @@
             "__type__": "map_instance_values",
             "mappers": {
                 "label": {
-                    "0": "World",
-                    "1": "Sports",
-                    "2": "Business",
-                    "3": "Sci/Tech"
+                    "0": "world",
+                    "1": "sports",
+                    "2": "business",
+                    "3": "sci/tech"
                 }
             }
         },
@@ -28,10 +31,10 @@
             "__type__": "set",
             "fields": {
                 "classes": [
-                    "World",
-                    "Sports",
-                    "Business",
-                    "Sci/Tech"
+                    "world",
+                    "sports",
+                    "business",
+                    "sci/tech"
                 ],
                 "text_type": "sentence"
             }
