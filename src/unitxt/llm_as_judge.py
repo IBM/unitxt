@@ -13,6 +13,7 @@ from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template
 from .llm_as_judge_constants import (
     DIRECT_CRITERIAS,
     EVALUATOR_TO_MODEL_ID,
+    EVALUATORS_METADATA,
     INFERENCE_ENGINE_NAME_TO_CLASS,
     MODEL_RENAMINGS,
     PAIRWISE_CRITERIAS,
@@ -711,7 +712,7 @@ class LLMJudgePairwise(LLMJudge):
         )
 
         for response_name, r_i in zip(response_names, ranking):
-            per_response_results[response_name]["ranking"] = ranking[r_i] + 1
+            per_response_results[response_name]["ranking"] = r_i + 1
 
         for response_name in response_names:
             # add response name
@@ -966,4 +967,5 @@ class LLMJudgePairwise(LLMJudge):
             )
             results.append(instance_results)
             slice_start = slice_end
+
         return results
