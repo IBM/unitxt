@@ -4,9 +4,8 @@ from unitxt.collections_operators import Explode, Wrap
 from unitxt.image_operators import ToImage
 from unitxt.operators import Copy
 from unitxt.splitters import RenameSplits
-from unitxt.test_utils.card import test_card
 from unitxt.templates import MultiReferenceTemplate
-
+from unitxt.test_utils.card import test_card
 
 for language in ["en", "fr"]:
     card = TaskCard(

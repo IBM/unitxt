@@ -124,7 +124,7 @@ add_to_catalog(
             "templates.qa.with_context.question_first",
             "templates.qa.with_context.ffqa",
             "templates.qa.with_context.title",
-            "templates.qa.with_context.lmms_eval"
+            "templates.qa.with_context.lmms_eval",
         ]
     ),
     "templates.qa.with_context.all",

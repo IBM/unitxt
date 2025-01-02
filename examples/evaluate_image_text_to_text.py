@@ -1,8 +1,8 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine, VLLMInferenceEngine
-from unitxt.text_utils import print_dict
-from tqdm import tqdm
+from unitxt.inference import (
+    LMMSEvalInferenceEngine,
+)
 
 # from cvar_pyutils.debugging_tools import set_remote_debugger
 # set_remote_debugger('9.148.189.104', 55557) # 9.148.189.104

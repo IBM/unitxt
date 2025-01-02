@@ -2,9 +2,8 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.image_operators import ToImage
 from unitxt.operators import Cast, Rename
-from unitxt.test_utils.card import test_card
 from unitxt.templates import MultipleChoiceTemplate
-
+from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/ai2d"),
