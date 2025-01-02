@@ -1,6 +1,5 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import WebsrcSquadF1
-from unitxt.test_utils.metrics import test_metric
 
 # from cvar_pyutils.debugging_tools import set_remote_debugger
 # set_remote_debugger('9.148.189.104', 55557)

@@ -6,7 +6,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
-
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc"),
     preprocess_steps=[
