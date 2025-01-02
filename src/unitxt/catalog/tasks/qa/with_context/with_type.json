@@ -1,0 +1,25 @@
+{
+    "__type__": "task",
+    "__description__": "This is the Question Answering Task with provided context (which is a either text, image, audio, table , or dialog) and additional field called type.\nThe 'tasks.qa.open' should be used if there is no context.  One or more ground truth answers can be provided in the 'answers' field.\nBy default, classical Rouge metric is used , but list of additional applicable metrics can be found under 'metrics.qa' in the Unitxt catalog.\n        ",
+    "input_fields": {
+        "context": "Union[Text, Image, Audio, Table, Dialog]",
+        "context_type": "str",
+        "question": "str"
+    },
+    "reference_fields": {
+        "answers": "List[str]",
+        "type": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.rouge"
+    ],
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ],
+    "defaults": {
+        "answers": []
+    },
+    "default_template": "templates.qa.with_context"
+}

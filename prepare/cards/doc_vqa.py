@@ -4,6 +4,7 @@ from unitxt.collections_operators import Explode, Wrap
 from unitxt.image_operators import ToImage
 from unitxt.operators import Copy
 from unitxt.splitters import RenameSplits
+from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 for language in ["en", "fr"]:
@@ -48,6 +49,11 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
     templates="templates.qa.with_context.all",
+    default_template=MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",
