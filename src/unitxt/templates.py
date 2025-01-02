@@ -639,9 +639,12 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
     Supports various ordering methods like sorting by length, alphabetically,
     placing correct answer at specific position, etc.
     """
+
     choices_order: Optional[Dict[str, Any]] = None
 
-    def _get_correct_answer_info(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any])-> Tuple[str, List[str], int]:
+    def _get_correct_answer_info(
+            self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
+    ) -> Tuple[str, List[str], int]:
         """
         Helper method to get common information about the correct answer.
 
@@ -653,7 +656,13 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         choices = input_fields[self.choices_field].copy()  # Create a copy to avoid modifying original
         return correct_answer, choices, target_index
 
-    def _update_fields(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], new_choices, correct_answer)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _update_fields(
+            self,
+            input_fields: Dict[str, Any],
+            reference_fields: Dict[str, Any],
+            new_choices,
+            correct_answer,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Helper method to update both input and reference fields.
         """
@@ -662,7 +671,12 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         reference_fields[self.target_field] = new_choices.index(correct_answer)
         return input_fields, reference_fields
 
-    def place_correct_at(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], target_position: int = 0)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def place_correct_at(
+            self,
+            input_fields: Dict[str, Any],
+            reference_fields: Dict[str, Any],
+            target_position: int = 0,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Modifies the choices array by moving the correct answer to the specified position.
         """
@@ -671,7 +685,8 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         # Validate target position
         if not 0 <= target_position < len(choices):
             raise ValueError(
-                f"Target position {target_position} is out of range. Must be between 0 and {len(choices) - 1}")
+                f"Target position {target_position} is out of range. Must be between 0 and {len(choices) - 1}"
+            )
 
         # Reorder choices
         choices.remove(correct_answer)
@@ -679,7 +694,12 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
 
         return self._update_fields(input_fields, reference_fields, choices, correct_answer)
 
-    def sort_by_length(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], reverse: bool = False)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def sort_by_length(
+            self,
+            input_fields: Dict[str, Any],
+            reference_fields: Dict[str, Any],
+            reverse: bool = False,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Sorts the choices array by the length of each answer.
         """
@@ -690,7 +710,12 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
 
         return self._update_fields(input_fields, reference_fields, sorted_choices, correct_answer)
 
-    def shuffle_choices_with_seed(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], random_seed: Optional[int] = None)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def shuffle_choices_with_seed(
+            self,
+            input_fields: Dict[str, Any],
+            reference_fields: Dict[str, Any],
+            random_seed: Optional[int] = None,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Shuffles the choices using a random seed.
         """
@@ -702,7 +727,12 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
 
         return self._update_fields(input_fields, reference_fields, choices, correct_answer)
 
-    def sort_alphabetically(self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any], reverse: bool = False)-> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def sort_alphabetically(
+            self,
+            input_fields: Dict[str, Any],
+            reference_fields: Dict[str, Any],
+            reverse: bool = False,
+    ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """
         Sorts the choices alphabetically.
         """
@@ -716,10 +746,10 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         if self.choices_order is not None:
             try:
                 ALLOWED_PARAMS = {
-                    'place_correct_at': {'target_position'},
-                    'sort_by_length': {'reverse'},
-                    'shuffle_choices_with_seed': {'random_seed'},
-                    'sort_alphabetically': {'reverse'}
+                    "place_correct_at": {"target_position"},
+                    "sort_by_length": {"reverse"},
+                    "shuffle_choices_with_seed": {"random_seed"},
+                    "sort_alphabetically": {"reverse"},
                 }
 
                 function_name = self.choices_order["method"]
@@ -727,14 +757,15 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
                     function = getattr(self, function_name)
                     allowed_params = ALLOWED_PARAMS.get(function_name, set())
                     params = {
-                        k: v for k, v in self.choices_order.get("params", {}).items()
+                        k: v
+                        for k, v in self.choices_order.get("params", {}).items()
                         if k in allowed_params
                     }
 
                     input_fields, reference_fields = function(
                         input_fields=input_fields,
                         reference_fields=reference_fields,
-                        **params
+                        **params,
                     )
                 else:
                     raise ValueError(f"Unknown ordering method: {function_name}")
