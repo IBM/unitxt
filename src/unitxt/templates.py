@@ -635,8 +635,8 @@ class MultipleChoiceTemplate(InputFormatTemplate):
 
 
 class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
-    """
-    Multiple choice template with configurable answer ordering functionality.
+    """Multiple choice template with configurable answer ordering functionality.
+
     Supports various ordering methods like sorting by length, alphabetically,
     placing correct answer at specific position, etc.
     """
@@ -646,8 +646,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
     def _get_correct_answer_info(
         self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[str, List[str], int]:
-        """
-        Helper method to get common information about the correct answer.
+        """Helper method to get common information about the correct answer.
 
         Returns:
             tuple: (correct_answer, original_choices, target_index)
@@ -666,9 +665,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         new_choices,
         correct_answer,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Helper method to update both input and reference fields.
-        """
+        """Helper method to update both input and reference fields."""
         input_fields[self.choices_field] = new_choices
         reference_fields[self.choices_field] = new_choices
         reference_fields[self.target_field] = new_choices.index(correct_answer)
@@ -680,9 +677,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         reference_fields: Dict[str, Any],
         target_position: int = 0,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Modifies the choices array by moving the correct answer to the specified position.
-        """
+        """Modifies the choices array by moving the correct answer to the specified position."""
         correct_answer, choices, _ = self._get_correct_answer_info(
             input_fields, reference_fields
         )
@@ -707,9 +702,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         reference_fields: Dict[str, Any],
         reverse: bool = False,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Sorts the choices array by the length of each answer.
-        """
+        """Sorts the choices array by the length of each answer."""
         correct_answer, choices, _ = self._get_correct_answer_info(
             input_fields, reference_fields
         )
@@ -727,9 +720,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         reference_fields: Dict[str, Any],
         random_seed: Optional[int] = None,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Shuffles the choices using a random seed.
-        """
+        """Shuffles the choices using a random seed."""
         correct_answer, choices, _ = self._get_correct_answer_info(
             input_fields, reference_fields
         )
@@ -748,9 +739,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
         reference_fields: Dict[str, Any],
         reverse: bool = False,
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
-        """
-        Sorts the choices alphabetically.
-        """
+        """Sorts the choices alphabetically."""
         correct_answer, choices, _ = self._get_correct_answer_info(
             input_fields, reference_fields
         )
@@ -764,7 +753,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         if self.choices_order is not None:
             try:
-                ALLOWED_PARAMS = {
+                allowed_params = {
                     "place_correct_at": {"target_position"},
                     "sort_by_length": {"reverse"},
                     "shuffle_choices_with_seed": {"random_seed"},
@@ -774,7 +763,7 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
                 function_name = self.choices_order["method"]
                 if hasattr(self, function_name):
                     function = getattr(self, function_name)
-                    allowed_params = ALLOWED_PARAMS.get(function_name, set())
+                    allowed_params = allowed_params.get(function_name, set())
                     params = {
                         k: v
                         for k, v in self.choices_order.get("params", {}).items()
@@ -788,8 +777,8 @@ class ReorderableMultipleChoiceTemplate(MultipleChoiceTemplate):
                     )
                 else:
                     raise ValueError(f"Unknown ordering method: {function_name}")
-            except (KeyError, AttributeError) as e:
-                raise ValueError(f"Invalid choices_order configuration: {str(e)}")
+            except KeyError as e:
+                raise UnitxtError(f"Invalid choices_order configuration: {e}") from e
 
         return input_fields, reference_fields
 
