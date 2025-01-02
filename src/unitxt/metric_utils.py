@@ -291,6 +291,7 @@ class PostProcessRecipe(SequentialOperatorInitializer):
         register_all_artifacts()
         self.steps = [
             FromPredictionsAndOriginalData(),
+            LoadJson(field="task_data"),
             _post_process_steps,
         ]
 
@@ -352,13 +353,11 @@ UNITXT_METRIC_SCHEMA = Features(
 class GlobalScores(dict):
     """GlobalScores is a dictionary-based class designed to handle and transform metric results into a structured format.
 
-    Attributes:
-        score (float): The main score value.
-        score_name (str): The name of the main score.
-
-    Methods:
-        to_df():
-            Transforms the dictionary of results into a pandas DataFrame with score_name as the index,
+    Args:
+        score (float):
+            The main score value.
+        score_name (str):
+            The name of the main score.
     """
 
     @property
@@ -549,12 +548,11 @@ class GroupsScores(dict):
     This class provides a property to summarize the scores and a custom
     string representation for pretty-printing.
 
-    Attributes:
-        summary (property): A property to get a summary of the group scores.
     """
 
     @property
     def summary(self):
+        """A property to get a summary of the group scores."""
         data = self
         # Desired metric columns
         metric_cols = [

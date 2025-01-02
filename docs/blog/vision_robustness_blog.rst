@@ -39,7 +39,7 @@ Here’s the code used to set up our tests. This example uses Unitxt to create s
     for card in ["cards.seed_bench", "cards.ai2d"]:
         for enumerator in ["capitals", "lowercase"]:
             for augmentor in [None, "augmentors.image.white_noise"]:
-                subsets[f"{card} {enumerator} {augmentor}"] = StandardRecipe(
+                subsets[f"{card} {enumerator} {augmentor}"] = DatasetRecipe(
                     card=card,
                     template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
                     loader_limit=100,

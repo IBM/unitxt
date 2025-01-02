@@ -2,7 +2,7 @@ from unitxt.card import TaskCard
 from unitxt.formats import ChatAPIFormat, HFSystemFormat, SystemFormat
 from unitxt.loaders import LoadFromDictionary
 from unitxt.settings_utils import get_constants
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 from unitxt.system_prompts import TextualSystemPrompt
 from unitxt.task import Task
 from unitxt.templates import InputOutputTemplate
@@ -665,7 +665,7 @@ class TestFormats(UnitxtTestCase):
             templates=[template],
         )
 
-        recipe = StandardRecipe(
+        recipe = DatasetRecipe(
             card=card,
             loader_limit=20,
             demos_pool_size=5,

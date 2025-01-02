@@ -1,7 +1,7 @@
 from unitxt.api import evaluate
 from unitxt.fusion import FixedFusion, WeightedFusion
 from unitxt.operators import IterableSource
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase, fillna, round_values
@@ -309,22 +309,22 @@ class TestFusion(UnitxtTestCase):
     def test_end_to_end(self):
         dataset = WeightedFusion(
             subsets={
-                "wnli": StandardRecipe(
+                "wnli": DatasetRecipe(
                     card="cards.wnli",
                     template="templates.classification.multi_class.relation.default",
                     group_by=["template"],
                 ),
-                "rte": StandardRecipe(
+                "rte": DatasetRecipe(
                     card="cards.rte",
                     template="templates.classification.multi_class.relation.default",
                 ),
                 "stsb": WeightedFusion(
                     subsets={
-                        "regression": StandardRecipe(
+                        "regression": DatasetRecipe(
                             card="cards.stsb",
                             template="templates.regression.two_texts.simple",
                         ),
-                        "classification": StandardRecipe(
+                        "classification": DatasetRecipe(
                             card="cards.stsb",
                             template=[
                                 "templates.regression.two_texts.similarity.flan",

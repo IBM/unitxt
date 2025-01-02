@@ -48,7 +48,7 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy
+from .utils import deep_copy, recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -992,7 +992,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
-    def _validate_group_mean_reduction(self, instances: List[dict]):
+    def _validate_group_mean_task_data(self, instance):
+        # instances need to all have task_data field with field group_id
+        assert "task_data" in instance, "each instance must have an task_data field"
+        assert isinstance(
+            instance["task_data"], dict
+        ), "each instance must have an task_data field that is a dict"
+        assert (
+            "group_id" in instance["task_data"]
+        ), "each instance task_data dict must have a key group_id"
+
+    def _validate_group_mean_reduction(self):
         """Ensure that group_mean reduction_map is properly formatted.
 
         Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
@@ -1042,17 +1052,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             1           'How do I repair my engine?'                 'paraphrase'
             2           'Why are ants eating my food?'               'original'
         """
-        # instances need to all have task_data field with field group_id
-        assert all(
-            "task_data" in instance for instance in instances
-        ), "each instance must have an task_data field"
-        assert all(
-            isinstance(instance["task_data"], dict) for instance in instances
-        ), "each instance must have an task_data field that is a dict"
-        assert all(
-            "group_id" in instance["task_data"] for instance in instances
-        ), "each instance task_data dict must have a key group_id"
-
         # validate the reduction_map
         assert (
             "group_mean" in self.reduction_map
@@ -1081,16 +1080,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-        # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
-        # this field exists
-        if self.subgroup_column is not None:
-            assert all(
-                self.subgroup_column in instance["task_data"] for instance in instances
-            ), f"each instance task_data dict must have a key {self.subgroup_column}"
-
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(instances)}
+        instance_scores = self.compute_instance_scores(stream)
+        global_score = {"num_of_instances": len(instance_scores)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1103,15 +1095,15 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 aggregation_function = self.average_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = instance_scores
             elif reduction_type == "max":
                 aggregation_function = self.max_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = instance_scores
             elif reduction_type == "group_mean":
                 aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction(instances=instances)
+                self._validate_group_mean_reduction()
                 reduction_fields = (
                     [self.main_score]
                     if "score_fields" not in reduction_params
@@ -1127,7 +1119,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances,
+                    instance_scores,
                     reduction_params,
                     reduction_fields,
                 )
@@ -1168,17 +1160,31 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
                 global_score.update(confidence_interval)
 
-        for instance in instances:
+        for instance in instance_scores:
             self.update_and_adjust_global_score(instance, global_score)
-        yield from instances
+
+        for i, instance in enumerate(stream):
+            instance["score"] = recursive_copy(instance_scores[i]["score"])
+            yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        instances = []
+        instance_scores = []
 
         for instance in stream:
             instance = self.verify_instance(instance)
+
+            if "group_mean" in self.reduction_map:
+                self._validate_group_mean_task_data(instance)
+
+            # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
+            # this field exists
+            if self.subgroup_column is not None:
+                assert (
+                    "task_data" in instance
+                    and self.subgroup_column in instance["task_data"]
+                ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
             task_data = instance["task_data"] if "task_data" in instance else {}
 
@@ -1214,9 +1220,18 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instance_score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
+            task_data = {}
+            if "task_data" in instance:
+                if "group_id" in instance["task_data"]:
+                    task_data["group_id"] = instance["task_data"]["group_id"]
+                if self.subgroup_column in instance["task_data"]:
+                    task_data[self.subgroup_column] = instance["task_data"][
+                        self.subgroup_column
+                    ]
 
-        return instances
+            instance_scores.append({"score": instance["score"], "task_data": task_data})
+
+        return instance_scores
 
     def get_group_scores(
         self,
@@ -1228,12 +1243,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
         Args:
-            instances: List of observation instances with instance-level scores (fields) computed.
-            score_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
+            instances (list):
+                List of observation instances with instance-level scores (fields) computed.
+            score_names (list):
+                List of instance score names in each instance to apply the aggregation function.
+            group_aggregation_func (Callable):
+                aggregation function accepting a list of numeric scores;
                 or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
                 callable function returns a single score for the group
-            prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
+            prepend_score_prefix (bool):
+                if True - prepend the score_prefix to the score names in the returned dicts. Set to False
                 if down the stream such a prepending is expected.
 
         Returns:
@@ -2465,6 +2484,11 @@ class Rouge(InstanceMetric, NLTKMixin):
         self.rouge_scorer = rouge_scorer
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        if len(references) == 0:
+            raise Exception(
+                f"No references passed passed for Rouge metric.  Rouge expects at least one reference answer per instance. The corresponding prediction is: {prediction}"
+            )
+
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
             prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
@@ -5080,14 +5104,18 @@ class IsCodeMixed(BulkInstanceMetric):
 class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
     """Metrics Ensemble class for creating ensemble of given metrics.
 
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        metrics (List[Union[Metric, str]]): List of metrics that will be ensemble.
-        weights (List[float]): Weight of each the metrics
-        InstanceMetric currently allows two reductions:
-        reduction_map (Dict[str, List[str]]. Parameter for specifying the redaction method of the global score.
-                                             (see it definition at InstanceMetric class). This class define its default
-                                             value to reduce by the mean of the main score.
+    Args:
+        main_score (str):
+            The main score label used for evaluation.
+        metrics (List[Union[Metric, str]]):
+            List of metrics that will be ensemble.
+        weights (List[float]):
+            Weight of each the metrics
+        reduction_map (Dict[str, List[str]]):
+            Specifies the redaction method of the global score.
+            InstanceMetric currently allows two reductions
+            (see it definition at InstanceMetric class).
+            This class define its default value to reduce by the mean of the main score.
 
     """
 

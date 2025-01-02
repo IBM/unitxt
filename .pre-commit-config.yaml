@@ -11,11 +11,6 @@ repos:
         exclude: src/unitxt/metrics.py|examples/evaluate_existing_dataset_no_install.py
       # Run the linter on the specific file with the ignore flag
       - id: ruff
-        name: ruff (src/unitxt/metrics.py)
-        files: src/unitxt/metrics.py
-        args: [--fix, --ignore, C901]
-      # Run the linter on the specific file with the ignore flag
-      - id: ruff
         name: ruff (examples/evaluate_existing_dataset_no_install.py)
         files: examples/evaluate_existing_dataset_no_install.py
         args: [--fix, --ignore, T201]

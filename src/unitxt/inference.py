@@ -63,6 +63,8 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
+    credentials: Optional[Dict[str, str]] = {}
+    extra_headers: Optional[Dict[str, str]] = None
 
 
 def get_model_and_label_id(model_name, label):
@@ -1169,8 +1171,8 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: list[
-            list[dict[str, float | str]]
+        dataset_with_options_logprobs: List[
+            List[Dict[str, Union[float, str]]]
         ] = self.get_options_log_probs(dataset_with_options)
 
         dataset_iterator = iter(dataset_with_options_logprobs)
@@ -1589,21 +1591,35 @@ class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
 
 
-class RITSInferenceEngine(OpenAiInferenceEngine):
+class RITSInferenceEngine(
+    OpenAiInferenceEngine,
+):
     label: str = "rits"
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
     def prepare_engine(self):
-        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
-        self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
-        logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
+        # inference endpoint need the '/v1' path
+        self.base_url = (
+            RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + "/v1"
+        )
+        logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
-    def _get_model_name_for_endpoint(self):
+    @staticmethod
+    def get_base_url_from_model_name(model_name: str):
+        base_url_template = (
+            "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+        )
+        return base_url_template.format(
+            RITSInferenceEngine._get_model_name_for_endpoint(model_name)
+        )
+
+    @staticmethod
+    def _get_model_name_for_endpoint(model_name: str):
         return (
-            self.model_name.split("/")[-1]
+            model_name.split("/")[-1]
             .lower()
             .replace("v0.1", "v01")
             .replace("vision-", "")
@@ -1791,16 +1807,19 @@ class WMLInferenceEngineBase(
 ):
     """Base for classes running inference using ibm-watsonx-ai.
 
-    Attributes:
-        credentials (Dict[str, str], optional): By default, it is created by a class
+    Args:
+        credentials (Dict[str, str], optional):
+            By default, it is created by a class
             instance which tries to retrieve proper environment variables
             ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
             However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
             "username", "password".
             can be directly provided instead.
-        model_name (str, optional): ID of a model to be used for inference. Mutually
+        model_name (str, optional):
+            ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
-        deployment_id (str, optional): Deployment ID of a tuned model to be used for
+        deployment_id (str, optional):
+            Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
         parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
             Defines inference parameters and their values. Deprecated attribute, please pass respective
@@ -2061,9 +2080,10 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
 
-    Attributes:
-        concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
-        which is also the maximum value.
+    Args:
+        concurrency_limit (int):
+            Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value.
 
     Examples:
         .. code-block:: python
@@ -2191,10 +2211,11 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     concatenate images within an instance into a single image and adjust your query
     accordingly (if necessary).
 
-    Attributes:
-        image_encoder (EncodeImageToString, optional): operator which encodes images in
-        given format to base64 strings required by service. You should specify it when
-        you are using images in your inputs.
+    Args:
+        image_encoder (EncodeImageToString, optional):
+            operator which encodes images in
+            given format to base64 strings required by service. You should specify it when
+            you are using images in your inputs.
 
     Example:
         .. code-block:: python
@@ -2683,6 +2704,7 @@ class AsyncTokenBucket:
 class LiteLLMInferenceEngine(
     InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
+    label: str = "litellm"
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
@@ -2715,11 +2737,15 @@ class LiteLLMInferenceEngine(
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
             kwargs = self.to_dict([StandardAPIParamsMixin])
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
+            del kwargs["credentials"]
             try:
                 response = await self._completion(
                     messages=messages,
                     max_retries=self.max_retries,
                     caching=True,
+                    drop_params=False,
+                    **self.credentials,
                     **kwargs,
                 )
             except Exception as e:
@@ -2791,12 +2817,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             across different API backends.
     """
 
+    label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
+            "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",

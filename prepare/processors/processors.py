@@ -28,7 +28,9 @@ from unitxt.processors import (
     Substring,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
+    TakeLastNonEmptyLine,
     ToYesOrNone,
+    Upper,
     YesNoToInt,
     YesToOneElseZero,
 )
@@ -73,6 +75,12 @@ add_processor_and_operator_to_catalog(
 )
 
 add_processor_and_operator_to_catalog(
+    artifact_name="take_last_non_empty_line",
+    operator=TakeLastNonEmptyLine(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
     artifact_name="literal_eval",
     operator=LiteralEval(),
     process_references=False,
@@ -91,6 +99,10 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="lower_case", operator=Lower(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="upper_case", operator=Upper(), overwrite=True
 )
 
 add_processor_and_operator_to_catalog(
