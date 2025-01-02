@@ -4,8 +4,8 @@ from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine, VL
 from unitxt.text_utils import print_dict
 from tqdm import tqdm
 
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.61.7.120', 55557)
+# from cvar_pyutils.debugging_tools import set_remote_debugger
+# set_remote_debugger('9.148.189.104', 55557) # 9.148.189.104
 
 with settings.context(
     disable_hf_datasets_cache=False,
@@ -55,7 +55,7 @@ with settings.context(
     dataset = load_dataset(
         card="cards.websrc",
         format="formats.chat_api",
-        max_test_instances=20,
+        # max_test_instances=20,
         split="test",
         # metrics=["metrics.relaxed_correctness.json"]
     )

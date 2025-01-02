@@ -48,7 +48,7 @@ card = TaskCard(
     default_template=MultiReferenceTemplate(
         input_format="{context}\n{question}\nAnswer the question using a single word.",
         references_field="answers",
-        __description__="lmms-evals default template for docvqa.",
+        __description__="lmms-evals default template for chartqa.",
     ),
     __tags__={
         "license": "GPL-3.0",

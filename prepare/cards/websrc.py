@@ -5,7 +5,8 @@ from unitxt.image_operators import DecodeImage, ToImage
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 from unitxt.templates import MultiReferenceTemplate
-
+from cvar_pyutils.debugging_tools import set_remote_debugger
+set_remote_debugger('9.148.189.104', 55557)
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc"),
@@ -20,9 +21,9 @@ card = TaskCard(
     task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
     templates="templates.qa.with_context.all",
     default_template=MultiReferenceTemplate(
-        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
         references_field="answers",
-        __description__="lmms-evals default template for docvqa.",
+        __description__="lmms-evals default template for websrc.",
     ),
     __tags__={
         "license": "Unknown",
