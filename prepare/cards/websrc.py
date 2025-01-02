@@ -1,4 +1,3 @@
-from cvar_pyutils.debugging_tools import set_remote_debugger
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
@@ -7,7 +6,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
-set_remote_debugger("9.148.189.104", 55557)
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc"),

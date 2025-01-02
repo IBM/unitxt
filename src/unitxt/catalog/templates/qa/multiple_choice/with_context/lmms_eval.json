@@ -3,9 +3,5 @@
     "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
     "choices_separator": "\n",
     "target_field": "answer",
-    "choices_separator": "\n",
-    "target_choice_format": " {choice_numeral}",
-    "postprocessors": [
-        "processors.first_character"
-    ]
+    "enumerator": "capitals"
 }
