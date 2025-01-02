@@ -1472,8 +1472,6 @@ class ANLS(InstanceMetric):
 class RelaxedCorrectness(GlobalMetric):
     main_score = "relaxed_overall"
     prediction_type = str  # string representation is compared
-    n_resamples = None
-
     def compute(self, references: List[List[str]],
                 predictions: List[str],
                 task_data: List[Dict]) -> dict:
@@ -1532,16 +1530,14 @@ class RelaxedCorrectness(GlobalMetric):
 
 
 class WebsrcSquadF1(GlobalMetric):
-    main_score = "websrc_f1"
-    reduction_map = {"mean": ["websrc_f1"]}
+    main_score = "websrc_squad_f1"
     prediction_type = Any  # string representation is compared
-
-    threshold: float = 0.5
     DOMAINS = ["auto", "book", "camera", "game", "jobs", "movie", "phone", "restaurant","sports", "university", "hotel"]
+
     def compute(
             self,
-            references: List[Any],
-            predictions: Any,
+            references: List[List[str]],
+            predictions: List[str],
             task_data: List[Dict],
     ) -> dict:
         """ANLS image-text accuracy metric."""
@@ -1549,7 +1545,7 @@ class WebsrcSquadF1(GlobalMetric):
         # Group results by domain
         subset_to_eval_samples = defaultdict(list)
         for pred, ref, task_data_i in zip(predictions, references,  task_data):
-            subset_to_eval_samples[task_data_i["domain"]].append([pred, ref])
+            subset_to_eval_samples[task_data_i["domain"]].append([pred, ref[0]])
         # Evaluate each domain
         for subset, sub_eval_samples in subset_to_eval_samples.items():
             judge_dict, metric_dict = self.evaluate_websrc(sub_eval_samples)
@@ -1609,7 +1605,7 @@ class WebsrcSquadF1(GlobalMetric):
 
         judge_list = []
         for sample in samples:
-            judge_list.append(_compute_f1(sample["answer"], sample["parsed_pred"]))
+            judge_list.append(_compute_f1(sample[1], sample[0]))
 
         f1 = np.mean(judge_list)
         return judge_list, {"f1": f1}
