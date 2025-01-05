@@ -1,4 +1,7 @@
-from templates.rag_eval.rag_eval import (
+from unitxt import add_to_catalog
+from unitxt.templates import InputOutputTemplateWithCustomTarget
+
+from prepare.templates.rag_eval.rag_eval import (
     answer_relevance_input_format,
     context_relevance_input_format_ares,
     correctness_input_format,
@@ -6,8 +9,6 @@ from templates.rag_eval.rag_eval import (
     faithfulness_no_question_input_format,
     faithfulness_with_question_input_format,
 )
-from unitxt import add_to_catalog
-from unitxt.templates import InputOutputTemplateWithCustomTarget
 
 ##################
 # post processors
