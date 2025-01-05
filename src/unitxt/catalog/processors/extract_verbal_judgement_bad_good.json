@@ -1,0 +1,8 @@
+{
+    "__type__": "post_process",
+    "process_references": false,
+    "process_prediction": true,
+    "operator": {
+        "__type__": "extract_verbal_judgement_bad_good"
+    }
+}
