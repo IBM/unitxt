@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 subsets = {  # the key must appear in the card name
     "cards.legalbench": [
@@ -82,7 +82,7 @@ def prepare_recipe(default_args, specific_args):
 
     if "template" in recipe and "template_card_index" in recipe:
         del recipe["template_card_index"]
-    return StandardRecipe(**recipe, format="formats.chat_api")
+    return DatasetRecipe(**recipe, format="formats.chat_api")
 
 
 ### Reasoning

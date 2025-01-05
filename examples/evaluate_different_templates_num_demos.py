@@ -21,5 +21,10 @@ predictions = ["entailment" for _ in dataset]
 
 results = evaluate(predictions=predictions, data=dataset)
 
-# Print the resulting scores per group.
-logger.info(results[0]["score"]["groups"])
+# Print Results:
+
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Groups Results:")
+print(results.groups_scores.summary)

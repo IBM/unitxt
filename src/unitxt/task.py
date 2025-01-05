@@ -40,25 +40,22 @@ def parse_string_types_instead_of_actual_objects(obj):
 class Task(InstanceOperator, ArtifactFetcherMixin):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
-    Attributes:
+    Args:
         input_fields (Union[Dict[str, str], List[str]]):
-        Dictionary with string names of instance input fields and types of respective values.
-        In case a list is passed, each type will be assumed to be Any.
-
+            Dictionary with string names of instance input fields and types of respective values.
+            In case a list is passed, each type will be assumed to be Any.
         reference_fields (Union[Dict[str, str], List[str]]):
-        Dictionary with string names of instance output fields and types of respective values.
-        In case a list is passed, each type will be assumed to be Any.
-
-        metrics (List[str]): List of names of metrics to be used in the task.
-
+            Dictionary with string names of instance output fields and types of respective values.
+            In case a list is passed, each type will be assumed to be Any.
+        metrics (List[str]):
+            List of names of metrics to be used in the task.
         prediction_type (Optional[str]):
-        Need to be consistent with all used metrics. Defaults to None, which means that it will
-        be set to Any.
-
+            Need to be consistent with all used metrics. Defaults to None, which means that it will
+            be set to Any.
         defaults (Optional[Dict[str, Any]]):
-        An optional dictionary with default values for chosen input/output keys. Needs to be
-        consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
-        Will not overwrite values if already provided in a given instance.
+            An optional dictionary with default values for chosen input/output keys. Needs to be
+            consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
+            Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
         1. "input_fields" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
@@ -288,7 +285,11 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
             "media": instance.get("media", {}),
+            "recipe_metadata": instance.get("recipe_metadata", {}),
         }
+        if "demos" in instance:
+            # for the case of recipe.skip_demoed_instances
+            result["demos"] = instance["demos"]
 
         if stream_name == constants.inference_stream:
             return result

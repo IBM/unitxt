@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "model": "watsonx/mistralai/mixtral-8x7b-instruct-v01",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "MIXTRAL8_7b",
+    "generate_summaries": false
+}

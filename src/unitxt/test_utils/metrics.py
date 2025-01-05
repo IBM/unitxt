@@ -74,7 +74,7 @@ def apply_metric(
     ti = []
     for instance in test_iterable:
         ti.append(deepcopy(instance))
-    multi_stream = MultiStream.from_iterables({"test": ti})
+    multi_stream = MultiStream.from_iterables({"test": ti}, copying=True)
 
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]

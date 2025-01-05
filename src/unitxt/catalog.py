@@ -1,7 +1,6 @@
 import json
 import os
 from collections import Counter
-from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -167,7 +166,6 @@ def add_link_to_catalog(
     )
 
 
-@lru_cache(maxsize=None)
 def get_from_catalog(
     name: str,
     catalog: Catalog = None,
