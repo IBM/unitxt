@@ -11,6 +11,7 @@ for new_catalog_name, base_catalog_name, main_score in [
     ("perplexity_flan_t5_small", "metrics.perplexity_q.flan_t5_small", "perplexity"),
     ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
     ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
+    ("token_precision", "metrics.token_overlap", "precision"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,
