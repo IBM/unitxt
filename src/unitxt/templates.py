@@ -495,7 +495,31 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
 
 
 class MultipleChoiceTemplate(InputFormatTemplate):
-    """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
+    """Formats the input that specifies a multiple-choice question, with a list of possible answers to choose from, and identifies the correct answer.
+
+    Args:
+        target_prefix (str): Optional prefix that can be added before the target label in
+            generated prompts or outputs.
+        choices_field (str): The key under which the multiple choices are stored in the
+            input and reference dictionaries.
+        target_field (str): The key under which the correct choice is stored in the
+            reference dictionary (can be integer index or textual label).
+        choices_separator (str): A string used to join formatted choices (e.g. ", ").
+        source_choice_format (str): A Python format string used for displaying each choice
+            in the input fields (e.g. "{choice_numeral}. {choice_text}").
+        target_choice_format (str): A Python format string used for displaying each choice
+            in the target or final output (e.g. "{choice_numeral}").
+        enumerator (str): Determines how choice numerals are enumerated. Possible values
+            include "capitals", "lowercase", "numbers", or "roman".
+        shuffle_choices (bool): If True, shuffle the choices. The shuffling seed can be
+            set with `shuffle_choices_seed`.
+        shuffle_choices_seed (int, optional): If provided, the choices are shuffled with
+            this fixed integer seed for reproducibility.
+        sort_choices_by_length (bool): If True, sorts choices by their length (ascending).
+        sort_choices_alphabetically (bool): If True, sorts choices in alphabetical order.
+        reverse_choices (bool): If True, reverses the order of the choices after any
+            sorting has been applied. Defaults to False to preserve backward compatibility.
+    """
 
     target_prefix: str = ""
     choices_field: str = "choices"
@@ -504,7 +528,12 @@ class MultipleChoiceTemplate(InputFormatTemplate):
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
     enumerator: str = "capitals"
+
     shuffle_choices: bool = False
+    shuffle_choices_seed: int = None
+    sort_choices_by_length: bool = False
+    sort_choices_alphabetically: bool = False
+    reverse_choices: bool = False  # False by default for backward-compat
 
     def prepare(self):
         super().prepare()
@@ -537,6 +566,22 @@ class MultipleChoiceTemplate(InputFormatTemplate):
                 "XIX",
                 "XX",
             ]
+
+    def verify(self):
+        super().verify()
+        if self.shuffle_choices and (
+            self.sort_choices_by_length
+            or self.sort_choices_alphabetically
+            or self.reverse_choices
+        ):
+            raise UnitxtError(
+                "You cannot combine shuffle_choices with sorting or reversing flags."
+            )
+
+        if self.sort_choices_by_length and self.sort_choices_alphabetically:
+            raise UnitxtError(
+                "You cannot combine both sort_choices_by_length and sort_choices_alphabetically simultaneously."
+            )
 
     def inputs_to_choices(self, data: Dict[str, Any], choice_format: str) -> str:
         choices = data[self.choices_field]
@@ -612,18 +657,36 @@ class MultipleChoiceTemplate(InputFormatTemplate):
     def preprocess_input_and_reference_fields(
         self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if (
+            not self.shuffle_choices
+            and not self.sort_choices_by_length
+            and not self.sort_choices_alphabetically
+            and not self.reverse_choices
+        ):
+            return input_fields, reference_fields
+
+        choices = input_fields[self.choices_field]
+        target_index = self.outputs_to_target_index(reference_fields)
+        original_label_choice = reference_fields[self.choices_field][target_index]
+
+        if self.sort_choices_by_length:
+            choices.sort(key=len)
+        if self.sort_choices_alphabetically:
+            choices.sort()
+        if self.reverse_choices:
+            choices.reverse()
         if self.shuffle_choices:
-            target_index = self.outputs_to_target_index(reference_fields)
-            original_label_choice = reference_fields[self.choices_field][target_index]
-            choices = input_fields[self.choices_field]
-            random_seed = {**input_fields}
-
-            random_generator = new_random_generator(random_seed)
+            random_generator = new_random_generator(
+                self.shuffle_choices_seed
+                if self.shuffle_choices_seed is not None
+                else {**input_fields}
+            )
             random_generator.shuffle(choices)
-            input_fields[self.choices_field] = choices
 
-            reference_fields[self.choices_field] = choices
-            reference_fields[self.target_field] = choices.index(original_label_choice)
+        # Update both input_fields and reference_fields once at the end
+        input_fields[self.choices_field] = choices
+        reference_fields[self.choices_field] = choices
+        reference_fields[self.target_field] = choices.index(original_label_choice)
 
         return input_fields, reference_fields
 
