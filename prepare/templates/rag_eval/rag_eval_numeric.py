@@ -1,15 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.templates import InputOutputTemplateWithCustomTarget
 
-from prepare.templates.rag_eval.rag_eval import (
-    answer_relevance_input_format,
-    context_relevance_input_format_ares,
-    correctness_input_format,
-    correctness_referenceless_input_format,
-    faithfulness_no_question_input_format,
-    faithfulness_with_question_input_format,
-)
-
 ##################
 # post processors
 ##################
@@ -54,6 +45,49 @@ def add_rag_templates(
         full_template_name = f"templates.rag_eval.{task}.{template_name}"
         rag_template_list.append(full_template_name)
         add_to_catalog(template, full_template_name, overwrite=True)
+
+
+########################################
+# input formats (prediction always last)
+########################################
+
+correctness_input_format = """Question: {question}\n
+Ground-truth answer: {ground_truths}\n
+Prediction: {answer}
+"""
+
+correctness_reference_based_with_context_input_format = """Question: {question}\n
+Evidence: {contexts}\n
+Ground Truth: {ground_truths}
+Prediction: {answer}
+"""
+
+
+faithfulness_with_question_input_format = """Question: {question}\n
+Evidence: {contexts}\n
+Prediction: {answer}
+"""
+
+faithfulness_no_question_input_format = """Evidence: {contexts}\n
+Prediction: {answer}
+"""
+
+context_relevance_input_format = """Question: {question}\n
+Evidence: {contexts}
+"""
+
+context_relevance_input_format_ares = """Question: {question}\n
+Document: {contexts}
+"""
+
+answer_relevance_input_format = """Question: {question}\n
+Prediction: {answer}
+"""
+
+correctness_referenceless_input_format = """Question: {question}\n
+Evidence: {contexts}\n
+Prediction: {answer}
+"""
 
 
 ###############
