@@ -756,6 +756,7 @@ class LLMJudgePairwise(LLMJudge):
         )
         predictions = self.convert_predictions_to_dicts(predictions)
         instances_count = len(predictions)
+        self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
             [f"{key}_winrate" for key in predictions[0].keys()]
         )
