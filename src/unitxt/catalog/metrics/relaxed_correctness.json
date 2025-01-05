@@ -1,3 +1,4 @@
 {
-    "__type__": "relaxed_correctness"
+    "__type__": "relaxed_correctness",
+    "n_resamples": null
 }
