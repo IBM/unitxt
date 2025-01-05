@@ -3,10 +3,10 @@
     "inference_model": {
         "__type__": "generic_inference_engine"
     },
-    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_verbal_rating",
+    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_verbal_good_bad",
     "task": "tasks.rag_eval.faithfulness.binary",
     "format": null,
-    "main_score": "faithfulness_q_c_a_verbal_rating",
+    "main_score": "faithfulness_q_c_a_verbal_good_bad",
     "prediction_field": "answer",
     "infer_log_probs": false
 }
