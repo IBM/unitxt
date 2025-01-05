@@ -1,0 +1,10 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "template": "templates.rag_eval.answer_correctness.judge_loose_match_no_context_numeric",
+    "task": "tasks.rag_eval.answer_correctness.binary",
+    "format": null,
+    "main_score": "answer_correctness_q_a_gt_loose_numeric",
+    "prediction_field": "answer",
+    "infer_log_probs": false
+}
