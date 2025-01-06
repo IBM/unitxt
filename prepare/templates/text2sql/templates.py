@@ -48,7 +48,7 @@ for name, input_format, instruction, target_prefix in template_details:
         name,
         overwrite=True,
     )
-    template_names.append(template_names)
+    template_names.append(name)
 
 
 add_to_catalog(
