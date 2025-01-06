@@ -29,12 +29,15 @@ from unitxt.processors import (
     TakeFirstNonEmptyLine,
     TakeFirstWord,
     TakeLastNonEmptyLine,
+    TakeUntilPunc,
+    Title,
     ToYesOrNone,
     Upper,
     YesNoToInt,
     YesToOneElseZero,
 )
 from unitxt.settings_utils import get_constants
+from unitxt.string_operators import Strip
 
 constants = get_constants()
 logger = get_logger()
@@ -75,6 +78,12 @@ add_processor_and_operator_to_catalog(
 )
 
 add_processor_and_operator_to_catalog(
+    artifact_name="strip",
+    operator=Strip(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
     artifact_name="take_last_non_empty_line",
     operator=TakeLastNonEmptyLine(),
     overwrite=True,
@@ -89,6 +98,14 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="lower_case_till_punc", operator=LowerCaseTillPunc(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="take_until_punc", operator=TakeUntilPunc(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="title", operator=Title(), overwrite=True
 )
 
 add_processor_and_operator_to_catalog(
