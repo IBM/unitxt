@@ -11,6 +11,7 @@ from .card import __file__ as _
 from .catalog import __file__ as _
 from .collections import __file__ as _
 from .collections_operators import __file__ as _
+from .data_utils import __file__ as _
 from .dataclass import __file__ as _
 from .dataset_utils import __file__ as _
 from .deprecation_utils import __file__ as _
