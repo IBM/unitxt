@@ -1,11 +1,6 @@
-import sys
-
 from unitxt import add_to_catalog
 from unitxt.blocks import TemplatesList
 from unitxt.templates import InputOutputTemplate
-
-sys.setrecursionlimit(99999)
-
 
 template_details = [
     (
