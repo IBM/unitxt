@@ -8,19 +8,26 @@ with settings.context(
 ):
     test_dataset = load_dataset(
         "card=cards.text2sql.bird"
-        ",template=templates.text2sql.you_are_given_with_hint",
+        ",template=templates.text2sql.you_are_given_with_hint"
+        ",loader_limit=100",
         split="validation",
     )
 
 # Infer
 inference_model = CrossProviderInferenceEngine(
-    model="llama-3-70b-instruct",  # "llama-3-2-1b-instruct",  # "llama-3-70b-instruct",
+    model="granite-3-8b-instruct",  # "llama-3-70b-instruct","llama-3-70b-instruct",  #
     max_tokens=256,
 )
 
 predictions = inference_model.infer(test_dataset)
-
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+
+# for item in evaluated_dataset:
+#     print("\n\n------prediction--------")
+#     print(item["prediction"])
+#     print("------processed_prediction--------")
+#     print(item["processed_prediction"])
+#     print(evaluated_dataset[0]["score"]["instance"]["score"])
 
 print_dict(
     evaluated_dataset[0],
@@ -37,7 +44,7 @@ print_dict(
 # num_of_instances (int):
 #     1534
 # execution_accuracy (float):
-#     0.475
+#     0.482
 
 # like GPT4 (rank 40 in the benchmark https://bird-bench.github.io/)
 
