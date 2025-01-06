@@ -574,7 +574,7 @@ class DictReduction(AggregationReduction[Dict[str, float]]):
 
 class MeanReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
-        return float(nan_mean(lst))
+        return nan_mean(lst)
 
 
 class MaxReduction(DictReduction):

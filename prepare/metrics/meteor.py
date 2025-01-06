@@ -3,10 +3,11 @@ from unitxt.metrics import HuggingfaceMetric, MeteorFast
 from unitxt.test_utils.metrics import test_metric
 
 metric = MeteorFast(
+    n_resamples=3,
     __description__="""METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
 
 METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
-"""
+""",
 )
 
 predictions = [
@@ -35,11 +36,11 @@ instance_targets = [
 
 global_target = {
     "meteor": 0.58,
-    "meteor_ci_high": 0.67,
-    "meteor_ci_low": 0.48,
+    "meteor_ci_high": 0.59,
+    "meteor_ci_low": 0.58,
     "score": 0.58,
-    "score_ci_high": 0.67,
-    "score_ci_low": 0.48,
+    "score_ci_high": 0.59,
+    "score_ci_low": 0.58,
     "score_name": "meteor",
     "num_of_instances": 4,
 }
@@ -61,16 +62,6 @@ metric_hf = MeteorFast(
 METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
 """,
 )
-global_target = {
-    "meteor": 0.58,
-    "meteor_ci_high": 0.59,
-    "meteor_ci_low": 0.58,
-    "num_of_instances": 4,
-    "score": 0.58,
-    "score_ci_high": 0.59,
-    "score_ci_low": 0.58,
-    "score_name": "meteor",
-}
 
 outputs = test_metric(
     metric=metric_hf,
