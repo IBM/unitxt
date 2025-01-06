@@ -8,7 +8,7 @@ with settings.context(
 ):
     test_dataset = load_dataset(
         "card=cards.text2sql.bird"
-        ",template=templates.text2sql.you_are_given_with_hint"
+        ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix"
         ",loader_limit=100",
         split="validation",
     )
