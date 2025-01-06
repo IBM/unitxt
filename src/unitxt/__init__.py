@@ -14,10 +14,6 @@ from .catalog import add_to_catalog, get_from_catalog
 from .logging_utils import get_logger
 from .register import register_all_artifacts, register_local_catalog
 from .settings_utils import get_constants, get_settings
-from .text2sql import (
-    ExecutionAccuracy,
-    GetSQL,
-)
 
 register_all_artifacts()
 random.seed(0)
