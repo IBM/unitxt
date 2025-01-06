@@ -7,12 +7,14 @@ from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
     NER,
     Accuracy,
+    AccuracyFast,
     BinaryAccuracy,
     BinaryMaxAccuracy,
     BinaryMaxF1,
     Detector,
     F1Binary,
     F1BinaryPosOnly,
+    F1Fast,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
@@ -214,6 +216,39 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def test_accuracy_fast(self):
+        metric = AccuracyFast()
+
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "accuracy": 1 / 3,
+            "score": 1 / 3,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
     def test_accuracy_with_prefix(self):
         metric = Accuracy(score_prefix="my_")
 
@@ -320,6 +355,44 @@ class TestMetrics(UnitxtTestCase):
 
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "my_f1_micro": 5 / 6,
+            "score": 5 / 6,
+            "score_name": "my_f1_micro",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 0.0, "score": 0.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
+    def test_f1_micro_map_reduce_with_prefix(self):
+        metric = F1Fast(main_score="f1_micro", averages=["micro"], score_prefix="my_")
+
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
         )
 
         expected_global_result = {
@@ -581,6 +654,37 @@ class TestMetrics(UnitxtTestCase):
 
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
+
+    def test_f1_macro_fast(self):
+        metric = F1Fast(
+            main_score="f1_macro",
+            averages=["macro", "per_class"],
+            ci_score_names=["f1_macro"],
+        )
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+
+        # recall class 'dog'  = 2/3  = 0.666        precision= 2/2 = 1    f1 = 0.8
+        # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75 f1 = 0.857142857143
+        # macro f1 = (0.8+0.847)/2
+        global_target = 0.82857142
+        global_target_dog = 0.8
+        global_target_cat = 0.857142857143
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
         self.assertAlmostEqual(
@@ -1295,6 +1399,14 @@ class TestConfidenceIntervals(UnitxtTestCase):
         """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
         self._test_confidence_interval(
             metric=Accuracy(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_map_reduce_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=AccuracyFast(),
             expected_ci_low=0.71,
             expected_ci_high=0.87,
         )

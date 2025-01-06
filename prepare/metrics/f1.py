@@ -2,9 +2,8 @@ from unitxt.catalog import add_to_catalog
 from unitxt.metrics import (
     BinaryMaxF1,
     F1Binary,
-    F1Macro,
+    F1Fast,
     F1MacroMultiLabel,
-    F1Micro,
     F1MicroMultiLabel,
     F1Strings,
     F1Weighted,
@@ -12,10 +11,12 @@ from unitxt.metrics import (
     RecallBinary,
 )
 
-metric = F1Macro()
+metric = F1Fast(
+    main_score="f1_macro", averages=["macro", "per_class"], ci_score_names=["f1_macro"]
+)
 add_to_catalog(metric, "metrics.f1_macro", overwrite=True)
 
-metric = F1Micro()
+metric = F1Fast(main_score="f1_micro", averages=["micro"])
 add_to_catalog(metric, "metrics.f1_micro", overwrite=True)
 
 metric = F1MacroMultiLabel()
