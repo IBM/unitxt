@@ -3,11 +3,12 @@ import io
 from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
+from .data_utils import SQLData
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Image, Number, Table, Video
+from .types import Dialog, Image, Number, SQLSchema, Table, Video
 
 constants = get_constants()
 
@@ -157,3 +158,14 @@ class MultiTypeSerializer(Serializer):
                 return serializer.serialize(value, instance)
 
         return str(value)
+
+
+class SQLSchemaSerializer(SingleTypeSerializer):
+    serialized_type = SQLSchema
+
+    def serialize(self, value: SQLSchema, instance: Dict[str, Any]) -> str:
+        return SQLData().generate_schema_prompt(
+            db_name=value["db_id"],
+            db_type=value["db_type"],
+            num_rows_from_table_to_add=value["num_table_rows_to_add"],
+        )

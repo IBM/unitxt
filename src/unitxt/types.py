@@ -38,6 +38,12 @@ class Table(TypedDict):
     rows: List[List[Any]]
 
 
+class SQLSchema(TypedDict):
+    db_id: str
+    db_type: Literal["sqlite"]
+    num_table_rows_to_add: int
+
+
 register_type(Text)
 register_type(Number)
 register_type(Turn)
@@ -47,3 +53,4 @@ register_type(Audio)
 register_type(Image)
 register_type(Video)
 register_type(RagResponse)
+register_type(SQLSchema)
