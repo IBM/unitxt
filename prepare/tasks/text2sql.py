@@ -1,7 +1,6 @@
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
-from unitxt.text2sql.metrics import ExecutionAccuracy  # noqa
-from unitxt.text2sql.types import SQLSchema
+from unitxt.types import SQLSchema
 
 add_to_catalog(
     Task(
