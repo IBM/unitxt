@@ -154,11 +154,11 @@ metric = GroupMeanAccuracy()
 global_target = {
     "group_mean_accuracy": 0.23,
     "group_mean_accuracy_ci_high": 0.44,
-    "group_mean_accuracy_ci_low": 0.03,
+    "group_mean_accuracy_ci_low": 0.02,
     "num_of_instances": 15,
     "score": 0.23,
     "score_ci_high": 0.44,
-    "score_ci_low": 0.03,
+    "score_ci_low": 0.02,
     "score_name": "group_mean_accuracy",
 }
 

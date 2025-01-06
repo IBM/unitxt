@@ -832,11 +832,11 @@ class MetricWithConfidenceInterval(Metric):
                 random_state=self.new_random_generator(),
             ).confidence_interval
             full_score_name = ci_score_prefix + score_name
-            result[f"{full_score_name}_ci_low"] = float(ci.low)
-            result[f"{full_score_name}_ci_high"] = float(ci.high)
+            result[f"{full_score_name}_ci_low"] = ci.low
+            result[f"{full_score_name}_ci_high"] = ci.high
             if score_name == self.score_prefix + self.main_score:
-                result["score_ci_low"] = float(ci.low)
-                result["score_ci_high"] = float(ci.high)
+                result["score_ci_low"] = ci.low
+                result["score_ci_high"] = ci.high
         return result
 
     def resample_from_non_nan(self, values):
@@ -931,10 +931,10 @@ class MetricWithConfidenceInterval(Metric):
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
                 ).confidence_interval
-            result["score_ci_low"] = float(ci.low)
-            result["score_ci_high"] = float(ci.high)
-            result[f"{score_name}_ci_low"] = float(ci.low)
-            result[f"{score_name}_ci_high"] = float(ci.high)
+            result["score_ci_low"] = ci.low
+            result["score_ci_high"] = ci.high
+            result[f"{score_name}_ci_low"] = ci.low
+            result[f"{score_name}_ci_high"] = ci.high
         return result
 
 
