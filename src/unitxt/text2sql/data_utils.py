@@ -2,7 +2,7 @@ import glob
 import json
 import os
 import sqlite3
-from typing import Optional
+from typing import List, Optional
 
 import evaluate
 from huggingface_hub import snapshot_download
@@ -136,8 +136,8 @@ class SQLData:
         self,
         db_name: str,
         db_type: str = "sqlite",
-        select_tables: Optional[list[str]] = None,
-        select_columns: Optional[list[str]] = None,
+        select_tables: Optional[List[str]] = None,
+        select_columns: Optional[List[str]] = None,
         num_rows_from_table_to_add: int = 0,
     ) -> str:
         # extract create ddls
