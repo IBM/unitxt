@@ -395,7 +395,7 @@ class TestPostProcessors(UnitxtTestCase):
             "good",
             "bad [[C]]",
         ]
-        targets = ["A", "B", "A", "None", "C"]
+        targets = ["choice_a", "choice_b", "choice_a", "None", "tie"]
 
         check_operator(
             operator=postprocessor,
