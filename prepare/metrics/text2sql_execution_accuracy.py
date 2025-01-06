@@ -1,6 +1,6 @@
 from unitxt.catalog import add_to_catalog
+from unitxt.metrics import ExecutionAccuracy
 from unitxt.test_utils.metrics import test_metric
-from unitxt.text2sql.metrics import ExecutionAccuracy
 
 metric = ExecutionAccuracy()
 

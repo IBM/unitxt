@@ -1,6 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
-from unitxt.text2sql.processors import GetSQL
+from unitxt.processors import GetSQL
 
 add_to_catalog(
     SequentialOperator(
