@@ -5,7 +5,7 @@ from unitxt.inference import (
     LMMSEvalInferenceEngine,
 )
 from unitxt.logging_utils import get_logger
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 logger = get_logger()
 
@@ -16,17 +16,17 @@ with settings.context(
 
     dataset = Benchmark(
         subsets={
-            "capitals": StandardRecipe(
+            "capitals": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=capitals]",
                 loader_limit=20,
             ),
-            "lowercase": StandardRecipe(
+            "lowercase": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=lowercase]",
                 loader_limit=20,
             ),
-            "capitals-greyscale": StandardRecipe(
+            "capitals-greyscale": DatasetRecipe(
                 card=card,
                 template="templates.qa.multiple_choice.with_context.lmms_eval[enumerator=capitals]",
                 loader_limit=20,
@@ -37,13 +37,13 @@ with settings.context(
 
     data = list(dataset()["test"])
 
-    inference_model = LMMSEvalInferenceEngine(
+    model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
         model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
         max_new_tokens=2,
     )
 
-    predictions = inference_model.infer(data)
+    predictions = model(data)
     results = evaluate(predictions=predictions, data=data)
 
     for subset in dataset.subsets:

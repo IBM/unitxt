@@ -6,7 +6,7 @@ from transformers import pipeline
 
 from ..api import evaluate
 from ..logging_utils import get_logger
-from ..standard import StandardRecipe
+from ..standard import DatasetRecipe
 from ..text_utils import print_dict
 from . import settings as config
 from .load_catalog_data import get_catalog_items, load_cards_data
@@ -122,7 +122,7 @@ def collect(dataset, split, n):
 
 
 def build_prompt(prompt_args):
-    recipe = StandardRecipe(**prompt_args)
+    recipe = DatasetRecipe(**prompt_args)
     logger.info("loading args:")
     print_dict(prompt_args)
     dataset = recipe()
@@ -134,7 +134,7 @@ def build_prompt(prompt_args):
         prompt_args["demos_taken_from"] = "test"
         logger.info("trying againg with loading args:")
         print_dict(prompt_args)
-        recipe = StandardRecipe(**prompt_args)
+        recipe = DatasetRecipe(**prompt_args)
         dataset = recipe()
         prompt_list = collect(dataset, "test", config.PROMPT_SAMPLE_SIZE)
     return prompt_list
