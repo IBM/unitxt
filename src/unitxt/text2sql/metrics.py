@@ -2,7 +2,6 @@ import sqlite3
 from typing import Any, Dict, List, Tuple
 
 import evaluate
-from func_timeout import FunctionTimedOut, func_timeout
 
 from ..metrics import InstanceMetric
 from .data_utils import SQLData
@@ -46,6 +45,13 @@ class ExecutionAccuracy(InstanceMetric):
     metric_flavour = "bird"
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        try:
+            from func_timeout import FunctionTimedOut, func_timeout
+        except ImportError as err:
+            raise ImportError(
+                "func_timeout should be installed for this metric"
+            ) from err
+
         predicted_sql = prediction
         execution_result: float = 0.0
 
