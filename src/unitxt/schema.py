@@ -6,6 +6,7 @@ from datasets import Image as DatasetImage
 
 from .artifact import Artifact
 from .dict_utils import dict_get
+from .image_operators import ImageDataString
 from .operator import InstanceOperatorValidator
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
@@ -55,6 +56,18 @@ def get_schema(stream_name):
     return UNITXT_DATASET_SCHEMA
 
 
+def load_chat_source(chat_str):
+    chat = json.loads(chat_str)
+    for turn in chat:
+        if isinstance(turn["content"], list):
+            for content in turn["content"]:
+                if content["type"] == "image_url":
+                    content["image_url"]["url"] = ImageDataString(
+                        content["image_url"]["url"]
+                    )
+    return chat
+
+
 def loads_instance(batch):
     if (
         "source" in batch
@@ -64,7 +77,7 @@ def loads_instance(batch):
             or batch["source"][0].startswith('[{"content":')
         )
     ):
-        batch["source"] = [json.loads(d) for d in batch["source"]]
+        batch["source"] = [load_chat_source(d) for d in batch["source"]]
     if (
         not settings.task_data_as_text
         and "task_data" in batch
@@ -130,9 +143,14 @@ class FinalizeDataset(InstanceOperatorValidator):
         )
 
         task_data["metadata"]["num_demos"] = instance["recipe_metadata"]["num_demos"]
+        task_data["metadata"]["demos_pool_size"] = instance["recipe_metadata"][
+            "demos_pool_size"
+        ]
         task_data["metadata"]["template"] = self.artifact_to_jsonable(
             instance["recipe_metadata"]["template"]
         )
+        if "criteria" in task_data and isinstance(task_data["criteria"], Artifact):
+            task_data["criteria"] = self.artifact_to_jsonable(task_data["criteria"])
         if "demos" in instance:
             task_data["demos"] = [
                 self._get_instance_task_data(instance)

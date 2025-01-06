@@ -166,6 +166,9 @@ line-length = 88
 indent-width = 4
 target-version = "py38"
 
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
 [tool.ruff.lint.per-file-ignores]
 "src/*" = ["TID252"]
 ".github/*" = ["TID251"]
@@ -191,6 +194,8 @@ target-version = "py38"
 "utils/hf/prepare_metric.py" = ["T201"]
 "utils/compare_unitxt_datasets_between_versions.py" = ["C901"]
 "performance/*.py" = ["T201"]
+"src/unitxt/llm_as_judge.py" = ["F401", "C901"]
+"examples/*.py" = ["T201"]
 
 [tool.ruff.lint]
 extend-select = [
@@ -232,8 +237,26 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 "src".msg = "Use unitxt outside src/ and relative imports inside src/ and install unitxt from source with `pip install -e '.[dev]'`."
 
 [tool.codespell]
-ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment'
+ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment,criterias'
 check-filenames = true
 check-hidden = false
 regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=[A-Z])|\\d+"
 skip = '*cards/mt/flores101*,*cards/trec*,*cards/belebele*,*cards/amazon_mass*,*cards/reuters21578*,*cards/attaq_500*,*cards/cohere_for_ai*,*egg-info*,*/logs/*'
+
+[tool.coverage.run]
+branch = true
+source = ["src"]
+
+[tool.coverage.report]
+omit = [
+    "src/unitxt/inference.py",
+    "src/unitxt/ui/*",
+    "src/unitxt/service/*",
+    "src/unitxt/test_utils/*",
+    "src/unitxt/dataset.py",
+    "src/unitxt/metric.py",
+    "src/unitxt/blocks.py",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"

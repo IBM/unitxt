@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "rits_inference_engine",
+        "model_name": "mistralai/mistral-large-instruct-2407",
+        "max_tokens": 1024,
+        "seed": 42
+    },
+    "evaluator_name": "MIXTRAL_LARGE",
+    "generate_summaries": false
+}

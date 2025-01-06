@@ -41,6 +41,7 @@ from tempfile import TemporaryDirectory
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
 
 import pandas as pd
+from datasets import IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -51,7 +52,7 @@ from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
 from .settings_utils import get_settings
-from .stream import DynamicStream, MultiStream
+from .stream import MultiStream
 from .type_utils import isoftype
 from .utils import LRUCache
 
@@ -122,16 +123,17 @@ class Loader(SourceOperator):
         )
         return operator(multi_stream)
 
-    def sef_default_data_classification(
+    def set_default_data_classification(
         self, default_data_classification_policy, additional_info
     ):
         if self.data_classification_policy is None:
-            logger.info(
-                f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
-                f"{default_data_classification_policy} by default {additional_info}.\n"
-                "To use a different value or remove this message, explicitly set the "
-                "`data_classification_policy` attribute of the loader.\n"
-            )
+            if additional_info is not None:
+                logger.info(
+                    f"{self.get_pretty_print_name()} sets 'data_classification_policy' to "
+                    f"{default_data_classification_policy} by default {additional_info}.\n"
+                    "To use a different value or remove this message, explicitly set the "
+                    "`data_classification_policy` attribute of the loader.\n"
+                )
             self.data_classification_policy = default_data_classification_policy
 
     @abstractmethod
@@ -161,23 +163,24 @@ class LoadHF(Loader):
     and it can filter datasets upon loading.
 
     Args:
-        path: The path or identifier of the dataset on the HuggingFace Hub.
-
-        name: An optional dataset name.
-
-        data_dir: Optional directory to store downloaded data.
-
-        split: Optional specification of which split to load.
-
-        data_files: Optional specification of particular data files to load.
-
-        revision: Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
-
-        streaming (bool): indicating if streaming should be used.
-
-        filtering_lambda: A lambda function for filtering the data after loading.
-
-        num_proc (int): Optional integer to specify the number of processes to use for parallel dataset loading.
+        path:
+            The path or identifier of the dataset on the HuggingFace Hub.
+        name:
+            An optional dataset name.
+        data_dir:
+            Optional directory to store downloaded data.
+        split:
+            Optional specification of which split to load.
+        data_files:
+            Optional specification of particular data files to load.
+        revision:
+            Optional. The revision of the dataset. Often the commit id. Use in case you want to set the dataset version.
+        streaming (bool):
+            indicating if streaming should be used.
+        filtering_lambda (str, optional):
+            A lambda function for filtering the data after loading.
+        num_proc (int, optional):
+            Specifies the number of processes to use for parallel dataset loading.
 
     Example:
         Loading glue's mrpc dataset
@@ -277,39 +280,22 @@ class LoadHF(Loader):
             for split in dataset.keys():
                 dataset[split] = dataset[split].to_iterable_dataset()
         else:
-            dataset = {self.split: dataset}
-
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+            dataset = {self.split: dataset.to_iterable_dataset()}
 
         return dataset
 
-    def split_limited_load(self, dataset, split_name):
-        yield from itertools.islice(dataset[split_name], self.get_limit())
-
-    def limited_load(self, dataset):
-        self.log_limited_loading()
-        return MultiStream(
-            {
-                name: DynamicStream(
-                    generator=self.split_limited_load,
-                    gen_kwargs={"dataset": dataset, "split_name": name},
-                )
-                for name in dataset.keys()
-            }
-        )
-
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
-            self.sef_default_data_classification(
+            self.set_default_data_classification(
                 ["proprietary"], "when loading from local files"
             )
         else:
-            self.sef_default_data_classification(
-                ["public"], "when loading from Huggingface hub"
+            self.set_default_data_classification(
+                ["public"],
+                None,  # No warning when loading from public hub
             )
 
-    def load_iterables(self):
+    def load_iterables(self) -> IterableDatasetDict:
         try:
             dataset = self.stream_dataset()
         except (
@@ -317,8 +303,15 @@ class LoadHF(Loader):
         ):  # streaming is not supported for zipped files so we load without streaming
             dataset = self.load_dataset()
 
+        if self.filtering_lambda is not None:
+            dataset = self.filter_load(dataset)
+
         if self.get_limit() is not None:
-            return self.limited_load(dataset=dataset)
+            self.log_limited_loading()
+            return {
+                split_name: dataset[split_name].take(self.get_limit())
+                for split_name in dataset
+            }
 
         return dataset
 
@@ -350,7 +343,7 @@ class LoadCSV(Loader):
     sep: str = ","
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
 
@@ -363,9 +356,7 @@ class LoadCSV(Loader):
                     file_path, nrows=self.get_limit(), sep=self.sep
                 ).to_dict("records")
             else:
-                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
-                    "records"
-                )
+                iterables[split_name] = pd.read_csv(file_path).to_dict("records")
         return iterables
 
 
@@ -473,14 +464,22 @@ class LoadFromIBMCloud(Loader):
     3. Mapping: split -> file_names, e.g. {"test" : ["test1.json", "test2.json"], "train": ["train.json"]}
 
     Args:
-        endpoint_url_env: Environment variable name for the IBM Cloud endpoint URL.
-        aws_access_key_id_env: Environment variable name for the AWS access key ID.
-        aws_secret_access_key_env: Environment variable name for the AWS secret access key.
-        bucket_name: Name of the S3 bucket from which to load data.
-        data_dir: Optional directory path within the bucket.
-        data_files: Union type allowing either a list of file names or a mapping of splits to file names.
-        data_field: The dataset key for nested JSON file, i.e. when multiple datasets are nested in the same file
-        caching: Bool indicating if caching is enabled to avoid re-downloading data.
+        endpoint_url_env:
+            Environment variable name for the IBM Cloud endpoint URL.
+        aws_access_key_id_env:
+            Environment variable name for the AWS access key ID.
+        aws_secret_access_key_env:
+            Environment variable name for the AWS secret access key.
+        bucket_name:
+            Name of the S3 bucket from which to load data.
+        data_dir:
+            Optional directory path within the bucket.
+        data_files:
+            Union type allowing either a list of file names or a mapping of splits to file names.
+        data_field:
+            The dataset key for nested JSON file, i.e. when multiple datasets are nested in the same file
+        caching (bool):
+            indicating if caching is enabled to avoid re-downloading data.
 
     Example:
         Loading from IBM Cloud
@@ -576,7 +575,7 @@ class LoadFromIBMCloud(Loader):
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from IBM COS"
         )
 
@@ -727,7 +726,7 @@ class LoadFromDictionary(Loader):
                     )
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["proprietary"], "when loading from python dictionary"
         )
 
@@ -742,25 +741,24 @@ class LoadFromHFSpace(LoadHF):
     from the given space and then reads them as a HuggingFace Dataset.
 
     Args:
-        space_name (str): Name of the HuggingFace Space to be accessed.
-
-        data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]): Relative
-        paths to files within a given repository. If given as a mapping, paths should
-        be values, while keys should represent the type of respective files
-        (training, testing etc.).
-
-        path (str, optional): Absolute path to a directory where data should be downloaded.
-
-        revision (str, optional): ID of a Git branch or commit to be used. By default, it is
-        set to None, thus data is downloaded from the main branch of the accessed
-        repository.
-
-        use_token (bool, optional): Whether a token is used for authentication when accessing
-        the HuggingFace Space. If necessary, the token is read from the HuggingFace
-        config folder.
-
-        token_env (str, optional): Key of an env variable which value will be used for
-        authentication when accessing the HuggingFace Space - if necessary.
+        space_name (str):
+            Name of the HuggingFace Space to be accessed.
+        data_files (str | Sequence[str] | Mapping[str, str | Sequence[str]]):
+            Relative paths to files within a given repository. If given as a mapping,
+            paths should be values, while keys should represent the type of respective files
+            (training, testing etc.).
+        path (str, optional):
+            Absolute path to a directory where data should be downloaded.
+        revision (str, optional):
+            ID of a Git branch or commit to be used. By default, it is set to None,
+            thus data is downloaded from the main branch of the accessed repository.
+        use_token (bool, optional):
+            Whether a token is used for authentication when accessing
+            the HuggingFace Space. If necessary, the token is read from the HuggingFace
+            config folder.
+        token_env (str, optional):
+            Key of an env variable which value will be used for
+            authentication when accessing the HuggingFace Space - if necessary.
 
     Example:
         Loading from a HuggingFace Space
@@ -908,7 +906,7 @@ class LoadFromHFSpace(LoadHF):
             )
 
     def _maybe_set_classification_policy(self):
-        self.sef_default_data_classification(
+        self.set_default_data_classification(
             ["public"], "when loading from Huggingface spaces"
         )
 

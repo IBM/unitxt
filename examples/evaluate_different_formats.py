@@ -1,13 +1,8 @@
 import pandas as pd
-from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.text_utils import print_dict
 
-logger = get_logger()
-
-
-inference_model = CrossProviderInferenceEngine(
+model = CrossProviderInferenceEngine(
     model="llama-3-8b-instruct", max_tokens=32, provider="bam"
 )
 """
@@ -41,24 +36,26 @@ for format in [
             demos_pool_size=50,
             loader_limit=300,
             max_test_instances=100,
+            split="test",
         )
 
-        test_dataset = dataset["test"]
+        predictions = model(dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-        logger.info(
+        print(
             f"Sample input and output for format '{format}' and system prompt '{system_prompt}':"
         )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=[
-                "source",
-                "prediction",
-            ],
+
+        print(
+            results.instance_scores.to_df(
+                columns=[
+                    "source",
+                    "prediction",
+                ]
+            )
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+
+        global_scores = results.global_scores
         df.loc[len(df)] = [
             format,
             system_prompt,
@@ -68,4 +65,4 @@ for format in [
         ]
 
         df = df.round(decimals=2)
-        logger.info(df.to_markdown())
+        print(df.to_markdown())
