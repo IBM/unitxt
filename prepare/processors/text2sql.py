@@ -6,7 +6,6 @@ add_to_catalog(
     SequentialOperator(
         steps=[
             GetSQL(field="prediction"),
-            # AddPrefix(field="prediction""),
         ]
     ),
     "processors.text2sql.get_sql",
