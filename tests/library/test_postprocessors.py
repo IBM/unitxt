@@ -404,6 +404,70 @@ class TestPostProcessors(UnitxtTestCase):
             tester=self,
         )
 
+    def test_scale_0_10_to_0_1_processor(self):
+        postprocessor, _ = fetch_artifact("processors.scale_0_10_to_0_1")
+        predictions = ["0", "5", "10", "a"]
+        targets = [0, 0.5, 1, 0.0]
+
+        check_operator(
+            operator=postprocessor,
+            inputs=list_to_stream_with_prediction_or_references(
+                predictions, key="prediction"
+            ),
+            targets=list_to_stream_with_prediction_or_references(
+                targets, key="prediction"
+            ),
+            tester=self,
+        )
+
+    def test_extract_verbal_judgement_processor(self):
+        postprocessor, _ = fetch_artifact("processors.extract_verbal_judgement")
+        predictions = [
+            "not good",
+            "Somewhat good",
+            "completely good",
+            "something else",
+            "it's completely good",
+        ]
+        targets = [0, 1 / 3, 1, 0, 0]
+
+        check_operator(
+            operator=postprocessor,
+            inputs=list_to_stream_with_prediction_or_references(
+                predictions, key="prediction"
+            ),
+            targets=list_to_stream_with_prediction_or_references(
+                targets, key="prediction"
+            ),
+            tester=self,
+        )
+
+    def test_extract_verbal_judgement_good_bad_processor(self):
+        postprocessor, _ = fetch_artifact(
+            "processors.extract_verbal_judgement_bad_good"
+        )
+        predictions = [
+            "very bad",
+            "bad",
+            "mediocre",
+            "good",
+            "very good",
+            "something else",
+            "very",
+        ]
+        targets = [0, 0.25, 0.5, 0.75, 1, 0, 0]
+
+        check_operator(
+            operator=postprocessor,
+            inputs=list_to_stream_with_prediction_or_references(
+                predictions, key="prediction"
+            ),
+            targets=list_to_stream_with_prediction_or_references(
+                targets, key="prediction"
+            ),
+            tester=self,
+        )
+
     def test_literal_eval(self):
         parser, _ = fetch_artifact("processors.literal_eval")
         inputs = [
