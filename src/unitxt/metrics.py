@@ -931,10 +931,10 @@ class MetricWithConfidenceInterval(Metric):
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
                 ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            result["score_ci_low"] = float(ci.low)
+            result["score_ci_high"] = float(ci.high)
+            result[f"{score_name}_ci_low"] = float(ci.low)
+            result[f"{score_name}_ci_high"] = float(ci.high)
         return result
 
 
@@ -2124,7 +2124,7 @@ class HuggingfaceMetric(GlobalMetric):
             **self.hf_compute_args,
         )
         if self.hf_main_score:
-            result[self.main_score] = result[self.hf_main_score]
+            result[self.main_score] = float(result[self.hf_main_score])
             del result[self.hf_main_score]
         if self.scale != 1.0:
             assert (
@@ -2144,6 +2144,8 @@ class HuggingfaceMetric(GlobalMetric):
                         result[key], float
                     ), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
+        if self.main_score in result:
+            result[self.main_score] = float(result[self.main_score])
         return result
 
 
