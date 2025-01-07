@@ -5304,7 +5304,6 @@ class IsCodeMixed(BulkInstanceMetric):
         if IsCodeMixed.inference_model is None:
             IsCodeMixed.inference_model = HFPipelineBasedInferenceEngine(
                 model_name="Nexusflow/Starling-LM-7B-beta",
-                task="text-generation",
                 max_new_tokens=1,
                 lazy_load=True,
             )
