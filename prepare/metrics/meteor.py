@@ -39,7 +39,7 @@ global_target = {
     "num_of_instances": 4,
 }
 
-# to match the setting to occur by testing on the global version, metric2, below
+# n_resample = 3 just to match the setting to occur by testing on the global version, metric2, below
 
 outputs = test_metric(
     metric=metric,
@@ -62,4 +62,8 @@ outputs = test_metric(
     global_target=global_target,
 )
 
+metric = Meteor()
+
+
 add_to_catalog(metric, "metrics.meteor", overwrite=True)
+add_to_catalog(metric2, "metrics.meteor_hf", overwrite=True)
