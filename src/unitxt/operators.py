@@ -55,6 +55,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
@@ -2212,3 +2213,20 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class WikipediaFetcher(FieldOperator):
+    mode: Literal["summary", "text"] = "text"
+    _requirements_list = ["Wikipedia-API"]
+
+    def prepare(self):
+        super().prepare()
+        import wikipediaapi
+
+        self.wikipedia = wikipediaapi.Wikipedia("Unitxt")
+
+    def process_value(self, value: Any) -> Any:
+        title = value.split("/")[-1]
+        page = self.wikipedia.page(title)
+
+        return {"title": page.title, "body": getattr(page, self.mode)}

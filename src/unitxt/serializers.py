@@ -7,7 +7,7 @@ from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Image, Number, Table, Video
+from .types import Dialog, Document, Image, MultiDocument, Number, Table, Video
 
 constants = get_constants()
 
@@ -127,9 +127,28 @@ class VideoSerializer(ImageSerializer):
         return "".join(serialized_images)
 
 
+class DocumentSerializer(SingleTypeSerializer):
+    serialized_type = Document
+
+    def serialize(self, value: Document, instance: Dict[str, Any]) -> str:
+        return f"# {value['title']}\n\n{value['body']}"
+
+
+class MultiDocumentSerializer(DocumentSerializer):
+    serialized_type = MultiDocument
+
+    def serialize(self, value: MultiDocument, instance: Dict[str, Any]) -> str:
+        documents = []
+        for document in value:
+            documents.append(super().serialize(document, instance))
+        return "\n\n".join(documents)
+
+
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
+            DocumentSerializer(),
+            MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),
