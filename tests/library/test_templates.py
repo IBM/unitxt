@@ -1237,6 +1237,96 @@ class TestTemplates(UnitxtTestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+    def test_multiple_choice_template_with_place_correct_choice_position_first(self):
+        template = MultipleChoiceTemplate(
+            input_format="Text: {text}, Choices: {choices}.",
+            enumerator="capitals",
+            place_correct_choice_position=0,
+        )
+
+        inputs = [
+            {
+                "input_fields": {
+                    "choices": ["One", "Two", "Three"],
+                    "text": "example place first",
+                },
+                "reference_fields": {
+                    "choices": ["One", "Two", "Three"],
+                    "label": 1,  # "Two" is index=1 in the original list
+                },
+            }
+        ]
+
+        # After placing correct choice ("Two") at index 0:
+        # => ["Two", "One", "Three"]
+        # => new label index=0 => enumerator => "A"
+        targets = [
+            {
+                "input_fields": {
+                    "choices": ["Two", "One", "Three"],
+                    "text": "example place first",
+                    "options": ["A", "B", "C"],  # enumerator placeholders
+                },
+                "reference_fields": {
+                    "choices": ["Two", "One", "Three"],
+                    "label": 0,  # "Two" is now index 0
+                },
+                "source": "Text: example place first, Choices: A. Two, B. One, C. Three.",
+                "target": "A",  # label index=0 => "A"
+                "references": ["A"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
+            }
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
+    def test_multiple_choice_template_with_place_correct_choice_position_last(self):
+        template = MultipleChoiceTemplate(
+            input_format="Text: {text}, Choices: {choices}.",
+            enumerator="capitals",
+            place_correct_choice_position=2,  # for a 3-element list => "last" index is 2
+        )
+
+        inputs = [
+            {
+                "input_fields": {
+                    "choices": ["One", "Two", "Three"],
+                    "text": "example place last",
+                },
+                "reference_fields": {
+                    "choices": ["One", "Two", "Three"],
+                    "label": 0,  # "One" is index=0
+                },
+            }
+        ]
+
+        # After placing correct choice ("One") at index 2 (the last):
+        # => ["Two", "Three", "One"]
+        # => "One" is new index=2 => enumerator => "C"
+        targets = [
+            {
+                "input_fields": {
+                    "choices": ["Two", "Three", "One"],
+                    "text": "example place last",
+                    "options": ["A", "B", "C"],
+                },
+                "reference_fields": {
+                    "choices": ["Two", "Three", "One"],
+                    "label": 2,  # "One" is now index 2
+                },
+                "source": "Text: example place last, Choices: A. Two, B. Three, C. One.",
+                "target": "C",
+                "references": ["C"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
+            }
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
     def test_multiple_choice_template_verify_flags(self):
         with self.subTest("shuffle_choices + sort_choices_by_length"):
             with self.assertRaises(UnitxtError) as ve:
@@ -1284,6 +1374,73 @@ class TestTemplates(UnitxtTestCase):
                 "You cannot combine both sort_choices_by_length and sort_choices_alphabetically",
                 str(ve.exception),
             )
+
+        with self.subTest("shuffle_choices + place_correct_choice_position"):
+            with self.assertRaises(UnitxtError) as ve:
+                template = MultipleChoiceTemplate(
+                    input_format="Text: {text}, Choices: {choices}.",
+                    enumerator="capitals",
+                    shuffle_choices=True,
+                    place_correct_choice_position=0,
+                )
+                template.verify()
+            self.assertIn("You cannot combine shuffle_choices", str(ve.exception))
+
+        with self.subTest("sort_choices_by_length + place_correct_choice_position"):
+            with self.assertRaises(UnitxtError) as ve:
+                template = MultipleChoiceTemplate(
+                    input_format="Text: {text}, Choices: {choices}.",
+                    enumerator="capitals",
+                    sort_choices_by_length=True,
+                    place_correct_choice_position=0,
+                )
+                template.verify()
+            self.assertIn(
+                "You cannot combine place_correct_choice_position with sorting or reversing flags",
+                str(ve.exception),
+            )
+
+        with self.subTest(
+            "sort_choices_alphabetically + place_correct_choice_position"
+        ):
+            with self.assertRaises(UnitxtError) as ve:
+                template = MultipleChoiceTemplate(
+                    input_format="Text: {text}, Choices: {choices}.",
+                    enumerator="capitals",
+                    sort_choices_alphabetically=True,
+                    place_correct_choice_position=0,
+                )
+                template.verify()
+            self.assertIn(
+                "You cannot combine place_correct_choice_position with sorting or reversing flags",
+                str(ve.exception),
+            )
+
+        with self.subTest("reverse_choices + place_correct_choice_position"):
+            with self.assertRaises(UnitxtError) as ve:
+                template = MultipleChoiceTemplate(
+                    input_format="Text: {text}, Choices: {choices}.",
+                    enumerator="capitals",
+                    reverse_choices=True,
+                    place_correct_choice_position=0,
+                )
+                template.verify()
+            self.assertIn(
+                "You cannot combine place_correct_choice_position with sorting or reversing flags",
+                str(ve.exception),
+            )
+
+        # Example of a "safe" scenario: place_correct_choice_position alone
+        with self.subTest("place_correct_choice_position alone (should not raise)"):
+            try:
+                template = MultipleChoiceTemplate(
+                    input_format="Text: {text}, Choices: {choices}.",
+                    enumerator="capitals",
+                    place_correct_choice_position=1,
+                )
+                template.verify()
+            except UnitxtError as e:
+                self.fail(f"Should not have raised an error, but got: {e}")
 
     def test_key_val_template_simple(self):
         template = KeyValTemplate()
