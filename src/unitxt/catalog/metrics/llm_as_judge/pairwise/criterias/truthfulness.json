@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "truthfulness",
+    "description": "The response is truthful according to the reference document."
+}
