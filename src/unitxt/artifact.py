@@ -6,7 +6,10 @@ import pkgutil
 import re
 import warnings
 from abc import abstractmethod
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Tuple, Union, final
+
+import requests
 
 from .dataclass import (
     AbstractField,
@@ -25,8 +28,8 @@ from .settings_utils import get_constants, get_settings
 from .text_utils import camel_to_snake_case, is_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
-    artifacts_json_cache,
     json_dump,
+    load_json,
     save_to_file,
     shallow_copy,
 )
@@ -116,6 +119,15 @@ class Catalogs:
 
     def reset(self):
         self.catalogs = []
+
+
+@lru_cache(maxsize=None)
+def artifacts_json_cache(artifact_path, catalog):
+    if catalog.is_local:
+        return load_json(artifact_path)
+    # github catalog
+    response = requests.get(artifact_path)
+    return response.json()
 
 
 def maybe_recover_artifacts_structure(obj):
@@ -280,8 +292,8 @@ class Artifact(Dataclass):
         return cls._recursive_load(d)
 
     @classmethod
-    def load(cls, path, artifact_identifier=None, overwrite_args=None):
-        d = artifacts_json_cache(path)
+    def load(cls, catalog, path, artifact_identifier=None, overwrite_args=None):
+        d = artifacts_json_cache(path, catalog)
         if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
             # d stands for an ArtifactLink
             artifact_link = ArtifactLink.from_dict(d)
@@ -503,7 +515,7 @@ class ArtifactLink(Artifact):
             raise UnitxtArtifactNotFoundError(self.artifact_linked_to, catalogs)
 
         path = needed_catalog.path(self.artifact_linked_to)
-        d = artifacts_json_cache(path)
+        d = artifacts_json_cache(path, needed_catalog)
         # if needed, follow, in a recursive manner, over multiple links,
         # passing through instantiating of the ArtifactLink-s on the way, triggering
         # deprecatioin warning as needed.

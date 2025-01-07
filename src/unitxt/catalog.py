@@ -51,6 +51,7 @@ class LocalCatalog(Catalog):
         ), f"Artifact with name {artifact_identifier} does not exist"
         path = self.path(artifact_identifier)
         return Artifact.load(
+            self,
             path,
             artifact_identifier=artifact_identifier,
             overwrite_args=overwrite_args,
@@ -105,6 +106,9 @@ class GithubCatalog(LocalCatalog):
     def prepare(self):
         tag = version
         self.location = f"https://raw.githubusercontent.com/{self.user}/{self.repo}/{tag}/{self.repo_dir}"
+
+    def get_with_overwrite(self, name, overwrite_args):
+        return self.load(name, overwrite_args=overwrite_args)
 
     def load(self, artifact_identifier: str, overwrite_args=None):
         url = self.path(artifact_identifier)

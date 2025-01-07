@@ -5,7 +5,6 @@ import os
 import re
 import threading
 from collections import OrderedDict
-from functools import lru_cache
 from typing import Any, Dict
 
 from .text_utils import is_made_of_sub_strings
@@ -120,11 +119,6 @@ def flatten_dict(
             items.append((new_key, v))
 
     return dict(items)
-
-
-@lru_cache(maxsize=None)
-def artifacts_json_cache(artifact_path):
-    return load_json(artifact_path)
 
 
 def load_json(path):
