@@ -123,7 +123,7 @@ class Catalogs:
 
 @lru_cache(maxsize=None)
 def artifacts_json_cache(artifact_path, catalog):
-    if catalog.is_local:
+    if catalog is None or catalog.is_local:
         return load_json(artifact_path)
     # github catalog
     response = requests.get(artifact_path)
@@ -510,6 +510,9 @@ class ArtifactLink(Artifact):
         for catalog in catalogs:
             if self.artifact_linked_to in catalog:
                 needed_catalog = catalog
+                if needed_catalog.is_local:
+                    # prefer a local catalog, if possible
+                    break
 
         if needed_catalog is None:
             raise UnitxtArtifactNotFoundError(self.artifact_linked_to, catalogs)
@@ -594,7 +597,7 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
-        artifact_to_return = Artifact.load(artifact_rep)
+        artifact_to_return = Artifact.load(catalog=None, path=artifact_rep)
         if isinstance(artifact_rep, ArtifactLink):
             artifact_to_return = fetch_artifact(artifact_to_return.artifact_linked_to)
 
