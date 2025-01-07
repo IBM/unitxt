@@ -5,6 +5,7 @@ import tempfile
 import unitxt
 from unitxt import add_to_catalog
 from unitxt.artifact import Artifact, Catalogs
+from unitxt.catalog import GithubCatalog
 from unitxt.error_utils import UnitxtError
 from unitxt.register import (
     _reset_env_local_catalogs,
@@ -80,3 +81,19 @@ class TestCatalogs(UnitxtTestCase):
                 content = json.load(f)
 
             self.assertDictEqual(content, {"__type__": "class_to_save", "t": 1})
+
+    def test_from_github_catalog(self):
+        github_catalog = GithubCatalog()
+        path = github_catalog.path("tasks.qa.with_context.abstractive")
+        artifact = Artifact.load(
+            catalog=github_catalog,
+            path=path,
+            artifact_identifier="task",
+            overwrite_args={"metrics": ["metrics.anls"]},
+        )
+
+        # assert reached the linked_to artifact
+        self.assertEqual("tasks.qa.with_context", artifact.__id__)
+
+        # assert employed overwrites
+        self.assertListEqual(["metrics.anls"], artifact.metrics)
