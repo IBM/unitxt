@@ -74,7 +74,6 @@ add_to_catalog(card, "cards.rag.benchmark.clap_nq.en", overwrite=True)
 card = TaskCard(
     loader=LoadHF(
         path="PrimeQA/clapnq_passages",
-        name="train",
         data_classification_policy=["public"],
     ),
     preprocess_steps=[

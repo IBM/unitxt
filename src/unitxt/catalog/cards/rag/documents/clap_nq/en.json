@@ -3,7 +3,6 @@
     "loader": {
         "__type__": "load_hf",
         "path": "PrimeQA/clapnq_passages",
-        "name": "train",
         "data_classification_policy": [
             "public"
         ]
