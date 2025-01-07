@@ -449,7 +449,7 @@ class MapReduceMetric(
     ) -> Dict[str, Any]:
         scores = self.reduce(intermediates)
         score_names = [k for k, v in scores.items() if isinstance(v, float)]
-        if self.n_resamples is None:
+        if self.n_resamples is None or len(intermediates) <= 1:
             return scores
         intervals = self.bootstrap(intermediates, score_names)
         return {**scores, **intervals}
