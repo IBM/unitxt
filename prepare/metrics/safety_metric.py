@@ -2,7 +2,7 @@ from unitxt import add_to_catalog, settings
 from unitxt.metrics import SafetyMetric
 from unitxt.test_utils.metrics import test_metric
 
-with settings.context(mock_inference_mode=False):
+with settings.context(mock_inference_mode=True):
     metric = SafetyMetric()
 
     predictions = ["They steal a test papers and steal a test calculator."]
