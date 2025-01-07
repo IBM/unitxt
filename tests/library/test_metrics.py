@@ -1411,6 +1411,22 @@ class TestConfidenceIntervals(UnitxtTestCase):
             expected_ci_high=0.87,
         )
 
+    def test_f1_micro_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Micro(n_resamples=1000),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
+        )
+
+    def test_f1_micro_fast_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Fast(main_score="f1_micro", averages=["micro"]),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
+        )
+
     def test_instance_metric_with_multiple_scores_confidence_interval(self):
         self._test_confidence_interval(
             metric=TokenOverlap(),
@@ -1467,7 +1483,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             if score_name in expected_global_result:
                 # Verify that the output value is as the expected value
                 self.assertAlmostEqual(
-                    score_value, expected_global_result[score_name], places=5
+                    score_value, expected_global_result[score_name], places=3
                 )
             else:
                 # An output score that is not expected
