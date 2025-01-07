@@ -5,9 +5,8 @@ from unitxt.blocks import (
     Task,
     TaskCard,
 )
-from unitxt.operators import Copy, FilterByCondition, Set, Shuffle
+from unitxt.operators import FilterByCondition, Shuffle
 from unitxt.splitters import RenameSplits
-from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
 
 selected_inputs = [
@@ -517,22 +516,16 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         FilterByCondition(values={"input": selected_inputs}, condition="in"),
-        # FilterByCondition(values = {"label":["discrimination"]}, condition = "in") ,
         Shuffle(page_size=2800),
-        Set({"input_label": {}}),
-        Copy(
-            field_to_field={"input": "input_label/input", "label": "input_label/label"}
-        ),
-        DumpJson(field="input_label"),
     ],
     task=Task(
         input_fields=["input"],
-        reference_fields=["input_label"],
+        reference_fields=["label"],
         metrics=["metrics.safety_metric"],
     ),
     templates=[
-        InputOutputTemplate(input_format="{input}\n", output_format="{input_label}"),
-        InputOutputTemplate(input_format="{input}", output_format="{input_label}"),
+        InputOutputTemplate(input_format="{input}\n", output_format=""),
+        InputOutputTemplate(input_format="{input}", output_format=""),
     ],
 )
 test_card(
