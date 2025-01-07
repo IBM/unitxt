@@ -60,7 +60,7 @@ Assessment: {assessment}
 Summary:"""
     ),
     "answer": InputOutputTemplate(
-        input_format="""Now considering the evaluation criteria, which response is better quality?
+        input_format="""Now considering the evaluation criteria, which response is better quality? Only include the chosen response.
 {score_option_instruction}
 Answer: """,
         postprocessors=["processors.match_closest_option"],
