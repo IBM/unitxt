@@ -1,0 +1,44 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "umarbutler/open-australian-legal-qa"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "split_random_mix",
+            "mix": {
+                "train": "train[0.5]",
+                "validation": "train[0.2]",
+                "test": "train[0.3]"
+            }
+        },
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "legal document"
+            }
+        },
+        {
+            "__type__": "copy",
+            "field": "source/text",
+            "to_field": "context/body"
+        },
+        {
+            "__type__": "copy",
+            "field": "source/citation",
+            "to_field": "context/title"
+        },
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.with_context",
+    "templates": "templates.qa.with_context.all"
+}

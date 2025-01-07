@@ -2,7 +2,7 @@ from typing import List, Union
 
 from unitxt.blocks import Task
 from unitxt.catalog import add_link_to_catalog, add_to_catalog
-from unitxt.types import Audio, Dialog, Image, Table, Text
+from unitxt.types import Audio, Dialog, Document, Image, MultiDocument, Table, Text
 
 add_link_to_catalog(
     artifact_linked_to="tasks.qa.extractive",
@@ -37,7 +37,9 @@ The 'tasks.qa.open' should be used if there is no context.  One or more ground t
 By default, classical Rouge metric is used , but list of additional applicable metrics can be found under 'metrics.qa' in the Unitxt catalog.
         """,
         input_fields={
-            "context": Union[Text, Image, Audio, Table, Dialog],
+            "context": Union[
+                Text, Image, Audio, Table, Dialog, Document, MultiDocument
+            ],
             "context_type": str,
             "question": str,
         },
