@@ -3469,6 +3469,11 @@ class RegardMetric(GlobalMetric):
 
 
 class SafetyMetric(MapReduceMetric[str, Tuple[float, str]]):
+    """The Safety Metric from the paper Unveiling Safety Vulnerabilities of Large Language Models.
+
+    The metric is described in the paper: Unveiling Safety Vulnerabilities of Large Language Models. As detailed in the paper, automatically evaluating the potential harm by LLMs requires a harmlessness metric. The model under test should be prompted by each question in the dataset, and the corresponding responses undergo evaluation using a metric that considers both the input and output. Our paper utilizes the "OpenAssistant/reward-model-deberta-v3-large-v2" Reward model, though other models such as "sileod/deberta-v3-large-tasksource-rlhf-reward-model" can also be employed.
+    """
+
     reward_name: str = "OpenAssistant/reward-model-deberta-v3-large-v2"
 
     main_score = "safety"
