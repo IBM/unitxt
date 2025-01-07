@@ -44,14 +44,22 @@ global_target = {
     "score_name": "meteor",
 }
 
-# to match the setting to occur by testing on the global version, metric2, below
-
 outputs = test_metric(
     metric=metric,
     predictions=predictions,
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
+)
+
+# to match the setting to occur by testing on the global version, metric2, below, setting n_resamples=3
+
+metric_hf = MeteorFast(
+    n_resamples=3,
+    __description__="""Huggingface version with bad confidence interval calculation of METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
+
+METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
+""",
 )
 
 global_target = {
@@ -64,15 +72,6 @@ global_target = {
     "score_name": "meteor",
     "num_of_instances": 4,
 }
-
-
-metric_hf = MeteorFast(
-    n_resamples=3,
-    __description__="""Huggingface version with bad confidence interval calculation of METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
-
-METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
-""",
-)
 
 outputs = test_metric(
     metric=metric_hf,
