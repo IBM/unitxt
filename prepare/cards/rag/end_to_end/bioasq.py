@@ -86,7 +86,7 @@ card = TaskCard(
         RenameSplits({"test": "train"}),
         Cast(field="id", to="str"),
         Copy(field="id", to_field="document_id"),
-        Wrap(field="passage", inside="list"),
+        Wrap(field="passage", inside="list", to_field="passages"),
         Set(
             fields={
                 "metadata_field": "",
