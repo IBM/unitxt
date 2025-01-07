@@ -116,13 +116,18 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                 self.prediction_type
             )
 
+        if hasattr(self, "inputs") and self.inputs is not None:
+            self.inputs = self.input_fields
+
+        if hasattr(self, "outputs") and self.outputs is not None:
+            self.outputs = self.reference_fields
+
     def task_deprecations(self):
         if hasattr(self, "inputs") and self.inputs is not None:
             depr_message = (
                 "The 'inputs' field is deprecated. Please use 'input_fields' instead."
             )
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
-
         if hasattr(self, "outputs") and self.outputs is not None:
             depr_message = "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)

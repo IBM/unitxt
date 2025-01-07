@@ -13,15 +13,16 @@ from unitxt.card import TaskCard
 from unitxt.catalog import add_link_to_catalog, add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.error_utils import UnitxtError
-from unitxt.loaders import LoadFromDictionary
+from unitxt.loaders import LoadFromDictionary, LoadHF
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
 from unitxt.operators import Copy, Rename, Set
 from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
-from unitxt.task import Task
-from unitxt.templates import YesNoTemplate
+from unitxt.standard import StandardRecipe
+from unitxt.task import FormTask, Task
+from unitxt.templates import InputOutputTemplate, YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
 from tests.utils import UnitxtTestCase
@@ -614,3 +615,35 @@ class TestArtifact(UnitxtTestCase):
             card2.task.metrics,
             ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
         )
+
+    def test_typed_recipe_to_catalog(self):
+        loader = LoadHF(path="resources/some_path", split="test")
+        inputs = {"question": "str", "metadata": "List[Dict[str, Any]]"}
+        outputs = {"answer": "str"}
+        task = FormTask(
+            inputs=inputs,
+            outputs=outputs,
+            metrics=["metrics.jaccard_index"],
+        )
+        templates = [
+            InputOutputTemplate(
+                input_format="{question}",
+                output_format="{answer}",
+            )
+        ]
+        preprocessors = ["operators.literal_eval[field=metadata]"]
+        card = TaskCard(
+            loader=loader,
+            task=task,
+            templates=templates,
+            preprocess_steps=preprocessors,
+        )
+        recipe = StandardRecipe(
+            card=card,
+            template_card_index=0,
+            postprocessors=[
+                "operators.regex_parser[field=prediction, regex=\\d+]",
+                "processors.to_list_by_comma_from_references",
+            ],
+        )
+        add_to_catalog(recipe, "temp_recipe_name", overwrite=True)
