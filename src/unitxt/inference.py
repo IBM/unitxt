@@ -2823,7 +2823,15 @@ class LiteLLMInferenceEngine(
 
 
 _supported_apis = Literal[
-    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
+    "watsonx",
+    "together-ai",
+    "open-ai",
+    "aws",
+    "ollama",
+    "bam",
+    "watsonx-sdk",
+    "rits",
+    "azure",
 ]
 
 
@@ -2897,6 +2905,52 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
+        "open-ai": {
+            "o1-mini": "o1-mini",
+            "o1-preview": "o1-preview",
+            "gpt-4o-mini": "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18": "gpt-4o-mini-2024-07-18",
+            "gpt-4o": "gpt-4o",
+            "gpt-4o-2024-08-06": "gpt-4o-2024-08-06",
+            "gpt-4o-2024-05-13": "gpt-4o-2024-05-13",
+            "gpt-4-turbo": "gpt-4-turbo",
+            "gpt-4-turbo-preview": "gpt-4-0125-preview",
+            "gpt-4-0125-preview": "gpt-4-0125-preview",
+            "gpt-4-1106-preview": "gpt-4-1106-preview",
+            "gpt-3.5-turbo-1106": "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo": "gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "gpt-3.5-turbo-16k-0613",
+            "gpt-4": "gpt-4",
+            "gpt-4-0314": "gpt-4-0314",
+            "gpt-4-0613": "gpt-4-0613",
+            "gpt-4-32k": "gpt-4-32k",
+            "gpt-4-32k-0314": "gpt-4-32k-0314",
+            "gpt-4-32k-0613": "gpt-4-32k-0613",
+            "gpt-4-vision-preview": "gpt-4-vision-preview",
+        },
+        "azure": {
+            "o1-mini": "azure/o1-mini",
+            "o1-preview": "azure/o1-preview",
+            "gpt-4o-mini": "azure/gpt-4o-mini",
+            "gpt-4o": "azure/gpt-4o",
+            "gpt-4": "azure/gpt-4",
+            "gpt-4-0314": "azure/gpt-4-0314",
+            "gpt-4-0613": "azure/gpt-4-0613",
+            "gpt-4-32k": "azure/gpt-4-32k",
+            "gpt-4-32k-0314": "azure/gpt-4-32k-0314",
+            "gpt-4-32k-0613": "azure/gpt-4-32k-0613",
+            "gpt-4-1106-preview": "azure/gpt-4-1106-preview",
+            "gpt-4-0125-preview": "azure/gpt-4-0125-preview",
+            "gpt-3.5-turbo": "azure/gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "azure/gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "azure/gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
+            "gpt-4-vision": "azure/gpt-4-vision",
+        },
     }
 
     _provider_to_base_class = {
@@ -2908,6 +2962,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
         "rits": RITSInferenceEngine,
+        "azure": LiteLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
