@@ -132,7 +132,7 @@ class SQLData:
         rows = "\n".join(rows)
         return header + "\n" + rows
 
-    def generate_schema_prompt(
+    def get_db_schema(
         self,
         db_name: str,
         db_type: str = "sqlite",
@@ -219,6 +219,6 @@ class SQLData:
 
 if __name__ == "__main__":
     BIRD_DATA = SQLData()
-    BIRD_DATA.generate_schema_prompt(
+    BIRD_DATA.get_db_schema(
         db_name="formula_1", db_type="sqlite", num_rows_from_table_to_add=1
     )

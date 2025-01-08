@@ -192,7 +192,7 @@ class SQLSchemaSerializer(SingleTypeSerializer):
     serialized_type = SQLSchema
 
     def serialize(self, value: SQLSchema, instance: Dict[str, Any]) -> str:
-        return SQLData().generate_schema_prompt(
+        return SQLData().get_db_schema(
             db_name=value["db_id"],
             db_type=value["db_type"],
             num_rows_from_table_to_add=value["num_table_rows_to_add"],
