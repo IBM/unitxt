@@ -1,0 +1,10 @@
+{
+    "__type__": "standard_recipe",
+    "card": "cards.tablebench_data_analysis",
+    "template_card_index": 0,
+    "serializer": "serializers.table.concat",
+    "num_demos": 5,
+    "demos_pool_size": 10,
+    "loader_limit": 10000,
+    "augmentor": null
+}

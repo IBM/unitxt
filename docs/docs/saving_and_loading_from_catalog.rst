@@ -42,7 +42,7 @@ It's also possible to add artifacts to the library's default catalog:
 Using Catalog Assets
 --------------------
 
-To use catalog objects, simply specify their name in the Unitxt object that will use them. 
+To use catalog objects, simply specify their name in the Unitxt object that will use them.
 
 .. code-block:: python
 
@@ -56,8 +56,8 @@ To use catalog objects, simply specify their name in the Unitxt object that will
 Modifying Catalog Assets on the Fly
 -----------------------------------
 
-To modify a catalog asset's fields dynamically, upon fetching the asset from the catalog, use the syntax: ``artifact_name[key_to_modify=new_value]``. 
-To assign lists, use: ``artifact_name[key_to_modify=[new_value_0, new_value_1]]``. 
+To modify a catalog asset's fields dynamically, upon fetching the asset from the catalog, use the syntax: ``artifact_name[key_to_modify=new_value]``.
+To assign lists, use: ``artifact_name[key_to_modify=[new_value_0, new_value_1]]``.
 To assign dictionaries, use: ``artifact_name[key_to_modify={new_key_0=new_value_0,new_key_1=new_value_1}]``.
 Note that the whole new value of the field has to be specified; not just one item of a list, or one key of the dictionary.
 For instance, to change the metric specification of a task:
@@ -85,20 +85,20 @@ Use ``get_from_catalog`` to directly access catalog assets, and obtain an asset 
 A Catalog Asset Linking to Another Catalog Asset
 ------------------------------------------------
 
-A catalog asset can be just a link to another asset. 
-This feature comes handy when for some reason, we want to change the catalog name 
-of an existing asset (e.g. ``asset1`` to ``asset2``), while there is already code 
+A catalog asset can be just a link to another asset.
+This feature comes handy when for some reason, we want to change the catalog name
+of an existing asset (e.g. ``asset1`` to ``asset2``), while there is already code
 that uses the old name of the asset and we want to avoid non-backward compatible changes.
 
-In such a case, we can save the asset as ``asset2``, create an asset of type 
+In such a case, we can save the asset as ``asset2``, create an asset of type
 :class:`ArtifactLink <unitxt.artifact.ArtifactLink>` that links to ``asset2``, and save
 that one as ``asset1``.
-When ``asset1`` is accessed from an existing code, Unixt Catalog realizes that the asset fetched from position ``asset1`` 
-is an ``ArtifactLink``, so it continues and fetches ``asset2`` -- the Artifact linked to by ``asset1``. 
+When ``asset1`` is accessed from an existing code, Unixt Catalog realizes that the asset fetched from position ``asset1``
+is an ``ArtifactLink``, so it continues and fetches ``asset2`` -- the Artifact linked to by ``asset1``.
 
 .. code-block:: python
 
-    link_to_asset2 = ArtifactLink(artifact_linked_to="asset2")
+    link_to_asset2 = ArtifactLink(to="asset2")
     add_to_catalog(
         link_to_asset2,
         "asset1",
@@ -109,8 +109,8 @@ Deprecated Asset
 ----------------
 
 Every asset has a special field named ``__deprecated_msg__`` of type ``str``, whose default value is None.
-When None, the asset is cocnsidered non-deprecated. When not None, the asset is considered deprecated, and 
-its ``__deprecated_msg__`` is logged at level WARN upon its instantiation. (Other than this logging, 
+When None, the asset is cocnsidered non-deprecated. When not None, the asset is considered deprecated, and
+its ``__deprecated_msg__`` is logged at level WARN upon its instantiation. (Other than this logging,
 the artifact is instantiated normally.)
 
 Example of a deprecated catalog asset:
@@ -123,12 +123,12 @@ Example of a deprecated catalog asset:
         "text": "You are an agent in charge of answering a boolean (yes/no) question. The system presents you with a passage and a question. Read the passage carefully, and then answer yes or no. Think about your answer, and make sure it makes sense. Do not explain the answer. Only say yes or no."
     }
 
-Combining this feature with ``ArtifactLink`` in the above example, we can also log a warning to the accessing code that 
-the name ``asset1`` is to be replaced by ``asset2``. 
+Combining this feature with ``ArtifactLink`` in the above example, we can also log a warning to the accessing code that
+the name ``asset1`` is to be replaced by ``asset2``.
 
 .. code-block:: python
 
-    link_to_asset2 = ArtifactLink(artifact_linked_to="asset2",
+    link_to_asset2 = ArtifactLink(to="asset2",
            __deprecated_msg__="'asset1' is going to be deprecated. In future uses, please access 'asset2' instead.")
     add_to_catalog(
         link_to_asset2,

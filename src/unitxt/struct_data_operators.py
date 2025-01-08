@@ -237,7 +237,7 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         return (
             "pd.DataFrame({\n"
-            + json.dumps(data_dict)
+            + json.dumps(data_dict)[1:-1]
             + "},\nindex="
             + str(list(range(len(rows))))
             + ")"

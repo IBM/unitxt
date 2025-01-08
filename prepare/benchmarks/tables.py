@@ -5,7 +5,7 @@ import random
 from itertools import combinations
 
 from tqdm import tqdm
-from unitxt import evaluate
+from unitxt import add_to_catalog, evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
     RITSInferenceEngine,
@@ -76,7 +76,7 @@ parser.add_argument(
     type=str,
     required=False,
     default="fin_qa,wikitq,turl_col_type,tab_fact,numeric_nlg,qtsumm,tablebench_data_analysis,scigen,"
-    "tablebench_fact_checking,tablebench_numerical_reasoning,tablebench_visualization",
+    "tablebench_fact_checking,tablebench_numerical_reasoning",  # ,tablebench_visualization",
 )  # TODO: Scigen is implemented with 1 judge. Should we make it 3?
 parser.add_argument(
     "-serializers",
@@ -189,6 +189,20 @@ def get_recipes():
                 obj_recipe = StandardRecipe(**kwargs)
 
                 recipes[subset_name] = str_recipe if recipes_only else obj_recipe
+
+                add_to_catalog(
+                    obj_recipe,
+                    "recipes.tables."
+                    + card
+                    + "."
+                    + serializer
+                    + "."
+                    + (",".join(augment).split("[")[0] if augment else "no")
+                    + "_augmentation_"
+                    + str(curr_num_demos)
+                    + "_demos",
+                    overwrite=True,
+                )
 
     return recipes
 
