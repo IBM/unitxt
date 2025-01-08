@@ -7,6 +7,7 @@ from unitxt.collections_operators import (
     Slice,
     Wrap,
 )
+from unitxt.processors import AddPrefix, GetSQL
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -112,4 +113,26 @@ class TestCollectionsOperators(UnitxtTestCase):
         operator = Chunk(field="x", size=2)
         inputs = [{"x": [0, 1, 2]}, {"x": [0, 1]}, {"x": [3]}]
         targets = [{"x": [[0, 1], [2]]}, {"x": [[0, 1]]}, {"x": [[3]]}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_add_prefix(self):
+        operator = AddPrefix(field="text", prefix="Hello ")
+        inputs = [{"text": "World"}, {"text": "Hello there"}, {"text": " Hello again"}]
+        targets = [
+            {"text": "Hello World"},
+            {"text": "Hello there"},
+            {"text": "Hello again"},
+        ]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_get_sql_with_simple_query(self):
+        operator = GetSQL(field="text")
+        inputs = [{"text": "SELECT * FROM table;"}]
+        targets = [{"text": "SELECT * FROM table"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_get_sql_with_code_block(self):
+        operator = GetSQL(field="text")
+        inputs = [{"text": "```SELECT id FROM table```"}]
+        targets = [{"text": "SELECT id FROM table"}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
