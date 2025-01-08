@@ -349,7 +349,7 @@ class TestArtifact(UnitxtTestCase):
 
             with self.assertWarns(DeprecationWarning):
                 rename_fields = ArtifactLink(
-                    artifact_linked_to="rename.for.test.artifact.link",
+                    to="rename.for.test.artifact.link",
                     __deprecated_msg__="Artifact is deprecated. "
                     "'rename.for.test.artifact.link' is now instantiated instead. "
                     "\nIn the future, please use 'rename.for.test.artifact.link'.",
@@ -536,7 +536,7 @@ class TestArtifact(UnitxtTestCase):
                 )
 
             link_to_copy_operator = ArtifactLink(
-                artifact_linked_to="copy.operator",
+                to="copy.operator",
             )
             add_to_catalog(
                 link_to_copy_operator,
