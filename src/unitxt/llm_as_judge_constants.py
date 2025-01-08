@@ -77,6 +77,8 @@ class EvaluatorNameEnum(str, Enum):
     LLAMA3_2_3B = "Llama3.2-3b"
     PROMETHEUS = "Prometheus"
     GPT4 = "GPT-4o"
+    O1_PREVIEW = "o1-Preview"
+    O1_MINI = "o1-Mini"
     GRANITE_13B = "Granite-13b"
     GRANITE3_2B = "Granite3-2b"
     GRANITE3_8B = "Granite3-8b"
@@ -88,6 +90,7 @@ class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
     OPENAI = "openai"
     RITS = "rits"
+    AZURE_OPENAI = "azure_openai"
 
 
 EVALUATOR_TO_MODEL_ID = {
@@ -99,7 +102,9 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.LLAMA3_1_70B: "meta-llama/llama-3-1-70b-instruct",
     EvaluatorNameEnum.LLAMA3_2_3B: "meta-llama/llama-3-2-3b-instruct",
     EvaluatorNameEnum.PROMETHEUS: "kaist-ai/prometheus-8x7b-v2",
-    EvaluatorNameEnum.GPT4: "gpt-4o",
+    EvaluatorNameEnum.GPT4: "gpt-4o-2024-08-06",
+    EvaluatorNameEnum.O1_PREVIEW: "o1-preview-2024-09-12",
+    EvaluatorNameEnum.O1_MINI: "o1-mini-2024-09-12",
     EvaluatorNameEnum.GRANITE_13B: "ibm/granite-13b-instruct-v2",
     EvaluatorNameEnum.GRANITE3_2B: "ibm/granite-3-2b-instruct",
     EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
@@ -121,14 +126,8 @@ INFERENCE_ENGINE_NAME_TO_CLASS = {
     ModelProviderEnum.WATSONX: LiteLLMInferenceEngine,
     ModelProviderEnum.OPENAI: LiteLLMInferenceEngine,
     ModelProviderEnum.RITS: RITSInferenceEngine,
+    ModelProviderEnum.AZURE_OPENAI: LiteLLMInferenceEngine,
 }
-
-PROVIDER_TO_STRATEGY = {
-    ModelProviderEnum.WATSONX: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
-    ModelProviderEnum.OPENAI: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
-    ModelProviderEnum.RITS: OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT,
-}
-
 
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
@@ -158,7 +157,15 @@ EVALUATORS_METADATA = [
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GPT4,
-        [ModelProviderEnum.OPENAI],
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.O1_MINI,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.O1_PREVIEW,
+        [ModelProviderEnum.OPENAI, ModelProviderEnum.AZURE_OPENAI],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_70B,
