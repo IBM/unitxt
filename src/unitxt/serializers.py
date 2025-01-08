@@ -8,7 +8,16 @@ from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Document, Image, MultiDocument, Number, SQLSchema, Table, Video
+from .types import (
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Number,
+    SQLSchema,
+    Table,
+    Video,
+)
 
 constants = get_constants()
 
