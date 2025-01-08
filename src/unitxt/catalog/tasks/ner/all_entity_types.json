@@ -1,5 +1,20 @@
 {
-    "__type__": "artifact_link",
-    "artifact_linked_to": "tasks.span_labeling.extraction",
-    "__deprecated_msg__": null
+    "__type__": "task",
+    "input_fields": {
+        "text": "str",
+        "entity_types": "List[str]"
+    },
+    "reference_fields": {
+        "spans_starts": "List[int]",
+        "spans_ends": "List[int]",
+        "text": "str",
+        "labels": "List[str]"
+    },
+    "prediction_type": "List[Tuple[str, str]]",
+    "metrics": [
+        "metrics.ner"
+    ],
+    "augmentable_inputs": [
+        "text"
+    ]
 }
