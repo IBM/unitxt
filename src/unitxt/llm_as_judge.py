@@ -729,9 +729,6 @@ class LLMJudgePairwise(LLMJudge):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
 
-        if isinstance(prediction, dict):
-            return prediction
-
         raise Exception(
             f"Prediction may be a list or a dict. Instead got type {type(prediction)}"
         )
@@ -744,7 +741,7 @@ class LLMJudgePairwise(LLMJudge):
     def compute(
         self,
         references: List[List[str]],
-        predictions: Union[List[Dict[str, str]], List[str]],
+        predictions: List[str],
         task_data: List[Dict[str, str]],
     ) -> dict:
         self.logger.info(
