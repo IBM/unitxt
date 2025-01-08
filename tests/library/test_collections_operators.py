@@ -7,7 +7,13 @@ from unitxt.collections_operators import (
     Slice,
     Wrap,
 )
-from unitxt.processors import AddPrefix, GetSQL
+from unitxt.processors import (
+    AddPrefix,
+    FixWhiteSpace,
+    GetSQL,
+    RemoveArticles,
+    RemovePunctuations,
+)
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -203,4 +209,68 @@ class TestCollectionsOperators(UnitxtTestCase):
                 "text": "WITH regional_sales AS (SELECT region, SUM(amount) AS total_sales FROM sales_data GROUP BY region) SELECT region FROM regional_sales"
             }
         ]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_articles_with_empty_input(self):
+        operator = RemoveArticles(field="text")
+        inputs = [{"text": ""}]
+        targets = [{"text": ""}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_articles_with_no_articles(self):
+        operator = RemoveArticles(field="text")
+        inputs = [{"text": "Hello world!"}]
+        targets = [{"text": "Hello world!"}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_punctuations(self):
+        operator = RemovePunctuations(field="text")
+        inputs = [
+            {"text": "Hello, world!"},
+            {"text": "This is a sentence with punctuation: .,;!?"},
+            {"text": "No punctuation here"},
+        ]
+        targets = [
+            {"text": "Hello world"},
+            {"text": "This is a sentence with punctuation "},
+            {"text": "No punctuation here"},
+        ]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_punctuations_with_empty_input(self):
+        operator = RemovePunctuations(field="text")
+        inputs = [{"text": ""}]
+        targets = [{"text": ""}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_remove_punctuations_with_only_punctuations(self):
+        operator = RemovePunctuations(field="text")
+        inputs = [{"text": ".,;!?"}]
+        targets = [{"text": ""}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_fix_white_space(self):
+        operator = FixWhiteSpace(field="text")
+        inputs = [
+            {"text": "  This is a   test  "},
+            {"text": "NoExtraSpacesHere"},
+            {"text": "   "},
+        ]
+        targets = [
+            {"text": "This is a test"},
+            {"text": "NoExtraSpacesHere"},
+            {"text": ""},
+        ]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_fix_white_space_with_empty_input(self):
+        operator = FixWhiteSpace(field="text")
+        inputs = [{"text": ""}]
+        targets = [{"text": ""}]
+        check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
+
+    def test_fix_white_space_with_newline_and_tabs(self):
+        operator = FixWhiteSpace(field="text")
+        inputs = [{"text": "  \tThis is a\n test with \t\nspaces."}]
+        targets = [{"text": "This is a test with spaces."}]
         check_operator(operator=operator, inputs=inputs, targets=targets, tester=self)
