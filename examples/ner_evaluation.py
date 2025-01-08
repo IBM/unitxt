@@ -29,7 +29,7 @@ test_set = [
 
 
 dataset = create_dataset(
-    task="tasks.span_labeling.extraction",
+    task="tasks.ner.all_entity_types",
     test_set=test_set,
     split="test",
     format="formats.chat_api",
