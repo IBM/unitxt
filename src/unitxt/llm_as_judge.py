@@ -17,7 +17,6 @@ from .llm_as_judge_constants import (
     INFERENCE_ENGINE_NAME_TO_CLASS,
     MODEL_RENAMINGS,
     PAIRWISE_CRITERIAS,
-    PROVIDER_TO_STRATEGY,
     Criteria,
     CriteriaOption,
     CriteriaWithOptions,
@@ -26,7 +25,6 @@ from .llm_as_judge_constants import (
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
-    # OptionSelectionStrategyEnum,
     PairwiseCriteriaCatalogEnum,
 )
 from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMasJudge
@@ -483,7 +481,7 @@ class LLMJudgeDirect(LLMJudge):
 
 class LLMJudgePairwise(LLMJudge):
     reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "1_winrate"
     prediction_type = List[str]
 
     def prepare(self):
@@ -724,8 +722,6 @@ class LLMJudgePairwise(LLMJudge):
             for metric in single_result.keys():
                 all_results[f"{response_name}_{metric}"] = single_result[metric]
 
-        winrates = [r["winrate"] for r in per_response_results.values()]
-        all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
         all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
@@ -759,9 +755,6 @@ class LLMJudgePairwise(LLMJudge):
         self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
             [f"{key}_winrate" for key in predictions[0].keys()]
-        )
-        self.reduction_map["mean"].extend(
-            [f"{key}_ranking" for key in predictions[0].keys()]
         )
 
         predictions_count_list = [len(prediction) for prediction in predictions]
