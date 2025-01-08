@@ -129,6 +129,7 @@ INFERENCE_ENGINE_NAME_TO_CLASS = {
     ModelProviderEnum.AZURE_OPENAI: LiteLLMInferenceEngine,
 }
 
+
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
     providers: List[ModelProviderEnum]
@@ -324,7 +325,9 @@ class DirectCriteriaCatalogEnum(Enum):
         "Does the user response contain irrelevant information?",
         [
             CriteriaOption("Yes", "The user response contains irrelevant information."),
-            CriteriaOption("No", "The user response doesn't contain irrelevant information."),
+            CriteriaOption(
+                "No", "The user response doesn't contain irrelevant information."
+            ),
         ],
         {
             "Yes": 0.0,
@@ -337,7 +340,9 @@ class DirectCriteriaCatalogEnum(Enum):
         "Does the user response come across as conversational?",
         [
             CriteriaOption("Yes", "The user response comes across as conversational."),
-            CriteriaOption("No", "The user response doesn't come across as conversational."),
+            CriteriaOption(
+                "No", "The user response doesn't come across as conversational."
+            ),
         ],
         {
             "Yes": 1.0,
@@ -382,7 +387,9 @@ class DirectCriteriaCatalogEnum(Enum):
         "Does the response directly answer the question?",
         [
             CriteriaOption("Excellent", "The response directly answers the question."),
-            CriteriaOption("Acceptable", "The response is adequate but could be better."),
+            CriteriaOption(
+                "Acceptable", "The response is adequate but could be better."
+            ),
             CriteriaOption(
                 "Could be Improved",
                 "The response relates to the questions but does not directly answer it.",
@@ -397,18 +404,24 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
-
     CONSISTENCY = CriteriaWithOptions(
         "consistency",
         "Is the response consistent with respect to the original text? The response should be consistent with the facts in the original article. Consider whether the response does reproduce all facts accurately and does not make up false information.",
         [
-            CriteriaOption("1", "The response is not consistent or makes up false information."),
             CriteriaOption(
-                "2", "The response is somewhat consistent or makes up some false information."
+                "1", "The response is not consistent or makes up false information."
             ),
-            CriteriaOption("3", "The response is consistent and does not make up false information."),
             CriteriaOption(
-                "4", "The response is very consistent and does not make up false information."
+                "2",
+                "The response is somewhat consistent or makes up some false information.",
+            ),
+            CriteriaOption(
+                "3",
+                "The response is consistent and does not make up false information.",
+            ),
+            CriteriaOption(
+                "4",
+                "The response is very consistent and does not make up false information.",
             ),
             CriteriaOption(
                 "5",
@@ -468,7 +481,6 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
-
     EFFECTIVENESS = CriteriaWithOptions(
         "email_effectiveness",
         "Does the email response effectively communicate the desired message?",
@@ -495,7 +507,7 @@ class DirectCriteriaCatalogEnum(Enum):
             "Acceptable": 0.5,
             "Could be Improved": 0.25,
             "Bad": 0.0,
-        }
+        },
     )
 
     GRAMMAR_AND_PUNCTUATION = CriteriaWithOptions(
@@ -571,7 +583,7 @@ class DirectCriteriaCatalogEnum(Enum):
         {
             "Yes": 1.0,
             "No": 0.0,
-        },  
+        },
     )
 
     RELEVANCE = CriteriaWithOptions(
@@ -646,7 +658,6 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
-
     NATURALNESS = CriteriaWithOptions(
         "naturalness",
         "Is the user response natural?",
@@ -664,8 +675,14 @@ class DirectCriteriaCatalogEnum(Enum):
         "information_from_reference",
         "Does the user response contain information from the reference document?",
         [
-            CriteriaOption("Yes", "The user response contains information from the reference document."),
-            CriteriaOption("No", "The user response doesn't contain information from the reference document."),
+            CriteriaOption(
+                "Yes",
+                "The user response contains information from the reference document.",
+            ),
+            CriteriaOption(
+                "No",
+                "The user response doesn't contain information from the reference document.",
+            ),
         ],
         {
             "Yes": 1.0,
@@ -677,8 +694,14 @@ class DirectCriteriaCatalogEnum(Enum):
         "information_outside_reference",
         "Does the user response contain information outside of the reference document?",
         [
-            CriteriaOption("Yes", "The user response contains information outside of the reference document."),
-            CriteriaOption("No", "The user response doesn't contain information outside of the reference document."),
+            CriteriaOption(
+                "Yes",
+                "The user response contains information outside of the reference document.",
+            ),
+            CriteriaOption(
+                "No",
+                "The user response doesn't contain information outside of the reference document.",
+            ),
         ],
         {
             "Yes": 0.0,
@@ -696,15 +719,15 @@ class DirectCriteriaCatalogEnum(Enum):
             ),
             CriteriaOption(
                 "Good",
-                "The response includes statements expressing emotions and acclamations."
+                "The response includes statements expressing emotions and acclamations.",
             ),
             CriteriaOption(
                 "Average",
-                "The order of events in the response follows a suitable chronological order."
+                "The order of events in the response follows a suitable chronological order.",
             ),
             CriteriaOption(
                 "Poor",
-                "The response includes minor and irrelevant details which add no value in a summary."
+                "The response includes minor and irrelevant details which add no value in a summary.",
             ),
         ],
         {
@@ -719,8 +742,12 @@ class DirectCriteriaCatalogEnum(Enum):
         "reference_document_faithfulness",
         "Is the response faithful according to reference document?",
         [
-            CriteriaOption("Yes", "The response is faithful according to reference document."),
-            CriteriaOption("No", "The response is not faithful according to reference document."),
+            CriteriaOption(
+                "Yes", "The response is faithful according to reference document."
+            ),
+            CriteriaOption(
+                "No", "The response is not faithful according to reference document."
+            ),
         ],
         {
             "Yes": 1.0,
@@ -910,6 +937,7 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
+
 DIRECT_CRITERIAS = [c.value for c in DirectCriteriaCatalogEnum]
 
 
@@ -942,12 +970,13 @@ class PairwiseCriteriaCatalogEnum(Enum):
     SUMMARIZATION_PREFERENCE = Criteria(
         name="summarization_preference",
         description="The summary should be accurate and concise. It covers all the article and accurately summarizes it. "
-                    "Keeps the length of summary reasonable. Has no fake data generated outside of the reference article.",
+        "Keeps the length of summary reasonable. Has no fake data generated outside of the reference article.",
     )
 
     EMAIL_INCLUSIVITY = Criteria(
         name="email_inclusivity",
         description="The email is inclusive. It uses inclusive language and does not target any particular culture or group.",
     )
+
 
 PAIRWISE_CRITERIAS = [c.value for c in PairwiseCriteriaCatalogEnum]
