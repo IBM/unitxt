@@ -28,7 +28,8 @@
         {
             "__type__": "wrap",
             "field": "passage",
-            "inside": "list"
+            "inside": "list",
+            "to_field": "passages"
         },
         {
             "__type__": "set",

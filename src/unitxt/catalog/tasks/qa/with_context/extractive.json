@@ -1,5 +1,5 @@
 {
     "__type__": "artifact_link",
-    "artifact_linked_to": "tasks.qa.extractive",
+    "to": "tasks.qa.extractive",
     "__deprecated_msg__": null
 }
