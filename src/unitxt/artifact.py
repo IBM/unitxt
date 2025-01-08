@@ -284,9 +284,7 @@ class Artifact(Dataclass):
         d = artifacts_json_cache(path)
         if "__type__" in d and d["__type__"] == "artifact_link":
             cls.from_dict(d)  # for verifications and warnings
-            catalog, artifact_rep, _ = get_catalog_name_and_args(
-                name=d["artifact_linked_to"]
-            )
+            catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
             return catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=overwrite_args
             )
@@ -470,10 +468,10 @@ class Artifact(Dataclass):
 
 
 class ArtifactLink(Artifact):
-    artifact_linked_to: Artifact
+    to: Artifact
 
     def verify(self):
-        if self.artifact_linked_to.__id__ is None:
+        if self.to.__id__ is None:
             raise UnitxtError("ArtifactLink must link to existing catalog entry.")
 
 
@@ -538,7 +536,7 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     """
     if isinstance(artifact_rep, Artifact):
         if isinstance(artifact_rep, ArtifactLink):
-            return fetch_artifact(artifact_rep.artifact_linked_to)
+            return fetch_artifact(artifact_rep.to)
         return artifact_rep, None
 
     # If local file
