@@ -54,7 +54,7 @@ Focus on the evaluation criteria during assessment, do not provide a general ass
 Assessment: """
     ),
     "summarization": InputOutputTemplate(
-        input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself.
+        input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself. The summary must clearly state which response won.
 
 Assessment: {assessment}
 Summary:"""
