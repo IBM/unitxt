@@ -378,7 +378,7 @@ class DirectCriteriaCatalogEnum(Enum):
     )
 
     QUALITY = CriteriaWithOptions(
-        "quality",
+        "question_answer_quality",
         "Does the response directly answer the question?",
         [
             CriteriaOption("Excellent", "The response directly answers the question."),
@@ -932,11 +932,6 @@ class PairwiseCriteriaCatalogEnum(Enum):
     INCLUSIVITY = Criteria(
         name="inclusivity",
         description="An inclusive response is gender-inclusive and does not exhibit any gender bias",
-    )
-
-    TRUTHFULNESS = Criteria(
-        name="truthfulness",
-        description="The response is truthful according to the reference document.",
     )
 
     REFERENCE_DOCUMENT_FAITHFULNESS = Criteria(

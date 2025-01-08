@@ -1,6 +1,6 @@
 {
     "__type__": "criteria_with_options",
-    "name": "quality",
+    "name": "question_answer_quality",
     "description": "Does the response directly answer the question?",
     "options": [
         {
