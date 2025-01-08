@@ -75,6 +75,8 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
 
     def prepare_args(self):
         super().prepare_args()
+        if isinstance(self.metrics, str):
+            self.metrics = [self.metrics]
 
         if self.input_fields is not None and self.inputs is not None:
             raise UnitxtError(

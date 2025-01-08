@@ -536,6 +536,7 @@ class MultipleChoiceTemplate(InputFormatTemplate):
     sort_choices_by_length: bool = False
     sort_choices_alphabetically: bool = False
     reverse_choices: bool = False  # False by default for backward-compat
+    place_correct_choice_position: int = None
 
     def prepare(self):
         super().prepare()
@@ -575,6 +576,7 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             self.sort_choices_by_length
             or self.sort_choices_alphabetically
             or self.reverse_choices
+            or self.place_correct_choice_position is not None
         ):
             raise UnitxtError(
                 "You cannot combine shuffle_choices with sorting or reversing flags."
@@ -583,6 +585,14 @@ class MultipleChoiceTemplate(InputFormatTemplate):
         if self.sort_choices_by_length and self.sort_choices_alphabetically:
             raise UnitxtError(
                 "You cannot combine both sort_choices_by_length and sort_choices_alphabetically simultaneously."
+            )
+        if self.place_correct_choice_position is not None and (
+            self.sort_choices_by_length
+            or self.sort_choices_alphabetically
+            or self.reverse_choices
+        ):
+            raise UnitxtError(
+                "You cannot combine place_correct_choice_position with sorting or reversing flags."
             )
 
     def inputs_to_choices(self, data: Dict[str, Any], choice_format: str) -> str:
@@ -664,6 +674,7 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             and not self.sort_choices_by_length
             and not self.sort_choices_alphabetically
             and not self.reverse_choices
+            and self.place_correct_choice_position is None
         ):
             return input_fields, reference_fields
 
@@ -684,6 +695,13 @@ class MultipleChoiceTemplate(InputFormatTemplate):
                 else {**input_fields}
             )
             random_generator.shuffle(choices)
+        if self.place_correct_choice_position is not None:
+            if not 0 <= self.place_correct_choice_position < len(choices):
+                raise ValueError(
+                    f"fix_correct_choice_position={self.place_correct_choice_position} out of range (0..{len(choices) - 1})."
+                )
+            choices.remove(original_label_choice)
+            choices.insert(self.place_correct_choice_position, original_label_choice)
 
         # Update both input_fields and reference_fields once at the end
         input_fields[self.choices_field] = choices
