@@ -2,24 +2,25 @@ import json
 
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
-from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.templates import SpanLabelingTemplate
+from unitxt.inference import (
+    CrossProviderInferenceEngine,
+)
 
 logger = get_logger()
-classes = ["Person", "Location", "Organization"]
+entity_types = ["Person", "Location", "Organization"]
 
 
 test_set = [
     {
         "text": "John lives in Texas.",
-        "classes": classes,
+        "entity_types": entity_types,
         "spans_starts": [0, 14],
         "spans_ends": [5, 19],
         "labels": ["Person", "Location"],
     },
     {
         "text": "Phil works at Apple and eats an apple.",
-        "classes": classes,
+        "entity_types": entity_types,
         "spans_starts": [0, 14],
         "spans_ends": [5, 19],
         "labels": ["Person", "Organization"],
@@ -27,19 +28,9 @@ test_set = [
 ]
 
 
-template = SpanLabelingTemplate(
-    instruction="""From the following text, extract the  entities of one of the following entity types: {classes}.
-Return the output in this exact format:
-The output should be a comma separated list of pairs of entity and corresponding entity_type.
-Use a colon to separate between the entity and entity_type. """,
-    input_format="{text_type}:\n{text}",
-    postprocessors=["processors.to_span_label_pairs"],
-)
-
 dataset = create_dataset(
-    task="tasks.span_labeling.extraction",
+    task="tasks.ner.all_entity_types",
     test_set=test_set,
-    template=template,
     split="test",
     format="formats.chat_api",
 )

@@ -1,7 +1,7 @@
 {
     "__type__": "span_labeling_template",
     "input_format": "{text_type}: {text}",
-    "instruction": "From the following {text_type}, extract the objects for which the {class_type} expressed is one of {classes}.",
+    "instruction": "From the following {text_type}, extract the objects for which the entity type expressed is one of {entity_types}.",
     "postprocessors": [
         "processors.to_span_label_pairs"
     ]

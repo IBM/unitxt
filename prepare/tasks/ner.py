@@ -36,3 +36,12 @@ add_to_catalog(
     "tasks.ner.all_entity_types",
     overwrite=True,
 )
+
+#
+# Should replace above when https://github.com/IBM/unitxt/issues/1479 resolved.
+# add_link_to_catalog(
+#    artifact_linked_to="tasks.span_labeling.extraction",
+#    name="tasks.ner.all_entity_types",
+#    deprecate=False,
+#    overwrite=True,
+# )
