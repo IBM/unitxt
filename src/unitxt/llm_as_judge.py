@@ -202,6 +202,14 @@ class LLMJudgeDirect(LLMJudge):
             metrics=[],
         )
 
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        if self.criteria is not None and not isinstance(self.criteria, CriteriaWithOptions):
+                raise Exception(
+                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
+                )
+        return
+
     def get_parsed_criteria(self, criteria: CriteriaWithOptions):
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
@@ -476,8 +484,13 @@ class LLMJudgePairwise(LLMJudge):
             metrics=[],
         )
 
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        if self.criteria is not None and not isinstance(self.criteria, Criteria):
+                raise Exception(
                     f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
                 )
+        return
 
     def get_instance_results(
         self,
