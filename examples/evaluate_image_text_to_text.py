@@ -7,7 +7,6 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-
     inference_model = LMMSEvalInferenceEngine(
         model_type="llava",
         model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
@@ -19,7 +18,6 @@ with settings.context(
         # max_test_instances=20,
         split="test",
     )
-
 
     predictions = inference_model.infer(dataset)
     results = evaluate(predictions=predictions, data=dataset)
