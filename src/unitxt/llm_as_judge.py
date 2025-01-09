@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .api import infer
 from .artifact import fetch_artifact
+from .dict_utils import dict_get
 from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
@@ -149,7 +150,7 @@ class LLMJudge(BulkInstanceMetric):
         return [
             get_parsed_context(
                 {
-                    context_field: td[context_field]
+                    context_field.split("/")[-1]: dict_get(td, context_field)
                     for context_field in self.context_fields
                 }
             )
