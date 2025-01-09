@@ -1,0 +1,10 @@
+{
+    "__type__": "dataset_recipe",
+    "card": "cards.tab_fact",
+    "serializer": "serializers.table.json",
+    "num_demos": 5,
+    "demos_pool_size": 10,
+    "augmentor": [
+        "augmentors.table.insert_empty_rows[times=2]"
+    ]
+}

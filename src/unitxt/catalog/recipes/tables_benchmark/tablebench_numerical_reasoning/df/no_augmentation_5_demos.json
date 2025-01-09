@@ -1,0 +1,8 @@
+{
+    "__type__": "dataset_recipe",
+    "card": "cards.tablebench_numerical_reasoning",
+    "serializer": "serializers.table.df",
+    "num_demos": 5,
+    "demos_pool_size": 10,
+    "augmentor": null
+}
