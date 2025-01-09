@@ -163,8 +163,8 @@ class LLMJudge(BulkInstanceMetric):
 
 class LLMJudgeDirect(LLMJudge):
     criteria: CriteriaWithOptions = None
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "llm_as_judge"
+    reduction_map = {"mean": ["llm_as_judge"]}
 
     def prepare(self):
         super().prepare()
@@ -224,6 +224,13 @@ class LLMJudgeDirect(LLMJudge):
         )
 
 
+    def set_main_score(self, criterias: List[CriteriaWithOptions]):
+        unique_criteria_names = list({criteria.name for criteria in criterias})
+        if len(unique_criteria_names) == 1 and criterias[0].name != "":
+            self.main_score = criterias[0].name
+            self.reduction_map = {"mean": [self.main_score]}
+        
+
     def get_results(
         self,
         assessment_prompts,
@@ -247,11 +254,11 @@ class LLMJudgeDirect(LLMJudge):
             criteria.option_map[selection] if criteria.option_map is not None else 1
             for criteria, selection in zip(criterias, selections)
         ]
-
-        return [
+        
+        result = [
             {
-                "score": scores[i],
-                "llm_as_a_judge_score": scores[i],
+                self.main_score: scores[i],
+                f"{self.main_score}_using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[i],
                 "positional_bias": positional_bias[i]
                 if self.check_positional_bias
                 else None,
@@ -308,6 +315,7 @@ class LLMJudgeDirect(LLMJudge):
         evaluations_count = len(predictions)
         # TODO: find out how to serialize and deserialize enums
         criterias = self.get_criterias(task_data, evaluations_count)
+        self.set_main_score(criterias)
         contexts = self.get_contexts(task_data)
         if self.check_positional_bias:
             criterias += [
@@ -624,7 +632,7 @@ class LLMJudgePairwise(LLMJudge):
             contest_results = per_response_results[key]["contest_results"]
             winrate = sum(contest_results) / len(contest_results)
             per_response_results[key]["winrate"] = winrate
-            per_response_results[key]["llm_as_a_judge_score"] = winrate
+            per_response_results[key]["llm_as_judge"] = winrate
         # calculate ranking
         ranking = rank_indexes(
             [result["winrate"] for result in per_response_results.values()]
