@@ -161,6 +161,7 @@ class LLMJudge(BulkInstanceMetric):
         self.logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
         return criterias
 
+
 class LLMJudgeDirect(LLMJudge):
     criteria: CriteriaWithOptions = None
     main_score = "llm_as_judge"
@@ -204,10 +205,12 @@ class LLMJudgeDirect(LLMJudge):
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
-        if self.criteria is not None and not isinstance(self.criteria, CriteriaWithOptions):
-                raise Exception(
-                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
-                )
+        if self.criteria is not None and not isinstance(
+            self.criteria, CriteriaWithOptions
+        ):
+            raise Exception(
+                f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
+            )
         return
 
     def get_parsed_criteria(self, criteria: CriteriaWithOptions):
@@ -231,13 +234,11 @@ class LLMJudgeDirect(LLMJudge):
             score_option_instruction,
         )
 
-
     def set_main_score(self, criterias: List[CriteriaWithOptions]):
         unique_criteria_names = list({criteria.name for criteria in criterias})
         if len(unique_criteria_names) == 1 and criterias[0].name != "":
             self.main_score = criterias[0].name
             self.reduction_map = {"mean": [self.main_score]}
-        
 
     def get_results(
         self,
@@ -262,11 +263,13 @@ class LLMJudgeDirect(LLMJudge):
             criteria.option_map[selection] if criteria.option_map is not None else 1
             for criteria, selection in zip(criterias, selections)
         ]
-        
+
         return [
             {
                 self.main_score: scores[i],
-                f"{self.main_score}_using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[i],
+                f"{self.main_score}_using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[
+                    i
+                ],
                 "positional_bias": positional_bias[i]
                 if self.check_positional_bias
                 else None,
@@ -487,9 +490,9 @@ class LLMJudgePairwise(LLMJudge):
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
         if self.criteria is not None and not isinstance(self.criteria, Criteria):
-                raise Exception(
-                    f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
-                )
+            raise Exception(
+                f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
+            )
         return
 
     def get_instance_results(
