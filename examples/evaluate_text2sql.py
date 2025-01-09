@@ -15,7 +15,7 @@ with settings.context(
 
 # Infer
 inference_model = CrossProviderInferenceEngine(
-    model="granite-3-8b-instruct",  # "llama-3-70b-instruct","llama-3-70b-instruct",  #
+    model="llama-3-70b-instruct",
     max_tokens=256,
 )
 
@@ -41,6 +41,7 @@ print_dict(
     evaluated_dataset[0]["score"]["global"],
 )
 
+# with llama-3-70b-instruct
 # num_of_instances (int):
 #     1534
 # execution_accuracy (float):
