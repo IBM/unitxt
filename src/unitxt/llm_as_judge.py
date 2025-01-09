@@ -138,6 +138,28 @@ class LLMJudge(BulkInstanceMetric):
             if not (isinstance(v, dict) and len(v) == 0)
         }
 
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
+            if self.criteria_field not in task_data[0]:
+                raise UnitxtError(
+                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
+                )
+            self.logger.info(
+                f"Reading criteria from the task_data field '{self.criteria_field}'"
+            )
+            criterias = [
+                fetch_artifact(task_data_instance[self.criteria_field])[0]
+                for task_data_instance in task_data
+            ]
+        else:
+            self.logger.info(
+                "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
+            )
+            criterias: List[Criteria] = [self.criteria] * eval_count
+        unique_criteria_names = list({criteria.name for criteria in criterias})
+
+        self.logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
+        return criterias
 
 class LLMJudgeDirect(LLMJudge):
     criteria: CriteriaWithOptions = None
@@ -201,25 +223,6 @@ class LLMJudgeDirect(LLMJudge):
             score_option_instruction,
         )
 
-    def get_criterias(self, task_data, eval_count):
-        if self.criteria is None:
-            self.logger.info("Reading criteria from the task_data")
-            criterias = [
-                fetch_artifact(task_data_instance["criteria"])[0]
-                for task_data_instance in task_data
-            ]
-        else:
-            self.logger.info(
-                "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
-            )
-            if not isinstance(self.criteria, CriteriaWithOptions):
-                raise Exception(
-                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
-                )
-            criterias: List[CriteriaWithOptions] = [self.criteria] * eval_count
-        unique_criterias = list({criteria.name for criteria in criterias})
-        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
-        return criterias
 
     def get_results(
         self,
@@ -465,33 +468,8 @@ class LLMJudgePairwise(LLMJudge):
             metrics=[],
         )
 
-    def get_criterias(self, task_data, eval_count):
-        if self.criteria is None:
-            if self.criteria_field not in task_data[0]:
-                raise UnitxtError(
-                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
-                )
-            self.logger.info(
-                f"Reading criteria from the task_data field f{self.criteria_field}"
-            )
-            criterias = [
-                fetch_artifact(task_data_instance[self.criteria_field])[0]
-                for task_data_instance in task_data
-            ]
-        else:
-            self.logger.info(
-                "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
-            )
-            if not isinstance(self.criteria, Criteria):
-                raise UnitxtError(
                     f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
                 )
-
-            criterias: List[Criteria] = [self.criteria] * eval_count
-
-        unique_criterias = list({criteria.name for criteria in criterias})
-        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
-        return criterias
 
     def get_instance_results(
         self,
