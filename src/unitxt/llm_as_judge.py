@@ -71,67 +71,10 @@ class LLMJudge(BulkInstanceMetric):
         if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
 
-        # if not isinstance(self.option_selection_strategy, OptionSelectionStrategyEnum):
-        #     self.option_selection_strategy = OptionSelectionStrategyEnum[
-        #         self.option_selection_strategy
-        #     ]
         if self.evaluator_name is None:
             self.evaluator_name = self.inference_engine.get_engine_id()
         elif not isinstance(self.evaluator_name, EvaluatorNameEnum):
             self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
-
-        self.assessment_template = direct_template_dict["assessment"]
-        self.summarization_template = direct_template_dict["summarization"]
-        self.option_selection_template = direct_template_dict["answer"]
-
-        self.assessment_task = Task(
-            input_fields={
-                "context_variables": str,
-                "response": str,
-                "criteria_description": str,
-                "display_options_instruction": str,
-            },
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-        self.summarization_task = Task(
-            input_fields={"assessment": str},
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-        self.option_selection_task = Task(
-            input_fields={
-                "context_variables": str,
-                "response": str,
-                "display_options_instruction": str,
-                "assessment": str,
-                "criteria_description": str,
-                "score_option_instruction": str,
-                "options": list,
-            },
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-    # def verify(self):
-    #     super().verify()
-    #     if (
-    #         self.option_selection_strategy
-    #         == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-    #         and not isinstance(
-    #             self.inference_engine, OptionSelectingByLogProbsInferenceEngine
-    #         )
-    #     ):
-    #         raise ValueError(
-    #             "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
-    #             f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
-    #             "to inherit from OptionSelectingByLogProbsInferenceEngine "
-    #         )
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
