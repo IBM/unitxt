@@ -3,15 +3,17 @@ import json
 import math
 import os
 import re
+import sqlite3
 import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
 from dataclasses import field
 from functools import lru_cache
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
+import evaluate
 import numpy
 import numpy as np
 import pandas as pd
@@ -20,6 +22,7 @@ from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .collections import ListCollection
+from .data_utils import SQLData
 from .dataclass import (
     AbstractField,
     InternalField,
@@ -35,6 +38,7 @@ from .inference import (
 )
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
+from .metrics import InstanceMetric
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -49,6 +53,8 @@ from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+
+logger = evaluate.logging.get_logger(__name__)
 
 logger = get_logger()
 settings = get_settings()
@@ -373,8 +379,7 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-from typing import Generic, TypeVar, NamedTuple
-from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -626,8 +631,9 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         from sklearn.metrics import f1_score
 
         self._metric = f1_score
-        import regex
         from functools import partial
+
+        import regex
 
         self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
 
@@ -5700,17 +5706,6 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
             dim=0,
         ).numpy()
-
-
-import sqlite3
-from typing import Any, Dict, List, Tuple
-
-import evaluate
-
-from .data_utils import SQLData
-from .metrics import InstanceMetric
-
-logger = evaluate.logging.get_logger(__name__)
 
 
 class ExecutionAccuracy(InstanceMetric):
