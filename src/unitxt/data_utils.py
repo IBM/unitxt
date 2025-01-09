@@ -1,8 +1,8 @@
 import glob
-import json
 import os
 import sqlite3
-from typing import List, Optional
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List, Optional
 
 import evaluate
 from huggingface_hub import snapshot_download
@@ -12,192 +12,102 @@ SQL_TIMEOUT = 100
 DOWNLOAD_LOCK_TIMEOUT = 1000
 
 # Path to the user's databases cache directory.
-
-
-# Base headers for HTTP requests.
-BASE_HEADERS = {"Content-Type": "application/json", "accept": "application/json"}
-# Path to the prompt cache file.
-
-
 # Logger instance.
 logger = evaluate.logging.get_logger(__name__)
 
 
-# class JSONCache:
-#     """A class for managing a JSON cache stored in a file."""
+class DatabaseConnector(ABC):
+    """Abstract base class for database connectors."""
 
-#     def __init__(self, filename):
-#         """Initializes the JSON cache."""
-#         logger.debug(f"Initializing JSON cache from: {filename}")
-#         self.filename = filename
-#         self.cache = self.load_cache()
-#         self.lock_path = filename + ".lock"
-#         self.cache_lock_timeout = 5
+    def __init__(self, db_config: Dict[str, Any]):
+        self.db_config = db_config
 
-#     def load_cache(self):
-#         cache = {}
-#         if os.path.exists(self.filename):
-#             with open(self.filename) as file:
-#                 for line in file:
-#                     if line.strip():
-#                         entry = json.loads(line)
-#                         cache.update(entry)
-#         return cache
-
-#     def add_to_cache(self, key, value):
-#         self.cache[key] = value
-#         self.append_to_file({key: value})
-
-#     def append_to_file(self, new_entry):
-#         with open(self.filename, "a") as file, FileLock(
-#             self.lock_path, timeout=self.cache_lock_timeout
-#         ):
-#             file.write(json.dumps(new_entry) + "\n")
-
-#     def get_from_cache(self, key):
-#         return self.cache.get(key, None)
-
-
-class SQLData:
-    def __init__(self, prompt_cache_location=None):
-        # self.base_headers = base_headers if base_headers else BASE_HEADERS
-
-        self.prompt_cache_location = os.path.join(
-            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"),
-            "user_cache",
-            "text2sql_requests_cache.jsonl",
-        )
-
-        self.databases_folder = os.path.join(
-            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
-        )
-        os.makedirs(self.databases_folder, exist_ok=True)
-
-        self.tables_json = None
-        # self.prompt_cache = JSONCache(self.prompt_cache_location)
-
-    def download_database(self):
-        done_file_path = os.path.join(self.databases_folder, "download_done")
-        if not os.path.exists(done_file_path):
-            snapshot_download(
-                repo_id="premai-io/birdbench",
-                repo_type="dataset",
-                local_dir=self.databases_folder,
-                force_download=False,
-                allow_patterns="*validation*",
-            )
-            open(os.path.join(self.databases_folder, "download_done"), "w")
-
-    def get_db_file_path(self, db_name):
-        self.download_database()
-
-        db_file_pattern = os.path.join(self.databases_folder, "**", db_name + ".sqlite")
-        db_file_paths = glob.glob(db_file_pattern, recursive=True)
-
-        if len(db_file_paths) == 0:
-            raise FileNotFoundError(
-                f"Database file {db_name} not found. You can try deleting folder {self.databases_folder} and running again."
-            )
-        if not len(db_file_paths) == 1:
-            raise FileExistsError(f"More than one files matched for {db_name}")
-
-        return db_file_paths[0]
-
-    def get_tables_json(self):
-        if not self.tables_json:
-            self.download_database()
-            db_tables_json_file = os.path.join(self.databases_folder, "tables.json")
-            if not os.path.exists(db_tables_json_file):
-                raise FileNotFoundError(
-                    f"tables.json file not found {db_tables_json_file}. "
-                    f"You can try deleting folder {self.databases_folder} and running again."
-                )
-            self.tables_json = json.load(open(db_tables_json_file))
-        return self.tables_json
-
-    ## function below from BIRD repo https://github.com/AlibabaResearch/DAMO-ConvAI/blob/main/bird/llm/src/gpt_request.py
-    def format_table(self, column_names: list, values: list):
-        rows = []
-        # Determine the maximum width of each column
-        widths = [
-            max(len(str(value[i])) for value in [*values, column_names])
-            for i in range(len(column_names))
-        ]
-        header = "".join(
-            f"{column.rjust(width)} " for column, width in zip(column_names, widths)
-        )
-        for value in values:
-            row = "".join(f"{str(v).rjust(width)} " for v, width in zip(value, widths))
-            rows.append(row)
-        rows = "\n".join(rows)
-        return header + "\n" + rows
-
-    def get_db_schema(
+    @abstractmethod
+    def get_table_schema(
         self,
-        db_name: str,
-        db_type: str = "sqlite",
         select_tables: Optional[List[str]] = None,
         select_columns: Optional[List[str]] = None,
         num_rows_from_table_to_add: int = 0,
     ) -> str:
-        # extract create ddls
-        if (
-            db_type == "sqlite"
-        ):  # this is BIRD style, from https://github.com/AlibabaResearch/DAMO-ConvAI/blob/9406bd7a49e15ff720770263d327fe62d9261325/bird/llm/src/gpt_request.py#L60
-            db_path: str = self.get_db_file_path(db_name)
-            conn: sqlite3.Connection = sqlite3.connect(db_path)
-            # Create a cursor object
-            cursor: sqlite3.Cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
-            tables: list[tuple[str]] = cursor.fetchall()
-            schemas: dict[str, str] = {}
+        """Abstract method to get database schema."""
+        pass
 
-            for table in tables:
-                if isinstance(table, tuple):
-                    table = table[0]
-                if table == "sqlite_sequence":
-                    continue
-                if select_tables:
-                    if table.lower() not in select_tables:
-                        continue
-                sql_query: str = f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}';"
-                cursor.execute(sql_query)
-                schema_prompt: str = cursor.fetchone()[0]
+    @abstractmethod
+    def format_table(self, column_names: list, values: list) -> str:
+        """Abstract method to format table data."""
+        pass
 
-                if select_tables and select_columns:
-                    schema_prompt = self.apply_column_selection(
-                        select_columns, table, schema_prompt
-                    )
 
-                if num_rows_from_table_to_add:
-                    schema_prompt = self.add_table_rows_to_prompt(
-                        num_rows_from_table_to_add, cursor, table, schema_prompt
-                    )
+class SQLiteConnector(DatabaseConnector):
+    """Database connector for SQLite databases."""
 
-                schemas[table] = schema_prompt
+    def __init__(self, db_config: Dict[str, Any]):
+        super().__init__(db_config)
+        self.db_path = self.db_config.get("db_path")
+        if not self.db_path:
+            raise ValueError("db_path is required for SQLiteConnector.")
+        self.conn: sqlite3.Connection = sqlite3.connect(self.db_path)
+        self.cursor: sqlite3.Cursor = self.conn.cursor()
 
-            schema_prompt: str = "\n\n".join(list(schemas.values()))
-        else:
-            raise NotADirectoryError(
-                f"only sqlite databases are currently supported, instead {db_type} was selected"
+    def get_table_schema(
+        self,
+        select_tables: Optional[List[str]] = None,
+        select_columns: Optional[List[str]] = None,
+        num_rows_from_table_to_add: int = 0,
+    ) -> str:
+        """Extracts schema from an SQLite database."""
+        self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        tables: list[tuple[str]] = self.cursor.fetchall()
+        schemas: dict[str, str] = {}
+
+        for table in tables:
+            if isinstance(table, tuple):
+                table = table[0]
+            if table == "sqlite_sequence":
+                continue
+            if select_tables and table.lower() not in select_tables:
+                continue
+            sql_query: str = (
+                f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}';"
             )
+            self.cursor.execute(sql_query)
+            schema_prompt: str = self.cursor.fetchone()[0]
+
+            if select_tables and select_columns:
+                schema_prompt = self.apply_column_selection(
+                    select_columns, table, schema_prompt
+                )
+
+            if num_rows_from_table_to_add:
+                schema_prompt = self.add_table_rows_to_prompt(
+                    num_rows_from_table_to_add, table, schema_prompt
+                )
+            schemas[table] = schema_prompt
+
+        schema_prompt: str = "\n\n".join(list(schemas.values()))
         return schema_prompt
 
     def add_table_rows_to_prompt(
-        self, num_rows_from_table_to_add, cursor, table, schema_prompt
-    ):
+        self, num_rows_from_table_to_add: int, table: str, schema_prompt: str
+    ) -> str:
+        """Adds sample table rows to the schema prompt."""
         cur_table: str = table
         sql_query: str = (
             f"SELECT * FROM `{cur_table}` LIMIT {num_rows_from_table_to_add}"
         )
-        cursor.execute(sql_query)
-        column_names: list[str] = [description[0] for description in cursor.description]
-        values: list[tuple] = cursor.fetchall()
+        self.cursor.execute(sql_query)
+        column_names: list[str] = [
+            description[0] for description in self.cursor.description
+        ]
+        values: list[tuple] = self.cursor.fetchall()
         rows_prompt: str = self.format_table(column_names=column_names, values=values)
         verbose_prompt: str = f"/* \nSample data ({num_rows_from_table_to_add} example row(s)): \n SELECT * FROM {cur_table} LIMIT {num_rows_from_table_to_add}; \n {rows_prompt} \n */"
         return f"{schema_prompt}\n\n{verbose_prompt}"
 
-    def apply_column_selection(self, select_columns, table, schema_prompt):
+    def apply_column_selection(
+        self, select_columns: List[str], table: str, schema_prompt: str
+    ) -> str:
+        """Filters columns based on `select_columns`."""
         lines: list[str] = []
         for line in schema_prompt.split("\n"):
             if line.startswith("    "):
@@ -213,12 +123,209 @@ class SQLData:
             else:
                 lines.append(line)
 
-        schema_prompt = "\n".join(lines)
-        return schema_prompt  # noqa
+        return "\n".join(lines)
+
+    def format_table(self, column_names: list, values: list) -> str:
+        """Formats table data into a string for display."""
+        rows = []
+        # Determine the maximum width of each column
+        widths = [
+            max(len(str(value[i])) for value in [*values, column_names])
+            for i in range(len(column_names))
+        ]
+        header = "".join(
+            f"{column.rjust(width)} " for column, width in zip(column_names, widths)
+        )
+        for value in values:
+            row = "".join(f"{str(v).rjust(width)} " for v, width in zip(value, widths))
+            rows.append(row)
+        rows = "\n".join(rows)
+        return header + "\n" + rows
+
+
+class MockConnector(DatabaseConnector):
+    """Database connector for mocking databases with in-memory data structures."""
+
+    def __init__(self, db_config: Dict[str, Any]):
+        super().__init__(db_config)
+        self.tables = db_config.get("tables", {})
+        if not self.tables:
+            raise ValueError("tables is required for MockConnector.")
+
+    def get_table_schema(
+        self,
+        select_tables: Optional[List[str]] = None,
+        select_columns: Optional[List[str]] = None,
+        num_rows_from_table_to_add: int = 0,
+    ) -> str:
+        """Generates a mock schema from the tables structure."""
+        schemas = {}
+        for table_name, table_data in self.tables.items():
+            if select_tables and table_name.lower() not in select_tables:
+                continue
+            columns = ", ".join([f"`{col}` TEXT" for col in table_data["columns"]])
+            schema = f"CREATE TABLE `{table_name}` ({columns});"
+            if num_rows_from_table_to_add:
+                schema = self.add_table_rows_to_prompt(
+                    num_rows_from_table_to_add, table_name, schema
+                )
+
+            schemas[table_name] = schema
+
+        return "\n\n".join(list(schemas.values()))
+
+    def add_table_rows_to_prompt(
+        self, num_rows_from_table_to_add: int, table_name: str, schema_prompt: str
+    ) -> str:
+        """Adds mock table rows to the schema prompt."""
+        table_data = self.tables.get(table_name)
+        if not table_data:
+            return schema_prompt  # Return original schema if table not found
+
+        rows = table_data.get("rows", [])[:num_rows_from_table_to_add]
+        if not rows:
+            return schema_prompt
+
+        rows_prompt: str = self.format_table(
+            column_names=table_data["columns"], values=rows
+        )
+        verbose_prompt: str = f"/* \nSample data ({num_rows_from_table_to_add} example row(s)): \n SELECT * FROM {table_name} LIMIT {num_rows_from_table_to_add}; \n {rows_prompt} \n */"
+        return f"{schema_prompt}\n\n{verbose_prompt}"
+
+    def format_table(self, column_names: list, values: list) -> str:
+        """Formats table data into a string for display."""
+        rows = []
+        # Determine the maximum width of each column
+        widths = [
+            max(len(str(value[i])) for value in [*values, column_names])
+            for i in range(len(column_names))
+        ]
+        header = "".join(
+            f"{column.rjust(width)} " for column, width in zip(column_names, widths)
+        )
+        for value in values:
+            row = "".join(f"{str(v).rjust(width)} " for v, width in zip(value, widths))
+            rows.append(row)
+        rows = "\n".join(rows)
+        return header + "\n" + rows
+
+
+class SQLData:
+    """Manages SQL database connections and schemas."""
+
+    def __init__(self, prompt_cache_location=None):
+        self.prompt_cache_location = os.path.join(
+            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"),
+            "user_cache",
+            "text2sql_requests_cache.jsonl",
+        )
+
+        self.databases_folder = os.path.join(
+            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
+        )
+        os.makedirs(self.databases_folder, exist_ok=True)
+        self.tables_json = None
+        # self.prompt_cache = JSONCache(self.prompt_cache_location)
+
+    def download_database(self, db_name):
+        """Downloads the dataset from huggingface if needed."""
+        done_file_path = os.path.join(self.databases_folder, "download_done")
+        if "bird/" in db_name:
+            if not os.path.exists(done_file_path):
+                snapshot_download(
+                    repo_id="premai-io/birdbench",
+                    repo_type="dataset",
+                    local_dir=self.databases_folder,
+                    force_download=False,
+                    allow_patterns="*validation*",
+                )
+                open(os.path.join(self.databases_folder, "download_done"), "w").close()
+
+    def get_db_file_path(self, db_name):
+        """Gets the local path of a downloaded database file."""
+        self.download_database(db_name)
+        db_name = db_name.split("/")[-1]
+
+        db_file_pattern = os.path.join(self.databases_folder, "**", db_name + ".sqlite")
+        db_file_paths = glob.glob(db_file_pattern, recursive=True)
+
+        if not db_file_paths:
+            raise FileNotFoundError(
+                f"Database file {db_name} not found. You can try deleting folder {self.databases_folder} and running again."
+            )
+        if len(db_file_paths) > 1:
+            raise FileExistsError(f"More than one files matched for {db_name}")
+        return db_file_paths[0]
+
+    # def get_tables_json(self):
+    #     """Gets the tables.json file"""
+    #     if not self.tables_json:
+    #         self.download_database()
+    #         db_tables_json_file = os.path.join(self.databases_folder, "tables.json")
+    #         if not os.path.exists(db_tables_json_file):
+    #             raise FileNotFoundError(
+    #                 f"tables.json file not found {db_tables_json_file}. "
+    #                 f"You can try deleting folder {self.databases_folder} and running again."
+    #             )
+    #         self.tables_json = json.load(open(db_tables_json_file))
+    #     return self.tables_json
+
+    def get_db_schema(
+        self,
+        db_name: str,
+        db_type: str = "local",
+        select_tables: Optional[List[str]] = None,
+        select_columns: Optional[List[str]] = None,
+        num_rows_from_table_to_add: int = 0,
+        mock_db: Optional[Dict] = None,
+    ) -> str:
+        """Retrieves the schema of a database."""
+        if db_type == "local":
+            db_path = self.get_db_file_path(db_name)
+            db_config = {"db_path": db_path}
+            connector = SQLiteConnector(db_config)
+        elif db_type == "mock":
+            if not mock_db:
+                raise ValueError("db_type is mock, but mock_db was not given")
+            connector = MockConnector(db_config={"tables": mock_db})
+        else:
+            raise ValueError(
+                f"Unsupported database type: {db_type}. Use 'sqlite' or 'mock'."
+            )
+
+        return connector.get_table_schema(
+            select_tables, select_columns, num_rows_from_table_to_add
+        )
 
 
 if __name__ == "__main__":
-    BIRD_DATA = SQLData()
-    BIRD_DATA.get_db_schema(
-        db_name="formula_1", db_type="sqlite", num_rows_from_table_to_add=1
+    # Example for using a downloaded sqlite db
+    sql_data_manager = SQLData()
+    schema_from_sqlite = sql_data_manager.get_db_schema(
+        db_name="bird/california_schools",
+        db_type="local",
+    )
+
+    # Example for using a mock db
+    mock_db_data = {
+        "users": {
+            "columns": ["id", "name", "age"],
+            "rows": [
+                [1, "Alice", 30],
+                [2, "Bob", 25],
+            ],
+        },
+        "products": {
+            "columns": ["id", "name", "price"],
+            "rows": [
+                [1, "Laptop", 1200],
+                [2, "Monitor", 300],
+            ],
+        },
+    }
+    schema_from_mock = sql_data_manager.get_db_schema(
+        db_name="mock_db_name",
+        db_type="mock",
+        select_tables=["users", "products"],
+        mock_db=mock_db_data,
     )
