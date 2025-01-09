@@ -16,17 +16,23 @@
                 "question_id": "id",
                 "question": "utterance",
                 "SQL": "query",
-                "db_id": "db_id"
+                "db_id": "db_id",
+                "evidence": "evidence"
             }
         },
         {
             "__type__": "set",
             "fields": {
                 "dbms": "sqlite",
-                "db_type": "sqlite",
+                "db_type": "local",
                 "use_oracle_knowledge": true,
                 "num_table_rows_to_add": 0
             }
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "'bird/'+db_id",
+            "to_field": "db_id"
         },
         {
             "__type__": "copy",

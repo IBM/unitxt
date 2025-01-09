@@ -3,7 +3,7 @@ import sys
 from unitxt import add_to_catalog
 from unitxt.blocks import Copy, Rename, Set, TaskCard
 from unitxt.loaders import LoadHF
-from unitxt.operators import Shuffle
+from unitxt.operators import ExecuteExpression, Shuffle
 
 # from unitxt.text2sql.metrics import ExecutionAccuracy
 
@@ -54,15 +54,20 @@ card = TaskCard(
                 "question": "utterance",
                 "SQL": "query",
                 "db_id": "db_id",
+                "evidence": "evidence",
             }
         ),
         Set(
             fields={
                 "dbms": "sqlite",
-                "db_type": "sqlite",
+                "db_type": "local",
                 "use_oracle_knowledge": True,
                 "num_table_rows_to_add": 0,
             }
+        ),
+        ExecuteExpression(
+            expression="'bird/'+db_id",
+            to_field="db_id",
         ),
         Copy(field="db_id", to_field="schema/db_id"),
         Copy(field="db_type", to_field="schema/db_type"),
@@ -71,6 +76,8 @@ card = TaskCard(
     task="tasks.text2sql",
     templates="templates.text2sql.all",
 )
+
+# from unitxt.test_utils.card import test_card
 
 # test_card(
 #     card,
@@ -82,7 +89,7 @@ add_to_catalog(
     overwrite=True,
 )
 
-# from unitxt import evaluate, load_dataset
+# from unitxt import load_dataset
 
-# ds = load_dataset("card=cards.text2sql.bird,template_card_index=0,loader_limit=10")
+# ds = load_dataset("card=cards.text2sql.bird,template_card_index=0")
 # scores = evaluate(predictions=ds["validation"]["target"], data=ds["validation"])

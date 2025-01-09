@@ -47,7 +47,7 @@ class Table(TypedDict):
 
 class SQLSchema(TypedDict):
     db_id: str
-    db_type: Literal["sqlite"]
+    db_type: Literal["local", "mock"]
     num_table_rows_to_add: int
 
 
