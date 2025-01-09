@@ -24,14 +24,17 @@ criteria = CriteriaWithOptions.from_obj(
         "name": "test for adherence and compliance",
         "description": description,
         "options": [
-            {"name": "Excellent", "description": ""},
+            {
+                "name": "Excellent",
+                "description": "",
+            },  # can add a description to each option
             {"name": "Good", "description": ""},
             {"name": "mediocre", "description": ""},
             {"name": "Bad", "description": ""},
             {"name": "Very Bad", "description": ""},
         ],
-        "option_map": {
-            "Very Good": 1.0,
+        "option_map": {  # map option to score
+            "Excellent": 1.0,
             "Good": 0.75,
             "mediocre": 0.5,
             "Bad": 0.25,
@@ -116,7 +119,8 @@ dataset = load_dataset(
     metrics=[metric],
 )
 
-predictions = ["Austin" "Austin"]
+# replace with running inference on the dataset using your generation model as before
+predictions = ["Austin", "Austin"]
 
 results = evaluate(predictions=predictions, data=dataset)
 
