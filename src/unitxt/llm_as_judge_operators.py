@@ -23,7 +23,7 @@ class CreateCriteriaWithOptionsFromJson(FieldOperator):
 class CreateYesNoCriteriaFromString(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return CriteriaWithOptions(
-            name=f"Unknown ({text[:20]}...)",
+            name='',
             description=text,
             options=[
                 CriteriaOption(name="Yes", description=""),
@@ -39,7 +39,7 @@ class CreateYesNoCriteriaFromString(FieldOperator):
 class CreateYesNoPartiallyCriteriaFromString(FieldOperator):
     def process_value(self, text: str) -> Any:
         return CriteriaWithOptions(
-            name=f"Unknown ({text[:20]}...)",
+            name='',
             description=text,
             options=[
                 CriteriaOption(name="Yes", description=""),
@@ -72,6 +72,6 @@ class CreateCriteriaFromJson(FieldOperator):
 class CreateCriteriaFromString(FieldOperator):
     def process_value(self, text: str) -> Any:
         return Criteria(
-            name=f"Unknown ({text[:20]}...)",
+            name='',
             description=text,
         )
