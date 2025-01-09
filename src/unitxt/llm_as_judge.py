@@ -263,7 +263,7 @@ class LLMJudgeDirect(LLMJudge):
             for criteria, selection in zip(criterias, selections)
         ]
         
-        result = [
+        return [
             {
                 self.main_score: scores[i],
                 f"{self.main_score}_using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[i],
