@@ -282,10 +282,12 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
-            # d stands for an ArtifactLink
-            artifact_link = ArtifactLink.from_dict(d)
-            return artifact_link.load(overwrite_args)
+        if "__type__" in d and d["__type__"] == "artifact_link":
+            cls.from_dict(d)  # for verifications and warnings
+            catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
+            return catalog.get_with_overwrite(
+                artifact_rep, overwrite_args=overwrite_args
+            )
 
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
@@ -466,54 +468,11 @@ class Artifact(Dataclass):
 
 
 class ArtifactLink(Artifact):
-    # the artifact linked to, expressed by its catalog id
-    artifact_linked_to: str = Field(default=None, required=True)
+    to: Artifact
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        assert isinstance(d, dict), f"argument must be a dictionary, got: d = {d}."
-        assert (
-            "artifact_linked_to" in d and d["artifact_linked_to"] is not None
-        ), f"A non-none field named 'artifact_linked_to' is expected in input argument d, but got: {d}."
-        artifact_linked_to = d["artifact_linked_to"]
-        # artifact_linked_to is a name of catalog entry
-        assert isinstance(
-            artifact_linked_to, str
-        ), f"'artifact_linked_to' should be a string expressing a name of a catalog entry. Got{artifact_linked_to}."
-        msg = d["__deprecated_msg__"] if "__deprecated_msg__" in d else None
-        return ArtifactLink(
-            artifact_linked_to=artifact_linked_to, __deprecated_msg__=msg
-        )
-
-    def load(self, overwrite_args: dict) -> Artifact:
-        # identify the catalog for the artifact_linked_to
-        assert (
-            self.artifact_linked_to is not None
-        ), "'artifact_linked_to' must be non-None in order to load it from the catalog. Currently, it is None."
-        assert isinstance(
-            self.artifact_linked_to, str
-        ), f"'artifact_linked_to' should be a string (expressing a name of a catalog entry). Currently, its type is: {type(self.artifact_linked_to)}."
-        needed_catalog = None
-        catalogs = list(Catalogs())
-        for catalog in catalogs:
-            if self.artifact_linked_to in catalog:
-                needed_catalog = catalog
-
-        if needed_catalog is None:
-            raise UnitxtArtifactNotFoundError(self.artifact_linked_to, catalogs)
-
-        path = needed_catalog.path(self.artifact_linked_to)
-        d = artifacts_json_cache(path)
-        # if needed, follow, in a recursive manner, over multiple links,
-        # passing through instantiating of the ArtifactLink-s on the way, triggering
-        # deprecatioin warning as needed.
-        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
-            # d stands for an ArtifactLink
-            artifact_link = ArtifactLink.from_dict(d)
-            return artifact_link.load(overwrite_args)
-        new_artifact = Artifact.from_dict(d, overwrite_args=overwrite_args)
-        new_artifact.__id__ = self.artifact_linked_to
-        return new_artifact
+    def verify(self):
+        if self.to.__id__ is None:
+            raise UnitxtError("ArtifactLink must link to existing catalog entry.")
 
 
 def get_raw(obj):
@@ -577,14 +536,12 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     """
     if isinstance(artifact_rep, Artifact):
         if isinstance(artifact_rep, ArtifactLink):
-            return fetch_artifact(artifact_rep.artifact_linked_to)
+            return fetch_artifact(artifact_rep.to)
         return artifact_rep, None
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
         artifact_to_return = Artifact.load(artifact_rep)
-        if isinstance(artifact_rep, ArtifactLink):
-            artifact_to_return = fetch_artifact(artifact_to_return.artifact_linked_to)
 
         return artifact_to_return, None
 

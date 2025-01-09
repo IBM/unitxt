@@ -1,0 +1,83 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "Idavidrein/gpqa",
+        "name": "gpqa_main",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "Correct Answer",
+                "Incorrect Answer 1",
+                "Incorrect Answer 2",
+                "Incorrect Answer 3"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "shuffle_field_values",
+            "field": "choices"
+        },
+        {
+            "__type__": "rename",
+            "field": "Correct Answer",
+            "to_field": "answer"
+        },
+        {
+            "__type__": "rename",
+            "field": "Subdomain",
+            "to_field": "topic"
+        },
+        {
+            "__type__": "rename",
+            "field": "Question",
+            "to_field": "question"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "situation"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.with_topic.all",
+    "__description__": "GPQA is a multiple-choice, Q&A dataset of very hard questions written and validated by experts in biology, physics, and chemistry. When attempting questions out of their own domain (e.g., a physicist answers a chemistry question), these experts get only 34 percent accuracy, despite spending >30m with full access to Google.",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "arxiv": "2311.12022",
+        "flags": [
+            "NLU",
+            "natural language understanding"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "cc-by-4.0",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "n<1K",
+        "source_datasets": "extended|other",
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
+        ]
+    }
+}

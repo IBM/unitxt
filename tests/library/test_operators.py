@@ -2641,10 +2641,30 @@ class TestApplyMetric(UnitxtTestCase):
         calc_confidence_intervals=False,
     ):
         inputs = [
-            {"prediction": "0", "references": ["1"], "metrics": metrics},
-            {"prediction": "1", "references": ["1"], "metrics": metrics},
-            {"prediction": "0", "references": ["2"], "metrics": metrics},
-            {"prediction": "0", "references": ["0"], "metrics": metrics},
+            {
+                "prediction": "0",
+                "references": ["1"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "1",
+                "references": ["1"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "0",
+                "references": ["2"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
+            {
+                "prediction": "0",
+                "references": ["0"],
+                "task_data": {"classes": ["0", "1", "2"]},
+                "metrics": metrics,
+            },
         ]
         output = apply_operator(
             operator=ApplyMetric(
@@ -2674,9 +2694,8 @@ class TestApplyMetric(UnitxtTestCase):
                 metrics="", expected_score_name="accuracy", expected_score_value=0.5
             )
         except Exception as e:
-            self.assertEqual(
-                str(e),
-                "Missing metric names in field 'metrics' and instance '{'prediction': '0', 'references': ['1'], 'metrics': ''}'.",
+            self.assertIn(
+                "Missing metric names in field 'metrics' and instance", str(e)
             )
 
     def test_apply_metric_with_single_string_metric(self):

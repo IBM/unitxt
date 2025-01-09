@@ -38,7 +38,11 @@ constants = get_constants()
 
 
 def nan_mean(scores):
-    return mean(score for score in scores if score == score)
+    result = mean(score for score in scores if score == score)
+    try:
+        return float(result)
+    except:
+        return result
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):

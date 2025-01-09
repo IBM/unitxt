@@ -1,6 +1,7 @@
 {
     "__type__": "templates_list",
     "items": [
+        "templates.span_labeling.extraction.detailed",
         "templates.span_labeling.extraction.extract",
         "templates.span_labeling.extraction.having",
         "templates.span_labeling.extraction.carry",

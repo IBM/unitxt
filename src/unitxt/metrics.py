@@ -7,10 +7,10 @@ import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from dataclasses import field
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import numpy
 import numpy as np
@@ -317,6 +317,398 @@ class Metric(Artifact):
                 instance["score"]["global"].pop(score_ci)
 
 
+def new_random_generator():
+    # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+    # So use '& MAX_32BIT' to get a 32-bit seed.
+    _max_32bit = 2**32 - 1
+    return np.random.default_rng(hash(get_seed()) & _max_32bit)
+
+
+class ConfidenceIntervalMixin(Artifact):
+    n_resamples: int = 1000
+    confidence_level: float = 0.95
+    ci_score_names: List[str] = None
+
+    @abstractmethod
+    def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
+        pass
+
+    def get_statistic(self, data: List[Any], score_names: List[str]):
+        def statistic_function(indices, axis=0):
+            # indices might be a 1D or 2D array, depending on bootstrap internals
+            # For simplicity, ensure we handle them as 1D.
+            indices = np.atleast_1d(indices).astype(int)
+
+            # Gather the subset
+            sample = [data[i] for i in indices]
+
+            # Compute metrics on this sample
+            scores = self._sample_to_scores(sample)
+
+            # Return them in consistent order
+            return np.array([scores[m] for m in score_names])
+
+        return statistic_function
+
+    def bootstrap(self, data: List[Any], score_names: List[str]):
+        if self.ci_score_names is not None:
+            score_names = self.ci_score_names
+
+        intervals = bootstrap(
+            (np.arange(len(data)),),
+            statistic=self.get_statistic(data, score_names),
+            n_resamples=self.n_resamples,
+            confidence_level=self.confidence_level,
+            random_state=new_random_generator(),
+            paired=False,
+            vectorized=False,  # set to True if your statistic function is vectorized
+            method="BCa",
+        ).confidence_interval
+
+        result = {}
+        for i, metric in enumerate(score_names):
+            result[f"{metric}_ci_low"] = float(intervals.low[i])
+            result[f"{metric}_ci_high"] = float(intervals.high[i])
+
+        return result
+
+
+from typing import Generic, TypeVar, NamedTuple
+from dataclasses import dataclass
+
+IntermediateType = TypeVar("IntermediateType")
+PredictionType = TypeVar("PredictionType")
+
+
+class EvaluationInput(tuple, Generic[PredictionType]):
+    def __new__(
+        cls,
+        prediction: PredictionType,
+        references: List[PredictionType],
+        task_data: Dict[str, Any],
+    ) -> "EvaluationInput[PredictionType]":
+        return super().__new__(cls, (prediction, references, task_data))
+
+
+def is_original_key(key):
+    if (
+        key.endswith("_ci_low")
+        or key.endswith("_ci_high")
+        or key == "score"
+        or key == "num_of_instances"
+        or key == "score_name"
+    ):
+        return False
+    return True
+
+
+class MapReduceMetric(
+    StreamOperator,
+    Metric,
+    ConfidenceIntervalMixin,
+    Generic[PredictionType, IntermediateType],
+):
+    score_prefix = ""
+    reference_field: str = NonPositionalField(default="references")
+    prediction_field: str = NonPositionalField(default="prediction")
+
+    def map(
+        self,
+        prediction: PredictionType,
+        references: List[PredictionType],
+        task_data: Dict[str, Any],
+    ) -> IntermediateType:
+        raise NotImplementedError()
+
+    def reduce_one(self, intermidate: IntermediateType):
+        return self.reduce([intermidate])
+
+    @abstractmethod
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        return {}
+
+    def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
+    def annotate_scores(self, scores):
+        scores = {
+            **{self.score_prefix + key: val for key, val in scores.items()},
+            "score_name": self.score_prefix + self.main_score,
+            "score": scores[self.main_score],
+        }
+        for level in ["high", "low"]:
+            if f"{self.main_score}_ci_{level}" in scores:
+                scores[f"score_ci_{level}"] = scores[f"{self.main_score}_ci_{level}"]
+        return scores
+
+    def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
+        return self.reduce(sample)
+
+    def reduce_and_bootstrap(
+        self, intermediates: List[IntermediateType]
+    ) -> Dict[str, Any]:
+        scores = self.reduce(intermediates)
+        score_names = [k for k, v in scores.items() if isinstance(v, float)]
+        if self.n_resamples is None or len(intermediates) <= 1:
+            return scores
+        intervals = self.bootstrap(intermediates, score_names)
+        return {**scores, **intervals}
+
+    def _instance_to_evaluation_input(
+        self, instance: Dict[str, Any]
+    ) -> EvaluationInput[PredictionType]:
+        instance = self.verify_instance(instance)
+
+        task_data = instance.get("task_data", {})
+
+        if self.reference_field == "references":
+            references = instance["references"]
+        else:
+            references = task_data[self.reference_field]
+            if not isinstance(references, list):
+                references = [references]
+        if self.prediction_field == "prediction":
+            prediction = instance["prediction"]
+        else:
+            prediction = task_data[self.prediction_field]
+
+        self._validate_prediction(prediction)
+        self._validate_reference(references)
+
+        return EvaluationInput[PredictionType](
+            prediction=prediction, references=references, task_data=task_data
+        )
+
+    def _instances_stream_to_evaluation_inputs(
+        self, stream: Stream
+    ) -> Generator[EvaluationInput[PredictionType], None, None]:
+        for instance in stream:
+            yield self._instance_to_evaluation_input(instance)
+
+    def map_stream(
+        self,
+        evaluation_inputs_stream: Generator[
+            EvaluationInput[PredictionType], None, None
+        ],
+    ):
+        intermediates = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            intermediate = self.map(
+                prediction=prediction, references=references, task_data=task_data
+            )
+
+            intermediates.append(intermediate)
+        return intermediates
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        instances_scores, global_scores = self.compute(stream, stream_name)
+        for i, (instance, instance_scores) in enumerate(zip(stream, instances_scores)):
+            previous_score = instance.get("score", {"global": {}, "instance": {}})
+
+            if i == 0:
+                for key in global_scores:
+                    if is_original_key(key) and key in previous_score["global"]:
+                        UnitxtWarning(
+                            message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                            f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                            f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                            f"which will yield, in this case, a score named: 'my_second_{key}')",
+                            additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                        )
+
+            global_scores = {**previous_score["global"], **global_scores}
+            instance_scores = {**previous_score["instance"], **instance_scores}
+
+            yield {
+                **instance,
+                "score": {"global": global_scores, "instance": instance_scores},
+            }
+
+    def compute(self, stream: Stream, stream_name: Optional[str] = None):
+        evaluation_inputs_stream = self._instances_stream_to_evaluation_inputs(stream)
+        intermediates_list = self.map_stream(evaluation_inputs_stream)
+
+        instances_scores = []
+        for intermediate in intermediates_list:
+            instance_score = self.reduce_one(intermediate)
+            instance_score = self.annotate_scores(instance_score)
+            instances_scores.append(instance_score)
+
+        global_scores = self.reduce_and_bootstrap(intermediates_list)
+        global_scores = self.annotate_scores(global_scores)
+
+        global_scores["num_of_instances"] = len(intermediates_list)
+
+        return instances_scores, global_scores
+
+
+def get_index_or_default(lst, item, default=-1):
+    try:
+        return lst.index(item)
+    except ValueError:
+        return default
+
+
+class AggregationReduction(Artifact, Generic[IntermediateType]):
+    def reduce(self, intermidates: List[IntermediateType]) -> Dict[str, Any]:
+        pass
+
+
+class DictReduction(AggregationReduction[Dict[str, float]]):
+    def reduce_list(self, lst: List[float]):
+        pass
+
+    def reduce(self, intermidates: List[Dict[str, float]]):
+        lists = {}
+        for intermidate in intermidates:
+            for key, val in intermidate.items():
+                if key not in lists:
+                    lists[key] = []
+                lists[key].append(val)
+
+        result = {}
+        for key, val_list in lists.items():
+            result[key] = self.reduce_list(val_list)
+        return result
+
+
+class MeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return nan_mean(lst)
+
+
+class MaxReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return float(nan_max(lst))
+
+
+class ReductionInstanceMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    reduction: AggregationReduction[IntermediateType]
+
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        return self.reduction.reduce(intermediates)
+
+    def reduce_one(self, intermidate: IntermediateType):
+        return recursive_copy(intermidate)
+
+
+class AccuracyFast(ReductionInstanceMetric[str, Dict[str, float]]):
+    main_score = "accuracy"
+    reduction = MeanReduction()
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: float(
+                str(prediction) in [str(reference) for reference in references]
+            )
+        }
+
+
+class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
+    main_score = "f1"
+    averages: List[Literal["f1", "macro", "micro", "per_class"]] = [
+        "f1",
+        "micro",
+        "macro",
+        "per_class",
+    ]
+    ignore_punc: bool = True
+    ignore_case: bool = True
+    _requirements_list = ["scikit-learn", "regex"]
+
+    def prepare(self):
+        super().prepare()
+        from sklearn.metrics import f1_score
+
+        self._metric = f1_score
+        import regex
+        from functools import partial
+
+        self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
+
+    def get_str_id(self, str):
+        if str not in self.str_to_id:
+            id = len(self.str_to_id)
+            self.str_to_id[str] = id
+            self.id_to_str[id] = str
+        return self.str_to_id[str]
+
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        self.str_to_id = {}
+        self.id_to_str = {}
+        return super().map_stream(evaluation_inputs_stream)
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Tuple[int, int]:
+        reference_index = self.get_str_id(references[0])
+        prediction_index = self.get_str_id(prediction)
+
+        return prediction_index, reference_index
+
+    def reduce(self, intermediates: List[Tuple[int, int]]) -> Dict[str, Any]:
+        y_true = []
+        y_pred = []
+        labels = set()
+        for pred_idx, ref_idx in intermediates:
+            y_pred.append(pred_idx)
+            y_true.append(ref_idx)
+            labels.add(ref_idx)
+
+        labels = list(labels)
+        result = {}
+
+        if "f1" in self.averages:
+            result["f1"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "micro" in self.averages:
+            result["f1_micro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="micro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "macro" in self.averages:
+            result["f1_macro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "per_class" in self.averages:
+            f1_per_class = self._metric(
+                y_true, y_pred, average=None, labels=list(labels), zero_division=0
+            )
+            for label, score in zip(labels, f1_per_class):
+                class_name = self.id_to_str[label]
+                result[f"f1_{class_name}"] = float(score)
+
+        return result
+
+
 class MetricWithConfidenceInterval(Metric):
     # The number of resamples used to estimate the confidence intervals of this metric.
     # Use None to disable confidence interval computation.
@@ -539,10 +931,10 @@ class MetricWithConfidenceInterval(Metric):
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
                 ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            result["score_ci_low"] = float(ci.low)
+            result["score_ci_high"] = float(ci.high)
+            result[f"{score_name}_ci_low"] = float(ci.low)
+            result[f"{score_name}_ci_high"] = float(ci.high)
         return result
 
 
@@ -1949,7 +2341,7 @@ class HuggingfaceMetric(GlobalMetric):
             **self.hf_compute_args,
         )
         if self.hf_main_score:
-            result[self.main_score] = result[self.hf_main_score]
+            result[self.main_score] = float(result[self.hf_main_score])
             del result[self.hf_main_score]
         if self.scale != 1.0:
             assert (
@@ -1969,6 +2361,8 @@ class HuggingfaceMetric(GlobalMetric):
                         result[key], float
                     ), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
+        if self.main_score in result:
+            result[self.main_score] = float(result[self.main_score])
         return result
 
 
@@ -2054,17 +2448,13 @@ class HuggingfaceInstanceMetric(InstanceMetric):
         return score
 
 
-class Meteor(InstanceMetric):
+class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "meteor"
-    ci_scores = ["meteor"]
-    reduction_map = {"mean": ["meteor"]}
-    prediction_type = str
-
-    _requirements_list: List[str] = ["nltk"]
+    reduction = MeanReduction()
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
     alpha: float = 0.9
     beta: int = 3
     gamma: float = 0.5
-    # unitxt uses nltk version >= 3.8
 
     def prepare(self):
         super().prepare()
@@ -2078,15 +2468,41 @@ class Meteor(InstanceMetric):
         self.word_tokenize = word_tokenize
         self.meteor_score = meteor_score
 
-    def verify(self):
-        import importlib.metadata as importlib_metadata
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {self.main_score: score}
 
-        from datasets.config import version
 
-        nltk_version = version.parse(importlib_metadata.version("nltk"))
-        assert nltk_version >= version.Version(
-            "3.6.6"
-        ), "nltk version must be at least 3.6.6"
+class Meteor(InstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = str
+
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
 
     def compute(self, references, prediction, task_data):
         score = self.meteor_score.meteor_score(
