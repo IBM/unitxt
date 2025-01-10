@@ -49,15 +49,14 @@ evaluated_gold_answers = evaluate(predictions=gold_answers, data=dataset)
 for criteria in criterias:
     logger.info(f"Scores for criteria '{criteria}'")
     gold_answer_scores = [
-        instance["score"]["instance"][criteria]
-        for instance in evaluated_gold_answers
+        instance["score"]["instance"][criteria] for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
-        instance["score"]["instance"][f"{criteria}_positional_bias"] for instance in evaluated_gold_answers
+        instance["score"]["instance"][f"{criteria}_positional_bias"]
+        for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][criteria]
-        for instance in evaluated_predictions
+        instance["score"]["instance"][criteria] for instance in evaluated_predictions
     ]
     prediction_scores_position_bias = [
         instance["score"]["instance"][f"{criteria}_positional_bias"]

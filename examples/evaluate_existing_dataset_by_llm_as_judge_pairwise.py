@@ -1,4 +1,4 @@
-import statistics
+import json
 
 from unitxt import get_logger, get_settings, load_dataset
 from unitxt.api import evaluate
@@ -7,8 +7,6 @@ from unitxt.inference import (
 )
 from unitxt.llm_as_judge_operators import LoadCriteria
 from unitxt.templates import NullTemplate
-from unitxt.text_utils import print_dict
-import json
 
 logger = get_logger()
 settings = get_settings()
@@ -59,12 +57,10 @@ predictions_3 = inference_model_3.infer(dataset)
 gold_answers = [d[0] for d in dataset["references"]]
 
 # Evaluate the predictions using the defined metric.
-predictions = [list(t) for t in list(zip(
-        gold_answers,
-        predictions_1,
-        predictions_2,
-        predictions_3
-        ))]
+predictions = [
+    list(t)
+    for t in list(zip(gold_answers, predictions_1, predictions_2, predictions_3))
+]
 
 print(json.dumps(predictions, indent=4))
 
@@ -77,19 +73,23 @@ dataset = load_dataset(
     loader_limit=test_instances,
     max_test_instances=test_instances,
     split="test",
-    template=NullTemplate()
+    template=NullTemplate(),
 )
 
-evaluated_predictions = evaluate(
-    predictions=predictions,
-    data=dataset)
+evaluated_predictions = evaluate(predictions=predictions, data=dataset)
 
-prediction_scores_by_system = {f"system_{system}": {
-    "per_instance_winrate": [
-        instance["score"]["instance"][f"{system}_winrate"]
-        for instance in evaluated_predictions
-    ], 
-    "mean_winrate": evaluated_predictions[0]["score"]["global"][f"{system}_winrate"]} for system in range(1, len(predictions[0])+1)}
+prediction_scores_by_system = {
+    f"system_{system}": {
+        "per_instance_winrate": [
+            instance["score"]["instance"][f"{system}_winrate"]
+            for instance in evaluated_predictions
+        ],
+        "mean_winrate": evaluated_predictions[0]["score"]["global"][
+            f"{system}_winrate"
+        ],
+    }
+    for system in range(1, len(predictions[0]) + 1)
+}
 print(json.dumps(prediction_scores_by_system, indent=4))
 # for criteria in criterias:
 #     logger.info(f"Scores for criteria '{criteria}'")

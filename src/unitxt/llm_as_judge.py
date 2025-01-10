@@ -237,7 +237,7 @@ class LLMJudgeDirect(LLMJudge):
     def set_main_score(self, criterias: List[CriteriaWithOptions]):
         unique_criteria_names = list({criteria.name for criteria in criterias})
         if len(unique_criteria_names) == 1 and criterias[0].name != "":
-            self.main_score = '_'.join(criterias[0].name.lower().split(' '))
+            self.main_score = "_".join(criterias[0].name.lower().split(" "))
             self.reduction_map = {"mean": [self.main_score]}
 
     def get_results(
@@ -314,14 +314,13 @@ class LLMJudgeDirect(LLMJudge):
             for i in range(evaluations_count)
         ]
         # add main_score to each result
-        results = [
+        return [
             {
                 f"{self.main_score}_{k}" if k != self.main_score else self.main_score: v
                 for k, v in r.items()
             }
             for r in results
         ]
-        return results
 
     def compute(
         self,
