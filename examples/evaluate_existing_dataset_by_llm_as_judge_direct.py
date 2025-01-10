@@ -5,7 +5,6 @@ from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 settings = get_settings()
@@ -16,15 +15,14 @@ criterias = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria},"
-    f"score_prefix={criteria}_]"
+    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria}]"
     for criteria in criterias
 ]
 dataset = load_dataset(
     card="cards.squad",
     metrics=metrics,
-    loader_limit=10,
-    max_test_instances=10,
+    loader_limit=20,
+    max_test_instances=20,
     split="test",
 )
 
@@ -48,37 +46,21 @@ gold_answers = [d[0] for d in dataset["references"]]
 evaluated_predictions = evaluate(predictions=predictions, data=dataset)
 evaluated_gold_answers = evaluate(predictions=gold_answers, data=dataset)
 
-print_dict(
-    evaluated_predictions[0],
-    keys_to_print=[
-        "source",
-        "score",
-    ],
-)
-print_dict(
-    evaluated_gold_answers[0],
-    keys_to_print=[
-        "source",
-        "score",
-    ],
-)
-
 for criteria in criterias:
     logger.info(f"Scores for criteria '{criteria}'")
     gold_answer_scores = [
-        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
+        instance["score"]["instance"][criteria]
         for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
-        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
-        for instance in evaluated_gold_answers
+        instance["score"]["instance"][f"{criteria}_positional_bias"] for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
+        instance["score"]["instance"][criteria]
         for instance in evaluated_predictions
     ]
-    prediction_position_bias = [
-        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+    prediction_scores_position_bias = [
+        instance["score"]["instance"][f"{criteria}_positional_bias"]
         for instance in evaluated_predictions
     ]
 
@@ -92,27 +74,27 @@ for criteria in criterias:
         f"Positional bias occurrence on gold answers: {statistics.mean(gold_answer_position_bias)}"
     )
     logger.info(
-        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_position_bias)}\n"
+        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_scores_position_bias)}\n"
     )
 
 """
-Output with 100 examples
+Output with 20 examples
 
 Scores for criteria 'answer_relevance'
-Scores of gold answers: 0.9625 +/- 0.14811526360619054
-Scores of predicted answers: 0.5125 +/- 0.4638102516061385
-Positional bias occurrence on gold answers: 0.03
-Positional bias occurrence on predicted answers: 0.12
+Scores of gold answers: 0.9166666666666666 +/- 0.17778975055468987
+Scores of predicted answers: 0.6583333333333333 +/- 0.4125370063511823
+Positional bias occurrence on gold answers: 0.13333333333333333
+Positional bias occurrence on predicted answers: 0.2
 
 Scores for criteria 'coherence'
-Scores of gold answers: 0.159 +/- 0.15689216524464028
-Scores of predicted answers: 0.066 +/- 0.11121005695384194
-Positional bias occurrence on gold answers: 0.16
-Positional bias occurrence on predicted answers: 0.07
+Scores of gold answers: 0.26166666666666666 +/- 0.22115813243068835
+Scores of predicted answers: 0.24 +/- 0.2717757696438688
+Positional bias occurrence on gold answers: 0.43333333333333335
+Positional bias occurrence on predicted answers: 0.3333333333333333
 
 Scores for criteria 'conciseness'
 Scores of gold answers: 1.0 +/- 0.0
-Scores of predicted answers: 0.34 +/- 0.47609522856952335
-Positional bias occurrence on gold answers: 0.03
-Positional bias occurrence on predicted answers: 0.01
+Scores of predicted answers: 0.6333333333333333 +/- 0.490132517853561
+Positional bias occurrence on gold answers: 0.03333333333333333
+Positional bias occurrence on predicted answers: 0.06666666666666667
 """
