@@ -250,9 +250,7 @@ class SQLData:
         db_file_paths = glob.glob(db_file_pattern, recursive=True)
 
         if not db_file_paths:
-            raise FileNotFoundError(
-                f"Database file {db_name} not found. You can try deleting folder {self.databases_folder} and running again."
-            )
+            raise FileNotFoundError(f"Database file {db_name} not found.")
         if len(db_file_paths) > 1:
             raise FileExistsError(f"More than one files matched for {db_name}")
         return db_file_paths[0]
