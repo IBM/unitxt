@@ -38,7 +38,6 @@ from .inference import (
 )
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
-from .metrics import InstanceMetric
 from .operator import (
     InstanceOperator,
     MultiStreamOperator,
@@ -5716,27 +5715,61 @@ class ExecutionAccuracy(InstanceMetric):
     prediction_type = "Any"  # string representation is compared
     sql_data = SQLData()
     metric_flavour = "bird"
-    sql_timeout = 350.0
+    sql_timeout = 100.0
 
-    @staticmethod
-    def run_sql_and_match(predicted_sql: str, ground_truth: str, db_path: str) -> int:
-        ## function below from BIRD repo https://github.com/AlibabaResearch/DAMO-ConvAI/blob/main/bird/llm/src/evaluation.py
+    # @staticmethod
+    def run_sql_and_match(
+        self,
+        predicted_sql: str,
+        ground_truth: str,
+        db_path: Optional[str] = None,
+        db: Optional[dict] = None,
+    ) -> int:
+        """Runs SQL queries against either a SQLite database or a dictionary-based database and checks if the results match."""
+        assert (
+            not db_path == db
+        ), "Either db_path or db should be inputted to the matching function"
+
         res: int = 0
-        conn = sqlite3.connect(db_path)
-        cursor = conn.cursor()
 
-        logger.debug(f"Running SQL query over SQLite DB: {db_path}")
+        if db_path:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+            logger.debug(f"Running SQL query over SQLite DB: {db_path}")
+        elif db:
+            # Initialize in-memory database from the 'db' dictionary
+            conn = sqlite3.connect(":memory:")
+            cursor = conn.cursor()
+            logger.debug("Running SQL query over in-memory DB")
+
+            # Create tables and insert data from the 'db' dictionary
+            for table_name, table_data in db.items():
+                columns = table_data["columns"]
+                rows = table_data["rows"]
+
+                # Create table
+                cursor.execute(f"CREATE TABLE {table_name} ({', '.join(columns)})")
+
+                # Insert data
+                placeholders = ", ".join(["?"] * len(columns))
+                cursor.executemany(
+                    f"INSERT INTO {table_name} VALUES ({placeholders})", rows
+                )
+
         try:
             cursor.execute(predicted_sql)
             predicted_res: List[Tuple] = cursor.fetchall()
-        except sqlite3.Error:
+        except sqlite3.Error as e:
+            logger.error(f"Error executing predicted SQL: {e}")
             return 0
-        cursor.execute(ground_truth)
-        ground_truth_res: List[Tuple] = cursor.fetchall()
-
-        logger.debug(f"predicted_res: {predicted_res}")
-        logger.debug(f"ground_truth_sql: {ground_truth}")
-        logger.debug(f"ground_truth_res: {ground_truth_res}")
+        try:
+            cursor.execute(ground_truth)
+            ground_truth_res: List[Tuple] = cursor.fetchall()
+        except sqlite3.Error as e:
+            logger.error(f"Error executing ground truth SQL: {e}")
+            return 0
+        finally:
+            conn.close()
 
         if set(predicted_res) == set(ground_truth_res):
             res = 1
@@ -5759,17 +5792,18 @@ class ExecutionAccuracy(InstanceMetric):
             if ";" in predicted_sql:
                 predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
             db_id = task_data["db_id"]
-            db_file_path = self.sql_data.get_db_file_path(db_id)
+            db = None
+            if task_data["db_type"] == "local":
+                db_file_path = self.sql_data.get_db_file_path(db_id)
+            elif task_data["db_type"] == "mock":
+                db_file_path = None
+                db = task_data["db"]
             logger.debug(f"Database file: {db_file_path}")
             try:
                 execution_result = func_timeout(
                     self.sql_timeout,
                     self.run_sql_and_match,
-                    args=(
-                        predicted_sql,
-                        references[0],
-                        db_file_path,
-                    ),
+                    args=(predicted_sql, references[0], db_file_path, db),
                 )
             except FunctionTimedOut:
                 logger.error("QUERY TIMEOUT")
