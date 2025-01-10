@@ -87,36 +87,3 @@ prediction_scores_by_system = {
     for system in range(1, len(predictions[0]) + 1)
 }
 print(json.dumps(prediction_scores_by_system, indent=4))
-# for criteria in criterias:
-#     logger.info(f"Scores for criteria '{criteria}'")
-#     gold_answer_scores = [
-#         instance["score"]["instance"][criteria]
-#         for instance in evaluated_gold_answers
-#     ]
-#     prediction_scores = [
-#         instance["score"]["instance"][f"{criteria}"]
-#         for instance in evaluated_predictions
-#     ]
-
-#     logger.info(
-#         f"Scores of gold answers: {statistics.mean(gold_answer_scores)} +/- {statistics.stdev(gold_answer_scores)}"
-#     )
-#     logger.info(
-#         f"Scores of predicted answers: {statistics.mean(prediction_scores)} +/- {statistics.stdev(prediction_scores)}"
-#     )
-
-"""
-Output with 100 examples
-
-Scores for criteria 'answer_relevance'
-Scores of gold answers: 0.9625 +/- 0.14811526360619054
-Scores of predicted answers: 0.5125 +/- 0.4638102516061385
-
-Scores for criteria 'coherence'
-Scores of gold answers: 0.159 +/- 0.15689216524464028
-Scores of predicted answers: 0.066 +/- 0.11121005695384194
-
-Scores for criteria 'conciseness'
-Scores of gold answers: 1.0 +/- 0.0
-Scores of predicted answers: 0.34 +/- 0.47609522856952335
-"""
