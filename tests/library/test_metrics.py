@@ -12,6 +12,7 @@ from unitxt.metrics import (
     BinaryMaxAccuracy,
     BinaryMaxF1,
     Detector,
+    ExecutionAccuracy,
     F1Binary,
     F1BinaryPosOnly,
     F1Fast,
@@ -2113,3 +2114,350 @@ Answer: """,
             instance_targets=instance_targets,
             global_target=global_target,
         )
+
+    def test_execution_accuracy_correct_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = ["SELECT name FROM employees WHERE department = 'Sales'"]
+        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "employees": {
+                        "columns": ["id", "name", "department", "salary"],
+                        "rows": [
+                            (1, "Alice", "Sales", 50000),
+                            (2, "Bob", "Engineering", 60000),
+                            (3, "Charlie", "Sales", 55000),
+                        ],
+                    }
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_incorrect_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT name FROM employees WHERE salary > 65000"
+        ]  # Incorrect query
+        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "employees": {
+                        "columns": ["id", "name", "department", "salary"],
+                        "rows": [
+                            (1, "Alice", "Sales", 50000),
+                            (2, "Bob", "Engineering", 60000),
+                            (3, "Charlie", "Sales", 55000),
+                        ],
+                    }
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(0.0, outputs["score"])
+
+    def test_execution_accuracy_invalid_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT * FROM non_existent_table"
+        ]  # Invalid: table doesn't exist
+        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "employees": {
+                        "columns": ["id", "name", "department", "salary"],
+                        "rows": [
+                            (1, "Alice", "Sales", 50000),
+                            (2, "Bob", "Engineering", 60000),
+                            (3, "Charlie", "Sales", 55000),
+                        ],
+                    }
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(0.0, outputs["score"])
+
+    def test_execution_accuracy_different_select_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT id, name FROM employees WHERE salary > 52000"
+        ]  # Different columns selected
+        references = ["SELECT name, department FROM employees WHERE salary > 52000;"]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "employees": {
+                        "columns": ["id", "name", "department", "salary"],
+                        "rows": [
+                            (1, "Alice", "Sales", 50000),
+                            (2, "Bob", "Engineering", 60000),
+                            (3, "Charlie", "Sales", 55000),
+                        ],
+                    }
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(0.0, outputs["score"])
+
+    def test_execution_accuracy_join_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE c.city = 'New York'"
+        ]
+        references = [
+            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE c.city = 'New York';"
+        ]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "customers": {
+                        "columns": ["customer_id", "name", "city"],
+                        "rows": [
+                            (1, "Alice", "New York"),
+                            (2, "Bob", "Los Angeles"),
+                            (3, "Charlie", "Chicago"),
+                        ],
+                    },
+                    "orders": {
+                        "columns": ["order_id", "customer_id", "order_date", "amount"],
+                        "rows": [
+                            (1, 1, "2023-10-26", 150.00),
+                            (2, 1, "2023-11-15", 200.00),
+                            (3, 2, "2023-11-20", 50.00),
+                            (4, 3, "2023-12-05", 300.00),
+                        ],
+                    },
+                    # Add other tables (products, order_items) similarly
+                    "products": {
+                        "columns": ["product_id", "name", "price"],
+                        "rows": [
+                            (1, "Laptop", 1200.00),
+                            (2, "Mouse", 25.00),
+                            (3, "Keyboard", 75.00),
+                        ],
+                    },
+                    "order_items": {
+                        "columns": [
+                            "order_item_id",
+                            "order_id",
+                            "product_id",
+                            "quantity",
+                        ],
+                        "rows": [
+                            (1, 1, 1, 2),
+                            (2, 1, 2, 1),
+                            (3, 2, 1, 1),
+                            (4, 2, 3, 2),
+                            (5, 3, 2, 1),
+                            (6, 4, 1, 3),
+                        ],
+                    },
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_aggregate_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT c.city, AVG(o.amount) FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city"
+        ]
+        references = [
+            "SELECT c.city, AVG(o.amount) FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city;"
+        ]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {  # Use the same complex 'db' as in the previous test
+                    "customers": {
+                        "columns": ["customer_id", "name", "city"],
+                        "rows": [
+                            (1, "Alice", "New York"),
+                            (2, "Bob", "Los Angeles"),
+                            (3, "Charlie", "Chicago"),
+                        ],
+                    },
+                    "orders": {
+                        "columns": ["order_id", "customer_id", "order_date", "amount"],
+                        "rows": [
+                            (1, 1, "2023-10-26", 150.00),
+                            (2, 1, "2023-11-15", 200.00),
+                            (3, 2, "2023-11-20", 50.00),
+                            (4, 3, "2023-12-05", 300.00),
+                        ],
+                    },
+                    "products": {
+                        "columns": ["product_id", "name", "price"],
+                        "rows": [
+                            (1, "Laptop", 1200.00),
+                            (2, "Mouse", 25.00),
+                            (3, "Keyboard", 75.00),
+                        ],
+                    },
+                    "order_items": {
+                        "columns": [
+                            "order_item_id",
+                            "order_id",
+                            "product_id",
+                            "quantity",
+                        ],
+                        "rows": [
+                            (1, 1, 1, 2),
+                            (2, 1, 2, 1),
+                            (3, 2, 1, 1),
+                            (4, 2, 3, 2),
+                            (5, 3, 2, 1),
+                            (6, 4, 1, 3),
+                        ],
+                    },
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_join_with_where_incorrect_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.amount > 250"  # Incorrect WHERE clause
+        ]
+        references = [
+            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.amount > 100;"
+        ]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {  # Same complex 'db'
+                    "customers": {
+                        "columns": ["customer_id", "name", "city"],
+                        "rows": [
+                            (1, "Alice", "New York"),
+                            (2, "Bob", "Los Angeles"),
+                            (3, "Charlie", "Chicago"),
+                        ],
+                    },
+                    "orders": {
+                        "columns": ["order_id", "customer_id", "order_date", "amount"],
+                        "rows": [
+                            (1, 1, "2023-10-26", 150.00),
+                            (2, 1, "2023-11-15", 200.00),
+                            (3, 2, "2023-11-20", 50.00),
+                            (4, 3, "2023-12-05", 300.00),
+                        ],
+                    },
+                    "products": {
+                        "columns": ["product_id", "name", "price"],
+                        "rows": [
+                            (1, "Laptop", 1200.00),
+                            (2, "Mouse", 25.00),
+                            (3, "Keyboard", 75.00),
+                        ],
+                    },
+                    "order_items": {
+                        "columns": [
+                            "order_item_id",
+                            "order_id",
+                            "product_id",
+                            "quantity",
+                        ],
+                        "rows": [
+                            (1, 1, 1, 2),
+                            (2, 1, 2, 1),
+                            (3, 2, 1, 1),
+                            (4, 2, 3, 2),
+                            (5, 3, 2, 1),
+                            (6, 4, 1, 3),
+                        ],
+                    },
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(0.0, outputs["score"])
+
+    def test_execution_accuracy_multi_join_query_mock_db(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT cust.name, p.name, oi.quantity FROM customers cust JOIN orders o ON cust.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id WHERE cust.city = 'Los Angeles' AND p.name = 'Mouse'"
+        ]
+        references = [
+            "SELECT cust.name, p.name, oi.quantity FROM customers cust JOIN orders o ON cust.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id WHERE cust.city = 'Los Angeles' AND p.name = 'Mouse';"
+        ]
+        task_data = [
+            {
+                "db_id": "mock_db",
+                "db_type": "mock",
+                "db": {
+                    "customers": {
+                        "columns": ["customer_id", "name", "city"],
+                        "rows": [
+                            (1, "Alice", "New York"),
+                            (2, "Bob", "Los Angeles"),
+                            (3, "Charlie", "Chicago"),
+                        ],
+                    },
+                    "orders": {
+                        "columns": ["order_id", "customer_id", "order_date", "amount"],
+                        "rows": [
+                            (1, 1, "2023-10-26", 150.00),
+                            (2, 1, "2023-11-15", 200.00),
+                            (3, 2, "2023-11-20", 50.00),
+                            (4, 3, "2023-12-05", 300.00),
+                        ],
+                    },
+                    "products": {
+                        "columns": ["product_id", "name", "price"],
+                        "rows": [
+                            (1, "Laptop", 1200.00),
+                            (2, "Mouse", 25.00),
+                            (3, "Keyboard", 75.00),
+                        ],
+                    },
+                    "order_items": {
+                        "columns": [
+                            "order_item_id",
+                            "order_id",
+                            "product_id",
+                            "quantity",
+                        ],
+                        "rows": [
+                            (1, 1, 1, 2),
+                            (2, 1, 2, 1),
+                            (3, 2, 1, 1),
+                            (4, 2, 3, 2),
+                            (5, 3, 2, 1),
+                            (6, 4, 1, 3),
+                        ],
+                    },
+                },
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
