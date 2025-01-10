@@ -10,6 +10,7 @@ add_to_catalog(
             "db_id": str,
             "dbms": str,
             "evidence": str,
+            "db_type": str,
             "schema": SQLSchema,
         },
         reference_fields={"query": str},
