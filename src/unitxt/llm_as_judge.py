@@ -264,10 +264,10 @@ class LLMJudgeDirect(LLMJudge):
             for criteria, selection in zip(criterias, selections)
         ]
 
-        return [
+        results = [
             {
                 self.main_score: scores[i],
-                f"{self.main_score}_using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[
+                f"using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[
                     i
                 ],
                 "positional_bias": positional_bias[i]
@@ -313,6 +313,15 @@ class LLMJudgeDirect(LLMJudge):
             }
             for i in range(evaluations_count)
         ]
+        # add main_score to each result
+        results = [
+            {
+                f"{self.main_score}_{k}" if k != self.main_score else self.main_score: v
+                for k, v in r.items()
+            }
+            for r in results
+        ]
+        return results
 
     def compute(
         self,
