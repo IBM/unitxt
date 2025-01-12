@@ -68,6 +68,27 @@ class StandardAPIParamsMixin(Artifact):
     extra_headers: Optional[Dict[str, str]] = None
 
 
+class TorchDeviceMixin(Artifact):
+    device: Optional[str] = None
+
+    def get_device_id(self) -> str:
+        if self.device is not None:
+            return self.device
+
+        import torch
+
+        if torch.backends.mps.is_available():
+            return "mps"
+        if torch.cuda.is_available():
+            return "cuda:0"
+        return "cpu"
+
+    def get_device(self):
+        import torch
+
+        return torch.device(self.get_device_id())
+
+
 def get_model_and_label_id(model_name, label):
     model_id = model_name.split("/")[-1].replace("-", "_").replace(".", ",").lower()
     return f"{model_id}_{label}"
@@ -281,13 +302,13 @@ class HFInferenceEngineBase(
     PackageRequirementsMixin,
     LazyLoadMixin,
     HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str
 
     n_top_tokens: int = 5
 
-    device: Any = None
     device_map: Any = None
 
     use_fast_tokenizer: bool = True
@@ -313,16 +334,8 @@ class HFInferenceEngineBase(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     @abc.abstractmethod
     def _init_processor(self):
@@ -788,7 +801,11 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
 
 class HFPipelineBasedInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
+    InferenceEngine,
+    PackageRequirementsMixin,
+    LazyLoadMixin,
+    HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str = "hf_pipeline_inference_engine"
@@ -799,7 +816,6 @@ class HFPipelineBasedInferenceEngine(
 
     task: Optional[str] = None
 
-    device: Any = None
     device_map: Any = None
 
     pipe: Any = InternalField(default=None)
@@ -879,16 +895,8 @@ class HFPipelineBasedInferenceEngine(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     def _prepare_engine(self):
         self._set_inference_device()
@@ -2475,7 +2483,7 @@ def get_text_without_images(instance, image_token="<image>"):
 
 
 class LMMSEvalBaseInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
     model_type: str
     model_args: Dict[str, str]
@@ -2491,19 +2499,12 @@ class LMMSEvalBaseInferenceEngine(
             self._prepare_engine()
 
     def _prepare_engine(self):
-        import torch
         from lmms_eval.api.instance import Instance
         from lmms_eval.models import get_model
 
         self.new_instance = Instance
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         if isinstance(self.model_args, dict):
             self.model_args = ",".join(f"{k}={v}" for k, v in self.model_args.items())
@@ -3012,7 +3013,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return get_model_and_label_id(self.provider_model_map[api][self.model], api)
 
 
-class HFOptionSelectingInferenceEngine(InferenceEngine):
+class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     """HuggingFace based class for inference engines that calculate log probabilities.
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
@@ -3026,16 +3027,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
     }
 
     def prepare_engine(self):
-        import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         # Load model and tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
