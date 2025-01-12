@@ -6,7 +6,6 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
     allow_unverified_code=True,
-    mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
         "benchmarks.vision[loader_limit=30,max_samples_per_subset=30]", split="test"
@@ -32,3 +31,12 @@ print("Global scores:")
 print(results.global_scores.summary)
 print("Subsets scores:")
 print(results.subsets_scores.summary)
+
+# | subset   |    score | score_name      |   num_of_instances |
+# |:---------|---------:|:----------------|-------------------:|
+# | ALL      | 0.15637  | subsets_mean    |                150 |
+# | doc_vqa  | 0.05     | anls            |                 30 |
+# | info_vqa | 0.176852 | anls            |                 30 |
+# | chart_qa | 0.1      | relaxed_overall |                 30 |
+# | ai2d     | 0.3      | exact_match_mm  |                 30 |
+# | websrc   | 0.155    | websrc_squad_f1 |                 30 |
