@@ -1,6 +1,5 @@
 {
     "__type__": "multi_reference_template",
-    "input_format": "{context}\n{question}",
-    "target_prefix": "Answer the question using a single word or phrase.",
+    "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
     "references_field": "answers"
 }

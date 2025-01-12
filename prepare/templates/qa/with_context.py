@@ -106,8 +106,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="{context}\n{question}",
-        target_prefix="Answer the question using a single word or phrase.",
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
         references_field="answers",
     ),
     "templates.qa.with_context.lmms_eval",
@@ -125,6 +124,7 @@ add_to_catalog(
             "templates.qa.with_context.question_first",
             "templates.qa.with_context.ffqa",
             "templates.qa.with_context.title",
+            "templates.qa.with_context.lmms_eval",
         ]
     ),
     "templates.qa.with_context.all",

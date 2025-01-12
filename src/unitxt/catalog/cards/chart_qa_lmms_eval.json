@@ -2,26 +2,14 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "HuggingFaceM4/ChartQA"
+        "path": "lmms-lab/ChartQA"
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
-            "mapper": {
-                "train": "train",
-                "val": "validation",
-                "test": "test"
-            }
-        },
-        {
-            "__type__": "rename",
-            "field": "label",
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
             "to_field": "answers"
-        },
-        {
-            "__type__": "rename",
-            "field": "query",
-            "to_field": "question"
         },
         {
             "__type__": "to_image",
@@ -35,8 +23,14 @@
             }
         }
     ],
-    "task": "tasks.qa.with_context",
+    "task": "tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
     "templates": "templates.qa.with_context.all",
+    "default_template": {
+        "__type__": "multi_reference_template",
+        "input_format": "{context}\n{question}\nAnswer the question using a single word.",
+        "references_field": "answers",
+        "__description__": "lmms-evals default template for chartqa."
+    },
     "__tags__": {
         "license": "GPL-3.0",
         "multilinguality": "monolingual",
