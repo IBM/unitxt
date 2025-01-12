@@ -60,7 +60,7 @@ class LLMJudge(BulkInstanceMetric):
     # )
     evaluator_name: EvaluatorNameEnum = None
     check_positional_bias: bool = True
-    context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
+    context_fields: str = ["context"]
     generate_summaries: bool = True
     format = "formats.chat_api"
     include_prompts_in_result: bool = False
@@ -72,10 +72,6 @@ class LLMJudge(BulkInstanceMetric):
         super().prepare()
         if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
-        if isinstance(self.context_fields, List):
-            self.context_fields = {
-                context_field: context_field for context_field in self.context_fields
-            }
 
         # if not isinstance(self.option_selection_strategy, OptionSelectionStrategyEnum):
         #     self.option_selection_strategy = OptionSelectionStrategyEnum[
@@ -154,8 +150,8 @@ class LLMJudge(BulkInstanceMetric):
         return [
             get_parsed_context(
                 {
-                    context_field_name: dict_get(td, context_field)
-                    for context_field_name, context_field in self.context_fields.items()
+                    context_field.split("/")[-1]: dict_get(td, context_field)
+                    for context_field in self.context_fields
                 }
             )
             for td in task_data
