@@ -8,7 +8,7 @@ from tqdm import tqdm
 from unitxt import add_to_catalog, evaluate
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
-    RITSInferenceEngine,
+    CrossProviderInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
 from unitxt.standard import StandardRecipe
@@ -28,8 +28,8 @@ SERIALIZERS = {
     "csv",
 }
 TABLE_AUGMENTORS = {
-    # "shuffle_cols",
-    # "shuffle_rows",
+    "shuffle_cols",
+    "shuffle_rows",
     "transpose",
     "insert_empty_rows[times=2]",
     # "duplicate_columns",  # TODO: we leave lossy perturb for now
@@ -49,7 +49,7 @@ DATASET_WITH_LONG_EXAMPLES = {
 }
 
 # TODO: Can we consider these parameters as final? the test sets are build from val+test as a part of the cards
-DEMOS_POOL_SIZE = 10
+DEMOS_POOL_SIZE = -1
 MAX_PREDICTIONS = 100
 LOADER_LIMIT = 10000
 TEMPERATURE = 0.05
@@ -131,19 +131,8 @@ all_augment = (
 def get_recipes():
     recipes = {}
     for card in cards_parsed:
-        # TODO: Decide what to do about demos_pool_size
-        demos_pool_size = (
-            min(6, DEMOS_POOL_SIZE)
-            if "tablebench_visualization" in card
-            else DEMOS_POOL_SIZE
-        )
         for augment in all_augment:
             for serializer in serializers_parsed:
-                curr_num_demos = (
-                    num_demos
-                    if card not in DATASET_WITH_LONG_EXAMPLES
-                    else min(1, num_demos)
-                )
                 subset_name = (
                     "dataset="
                     + card
@@ -154,7 +143,7 @@ def get_recipes():
                     )
                     + ("__augment=" + ",".join(augment) if augment else "")
                     + "__num_demos="
-                    + str(curr_num_demos)
+                    + str(num_demos)
                 )
 
                 kwargs = {
@@ -163,8 +152,8 @@ def get_recipes():
                     "serializer": "serializers.table." + serializer
                     if serializer in SERIALIZERS and serializer != "csv"
                     else None,
-                    "num_demos": curr_num_demos,
-                    "demos_pool_size": demos_pool_size,
+                    "num_demos": num_demos,
+                    "demos_pool_size": DEMOS_POOL_SIZE,
                     "loader_limit": LOADER_LIMIT,
                     "augmentor": [
                         "augmentors."
@@ -199,7 +188,7 @@ def get_recipes():
                     + "."
                     + (",".join(augment).split("[")[0] if augment else "no")
                     + "_augmentation_"
-                    + str(curr_num_demos)
+                    + str(num_demos)
                     + "_demos",
                     overwrite=True,
                 )
@@ -208,9 +197,7 @@ def get_recipes():
 
 
 if recipes_only:
-    recipes = get_recipes()
-    with open(os.path.join(out_path, "recipes.json"), "w") as f:
-        json.dump(recipes, f)
+    get_recipes()
 
 elif len(models_parsed) > 0:  # run  benchmark
     # print("Run Params:", [f"{arg}: {value}" for arg, value in vars(args).items()])
@@ -249,7 +236,7 @@ elif len(models_parsed) > 0:  # run  benchmark
 
                 benchmark = Benchmark(
                     max_samples_per_subset=MAX_PREDICTIONS if not debug else 5,
-                    loader_limit=LOADER_LIMIT if not debug else 100,
+                    loader_limit=LOADER_LIMIT if not debug else 500,
                     subsets={subset_name: subset},
                 )
 
@@ -271,10 +258,16 @@ elif len(models_parsed) > 0:  # run  benchmark
                     #     temperature=TEMPERATURE,
                     # )
 
-                    inference_model = RITSInferenceEngine(
-                        model_name=model,
+                    # inference_model = RITSInferenceEngine(
+                    #     model_name=model,
+                    #     max_tokens=max_pred_tokens,
+                    #     temperature=TEMPERATURE,
+                    # )
+
+                    inference_model = CrossProviderInferenceEngine(
+                        model=model,
                         max_tokens=max_pred_tokens,
-                        temperature=TEMPERATURE,
+                        provider="rits",
                     )
 
                     predictions = inference_model.infer(test_dataset)
