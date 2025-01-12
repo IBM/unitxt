@@ -1,3 +1,4 @@
+from unitxt import get_from_catalog
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
@@ -5,6 +6,13 @@ from unitxt.image_operators import DecodeImage, ToImage
 from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
+
+templates = get_from_catalog("templates.qa.with_context.all")
+template = MultiReferenceTemplate(
+    input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
+    references_field="answers",
+    __description__="lmms-evals default template for websrc.",
+)
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc"),
@@ -17,12 +25,8 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
-    templates="templates.qa.with_context.all",
-    default_template=MultiReferenceTemplate(
-        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
-        references_field="answers",
-        __description__="lmms-evals default template for websrc.",
-    ),
+    templates=[template, *templates.items],
+    default_template=template,
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
