@@ -1766,11 +1766,51 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class ExactMatchMM(InstanceMetric):
+    reduction_map = {"mean": ["exact_match_mm"]}
+    main_score = "exact_match_mm"
+    prediction_type = Any  # string representation is compared
+
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def exact_match(pred, gt):
+        """Brought from MMStar"""
+        answer = gt.lower().strip().replace("\n", " ")
+        predict = pred.lower().strip().replace("\n", " ")
+        try:
+            if answer == predict[0]:
+                return 1.0
+            elif predict[0] == "(" and answer == predict[1]:
+                return 1.0
+            elif predict[0:7] == "option " and answer == predict[7]:
+                return 1.0
+            elif predict[0:14] == "the answer is " and answer == predict[14]:
+                return 1.0
+        except Exception as e:
+            return 0.0
+        return 0.0
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        # result = {self.main_score: float(str(prediction) in [str(reference) for reference in references])}
+        result = {
+            self.main_score: max(
+                [
+                    self.exact_match(str(prediction), str(reference))
+                    for reference in references
+                ]
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class ANLS(InstanceMetric):
     main_score = "anls"
     reduction_map = {"mean": ["anls"]}
-    prediction_type = Any  # string representation is compared
-
+    prediction_type = str  # string representation is compared
     threshold: float = 0.5
 
     @staticmethod
@@ -1826,6 +1866,183 @@ class ANLS(InstanceMetric):
                     )
             distances = distances_
         return distances[-1]
+
+
+class RelaxedCorrectness(GlobalMetric):
+    main_score = "relaxed_overall"
+    prediction_type = str  # string representation is compared
+
+    def compute(
+        self, references: List[List[str]], predictions: List[str], task_data: List[Dict]
+    ) -> dict:
+        return_dict = {
+            self.main_score: [],
+            "relaxed_human_split": [],
+            "relaxed_augmented_split": [],
+        }
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
+            print(task_data_i)
+            type = task_data_i["type"]
+            score = self.relaxed_correctness(pred, ref[0])
+            score = 1.0 if score else 0.0
+            return_dict["relaxed_overall"].append(score)
+            if type == "human_test":
+                return_dict["relaxed_human_split"].append(score)
+            else:
+                return_dict["relaxed_augmented_split"].append(score)
+        return_dict = {
+            key: sum(value) / len(value)
+            for key, value in return_dict.items()
+            if len(value) > 0
+        }
+        return return_dict
+
+    @staticmethod
+    def _to_float(text: str):
+        try:
+            if text.endswith("%"):
+                # Convert percentages to floats.
+                return float(text.rstrip("%")) / 100.0
+            else:
+                return float(text)
+        except ValueError:
+            return None
+
+    def relaxed_correctness(
+        self, prediction, target, max_relative_change: float = 0.05
+    ) -> bool:
+        """Calculates relaxed correctness.
+
+        The correctness tolerates certain error ratio defined by max_relative_change.
+        See https://arxiv.org/pdf/2203.10244.pdf, end of section 5.1:
+        “Following Methani et al. (2020), we use a relaxed accuracy measure for the
+        numeric answers to allow a minor inaccuracy that may result from the automatic
+        data extraction process. We consider an answer to be correct if it is within
+        5% of the gold answer. For non-numeric answers, we still need an exact match
+        to consider an answer to be correct.”
+
+        This function is taken from https://github.com/QwenLM/Qwen-VL/blob/34b4c0ee7b07726371b960911f249fe61b362ca3/eval_mm/evaluate_vqa.py#L113
+        Args:
+          target: List of target string.
+          prediction: List of predicted string.
+          max_relative_change: Maximum relative change.
+
+        Returns:
+          Whether the prediction was correct given the specified tolerance.
+        """
+        prediction_float = self._to_float(prediction)
+        target_float = self._to_float(target)
+        if prediction_float is not None and target_float:
+            relative_change = abs(prediction_float - target_float) / abs(target_float)
+            return relative_change <= max_relative_change
+        else:
+            return prediction.lower() == target.lower()
+
+
+class WebsrcSquadF1(GlobalMetric):
+    main_score = "websrc_squad_f1"
+    prediction_type = Any  # string representation is compared
+    DOMAINS = [
+        "auto",
+        "book",
+        "camera",
+        "game",
+        "jobs",
+        "movie",
+        "phone",
+        "restaurant",
+        "sports",
+        "university",
+        "hotel",
+    ]
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        """ANLS image-text accuracy metric."""
+        evaluation_result = {}
+        # Group results by domain
+        subset_to_eval_samples = defaultdict(list)
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
+            subset_to_eval_samples[task_data_i["domain"]].append([pred, ref[0]])
+        # Evaluate each domain
+        for subset, sub_eval_samples in subset_to_eval_samples.items():
+            judge_dict, metric_dict = self.evaluate_websrc(sub_eval_samples)
+            metric_dict.update({"num_example": len(sub_eval_samples)})
+            evaluation_result[subset] = metric_dict
+
+        # Aggregate results for all domains
+        printable_results = {}
+        for domain in self.DOMAINS:
+            if domain not in evaluation_result:
+                continue
+            printable_results[domain] = {
+                "num": int(evaluation_result[domain]["num_example"]),
+                "f1": round(evaluation_result[domain]["f1"], 3),
+            }
+        all_ins_f1 = np.sum(
+            [
+                cat_results["f1"] * cat_results["num_example"]
+                for cat_results in evaluation_result.values()
+            ]
+        ) / sum(
+            [cat_results["num_example"] for cat_results in evaluation_result.values()]
+        )
+        printable_results["Overall"] = {
+            "num": sum(
+                [
+                    cat_results["num_example"]
+                    for cat_results in evaluation_result.values()
+                ]
+            ),
+            "f1": round(all_ins_f1, 3),
+        }
+        return {self.main_score: printable_results["Overall"]["f1"]}
+
+    def evaluate_websrc(self, samples):
+        def _normalize_str(string):
+            # lower it
+            string = string.lower()
+
+            # strip leading and trailing whitespaces
+            string = string.strip()
+
+            return string
+
+        def _tokenize(text):
+            # Regex pattern to match words and isolate punctuation
+            pattern = r"\w+|[^\w\s]"
+            tokens = re.findall(pattern, text)
+            return tokens
+
+        def _compute_f1(sa, sb):
+            sa = _normalize_str(sa)
+            sb = _normalize_str(sb)
+
+            sa = _tokenize(sa)
+            sb = _tokenize(sb)
+
+            sa = set(sa)
+            sb = set(sb)
+
+            if len(sa) == 0 or len(sb) == 0:
+                return 0.0
+
+            comm = sa.intersection(sb)
+            prec = len(comm) / len(sb)
+            rec = len(comm) / len(sa)
+            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
+            return f1
+
+        judge_list = []
+        for sample in samples:
+            judge_list.append(_compute_f1(sample[1], sample[0]))
+
+        f1 = np.mean(judge_list)
+        return judge_list, {"f1": f1}
 
 
 class JaccardIndex(InstanceMetric):
