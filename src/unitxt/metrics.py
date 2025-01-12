@@ -3481,7 +3481,7 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
     batch_size: int = 32
     main_score = "sbert_score"
 
-    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
