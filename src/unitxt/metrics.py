@@ -3212,6 +3212,8 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
     batch_size: int = 32
     model_layer: int = None
 
+    _requirements_list: List[str] = ["bert_score"]
+
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
@@ -3312,6 +3314,8 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
     main_score = "reward_score"
     model_name: str
     batch_size: int = 32
+
+    _requirements_list: List[str] = ["transformers"]
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
