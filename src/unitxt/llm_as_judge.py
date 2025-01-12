@@ -200,11 +200,13 @@ class LLMJudge(BulkInstanceMetric):
 
 class LLMJudgeDirect(LLMJudge):
     criteria: CriteriaWithOptions = None
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "judge_score"
+    reduction_map = None
 
     def prepare(self):
         super().prepare()
+        if not self.reduction_map:
+            self.reduction_map = {"mean": [self.main_score]}
         self.assessment_template = direct_template_dict["assessment"]
         self.summarization_template = direct_template_dict["summarization"]
         self.option_selection_template = direct_template_dict["answer"]
@@ -306,6 +308,7 @@ class LLMJudgeDirect(LLMJudge):
 
         return [
             {
+                self.main_score: scores[i],
                 "score": scores[i],
                 "llm_as_a_judge_score": scores[i],
                 "positional_bias": positional_bias[i]
@@ -482,12 +485,14 @@ class LLMJudgeDirect(LLMJudge):
 
 
 class LLMJudgePairwise(LLMJudge):
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "judge_score"
+    reduction_map = None
     prediction_type = List[str]
 
     def prepare(self):
         super().prepare()
+        if not self.reduction_map:
+            self.reduction_map = {"mean": [self.main_score]}
         self.assessment_template = pairwise_template_dict["assessment"]
         self.summarization_template = pairwise_template_dict["summarization"]
         self.option_selection_template = pairwise_template_dict["answer"]
