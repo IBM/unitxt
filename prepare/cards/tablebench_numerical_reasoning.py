@@ -51,7 +51,8 @@ card = TaskCard(
     ),
     templates=[
         InputOutputTemplate(
-            input_format="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
+            instruction="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}",
+            input_format="{context_type}: {context} \nQuestion: {question}",
             target_prefix="Final Answer: ",
             output_format="{answers}",
             postprocessors=[
@@ -72,5 +73,5 @@ card = TaskCard(
     },
 )
 
-test_card(card, strict=False, loader_limit=200)
+test_card(card, strict=False, loader_limit=200, demos_pool_size=-1, num_demos=1)
 add_to_catalog(card, "cards.tablebench_numerical_reasoning", overwrite=True)

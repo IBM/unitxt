@@ -37,7 +37,7 @@ card = TaskCard(
     ),
     templates=[
         InputOutputTemplate(
-            input_format="""Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific language (DSL) that will be executed to get the answer. \nThe DSL consists of mathematical operations and table operations as executable programs. The program consists of a sequence of operations. Each operation takes a list of arguments. \nThere are 6 mathematical operations: add, subtract, multiply, divide, greater, exp, and 4 table aggregation operations table-max, table-min, table-sum, table-average, that apply aggregation operations on table rows. The mathematical operations take arguments of either numbers from the given reports, or a numerical result from a previous step.\nThe table operations take arguments of table row names. We use the special token #n to denote the result from the nth step. \nFor example, in the example "divide(9413, 20.01), divide(8249, 9.48), subtract(#0, #1)", the program consists of 3 steps; The first and the second division steps take arguments from the table and the text, respectively, then the third step subtracts the results from the two previous steps.
+            instruction="""Presented with a financial report consisting of textual contents and a structured table, given a question, generate the reasoning program in the domain specific language (DSL) that will be executed to get the answer. \nThe DSL consists of mathematical operations and table operations as executable programs. The program consists of a sequence of operations. Each operation takes a list of arguments. \nThere are 6 mathematical operations: add, subtract, multiply, divide, greater, exp, and 4 table aggregation operations table-max, table-min, table-sum, table-average, that apply aggregation operations on table rows. The mathematical operations take arguments of either numbers from the given reports, or a numerical result from a previous step.\nThe table operations take arguments of table row names. We use the special token #n to denote the result from the nth step. \nFor example, in the example "divide(9413, 20.01), divide(8249, 9.48), subtract(#0, #1)", the program consists of 3 steps; The first and the second division steps take arguments from the table and the text, respectively, then the third step subtracts the results from the two previous steps.
                 Definitions of all operations:
                 [["Name", "Arguments", "Output", "Description"],
                 ["add", "number1, number2", "number", "add two numbers: number1 + number2"],
@@ -51,7 +51,8 @@ card = TaskCard(
                 ["table-max", "table header", "number", "the maximum number of one table row"],
                 ["table-min", "table header", "number", "the minimum number of one table row"]]
                 Answer with only the program, without any additional explanation.
-                Pre-table text: {pre_text}
+                """,
+            input_format="""Pre-table text: {pre_text}
                 Table: {table}
                 Post-table text: {post_text}
                 Question: {question}

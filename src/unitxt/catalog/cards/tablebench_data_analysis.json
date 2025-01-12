@@ -84,7 +84,8 @@
     "templates": [
         {
             "__type__": "input_output_template",
-            "input_format": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
+            "instruction": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}",
+            "input_format": "{context_type}: {context} \nQuestion: {question}",
             "target_prefix": "Final Answer: ",
             "output_format": "{answers}",
             "postprocessors": [
