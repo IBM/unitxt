@@ -3214,6 +3214,12 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
     _requirements_list: List[str] = ["bert_score"]
 
+    def prepare(self):
+        super().prepare()
+        from evaluate import load
+
+        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
@@ -3223,10 +3229,7 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
             predictions.append(prediction)
             references.append(reference)
 
-        from evaluate import load
-
-        bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
-        results = bertscore.compute(
+        results = self.bertscore.compute(
             predictions=predictions,
             references=references,
             batch_size=self.batch_size,
@@ -3263,16 +3266,20 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
     _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
 
+    def prepare(self):
+        super().prepare()
+        from sentence_transformers import SentenceTransformer
+
+        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
+
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
     ):
         # if settings.mock_inference_mode:
         #     return [0.5 for _ in evaluation_inputs_stream]
 
-        from sentence_transformers import SentenceTransformer
         from sentence_transformers import util
 
-        model = SentenceTransformer(self.model_name, device=self.get_device_id())
         scores = []
 
         predictions = []
@@ -3291,7 +3298,7 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
         # Compute embeddings in a single pass
         combined = predictions + flattened_references
-        combined_emb = model.encode(
+        combined_emb = self.model.encode(
             combined, device=self.get_device_id(), batch_size=self.batch_size
         )
 
@@ -3317,6 +3324,14 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
     _requirements_list: List[str] = ["transformers"]
 
+    def prepare(self):
+        super().prepare()
+        from transformers import pipeline
+
+        self.model = pipeline(
+            "text-classification", model=self.model_name, device=self.get_device()
+        )
+
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
@@ -3324,13 +3339,7 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
         for prediction, references, _ in evaluation_inputs_stream:
             inputs.append({"text": references[0], "text_pair": prediction})
 
-        from transformers import pipeline
-
-        model = pipeline(
-            "text-classification", model=self.model_name, device=self.get_device()
-        )
-
-        results = model(inputs, batch_size=self.batch_size)
+        results = self.model(inputs, batch_size=self.batch_size)
 
         return [result["score"] for result in results]
 
