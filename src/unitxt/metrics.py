@@ -3225,7 +3225,7 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
         from evaluate import load
 
-        bertscore = load("bertscore")
+        bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
         results = bertscore.compute(
             predictions=predictions,
             references=references,
