@@ -55,6 +55,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
@@ -1633,6 +1634,12 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+def update_scores_of_stream_instances(stream: Stream, scores: List[dict]) -> Generator:
+    for instance, score in zip(stream, scores):
+        instance["score"] = recursive_copy(score)
+        yield instance
+
+
 class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
@@ -1646,13 +1653,6 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
 
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricsList
-
-        def update_scores_of_stream_instances(
-            stream: Stream, scores: List[dict]
-        ) -> Generator:
-            for instance, score in zip(stream, scores):
-                instance["score"] = recursive_copy(score)
-                yield instance
 
         # to be populated only when two or more metrics
         accumulated_scores = []
@@ -1680,29 +1680,28 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                     f"Operator {metric_name} must be a Metric or MetricsList"
                 )
 
+        for metric in metrics_list:
+            if not self.calc_confidence_intervals:
+                metric.disable_confidence_interval_calculation()
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        for metric_no, metric in enumerate(metrics_list):
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
-
-            if metric_no > 0:
-                # update input stream with accumulated scores
+        for i, metric in enumerate(metrics_list):
+            if i == 0:  # first metric
+                multi_stream = MultiStream({"tmp": stream})
+            else:  # metrics with previous scores
                 reusable_generator = ReusableGenerator(
                     generator=update_scores_of_stream_instances,
                     gen_kwargs={"stream": stream, "scores": accumulated_scores},
                 )
                 multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
-            else:
-                multi_stream = MultiStream.from_iterables({"tmp": stream})
+
             multi_stream = metric(multi_stream)
-            if metric_no < len(metrics_list) - 1:
-                # not the last metric, so prepare for the next metric by
-                # updating accumulated_scores
+
+            if i < len(metrics_list) - 1:  # last metric
                 accumulated_scores = []
                 for inst in multi_stream["tmp"]:
                     accumulated_scores.append(recursive_copy(inst["score"]))
@@ -2214,3 +2213,20 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class WikipediaFetcher(FieldOperator):
+    mode: Literal["summary", "text"] = "text"
+    _requirements_list = ["Wikipedia-API"]
+
+    def prepare(self):
+        super().prepare()
+        import wikipediaapi
+
+        self.wikipedia = wikipediaapi.Wikipedia("Unitxt")
+
+    def process_value(self, value: Any) -> Any:
+        title = value.split("/")[-1]
+        page = self.wikipedia.page(title)
+
+        return {"title": page.title, "body": getattr(page, self.mode)}

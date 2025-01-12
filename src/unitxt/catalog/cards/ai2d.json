@@ -28,7 +28,18 @@
         }
     ],
     "task": "tasks.qa.multiple_choice.with_context[metrics=[metrics.exact_match_mm]]",
-    "templates": "templates.qa.multiple_choice.with_context.no_intro.all",
+    "templates": [
+        {
+            "__type__": "multiple_choice_template",
+            "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+            "choices_separator": "\n",
+            "target_field": "answer",
+            "enumerator": "capitals"
+        },
+        "templates.qa.multiple_choice.with_context.no_intro.helm",
+        "templates.qa.multiple_choice.with_context.no_intro.mmlu",
+        "templates.qa.multiple_choice.with_context.no_intro.lm_eval_harness"
+    ],
     "default_template": {
         "__type__": "multiple_choice_template",
         "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",

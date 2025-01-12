@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import Accuracy, BinaryAccuracy, BinaryMaxAccuracy
+from unitxt.metrics import AccuracyFast, BinaryAccuracy, BinaryMaxAccuracy
 from unitxt.test_utils.metrics import test_metric
 
-metric = Accuracy()
+metric = AccuracyFast()
 
 predictions = ["A", "B", "C"]
 references = [["B"], ["A"], ["C"]]

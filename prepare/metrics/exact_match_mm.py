@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import ExactMatchMM
 from unitxt.test_utils.metrics import test_metric
 
-metric = ExactMatchMM()
+metric = ExactMatchMM(n_resamples=None)
 
 predictions = ["A", "B", "C"]
 references = [["B"], ["A"], ["C"]]
@@ -17,6 +17,7 @@ global_target = {
     "exact_match_mm": 0.33,
     "score": 0.33,
     "score_name": "exact_match_mm",
+    "num_of_instances": 3,
 }
 
 outputs = test_metric(

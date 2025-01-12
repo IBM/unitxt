@@ -9,6 +9,7 @@ import sys
 import time
 import uuid
 from collections import Counter
+from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
     Dict,
@@ -65,6 +66,27 @@ class StandardAPIParamsMixin(Artifact):
     service_tier: Optional[Literal["auto", "default"]] = None
     credentials: Optional[Dict[str, str]] = {}
     extra_headers: Optional[Dict[str, str]] = None
+
+
+class TorchDeviceMixin(Artifact):
+    device: Optional[str] = None
+
+    def get_device_id(self) -> str:
+        if self.device is not None:
+            return self.device
+
+        import torch
+
+        if torch.backends.mps.is_available():
+            return "mps"
+        if torch.cuda.is_available():
+            return "cuda:0"
+        return "cpu"
+
+    def get_device(self):
+        import torch
+
+        return torch.device(self.get_device_id())
 
 
 def get_model_and_label_id(model_name, label):
@@ -280,13 +302,13 @@ class HFInferenceEngineBase(
     PackageRequirementsMixin,
     LazyLoadMixin,
     HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str
 
     n_top_tokens: int = 5
 
-    device: Any = None
     device_map: Any = None
 
     use_fast_tokenizer: bool = True
@@ -312,16 +334,8 @@ class HFInferenceEngineBase(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     @abc.abstractmethod
     def _init_processor(self):
@@ -787,7 +801,11 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
 
 
 class HFPipelineBasedInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
+    InferenceEngine,
+    PackageRequirementsMixin,
+    LazyLoadMixin,
+    HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str = "hf_pipeline_inference_engine"
@@ -798,7 +816,6 @@ class HFPipelineBasedInferenceEngine(
 
     task: Optional[str] = None
 
-    device: Any = None
     device_map: Any = None
 
     pipe: Any = InternalField(default=None)
@@ -878,16 +895,8 @@ class HFPipelineBasedInferenceEngine(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     def _prepare_engine(self):
         self._set_inference_device()
@@ -1469,6 +1478,13 @@ class OpenAiInferenceEngineParams(Artifact):
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
+def run_with_imap(func):
+    def inner(self, args):
+        return func(self, *args)
+
+    return inner
+
+
 class OpenAiInferenceEngine(
     InferenceEngine,
     LogProbInferenceEngine,
@@ -1485,6 +1501,7 @@ class OpenAiInferenceEngine(
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
     credentials: CredentialsOpenAi = {}
+    num_parallel_requests: int = 20
 
     def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
@@ -1528,52 +1545,76 @@ class OpenAiInferenceEngine(
             if v is not None
         }
 
+    def _parallel_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        infer_func,
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = [(instance, return_meta_data) for instance in dataset]
+        outputs = []
+        with ThreadPool(processes=self.num_parallel_requests) as pool:
+            for output in tqdm(
+                pool.imap(infer_func, inputs),
+                total=len(inputs),
+                desc=f"Inferring with {self.__class__.__name__}",
+            ):
+                outputs.append(output)
+
+        return outputs
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            prediction = response.choices[0].message.content
-            output = self.get_return_object(prediction, response, return_meta_data)
-
-            outputs.append(output)
-
-        return outputs
+        return self._parallel_infer(
+            dataset=dataset,
+            return_meta_data=return_meta_data,
+            infer_func=self._get_chat_completion,
+        )
 
     def _infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
-                {
-                    "top_tokens": [
-                        {"text": obj.token, "logprob": obj.logprob}
-                        for obj in generated_token.top_logprobs
-                    ]
-                }
-                for generated_token in top_logprobs_response
-            ]
-            output = self.get_return_object(pred_output, response, return_meta_data)
-            outputs.append(output)
-        return outputs
+        return self._parallel_infer(
+            dataset=dataset,
+            return_meta_data=return_meta_data,
+            infer_func=self._get_logprobs,
+        )
+
+    @run_with_imap
+    def _get_chat_completion(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        prediction = response.choices[0].message.content
+        return self.get_return_object(prediction, response, return_meta_data)
+
+    @run_with_imap
+    def _get_logprobs(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        top_logprobs_response = response.choices[0].logprobs.content
+        pred_output = [
+            {
+                "top_tokens": [
+                    {"text": obj.token, "logprob": obj.logprob}
+                    for obj in generated_token.top_logprobs
+                ]
+            }
+            for generated_token in top_logprobs_response
+        ]
+        return self.get_return_object(pred_output, response, return_meta_data)
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
@@ -2442,7 +2483,7 @@ def get_text_without_images(instance, image_token="<image>"):
 
 
 class LMMSEvalBaseInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
     model_type: str
     model_args: Dict[str, str]
@@ -2458,19 +2499,12 @@ class LMMSEvalBaseInferenceEngine(
             self._prepare_engine()
 
     def _prepare_engine(self):
-        import torch
         from lmms_eval.api.instance import Instance
         from lmms_eval.models import get_model
 
         self.new_instance = Instance
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         if isinstance(self.model_args, dict):
             self.model_args = ",".join(f"{k}={v}" for k, v in self.model_args.items())
@@ -2790,7 +2824,15 @@ class LiteLLMInferenceEngine(
 
 
 _supported_apis = Literal[
-    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
+    "watsonx",
+    "together-ai",
+    "open-ai",
+    "aws",
+    "ollama",
+    "bam",
+    "watsonx-sdk",
+    "rits",
+    "azure",
 ]
 
 
@@ -2864,6 +2906,52 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
+        "open-ai": {
+            "o1-mini": "o1-mini",
+            "o1-preview": "o1-preview",
+            "gpt-4o-mini": "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18": "gpt-4o-mini-2024-07-18",
+            "gpt-4o": "gpt-4o",
+            "gpt-4o-2024-08-06": "gpt-4o-2024-08-06",
+            "gpt-4o-2024-05-13": "gpt-4o-2024-05-13",
+            "gpt-4-turbo": "gpt-4-turbo",
+            "gpt-4-turbo-preview": "gpt-4-0125-preview",
+            "gpt-4-0125-preview": "gpt-4-0125-preview",
+            "gpt-4-1106-preview": "gpt-4-1106-preview",
+            "gpt-3.5-turbo-1106": "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo": "gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "gpt-3.5-turbo-16k-0613",
+            "gpt-4": "gpt-4",
+            "gpt-4-0314": "gpt-4-0314",
+            "gpt-4-0613": "gpt-4-0613",
+            "gpt-4-32k": "gpt-4-32k",
+            "gpt-4-32k-0314": "gpt-4-32k-0314",
+            "gpt-4-32k-0613": "gpt-4-32k-0613",
+            "gpt-4-vision-preview": "gpt-4-vision-preview",
+        },
+        "azure": {
+            "o1-mini": "azure/o1-mini",
+            "o1-preview": "azure/o1-preview",
+            "gpt-4o-mini": "azure/gpt-4o-mini",
+            "gpt-4o": "azure/gpt-4o",
+            "gpt-4": "azure/gpt-4",
+            "gpt-4-0314": "azure/gpt-4-0314",
+            "gpt-4-0613": "azure/gpt-4-0613",
+            "gpt-4-32k": "azure/gpt-4-32k",
+            "gpt-4-32k-0314": "azure/gpt-4-32k-0314",
+            "gpt-4-32k-0613": "azure/gpt-4-32k-0613",
+            "gpt-4-1106-preview": "azure/gpt-4-1106-preview",
+            "gpt-4-0125-preview": "azure/gpt-4-0125-preview",
+            "gpt-3.5-turbo": "azure/gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "azure/gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "azure/gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
+            "gpt-4-vision": "azure/gpt-4-vision",
+        },
     }
 
     _provider_to_base_class = {
@@ -2875,6 +2963,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
         "rits": RITSInferenceEngine,
+        "azure": LiteLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
@@ -2924,7 +3013,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return get_model_and_label_id(self.provider_model_map[api][self.model], api)
 
 
-class HFOptionSelectingInferenceEngine(InferenceEngine):
+class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     """HuggingFace based class for inference engines that calculate log probabilities.
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
@@ -2938,16 +3027,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
     }
 
     def prepare_engine(self):
-        import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         # Load model and tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)

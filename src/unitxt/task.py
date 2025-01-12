@@ -75,6 +75,8 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
 
     def prepare_args(self):
         super().prepare_args()
+        if isinstance(self.metrics, str):
+            self.metrics = [self.metrics]
 
         if self.input_fields is not None and self.inputs is not None:
             raise UnitxtError(
@@ -116,16 +118,24 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                 self.prediction_type
             )
 
-    def verify(self):
+        if hasattr(self, "inputs") and self.inputs is not None:
+            self.inputs = self.input_fields
+
+        if hasattr(self, "outputs") and self.outputs is not None:
+            self.outputs = self.reference_fields
+
+    def task_deprecations(self):
         if hasattr(self, "inputs") and self.inputs is not None:
             depr_message = (
                 "The 'inputs' field is deprecated. Please use 'input_fields' instead."
             )
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
-
         if hasattr(self, "outputs") and self.outputs is not None:
             depr_message = "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
+
+    def verify(self):
+        self.task_deprecations()
 
         if self.input_fields is None:
             raise UnitxtError(
@@ -152,7 +162,11 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                     f"will raise an exception.",
                     Documentation.ADDING_TASK,
                 )
-                data = {key: Any for key in data}
+                if isinstance(data, dict):
+                    data = parse_type_dict(to_type_dict(data))
+                else:
+                    data = {key: Any for key in data}
+
                 if io_type == "input_fields":
                     self.input_fields = data
                 else:

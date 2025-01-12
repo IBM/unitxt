@@ -47,9 +47,22 @@ Evaluate a custom dataset - with existing predictions
 These examples demonstrate how to evaluate a datasets of different tasks when predictions are already available and no inference is required.
 
 `Example code for QA task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_qa_dataset_with_given_predictions.py>`__
+
 `Example code for classification task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_classification_dataset_with_given_predictions.py>`__  
 
 Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`
+
+Evaluate a Named Entity Recognition (NER) dataset
+===================================================
+
+This example demonstrates how to evaluate a named entity recognition task.
+The ground truth entities are provided as spans within the provided texts, 
+and the model is prompted to identify these entities.
+Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
+
+Example code <https://github.com/IBM/unitxt/blob/main/examples/ner_evaluation.py>`__
+
+Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
 
 Evaluation usecases
 -----------------------

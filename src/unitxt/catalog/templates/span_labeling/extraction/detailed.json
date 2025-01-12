@@ -1,0 +1,8 @@
+{
+    "__type__": "span_labeling_template",
+    "instruction": "From the given {text_type}, extract all the entities of the following entity types: {entity_types}.\nReturn the output in this exact format:\nThe output should be a comma separated list of pairs of entity and corresponding entity_type.\nUse a colon to separate between the entity and entity_type. ",
+    "input_format": "{text_type}:\n{text}",
+    "postprocessors": [
+        "processors.to_span_label_pairs"
+    ]
+}

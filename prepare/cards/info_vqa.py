@@ -1,12 +1,22 @@
+from unitxt import get_from_catalog
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
 from unitxt.operators import Rename
-from unitxt.splitters import SplitRandomMix
+from unitxt.splitters import RenameSplits, SplitRandomMix
+from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.splitters import RenameSplits
+
+
+templates = get_from_catalog("templates.qa.with_context.all")
+template = MultiReferenceTemplate(
+    input_format="{context}\n{question}\nAnswer the question using a single word.",
+    references_field="answers",
+    __description__="lmms-evals default template for chartqa.",
+)
 
 
 card = TaskCard(
@@ -21,13 +31,8 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates=[MultiReferenceTemplate(input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
-                                      references_field="answers")],
-    default_template=MultiReferenceTemplate(
-        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
-        references_field="answers",
-        __description__="lmms-evals default template for info_vqa.",
-    ),
+    templates=[template, *templates.items],
+    default_template=template,
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
@@ -47,7 +52,9 @@ add_to_catalog(card, "cards.info_vqa", overwrite=True)
 
 card = TaskCard(
     loader=LoadHF(
-        path="lmms-lab/DocVQA", name="InfographicVQA", data_classification_policy=["public"]
+        path="lmms-lab/DocVQA",
+        name="InfographicVQA",
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         RenameSplits(mapper={"validation": "test"}),

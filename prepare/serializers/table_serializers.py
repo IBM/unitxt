@@ -3,6 +3,7 @@ from unitxt.struct_data_operators import (
     SerializeTableAsConcatenation,
     SerializeTableAsDFLoader,
     SerializeTableAsHTML,
+    SerializeTableAsImage,
     SerializeTableAsIndexedRowMajor,
     SerializeTableAsJson,
     SerializeTableAsMarkdown,
@@ -31,3 +32,7 @@ add_to_catalog(operator, "serializers.table.json", overwrite=True)
 operator = SerializeTableAsHTML()
 
 add_to_catalog(operator, "serializers.table.html", overwrite=True)
+
+operator = SerializeTableAsImage()
+
+add_to_catalog(operator, "serializers.table.image", overwrite=True)

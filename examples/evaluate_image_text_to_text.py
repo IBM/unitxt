@@ -1,57 +1,17 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine, LMMSEvalInferenceEngine, VLLMInferenceEngine
-from unitxt.text_utils import print_dict
-from tqdm import tqdm
-
-# from cvar_pyutils.debugging_tools import set_remote_debugger
-# set_remote_debugger('9.148.189.104', 55557) # 9.148.189.104
+from unitxt.inference import (
+    LMMSEvalInferenceEngine,
+)
 
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-    # inference_model = HFLlavaInferenceEngine(
-    #     model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
-    # )
     inference_model = LMMSEvalInferenceEngine(
         model_type="llava",
         model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
         max_new_tokens=128,
     )
-    # inference_model = VLLMInferenceEngine(
-    #     model="llava-hf/llava-1.5-7b-hf",
-    #     max_tokens=32,
-    # )
-    # dataset = load_dataset(
-    #     card="cards.ai2d",
-    #     # template="templates.qa.multiple_choice.with_context.lmms_eval",
-    #     #format="formats.models.llava_interleave", Format should include the instruction from the dataset.
-    #     format="formats.chat_api",
-    #     # system_prompt="system_prompts.models.llava1_5", # need to insert this into the format
-    #     # max_test_instances=20,
-    #     # loader_limit=20,
-    #     # augmentor="augmentors.image.grey_scale",
-    #     # augmentor="augmentors.image.to_rgb",
-    #     split="test",
-    #     # metrics=["metrics.exact_match_mm"]
-    # )
-    # dataset = load_dataset(
-    #     card="cards.doc_vqa.lmms_eval", # info_vqa_lmms_eval doc_vqa.lmms_eval
-    #     # template_card_index=0, # not needed in  newer version
-    #     # template="templates.qa.with_context.lmms_eval", # why do we need to define both the dataset and the template?
-    #     format="formats.chat_api",
-    #     # max_test_instances=20,
-    #     # loader_limit=20,
-    #     # augmentor="augmentors.image.to_rgb",
-    #     split="test"
-    #     # metrics=["metrics.anls"]
-    # )
-    # dataset = load_dataset(
-    #     card="cards.chart_qa_lmms_eval",
-    #     format="formats.chat_api",
-    #     # max_test_instances=20,
-    #     split="test",
-    # )
     dataset = load_dataset(
         card="cards.websrc",
         format="formats.chat_api",

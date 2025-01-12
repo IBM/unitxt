@@ -1,9 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import RelaxedCorrectness
 from unitxt.test_utils.metrics import test_metric
-# from cvar_pyutils.debugging_tools import set_remote_debugger
-# set_remote_debugger('9.61.188.58', 55557)
-metric = RelaxedCorrectness()
+metric = RelaxedCorrectness(n_resamples=None)
 
 predictions = ["10", "30"]
 references = [["14"], ["30"]]
@@ -38,6 +36,6 @@ outputs = test_metric(
     references=references,
     instance_targets=instance_targets,
     global_target=global_target,
-    task_data=[{"type": "human_test"}, {"type": "augmented_test"}]
+    task_data=[{"type": "human_test"}, {"type": "augmented_test"}],
 )
 add_to_catalog(metric, "metrics.relaxed_correctness", overwrite=True)
