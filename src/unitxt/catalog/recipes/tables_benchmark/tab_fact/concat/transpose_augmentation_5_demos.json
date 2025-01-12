@@ -4,6 +4,7 @@
     "serializer": "serializers.table.concat",
     "num_demos": 5,
     "demos_pool_size": -1,
+    "loader_limit": 10000,
     "augmentor": [
         "augmentors.table.transpose"
     ]

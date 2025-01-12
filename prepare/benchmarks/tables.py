@@ -1,8 +1,6 @@
 import argparse
 import json
 import os.path
-import random
-from itertools import combinations
 
 from tqdm import tqdm
 from unitxt import add_to_catalog, evaluate
@@ -11,7 +9,7 @@ from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
 from unitxt.settings_utils import get_settings
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 # usage: python prepare/benchmarks/tables.py [-out_path OUT_PATH] [-models MODELS] [-cards CARDS]
 # [-serializers SERIALIZERS] [-max_augmentors MAX_AUGMENTORS] [-max_pred_tokens MAX_PRED_TOKENS]
@@ -116,15 +114,7 @@ recipes_only = args.recipes_only
 models_parsed = [item.strip() for item in models.split(",")]
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
-
-augment_combinations = list(combinations(TABLE_AUGMENTORS, COMB_SIZE_AUGMENT))
-random.seed(settings.seed)
-rand_augment_combinations = random.sample(
-    augment_combinations, min(max_augmentors, len(augment_combinations))
-)
-all_augment = (
-    [None] + [list(i) for i in rand_augment_combinations]
-)  # TODO: Do we want other augmentations/sampling? Also we cannot augment with params for now
+all_augment = [None] + [[i] for i in TABLE_AUGMENTORS]
 
 
 # create the recipes subset dynamically
@@ -148,7 +138,6 @@ def get_recipes():
 
                 kwargs = {
                     "card": "cards." + card,
-                    "template_card_index": 0,
                     "serializer": "serializers.table." + serializer
                     if serializer in SERIALIZERS and serializer != "csv"
                     else None,
@@ -175,13 +164,13 @@ def get_recipes():
                     for key, value in kwargs.items()
                 )
 
-                obj_recipe = StandardRecipe(**kwargs)
+                obj_recipe = DatasetRecipe(**kwargs)
 
                 recipes[subset_name] = str_recipe if recipes_only else obj_recipe
 
                 add_to_catalog(
                     obj_recipe,
-                    "recipes.tables."
+                    "recipes.tables_benchmark."
                     + card
                     + "."
                     + serializer

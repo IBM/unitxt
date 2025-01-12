@@ -28,7 +28,7 @@ recipes_only = False
 # Process parameters
 cards_parsed = [item.strip() for item in cards.split(",")]
 serializers_parsed = [item.strip() for item in serializers.split(",")]
-all_augment = [None] + [list(i) for i in TABLE_AUGMENTORS]
+all_augment = [None] + [[i] for i in TABLE_AUGMENTORS]
 
 # Create the recipes subset dynamically
 
@@ -42,6 +42,7 @@ for card in cards_parsed:
                 else None,
                 "num_demos": num_demos,
                 "demos_pool_size": DEMOS_POOL_SIZE,
+                "loader_limit": LOADER_LIMIT,
                 "augmentor": [f"augmentors.table.{a!s}" for a in augment]
                 if augment
                 else None,
