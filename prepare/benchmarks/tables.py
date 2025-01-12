@@ -254,7 +254,7 @@ elif len(models_parsed) > 0:  # run  benchmark
                     # )
 
                     inference_model = CrossProviderInferenceEngine(
-                        model=model,
+                        model=model_name,
                         max_tokens=max_pred_tokens,
                         provider="rits",
                     )
