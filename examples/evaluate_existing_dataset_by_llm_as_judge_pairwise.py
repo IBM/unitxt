@@ -5,7 +5,6 @@ from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
-from unitxt.llm_as_judge_operators import LoadCriteria
 from unitxt.templates import NullTemplate
 
 logger = get_logger()
@@ -15,16 +14,9 @@ test_instances = 10
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
-criterias = ["factually_consistent"]
-metrics = [
-    "metrics.llm_as_judge.pairwise.rits.llama3_1_405b"
-    f"[criteria=metrics.llm_as_judge.pairwise.criterias.{criteria},"
-    "context_fields=[context,question]]"
-    for criteria in criterias
-]
+
 dataset = load_dataset(
     card="cards.squad",
-    metrics=metrics,
     loader_limit=test_instances,
     max_test_instances=test_instances,
     split="test",
@@ -64,16 +56,20 @@ predictions = [
 
 print(json.dumps(predictions, indent=4))
 
+criterias = ["factually_consistent"]
+metrics = [
+    "metrics.llm_as_judge.pairwise.rits.llama3_1_405b"
+    f"[criteria=metrics.llm_as_judge.pairwise.criterias.{criteria},"
+    "context_fields=[context,question]]"
+    for criteria in criterias
+]
 dataset = load_dataset(
     card="cards.squad",
-    preprocess_steps=[
-        LoadCriteria(field="criteria", to_field="criteria"),
-    ],
-    metrics=metrics,
     loader_limit=test_instances,
     max_test_instances=test_instances,
-    split="test",
+    metrics=metrics,
     template=NullTemplate(),
+    split="test",
 )
 
 evaluated_predictions = evaluate(predictions=predictions, data=dataset)
