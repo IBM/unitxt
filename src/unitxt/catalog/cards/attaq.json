@@ -1,0 +1,43 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "ibm/AttaQ"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "shuffle",
+            "page_size": 2800
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": [
+            "input"
+        ],
+        "reference_fields": [
+            "label"
+        ],
+        "metrics": [
+            "metrics.safety_metric"
+        ]
+    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}\n",
+            "output_format": ""
+        },
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}",
+            "output_format": ""
+        }
+    ]
+}

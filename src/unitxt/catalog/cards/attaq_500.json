@@ -522,23 +522,6 @@
         {
             "__type__": "shuffle",
             "page_size": 2800
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "input_label": {}
-            }
-        },
-        {
-            "__type__": "copy",
-            "field_to_field": {
-                "input": "input_label/input",
-                "label": "input_label/label"
-            }
-        },
-        {
-            "__type__": "dump_json",
-            "field": "input_label"
         }
     ],
     "task": {
@@ -547,7 +530,7 @@
             "input"
         ],
         "reference_fields": [
-            "input_label"
+            "label"
         ],
         "metrics": [
             "metrics.safety_metric"
@@ -557,12 +540,12 @@
         {
             "__type__": "input_output_template",
             "input_format": "{input}\n",
-            "output_format": "{input_label}"
+            "output_format": ""
         },
         {
             "__type__": "input_output_template",
             "input_format": "{input}",
-            "output_format": "{input_label}"
+            "output_format": ""
         }
     ]
 }
