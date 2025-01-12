@@ -2,27 +2,14 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "vidore/infovqa_train"
+        "path": "lmms-lab/ChartQA"
     },
     "preprocess_steps": [
-        {
-            "__type__": "split_random_mix",
-            "mix": {
-                "train": "train[90%]",
-                "validation": "train[5%]",
-                "test": "train[5%]"
-            }
-        },
         {
             "__type__": "wrap",
             "field": "answer",
             "inside": "list",
             "to_field": "answers"
-        },
-        {
-            "__type__": "rename",
-            "field": "query",
-            "to_field": "question"
         },
         {
             "__type__": "to_image",
@@ -36,7 +23,7 @@
             }
         }
     ],
-    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
+    "task": "tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
     "templates": [
         {
             "__type__": "multi_reference_template",
@@ -61,7 +48,7 @@
         "__description__": "lmms-evals default template for chartqa."
     },
     "__tags__": {
-        "license": "Unknown",
+        "license": "GPL-3.0",
         "multilinguality": "monolingual",
         "modalities": [
             "image",
@@ -71,5 +58,5 @@
         "task_categories": "question-answering",
         "task_ids": "extractive-qa"
     },
-    "__description__": "InfographicVQA is a dataset that comprises a diverse collection of infographics along with natural language questions and answers annotations. The collected questions require methods to jointly reason over the document layout, textual content, graphical elements, and data visualizations. We curate the dataset with emphasis on questions that require elementary reasoning and basic arithmetic skills."
+    "__description__": "ChartQA: A Benchmark for Question Answering about Charts with Visual and Logical Reasoning."
 }
