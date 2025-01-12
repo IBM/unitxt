@@ -3,7 +3,7 @@
     "card": "cards.tablebench_data_analysis",
     "serializer": null,
     "num_demos": 5,
-    "demos_pool_size": 10,
+    "demos_pool_size": -1,
     "augmentor": [
         "augmentors.table.transpose"
     ]

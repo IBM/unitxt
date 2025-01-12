@@ -3,6 +3,6 @@
     "card": "cards.wikitq",
     "serializer": "serializers.table.json",
     "num_demos": 5,
-    "demos_pool_size": 10,
+    "demos_pool_size": -1,
     "augmentor": null
 }

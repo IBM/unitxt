@@ -3,6 +3,6 @@
     "card": "cards.tab_fact",
     "serializer": "serializers.table.concat",
     "num_demos": 5,
-    "demos_pool_size": 10,
+    "demos_pool_size": -1,
     "augmentor": null
 }

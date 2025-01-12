@@ -3,7 +3,7 @@
     "card": "cards.numeric_nlg",
     "serializer": "serializers.table.indexed_row_major",
     "num_demos": 5,
-    "demos_pool_size": 10,
+    "demos_pool_size": -1,
     "augmentor": [
         "augmentors.table.insert_empty_rows[times=2]"
     ]
