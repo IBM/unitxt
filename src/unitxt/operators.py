@@ -2257,3 +2257,13 @@ class WikipediaFetcher(FieldOperator):
         page = self.wikipedia.page(title)
 
         return {"title": page.title, "body": getattr(page, self.mode)}
+
+class FilterEntityTypes(InstanceOperator):
+    
+    entities_types_to_keep: List[str]
+    
+    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        
+        return {key:dict_get(instance,key) for key in self.entity_types_to_keep}
+    
