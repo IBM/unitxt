@@ -1,6 +1,5 @@
 from unitxt import add_to_catalog
 from unitxt.inference import (
-    IbmGenAiInferenceEngine,
     OpenAiInferenceEngine,
     RITSInferenceEngine,
     WMLInferenceEngineGeneration,
@@ -15,13 +14,7 @@ def get_inference_engine(model_name, framework_name):
             random_seed=42,
             decoding_method="greedy",
         )
-    if framework_name == "ibm_gen_ai":
-        return IbmGenAiInferenceEngine(
-            model_name=model_name,
-            max_new_tokens=5,
-            random_seed=42,
-            decoding_method="greedy",
-        )
+
     if framework_name == "openai":
         return OpenAiInferenceEngine(
             model_name=model_name, logprobs=True, max_tokens=5, temperature=0.0
@@ -35,10 +28,9 @@ def get_inference_engine(model_name, framework_name):
 
 model_names_to_infer_framework = {
     "meta-llama/llama-3-1-70b-instruct": ["ibm_wml", "rits"],
-    "meta-llama/llama-3-70b-instruct": ["ibm_gen_ai"],
     "gpt-4-turbo": ["openai"],
-    "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "ibm_gen_ai", "rits"],
-    "meta-llama/llama-3-1-405b-instruct-fp8": ["ibm_gen_ai", "rits"],
+    "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml", "rits"],
+    "meta-llama/llama-3-1-405b-instruct-fp8": ["rits"],
     "meta-llama/llama-3-405b-instruct": ["ibm_wml"],
 }
 

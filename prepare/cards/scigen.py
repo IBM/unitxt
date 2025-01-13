@@ -26,7 +26,7 @@ card = TaskCard(
             }
         ),
     ],
-    task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
+    task="tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_wml_template_table2text_single_turn_with_reference]]",
     templates=[
         "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
     ],

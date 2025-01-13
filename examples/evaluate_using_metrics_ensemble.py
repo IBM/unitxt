@@ -11,7 +11,7 @@ logger = get_logger()
 ensemble_metric = MetricsEnsemble(
     metrics=[
         "metrics.llm_as_judge.rating.llama_3_70b_instruct.generic_single_turn",
-        "metrics.llm_as_judge.rating.llama_3_8b_instruct_ibm_genai_template_mt_bench_single_turn",
+        "metrics.llm_as_judge.rating.llama_3_8b_instruct_wml_template_mt_bench_single_turn",
     ],
     weights=[0.75, 0.25],
 )
