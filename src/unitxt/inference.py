@@ -1868,6 +1868,7 @@ class WMLInferenceEngineBase(
                 "will use space by default. If it is not desired, then have "
                 "only one of those defined in the env."
             )
+        elif space_id:
             credentials["space_id"] = space_id
         elif project_id:
             credentials["project_id"] = project_id
