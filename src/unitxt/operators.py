@@ -1768,9 +1768,7 @@ class Balance(StreamOperator):
 
     by_fields: List[str]
 
-    def process(
-        self, stream: Stream, stream_name: str | None = None
-    ) -> Generator[Any, None, None]:
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         grouped_instances = {}
 
         for instance in stream:
