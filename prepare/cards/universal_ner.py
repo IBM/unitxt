@@ -76,7 +76,7 @@ for sub_task in sub_tasks:
             ),
             Set(
                 fields={
-                    "classes": ["Person", "Organization", "Location"],
+                    "entity_types": ["Person", "Organization", "Location"],
                 }
             ),
         ],

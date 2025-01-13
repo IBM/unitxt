@@ -273,7 +273,7 @@
         {
             "__type__": "set",
             "fields": {
-                "classes": [
+                "entity_types": [
                     "aircraft_code",
                     "airline_code",
                     "airline_name",

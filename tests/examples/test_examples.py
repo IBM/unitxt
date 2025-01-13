@@ -30,6 +30,7 @@ _excluded_files = [
     "evaluate_batched_multiclass_classification.py",
     "robustness_testing_for_vision_text_models.py",  # GIL ERROR
     "evaluate_existing_dataset_by_llm_as_judge_from_template.py",
+    "examples/evaluate_vision_benchmark.py",
     # "evaluate_llm_as_judge.py",
     # "evaluate_different_templates_num_demos.py",
     # "evaluate_image_text_to_text_vllm_inference.py",

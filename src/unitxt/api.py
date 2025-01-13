@@ -7,6 +7,7 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from .artifact import fetch_artifact
 from .card import TaskCard
 from .dataset_utils import get_dataset_artifact
+from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
     LogProbInferenceEngine,
@@ -198,8 +199,14 @@ def load_dataset(
     ).with_transform(loads_instance)
 
 
-def evaluate(predictions, data) -> EvaluationResults:
-    return _compute(predictions=predictions, references=data)
+def evaluate(
+    predictions, dataset: Union[Dataset, IterableDataset] = None, data=None
+) -> EvaluationResults:
+    if dataset is None and data is None:
+        raise UnitxtError(message="Specify 'dataset' in evaluate")
+    if data is not None:
+        dataset = data  # for backward compatibility
+    return _compute(predictions=predictions, references=dataset)
 
 
 def post_process(predictions, data) -> List[Dict[str, Any]]:
