@@ -80,20 +80,20 @@ for criteria in criterias:
 Output with 20 examples
 
 Scores for criteria 'answer_relevance'
-Scores of gold answers: 0.9166666666666666 +/- 0.17778975055468987
-Scores of predicted answers: 0.6583333333333333 +/- 0.4125370063511823
-Positional bias occurrence on gold answers: 0.13333333333333333
-Positional bias occurrence on predicted answers: 0.2
+Scores of gold answers: 0.8875 +/- 0.18978866362906205
+Scores of predicted answers: 0.7625 +/- 0.3390679950439998
+Positional bias occurrence on gold answers: 0.25
+Positional bias occurrence on predicted answers: 0.25
 
 Scores for criteria 'coherence'
-Scores of gold answers: 0.26166666666666666 +/- 0.22115813243068835
-Scores of predicted answers: 0.24 +/- 0.2717757696438688
-Positional bias occurrence on gold answers: 0.43333333333333335
-Positional bias occurrence on predicted answers: 0.3333333333333333
+Scores of gold answers: 0.8125 +/- 0.2910394257972982
+Scores of predicted answers: 0.6875 +/- 0.39632356531129037
+Positional bias occurrence on gold answers: 0.3
+Positional bias occurrence on predicted answers: 0.3
 
 Scores for criteria 'conciseness'
 Scores of gold answers: 1.0 +/- 0.0
-Scores of predicted answers: 0.6333333333333333 +/- 0.490132517853561
-Positional bias occurrence on gold answers: 0.03333333333333333
-Positional bias occurrence on predicted answers: 0.06666666666666667
+Scores of predicted answers: 0.6 +/- 0.5026246899500346
+Positional bias occurrence on gold answers: 0
+Positional bias occurrence on predicted answers: 0.05
 """

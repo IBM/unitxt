@@ -316,7 +316,7 @@ class DirectCriteriaCatalogEnum(Enum):
             "2": 0.25,
             "3": 0.5,
             "4": 0.75,
-            "5": 0.1,
+            "5": 1,
         },
     )
 
