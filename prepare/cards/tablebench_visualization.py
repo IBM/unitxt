@@ -55,8 +55,8 @@ card = TaskCard(
             output_format="```python\nimport pandas as pd \nimport matplotlib.pyplot as plt\ndf = pd.read_csv('table.csv')\n{answers}\nplt.show()\n```",
             target_prefix="Final Answer: ",
             postprocessors=[
-                "processors.remove_substrings",
-                "processors.filter_python_comment_lines",
+                # "processors.remove_substrings",
+                # "processors.filter_python_comment_lines",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",
