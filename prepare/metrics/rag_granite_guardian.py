@@ -12,10 +12,14 @@ test_examples = [
     }
 ]
 
-risk_names = ["groundedness", "context_relevance", "answer_relevance"]
+risk_names_to_pred_field = {
+    "groundedness": "answer",
+    "context_relevance": "question",
+    "answer_relevance": "answer",
+}
 
 
-for granite_risk_name in risk_names:
+for granite_risk_name, pred_field in risk_names_to_pred_field.items():
     metric_name = f"""granite_guardian_{granite_risk_name}"""
     metric = GraniteGuardianWMLMetric(
         main_score=metric_name,
@@ -28,7 +32,11 @@ for granite_risk_name in risk_names:
         preprocess_steps=[
             Copy(
                 field_to_field={field: f"task_data/{field}" for field in rag_fields},
-                not_exist_ok=True,
+                not_exist_do_nothing=True,
+            ),
+            Copy(
+                field_to_field={"prediction": f"task_data/{pred_field}"},
+                not_exist_do_nothing=True,
             ),
             Set(
                 fields={

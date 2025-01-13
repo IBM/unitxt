@@ -4,13 +4,18 @@
     "preprocess_steps": [
         {
             "__type__": "copy",
-            "field": "contexts",
-            "to_field": "references"
+            "field_to_field": {
+                "task_data/contexts": "references",
+                "answer": "prediction"
+            },
+            "not_exist_do_nothing": true
         },
         {
             "__type__": "copy",
-            "field": "answer",
-            "to_field": "prediction"
+            "field_to_field": {
+                "contexts": "references"
+            },
+            "not_exist_do_nothing": true
         }
     ],
     "metric": "metrics.bert_score.deberta_large_mnli"

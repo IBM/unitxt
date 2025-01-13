@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nDocument: {contexts}\n",
+    "output_format": "{is_context_relevant}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.extract_verbal_judgement"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "Given the following question and document, you must analyze the provided document and determine to what extent it is sufficient for answering the question. In your evaluation, you should consider the content of the document and how it relates to the provided question.\nReply with one of the 4 options, without any further explanations:\n\"Completely Relevant\" - if the question is completely answerable from the document.\n\"Mostly Relevant\" - if the document contains most of the information required to answer the question but not enough to fully address it.\n\"Somewhat Relevant\" - If the document is related to the question but not sufficient to answer it.\n\"Not Relevant\" - If the document is irrelevant to the question.\n"
+}

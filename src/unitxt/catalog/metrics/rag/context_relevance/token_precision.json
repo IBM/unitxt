@@ -1,0 +1,22 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "precision",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/contexts": "references",
+                "question": "prediction"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "references"
+            },
+            "not_exist_do_nothing": true
+        }
+    ],
+    "metric": "metrics.token_overlap"
+}
