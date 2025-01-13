@@ -730,9 +730,6 @@ class LLMJudgePairwise(LLMJudge):
 
         winrates = [r["winrate"] for r in per_response_results.values()]
         all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
-        all_results[self.main_score] = max(
-            range(len(winrates)), key=winrates.__getitem__
-        )
         all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
