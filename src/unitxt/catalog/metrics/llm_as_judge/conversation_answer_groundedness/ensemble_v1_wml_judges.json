@@ -6,10 +6,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "ibm/granite-13b-instruct-v2",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v8",
             "task": "rating.single_turn",
@@ -21,10 +18,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "meta-llama/llama-3-70b-instruct",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v10",
             "task": "rating.single_turn",
@@ -36,10 +30,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "mistralai/mixtral-8x7b-instruct-v01",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v10",
             "task": "rating.single_turn",
@@ -51,10 +42,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "meta-llama/llama-3-70b-instruct",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v11",
             "task": "rating.single_turn",
@@ -66,10 +54,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "mistralai/mixtral-8x7b-instruct-v01",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v11",
             "task": "rating.single_turn",
@@ -81,10 +66,7 @@
             "inference_model": {
                 "__type__": "wml_inference_engine_generation",
                 "model_name": "ibm/granite-13b-chat-v2",
-                "parameters": {
-                    "__type__": "wml_inference_engine_params",
-                    "max_new_tokens": 256
-                }
+                "max_new_tokens": 256
             },
             "template": "templates.response_assessment.judges.grounded.v11",
             "task": "rating.single_turn",
