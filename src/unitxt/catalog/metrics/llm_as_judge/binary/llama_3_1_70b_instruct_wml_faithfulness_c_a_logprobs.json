@@ -7,5 +7,5 @@
     "main_score": "faithfulness_c_a_logprobs",
     "prediction_field": "answer",
     "infer_log_probs": true,
-    "__deprecated_msg__": "This metrics should be replaced with metrics.rag.faithfulness.llama_3_1_70b_instruct_wml_c_a_logprobs"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.faithfulness.llama_3_1_70b_instruct_wml_c_a_logprobs"
 }

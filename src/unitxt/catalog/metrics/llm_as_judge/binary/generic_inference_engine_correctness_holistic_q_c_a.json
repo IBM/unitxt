@@ -9,5 +9,5 @@
     "main_score": "correctness_holistic_q_c_a",
     "prediction_field": "answer",
     "infer_log_probs": false,
-    "__deprecated_msg__": "This metrics should be replaced with metrics.rag.correctness_holistic.generic_inference_engine_q_c_a"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.correctness_holistic.generic_inference_engine_q_c_a"
 }
