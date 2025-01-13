@@ -5,5 +5,5 @@
     "max_tokens": 5,
     "temperature": 0.0,
     "top_logprobs": 5,
-    "provider": "rits"
+    "provider": "watsonx"
 }
