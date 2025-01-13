@@ -27,7 +27,8 @@ card = TaskCard(
         reference_fields={"input_label": str},
         prediction_type=str,
         metrics=["metrics.safety_metric", 
-                 "metrics.llm_as_judge.direct.watsonx.granite_guardian_3_0_2b"
+                 # "metrics.llm_as_judge.direct.watsonx.granite_guardian_3_0_2b"
+                 "metrics.llm_as_judge.direct.watsonx.llama3_1_70b"
                  "[context_fields=[input,input_label],"
                  "criteria=metrics.llm_as_judge.direct.criterias.harmfulness]"],
         

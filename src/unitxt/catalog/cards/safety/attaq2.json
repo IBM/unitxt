@@ -1,0 +1,71 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "ibm/AttaQ",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "shuffle",
+            "page_size": 2800
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "input_label": {}
+            }
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "input": "input_label/input",
+                "label": "input_label/label"
+            }
+        },
+        {
+            "__type__": "dump_json",
+            "field": "input_label"
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "input": "str"
+        },
+        "reference_fields": {
+            "input_label": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.safety_metric",
+            "metrics.llm_as_judge.direct.watsonx.llama3_1_70b[context_fields=[input,input_label],criteria=metrics.llm_as_judge.direct.criterias.harmfulness]"
+        ]
+    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}\n",
+            "output_format": "{input_label}"
+        },
+        {
+            "__type__": "input_output_template",
+            "input_format": "{input}",
+            "output_format": "{input_label}"
+        }
+    ],
+    "__description__": "AttaQ",
+    "__tags__": {
+        "languages": [
+            "english"
+        ]
+    }
+}
