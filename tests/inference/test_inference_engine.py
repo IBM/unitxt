@@ -9,7 +9,6 @@ from unitxt.inference import (
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
-    IbmGenAiInferenceEngine,
     LiteLLMInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
@@ -198,14 +197,11 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             },
         ]
 
-        genai_engine = IbmGenAiInferenceEngine(
-            model_name="mistralai/mixtral-8x7b-instruct-v01"
-        )
         watsonx_engine = WMLInferenceEngineGeneration(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
 
-        for engine in [genai_engine, watsonx_engine]:
+        for engine in [watsonx_engine]:
             dataset = cast(OptionSelectingByLogProbsInferenceEngine, engine).select(
                 dataset
             )
