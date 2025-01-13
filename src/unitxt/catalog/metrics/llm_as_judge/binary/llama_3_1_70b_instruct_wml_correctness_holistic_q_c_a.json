@@ -6,5 +6,6 @@
     "format": null,
     "main_score": "correctness_holistic_q_c_a",
     "prediction_field": "answer",
-    "infer_log_probs": false
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metrics should be replaced with metrics.rag.correctness_holistic.llama_3_1_70b_instruct_wml_q_c_a"
 }

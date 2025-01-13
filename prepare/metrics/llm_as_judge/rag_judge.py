@@ -15,6 +15,13 @@ metric_type_to_template_dict = {
     "answer_correctness": {"q_a_gt_loose": "judge_loose_match_no_context"},
     "answer_relevance": {"q_a": "judge_answer_relevance"},
 }
+metric_type_to_realization = {
+    "faithfulness": "_verbal",
+    "context_relevance": "_numeric",
+    "correctness_holistic": "_numeric",
+    "answer_correctness": "_numeric",
+    "answer_relevance": "_numeric",
+}
 
 generic_engine_label = "generic_inference_engine"
 inference_models = {
@@ -33,9 +40,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
         for logprobs_label in [
             "",
             "_logprobs",
-            "_numeric",
-            "_verbal_good_bad",
-            "_verbal",
+            metric_type_to_realization[metric_type],
         ]:
             use_logprobs = logprobs_label == "_logprobs"
             template = (
@@ -62,15 +67,28 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                     infer_log_probs=use_logprobs,
                 )
 
+                new_catalog_name = f"metrics.rag.{metric_type}.{inf_label}_{template_short_name}{logprobs_label}"
+
                 add_to_catalog(
                     metric,
-                    f"metrics.rag.{metric_type}.{inf_label}_{template_short_name}{logprobs_label}",
+                    new_catalog_name,
                     overwrite=True,
                 )
 
-                # for backwards compatibility: keep also legacy path to metrics
-                add_to_catalog(
-                    metric,
-                    f"metrics.llm_as_judge.binary.{inf_label}_{metric_label}",
-                    overwrite=True,
-                )
+                if logprobs_label in ["_logprobs", ""]:
+                    metric = TaskBasedLLMasJudge(
+                        inference_model=inference_model,
+                        template=template,
+                        task=task_name,
+                        format=None,
+                        main_score=metric_label,
+                        prediction_field=get_prediction_field(metric_type),
+                        infer_log_probs=use_logprobs,
+                        __deprecated_msg__=f"This metric should be replaced with {new_catalog_name}",
+                    )
+                    # for backwards compatibility: keep also legacy path to metrics
+                    add_to_catalog(
+                        metric,
+                        f"metrics.llm_as_judge.binary.{inf_label}_{metric_label}",
+                        overwrite=True,
+                    )
