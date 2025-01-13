@@ -10,6 +10,7 @@ from unitxt.operators import (
     ApplyMetric,
     ApplyOperatorsField,
     ApplyStreamOperatorsField,
+    Balance,
     CastFields,
     CollateInstances,
     Copy,
@@ -1855,6 +1856,86 @@ label (str):
             set(page_1_outputs)
         )
         self.assertSetEqual(inputs_outputs_intersection, set())
+
+    def test_balance(self):
+        inputs = [
+            {"a": 1, "b": "x"},
+            {"a": 1, "b": "x"},
+            {"a": 2, "b": "y"},
+            {"a": 2, "b": "y"},
+            {"a": 3, "b": "z"},
+            {"a": 3, "b": "z"},
+        ]
+        targets = [
+            {"a": 1, "b": "x"},
+            {"a": 2, "b": "y"},
+            {"a": 3, "b": "z"},
+            {"a": 1, "b": "x"},
+            {"a": 2, "b": "y"},
+            {"a": 3, "b": "z"},
+        ]
+
+        check_operator(
+            operator=Balance(by_fields=["a"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [{"a": 1, "b": "x"}] * 5
+        targets = [{"a": 1, "b": "x"}] * 5
+
+        check_operator(
+            operator=Balance(by_fields=["a"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = []
+        targets = []
+
+        check_operator(
+            operator=Balance(by_fields=["a"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {"a": 1, "b": "x"},
+            {"a": 1, "b": "x"},
+            {"a": 2, "b": "y"},
+            {"a": 3, "b": "z"},
+        ]
+        targets = [
+            {"a": 1, "b": "x"},
+            {"a": 2, "b": "y"},
+            {"a": 3, "b": "z"},
+            {"a": 1, "b": "x"},
+        ]
+
+        check_operator(
+            operator=Balance(by_fields=["a"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {"a": 1, "b": "x"},
+            {"a": "1", "b": "y"},
+            {"a": 1.0, "b": "z"},
+            {"a": None, "b": "w"},
+        ]
+        targets = inputs
+
+        check_operator(
+            operator=Balance(by_fields=["a"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
 
     def test_grouped_shuffle(self):
         # 18 questions indexed by "index", but with two grouping features: question, topic
