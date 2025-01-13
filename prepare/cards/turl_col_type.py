@@ -44,7 +44,7 @@ card = TaskCard(
         InputOutputTemplate(
             instruction="""
                     This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types.
-                    \nCandidate Types: {vocab} \nOutput only the correct column types for the mentioned from the candidate types.
+                    Candidate Types: {vocab} \nOutput only the correct column types for the mentioned from the candidate types.
                 """.strip(),
             input_format="\nColumn name: {colname}"
             "\nPage Title: {page_title} "
