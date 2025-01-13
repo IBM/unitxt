@@ -50,9 +50,10 @@ def dict_diff_string(dict1, dict2, max_diff=200):
     keys_in_both = dict1.keys() & dict2.keys()
     added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}
     removed = {k: dict1[k] for k in dict1.keys() - dict2.keys()}
-    changed = {
-        k: (dict1[k], dict2[k]) for k in keys_in_both if str(dict1[k]) != str(dict2[k])
-    }
+    changed = {}
+    for k in keys_in_both:
+        if str(dict1[k]) != str(dict2[k]):
+            changed[k] = (dict1[k], dict2[k])
     result = []
 
     def format_with_value(k, value, label):
@@ -477,6 +478,8 @@ class ArtifactLink(Artifact):
 
 def get_raw(obj):
     if isinstance(obj, Artifact):
+        if obj.__id__ is not None:
+            return obj.__id__
         return obj._to_raw_dict()
 
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple

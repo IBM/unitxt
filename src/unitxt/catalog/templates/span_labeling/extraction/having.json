@@ -1,7 +1,7 @@
 {
     "__type__": "span_labeling_template",
     "input_format": "{text_type}: {text}",
-    "instruction": "From the following {text_type}, extract spans having a {class_type}: {classes}.",
+    "instruction": "From the following {text_type}, extract spans having a entity type: {entity_types}.",
     "postprocessors": [
         "processors.to_span_label_pairs"
     ]

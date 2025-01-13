@@ -39,7 +39,7 @@ from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
-from .serializers import TableSerializer
+from .serializers import ImageSerializer, TableSerializer
 from .types import Table
 from .utils import recursive_copy
 
@@ -357,6 +357,67 @@ class SerializeTableAsConcatenation(SerializeTable):
 
         # return serialized table as a string
         return serialized_tbl_str.strip()
+
+
+class SerializeTableAsImage(SerializeTable):
+    _requirements_list = ["matplotlib", "pillow"]
+
+    def serialize_table(self, table_content: Dict) -> str:
+        raise NotImplementedError()
+
+    def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
+        table_content = recursive_copy(value)
+        if self.shuffle_columns:
+            table_content = shuffle_columns(table=table_content, seed=self.seed)
+
+        if self.shuffle_rows:
+            table_content = shuffle_rows(table=table_content, seed=self.seed)
+
+        import io
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        from PIL import Image
+
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
+
+        # Create a pandas DataFrame
+        df = pd.DataFrame(rows, columns=header)
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        df.columns = [
+            f"{col}_{i}" if df.columns.duplicated()[i] else col
+            for i, col in enumerate(df.columns)
+        ]
+
+        # Create a matplotlib table
+        plt.rcParams["font.family"] = "Serif"
+        fig, ax = plt.subplots(figsize=(len(header) * 1.5, len(rows) * 0.5))
+        ax.axis("off")  # Turn off the axes
+
+        table = pd.plotting.table(ax, df, loc="center", cellLoc="center")
+        table.auto_set_column_width(col=range(len(df.columns)))
+        table.scale(1.5, 1.5)
+
+        # Save the plot to a BytesIO buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
+        plt.close(fig)  # Close the figure to free up memory
+        buf.seek(0)
+
+        # Load the image from the buffer using PIL
+        image = Image.open(buf)
+        return ImageSerializer().serialize({"image": image, "format": "png"}, instance)
 
 
 # truncate cell value to maximum allowed length

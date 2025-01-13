@@ -8,7 +8,7 @@ from unitxt.processors import SplitStrip
 from unitxt.span_lableing_operators import IobExtractor
 from unitxt.test_utils.card import test_card
 
-classes = [
+entity_types = [
     "aircraft_code",
     "airline_code",
     "airline_name",
@@ -103,9 +103,9 @@ card = TaskCard(
             },
         ),
         IobExtractor(
-            labels=classes,
-            begin_labels=["B-" + c for c in classes],
-            inside_labels=["I-" + c for c in classes],
+            labels=entity_types,
+            begin_labels=["B-" + c for c in entity_types],
+            inside_labels=["I-" + c for c in entity_types],
             outside_label="O",
         ),
         Copy(
@@ -117,7 +117,7 @@ card = TaskCard(
             get_default=[],
             not_exist_ok=True,
         ),
-        Set(fields={"classes": classes}),
+        Set(fields={"entity_types": entity_types}),
     ],
     task="tasks.span_labeling.extraction",
     templates="templates.span_labeling.extraction.all",
