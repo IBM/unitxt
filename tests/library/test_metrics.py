@@ -2461,3 +2461,96 @@ Answer: """,
 
         outputs = metric.compute(references, predictions[0], task_data[0])
         self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_correct_query_remote_db(self):
+        import os
+        import subprocess
+
+        def source_bashrc_and_import_env():
+            # Command to source .bashrc and print all environment variables
+            command = "source ~/.bashrc && env"
+            process = subprocess.Popen(
+                ["bash", "-c", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            stdout, stderr = process.communicate()
+
+            # Parse the environment variables and set them in os.environ
+            output = stdout.decode("utf-8").splitlines()
+            for line in output:
+                key, value = line.split("=", 1)
+                os.environ[key] = value
+
+        # Example usage to import environment variables
+        source_bashrc_and_import_env()
+        metric = ExecutionAccuracy()
+        predictions = [
+            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
+FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+WHERE UPPER(MFGN_TP) = 'MES'
+AND PLANT = '970'
+AND UPPER(BRAND_CD) = 'STOR'"""
+        ]
+        references = [
+            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
+FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+WHERE UPPER(MFGN_TP) = 'MES'
+AND PLANT = '970'
+AND UPPER(BRAND_CD) = 'STOR'"""
+        ]
+        task_data = [
+            {
+                "db_type": "remote",
+                "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_incorrect_query_remote_db(self):
+        import os
+        import subprocess
+
+        def source_bashrc_and_import_env():
+            # Command to source .bashrc and print all environment variables
+            command = "source ~/.bashrc && env"
+            process = subprocess.Popen(
+                ["bash", "-c", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            stdout, stderr = process.communicate()
+
+            # Parse the environment variables and set them in os.environ
+            output = stdout.decode("utf-8").splitlines()
+            for line in output:
+                key, value = line.split("=", 1)
+                os.environ[key] = value
+
+        # Example usage to import environment variables
+        source_bashrc_and_import_env()
+
+        metric = ExecutionAccuracy()
+        predictions = [
+            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
+FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+WHERE UPPER(MFGN_TP) = 'MES'
+AND PLANT = '970'
+AND UPPER(BRAND_CD) = 'STOR'"""
+        ]
+        references = [
+            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
+FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+WHERE UPPER(MFGN_TP) = 'MES'
+AND PLANT = '970'
+AND UPPER(BRAND_CD) = 'STOR'"""
+        ]
+        task_data = [
+            {
+                "db_type": "remote",
+                "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+
+        self.assertEqual(1.0, outputs["score"])
