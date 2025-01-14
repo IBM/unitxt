@@ -3,7 +3,6 @@ import json
 import math
 import os
 import re
-import sqlite3
 import string
 import uuid
 import warnings
@@ -17,12 +16,12 @@ import evaluate
 import numpy
 import numpy as np
 import pandas as pd
+import requests
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
 from .collections import ListCollection
-from .data_utils import SQLData
 from .dataclass import (
     AbstractField,
     InternalField,
@@ -2512,8 +2511,6 @@ class FinQAEval(InstanceMetric):
         import importlib.util as iua
         import os
 
-        import requests
-
         # download finqa evaluation script, load as a module and use it on the fly
         def download_finqa_eval_script_file(url, local_path, hash_of_script):
             if not os.path.exists(local_path):
@@ -4370,8 +4367,6 @@ class RemoteMetric(StreamOperator, Metric):
         return MetricRequest(instance_inputs=instance_inputs)
 
     def get_metric_response(self, metric_request: MetricRequest) -> MetricResponse:
-        import requests
-
         response = requests.post(
             url=self.get_metric_url(),
             json=metric_request.to_dict(),
@@ -5708,72 +5703,37 @@ class GraniteGuardianWMLMetric(InstanceMetric):
 
 
 class ExecutionAccuracy(InstanceMetric):
+    from .db_utils import (
+        DatabaseConnector,
+        LocalSQLiteConnector,
+        MockConnector,
+        RemoteDatabaseConnector,
+        SQLData,
+    )
+
     reduction_map = {"mean": ["execution_accuracy"]}
     main_score = "execution_accuracy"
     ci_scores = ["execution_accuracy"]
 
     prediction_type = "Any"  # string representation is compared
     sql_data = SQLData()
-    metric_flavour = "bird"
     sql_timeout = 100.0
 
-    # @staticmethod
     def run_sql_and_match(
-        self,
-        predicted_sql: str,
-        ground_truth: str,
-        db_path: Optional[str] = None,
-        db: Optional[dict] = None,
+        self, predicted_sql: str, gold_sql: str, connector: DatabaseConnector
     ) -> int:
-        """Runs SQL queries against either a SQLite database or a dictionary-based database and checks if the results match."""
-        assert (
-            not db_path == db
-        ), "Either db_path or db should be inputted to the matching function"
-
-        res: int = 0
-
-        if db_path:
-            conn = sqlite3.connect(db_path)
-            cursor = conn.cursor()
-            logger.debug(f"Running SQL query over SQLite DB: {db_path}")
-        elif db:
-            # Initialize in-memory database from the 'db' dictionary
-            conn = sqlite3.connect(":memory:")
-            cursor = conn.cursor()
-            logger.debug("Running SQL query over in-memory DB")
-
-            # Create tables and insert data from the 'db' dictionary
-            for table_name, table_data in db.items():
-                columns = table_data["columns"]
-                rows = table_data["rows"]
-
-                # Create table
-                cursor.execute(f"CREATE TABLE {table_name} ({', '.join(columns)})")
-
-                # Insert data
-                placeholders = ", ".join(["?"] * len(columns))
-                cursor.executemany(
-                    f"INSERT INTO {table_name} VALUES ({placeholders})", rows
-                )
-
+        """Runs SQL queries using the provided connector and checks if the results match."""
         try:
-            cursor.execute(predicted_sql)
-            predicted_res: List[Tuple] = cursor.fetchall()
-        except sqlite3.Error as e:
-            logger.error(f"Error executing predicted SQL: {e}")
-            return 0
-        try:
-            cursor.execute(ground_truth)
-            ground_truth_res: List[Tuple] = cursor.fetchall()
-        except sqlite3.Error as e:
-            logger.error(f"Error executing ground truth SQL: {e}")
-            return 0
-        finally:
-            conn.close()
+            pred_res = connector.execute_query(predicted_sql)
+            gold_res = connector.execute_query(gold_sql)
 
-        if set(predicted_res) == set(ground_truth_res):
-            res = 1
-        return res
+            if pred_res is None or gold_res is None:
+                return 0  # Treat execution error as mismatch
+
+            return int(set(pred_res) == set(gold_res))
+        except Exception as e:
+            logger.error(f"Error in run_sql_and_match: {e}")
+            return 0
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         try:
@@ -5792,22 +5752,36 @@ class ExecutionAccuracy(InstanceMetric):
             if ";" in predicted_sql:
                 predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
             db_id = task_data["db_id"]
-            db = None
+            db_config = {
+                "db_path": None,
+                "tables": None,
+                "api_url": None,
+                "database_id": None,
+            }
             if task_data["db_type"] == "local":
-                db_file_path = self.sql_data.get_db_file_path(db_id)
+                db_config["db_path"] = self.sql_data.get_db_file_path(db_id)
+                connector = LocalSQLiteConnector(db_config)
             elif task_data["db_type"] == "mock":
-                db_file_path = None
-                db = task_data["db"]
-            logger.debug(f"Database file: {db_file_path}")
+                db_config["tables"] = task_data["db"]
+                connector = MockConnector(db_config)
+            elif task_data["db_type"] == "remote":
+                db_config["api_url"], db_config["database_id"] = (
+                    db_id.split(",")[0],
+                    db_id.split("db_id=")[-1].split(",")[0],
+                )
+                connector = RemoteDatabaseConnector(db_config)
+            else:
+                raise OSError(f'db_type {task_data["db_type"]} is not supported')
+
             try:
                 execution_result = func_timeout(
                     self.sql_timeout,
                     self.run_sql_and_match,
-                    args=(predicted_sql, references[0], db_file_path, db),
+                    args=(predicted_sql, references[0], connector),
                 )
             except FunctionTimedOut:
                 logger.error("QUERY TIMEOUT")
-                pass
+                execution_result = 0.0
 
         result = {self.main_score: float(execution_result)}
         logger.debug(f"Result: {result}")
