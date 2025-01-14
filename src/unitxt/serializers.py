@@ -3,8 +3,8 @@ import io
 from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
-from .data_utils import SQLData
 from .dataclass import AbstractField, Field
+from .db_utils import SQLData
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
