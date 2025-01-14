@@ -459,11 +459,15 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
                     judge_task_input_field, judge_task_input_field
                 )
                 new_val = input_instance.get(orig_task_field_name)
+                if not new_val and isinstance(prediction, dict):
+                    new_val = prediction.get(orig_task_field_name)
                 if new_val:
                     instance_task_data[judge_task_input_field] = new_val
 
             if self.prediction_field and prediction:
-                instance_task_data[self.prediction_field] = str(prediction)
+                if isinstance(prediction, dict):
+                    prediction = prediction[self.prediction_field]
+                instance_task_data[self.prediction_field] = prediction
             instance_task_data = judge_task.process(instance_task_data)["input_fields"]
 
             data_classification_policy = input_instance.get("metadata", {}).get(
