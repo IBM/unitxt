@@ -2261,15 +2261,18 @@ class WikipediaFetcher(FieldOperator):
 class FilterEntityTypes(InstanceOperator):
     
     entities_types_to_keep: List[str]
+    fields_to_filter: List[str]
     
     def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         
-        data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in self.entities_types_to_keep]
+        data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in set(self.entities_types_to_keep)]
         
         return {
             key:(
-                [value[i] for i in data_to_keep_indices] if isinstance(value, List) else value
+                [value[i] for i in data_to_keep_indices] if key in self.fields_to_filter else value
                 ) 
             for key,value in instance.items()
             }
+
+
