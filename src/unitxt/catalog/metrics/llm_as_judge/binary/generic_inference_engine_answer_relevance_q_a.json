@@ -8,5 +8,6 @@
     "format": null,
     "main_score": "answer_relevance_q_a",
     "prediction_field": "answer",
-    "infer_log_probs": false
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.answer_relevance.generic_inference_engine_q_a"
 }

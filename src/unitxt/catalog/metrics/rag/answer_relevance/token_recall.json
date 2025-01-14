@@ -1,0 +1,29 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "recall",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/question": "references",
+                "answer": "prediction"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "references"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "references"
+            ],
+            "to_field": "references"
+        }
+    ],
+    "metric": "metrics.token_overlap"
+}

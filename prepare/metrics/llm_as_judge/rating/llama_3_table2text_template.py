@@ -4,7 +4,7 @@ from unitxt.llm_as_judge_from_template import LLMAsJudge
 from unitxt.random_utils import get_seed
 
 model_list = ["llama-3-70b-instruct"]
-format = "formats.chat_api"
+format = "formats.llama3_instruct"
 template = "templates.response_assessment.rating.table2text_single_turn_with_reference"
 task = "rating.single_turn_with_reference"
 for model_id in model_list:
