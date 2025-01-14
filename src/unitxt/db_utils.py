@@ -5,6 +5,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 import evaluate
+import requests
 from huggingface_hub import snapshot_download
 
 # Constants for SQL timeout and download lock timeout.
@@ -25,8 +26,6 @@ class DatabaseConnector(ABC):
     @abstractmethod
     def get_table_schema(
         self,
-        select_tables: Optional[List[str]] = None,
-        select_columns: Optional[List[str]] = None,
         num_rows_from_table_to_add: int = 0,
     ) -> str:
         """Abstract method to get database schema."""
@@ -37,8 +36,13 @@ class DatabaseConnector(ABC):
         """Abstract method to format table data."""
         pass
 
+    @abstractmethod
+    def execute_query(self, query: str) -> Any:
+        """Abstract method to execute a query against the database."""
+        pass
 
-class SQLiteConnector(DatabaseConnector):
+
+class LocalSQLiteConnector(DatabaseConnector):
     """Database connector for SQLite databases."""
 
     def __init__(self, db_config: Dict[str, Any]):
@@ -51,9 +55,6 @@ class SQLiteConnector(DatabaseConnector):
 
     def get_table_schema(
         self,
-        select_tables: Optional[List[str]] = None,
-        select_columns: Optional[List[str]] = None,
-        num_rows_from_table_to_add: int = 0,
     ) -> str:
         """Extracts schema from an SQLite database."""
         self.cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -65,65 +66,16 @@ class SQLiteConnector(DatabaseConnector):
                 table = table[0]
             if table == "sqlite_sequence":
                 continue
-            if select_tables and table.lower() not in select_tables:
-                continue
             sql_query: str = (
                 f"SELECT sql FROM sqlite_master WHERE type='table' AND name='{table}';"
             )
             self.cursor.execute(sql_query)
             schema_prompt: str = self.cursor.fetchone()[0]
 
-            if select_tables and select_columns:
-                schema_prompt = self.apply_column_selection(
-                    select_columns, table, schema_prompt
-                )
-
-            if num_rows_from_table_to_add:
-                schema_prompt = self.add_table_rows_to_prompt(
-                    num_rows_from_table_to_add, table, schema_prompt
-                )
             schemas[table] = schema_prompt
 
         schema_prompt: str = "\n\n".join(list(schemas.values()))
         return schema_prompt
-
-    def add_table_rows_to_prompt(
-        self, num_rows_from_table_to_add: int, table: str, schema_prompt: str
-    ) -> str:
-        """Adds sample table rows to the schema prompt."""
-        cur_table: str = table
-        sql_query: str = (
-            f"SELECT * FROM `{cur_table}` LIMIT {num_rows_from_table_to_add}"
-        )
-        self.cursor.execute(sql_query)
-        column_names: list[str] = [
-            description[0] for description in self.cursor.description
-        ]
-        values: list[tuple] = self.cursor.fetchall()
-        rows_prompt: str = self.format_table(column_names=column_names, values=values)
-        verbose_prompt: str = f"/* \nSample data ({num_rows_from_table_to_add} example row(s)): \n SELECT * FROM {cur_table} LIMIT {num_rows_from_table_to_add}; \n {rows_prompt} \n */"
-        return f"{schema_prompt}\n\n{verbose_prompt}"
-
-    def apply_column_selection(
-        self, select_columns: List[str], table: str, schema_prompt: str
-    ) -> str:
-        """Filters columns based on `select_columns`."""
-        lines: list[str] = []
-        for line in schema_prompt.split("\n"):
-            if line.startswith("    "):
-                col_name: str = line.strip().split()[0]
-                if "`" in line:
-                    col_name = line[line.find("`") + 1 : line.rfind("`")]
-                if col_name.endswith(","):
-                    lines.append(line)
-                    continue
-                col_name_formatted: str = table + "." + col_name.lower()
-                if col_name_formatted in select_columns:
-                    lines.append(line)
-            else:
-                lines.append(line)
-
-        return "\n".join(lines)
 
     def format_table(self, column_names: list, values: list) -> str:
         """Formats table data into a string for display."""
@@ -141,6 +93,21 @@ class SQLiteConnector(DatabaseConnector):
             rows.append(row)
         rows = "\n".join(rows)
         return header + "\n" + rows
+
+    def execute_query(self, query: str) -> Any:
+        """Executes a query against the SQLite database."""
+        conn = None  # Initialize conn to None outside the try block
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(query)
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            logger.error(f"Error executing SQL: {e}")
+            return None
+        finally:
+            if conn:
+                conn.close()
 
 
 class MockConnector(DatabaseConnector):
@@ -155,8 +122,6 @@ class MockConnector(DatabaseConnector):
     def get_table_schema(
         self,
         select_tables: Optional[List[str]] = None,
-        select_columns: Optional[List[str]] = None,
-        num_rows_from_table_to_add: int = 0,
     ) -> str:
         """Generates a mock schema from the tables structure."""
         schemas = {}
@@ -165,32 +130,10 @@ class MockConnector(DatabaseConnector):
                 continue
             columns = ", ".join([f"`{col}` TEXT" for col in table_data["columns"]])
             schema = f"CREATE TABLE `{table_name}` ({columns});"
-            if num_rows_from_table_to_add:
-                schema = self.add_table_rows_to_prompt(
-                    num_rows_from_table_to_add, table_name, schema
-                )
 
             schemas[table_name] = schema
 
         return "\n\n".join(list(schemas.values()))
-
-    def add_table_rows_to_prompt(
-        self, num_rows_from_table_to_add: int, table_name: str, schema_prompt: str
-    ) -> str:
-        """Adds mock table rows to the schema prompt."""
-        table_data = self.tables.get(table_name)
-        if not table_data:
-            return schema_prompt  # Return original schema if table not found
-
-        rows = table_data.get("rows", [])[:num_rows_from_table_to_add]
-        if not rows:
-            return schema_prompt
-
-        rows_prompt: str = self.format_table(
-            column_names=table_data["columns"], values=rows
-        )
-        verbose_prompt: str = f"/* \nSample data ({num_rows_from_table_to_add} example row(s)): \n SELECT * FROM {table_name} LIMIT {num_rows_from_table_to_add}; \n {rows_prompt} \n */"
-        return f"{schema_prompt}\n\n{verbose_prompt}"
 
     def format_table(self, column_names: list, values: list) -> str:
         """Formats table data into a string for display."""
@@ -208,6 +151,96 @@ class MockConnector(DatabaseConnector):
             rows.append(row)
         rows = "\n".join(rows)
         return header + "\n" + rows
+
+    def execute_query(self, query: str) -> Any:
+        """Simulates executing a query against the mock database."""
+        # Initialize in-memory database from the 'db' dictionary
+        conn = sqlite3.connect(":memory:")
+        cursor = conn.cursor()
+        logger.debug("Running SQL query over in-memory DB")
+
+        # Create tables and insert data from the 'db' dictionary
+        for table_name, table_data in self.tables.items():
+            columns = table_data["columns"]
+            rows = table_data["rows"]
+
+            # Create table
+            cursor.execute(f"CREATE TABLE {table_name} ({', '.join(columns)})")
+
+            # Insert data
+            placeholders = ", ".join(["?"] * len(columns))
+            cursor.executemany(
+                f"INSERT INTO {table_name} VALUES ({placeholders})", rows
+            )
+
+        try:
+            cursor.execute(query)
+            return cursor.fetchall()
+        except sqlite3.Error as e:
+            logger.error(f"Error executing SQL: {e}")
+            return None
+        finally:
+            conn.close()
+
+
+class RemoteDatabaseConnector(DatabaseConnector):
+    """Database connector for remote databases accessed via HTTP."""
+
+    def __init__(self, db_config: Dict[str, Any]):
+        super().__init__(db_config)
+        self.api_url = db_config.get("api_url")
+        self.database_id = db_config.get("database_id")
+        if not self.api_url or not self.database_id:
+            raise ValueError(
+                "Both 'api_url' and 'database_id' are required for RemoteDatabaseConnector."
+            )
+
+        self.api_key = os.getenv("SQL_API_KEY", None)
+        if not self.api_key:
+            raise ValueError(
+                "The environment variable 'SQL_API_KEY' must be set to use the RemoteDatabaseConnector."
+            )
+
+        self.base_headers = {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+    def get_table_schema(
+        self,
+    ) -> str:
+        """Retrieves the schema of a database.
+
+        Currently, this method is not implemented for remote databases.
+        """
+        raise NotImplementedError(
+            "get_table_schema is not implemented for RemoteDatabaseConnector"
+        )
+
+    def format_table(self, column_names: list, values: list) -> str:
+        """Formats table data into a string for display.
+
+        Currently, this method is not implemented for remote databases.
+        """
+        raise NotImplementedError(
+            "format_table is not implemented for RemoteDatabaseConnector"
+        )
+
+    def execute_query(self, query: str) -> Any:
+        """Executes a query against the remote database."""
+        try:
+            response = requests.post(
+                self.api_url,
+                headers=self.base_headers,
+                json={"sql": query, "dataSourceId": self.database_id},
+                verify=True,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error executing SQL over remote DB: {e}")
+            return None
 
 
 class SQLData:
@@ -255,19 +288,6 @@ class SQLData:
             raise FileExistsError(f"More than one files matched for {db_name}")
         return db_file_paths[0]
 
-    # def get_tables_json(self):
-    #     """Gets the tables.json file"""
-    #     if not self.tables_json:
-    #         self.download_database()
-    #         db_tables_json_file = os.path.join(self.databases_folder, "tables.json")
-    #         if not os.path.exists(db_tables_json_file):
-    #             raise FileNotFoundError(
-    #                 f"tables.json file not found {db_tables_json_file}. "
-    #                 f"You can try deleting folder {self.databases_folder} and running again."
-    #             )
-    #         self.tables_json = json.load(open(db_tables_json_file))
-    #     return self.tables_json
-
     def get_db_schema(
         self,
         db_name: str,
@@ -281,49 +301,20 @@ class SQLData:
         if db_type == "local":
             db_path = self.get_db_file_path(db_name)
             db_config = {"db_path": db_path}
-            connector = SQLiteConnector(db_config)
+            connector = LocalSQLiteConnector(db_config)
         elif db_type == "mock":
             if not mock_db:
                 raise ValueError("db_type is mock, but mock_db was not given")
             connector = MockConnector(db_config={"tables": mock_db})
+        elif db_type == "remote":
+            db_config = {
+                "api_url": db_name.split(",")[0],
+                "database_id": db_name.split("db_id=")[-1].split(",")[0],
+            }
+            connector = RemoteDatabaseConnector(db_config=db_config)
         else:
             raise ValueError(
                 f"Unsupported database type: {db_type}. Use 'sqlite' or 'mock'."
             )
 
-        return connector.get_table_schema(
-            select_tables, select_columns, num_rows_from_table_to_add
-        )
-
-
-if __name__ == "__main__":
-    # Example for using a downloaded sqlite db
-    sql_data_manager = SQLData()
-    schema_from_sqlite = sql_data_manager.get_db_schema(
-        db_name="bird/california_schools",
-        db_type="local",
-    )
-
-    # Example for using a mock db
-    mock_db_data = {
-        "users": {
-            "columns": ["id", "name", "age"],
-            "rows": [
-                [1, "Alice", 30],
-                [2, "Bob", 25],
-            ],
-        },
-        "products": {
-            "columns": ["id", "name", "price"],
-            "rows": [
-                [1, "Laptop", 1200],
-                [2, "Monitor", 300],
-            ],
-        },
-    }
-    schema_from_mock = sql_data_manager.get_db_schema(
-        db_name="mock_db_name",
-        db_type="mock",
-        select_tables=["users", "products"],
-        mock_db=mock_db_data,
-    )
+        return connector.get_table_schema(num_rows_from_table_to_add)
