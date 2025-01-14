@@ -55,7 +55,7 @@ for task in task_names:
     add_to_catalog(answer_reward, f"{base}.{task}.answer_relevance", overwrite=True)
     add_to_catalog(
         answer_reward,
-        f"{base}.{task}.answer_relevance.deberta_v3_large_v2",
+        f"{base}.{task}.answer_relevance.answer_reward",
         overwrite=True,
     )
 
