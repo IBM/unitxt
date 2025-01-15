@@ -1,4 +1,6 @@
+import inspect
 import json
+from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
@@ -190,13 +192,32 @@ def load_dataset(
         disable_cache = settings.disable_hf_datasets_cache
 
     if streaming:
-        return stream.to_iterable_dataset(
+        dataset = stream.to_iterable_dataset(
             features=UNITXT_DATASET_SCHEMA,
         ).map(loads_instance, batched=True)
+    else:
+        dataset = stream.to_dataset(
+            features=UNITXT_DATASET_SCHEMA, disable_cache=disable_cache
+        ).with_transform(loads_instance)
 
-    return stream.to_dataset(
-        features=UNITXT_DATASET_SCHEMA, disable_cache=disable_cache
-    ).with_transform(loads_instance)
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    all_kwargs = {key: values[key] for key in args if key != "kwargs"}
+    all_kwargs.update(kwargs)
+    metadata = fill_metadata(**all_kwargs)
+    if isinstance(dataset, dict):
+        for ds in dataset.values():
+            ds.info.description = metadata.copy()
+    else:
+        dataset.info.description = metadata
+    return dataset
+
+
+def fill_metadata(**kwargs):
+    metadata = kwargs.copy()
+    metadata["unitxt_version"] = get_constants().version
+    metadata["creation_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+    return metadata
 
 
 def evaluate(
@@ -206,7 +227,15 @@ def evaluate(
         raise UnitxtError(message="Specify 'dataset' in evaluate")
     if data is not None:
         dataset = data  # for backward compatibility
-    return _compute(predictions=predictions, references=dataset)
+    evaluation_result = _compute(predictions=predictions, references=dataset)
+    if hasattr(dataset, "info") and hasattr(dataset.info, "description"):
+        evaluation_result.metadata["dataset"] = dataset.info.description
+    if hasattr(predictions, "metadata"):
+        evaluation_result.metadata["predictions"] = predictions.metadata
+    evaluation_result.metadata["creation_time"] = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S.%f"
+    )[:-3]
+    return evaluation_result
 
 
 def post_process(predictions, data) -> List[Dict[str, Any]]:
