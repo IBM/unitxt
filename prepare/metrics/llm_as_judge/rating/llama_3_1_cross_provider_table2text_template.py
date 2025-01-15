@@ -10,9 +10,7 @@ for model_id in model_list:
     inference_model = CrossProviderInferenceEngine(
         model=model_id, max_tokens=252, seed=get_seed()
     )
-    model_label = (
-        model_id.replace("-", "_").replace(".", ",").lower() + "_cross_provider"
-    )
+    model_label = model_id.replace("-", "_").replace(".", ",").lower()
     template_label = template.split(".")[-1]
     metric = LLMAsJudge(
         inference_model=inference_model,
@@ -24,6 +22,6 @@ for model_id in model_list:
     )
     add_to_catalog(
         metric,
-        f"metrics.llm_as_judge.rating.{model_label}_template_{template_label}",
+        f"metrics.llm_as_judge.rating.{model_label}.{template_label}",
         overwrite=True,
     )
