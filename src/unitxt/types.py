@@ -46,7 +46,7 @@ class Table(TypedDict):
 
 
 class SQLDatabase(TypedDict):
-    db_id: str
+    db_id: Optional[str]
     db_type: Literal["local", "in_memory", "remote"]
     dbms: Optional[str]
     data: Optional[Dict[str, Dict]]

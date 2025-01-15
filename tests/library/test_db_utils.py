@@ -5,7 +5,11 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
-from unitxt.db_utils import LocalSQLiteConnector, RemoteDatabaseConnector
+from unitxt.db_utils import (
+    InMemoryDatabaseConnector,
+    LocalSQLiteConnector,
+    RemoteDatabaseConnector,
+)
 from unitxt.types import SQLDatabase
 
 
@@ -157,3 +161,130 @@ class TestLocalSQLiteConnector(unittest.TestCase):
     def test_init_multiple_databases_found(self, mock_get_db_file_path):
         with self.assertRaises(FileExistsError):
             LocalSQLiteConnector(self.db_config)
+
+
+class TestInMemoryDatabaseConnector(unittest.TestCase):
+    def setUp(self):
+        self.db_config: SQLDatabase = {
+            "db_type": "in_memory",
+            "db_id": None,
+            "dbms": None,
+            "data": {
+                "users": {
+                    "columns": ["user_id", "name", "email", "age", "city"],
+                    "rows": [
+                        [1, "Alice", "alice@example.com", 30, "New York"],
+                        [2, "Bob", "bob@example.com", 25, "Los Angeles"],
+                        [3, "Charlie", "charlie@example.com", 40, "Chicago"],
+                        [4, "David", "david@example.com", 35, "New York"],
+                        [5, "Eva", "eva@example.com", 28, "Los Angeles"],
+                    ],
+                },
+                "orders": {
+                    "columns": ["order_id", "user_id", "product", "quantity", "price"],
+                    "rows": [
+                        [101, 1, "Laptop", 2, 1200.00],
+                        [102, 1, "Mouse", 5, 25.50],
+                        [103, 2, "Keyboard", 3, 75.00],
+                        [104, 3, "Monitor", 1, 300.00],
+                        [105, 3, "USB Drive", 10, 15.00],
+                        [106, 4, "Headphones", 2, 100.00],
+                        [107, 5, "Webcam", 1, 80.00],
+                        [108, 5, "Printer", 1, 250.00],
+                        [109, 5, "Laptop", 1, 1300.00],
+                        [110, 5, "Mouse", 2, 24.00],
+                    ],
+                },
+            },
+        }
+
+    def test_init_success(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        self.assertEqual(connector.tables, self.db_config["data"])
+
+    def test_init_missing_tables(self):
+        self.db_config["data"] = None
+        with self.assertRaises(ValueError):
+            InMemoryDatabaseConnector(self.db_config)
+
+    def test_get_table_schema(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        schema_text = connector.get_table_schema()
+        expected_schema = (
+            "CREATE TABLE `users` (`user_id` TEXT, `name` TEXT, `email` TEXT, `age` TEXT, `city` TEXT);\n\n"
+            "CREATE TABLE `orders` (`order_id` TEXT, `user_id` TEXT, `product` TEXT, `quantity` TEXT, `price` TEXT);"
+        )
+        self.assertEqual(schema_text, expected_schema)
+
+    def test_get_table_schema_with_selected_tables(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        schema_text = connector.get_table_schema(select_tables=["orders"])
+        expected_schema = "CREATE TABLE `orders` (`order_id` TEXT, `user_id` TEXT, `product` TEXT, `quantity` TEXT, `price` TEXT);"
+
+        self.assertEqual(schema_text, expected_schema)
+
+    def test_execute_query_success(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        result = connector.execute_query("SELECT * FROM users WHERE age > 30")
+        expected_result = [
+            (3, "Charlie", "charlie@example.com", 40, "Chicago"),
+            (4, "David", "david@example.com", 35, "New York"),
+        ]
+
+        self.assertEqual(result, expected_result)
+
+    def test_execute_query_failure(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        result = connector.execute_query("SELECT * FROM non_existent_table")
+
+        self.assertIsNone(result)
+
+    def test_execute_complex_query(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        query = """
+            SELECT u.name, o.product, o.quantity
+            FROM users u
+            JOIN orders o ON u.user_id = o.user_id
+            WHERE u.city = 'Los Angeles'
+            ORDER BY o.quantity DESC
+        """
+        result = connector.execute_query(query)
+        expected_result = [
+            ("Bob", "Keyboard", 3),
+            ("Eva", "Mouse", 2),
+            ("Eva", "Laptop", 1),
+            ("Eva", "Printer", 1),
+            ("Eva", "Webcam", 1),
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_execute_query_with_aggregation(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        query = """
+            SELECT u.city, AVG(u.age)
+            FROM users u
+            GROUP BY u.city
+            ORDER BY u.city ASC
+        """
+        result = connector.execute_query(query)
+        expected_result = [
+            ("Chicago", 40.0),
+            ("Los Angeles", 26.5),
+            ("New York", 32.5),
+        ]
+        self.assertEqual(result, expected_result)
+
+    def test_execute_query_with_sum_and_having(self):
+        connector = InMemoryDatabaseConnector(self.db_config)
+        query = """
+            SELECT u.name, SUM(o.price)
+            FROM users u
+            JOIN orders o on u.user_id = o.user_id
+            GROUP BY u.name
+            HAVING SUM(o.price) > 300
+            ORDER BY u.name DESC
+        """
+        result = connector.execute_query(query)
+        expected_result = [("Eva", 1654.0), ("Charlie", 315.0), ("Alice", 1225.5)]
+
+        self.assertEqual(result, expected_result)
