@@ -35,11 +35,6 @@ class DatabaseConnector(ABC):
         pass
 
     @abstractmethod
-    def format_table(self, column_names: list, values: list) -> str:
-        """Abstract method to format table data."""
-        pass
-
-    @abstractmethod
     def execute_query(self, query: str) -> Any:
         """Abstract method to execute a query against the database."""
         pass
@@ -113,23 +108,6 @@ class LocalSQLiteConnector(DatabaseConnector):
         schema_prompt: str = "\n\n".join(list(schemas.values()))
         return schema_prompt
 
-    def format_table(self, column_names: list, values: list) -> str:
-        """Formats table data into a string for display."""
-        rows = []
-        # Determine the maximum width of each column
-        widths = [
-            max(len(str(value[i])) for value in [*values, column_names])
-            for i in range(len(column_names))
-        ]
-        header = "".join(
-            f"{column.rjust(width)} " for column, width in zip(column_names, widths)
-        )
-        for value in values:
-            row = "".join(f"{str(v).rjust(width)} " for v, width in zip(value, widths))
-            rows.append(row)
-        rows = "\n".join(rows)
-        return header + "\n" + rows
-
     def execute_query(self, query: str) -> Any:
         """Executes a query against the SQLite database."""
         conn = None  # Initialize conn to None outside the try block
@@ -171,23 +149,6 @@ class InMemoryDatabaseConnector(DatabaseConnector):
             schemas[table_name] = schema
 
         return "\n\n".join(list(schemas.values()))
-
-    def format_table(self, column_names: list, values: list) -> str:
-        """Formats table data into a string for display."""
-        rows = []
-        # Determine the maximum width of each column
-        widths = [
-            max(len(str(value[i])) for value in [*values, column_names])
-            for i in range(len(column_names))
-        ]
-        header = "".join(
-            f"{column.rjust(width)} " for column, width in zip(column_names, widths)
-        )
-        for value in values:
-            row = "".join(f"{str(v).rjust(width)} " for v, width in zip(value, widths))
-            rows.append(row)
-        rows = "\n".join(rows)
-        return header + "\n" + rows
 
     def execute_query(self, query: str) -> Any:
         """Simulates executing a query against the mock database."""
@@ -257,15 +218,6 @@ class RemoteDatabaseConnector(DatabaseConnector):
         """
         raise NotImplementedError(
             "get_table_schema is not implemented for RemoteDatabaseConnector"
-        )
-
-    def format_table(self, column_names: list, values: list) -> str:
-        """Formats table data into a string for display.
-
-        Currently, this method is not implemented for remote databases.
-        """
-        raise NotImplementedError(
-            "format_table is not implemented for RemoteDatabaseConnector"
         )
 
     def execute_query(self, query: str) -> Any:
