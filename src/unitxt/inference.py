@@ -9,6 +9,8 @@ import sys
 import time
 import uuid
 from collections import Counter
+from datetime import datetime
+from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
     Dict,
@@ -20,6 +22,7 @@ from typing import (
     Sequence,
     Tuple,
     TypedDict,
+    TypeVar,
     Union,
 )
 
@@ -31,7 +34,12 @@ from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
-from .image_operators import EncodeImageToString, data_url_to_image, extract_images
+from .image_operators import (
+    EncodeImageToString,
+    ImageDataString,
+    data_url_to_image,
+    extract_images,
+)
 from .logging_utils import get_logger
 from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
@@ -58,6 +66,29 @@ class StandardAPIParamsMixin(Artifact):
     n: Optional[int] = None
     parallel_tool_calls: Optional[bool] = None
     service_tier: Optional[Literal["auto", "default"]] = None
+    credentials: Optional[Dict[str, str]] = {}
+    extra_headers: Optional[Dict[str, str]] = None
+
+
+class TorchDeviceMixin(Artifact):
+    device: Optional[str] = None
+
+    def get_device_id(self) -> str:
+        if self.device is not None:
+            return self.device
+
+        import torch
+
+        if torch.backends.mps.is_available():
+            return "mps"
+        if torch.cuda.is_available():
+            return "cuda:0"
+        return "cpu"
+
+    def get_device(self):
+        import torch
+
+        return torch.device(self.get_device_id())
 
 
 def get_model_and_label_id(model_name, label):
@@ -70,21 +101,26 @@ class TextGenerationInferenceOutput:
     """Contains the prediction results and metadata for the inference.
 
     Args:
-    prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
-    If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
-    the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
-    for this position and their probabilities.
-    For example: [ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
-                   {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]}
-                ]
+        prediction (Union[str, List[Dict[str, Any]]]): If this is the result of an _infer call, the string predicted by the model.
+        | If this is the results of an _infer_log_probs call, a list of dictionaries. The i'th dictionary represents
+          the i'th token in the response. The entry "top_tokens" in the dictionary holds a sorted list of the top tokens
+          for this position and their probabilities.
+        | For example: ``[ {.. "top_tokens": [ {"text": "a", 'logprob': },  {"text": "b", 'logprob': } ....]},
+          {.. "top_tokens": [ {"text": "c", 'logprob': },  {"text": "d", 'logprob': } ....]} ]``
 
-    input_tokens (int) : number of input tokens to the model.
-    output_tokens (int) : number of output tokens to the model.
-    stop_reason (str): stop reason for text generation, for example "eos" (end of string).
-    seed (int): seed used by the model during generation.
-    input_text (str): input to the model.
-    model_name (str): the model_name as kept in the InferenceEngine.
-    inference_type (str): The label stating the type of the InferenceEngine.
+        input_tokens (int) : number of input tokens to the model.
+
+        output_tokens (int) : number of output tokens to the model.
+
+        stop_reason (str): stop reason for text generation, for example "eos" (end of string).
+
+        seed (int): seed used by the model during generation.
+
+        input_text (str): input to the model.
+
+        model_name (str): the model_name as kept in the InferenceEngine.
+
+        inference_type (str): The label stating the type of the InferenceEngine.
     """
 
     prediction: Union[str, List[Dict[str, Any]]]
@@ -95,6 +131,18 @@ class TextGenerationInferenceOutput:
     input_text: Optional[str] = None
     model_name: Optional[str] = None
     inference_type: Optional[str] = None
+
+
+T = TypeVar("T")
+
+
+class ListWithMetadata(List[T]):
+    def __init__(self, *args, metadata: Optional[dict] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metadata = metadata if metadata is not None else {}
+
+    def __repr__(self):
+        return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
 
 
 class InferenceEngine(Artifact):
@@ -124,11 +172,18 @@ class InferenceEngine(Artifact):
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
 
+    def __call__(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        return self.infer(dataset=dataset, return_meta_data=return_meta_data)
+
     def infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and perform inference on the input dataset.
 
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
@@ -146,8 +201,17 @@ class InferenceEngine(Artifact):
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
-            return self._mock_infer(dataset)
-        return self._infer(dataset, return_meta_data)
+            result = self._mock_infer(dataset)
+        else:
+            result = self._infer(dataset, return_meta_data)
+        return ListWithMetadata(
+            result,
+            metadata={
+                "init_dict": self._init_dict,
+                "inference_engine_type": self.__class__.__name__,
+                "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            },
+        )
 
     def _mock_infer(
         self,
@@ -261,13 +325,13 @@ class HFInferenceEngineBase(
     PackageRequirementsMixin,
     LazyLoadMixin,
     HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str
 
     n_top_tokens: int = 5
 
-    device: Any = None
     device_map: Any = None
 
     use_fast_tokenizer: bool = True
@@ -293,16 +357,8 @@ class HFInferenceEngineBase(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     @abc.abstractmethod
     def _init_processor(self):
@@ -519,6 +575,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             self.model.to(self.device)
 
     def prepare_inputs(self, data: Iterable) -> Mapping:
+        if isinstance(data[0], list):
+            data = self.processor.apply_chat_template(
+                data, tokenize=False, add_generation_prompt=True
+            )
         return self.processor(
             data,
             padding=True,
@@ -572,7 +632,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        self.verify_not_chat_api(dataset)
         return self._infer_fn(dataset, return_meta_data, False)
 
     def _infer_log_probs(
@@ -764,11 +823,12 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             self.model.to(self.device)
 
 
-@deprecation(
-    version="2.0.0", msg=" Use non-pipeline-based 'HFInferenceEngine' instead."
-)
 class HFPipelineBasedInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, HFGenerationParamsMixin
+    InferenceEngine,
+    PackageRequirementsMixin,
+    LazyLoadMixin,
+    HFGenerationParamsMixin,
+    TorchDeviceMixin,
 ):
     model_name: str
     label: str = "hf_pipeline_inference_engine"
@@ -779,7 +839,6 @@ class HFPipelineBasedInferenceEngine(
 
     task: Optional[str] = None
 
-    device: Any = None
     device_map: Any = None
 
     pipe: Any = InternalField(default=None)
@@ -859,16 +918,8 @@ class HFPipelineBasedInferenceEngine(
                 f"were given: 'device={self.device}', 'device_map={self.device_map}'."
             )
 
-        if self.device is None and self.device_map is None:
-            import torch
-
-            self.device = torch.device(
-                "mps"
-                if torch.backends.mps.is_available()
-                else 0
-                if torch.cuda.is_available()
-                else "cpu"
-            )
+        if self.device_map is None:
+            self.device = self.get_device()
 
     def _prepare_engine(self):
         self._set_inference_device()
@@ -1152,8 +1203,8 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: list[
-            list[dict[str, float | str]]
+        dataset_with_options_logprobs: List[
+            List[Dict[str, Union[float, str]]]
         ] = self.get_options_log_probs(dataset_with_options)
 
         dataset_iterator = iter(dataset_with_options_logprobs)
@@ -1450,6 +1501,13 @@ class OpenAiInferenceEngineParams(Artifact):
     service_tier: Optional[Literal["auto", "default"]] = None
 
 
+def run_with_imap(func):
+    def inner(self, args):
+        return func(self, *args)
+
+    return inner
+
+
 class OpenAiInferenceEngine(
     InferenceEngine,
     LogProbInferenceEngine,
@@ -1466,6 +1524,7 @@ class OpenAiInferenceEngine(
     base_url: Optional[str] = None
     default_headers: Dict[str, str] = {}
     credentials: CredentialsOpenAi = {}
+    num_parallel_requests: int = 20
 
     def get_engine_id(self) -> str:
         return get_model_and_label_id(self.model_name, self.label)
@@ -1509,52 +1568,76 @@ class OpenAiInferenceEngine(
             if v is not None
         }
 
+    def _parallel_infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        infer_func,
+        return_meta_data: bool = False,
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        inputs = [(instance, return_meta_data) for instance in dataset]
+        outputs = []
+        with ThreadPool(processes=self.num_parallel_requests) as pool:
+            for output in tqdm(
+                pool.imap(infer_func, inputs),
+                total=len(inputs),
+                desc=f"Inferring with {self.__class__.__name__}",
+            ):
+                outputs.append(output)
+
+        return outputs
+
     def _infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            prediction = response.choices[0].message.content
-            output = self.get_return_object(prediction, response, return_meta_data)
-
-            outputs.append(output)
-
-        return outputs
+        return self._parallel_infer(
+            dataset=dataset,
+            return_meta_data=return_meta_data,
+            infer_func=self._get_chat_completion,
+        )
 
     def _infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
-        outputs = []
-        for instance in tqdm(dataset, desc="Inferring with openAI API"):
-            messages = self.to_messages(instance)
-            response = self.client.chat.completions.create(
-                messages=messages,
-                model=self.model_name,
-                **self._get_completion_kwargs(),
-            )
-            top_logprobs_response = response.choices[0].logprobs.content
-            pred_output = [
-                {
-                    "top_tokens": [
-                        {"text": obj.token, "logprob": obj.logprob}
-                        for obj in generated_token.top_logprobs
-                    ]
-                }
-                for generated_token in top_logprobs_response
-            ]
-            output = self.get_return_object(pred_output, response, return_meta_data)
-            outputs.append(output)
-        return outputs
+        return self._parallel_infer(
+            dataset=dataset,
+            return_meta_data=return_meta_data,
+            infer_func=self._get_logprobs,
+        )
+
+    @run_with_imap
+    def _get_chat_completion(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        prediction = response.choices[0].message.content
+        return self.get_return_object(prediction, response, return_meta_data)
+
+    @run_with_imap
+    def _get_logprobs(self, instance, return_meta_data):
+        messages = self.to_messages(instance)
+        response = self.client.chat.completions.create(
+            messages=messages,
+            model=self.model_name,
+            **self._get_completion_kwargs(),
+        )
+        top_logprobs_response = response.choices[0].logprobs.content
+        pred_output = [
+            {
+                "top_tokens": [
+                    {"text": obj.token, "logprob": obj.logprob}
+                    for obj in generated_token.top_logprobs
+                ]
+            }
+            for generated_token in top_logprobs_response
+        ]
+        return self.get_return_object(pred_output, response, return_meta_data)
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
@@ -1568,25 +1651,78 @@ class OpenAiInferenceEngine(
         return predict_result
 
 
+class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
+    label: str = "azure_openai"
+
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        api_key_var_name = f"{self.label.upper()}_API_KEY"
+        api_key = self.credentials.get(
+            "api_key", os.environ.get(api_key_var_name, None)
+        )
+        assert api_key, (
+            f"Error while trying to run {self.label}. "
+            f"Please set the env variable: '{api_key_var_name}'"
+        )
+
+        azure_openapi_host = self.credentials.get(
+            "azure_openapi_host", os.environ.get(f"{self.label.upper()}_HOST", None)
+        )
+
+        api_version = self.credentials.get(
+            "api_version", os.environ.get("OPENAI_API_VERSION", None)
+        )
+        assert (
+            api_version and azure_openapi_host
+        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
+
+        return {"api_key": api_key, "api_url": api_url}
+
+    def create_client(self):
+        from openai import AzureOpenAI
+
+        self.credentials = self._prepare_credentials()
+        return AzureOpenAI(
+            api_key=self.credentials["api_key"],
+            base_url=self.credentials["api_url"],
+            default_headers=self.get_default_headers(),
+        )
+
+
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
 
 
-class RITSInferenceEngine(OpenAiInferenceEngine):
+class RITSInferenceEngine(
+    OpenAiInferenceEngine,
+):
     label: str = "rits"
+    data_classification_policy = ["public", "proprietary"]
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
     def prepare_engine(self):
-        base_url_template = "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}/v1"
-        self.base_url = base_url_template.format(self._get_model_name_for_endpoint())
-        logger.info(f"Created RITS inference engine with endpoint: {self.base_url}")
+        # inference endpoint need the '/v1' path
+        self.base_url = (
+            RITSInferenceEngine.get_base_url_from_model_name(self.model_name) + "/v1"
+        )
+        logger.info(f"Created RITS inference engine with base url: {self.base_url}")
         super().prepare_engine()
 
-    def _get_model_name_for_endpoint(self):
+    @staticmethod
+    def get_base_url_from_model_name(model_name: str):
+        base_url_template = (
+            "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+        )
+        return base_url_template.format(
+            RITSInferenceEngine._get_model_name_for_endpoint(model_name)
+        )
+
+    @staticmethod
+    def _get_model_name_for_endpoint(model_name: str):
         return (
-            self.model_name.split("/")[-1]
+            model_name.split("/")[-1]
             .lower()
             .replace("v0.1", "v01")
             .replace("vision-", "")
@@ -1774,16 +1910,19 @@ class WMLInferenceEngineBase(
 ):
     """Base for classes running inference using ibm-watsonx-ai.
 
-    Attributes:
-        credentials (Dict[str, str], optional): By default, it is created by a class
+    Args:
+        credentials (Dict[str, str], optional):
+            By default, it is created by a class
             instance which tries to retrieve proper environment variables
             ("WML_URL", "WML_PROJECT_ID", "WML_SPACE_ID", "WML_APIKEY", "WML_USERNAME", "WML_PASSWORD").
             However, a dictionary with the following keys: "url", "apikey", "project_id", "space_id",
             "username", "password".
             can be directly provided instead.
-        model_name (str, optional): ID of a model to be used for inference. Mutually
+        model_name (str, optional):
+            ID of a model to be used for inference. Mutually
             exclusive with 'deployment_id'.
-        deployment_id (str, optional): Deployment ID of a tuned model to be used for
+        deployment_id (str, optional):
+            Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
         parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
             Defines inference parameters and their values. Deprecated attribute, please pass respective
@@ -2044,29 +2183,32 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
 
-    Attributes:
-        concurrency_limit (int): Number of concurrent requests sent to a model. Default is 10,
+    Args:
+        concurrency_limit (int):
+            Number of concurrent requests sent to a model. Default is 10,
             which is also the maximum value.
 
     Examples:
-        from .api import load_dataset
+        .. code-block:: python
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "google/flan-t5-xxl"
-        wml_inference = WMLInferenceEngineGeneration(
-            credentials=wml_credentials,
-            model_name=model_name,
-            data_classification_policy=["public"],
-            top_p=0.5,
-            random_seed=123,
-        )
+            from .api import load_dataset
 
-        dataset = load_dataset(
-            dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "google/flan-t5-xxl"
+            wml_inference = WMLInferenceEngineGeneration(
+                credentials=wml_credentials,
+                model_name=model_name,
+                data_classification_policy=["public"],
+                top_p=0.5,
+                random_seed=123,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.argument_topic,template_card_index=0,loader_limit=5"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     concurrency_limit: int = 10
@@ -2172,33 +2314,36 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
     concatenate images within an instance into a single image and adjust your query
     accordingly (if necessary).
 
-    Attributes:
-        image_encoder (EncodeImageToString, optional): operator which encodes images in
+    Args:
+        image_encoder (EncodeImageToString, optional):
+            operator which encodes images in
             given format to base64 strings required by service. You should specify it when
             you are using images in your inputs.
 
     Example:
-        from .api import load_dataset
-        from .image_operators
+        .. code-block:: python
 
-        image_encoder = EncodeImageToString(image_format="JPEG")
+            from .api import load_dataset
+            from .image_operators
 
-        wml_credentials = {
-            "url": "some_url", "project_id": "some_id", "api_key": "some_key"
-        }
-        model_name = "meta-llama/llama-3-2-11b-vision-instruct"
-        wml_inference = WMLInferenceEngineChat(
-            credentials=wml_credentials,
-            model_name=model_name,
-            image_encoder=image_encoder,
-            data_classification_policy=["public"],
-            max_tokens=1024,
-        )
+            image_encoder = EncodeImageToString(image_format="JPEG")
 
-        dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
-        )
-        results = wml_inference.infer(dataset["test"])
+            wml_credentials = {
+                "url": "some_url", "project_id": "some_id", "api_key": "some_key"
+            }
+            model_name = "meta-llama/llama-3-2-11b-vision-instruct"
+            wml_inference = WMLInferenceEngineChat(
+                credentials=wml_credentials,
+                model_name=model_name,
+                image_encoder=image_encoder,
+                data_classification_policy=["public"],
+                max_tokens=1024,
+            )
+
+            dataset = load_dataset(
+                dataset_query="card=cards.doc_vqa.en,template=templates.qa.with_context.with_type,loader_limit=30"
+            )
+            results = wml_inference.infer(dataset["test"])
     """
 
     image_encoder: Optional[EncodeImageToString] = None
@@ -2212,7 +2357,7 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
 
         images = [None]
         if "images" in instance["media"]:
-            images = extract_images(instance["source"], instance)
+            images = extract_images(instance)
 
         return question or instance["source"], images
 
@@ -2253,7 +2398,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": "data:image/jpeg;base64," + encoded_image,
+                            "url": ImageDataString(
+                                "data:image/jpeg;base64," + encoded_image
+                            ),
                         },
                     }
                 )
@@ -2362,16 +2509,43 @@ class WMLInferenceEngine(WMLInferenceEngineGeneration):
 
 
 def get_images_without_text(instance):
-    return extract_images(instance["source"], instance)
+    if isinstance(instance["source"], str):
+        images = extract_images(instance["source"], instance)
+    elif isinstance(instance["source"], list):
+        images = []
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, list):
+                for sub_content in content:
+                    if sub_content["type"] == "image_url":
+                        image = data_url_to_image(sub_content["image_url"]["url"])
+                        images.append(image)
+
+    return [image.convert("RGB") for image in images]
 
 
 def get_text_without_images(instance, image_token="<image>"):
-    regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
-    return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], str):
+        regex = r"<" + f"{constants.image_tag}" + r'\s+src=["\'](.*?)["\']\s*/?>'
+        return re.sub(regex, image_token, instance["source"])
+    if isinstance(instance["source"], list):
+        text = ""
+        for turn in instance["source"]:
+            content = turn["content"]
+            if isinstance(content, str):
+                text += content
+            else:
+                for sub_content in content:
+                    if sub_content["type"] == "text":
+                        text += sub_content["text"]
+                    if sub_content["type"].startswith("image"):
+                        text += image_token
+        return text
+    raise ValueError()
 
 
 class LMMSEvalBaseInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin
+    InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
     model_type: str
     model_args: Dict[str, str]
@@ -2387,19 +2561,12 @@ class LMMSEvalBaseInferenceEngine(
             self._prepare_engine()
 
     def _prepare_engine(self):
-        import torch
         from lmms_eval.api.instance import Instance
         from lmms_eval.models import get_model
 
         self.new_instance = Instance
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         if isinstance(self.model_args, dict):
             self.model_args = ",".join(f"{k}={v}" for k, v in self.model_args.items())
@@ -2539,15 +2706,38 @@ class LMMSEvalLoglikelihoodInferenceEngine(LMMSEvalBaseInferenceEngine):
         return optimal_responses
 
 
-class VLLMInferenceEngine(
-    InferenceEngine, PackageRequirementsMixin, StandardAPIParamsMixin
-):
+class VLLMParamsMixin(Artifact):
+    model: str
+    n: int = 1
+    best_of: Optional[int] = None
+    _real_n: Optional[int] = None
+    presence_penalty: float = 0.0
+    frequency_penalty: float = 0.0
+    repetition_penalty: float = 1.0
+    temperature: float = 1.0
+    top_p: float = 1.0
+    top_k: int = -1
+    min_p: float = 0.0
+    seed: Optional[int] = None
+    stop: Optional[Union[str, List[str]]] = None
+    stop_token_ids: Optional[List[int]] = None
+    bad_words: Optional[List[str]] = None
+    ignore_eos: bool = False
+    max_tokens: Optional[int] = 16
+    min_tokens: int = 0
+    logprobs: Optional[int] = None
+    prompt_logprobs: Optional[int] = None
+
+
+class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
         from vllm import LLM, SamplingParams
 
-        args = self.to_dict([StandardAPIParamsMixin])
+        args = self.to_dict([VLLMParamsMixin])
+        args.pop("model")
+
         self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model)
+        self.llm = LLM(model=self.model, trust_remote_code=True)
 
     def _infer(
         self,
@@ -2610,6 +2800,7 @@ class AsyncTokenBucket:
 class LiteLLMInferenceEngine(
     InferenceEngine, StandardAPIParamsMixin, PackageRequirementsMixin
 ):
+    label: str = "litellm"
     max_requests_per_second: float = 6
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
@@ -2642,11 +2833,15 @@ class LiteLLMInferenceEngine(
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
             kwargs = self.to_dict([StandardAPIParamsMixin])
+            kwargs = {k: v for k, v in kwargs.items() if v is not None}
+            del kwargs["credentials"]
             try:
                 response = await self._completion(
                     messages=messages,
                     max_retries=self.max_retries,
                     caching=True,
+                    drop_params=False,
+                    **self.credentials,
                     **kwargs,
                 )
             except Exception as e:
@@ -2691,7 +2886,15 @@ class LiteLLMInferenceEngine(
 
 
 _supported_apis = Literal[
-    "watsonx", "together-ai", "open-ai", "aws", "ollama", "bam", "watsonx-sdk", "rits"
+    "watsonx",
+    "together-ai",
+    "open-ai",
+    "aws",
+    "ollama",
+    "bam",
+    "watsonx-sdk",
+    "rits",
+    "azure",
 ]
 
 
@@ -2700,25 +2903,32 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     This class extends the InferenceEngine and OpenAiInferenceEngineParamsMixin
     to enable seamless integration with various API providers. The supported APIs are
-    specified in `_supported_apis`, allowing users to interact with multiple models
-    from different sources. The `api_model_map` dictionary maps each API to
+    specified in ``_supported_apis``, allowing users to interact with multiple models
+    from different sources. The ``provider_model_map`` dictionary maps each API to
     specific model identifiers, enabling automatic configuration based on
     user requests.
 
-    Attributes:
-        provider: Optional; Specifies the current API in use. Must be one of the
+    Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
+    "bam", "watsonx-sdk", "rits"]
+
+    Args:
+        provider (Optional):
+            Specifies the current API in use. Must be one of the
             literals in `_supported_apis`.
-        provider_model_map: Dictionary mapping each supported API to a corresponding
+        provider_model_map (Dict[_supported_apis, Dict[str, str]]):
+            mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
     """
 
+    label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx": {
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
+            "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
@@ -2758,6 +2968,52 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
+        "open-ai": {
+            "o1-mini": "o1-mini",
+            "o1-preview": "o1-preview",
+            "gpt-4o-mini": "gpt-4o-mini",
+            "gpt-4o-mini-2024-07-18": "gpt-4o-mini-2024-07-18",
+            "gpt-4o": "gpt-4o",
+            "gpt-4o-2024-08-06": "gpt-4o-2024-08-06",
+            "gpt-4o-2024-05-13": "gpt-4o-2024-05-13",
+            "gpt-4-turbo": "gpt-4-turbo",
+            "gpt-4-turbo-preview": "gpt-4-0125-preview",
+            "gpt-4-0125-preview": "gpt-4-0125-preview",
+            "gpt-4-1106-preview": "gpt-4-1106-preview",
+            "gpt-3.5-turbo-1106": "gpt-3.5-turbo-1106",
+            "gpt-3.5-turbo": "gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "gpt-3.5-turbo-16k-0613",
+            "gpt-4": "gpt-4",
+            "gpt-4-0314": "gpt-4-0314",
+            "gpt-4-0613": "gpt-4-0613",
+            "gpt-4-32k": "gpt-4-32k",
+            "gpt-4-32k-0314": "gpt-4-32k-0314",
+            "gpt-4-32k-0613": "gpt-4-32k-0613",
+            "gpt-4-vision-preview": "gpt-4-vision-preview",
+        },
+        "azure": {
+            "o1-mini": "azure/o1-mini",
+            "o1-preview": "azure/o1-preview",
+            "gpt-4o-mini": "azure/gpt-4o-mini",
+            "gpt-4o": "azure/gpt-4o",
+            "gpt-4": "azure/gpt-4",
+            "gpt-4-0314": "azure/gpt-4-0314",
+            "gpt-4-0613": "azure/gpt-4-0613",
+            "gpt-4-32k": "azure/gpt-4-32k",
+            "gpt-4-32k-0314": "azure/gpt-4-32k-0314",
+            "gpt-4-32k-0613": "azure/gpt-4-32k-0613",
+            "gpt-4-1106-preview": "azure/gpt-4-1106-preview",
+            "gpt-4-0125-preview": "azure/gpt-4-0125-preview",
+            "gpt-3.5-turbo": "azure/gpt-3.5-turbo",
+            "gpt-3.5-turbo-0301": "azure/gpt-3.5-turbo-0301",
+            "gpt-3.5-turbo-0613": "azure/gpt-3.5-turbo-0613",
+            "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
+            "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
+            "gpt-4-vision": "azure/gpt-4-vision",
+        },
     }
 
     _provider_to_base_class = {
@@ -2769,6 +3025,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "bam": IbmGenAiInferenceEngine,
         "watsonx-sdk": WMLInferenceEngine,
         "rits": RITSInferenceEngine,
+        "azure": LiteLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
@@ -2818,7 +3075,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         return get_model_and_label_id(self.provider_model_map[api][self.model], api)
 
 
-class HFOptionSelectingInferenceEngine(InferenceEngine):
+class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     """HuggingFace based class for inference engines that calculate log probabilities.
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
@@ -2832,16 +3089,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine):
     }
 
     def prepare_engine(self):
-        import torch
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
-        self.device = torch.device(
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        self.device = self.get_device()
 
         # Load model and tokenizer
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)

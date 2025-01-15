@@ -1,465 +1,969 @@
-import re
-from abc import abstractmethod
-from typing import Any, Dict, List, Literal, Optional
+import itertools
+from difflib import get_close_matches
+from typing import Any, Dict, List, Optional, Union
 
 from .api import infer
-from .dataclass import Field
-from .formats import ChatAPIFormat, Format, SystemFormat
-from .inference import InferenceEngine, LogProbInferenceEngine, OpenAiInferenceEngine
+from .artifact import fetch_artifact
+from .error_utils import UnitxtError
+from .inference import (
+    InferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
+)
+from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template_dict
+from .llm_as_judge_constants import (
+    DIRECT_CRITERIAS,
+    EVALUATOR_TO_MODEL_ID,
+    INFERENCE_ENGINE_NAME_TO_CLASS,
+    MODEL_RENAMINGS,
+    PAIRWISE_CRITERIAS,
+    PROVIDER_TO_STRATEGY,
+    Criteria,
+    CriteriaOption,
+    CriteriaWithOptions,
+    DirectCriteriaCatalogEnum,
+    EvaluatorMetadata,
+    EvaluatorNameEnum,
+    EvaluatorTypeEnum,
+    ModelProviderEnum,
+    # OptionSelectionStrategyEnum,
+    PairwiseCriteriaCatalogEnum,
+)
+from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMasJudge
+from .llm_as_judge_operators import (
+    CreateCriteriaFromDict,
+    CreateCriteriaFromJson,
+    CreateCriteriaFromString,
+    CreateCriteriaWithOptionsFromDict,
+    CreateCriteriaWithOptionsFromJson,
+    CreateYesNoCriteriaFromString,
+    CreateYesNoPartiallyCriteriaFromString,
+    LoadCriteria,
+    LoadCriteriaWithOptions,
+)
+from .llm_as_judge_utils import (
+    get_evaluator_metadata,
+    get_parsed_context,
+    rank_indexes,
+    rename_model_if_required,
+)
+from .logging_utils import get_logger
 from .metrics import BulkInstanceMetric
-from .operator import SequentialOperator
-from .operators import ArtifactFetcherMixin
-from .settings_utils import get_settings
-from .system_prompts import EmptySystemPrompt, SystemPrompt
+from .task import Task
 from .templates import Template
 
-settings = get_settings()
 
+class LLMJudge(BulkInstanceMetric):
+    inference_engine: InferenceEngine
+    # option_selection_strategy: OptionSelectionStrategyEnum = (
+    #     OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
+    # )
+    evaluator_name: EvaluatorNameEnum = None
+    check_positional_bias: bool = True
+    context_fields: str = ["context"]
+    generate_summaries: bool = True
+    format = "formats.chat_api"
+    include_prompts_in_result: bool = False
+    criteria_field: str = None
+    criteria: Criteria = None
+    logger = get_logger()
 
-def get_task_data_dict(task_data):
-    import json
+    def prepare(self):
+        super().prepare()
+        if isinstance(self.context_fields, str):
+            self.context_fields = [self.context_fields]
 
-    # seems like the task data sometimes comes as a string, not a dict
-    # this fixes it
-    return json.loads(task_data) if isinstance(task_data, str) else task_data
+        # if not isinstance(self.option_selection_strategy, OptionSelectionStrategyEnum):
+        #     self.option_selection_strategy = OptionSelectionStrategyEnum[
+        #         self.option_selection_strategy
+        #     ]
+        if self.evaluator_name is None:
+            self.evaluator_name = self.inference_engine.get_engine_id()
+        elif not isinstance(self.evaluator_name, EvaluatorNameEnum):
+            self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
 
+        self.assessment_template = direct_template_dict["assessment"]
+        self.summarization_template = direct_template_dict["summarization"]
+        self.option_selection_template = direct_template_dict["answer"]
 
-class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
-    """LLM-as-judge-base metric class for evaluating correctness of generated predictions.
+        self.assessment_task = Task(
+            input_fields={
+                "context_variables": str,
+                "response": str,
+                "criteria_description": str,
+                "display_options_instruction": str,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
 
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        task (str): The type of task the llm as judge runs. This defines the output and input
-         format of the judge model.
-        template (Template): The template used when generating inputs for the judge llm.
-        format (Format): The format used when generating inputs for judge llm.
-        system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
-        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
-        reduction_map (dict): A dictionary specifying the reduction method for the metric.
-        batch_size (int): The size of the bulk.
-    """
+        self.summarization_task = Task(
+            input_fields={"assessment": str},
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
 
-    main_score: str = "llm_as_judge"
-    task: str
-    template: Template
-    system_prompt: SystemPrompt = Field(default_factory=EmptySystemPrompt)
-    format: Format = Field(default_factory=SystemFormat)
-    inference_model: InferenceEngine
-    reduction_map: Optional[Dict[str, List[str]]] = None
-    batch_size: int = 32
-    prediction_type = Any  # Because handled with multiple tasks
+        self.option_selection_task = Task(
+            input_fields={
+                "context_variables": str,
+                "response": str,
+                "display_options_instruction": str,
+                "assessment": str,
+                "criteria_description": str,
+                "score_option_instruction": str,
+                "options": list,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
 
-    def verify(self):
-        if not isinstance(self.template, Template):
-            raise ValueError(
-                f"Provided template argument to 'LLMAsJudge' metric is not of type Template, but {type(self.template)}"
+    # def verify(self):
+    #     super().verify()
+    #     if (
+    #         self.option_selection_strategy
+    #         == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
+    #         and not isinstance(
+    #             self.inference_engine, OptionSelectingByLogProbsInferenceEngine
+    #         )
+    #     ):
+    #         raise ValueError(
+    #             "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
+    #             f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
+    #             "to inherit from OptionSelectingByLogProbsInferenceEngine "
+    #         )
+
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        # We check the criteria here and not in verify(), because we want catalog
+        # may contain a partially initialized object, and verify() method
+        # is called when creating the object and not when using it.
+        if self.criteria is None and self.criteria_field is None:
+            raise UnitxtError(
+                f"You must set either the 'criteria' field of the {__class__.__name__} metric to define one criteria to evaluate on all instance, or set a 'criteria_field' of the metric to evaluate on each instance based on the criteria specified in that field of each instance."
             )
-        if self.format and not isinstance(self.format, Format):
-            raise ValueError(
-                f"Provided format argument to 'LLMAsJudge' metric is not of type Format, but {type(self.format)}"
-            )
+        return
 
-        if self.system_prompt and not isinstance(self.system_prompt, SystemPrompt):
-            raise ValueError(
-                f"Provided system_prompt argument to 'LLMAsJudge' metric is not of type SystemPrompt, but {type(self.system_prompt)}"
+    def get_contexts(self, task_data: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+        return [
+            get_parsed_context(
+                {
+                    context_field: td[context_field]
+                    for context_field in self.context_fields
+                }
             )
+            for td in task_data
+        ]
 
-        if isinstance(self.inference_model, OpenAiInferenceEngine):
-            if self.format and type(self.format) is not ChatAPIFormat:
-                if not (
-                    type(self.format) is SystemFormat
-                    and self.format.__id__ == "formats.empty"
-                ):
-                    raise ValueError(
-                        "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
-                        "not support formatting. Please remove the format definition from the recipe,"
-                        "or set the format to either 'formats.empty' or 'formats.chat_api'"
-                        " (OpenAi Chat API take care of the formatting automatically)."
-                    )
-            if self.system_prompt and type(self.system_prompt) is not EmptySystemPrompt:
-                raise ValueError(
-                    "Error in 'LLMAsJudge' metric. Inference model 'OpenAiInferenceEngine' does "
-                    "not support system prompt. Please remove the system_prompt definition from the recipe"
-                    " (Current implementation of Unitxt does not support this."
-                    " Support will be added in future updates)."
+    def perform_evaluation_step(
+        self,
+        instances: list,
+        task: Task,
+        template: Template,
+        previous_messages: Optional[List[Dict[str, str]]] = None,
+    ):
+        outputs_dataset = infer(
+            instances,
+            task=task,
+            engine=self.inference_engine,
+            template=template,
+            format=self.format,
+            return_data=True,
+            previous_messages=previous_messages,
+        )
+        prompts: List[str] = [instance["source"] for instance in outputs_dataset]
+        raw_predictions: List[str] = [
+            instance["raw_prediction"] for instance in outputs_dataset
+        ]
+        predictions: List[str] = [
+            instance["prediction"] for instance in outputs_dataset
+        ]
+        return (prompts, raw_predictions, predictions)
+
+    def clean_results(self, results: Union[dict, list]):
+        if isinstance(results, list):
+            return [self.clean_results(x) for x in results]
+        cleaned = {
+            k: (v if not isinstance(v, dict) else self.clean_results(v))
+            for k, v in results.items()
+            if v is not None and not (isinstance(v, (list, dict)) and len(v) == 0)
+        }
+        # Remove the dictionary itself if it becomes empty
+        return {
+            k: v
+            for k, v in cleaned.items()
+            if not (isinstance(v, dict) and len(v) == 0)
+        }
+
+
+class LLMJudgeDirect(LLMJudge):
+    criteria: CriteriaWithOptions = None
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+
+    def prepare(self):
+        super().prepare()
+        self.assessment_template = direct_template_dict["assessment"]
+        self.summarization_template = direct_template_dict["summarization"]
+        self.option_selection_template = direct_template_dict["answer"]
+
+        self.assessment_task = Task(
+            input_fields={
+                "context_variables": str,
+                "response": str,
+                "criteria_description": str,
+                "display_options_instruction": str,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
+
+        self.summarization_task = Task(
+            input_fields={"assessment": str},
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
+
+        self.option_selection_task = Task(
+            input_fields={
+                "criteria_description": str,
+                "score_option_instruction": str,
+                "options": list,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
+
+    def get_parsed_criteria(self, criteria: CriteriaWithOptions):
+        criteria_description = criteria.description
+        criteria_option_names = [o.name for o in criteria.options]
+
+        display_options_instruction = "Choose an answer:\n" + "\n".join(
+            [
+                f"- \"{o.name}\"{f' if {o.description}' if o.description != '' else ''}"
+                for o in criteria.options
+            ]
+        )
+        score_option_instruction = "".join(
+            [f"Score {o.name}: {o.description}\n" for o in criteria.options]
+        )
+
+        return (
+            criteria_description,
+            criteria_option_names,
+            display_options_instruction,
+            score_option_instruction,
+        )
+
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
+            self.logger.info("Reading criteria from the task_data")
+            criterias = [
+                fetch_artifact(task_data_instance["criteria"])[0]
+                for task_data_instance in task_data
+            ]
+        else:
+            self.logger.info(
+                "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
+            )
+            if not isinstance(self.criteria, CriteriaWithOptions):
+                raise Exception(
+                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
                 )
+            criterias: List[CriteriaWithOptions] = [self.criteria] * eval_count
+        unique_criterias = list({criteria.name for criteria in criterias})
+        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
+        return criterias
 
-    @abstractmethod
-    def get_full_task_name(self):
-        pass
+    def get_results(
+        self,
+        assessment_prompts,
+        assessment_outputs,
+        summarization_prompts,
+        summarization_outputs,
+        option_selection_prompts,
+        option_selection_outputs,
+        selections,
+        evaluations_count,
+        criterias: List[CriteriaWithOptions],
+    ) -> List[Dict[str, Any]]:
+        positional_bias = None
+        if self.check_positional_bias:
+            positional_bias = [
+                selections[i] != selections[evaluations_count + i]
+                for i in range(evaluations_count)
+            ]
+
+        scores = [
+            criteria.option_map[selection] if criteria.option_map is not None else 1
+            for criteria, selection in zip(criterias, selections)
+        ]
+
+        return [
+            {
+                "score": scores[i],
+                "llm_as_a_judge_score": scores[i],
+                "positional_bias": positional_bias[i]
+                if self.check_positional_bias
+                else None,
+                "selected_option": selections[i],
+                "positional_bias_selected_option": selections[evaluations_count + i]
+                if self.check_positional_bias
+                else None,
+                "assessment": assessment_outputs[i],
+                "positional_bias_assessment": assessment_outputs[i + evaluations_count]
+                if self.check_positional_bias
+                else None,
+                "summary": summarization_outputs[i]
+                if self.generate_summaries
+                else None,
+                "prompts": {
+                    "assessment": assessment_prompts[i],
+                    "positional_bias_assessment": assessment_prompts[
+                        evaluations_count + i
+                    ]
+                    if self.check_positional_bias
+                    else None,
+                    "summarization": summarization_prompts[i]
+                    if self.generate_summaries
+                    else None,
+                    "option_selection": option_selection_prompts[i],
+                    "posional_bias_option_selection": option_selection_prompts[
+                        i + evaluations_count
+                    ]
+                    if self.check_positional_bias
+                    else None,
+                }
+                if self.include_prompts_in_result
+                else None,
+                "option_selection_completion": option_selection_outputs[i],
+                "positional_bias_option_selection_completion": option_selection_outputs[
+                    evaluations_count + i
+                ]
+                if self.check_positional_bias
+                else None,
+                "criteria": criterias[i].to_json(),
+            }
+            for i in range(evaluations_count)
+        ]
 
     def compute(
         self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
-        instances = self.prepare_instances(references, predictions, task_data)
-        outputs = self.infer_instances(instances)
-        return self.get_metric_results_from_prediction_outputs(outputs)
-
-    @abstractmethod
-    def prepare_instances(
-        self, references, predictions, task_data
-    ) -> List[Dict[str, Any]]:
-        """Generate a list of instances for inference.
-
-        Each generated instance should include all the fields required by the metrics' task and template, to
-        create the source prompt for the judge.
-        """
-        pass
-
-    @abstractmethod
-    def infer_instances(self, instances: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Generate the dataset and call the inference engine to generate the judges' predictions.
-
-        Return the list of the produced instances with their generated judge predictions.
-        """
-        pass
-
-    @abstractmethod
-    def get_metric_results_from_prediction_outputs(
-        self, outputs: List[Dict[str, Any]]
-    ) -> List[Dict[str, Any]]:
-        """Generate a scores' dictionary for each instance.
-
-        Return the list of scores dictionaries for the input instances.
-        """
-        pass
-
-
-class LLMAsJudge(LLMAsJudgeBase):
-    """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
-
-    This class uses the source prompt given to the generator and the generator's predictions to evaluate
-    correctness using one of three supported tasks (rating.single_turn, rating.single_turn_with_reference,
-    pairwise_comparative_rating.single_turn).
-
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        task (Literal["rating.single_turn","rating.single_turn_with_reference",
-        "pairwise_comparative_rating.single_turn"]): The type of task the llm as judge runs.
-         This defines the output and input format of the judge model.
-        template (Template): The template used when generating inputs for the judge llm.
-        format (Format): The format used when generating inputs for judge llm.
-        system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
-        strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
-         inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
-        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
-        reduction_map (dict): A dictionary specifying the reduction method for the metric.
-        batch_size (int): The size of the bulk.
-    """
-
-    task: Literal[
-        "rating.single_turn",
-        "rating.single_turn_with_reference",
-        "pairwise_comparative_rating.single_turn",
-    ]
-    strip_system_prompt_and_format_from_inputs: bool = True
-
-    def _get_input_instances(self, task_data: List[Dict]) -> List:
-        if self.strip_system_prompt_and_format_from_inputs:
-            instances = []
-            for task_data_instance in task_data:
-                template = task_data_instance["metadata"]["template"]
-                template = self.get_artifact(template)
-                instance = SequentialOperator(
-                    steps=[template, "formats.empty"]
-                ).process_instance(
-                    {
-                        "input_fields": task_data_instance,
-                        "reference_fields": task_data_instance,
-                    }
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict[str, Any]],
+    ) -> dict:
+        self.logger.info(
+            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
+        )
+        evaluations_count = len(predictions)
+        # TODO: find out how to serialize and deserialize enums
+        criterias = self.get_criterias(task_data, evaluations_count)
+        contexts = self.get_contexts(task_data)
+        if self.check_positional_bias:
+            criterias += [
+                CriteriaWithOptions(
+                    name=criteria.name,
+                    description=criteria.description,
+                    option_map=criteria.option_map,
+                    options=list(reversed(criteria.options)),
                 )
-                instances.append(instance["source"])
-                """
-                We also have access to: instance["target"]
-                                        instance["references"]
-                """
-            return instances
-        return [t["source"] for t in task_data]
-
-    def _get_instance_for_judge_model(
-        self, input_instances: List[str], predictions: List, references: List
-    ) -> List[Dict]:
-        string_input_instances = []
-
-        for input_instance in input_instances:
-            if isinstance(input_instance, str):
-                string_input_instances.append(input_instance)
-            if isinstance(input_instance, list):  # chat api
-                if len(input_instance) == 1:  # only user
-                    string_input_instances.append(input_instance[0]["content"])
-                if len(input_instance) == 2:  # only system and user
-                    string_input_instances.append(
-                        input_instance[0]["content"]
-                        + "\n"
-                        + input_instance[1]["content"]
-                    )
-                else:  # num demos > 0
-                    turns = []
-                    for turn in input_instance:
-                        turns.append(f'{turn["role"]}: {turn["content"]}')
-                    string_input_instances.append("\n".join(turns))
-
-        if self.task == "rating.single_turn":
-            instances = [
-                {
-                    "question": input_instance,
-                    "answer": prediction,
-                }
-                for input_instance, prediction, reference in zip(
-                    string_input_instances, predictions, references
-                )
+                for criteria in criterias
             ]
-        elif self.task == "rating.single_turn_with_reference":
-            instances = [
-                {
-                    "question": input_instance,
-                    "answer": prediction,
-                    "reference_answer": reference[0],
-                }
-                for input_instance, prediction, reference in zip(
-                    string_input_instances, predictions, references
-                )
-            ]
-        elif self.task == "pairwise_comparative_rating.single_turn":
-            instances = [
-                {
-                    "question": input_instance,
-                    "answer_a": prediction,
-                    "answer_b": reference[0],
-                    "model_a": "input_model",
-                    "model_b": "baseline_model",
-                }
-                for input_instance, prediction, reference in zip(
-                    string_input_instances, predictions, references
-                )
-            ]
-        else:
-            raise NotImplementedError(
-                f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
-            )
-        return instances
+            contexts += contexts
+            predictions += predictions
 
-    def prepare(self):
-        super().prepare()
-        if self.task == "pairwise_comparative_rating.single_turn":
-            self.reduction_map = {"weighted_win_rate": [self.main_score]}
-        if self.reduction_map is None:
-            self.reduction_map = {"mean": [self.main_score]}
-
-    def verify(self):
-        super().verify()
-        supported_tasks = [
-            "rating.single_turn",
-            "rating.single_turn_with_reference",
-            "pairwise_comparative_rating.single_turn",
+        parsed_criterias = [
+            self.get_parsed_criteria(criteria) for criteria in criterias
         ]
-        assert self.task in supported_tasks, (
-            f"Error in 'LLMAsJudge' metric. {self.task} is not a supported task type."
-            f"The supported tasks types are: {', '.join(supported_tasks)}."
-        )
 
-    def get_full_task_name(self):
-        return f"tasks.response_assessment.{self.task}"
+        (
+            criteria_description_list,
+            criteria_option_names_list,
+            display_options_instruction_list,
+            score_option_instruction_list,
+        ) = zip(*parsed_criterias)
 
-    def infer_instances(self, instances):
-        return infer(
-            instances,
-            engine=self.inference_model,
-            task=self.get_full_task_name(),
-            template=self.template,
-            system_prompt=self.system_prompt,
-            format=self.format,
-            return_data=True,
-        )
+        assessment_for_summaries_slice = slice(0, evaluations_count)
 
-    def get_metric_results_from_prediction_outputs(self, outputs):
-        results = []
-        for instance in outputs:
-            if self.task == "pairwise_comparative_rating.single_turn":
-                task_data = get_task_data_dict(instance["task_data"])
-                is_model_b_the_baseline = task_data["model_b"] == "baseline_model"
-                if is_model_b_the_baseline:
-                    model_a_preference_score = instance["prediction"]
-                else:
-                    model_a_preference_score = instance["prediction"] * -1
-
-                result = {
-                    self.main_score: model_a_preference_score,
-                    f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
-                    f"{self.main_score}_judge_raw_input": instance["source"],
-                }
-            else:
-                result = {
-                    self.main_score: instance["prediction"],
-                    f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
-                    f"{self.main_score}_judge_raw_input": instance["source"],
-                }
-            results.append(result)
-        return results
-
-    def prepare_instances(self, references, predictions, task_data):
-        input_instances = self._get_input_instances(task_data)
-        instances = self._get_instance_for_judge_model(
-            input_instances, predictions, references
-        )
-        # Copy the data classification policy from the original instance
-        for instance, single_task_data in zip(instances, task_data):
-            instance["data_classification_policy"] = single_task_data.get(
-                "metadata", {}
-            ).get("data_classification_policy")
-        return instances
-
-
-class TaskBasedLLMasJudge(LLMAsJudgeBase):
-    """LLM-as-judge-based metric class for evaluating correctness of generated predictions.
-
-    This class can use any task and matching template to evaluate the predictions. All
-    task/templates field are taken from the instance's task_data.
-    The instances sent to the judge can either be: 1.a unitxt dataset, in which case the predictions are
-    copied to a specified field of the task. 2. dictionaries with the fields required by the task and template.
-
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        task (str): The type of task the llm as judge runs.
-        This defines the output and input format of the judge model.
-        template (Template): The template used when generating inputs for the judge llm.
-        format (Format): The format used when generating inputs for judge llm.
-        system_prompt (SystemPrompt): The system prompt used when generating inputs for judge llm.
-        strip_system_prompt_and_format_from_inputs (bool): Whether to strip the system prompt and formatting from the
-         inputs that the models that is being judges received, when they are inserted to the llm-as-judge prompt.
-        inference_model (InferenceEngine): The module that creates the inference of the judge llm.
-        reduction_map (dict): A dictionary specifying the reduction method for the metric.
-        batch_size (int): The size of the bulk.
-        infer_log_probs(bool): whether to perform the inference using logprobs. If true, the template's
-        post-processing must support the logprobs output.
-        judge_to_generator_fields_mapping (Dict[str, str]): optional mapping between the names of the fields in the generator task and the
-        judge task. For example, if the generator task uses "reference_answers" and the judge task  expect "ground_truth",
-        include  {"ground_truth": "reference_answers"} in this dictionary.
-        prediction_field: if indicated, and prediction exist, copy prediction to this field name in task_data.
-        include_meta_data (bool): whether to include the inference per-instance metadata in the returned results.
-
-    """
-
-    infer_log_probs: bool = False
-    judge_to_generator_fields_mapping: Dict[str, str] = {}
-    prediction_field: Optional[str] = None
-    include_meta_data: bool = True
-
-    # Allow for input which is a dictionary of all input fields. In this case, all input fields are
-    # treated as the task data, and the predictions and references are taken directly from there
-    # by the judge's template
-    def preprocess_instance(self, instance):
-        if "task_data" not in instance:
-            instance["task_data"] = instance.copy()
-        if "prediction" not in instance:
-            instance["prediction"] = None
-        if "references" not in instance:
-            instance["references"] = [""]
-        return instance
-
-    def verify(self):
-        super().verify()
-        if self.infer_log_probs and not isinstance(
-            self.inference_model, LogProbInferenceEngine
-        ):
-            raise NotImplementedError(
-                f"Error in TaskBasedLLMasJudge: return_log_probs set to True but supplied engine "
-                f"{self.inference_model.__class__.__name__} does not support logprobs."
+        assessment_instances = [
+            {
+                "context_variables": context,
+                "response": prediction,
+                "display_options_instruction": display_options_instruction,
+                "criteria_description": criteria_description,
+                "data_classification_policy": ["public"],
+            }
+            for context, prediction, criteria_description, display_options_instruction in zip(
+                contexts,
+                predictions,
+                criteria_description_list,
+                display_options_instruction_list,
             )
-        if self.include_meta_data and not hasattr(
-            self.inference_model, "get_return_object"
-        ):
-            Warning(
-                f"Supplied inference engine {self.inference_model.__class__.__name__} does not support "
-                "return_meta_data. Setting return_meta_data to False. Metadata scores will not appear "
-                "in returned instances scores."
+        ]
+        assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
+            assessment_instances, self.assessment_task, self.assessment_template
+        )
+        self.logger.info("The assessment was generated successfully.")
+
+        summarization_prompts = None
+        summarization_outputs = None
+        if self.generate_summaries:
+            # Summarisation Stage
+            summarization_instances = [
+                {
+                    "assessment": assessment_output,
+                    "data_classification_policy": ["public"],
+                }
+                for assessment_output in assessment_outputs[
+                    assessment_for_summaries_slice
+                ]
+            ]
+            (
+                summarization_prompts,
+                summarization_outputs,
+                _,
+            ) = self.perform_evaluation_step(
+                summarization_instances,
+                self.summarization_task,
+                self.summarization_template,
             )
-            self.include_meta_data = False
+            self.logger.info("The summary was generated successfully.")
+
+        option_selection_instances = [
+            {
+                "criteria_description": criteria_description,
+                "score_option_instruction": score_option_instruction,
+                "options": criteria_option_names,
+                "data_classification_policy": ["public"],
+            }
+            for criteria_description, score_option_instruction, criteria_option_names in zip(
+                criteria_description_list,
+                score_option_instruction_list,
+                criteria_option_names_list,
+            )
+        ]
+
+        previous_messages = [
+            [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
+            for assessment_prompt, assessment_output in zip(
+                assessment_prompts, assessment_outputs
+            )
+        ]
+        (
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+        ) = self.perform_evaluation_step(
+            option_selection_instances,
+            self.option_selection_task,
+            self.option_selection_template,
+            previous_messages,
+        )
+        self.logger.info("The selections were calculated successfully.")
+
+        results = self.get_results(
+            assessment_prompts,
+            assessment_outputs,
+            summarization_prompts,
+            summarization_outputs,
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+            evaluations_count,
+            criterias,
+        )
+        return self.clean_results(results)
+
+
+class LLMJudgePairwise(LLMJudge):
+    reduction_map = {"mean": ["score"]}
+    main_score = "score"
+    prediction_type = List[str]
 
     def prepare(self):
         super().prepare()
-        self.reduction_map = {"mean": [self.main_score]}
-        self.score_prefix = f"{self.inference_model.get_engine_id()}_"
-        if not self.format:
-            self.set_format_for_inference_engine()
+        self.assessment_template = pairwise_template_dict["assessment"]
+        self.summarization_template = pairwise_template_dict["summarization"]
+        self.option_selection_template = pairwise_template_dict["answer"]
 
-    # if format is not directly set in constructor, choose according to the inference model
-    def set_format_for_inference_engine(self):
-        model_name = self.inference_model.get_engine_id()
-        # TODO : better format resolution to support more chat_api options
-        if "rits" in model_name:
-            format_name = "formats.chat_api"
-        elif re.search("llama.?3.*instruct", model_name):
-            format_name = "formats.llama3_instruct"
-        else:
-            format_name = "formats.empty"
-        self.format = self.get_artifact(format_name)
-
-    def get_full_task_name(self):
-        return self.task
-
-    def get_metric_results_from_prediction_outputs(self, outputs):
-        results = []
-        for instance in outputs:
-            result = {
-                self.main_score: instance["prediction"],
-                f"{self.main_score}_judge_raw_output": instance["raw_prediction"],
-                f"{self.main_score}_judge_raw_input": instance["source"],
-            }
-            if self.include_meta_data:
-                meta_data = {
-                    f"{self.main_score}_{k}": v
-                    for k, v in instance["infer_meta_data"].items()
-                }
-                result.update(meta_data)
-            results.append(result)
-        return results
-
-    def prepare_instances(self, references, predictions, task_data):
-        from . import get_from_catalog
-
-        instances = []
-        judge_task = get_from_catalog(self.get_full_task_name())
-        judge_task_input_fields = judge_task.input_fields
-
-        for input_instance, prediction, _ in zip(task_data, predictions, references):
-            input_instance = get_task_data_dict(input_instance)
-
-            instance_task_data = {}
-            for judge_task_input_field in judge_task_input_fields:
-                orig_task_field_name = self.judge_to_generator_fields_mapping.get(
-                    judge_task_input_field, judge_task_input_field
-                )
-                new_val = input_instance.get(orig_task_field_name)
-                if new_val:
-                    instance_task_data[judge_task_input_field] = new_val
-
-            if self.prediction_field and prediction:
-                instance_task_data[self.prediction_field] = str(prediction)
-            instance_task_data = judge_task.process(instance_task_data)["input_fields"]
-
-            data_classification_policy = input_instance.get("metadata", {}).get(
-                "data_classification_policy"
-            )
-            instance_task_data[
-                "data_classification_policy"
-            ] = data_classification_policy
-            instances.append(instance_task_data)
-
-        return instances
-
-    def infer_instances(self, instances):
-        return infer(
-            instances,
-            engine=self.inference_model,
-            task=self.get_full_task_name(),
-            template=self.template,
-            system_prompt=self.system_prompt,
-            format=self.format,
-            return_data=True,
-            return_log_probs=self.infer_log_probs,
-            return_meta_data=self.include_meta_data,
+        self.assessment_task = Task(
+            input_fields={
+                "context_variables": str,
+                "response_a": str,
+                "response_b": str,
+                "option_a": str,
+                "option_b": str,
+                "criteria_name": str,
+                "criteria_description": str,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
         )
+
+        self.summarization_task = Task(
+            input_fields={"assessment": str},
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
+
+        self.option_selection_task = Task(
+            input_fields={
+                "score_option_instruction": str,
+                "options": list,
+            },
+            reference_fields={},
+            prediction_type=str,
+            metrics=[],
+        )
+
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
+            if self.criteria_field not in task_data[0]:
+                raise UnitxtError(
+                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
+                )
+            self.logger.info(
+                f"Reading criteria from the task_data field f{self.criteria_field}"
+            )
+            criterias = [
+                fetch_artifact(task_data_instance[self.criteria_field])[0]
+                for task_data_instance in task_data
+            ]
+        else:
+            self.logger.info(
+                "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
+            )
+            if not isinstance(self.criteria, Criteria):
+                raise UnitxtError(
+                    f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
+                )
+
+            criterias: List[Criteria] = [self.criteria] * eval_count
+
+        unique_criterias = list({criteria.name for criteria in criterias})
+        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
+        return criterias
+
+    def get_instance_results(
+        self,
+        instance_predictions: Dict[str, str],
+        assessment_prompts,
+        assessment_outputs,
+        summarization_prompts,
+        summarization_outputs,
+        option_selection_prompts,
+        option_selection_outputs,
+        selections,
+        contests_count,
+        combination_indexes,
+        criteria: Criteria,
+    ):
+        response_names = list(instance_predictions.keys())
+        per_response_results = {
+            response_key: {
+                "summaries": [],
+                "contest_results": [],
+                "selections": [],
+                "compared_to": [],
+                "assessments": [],
+                "positional_bias_assessments": [],
+                "option_selection_outputs": [],
+                "positional_bias": [],
+                "positional_bias_selection": [],
+                "prompts": {
+                    "assessment": [],
+                    "positional_bias_assessment": [],
+                    "option_selection": [],
+                    "positional_bias_option_selection": [],
+                    "summary": [],
+                },
+            }
+            for response_key in response_names
+        }
+
+        positional_bias = None
+        for i in range(contests_count):
+            positional_bias_i = contests_count + i
+            (idx_1, idx_2) = combination_indexes[i]
+            response_name_1 = response_names[idx_1]
+            response_name_2 = response_names[idx_2]
+            # add contest results
+            selected_response_name = selections[i]
+            per_response_results[response_name_1]["contest_results"].append(
+                selected_response_name == response_name_1
+            )
+            per_response_results[response_name_2]["contest_results"].append(
+                selected_response_name == response_name_2
+            )
+            per_response_results[response_name_1]["assessments"].append(
+                assessment_outputs[i]
+            )
+            per_response_results[response_name_2]["assessments"].append(
+                assessment_outputs[i]
+            )
+            per_response_results[response_name_1]["selections"].append(
+                selected_response_name
+            )
+            per_response_results[response_name_2]["selections"].append(
+                selected_response_name
+            )
+
+            # add the response indexes to which the response was compared to
+            per_response_results[response_name_1]["compared_to"].append(
+                f"{response_name_2}"
+            )
+            per_response_results[response_name_2]["compared_to"].append(
+                f"{response_name_1}"
+            )
+
+            if self.include_prompts_in_result:
+                per_response_results[response_name_1]["prompts"]["assessment"].append(
+                    assessment_prompts[i]
+                )
+                per_response_results[response_name_2]["prompts"]["assessment"].append(
+                    assessment_prompts[i]
+                )
+            if self.generate_summaries:
+                # add summaries
+                if self.include_prompts_in_result:
+                    per_response_results[response_name_1]["prompts"]["summary"].append(
+                        summarization_prompts[i]
+                    )
+                    per_response_results[response_name_2]["prompts"]["summary"].append(
+                        summarization_prompts[i]
+                    )
+                per_response_results[response_name_1]["summaries"].append(
+                    summarization_outputs[i]
+                )
+                per_response_results[response_name_2]["summaries"].append(
+                    summarization_outputs[i]
+                )
+            if self.include_prompts_in_result:
+                per_response_results[response_name_1]["prompts"][
+                    "option_selection"
+                ].append(option_selection_prompts[i])
+                per_response_results[response_name_2]["prompts"][
+                    "option_selection"
+                ].append(option_selection_prompts[i])
+
+            ## add positional bias
+            if self.check_positional_bias:
+                per_response_results[response_name_1][
+                    "positional_bias_assessments"
+                ].append(assessment_outputs[positional_bias_i])
+                per_response_results[response_name_2][
+                    "positional_bias_assessments"
+                ].append(assessment_outputs[positional_bias_i])
+                positional_bias = selections[i] != selections[positional_bias_i]
+
+                per_response_results[response_name_1]["positional_bias"].append(
+                    positional_bias
+                )
+                per_response_results[response_name_2]["positional_bias"].append(
+                    positional_bias
+                )
+
+                # add prompts
+                if self.include_prompts_in_result:
+                    per_response_results[response_name_1]["prompts"][
+                        "positional_bias_assessment"
+                    ].append(assessment_prompts[positional_bias_i])
+                    per_response_results[response_name_2]["prompts"][
+                        "positional_bias_assessment"
+                    ].append(assessment_prompts[positional_bias_i])
+                    per_response_results[response_name_1]["prompts"][
+                        "positional_bias_option_selection"
+                    ].append(option_selection_prompts[positional_bias_i])
+                    per_response_results[response_name_2]["prompts"][
+                        "positional_bias_option_selection"
+                    ].append(option_selection_prompts[positional_bias_i])
+
+            per_response_results[response_name_1]["option_selection_outputs"].append(
+                option_selection_outputs[i]
+            )
+            per_response_results[response_name_2]["option_selection_outputs"].append(
+                option_selection_outputs[i]
+            )
+            if self.check_positional_bias:
+                per_response_results[response_name_1][
+                    "positional_bias_selection"
+                ].append(option_selection_outputs[positional_bias_i])
+                per_response_results[response_name_2][
+                    "positional_bias_selection"
+                ].append(option_selection_outputs[positional_bias_i])
+
+        # add winrate
+        for key in response_names:
+            contest_results = per_response_results[key]["contest_results"]
+            winrate = sum(contest_results) / len(contest_results)
+            per_response_results[key]["winrate"] = winrate
+            per_response_results[key]["llm_as_a_judge_score"] = winrate
+        # calculate ranking
+        ranking = rank_indexes(
+            [result["winrate"] for result in per_response_results.values()]
+        )
+
+        for response_name, r_i in zip(response_names, ranking):
+            per_response_results[response_name]["ranking"] = ranking[r_i] + 1
+
+        for response_name in response_names:
+            # add response name
+            per_response_results[response_name]["response_name"] = response_name
+
+        all_results = {}
+        for response_name in response_names:
+            single_result = per_response_results[response_name]
+            for metric in single_result.keys():
+                all_results[f"{response_name}_{metric}"] = single_result[metric]
+
+        winrates = [r["winrate"] for r in per_response_results.values()]
+        all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
+        all_results["criteria"] = criteria.to_json()
+        return self.clean_results(all_results)
+
+    def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], List[str]]):
+        if isinstance(prediction, list):
+            return {f"{key + 1}": value for key, value in enumerate(prediction)}
+
+        if isinstance(prediction, dict):
+            return prediction
+
+        raise Exception(
+            f"Prediction may be a list or a dict. Instead got type {type(prediction)}"
+        )
+
+    def convert_predictions_to_dicts(
+        self, predictions: Union[List[Dict[str, str]], List[str]]
+    ):
+        return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: Union[List[Dict[str, str]], List[str]],
+        task_data: List[Dict[str, str]],
+    ) -> dict:
+        self.logger.info(
+            f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
+        )
+        predictions = self.convert_predictions_to_dicts(predictions)
+        instances_count = len(predictions)
+        self.reduction_map["mean"].extend(
+            [f"{key}_winrate" for key in predictions[0].keys()]
+        )
+        self.reduction_map["mean"].extend(
+            [f"{key}_ranking" for key in predictions[0].keys()]
+        )
+
+        predictions_count_list = [len(prediction) for prediction in predictions]
+        combination_indexes_list = [
+            list(itertools.combinations(range(evaluations_count), 2))
+            for evaluations_count in predictions_count_list
+        ]
+        contests_count_list = [
+            len(combination_indexes) for combination_indexes in combination_indexes_list
+        ]
+
+        self.logger.info(
+            f"The evaluation will perform {sum(contests_count_list) * [1,2][self.check_positional_bias]} ({' + '.join([f'{c * [1,2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
+        )
+
+        response_pairs_list: List[List[List[str]]] = []
+        option_pairs_list: List[List[List[str]]] = []
+        predictions_names = set(predictions[0].keys())
+        for i, combination_indexes in enumerate(combination_indexes_list):
+            instance_predictions = predictions[i]
+            instance_predictions_names = list(instance_predictions.keys())
+            if set(instance_predictions_names) != predictions_names:
+                raise Exception(
+                    f"The set of prediction names is different between instance 0 and instance {i}. In prediction 0, it is {sorted(predictions_names)}. In prediction {i}, it is {sorted(instance_predictions_names)}. Make sure the same number of predictions is passed for all instances."
+                )
+
+            response_pairs: List[List[str]] = []
+            option_pairs: List[List[str]] = []
+            for combination in combination_indexes:
+                (idx_1, idx_2) = combination
+                response_name_1 = instance_predictions_names[idx_1]
+                response_name_2 = instance_predictions_names[idx_2]
+                response_pairs.append(
+                    [
+                        instance_predictions[response_name_1],
+                        instance_predictions[response_name_2],
+                    ]
+                )
+                option_pairs.append([response_name_1, response_name_2])
+            response_pairs_list.append(response_pairs)
+            option_pairs_list.append(option_pairs)
+
+        criterias = self.get_criterias(task_data, instances_count)
+        contexts = self.get_contexts(task_data)
+        if self.check_positional_bias:
+            criterias.extend(criterias)
+            contexts.extend(contexts)
+            for response_pairs, option_pairs in zip(
+                response_pairs_list, option_pairs_list
+            ):
+                response_pairs += [
+                    list(reversed(response_pair)) for response_pair in response_pairs
+                ]
+                option_pairs += [
+                    list(reversed(option_pair)) for option_pair in option_pairs
+                ]
+
+        assessment_instances = [
+            {
+                "context_variables": contexts[i],
+                "response_a": response_pair[0],
+                "response_b": response_pair[1],
+                "option_a": option_pair[0],
+                "option_b": option_pair[1],
+                "criteria_name": criterias[i].name,
+                "criteria_description": criterias[i].description,
+                "data_classification_policy": ["public"],
+            }
+            for i, (response_pairs, option_pairs) in enumerate(
+                zip(response_pairs_list, option_pairs_list)
+            )
+            for response_pair, option_pair in zip(response_pairs, option_pairs)
+        ]
+        assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
+            assessment_instances, self.assessment_task, self.assessment_template
+        )
+        self.logger.info("The assessment was generated successfully.")
+
+        # the slices used to get the assessment for each summary generation instance
+        # it will grab the whole assessment for a particular instance or half of it depending on the value of check_positional_bias
+        incremental_contests_count_list = [
+            sum(contests_count_list[: i + 1]) for i in range(len(contests_count_list))
+        ]
+
+        # Summarisation Stage
+        summarization_prompts = None
+        summarization_outputs = None
+        if self.generate_summaries:
+            incremental_contests_count_with_positional_bias_list = [
+                incremental_contests_count * [1, 2][self.check_positional_bias]
+                for incremental_contests_count in incremental_contests_count_list
+            ]
+            assessment_for_summaries_slice_list = [
+                slice(
+                    incremental_contests_count_with_positional_bias_list[i - 1]
+                    if i > 0
+                    else 0,
+                    (
+                        incremental_contests_count_with_positional_bias_list[i - 1]
+                        if i > 0
+                        else 0
+                    )
+                    + contests_count_list[i],
+                )
+                for i in range(len(contests_count_list))
+            ]
+            summarization_instances = [
+                {
+                    "assessment": assessment_output,
+                    "data_classification_policy": ["public"],
+                }
+                for assessment_for_summaries_slice in assessment_for_summaries_slice_list
+                for assessment_output in assessment_outputs[
+                    assessment_for_summaries_slice
+                ]
+            ]
+
+            (
+                summarization_prompts,
+                summarization_outputs,
+                _,
+            ) = self.perform_evaluation_step(
+                summarization_instances,
+                self.summarization_task,
+                self.summarization_template,
+            )
+            self.logger.info("The summary was generated successfully.")
+
+        score_option_instruction_list = [
+            "".join(
+                [
+                    f'Choose "{option}" if Response {option} is better quality.\n'
+                    for option in option_pair
+                ]
+            )
+            for option_pairs in option_pairs_list
+            for option_pair in option_pairs
+        ]
+
+        option_selection_instances = [
+            {
+                "options": [f"Response {option}" for option in option_pair],
+                "score_option_instruction": score_option_instruction,
+                "data_classification_policy": ["public"],
+            }
+            for option_pair, score_option_instruction in zip(
+                [
+                    option_pair
+                    for option_pairs in option_pairs_list
+                    for option_pair in option_pairs
+                ],
+                score_option_instruction_list,
+            )
+        ]
+
+        previous_messages = [
+            [assessment_prompt[0], {"role": "assistant", "content": assessment_output}]
+            for assessment_prompt, assessment_output in zip(
+                assessment_prompts, assessment_outputs
+            )
+        ]
+
+        (
+            option_selection_prompts,
+            option_selection_outputs,
+            selections,
+        ) = self.perform_evaluation_step(
+            option_selection_instances,
+            self.option_selection_task,
+            self.option_selection_template,
+            previous_messages,
+        )
+        # Selections are of the form 'Response n', so we just keep n
+        selections = [selection.split(" ")[-1] for selection in selections]
+        self.logger.info("The selections were calculated successfully.")
+        results = []
+        slice_start = 0
+        for i, incremental_contests_count in enumerate(incremental_contests_count_list):
+            slice_end = slice_start + contests_count_list[i]
+            if self.check_positional_bias:
+                slice_end += contests_count_list[i]
+            sli = slice(slice_start, slice_end)
+            sli_summarization = slice(
+                (incremental_contests_count_list[i - 1] if i > 0 else 0),
+                (incremental_contests_count_list[i - 1] if i > 0 else 0)
+                + incremental_contests_count,
+            )
+            instance_results = self.get_instance_results(
+                predictions[i],
+                assessment_prompts[sli],
+                assessment_outputs[sli],
+                summarization_prompts[sli_summarization]
+                if self.generate_summaries
+                else None,
+                summarization_outputs[sli_summarization]
+                if self.generate_summaries
+                else None,
+                option_selection_prompts[sli],
+                option_selection_outputs[sli],
+                selections[sli],
+                contests_count_list[i],
+                combination_indexes_list[i],
+                criterias[i],
+            )
+            results.append(instance_results)
+            slice_start = slice_end
+        return results

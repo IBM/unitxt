@@ -65,7 +65,7 @@
         {
             "__type__": "set",
             "fields": {
-                "classes": [
+                "entity_types": [
                     "Person",
                     "Organization",
                     "Location"

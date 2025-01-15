@@ -46,6 +46,36 @@ def verify_legal_catalog_name(name):
     ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
+def dict_diff_string(dict1, dict2, max_diff=200):
+    keys_in_both = dict1.keys() & dict2.keys()
+    added = {k: dict2[k] for k in dict2.keys() - dict1.keys()}
+    removed = {k: dict1[k] for k in dict1.keys() - dict2.keys()}
+    changed = {}
+    for k in keys_in_both:
+        if str(dict1[k]) != str(dict2[k]):
+            changed[k] = (dict1[k], dict2[k])
+    result = []
+
+    def format_with_value(k, value, label):
+        value_str = str(value)
+        return (
+            f" - {k} ({label}): {value_str}"
+            if len(value_str) <= max_diff
+            else f" - {k} ({label})"
+        )
+
+    result.extend(format_with_value(k, added[k], "added") for k in added)
+    result.extend(format_with_value(k, removed[k], "removed") for k in removed)
+    result.extend(
+        f" - {k} (changed): {dict1[k]!s} -> {dict2[k]!s}"
+        if len(str(dict1[k])) <= max_diff and len(str(dict2[k])) <= 200
+        else f" - {k} (changed)"
+        for k in changed
+    )
+
+    return "\n".join(result)
+
+
 class Catalogs:
     def __new__(cls):
         if not hasattr(cls, "instance"):
@@ -89,16 +119,18 @@ class Catalogs:
         self.catalogs = []
 
 
-def map_values_in_place(object, mapper):
-    if isinstance(object, dict):
-        for key, value in object.items():
-            object[key] = mapper(value)
-        return object
-    if isinstance(object, list):
-        for i in range(len(object)):
-            object[i] = mapper(object[i])
-        return object
-    return mapper(object)
+def maybe_recover_artifacts_structure(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    if isinstance(obj, dict):
+        for key, value in obj.items():
+            obj[key] = maybe_recover_artifact(value)
+        return obj
+    if isinstance(obj, list):
+        for i in range(len(obj)):
+            obj[i] = maybe_recover_artifact(obj[i])
+        return obj
+    return obj
 
 
 def get_closest_artifact_type(type):
@@ -131,6 +163,9 @@ class Artifact(Dataclass):
     _class_register = {}
 
     __type__: str = Field(default=None, final=True, init=False)
+    __title__: str = NonPositionalField(
+        default=None, required=False, also_positional=False
+    )
     __description__: str = NonPositionalField(
         default=None, required=False, also_positional=False
     )
@@ -150,8 +185,12 @@ class Artifact(Dataclass):
     )
 
     @classmethod
-    def is_artifact_dict(cls, d):
-        return isinstance(d, dict) and "__type__" in d
+    def is_artifact_dict(cls, obj):
+        return isinstance(obj, dict) and "__type__" in obj
+
+    @classmethod
+    def is_possible_identifier(cls, obj):
+        return isinstance(obj, str) or cls.is_artifact_dict(obj)
 
     @classmethod
     def verify_artifact_dict(cls, d):
@@ -244,10 +283,12 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
-            # d stands for an ArtifactLink
-            artifact_link = ArtifactLink.from_dict(d)
-            return artifact_link.load(overwrite_args)
+        if "__type__" in d and d["__type__"] == "artifact_link":
+            cls.from_dict(d)  # for verifications and warnings
+            catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
+            return catalog.get_with_overwrite(
+                artifact_rep, overwrite_args=overwrite_args
+            )
 
         new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
@@ -261,6 +302,9 @@ class Artifact(Dataclass):
     def prepare(self):
         if self.__deprecated_msg__:
             warnings.warn(self.__deprecated_msg__, DeprecationWarning, stacklevel=2)
+
+    def prepare_args(self):
+        pass
 
     def verify(self):
         pass
@@ -292,10 +336,11 @@ class Artifact(Dataclass):
                 field.type, Union[Artifact, List[Artifact], Dict[str, Artifact]]
             ):
                 value = getattr(self, field.name)
-                value = map_values_in_place(value, maybe_recover_artifact)
+                value = maybe_recover_artifacts_structure(value)
                 setattr(self, field.name, value)
 
         self.verify_data_classification_policy()
+        self.prepare_args()
         if not settings.skip_artifacts_prepare_and_verify:
             self.prepare()
             self.verify()
@@ -330,6 +375,13 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
+        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        current_args = self.get_repr_dict()
+        diffs = dict_diff_string(original_args, current_args)
+        if diffs:
+            raise UnitxtError(
+                f"Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n{diffs}"
+            )
         save_to_file(path, self.to_json())
 
     def verify_instance(
@@ -342,16 +394,17 @@ class Artifact(Dataclass):
         proper way (for example when sending it to some external services).
 
         Args:
-            instance (Dict[str, Any]): data which should contain its allowed data
-                classification policies under key 'data_classification_policy'.
-            name (Optional[str]): name of artifact which should be used to retrieve
-                data classification from env. If not specified, then either __id__ or
-                 __class__.__name__, are used instead, respectively.
+            instance (Dict[str, Any]): data which should contain its allowed data classification policies under key 'data_classification_policy'.
+
+            name (Optional[str]): name of artifact which should be used to retrieve data classification from env. If not specified, then either ``__id__`` or ``__class__.__name__``, are used instead, respectively.
 
         Returns:
             Dict[str, Any]: unchanged instance.
 
-        Examples:
+        :Examples:
+
+        .. code-block:: python
+
             instance = {"x": "some_text", "data_classification_policy": ["pii"]}
 
             # Will raise an error as "pii" is not included policy
@@ -366,6 +419,7 @@ class Artifact(Dataclass):
             UNITXT_DATA_CLASSIFICATION_POLICY = json.dumps({"metrics.accuracy": ["pii"]})
             metric = fetch_artifact("metrics.accuracy")
             metric.verify_instance(instance)
+
         """
         name = name or self.get_pretty_print_name()
         data_classification_policy = get_artifacts_data_classification(name)
@@ -408,60 +462,24 @@ class Artifact(Dataclass):
 
         return instance
 
+    def __repr__(self):
+        if self.__id__ is not None:
+            return self.__id__
+        return super().__repr__()
+
 
 class ArtifactLink(Artifact):
-    # the artifact linked to, expressed by its catalog id
-    artifact_linked_to: str = Field(default=None, required=True)
+    to: Artifact
 
-    @classmethod
-    def from_dict(cls, d: dict):
-        assert isinstance(d, dict), f"argument must be a dictionary, got: d = {d}."
-        assert (
-            "artifact_linked_to" in d and d["artifact_linked_to"] is not None
-        ), f"A non-none field named 'artifact_linked_to' is expected in input argument d, but got: {d}."
-        artifact_linked_to = d["artifact_linked_to"]
-        # artifact_linked_to is a name of catalog entry
-        assert isinstance(
-            artifact_linked_to, str
-        ), f"'artifact_linked_to' should be a string expressing a name of a catalog entry. Got{artifact_linked_to}."
-        msg = d["__deprecated_msg__"] if "__deprecated_msg__" in d else None
-        return ArtifactLink(
-            artifact_linked_to=artifact_linked_to, __deprecated_msg__=msg
-        )
-
-    def load(self, overwrite_args: dict) -> Artifact:
-        # identify the catalog for the artifact_linked_to
-        assert (
-            self.artifact_linked_to is not None
-        ), "'artifact_linked_to' must be non-None in order to load it from the catalog. Currently, it is None."
-        assert isinstance(
-            self.artifact_linked_to, str
-        ), f"'artifact_linked_to' should be a string (expressing a name of a catalog entry). Currently, its type is: {type(self.artifact_linked_to)}."
-        needed_catalog = None
-        catalogs = list(Catalogs())
-        for catalog in catalogs:
-            if self.artifact_linked_to in catalog:
-                needed_catalog = catalog
-
-        if needed_catalog is None:
-            raise UnitxtArtifactNotFoundError(self.artifact_linked_to, catalogs)
-
-        path = needed_catalog.path(self.artifact_linked_to)
-        d = artifacts_json_cache(path)
-        # if needed, follow, in a recursive manner, over multiple links,
-        # passing through instantiating of the ArtifactLink-s on the way, triggering
-        # deprecatioin warning as needed.
-        if "artifact_linked_to" in d and d["artifact_linked_to"] is not None:
-            # d stands for an ArtifactLink
-            artifact_link = ArtifactLink.from_dict(d)
-            return artifact_link.load(overwrite_args)
-        new_artifact = Artifact.from_dict(d, overwrite_args=overwrite_args)
-        new_artifact.__id__ = self.artifact_linked_to
-        return new_artifact
+    def verify(self):
+        if self.to.__id__ is None:
+            raise UnitxtError("ArtifactLink must link to existing catalog entry.")
 
 
 def get_raw(obj):
     if isinstance(obj, Artifact):
+        if obj.__id__ is not None:
+            return obj.__id__
         return obj._to_raw_dict()
 
     if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
@@ -521,14 +539,12 @@ def fetch_artifact(artifact_rep) -> Tuple[Artifact, Union[AbstractCatalog, None]
     """
     if isinstance(artifact_rep, Artifact):
         if isinstance(artifact_rep, ArtifactLink):
-            return fetch_artifact(artifact_rep.artifact_linked_to)
+            return fetch_artifact(artifact_rep.to)
         return artifact_rep, None
 
     # If local file
     if isinstance(artifact_rep, str) and Artifact.is_artifact_file(artifact_rep):
         artifact_to_return = Artifact.load(artifact_rep)
-        if isinstance(artifact_rep, ArtifactLink):
-            artifact_to_return = fetch_artifact(artifact_to_return.artifact_linked_to)
 
         return artifact_to_return, None
 
@@ -574,11 +590,10 @@ def reset_artifacts_json_cache():
     artifacts_json_cache.cache_clear()
 
 
-def maybe_recover_artifact(artifact):
-    if isinstance(artifact, str):
-        return verbosed_fetch_artifact(artifact)
-
-    return artifact
+def maybe_recover_artifact(obj):
+    if Artifact.is_possible_identifier(obj):
+        return verbosed_fetch_artifact(obj)
+    return obj
 
 
 def register_all_artifacts(path):

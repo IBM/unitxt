@@ -1,7 +1,6 @@
 import json
 import os
 from collections import Counter
-from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
@@ -154,7 +153,7 @@ def add_link_to_catalog(
         deprecated_msg = None
 
     artifact_link = ArtifactLink(
-        artifact_linked_to=artifact_linked_to, __deprecated_msg__=deprecated_msg
+        to=artifact_linked_to, __deprecated_msg__=deprecated_msg
     )
 
     add_to_catalog(
@@ -167,7 +166,6 @@ def add_link_to_catalog(
     )
 
 
-@lru_cache(maxsize=None)
 def get_from_catalog(
     name: str,
     catalog: Catalog = None,

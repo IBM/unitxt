@@ -42,6 +42,7 @@ with settings.context(allow_unverified_code=True):
         __description__=(
             "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents… See the full description on the dataset page: https://huggingface.co/datasets/multidoc2dial"
         ),
+        __title__="MultiDoc2Dial Abstractive",
     )
 
     card_extractive = TaskCard(
@@ -56,7 +57,7 @@ with settings.context(allow_unverified_code=True):
             ),
             Set({"context_type": "document"}),
         ],
-        task="tasks.qa.with_context.extractive",
+        task="tasks.qa.extractive",
         templates="templates.qa.with_context.all",
         __tags__={
             "annotations_creators": "crowdsourced",
@@ -74,6 +75,7 @@ with settings.context(allow_unverified_code=True):
         __description__=(
             "MultiDoc2Dial is a new task and dataset on modeling goal-oriented dialogues grounded in multiple documents. Most previous works treat document-grounded dialogue modeling as a machine reading comprehension task based on a single given document or passage. We aim to address more realistic scenarios where a goal-oriented information-seeking conversation involves multiple topics, and hence is grounded on different documents… See the full description on the dataset page: https://huggingface.co/datasets/multidoc2dial"
         ),
+        __title__="MultiDoc2Dial Extractive",
     )
 
     for name, card in zip(

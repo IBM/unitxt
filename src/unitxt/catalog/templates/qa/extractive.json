@@ -1,0 +1,11 @@
+{
+    "__type__": "multi_reference_template",
+    "instruction": "Answer the question directly based on the information provided in the {context_type}. Extract the exact phrase from the {context_type} that directly answers the question, without any alterations.",
+    "input_format": "{context_type}:\n{context}\nQuestion:\n{question}",
+    "output_format": "{answer}",
+    "target_prefix": "Answer:\n",
+    "references_field": "answers",
+    "title_fields": [
+        "context_type"
+    ]
+}

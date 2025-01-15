@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nGround-truth answer: {ground_truths}\n\nPrediction: {answer}\n",
+    "output_format": "{is_correct}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.extract_verbal_judgement"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the \"Ground-truth answer\" and the \"Prediction\" to determine whether the prediction correctly answers the question.\nThere should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.\nThe prediction must contain all the important information presented in the ground truths, but doesn't have to fully match it.\nReply with one of the 4 options, without any further explanations:\n\"Completely Correct\" - if the prediction provides the correct answer.\n\"Mostly Correct\" - if the prediction provides the correct answer with respect to the ground truths, but is missing or adding some non-crucial information.\n\"Somewhat Correct\" - If the answer is partially correct with respect to the ground truths, but misses on important information that is necessary to answer the question or adding subtantial information that is not present in the ground truth.\n\"Not Correct\" - If the prediction is completely wrong, contradictory or irrelevant to the ground truth.\n"
+}

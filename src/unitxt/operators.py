@@ -55,6 +55,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Optional,
     Tuple,
     Union,
@@ -66,6 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -81,7 +83,7 @@ from .operator import (
 )
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
-from .stream import DynamicStream, ListStream, Stream
+from .stream import DynamicStream, Stream
 from .text_utils import nested_tuple_to_string
 from .type_utils import isoftype
 from .utils import (
@@ -132,39 +134,45 @@ class IterableSource(SourceOperator):
 class MapInstanceValues(InstanceOperator):
     """A class used to map instance values into other values.
 
-    This class is a type of InstanceOperator,
+    This class is a type of ``InstanceOperator``,
     it maps values of instances in a stream using predefined mappers.
 
-    Attributes:
-        mappers (Dict[str, Dict[str, Any]]): The mappers to use for mapping instance values.
+    Args:
+        mappers (Dict[str, Dict[str, Any]]):
+            The mappers to use for mapping instance values.
             Keys are the names of the fields to undergo mapping, and values are dictionaries
             that define the mapping from old values to new values.
-        strict (bool): If True, the mapping is applied strictly. That means if a value
+            Note that mapped values are defined by their string representation, so mapped values
+            are converted to strings before being looked up in the mappers.
+        strict (bool):
+            If True, the mapping is applied strictly. That means if a value
             does not exist in the mapper, it will raise a KeyError. If False, values
             that are not present in the mapper are kept as they are.
-        process_every_value (bool): If True, all fields to be mapped should be lists, and the mapping
-            is to be applied to their individual elements. If False, mapping is only applied to a field
-            containing a single value.
+        process_every_value (bool):
+            If True, all fields to be mapped should be lists, and the mapping
+            is to be applied to their individual elements.
+            If False, mapping is only applied to a field containing a single value.
 
     Examples:
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})
-        replaces '1' with 'hi' and '2' with 'bye' in field 'a' in all instances of all streams:
-        instance {"a":"1", "b": 2} becomes {"a":"hi", "b": 2}.
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}})``
+        replaces ``"1"`` with ``"hi"`` and ``"2"`` with ``"bye"`` in field ``"a"`` in all instances of all streams:
+        instance ``{"a": 1, "b": 2}`` becomes ``{"a": "hi", "b": 2}``. Note that the value of ``"b"`` remained intact,
+        since field-name ``"b"`` does not participate in the mappers, and that ``1`` was casted to ``"1"`` before looked
+        up in the mapper of ``"a"``.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)
-        Assuming field 'a' is a list of values, potentially including "1"-s and "2"-s, this replaces
-        each such "1" with "hi" and "2" -- with "bye" in all instances of all streams:
-        instance {"a": ["1", "2"], "b": 2} becomes {"a": ["hi", "bye"], "b": 2}.
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, process_every_value=True)``:
+        Assuming field ``"a"`` is a list of values, potentially including ``"1"``-s and ``"2"``-s, this replaces
+        each such ``"1"`` with ``"hi"`` and ``"2"`` -- with ``"bye"`` in all instances of all streams:
+        instance ``{"a": ["1", "2"], "b": 2}`` becomes ``{"a": ["hi", "bye"], "b": 2}``.
 
-        MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)
-        To ensure that all values of field 'a' are mapped in every instance, use strict=True.
-        Input instance {"a":"3", "b": 2} will raise an exception per the above call,
-        because "3" is not a key in the mapper of "a".
+        ``MapInstanceValues(mappers={"a": {"1": "hi", "2": "bye"}}, strict=True)``:
+        To ensure that all values of field ``"a"`` are mapped in every instance, use ``strict=True``.
+        Input instance ``{"a":"3", "b": 2}`` will raise an exception per the above call,
+        because ``"3"`` is not a key in the mapper of ``"a"``.
 
-        MapInstanceValues(mappers={"a": {str([1,2,3,4]): 'All', str([]): 'None'}}, strict=True)
-        replaces a list [1,2,3,4] with the string 'All' and an empty list by string 'None'.
-        Note that mapped values are defined by their string representation, so mapped values
-        must be converted to strings.
+        ``MapInstanceValues(mappers={"a": {str([1,2,3,4]): "All", str([]): "None"}}, strict=True)``
+        replaces a list ``[1,2,3,4]`` with the string ``"All"`` and an empty list by string ``"None"``.
+
     """
 
     mappers: Dict[str, Dict[str, str]]
@@ -234,27 +242,25 @@ class FlattenInstances(InstanceOperator):
 
 
 class Set(InstanceOperator):
-    """Adds specified fields to each instance in a given stream or all streams (default) If fields exist, updates them.
+    """Sets specified fields in each instance, in a given stream or all streams (default), with specified values. If fields exist, updates them, if do not exist -- adds them.
 
     Args:
-        fields (Dict[str, object]): The fields to add to each instance.
-             Use '/' to access inner fields
+        fields (Dict[str, object]): The fields to add to each instance. Use '/' to access inner fields
+
         use_deepcopy (bool) : Deep copy the input value to avoid later modifications
 
     Examples:
-        # Add a 'classes' field with a value of a list "positive" and "negative" to all streams
-        Set(fields={"classes": ["positive","negatives"]})
+        # Set a value of a list consisting of "positive" and "negative" do field "classes" to each and every instance of all streams
+        ``Set(fields={"classes": ["positive","negatives"]})``
 
-        # Add a 'start' field under the 'span' field with a value of 0 to all streams
-        Set(fields={"span/start": 0}
+        # In each and every instance of all streams, field "span" is to become a dictionary containing a field "start", in which the value 0 is to be set
+        ``Set(fields={"span/start": 0}``
 
-        # Add a 'classes' field with a value of a list "positive" and "negative" to 'train' stream
-        Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})
+        # In all instances of stream "train" only, Set field "classes" to have the value of a list consisting of "positive" and "negative"
+        ``Set(fields={"classes": ["positive","negatives"], apply_to_stream=["train"]})``
 
-        # Add a 'classes' field on a given list, prevent modification of original list
-        # from changing the instance.
-        Set(fields={"classes": alist}), use_deepcopy=True)
-        # if now alist is modified, still the instances remain intact.
+        # Set field "classes" to have the value of a given list, preventing modification of original list from changing the instance.
+        ``Set(fields={"classes": alist}), use_deepcopy=True)``  if now alist is modified, still the instances remain intact.
     """
 
     fields: Dict[str, object]
@@ -332,23 +338,27 @@ class InstanceFieldOperator(InstanceOperator):
     """A general stream instance operator that processes the values of a field (or multiple ones).
 
     Args:
-        field (Optional[str]): The field to process, if only a single one is passed. Defaults to None
-        to_field (Optional[str]): Field name to save result into, if only one field is processed, if None is passed the
-          operation would happen in-place and its result would replace the value of "field". Defaults to None
-        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]): Mapping from names of fields to process,
-          to names of fields to save the results into. Inner List, if used, should be of length 2.
-          A field is processed by feeding its value into method 'process_value' and storing the result in to_field that
-          is mapped to the field.
-          When the type of argument 'field_to_field' is List, the order by which the fields are processed is their order
-          in the (outer) List. But when the type of argument 'field_to_field' is Dict, there is no uniquely determined
-          order. The end result might depend on that order if either (1) two different fields are mapped to the same
-          to_field, or (2) a field shows both as a key and as a value in different mappings.
-          The operator throws an AssertionError in either of these cases.
-          field_to_field defaults to None
-        process_every_value (bool): Processes the values in a list instead of the list as a value, similar to *var. Defaults to False
+        field (Optional[str]):
+            The field to process, if only a single one is passed. Defaults to None
+        to_field (Optional[str]):
+            Field name to save result into, if only one field is processed, if None is passed the
+            operation would happen in-place and its result would replace the value of ``field``. Defaults to None
+        field_to_field (Optional[Union[List[List[str]], Dict[str, str]]]):
+            Mapping from names of fields to process,
+            to names of fields to save the results into. Inner List, if used, should be of length 2.
+            A field is processed by feeding its value into method ``process_value`` and storing the result in ``to_field`` that
+            is mapped to the field. When the type of argument ``field_to_field`` is List, the order by which the fields are processed is their order
+            in the (outer) List. But when the type of argument ``field_to_field`` is Dict, there is no uniquely determined
+            order. The end result might depend on that order if either (1) two different fields are mapped to the same
+            to_field, or (2) a field shows both as a key and as a value in different mappings.
+            The operator throws an AssertionError in either of these cases. ``field_to_field``
+            defaults to None.
+        process_every_value (bool):
+            Processes the values in a list instead of the list as a value, similar to python's ``*var``. Defaults to False
 
-        Note: if 'field' and 'to_field' (or both members of a pair in 'field_to_field') are equal (or share a common
-        prefix if 'field' and 'to_field' contain a /), then the result of the operation is saved within 'field'
+    Note: if ``field`` and ``to_field`` (or both members of a pair in ``field_to_field`` ) are equal (or share a common
+    prefix if ``field`` and ``to_field`` contain a / ), then the result of the operation is saved within ``field`` .
+
     """
 
     field: Optional[str] = None
@@ -577,17 +587,18 @@ class Apply(InstanceOperator):
     Args:
         function (str): name of function.
         to_field (str): the field to store the result
-        any additional arguments are field names whose values will be passed directly to the function specified
+
+    any additional arguments are field names whose values will be passed directly to the function specified
 
     Examples:
-    Store in field  "b" the uppercase string of the value in field "a"
-    Apply("a", function=str.upper, to_field="b")
+    Store in field  "b" the uppercase string of the value in field "a":
+    ``Apply("a", function=str.upper, to_field="b")``
 
-    Dump the json representation of field "t" and store back in the same field.
-    Apply("t", function=json.dumps, to_field="t")
+    Dump the json representation of field "t" and store back in the same field:
+    ``Apply("t", function=json.dumps, to_field="t")``
 
-    Set the time in a field 'b'.
-    Apply(function=time.time, to_field="b")
+    Set the time in a field 'b':
+    ``Apply(function=time.time, to_field="b")``
 
     """
 
@@ -667,14 +678,13 @@ class ListFieldValues(InstanceOperator):
 
 
 class ZipFieldValues(InstanceOperator):
-    """Zips values of multiple fields in a given instance, similar to list(zip(*fields)).
+    """Zips values of multiple fields in a given instance, similar to ``list(zip(*fields))``.
 
     The value in each of the specified 'fields' is assumed to be a list. The lists from all 'fields'
     are zipped, and stored into 'to_field'.
 
-    If 'longest'=False, the length of the zipped result is determined by the shortest input value.
-    If 'longest'=False, the length of the zipped result is determined by the longest input, padding shorter
-    inputs with None -s.
+    | If 'longest'=False, the length of the zipped result is determined by the shortest input value.
+    | If 'longest'=True, the length of the zipped result is determined by the longest input, padding shorter inputs with None-s.
 
     """
 
@@ -706,11 +716,11 @@ class ZipFieldValues(InstanceOperator):
 class InterleaveListsToDialogOperator(InstanceOperator):
     """Interleaves two lists, one of user dialog turns and one of assistant dialog turns, into a single list of tuples, alternating between "user" and "assistant".
 
-     The list of tuples if of format (role, turn_content), where the role label is specified by
-     the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
+    The list of tuples if of format (role, turn_content), where the role label is specified by
+    the 'user_role_label' and 'assistant_role_label' fields (default to "user" and "assistant").
 
     The user turns and assistant turns field are specified in the arguments.
-     The value of each of the 'fields' is assumed to be a list.
+    The value of each of the 'fields' is assumed to be a list.
 
     """
 
@@ -799,10 +809,16 @@ class TakeByField(InstanceOperator):
 
 
 class Perturb(FieldOperator):
-    """Slightly perturbs the contents of 'field'. Could be Handy for imitating prediction from given target.
+    """Slightly perturbs the contents of ``field``. Could be Handy for imitating prediction from given target.
 
-    When task was classification, argument 'select_from' can be used to list the other potential classes, as a
+    When task was classification, argument ``select_from`` can be used to list the other potential classes, as a
     relevant perturbation
+
+    Args:
+        percentage_to_perturb (int):
+            the percentage of the instances for which to apply this perturbation. Defaults to 1 (1 percent)
+        select_from: List[Any]:
+            a list of values to select from, as a perturbation of the field's value. Defaults to [].
     """
 
     select_from: List[Any] = []
@@ -854,13 +870,13 @@ class Copy(FieldOperator):
 
     Examples:
         An input instance {"a": 2, "b": 3}, when processed by
-        Copy(field_to_field={"a": "b"}
+        ``Copy(field_to_field={"a": "b"})``
         would yield {"a": 2, "b": 2}, and when processed by
-        Copy(field_to_field={"a": "c"} would yield
+        ``Copy(field_to_field={"a": "c"})`` would yield
         {"a": 2, "b": 3, "c": 2}
 
         with field names containing / , we can also copy inside the field:
-        Copy(field="a/0",to_field="a")
+        ``Copy(field="a/0",to_field="a")``
         would process instance {"a": [1, 3]} into {"a": 1}
 
 
@@ -930,31 +946,41 @@ class CastFields(InstanceOperator):
     """Casts specified fields to specified types.
 
     Args:
-        use_nested_query (bool): Whether to cast nested fields, expressed in dpath. Defaults to False.
-        fields (Dict[str, str]): A dictionary mapping field names to the names of the types to cast the fields to.
+        fields (Dict[str, str]):
+            A dictionary mapping field names to the names of the types to cast the fields to.
             e.g: "int", "str", "float", "bool". Basic names of types
-        defaults (Dict[str, object]): A dictionary mapping field names to default values for cases of casting failure.
-        process_every_value (bool): If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
+        defaults (Dict[str, object]):
+            A dictionary mapping field names to default values for cases of casting failure.
+        process_every_value (bool):
+            If true, all fields involved must contain lists, and each value in the list is then casted. Defaults to False.
 
-    Examples:
-        CastFields(
-                fields={"a/d": "float", "b": "int"},
-                failure_defaults={"a/d": 0.0, "b": 0},
-                process_every_value=True,
-                use_nested_query=True
-            )
-        would process the input instance: {"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}
-            into {"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}
+    Example:
+        .. code-block:: python
+
+                CastFields(
+                    fields={"a/d": "float", "b": "int"},
+                    failure_defaults={"a/d": 0.0, "b": 0},
+                    process_every_value=True,
+                )
+
+    would process the input instance: ``{"a": {"d": ["half", "0.6", 1, 12]}, "b": ["2"]}``
+    into ``{"a": {"d": [0.0, 0.6, 1.0, 12.0]}, "b": [2]}``.
 
     """
 
     fields: Dict[str, str] = field(default_factory=dict)
     failure_defaults: Dict[str, object] = field(default_factory=dict)
-    use_nested_query: bool = False
+    use_nested_query: bool = None  # deprecated field
     process_every_value: bool = False
 
     def prepare(self):
         self.types = {"int": int, "float": float, "str": str, "bool": bool}
+
+    def verify(self):
+        super().verify()
+        if self.use_nested_query is not None:
+            depr_message = "Field 'use_nested_query' is deprecated. From now on, default behavior is compatible to use_nested_query=True. Please remove this field from your code."
+            warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
 
     def _cast_single(self, value, type, field):
         try:
@@ -1093,18 +1119,18 @@ class FilterByCondition(StreamOperator):
 
     Args:
        values (Dict[str, Any]): Field names and respective Values that instances must match according the condition, to be included in the output.
+
        condition: the name of the desired condition operator between the specified (sub) field's value  and the provided constant value.  Supported conditions are  ("gt", "ge", "lt", "le", "ne", "eq", "in","not in")
+
        error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByCondition(values = {"a":4}, condition = "gt") will yield only instances where field "a" contains a value > 4
-       FilterByCondition(values = {"a":4}, condition = "le") will yield only instances where "a"<=4
-       FilterByCondition(values = {"a":[4,8]}, condition = "in") will yield only instances where "a" is 4 or 8
-       FilterByCondition(values = {"a":[4,8]}, condition = "not in") will yield only instances where "a" different from 4 or 8
-       FilterByCondition(values = {"a/b":[4,8]}, condition = "not in") will yield only instances where "a" is
-            a dict in which key "b" is mapped to a value that is neither 4 nor 8
-       FilterByCondition(values = {"a[2]":4}, condition = "le") will yield only instances where "a" is a list whose 3-rd
-            element is <= 4
+       | ``FilterByCondition(values = {"a":4}, condition = "gt")`` will yield only instances where field ``"a"`` contains a value ``> 4``
+       | ``FilterByCondition(values = {"a":4}, condition = "le")`` will yield only instances where ``"a"<=4``
+       | ``FilterByCondition(values = {"a":[4,8]}, condition = "in")`` will yield only instances where ``"a"`` is ``4`` or ``8``
+       | ``FilterByCondition(values = {"a":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is different from ``4`` or ``8``
+       | ``FilterByCondition(values = {"a/b":[4,8]}, condition = "not in")`` will yield only instances where ``"a"`` is a dict in which key ``"b"`` is mapped to a value that is neither ``4`` nor ``8``
+       | ``FilterByCondition(values = {"a[2]":4}, condition = "le")`` will yield only instances where "a" is a list whose 3-rd element is ``<= 4``
 
 
     """
@@ -1252,16 +1278,19 @@ class FilterByExpression(StreamOperator, ComputeExpressionMixin):
     Raises an error if a field participating in the specified condition is missing from the instance
 
     Args:
-       expression (str): a condition over fields of the instance, to be processed by python's eval()
-       imports_list (List[str]): names of imports needed for the eval of the query (e.g. 're', 'json')
-       error_on_filtered_all (bool, optional): If True, raises an error if all instances are filtered out. Defaults to True.
+        expression (str):
+            a condition over fields of the instance, to be processed by python's eval()
+        imports_list (List[str]):
+            names of imports needed for the eval of the query (e.g. 're', 'json')
+        error_on_filtered_all (bool, optional):
+            If True, raises an error if all instances are filtered out. Defaults to True.
 
     Examples:
-       FilterByExpression(expression = "a > 4") will yield only instances where "a">4
-       FilterByExpression(expression = "a <= 4 and b > 5") will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
-       FilterByExpression(expression = "a in [4, 8]") will yield only instances where "a" is 4 or 8
-       FilterByExpression(expression = "a not in [4, 8]") will yield only instances where "a" is neither 4 nor 8
-       FilterByExpression(expression = "a['b'] not in [4, 8]") will yield only instances where "a" is a dict in which key 'b' is mapped to a value that is neither 4 nor 8
+        | ``FilterByExpression(expression = "a > 4")`` will yield only instances where "a">4
+        | ``FilterByExpression(expression = "a <= 4 and b > 5")`` will yield only instances where the value of field "a" is not exceeding 4 and in field "b" -- greater than 5
+        | ``FilterByExpression(expression = "a in [4, 8]")`` will yield only instances where "a" is 4 or 8
+        | ``FilterByExpression(expression = "a not in [4, 8]")`` will yield only instances where "a" is neither 4 nor 8
+        | ``FilterByExpression(expression = "a['b'] not in [4, 8]")`` will yield only instances where "a" is a dict in which key 'b' is mapped to a value that is neither 4 nor 8
     """
 
     error_on_filtered_all: bool = True
@@ -1605,6 +1634,12 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
         yield from stream
 
 
+def update_scores_of_stream_instances(stream: Stream, scores: List[dict]) -> Generator:
+    for instance, score in zip(stream, scores):
+        instance["score"] = recursive_copy(score)
+        yield instance
+
+
 class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     """Applies metric operators to a stream based on a metric field specified in each instance.
 
@@ -1619,23 +1654,10 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
         from .metrics import Metric, MetricsList
 
-        # Number of instances in input stream is assumed to be small. This is why
-        # each metric consumes all of them and lays them in its main memory, and even generates
-        # some 1000 copies thereof for the sake of CI.
-        # So we start with deep copying here, to make a 'frozen' status of the stream, having
-        # passed the preprocess_steps of the task, and inference, and now getting to be evaluated,
-        # a frozen status to be fed into each of the metrics listed in metric_field,
-        # so that the evaluation of one does not affect the evaluation of another
-        # (typically, affecting via change of instance as part of
-        # preprocess_steps of MetricPipeline, as illustrated in docs/adding_metrics/Using Metric Pipelines).
+        # to be populated only when two or more metrics
+        accumulated_scores = []
 
-        instances_upon_entrance_to_metrics_evaluations = []
-        for instance in stream:
-            instances_upon_entrance_to_metrics_evaluations.append(
-                recursive_copy(instance)
-            )
-
-        first_instance = instances_upon_entrance_to_metrics_evaluations[0]
+        first_instance = stream.peek()
 
         metric_names = first_instance.get(self.metric_field, [])
         if not metric_names:
@@ -1658,32 +1680,33 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
                     f"Operator {metric_name} must be a Metric or MetricsList"
                 )
 
+        for metric in metrics_list:
+            if not self.calc_confidence_intervals:
+                metric.disable_confidence_interval_calculation()
         # Each metric operator computes its score and then sets the main score, overwriting
         # the previous main score value (if any). So, we need to reverse the order of the listed metrics.
         # This will cause the first listed metric to run last, and the main score will be set
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        for metric in metrics_list:
-            if not self.calc_confidence_intervals:
-                metric.disable_confidence_interval_calculation()
-            multi_stream = MultiStream(
-                {
-                    "tmp": ListStream(
-                        instances_list=instances_upon_entrance_to_metrics_evaluations,
-                        copying=True,  # ensures deep copy when iterating over instances
-                    )
-                }
-            )
-            multi_stream = metric(multi_stream)
-            for evaluated_instance, freezed_instance in zip(
-                multi_stream["tmp"], instances_upon_entrance_to_metrics_evaluations
-            ):
-                freezed_instance["score"] = recursive_shallow_copy(
-                    evaluated_instance["score"]
+        for i, metric in enumerate(metrics_list):
+            if i == 0:  # first metric
+                multi_stream = MultiStream({"tmp": stream})
+            else:  # metrics with previous scores
+                reusable_generator = ReusableGenerator(
+                    generator=update_scores_of_stream_instances,
+                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
                 )
+                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
 
-        yield from instances_upon_entrance_to_metrics_evaluations
+            multi_stream = metric(multi_stream)
+
+            if i < len(metrics_list) - 1:  # last metric
+                accumulated_scores = []
+                for inst in multi_stream["tmp"]:
+                    accumulated_scores.append(recursive_copy(inst["score"]))
+
+        yield from multi_stream["tmp"]
 
 
 class MergeStreams(MultiStreamOperator):
@@ -1805,14 +1828,14 @@ class EncodeLabels(InstanceOperator):
     Args:
         fields (List[str]): The fields to encode together.
 
-    Example: applying
-        EncodeLabels(fields = ["a", "b/*"])
-        on input stream = [{"a": "red", "b": ["red", "blue"], "c":"bread"},
-        {"a": "blue", "b": ["green"], "c":"water"}]   will yield the
-        output stream = [{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]
+    Example:
+        applying ``EncodeLabels(fields = ["a", "b/*"])``
+        on input stream = ``[{"a": "red", "b": ["red", "blue"], "c":"bread"},
+        {"a": "blue", "b": ["green"], "c":"water"}]``   will yield the
+        output stream = ``[{'a': 0, 'b': [0, 1], 'c': 'bread'}, {'a': 1, 'b': [2], 'c': 'water'}]``
 
-        Note: qpath is applied here, and hence, fields that are lists, should be included in
-        input 'fields' with the appendix "/*"  as in the above example.
+        Note: dict_utils are applied here, and hence, fields that are lists, should be included in
+        input 'fields' with the appendix ``"/*"``  as in the above example.
 
     """
 
@@ -1856,13 +1879,15 @@ class StreamRefiner(StreamOperator):
     input stream. And if the input stream consists of more than 'max_instances' instances, the resulting stream only consists
     of the leading 'max_instances' of the input stream.
 
-    Args:  max_instances (int)
-           apply_to_streams (optional, list(str)): names of streams to refine.
+    Args:
+        max_instances (int)
+        apply_to_streams (optional, list(str)):
+            names of streams to refine.
 
     Examples:
-        when input = [{"a": 1},{"a": 2},{"a": 3},{"a": 4},{"a": 5},{"a": 6}] is fed into
-        StreamRefiner(max_instances=4)
-        the resulting stream is [{"a": 1},{"a": 2},{"a": 3},{"a": 4}]
+        when input = ``[{"a": 1},{"a": 2},{"a": 3},{"a": 4},{"a": 5},{"a": 6}]`` is fed into
+        ``StreamRefiner(max_instances=4)``
+        the resulting stream is ``[{"a": 1},{"a": 2},{"a": 3},{"a": 4}]``
     """
 
     max_instances: int = None
@@ -1875,7 +1900,7 @@ class StreamRefiner(StreamOperator):
             yield from stream
 
 
-class DeterministicBalancer(StreamRefiner):
+class Balance(StreamRefiner):
     """A class used to balance streams deterministically.
 
     For each instance, a signature is constructed from the values of the instance in specified input 'fields'.
@@ -1883,18 +1908,20 @@ class DeterministicBalancer(StreamRefiner):
     When also input 'max_instances' is specified, DeterministicBalancer maintains a total instance count not exceeding
     'max_instances'. The total number of discarded instances is as few as possible.
 
-    Attributes:
-        fields (List[str]): A list of field names to be used in producing the instance's signature.
-        max_instances (Optional, int)
+    Args:
+        fields (List[str]):
+            A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int):
+            overall max.
 
     Usage:
-        balancer = DeterministicBalancer(fields=["field1", "field2"], max_instances=200)
-        balanced_stream = balancer.process(stream)
+        ``balancer = DeterministicBalancer(fields=["field1", "field2"], max_instances=200)``
+        ``balanced_stream = balancer.process(stream)``
 
     Example:
-        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 2},{"a": 3},{"a": 4}] is fed into
-        DeterministicBalancer(fields=["a"])
-        the resulting stream will be: [{"a": 1, "b": 1},{"a": 2},{"a": 3},{"a": 4}]
+        When input ``[{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 2},{"a": 3},{"a": 4}]`` is fed into
+        ``DeterministicBalancer(fields=["a"])``
+        the resulting stream will be: ``[{"a": 1, "b": 1},{"a": 2},{"a": 3},{"a": 4}]``
     """
 
     fields: List[str]
@@ -1928,27 +1955,35 @@ class DeterministicBalancer(StreamRefiner):
                 yield instance
 
 
+class DeterministicBalancer(Balance):
+    pass
+
+
 class MinimumOneExamplePerLabelRefiner(StreamRefiner):
     """A class used to return a specified number instances ensuring at least one example  per label.
 
-    For each instance, a signature value is constructed from the values of the instance in specified input 'fields'.
-    MinimumOneExamplePerLabelRefiner takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
-    MinimumOneExamplePerLabelRefiner then shuffles the results to avoid having one instance
+    For each instance, a signature value is constructed from the values of the instance in specified input ``fields``.
+    ``MinimumOneExamplePerLabelRefiner`` takes first instance that appears from each label (each unique signature), and then adds more elements up to the max_instances limit.  In general, the refiner takes the first elements in the stream that meet the required conditions.
+    ``MinimumOneExamplePerLabelRefiner`` then shuffles the results to avoid having one instance
     from each class first and then the rest . If max instance is not set, the original stream will be used
 
-    Attributes:
-        fields (List[str]): A list of field names to be used in producing the instance's signature.
-        max_instances (Optional, int): Number of elements to select. Note that max_instances of StreamRefiners that are passed to the recipe (e.g. 'train_refiner'. `test_refiner`) are overridden by the recipe parameters ( `max_train_instances`, `max_test_instances`)
+    Args:
+        fields (List[str]):
+            A list of field names to be used in producing the instance's signature.
+        max_instances (Optional, int):
+            Number of elements to select. Note that max_instances of StreamRefiners
+            that are passed to the recipe (e.g. ``train_refiner``. ``test_refiner``) are overridden
+            by the recipe parameters ( ``max_train_instances``, ``max_test_instances``)
 
     Usage:
-        balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)
-        balanced_stream = balancer.process(stream)
+        | ``balancer = MinimumOneExamplePerLabelRefiner(fields=["field1", "field2"], max_instances=200)``
+        | ``balanced_stream = balancer.process(stream)``
 
     Example:
-        When input [{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}] is fed into
-        MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)
+        When input ``[{"a": 1, "b": 1},{"a": 1, "b": 2},{"a": 1, "b": 3},{"a": 1, "b": 4},{"a": 2, "b": 5}]`` is fed into
+        ``MinimumOneExamplePerLabelRefiner(fields=["a"], max_instances=3)``
         the resulting stream will be:
-        [{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}] (order may be different)
+        ``[{'a': 1, 'b': 1}, {'a': 1, 'b': 2}, {'a': 2, 'b': 5}]`` (order may be different)
     """
 
     fields: List[str]
@@ -2006,20 +2041,19 @@ class LengthBalancer(DeterministicBalancer):
     """Balances by a signature that reflects the total length of the fields' values, quantized into integer segments.
 
     Args:
-        segments_boundaries (List[int]): distinct integers sorted in increasing order, that maps a given total length
-        into the index of the least of them that exceeds the total length. (If none exceeds -- into one index
-        beyond, namely, the length of segments_boundaries)
+        segments_boundaries (List[int]):
+            distinct integers sorted in increasing order, that map a given total length
+            into the index of the least of them that exceeds the given total length.
+            (If none exceeds -- into one index beyond, namely, the length of segments_boundaries)
+        fields (Optional, List[str]):
+            the total length of the values of these fields goes through the quantization described above
 
-        fields (Optional, List[str])
 
     Example:
-        when input [{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}] is fed into
-
-        .. code-block::
-
-            LengthBalancer(fields=["a"], segments_boundaries=[1])
-
-        input instances will be counted and balanced against two categories: empty total length (less than 1), and non-empty.
+        when input ``[{"a": [1, 3], "b": 0, "id": 0}, {"a": [1, 3], "b": 0, "id": 1}, {"a": [], "b": "a", "id": 2}]``
+        is fed into ``LengthBalancer(fields=["a"], segments_boundaries=[1])``,
+        input instances will be counted and balanced against two categories:
+        empty total length (less than 1), and non-empty.
     """
 
     segments_boundaries: List[int]
@@ -2051,9 +2085,11 @@ class UnexpectedHttpCodeError(Exception):
 class DownloadOperator(SideEffectOperator):
     """Operator for downloading a file from a given URL to a specified local path.
 
-    Attributes:
-        source (str): URL of the file to be downloaded.
-        target (str): Local path where the downloaded file should be saved.
+    Args:
+        source (str):
+            URL of the file to be downloaded.
+        target (str):
+            Local path where the downloaded file should be saved.
     """
 
     source: str
@@ -2073,9 +2109,11 @@ class DownloadOperator(SideEffectOperator):
 class ExtractZipFile(SideEffectOperator):
     """Operator for extracting files from a zip archive.
 
-    Attributes:
-        zip_file (str): Path of the zip file to be extracted.
-        target_dir (str): Directory where the contents of the zip file will be extracted.
+    Args:
+        zip_file (str):
+            Path of the zip file to be extracted.
+        target_dir (str):
+            Directory where the contents of the zip file will be extracted.
     """
 
     zip_file: str
@@ -2089,8 +2127,9 @@ class ExtractZipFile(SideEffectOperator):
 class DuplicateInstances(StreamOperator):
     """Operator which duplicates each instance in stream a given number of times.
 
-    Attributes:
-        num_duplications (int): How many times each instance should be duplicated (1 means no duplication).
+    Args:
+        num_duplications (int):
+            How many times each instance should be duplicated (1 means no duplication).
         duplication_index_field (Optional[str]):
             If given, then additional field with specified name is added to each duplicated instance,
             which contains id of a given duplication. Defaults to None, so no field is added.
@@ -2132,21 +2171,23 @@ class CollateInstances(StreamOperator):
         batch_size (int)
 
     Example:
-        CollateInstances(batch_size=2)
+        .. code-block:: text
 
-        Given inputs = [
-            {"a": 1, "b": 2},
-            {"a": 2, "b": 2},
-            {"a": 3, "b": 2},
-            {"a": 4, "b": 2},
-            {"a": 5, "b": 2}
-        ]
+            CollateInstances(batch_size=2)
 
-        Returns targets = [
-            {"a": [1,2], "b": [2,2]},
-            {"a": [3,4], "b": [2,2]},
-            {"a": [5], "b": [2]},
-        ]
+            Given inputs = [
+                {"a": 1, "b": 2},
+                {"a": 2, "b": 2},
+                {"a": 3, "b": 2},
+                {"a": 4, "b": 2},
+                {"a": 5, "b": 2}
+            ]
+
+            Returns targets = [
+                {"a": [1,2], "b": [2,2]},
+                {"a": [3,4], "b": [2,2]},
+                {"a": [5], "b": [2]},
+            ]
 
 
     """
@@ -2176,3 +2217,20 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class WikipediaFetcher(FieldOperator):
+    mode: Literal["summary", "text"] = "text"
+    _requirements_list = ["Wikipedia-API"]
+
+    def prepare(self):
+        super().prepare()
+        import wikipediaapi
+
+        self.wikipedia = wikipediaapi.Wikipedia("Unitxt")
+
+    def process_value(self, value: Any) -> Any:
+        title = value.split("/")[-1]
+        page = self.wikipedia.page(title)
+
+        return {"title": page.title, "body": getattr(page, self.mode)}

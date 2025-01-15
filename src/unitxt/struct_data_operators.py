@@ -2,17 +2,25 @@
 
 These operators are specialized in handling structured data like tables.
 For tables, expected input format is:
-{
-  "header": ["col1", "col2"],
-  "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-}
+
+.. code-block:: text
+
+    {
+        "header": ["col1", "col2"],
+        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+    }
 
 For triples, expected input format is:
-[[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
+
+.. code-block:: text
+
+    [[ "subject1", "relation1", "object1" ], [ "subject1", "relation2", "object2"]]
 
 For key-value pairs, expected input format is:
-{"key1": "value1", "key2": value2, "key3": "value3"}
-------------------------
+
+.. code-block:: text
+
+    {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
 import json
@@ -31,7 +39,7 @@ from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
-from .serializers import TableSerializer
+from .serializers import ImageSerializer, TableSerializer
 from .types import Table
 from .utils import recursive_copy
 
@@ -148,11 +156,15 @@ class SerializeTableAsMarkdown(SerializeTable):
 
     Markdown table format is used in GitHub code primarily.
     Format:
-    |col1|col2|col3|
-    |---|---|---|
-    |A|4|1|
-    |I|2|1|
-    ...
+
+    .. code-block:: text
+
+        |col1|col2|col3|
+        |---|---|---|
+        |A|4|1|
+        |I|2|1|
+        ...
+
     """
 
     # main method that serializes a table.
@@ -192,11 +204,14 @@ class SerializeTableAsDFLoader(SerializeTable):
 
     Pandas dataframe based code snippet format serializer.
     Format(Sample):
-    pd.DataFrame({
-        "name" : ["Alex", "Diana", "Donald"],
-        "age" : [26, 34, 39]
-    },
-    index=[0,1,2])
+
+    .. code-block:: python
+
+        pd.DataFrame({
+            "name" : ["Alex", "Diana", "Donald"],
+            "age" : [26, 34, 39]
+        },
+        index=[0,1,2])
     """
 
     # main method that serializes a table.
@@ -222,7 +237,7 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         return (
             "pd.DataFrame({\n"
-            + json.dumps(data_dict)
+            + json.dumps(data_dict)[1:-1]
             + "},\nindex="
             + str(list(range(len(rows))))
             + ")"
@@ -234,11 +249,14 @@ class SerializeTableAsJson(SerializeTable):
 
     Json format based serializer.
     Format(Sample):
-    {
-        "0":{"name":"Alex","age":26},
-        "1":{"name":"Diana","age":34},
-        "2":{"name":"Donald","age":39}
-    }
+
+    .. code-block:: json
+
+        {
+            "0":{"name":"Alex","age":26},
+            "1":{"name":"Diana","age":34},
+            "2":{"name":"Donald","age":39}
+        }
     """
 
     # main method that serializes a table.
@@ -264,15 +282,18 @@ class SerializeTableAsHTML(SerializeTable):
 
     HTML table format used for rendering tables in web pages.
     Format(Sample):
-    <table>
-        <thead>
-            <tr><th>name</th><th>age</th><th>sex</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>Alice</td><td>26</td><td>F</td></tr>
-            <tr><td>Raj</td><td>34</td><td>M</td></tr>
-        </tbody>
-    </table>
+
+    .. code-block:: html
+
+        <table>
+            <thead>
+                <tr><th>name</th><th>age</th><th>sex</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Alice</td><td>26</td><td>F</td></tr>
+                <tr><td>Raj</td><td>34</td><td>M</td></tr>
+            </tbody>
+        </table>
     """
 
     # main method that serializes a table.
@@ -336,6 +357,67 @@ class SerializeTableAsConcatenation(SerializeTable):
 
         # return serialized table as a string
         return serialized_tbl_str.strip()
+
+
+class SerializeTableAsImage(SerializeTable):
+    _requirements_list = ["matplotlib", "pillow"]
+
+    def serialize_table(self, table_content: Dict) -> str:
+        raise NotImplementedError()
+
+    def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
+        table_content = recursive_copy(value)
+        if self.shuffle_columns:
+            table_content = shuffle_columns(table=table_content, seed=self.seed)
+
+        if self.shuffle_rows:
+            table_content = shuffle_rows(table=table_content, seed=self.seed)
+
+        import io
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        from PIL import Image
+
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
+
+        # Create a pandas DataFrame
+        df = pd.DataFrame(rows, columns=header)
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        df.columns = [
+            f"{col}_{i}" if df.columns.duplicated()[i] else col
+            for i, col in enumerate(df.columns)
+        ]
+
+        # Create a matplotlib table
+        plt.rcParams["font.family"] = "Serif"
+        fig, ax = plt.subplots(figsize=(len(header) * 1.5, len(rows) * 0.5))
+        ax.axis("off")  # Turn off the axes
+
+        table = pd.plotting.table(ax, df, loc="center", cellLoc="center")
+        table.auto_set_column_width(col=range(len(df.columns)))
+        table.scale(1.5, 1.5)
+
+        # Save the plot to a BytesIO buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
+        plt.close(fig)  # Close the figure to free up memory
+        buf.seek(0)
+
+        # Load the image from the buffer using PIL
+        image = Image.open(buf)
+        return ImageSerializer().serialize({"image": image, "format": "png"}, instance)
 
 
 # truncate cell value to maximum allowed length
@@ -404,7 +486,7 @@ class TruncateTableRows(FieldOperator):
     """Limits table rows to specified limit by removing excess rows via random selection.
 
     Args:
-        rows_to_keep (int) - number of rows to keep.
+        rows_to_keep (int): number of rows to keep.
     """
 
     rows_to_keep: int = 10
@@ -563,16 +645,19 @@ class ListToKeyValPairs(InstanceOperator):
 class ConvertTableColNamesToSequential(FieldOperator):
     """Replaces actual table column names with static sequential names like col_0, col_1,...
 
-    Sample input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
-    Sample output:
-    {
-        "header": ["col_0", "col_1"],
-        "rows": [["Alex", 21], ["Donald", 34]]
-    }
+    .. code-block:: text
+
+        Sample input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
+
+        Sample output:
+        {
+            "header": ["col_0", "col_1"],
+            "rows": [["Alex", 21], ["Donald", 34]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -595,17 +680,19 @@ class ConvertTableColNamesToSequential(FieldOperator):
 class ShuffleTableRows(TypeDependentAugmentor):
     """Shuffles the input table rows randomly.
 
-    Sample Input:
-    {
-        "header": ["name", "age"],
-        "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-    }
+    .. code-block:: text
 
-    Sample Output:
-    {
-        "header": ["name", "age"],
-        "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
-    }
+        Sample Input:
+        {
+            "header": ["name", "age"],
+            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+        }
+
+        Sample Output:
+        {
+            "header": ["name", "age"],
+            "rows": [["Donald", 39], ["Raj", 34], ["Alex", 26]],
+        }
     """
 
     augmented_type = Table
@@ -619,17 +706,19 @@ class ShuffleTableRows(TypeDependentAugmentor):
 class ShuffleTableColumns(TypeDependentAugmentor):
     """Shuffles the table columns randomly.
 
-    Sample Input:
-        {
-            "header": ["name", "age"],
-            "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": ["age", "name"],
-            "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age"],
+                "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+            }
+
+        Sample Output:
+            {
+                "header": ["age", "name"],
+                "rows": [[26, "Alex"], [34, "Raj"], [39, "Donald"]],
+            }
     """
 
     augmented_type = Table
@@ -651,7 +740,7 @@ class LoadJson(FieldOperator):
             except json.JSONDecodeError:
                 return self.failure_value
         else:
-            return json.loads(value)
+            return json.loads(value, strict=False)
 
 
 class DumpJson(FieldOperator):
@@ -662,11 +751,14 @@ class DumpJson(FieldOperator):
 class MapHTMLTableToJSON(FieldOperator):
     """Converts HTML table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     _requirements_list = ["bs4"]
@@ -701,11 +793,14 @@ class MapHTMLTableToJSON(FieldOperator):
 class MapTableListsToStdTableJSON(FieldOperator):
     """Converts lists table format to the basic one (JSON).
 
-    JSON format
-    {
-        "header": ["col1", "col2"],
-        "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
-    }
+    JSON format:
+
+    .. code-block:: json
+
+        {
+            "header": ["col1", "col2"],
+            "rows": [["row11", "row12"], ["row21", "row22"], ["row31", "row32"]]
+        }
     """
 
     def process_value(self, table: Any) -> Any:
@@ -755,17 +850,20 @@ class ConstructTableFromRowsCols(InstanceOperator):
 class TransposeTable(TypeDependentAugmentor):
     """Transpose a table.
 
-    Sample Input:
-        {
-            "header": ["name", "age", "sex"],
-            "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
-        }
+    .. code-block:: text
 
-    Sample Output:
-        {
-            "header": [" ", "0", "1", "2"],
-            "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
-        }
+        Sample Input:
+            {
+                "header": ["name", "age", "sex"],
+                "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+            }
+
+        Sample Output:
+            {
+                "header": [" ", "0", "1", "2"],
+                "rows": [["name", "Alice", "Raj", "Donald"], ["age", 26, 34, 39], ["sex", "F", "M", "M"]],
+            }
+
     """
 
     augmented_type = Table
@@ -791,8 +889,9 @@ class DuplicateTableRows(TypeDependentAugmentor):
     """Duplicates specific rows of a table for the given number of times.
 
     Args:
-        row_indices (List[int]) - rows to be duplicated
-        times(int) - how many times to duplicate
+        row_indices (List[int]): rows to be duplicated
+
+        times(int): each row to be duplicated is to show that many times
     """
 
     augmented_type = Table
@@ -823,8 +922,9 @@ class DuplicateTableColumns(TypeDependentAugmentor):
     """Duplicates specific columns of a table for the given number of times.
 
     Args:
-        column_indices (List[int]) - columns to be duplicated
-        times(int) - how many times to duplicate
+        column_indices (List[int]): columns to be duplicated
+
+        times(int): each column to be duplicated is to show that many times
     """
 
     augmented_type = Table

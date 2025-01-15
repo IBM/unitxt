@@ -3,7 +3,10 @@
     "loader": {
         "__type__": "load_hf",
         "path": "glue",
-        "name": "wnli"
+        "name": "wnli",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

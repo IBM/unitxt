@@ -1,0 +1,37 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "granite_guardian_groundedness",
+    "metric": {
+        "__type__": "granite_guardian_wml_metric",
+        "main_score": "granite_guardian_groundedness",
+        "risk_name": "groundedness"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "ground_truths": "task_data/ground_truths",
+                "answer": "task_data/answer",
+                "contexts": "task_data/contexts",
+                "question": "task_data/question"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}

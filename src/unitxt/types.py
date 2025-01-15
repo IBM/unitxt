@@ -11,6 +11,13 @@ class Turn(TypedDict):
     content: Text
 
 
+class RagResponse(TypedDict):
+    answer: str
+    contexts: List[str]
+    context_ids: Union[List[int], List[str]]
+    is_answerable: bool
+
+
 Dialog = NewType("Dialog", List[Turn])
 
 
@@ -18,6 +25,13 @@ class Image(TypedDict):
     image: Any
     format: str
 
+
+class Document(TypedDict):
+    title: str
+    body: str
+
+
+MultiDocument = NewType("MultiDocument", List[Document])
 
 Video = NewType("Video", List[Image])
 
@@ -39,3 +53,6 @@ register_type(Table)
 register_type(Audio)
 register_type(Image)
 register_type(Video)
+register_type(Document)
+register_type(MultiDocument)
+register_type(RagResponse)

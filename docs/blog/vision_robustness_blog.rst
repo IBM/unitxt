@@ -1,10 +1,14 @@
 .. title:: If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
-.. sectionauthor:: Elron Bandel and Nimrod Shabtay
-.. date:: 2024-11-01
 
-============================
+:Authors:
+    Elron Bandel
+    Nimrod Shabtay
+
+:Date: 2024-11-01
+
+==========================================================================================================================
 [01/11/2024] If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
-============================
+==========================================================================================================================
 
 **Authors**: Elron Bandel and Nimrod Shabtay
 
@@ -35,7 +39,7 @@ Here’s the code used to set up our tests. This example uses Unitxt to create s
     for card in ["cards.seed_bench", "cards.ai2d"]:
         for enumerator in ["capitals", "lowercase"]:
             for augmentor in [None, "augmentors.image.white_noise"]:
-                subsets[f"{card} {enumerator} {augmentor}"] = StandardRecipe(
+                subsets[f"{card} {enumerator} {augmentor}"] = DatasetRecipe(
                     card=card,
                     template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
                     loader_limit=100,
@@ -46,14 +50,16 @@ Here’s the code used to set up our tests. This example uses Unitxt to create s
 
     data = list(benchmark()["test"])
 
-    inference_model = LMMSEvalInferenceEngine(
+    model = LMMSEvalInferenceEngine(
         model_type="llava_onevision",
         model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
         max_new_tokens=2,
     )
 
-    predictions = inference_model.infer(data)
+    predictions = model(data)
     results = evaluate(predictions=predictions, data=data)
+
+    print(results.subsets_scores.summary)
 
 In order to run this you will first have to install llms-eval library which might not work on mac.
 

@@ -1,0 +1,11 @@
+{
+    "__type__": "dataset_recipe",
+    "card": "cards.tablebench_numerical_reasoning",
+    "serializer": "serializers.table.markdown",
+    "num_demos": 5,
+    "demos_pool_size": -1,
+    "loader_limit": 10000,
+    "augmentor": [
+        "augmentors.table.insert_empty_rows[times=2]"
+    ]
+}

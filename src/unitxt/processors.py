@@ -132,6 +132,14 @@ class TakeFirstNonEmptyLine(FieldOperator):
         return parts[0].strip()
 
 
+class TakeLastNonEmptyLine(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        parts = str(text).strip().split("\n")
+        if len(parts) == 0:
+            return ""
+        return parts[-1].strip()
+
+
 class ConvertToBoolean(FieldOperator):
     def process_value(self, text: Any) -> Any:
         clean_instance = str(text).strip().lower()
@@ -155,6 +163,11 @@ class LowerCaseTillPunc(FieldOperator):
 class Lower(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return text.lower()
+
+
+class Upper(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).upper()
 
 
 @deprecation("2.0.0", alternative=Lower)
@@ -397,3 +410,30 @@ class RemovePunctuations(FieldOperator):
 class FixWhiteSpace(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return " ".join(text.split())
+
+
+class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
+    max_val = 10
+    min_val = 0
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            text = float(text)
+            return (text - self.min_val) / self.max_val
+        except Exception:
+            return 0
+
+
+class ExtractVerbalJudgment(FieldOperator):
+    classes = ["not", "somewhat", "mostly", "completely"]
+
+    def process_value(self, text: Any) -> Any:
+        max_val = len(self.classes) - 1
+        for i, c in enumerate(self.classes):
+            if text.strip().lower().startswith(c):
+                return i / (max_val)
+        return 0
+
+
+class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
+    classes = ["very bad", "bad", "mediocre", "good", "very good"]

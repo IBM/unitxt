@@ -1,15 +1,16 @@
 import ast
 import json
+import math
 import os
 import re
 import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, defaultdict
+from collections import Counter, defaultdict, namedtuple
 from dataclasses import field
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
 import numpy
 import numpy as np
@@ -27,7 +28,12 @@ from .dataclass import (
 )
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
-from .inference import HFPipelineBasedInferenceEngine, InferenceEngine
+from .inference import (
+    HFPipelineBasedInferenceEngine,
+    InferenceEngine,
+    TorchDeviceMixin,
+    WMLInferenceEngineGeneration,
+)
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
 from .operator import (
@@ -43,7 +49,7 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy
+from .utils import deep_copy, recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -125,8 +131,8 @@ class Metric(Artifact):
     #
     score_prefix: str = ""
 
-    def prepare(self):
-        super().prepare()
+    def prepare_args(self):
+        super().prepare_args()
         if isinstance(self.prediction_type, str):
             self.prediction_type = parse_string_types_instead_of_actual_objects(
                 self.prediction_type
@@ -310,6 +316,398 @@ class Metric(Artifact):
                 continue
             if score_ci in instance["score"]["global"]:
                 instance["score"]["global"].pop(score_ci)
+
+
+def new_random_generator():
+    # The np.random.default_rng expects a 32-bit int, while hash(..) can return a 64-bit integer.
+    # So use '& MAX_32BIT' to get a 32-bit seed.
+    _max_32bit = 2**32 - 1
+    return np.random.default_rng(hash(get_seed()) & _max_32bit)
+
+
+class ConfidenceIntervalMixin(Artifact):
+    n_resamples: int = 1000
+    confidence_level: float = 0.95
+    ci_score_names: List[str] = None
+
+    @abstractmethod
+    def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
+        pass
+
+    def get_statistic(self, data: List[Any], score_names: List[str]):
+        def statistic_function(indices, axis=0):
+            # indices might be a 1D or 2D array, depending on bootstrap internals
+            # For simplicity, ensure we handle them as 1D.
+            indices = np.atleast_1d(indices).astype(int)
+
+            # Gather the subset
+            sample = [data[i] for i in indices]
+
+            # Compute metrics on this sample
+            scores = self._sample_to_scores(sample)
+
+            # Return them in consistent order
+            return np.array([scores[m] for m in score_names])
+
+        return statistic_function
+
+    def bootstrap(self, data: List[Any], score_names: List[str]):
+        if self.ci_score_names is not None:
+            score_names = self.ci_score_names
+
+        intervals = bootstrap(
+            (np.arange(len(data)),),
+            statistic=self.get_statistic(data, score_names),
+            n_resamples=self.n_resamples,
+            confidence_level=self.confidence_level,
+            random_state=new_random_generator(),
+            paired=False,
+            vectorized=False,  # set to True if your statistic function is vectorized
+            method="BCa",
+        ).confidence_interval
+
+        result = {}
+        for i, metric in enumerate(score_names):
+            result[f"{metric}_ci_low"] = float(intervals.low[i])
+            result[f"{metric}_ci_high"] = float(intervals.high[i])
+
+        return result
+
+
+from typing import Generic, TypeVar, NamedTuple
+from dataclasses import dataclass
+
+IntermediateType = TypeVar("IntermediateType")
+PredictionType = TypeVar("PredictionType")
+
+
+class EvaluationInput(tuple, Generic[PredictionType]):
+    def __new__(
+        cls,
+        prediction: PredictionType,
+        references: List[PredictionType],
+        task_data: Dict[str, Any],
+    ) -> "EvaluationInput[PredictionType]":
+        return super().__new__(cls, (prediction, references, task_data))
+
+
+def is_original_key(key):
+    if (
+        key.endswith("_ci_low")
+        or key.endswith("_ci_high")
+        or key == "score"
+        or key == "num_of_instances"
+        or key == "score_name"
+    ):
+        return False
+    return True
+
+
+class MapReduceMetric(
+    StreamOperator,
+    Metric,
+    ConfidenceIntervalMixin,
+    Generic[PredictionType, IntermediateType],
+):
+    score_prefix = ""
+    reference_field: str = NonPositionalField(default="references")
+    prediction_field: str = NonPositionalField(default="prediction")
+
+    def map(
+        self,
+        prediction: PredictionType,
+        references: List[PredictionType],
+        task_data: Dict[str, Any],
+    ) -> IntermediateType:
+        raise NotImplementedError()
+
+    def reduce_one(self, intermidate: IntermediateType):
+        return self.reduce([intermidate])
+
+    @abstractmethod
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        return {}
+
+    def disable_confidence_interval_calculation(self):
+        self.n_resamples = None
+
+    def annotate_scores(self, scores):
+        scores = {
+            **{self.score_prefix + key: val for key, val in scores.items()},
+            "score_name": self.score_prefix + self.main_score,
+            "score": scores[self.main_score],
+        }
+        for level in ["high", "low"]:
+            if f"{self.main_score}_ci_{level}" in scores:
+                scores[f"score_ci_{level}"] = scores[f"{self.main_score}_ci_{level}"]
+        return scores
+
+    def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
+        return self.reduce(sample)
+
+    def reduce_and_bootstrap(
+        self, intermediates: List[IntermediateType]
+    ) -> Dict[str, Any]:
+        scores = self.reduce(intermediates)
+        score_names = [k for k, v in scores.items() if isinstance(v, float)]
+        if self.n_resamples is None or len(intermediates) <= 1:
+            return scores
+        intervals = self.bootstrap(intermediates, score_names)
+        return {**scores, **intervals}
+
+    def _instance_to_evaluation_input(
+        self, instance: Dict[str, Any]
+    ) -> EvaluationInput[PredictionType]:
+        instance = self.verify_instance(instance)
+
+        task_data = instance.get("task_data", {})
+
+        if self.reference_field == "references":
+            references = instance["references"]
+        else:
+            references = task_data[self.reference_field]
+            if not isinstance(references, list):
+                references = [references]
+        if self.prediction_field == "prediction":
+            prediction = instance["prediction"]
+        else:
+            prediction = task_data[self.prediction_field]
+
+        self._validate_prediction(prediction)
+        self._validate_reference(references)
+
+        return EvaluationInput[PredictionType](
+            prediction=prediction, references=references, task_data=task_data
+        )
+
+    def _instances_stream_to_evaluation_inputs(
+        self, stream: Stream
+    ) -> Generator[EvaluationInput[PredictionType], None, None]:
+        for instance in stream:
+            yield self._instance_to_evaluation_input(instance)
+
+    def map_stream(
+        self,
+        evaluation_inputs_stream: Generator[
+            EvaluationInput[PredictionType], None, None
+        ],
+    ):
+        intermediates = []
+        for prediction, references, task_data in evaluation_inputs_stream:
+            intermediate = self.map(
+                prediction=prediction, references=references, task_data=task_data
+            )
+
+            intermediates.append(intermediate)
+        return intermediates
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        instances_scores, global_scores = self.compute(stream, stream_name)
+        for i, (instance, instance_scores) in enumerate(zip(stream, instances_scores)):
+            previous_score = instance.get("score", {"global": {}, "instance": {}})
+
+            if i == 0:
+                for key in global_scores:
+                    if is_original_key(key) and key in previous_score["global"]:
+                        UnitxtWarning(
+                            message=f"Metric '{key}' that has just been evaluated with value {global_scores[key]}, is already recorded "
+                            f"to have value {previous_score['global'][key]} by a previous metric evaluation on this instance or stream. "
+                            f"To avoid overwriting the existing value, add a score_prefix to the metric name (e.g. score_prefix='my_second_' , "
+                            f"which will yield, in this case, a score named: 'my_second_{key}')",
+                            additional_info_id=Documentation.MULTIPLE_METRICS_OUTPUTS,
+                        )
+
+            global_scores = {**previous_score["global"], **global_scores}
+            instance_scores = {**previous_score["instance"], **instance_scores}
+
+            yield {
+                **instance,
+                "score": {"global": global_scores, "instance": instance_scores},
+            }
+
+    def compute(self, stream: Stream, stream_name: Optional[str] = None):
+        evaluation_inputs_stream = self._instances_stream_to_evaluation_inputs(stream)
+        intermediates_list = self.map_stream(evaluation_inputs_stream)
+
+        instances_scores = []
+        for intermediate in intermediates_list:
+            instance_score = self.reduce_one(intermediate)
+            instance_score = self.annotate_scores(instance_score)
+            instances_scores.append(instance_score)
+
+        global_scores = self.reduce_and_bootstrap(intermediates_list)
+        global_scores = self.annotate_scores(global_scores)
+
+        global_scores["num_of_instances"] = len(intermediates_list)
+
+        return instances_scores, global_scores
+
+
+def get_index_or_default(lst, item, default=-1):
+    try:
+        return lst.index(item)
+    except ValueError:
+        return default
+
+
+class AggregationReduction(Artifact, Generic[IntermediateType]):
+    def reduce(self, intermidates: List[IntermediateType]) -> Dict[str, Any]:
+        pass
+
+
+class DictReduction(AggregationReduction[Dict[str, float]]):
+    def reduce_list(self, lst: List[float]):
+        pass
+
+    def reduce(self, intermidates: List[Dict[str, float]]):
+        lists = {}
+        for intermidate in intermidates:
+            for key, val in intermidate.items():
+                if key not in lists:
+                    lists[key] = []
+                lists[key].append(val)
+
+        result = {}
+        for key, val_list in lists.items():
+            result[key] = self.reduce_list(val_list)
+        return result
+
+
+class MeanReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return nan_mean(lst)
+
+
+class MaxReduction(DictReduction):
+    def reduce_list(self, lst: List[float]):
+        return float(nan_max(lst))
+
+
+class ReductionInstanceMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    reduction: AggregationReduction[IntermediateType]
+
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        return self.reduction.reduce(intermediates)
+
+    def reduce_one(self, intermidate: IntermediateType):
+        return recursive_copy(intermidate)
+
+
+class AccuracyFast(ReductionInstanceMetric[str, Dict[str, float]]):
+    main_score = "accuracy"
+    reduction = MeanReduction()
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        return {
+            self.main_score: float(
+                str(prediction) in [str(reference) for reference in references]
+            )
+        }
+
+
+class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
+    main_score = "f1"
+    averages: List[Literal["f1", "macro", "micro", "per_class"]] = [
+        "f1",
+        "micro",
+        "macro",
+        "per_class",
+    ]
+    ignore_punc: bool = True
+    ignore_case: bool = True
+    _requirements_list = ["scikit-learn", "regex"]
+
+    def prepare(self):
+        super().prepare()
+        from sklearn.metrics import f1_score
+
+        self._metric = f1_score
+        import regex
+        from functools import partial
+
+        self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
+
+    def get_str_id(self, str):
+        if str not in self.str_to_id:
+            id = len(self.str_to_id)
+            self.str_to_id[str] = id
+            self.id_to_str[id] = str
+        return self.str_to_id[str]
+
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        self.str_to_id = {}
+        self.id_to_str = {}
+        return super().map_stream(evaluation_inputs_stream)
+
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Tuple[int, int]:
+        reference_index = self.get_str_id(references[0])
+        prediction_index = self.get_str_id(prediction)
+
+        return prediction_index, reference_index
+
+    def reduce(self, intermediates: List[Tuple[int, int]]) -> Dict[str, Any]:
+        y_true = []
+        y_pred = []
+        labels = set()
+        for pred_idx, ref_idx in intermediates:
+            y_pred.append(pred_idx)
+            y_true.append(ref_idx)
+            labels.add(ref_idx)
+
+        labels = list(labels)
+        result = {}
+
+        if "f1" in self.averages:
+            result["f1"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "micro" in self.averages:
+            result["f1_micro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="micro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "macro" in self.averages:
+            result["f1_macro"] = float(
+                self._metric(
+                    y_true,
+                    y_pred,
+                    average="macro",
+                    labels=labels,
+                    zero_division=0,
+                )
+            )
+
+        if "per_class" in self.averages:
+            f1_per_class = self._metric(
+                y_true, y_pred, average=None, labels=list(labels), zero_division=0
+            )
+            for label, score in zip(labels, f1_per_class):
+                class_name = self.id_to_str[label]
+                result[f"f1_{class_name}"] = float(score)
+
+        return result
 
 
 class MetricWithConfidenceInterval(Metric):
@@ -499,7 +897,7 @@ class MetricWithConfidenceInterval(Metric):
                 except Exception as e:
                     # this happens in edge cases, for example, when the sampling creates a
                     # sample where all strings are empty and this fails bleu.
-                    logger.info(f"Warning in {self.__class__.__name__}", e)
+                    logger.warning(f"Warning in {self.__class__.__name__}: {e}")
                     return np.nan
 
             # resample the instance scores, and then return the global score each time
@@ -534,10 +932,10 @@ class MetricWithConfidenceInterval(Metric):
                     confidence_level=self.confidence_level,
                     random_state=random_gen,
                 ).confidence_interval
-            result["score_ci_low"] = ci.low
-            result["score_ci_high"] = ci.high
-            result[f"{score_name}_ci_low"] = ci.low
-            result[f"{score_name}_ci_high"] = ci.high
+            result["score_ci_low"] = float(ci.low)
+            result["score_ci_high"] = float(ci.high)
+            result[f"{score_name}_ci_low"] = float(ci.low)
+            result[f"{score_name}_ci_high"] = float(ci.high)
         return result
 
 
@@ -960,11 +1358,13 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     """Class for metrics for which a global score can be calculated by aggregating the instance scores (possibly with additional instance inputs).
 
     InstanceMetric currently allows two reductions:
+
     1. 'mean', which calculates the mean of instance scores,
     2. 'group_mean', which first applies an aggregation function specified in the reduction_map
-        to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
-        of the group scores; if grouping_field is None, grouping is disabled.
-        See _validate_group_mean_reduction for formatting instructions.
+       to instance scores grouped by the field grouping_field (which must not be None), and returns the mean
+       of the group scores; if grouping_field is None, grouping is disabled.
+       See _validate_group_mean_reduction for formatting instructions.
+
     """
 
     n_resamples: int = OptionalField(
@@ -985,7 +1385,17 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     reference_field: str = NonPositionalField(default="references")
     prediction_field: str = NonPositionalField(default="prediction")
 
-    def _validate_group_mean_reduction(self, instances: List[dict]):
+    def _validate_group_mean_task_data(self, instance):
+        # instances need to all have task_data field with field group_id
+        assert "task_data" in instance, "each instance must have an task_data field"
+        assert isinstance(
+            instance["task_data"], dict
+        ), "each instance must have an task_data field that is a dict"
+        assert (
+            "group_id" in instance["task_data"]
+        ), "each instance task_data dict must have a key group_id"
+
+    def _validate_group_mean_reduction(self):
         """Ensure that group_mean reduction_map is properly formatted.
 
         Example: Apply the variance (np.var) to group Accuracy instance scores.  This class would be specified as follows:
@@ -1035,17 +1445,6 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             1           'How do I repair my engine?'                 'paraphrase'
             2           'Why are ants eating my food?'               'original'
         """
-        # instances need to all have task_data field with field group_id
-        assert all(
-            "task_data" in instance for instance in instances
-        ), "each instance must have an task_data field"
-        assert all(
-            isinstance(instance["task_data"], dict) for instance in instances
-        ), "each instance must have an task_data field that is a dict"
-        assert all(
-            "group_id" in instance["task_data"] for instance in instances
-        ), "each instance task_data dict must have a key group_id"
-
         # validate the reduction_map
         assert (
             "group_mean" in self.reduction_map
@@ -1074,16 +1473,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
-        # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
-        # this field exists
-        if self.subgroup_column is not None:
-            assert all(
-                self.subgroup_column in instance["task_data"] for instance in instances
-            ), f"each instance task_data dict must have a key {self.subgroup_column}"
-
     def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        instances = self.compute_instance_scores(stream)
-        global_score = {"num_of_instances": len(instances)}
+        instance_scores = self.compute_instance_scores(stream)
+        global_score = {"num_of_instances": len(instance_scores)}
         for reduction_type, reduction_params in self.reduction_map.items():
             assert (
                 reduction_type in self.implemented_reductions
@@ -1096,15 +1488,15 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 aggregation_function = self.average_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = instance_scores
             elif reduction_type == "max":
                 aggregation_function = self.max_item_scores
                 reduction_fields = list(set(reduction_params))
                 # no group reduction, so resample instances individually
-                scores_to_resample = instances
+                scores_to_resample = instance_scores
             elif reduction_type == "group_mean":
                 aggregation_function = self.average_item_scores
-                self._validate_group_mean_reduction(instances=instances)
+                self._validate_group_mean_reduction()
                 reduction_fields = (
                     [self.main_score]
                     if "score_fields" not in reduction_params
@@ -1120,7 +1512,7 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     scores_to_resample,
                     aggregation_function,
                 ) = self._set_up_group_mean_aggregation(
-                    instances,
+                    instance_scores,
                     reduction_params,
                     reduction_fields,
                 )
@@ -1161,17 +1553,31 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 )
                 global_score.update(confidence_interval)
 
-        for instance in instances:
+        for instance in instance_scores:
             self.update_and_adjust_global_score(instance, global_score)
-        yield from instances
+
+        for i, instance in enumerate(stream):
+            instance["score"] = recursive_copy(instance_scores[i]["score"])
+            yield instance
 
     def compute_instance_scores(
         self, stream: Stream, stream_name: Optional[str] = None
     ):
-        instances = []
+        instance_scores = []
 
         for instance in stream:
             instance = self.verify_instance(instance)
+
+            if "group_mean" in self.reduction_map:
+                self._validate_group_mean_task_data(instance)
+
+            # for aggregation functions that use the subgroup_column (expect a dict of lists), check that
+            # this field exists
+            if self.subgroup_column is not None:
+                assert (
+                    "task_data" in instance
+                    and self.subgroup_column in instance["task_data"]
+                ), f"each instance task_data dict must have a key {self.subgroup_column}"
 
             task_data = instance["task_data"] if "task_data" in instance else {}
 
@@ -1207,9 +1613,18 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                     instance_score, instance["score"]["instance"]
                 )
             )
-            instances.append(instance)
+            task_data = {}
+            if "task_data" in instance:
+                if "group_id" in instance["task_data"]:
+                    task_data["group_id"] = instance["task_data"]["group_id"]
+                if self.subgroup_column in instance["task_data"]:
+                    task_data[self.subgroup_column] = instance["task_data"][
+                        self.subgroup_column
+                    ]
 
-        return instances
+            instance_scores.append({"score": instance["score"], "task_data": task_data})
+
+        return instance_scores
 
     def get_group_scores(
         self,
@@ -1221,12 +1636,16 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         """Group scores by the group_id and subgroup_type fields of each instance, and compute group_aggregation_func by group.
 
         Args:
-            instances: List of observation instances with instance-level scores (fields) computed.
-            score_names: List of instance score names in each instance to apply the aggregation function.
-            group_aggregation_func: Callable aggregation function accepting a list of numeric scores;
+            instances (list):
+                List of observation instances with instance-level scores (fields) computed.
+            score_names (list):
+                List of instance score names in each instance to apply the aggregation function.
+            group_aggregation_func (Callable):
+                aggregation function accepting a list of numeric scores;
                 or, if self.subgroup_column is not None, a dict of subgroup types scores by subgroup_column value.
                 callable function returns a single score for the group
-            prepend_score_prefix: if True - prepend the score_prefix to the score names in the returned dicts. Set to False
+            prepend_score_prefix (bool):
+                if True - prepend the score_prefix to the score names in the returned dicts. Set to False
                 if down the stream such a prepending is expected.
 
         Returns:
@@ -1348,11 +1767,51 @@ class Accuracy(InstanceMetric):
         return result
 
 
+class ExactMatchMM(InstanceMetric):
+    reduction_map = {"mean": ["exact_match_mm"]}
+    main_score = "exact_match_mm"
+    prediction_type = Any  # string representation is compared
+
+    @staticmethod
+    @lru_cache(maxsize=10000)
+    def exact_match(pred, gt):
+        """Brought from MMStar"""
+        answer = gt.lower().strip().replace("\n", " ")
+        predict = pred.lower().strip().replace("\n", " ")
+        try:
+            if answer == predict[0]:
+                return 1.0
+            elif predict[0] == "(" and answer == predict[1]:
+                return 1.0
+            elif predict[0:7] == "option " and answer == predict[7]:
+                return 1.0
+            elif predict[0:14] == "the answer is " and answer == predict[14]:
+                return 1.0
+        except Exception as e:
+            return 0.0
+        return 0.0
+
+    def compute(
+        self, references: List[Any], prediction: Any, task_data: List[Dict]
+    ) -> dict:
+        # result = {self.main_score: float(str(prediction) in [str(reference) for reference in references])}
+        result = {
+            self.main_score: max(
+                [
+                    self.exact_match(str(prediction), str(reference))
+                    for reference in references
+                ]
+            )
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result
+
+
 class ANLS(InstanceMetric):
     main_score = "anls"
     reduction_map = {"mean": ["anls"]}
-    prediction_type = Any  # string representation is compared
-
+    prediction_type = str  # string representation is compared
     threshold: float = 0.5
 
     @staticmethod
@@ -1408,6 +1867,183 @@ class ANLS(InstanceMetric):
                     )
             distances = distances_
         return distances[-1]
+
+
+class RelaxedCorrectness(GlobalMetric):
+    main_score = "relaxed_overall"
+    prediction_type = str  # string representation is compared
+
+    def compute(
+        self, references: List[List[str]], predictions: List[str], task_data: List[Dict]
+    ) -> dict:
+        return_dict = {
+            self.main_score: [],
+            "relaxed_human_split": [],
+            "relaxed_augmented_split": [],
+        }
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
+            print(task_data_i)
+            type = task_data_i["type"]
+            score = self.relaxed_correctness(pred, ref[0])
+            score = 1.0 if score else 0.0
+            return_dict["relaxed_overall"].append(score)
+            if type == "human_test":
+                return_dict["relaxed_human_split"].append(score)
+            else:
+                return_dict["relaxed_augmented_split"].append(score)
+        return_dict = {
+            key: sum(value) / len(value)
+            for key, value in return_dict.items()
+            if len(value) > 0
+        }
+        return return_dict
+
+    @staticmethod
+    def _to_float(text: str):
+        try:
+            if text.endswith("%"):
+                # Convert percentages to floats.
+                return float(text.rstrip("%")) / 100.0
+            else:
+                return float(text)
+        except ValueError:
+            return None
+
+    def relaxed_correctness(
+        self, prediction, target, max_relative_change: float = 0.05
+    ) -> bool:
+        """Calculates relaxed correctness.
+
+        The correctness tolerates certain error ratio defined by max_relative_change.
+        See https://arxiv.org/pdf/2203.10244.pdf, end of section 5.1:
+        “Following Methani et al. (2020), we use a relaxed accuracy measure for the
+        numeric answers to allow a minor inaccuracy that may result from the automatic
+        data extraction process. We consider an answer to be correct if it is within
+        5% of the gold answer. For non-numeric answers, we still need an exact match
+        to consider an answer to be correct.”
+
+        This function is taken from https://github.com/QwenLM/Qwen-VL/blob/34b4c0ee7b07726371b960911f249fe61b362ca3/eval_mm/evaluate_vqa.py#L113
+        Args:
+          target: List of target string.
+          prediction: List of predicted string.
+          max_relative_change: Maximum relative change.
+
+        Returns:
+          Whether the prediction was correct given the specified tolerance.
+        """
+        prediction_float = self._to_float(prediction)
+        target_float = self._to_float(target)
+        if prediction_float is not None and target_float:
+            relative_change = abs(prediction_float - target_float) / abs(target_float)
+            return relative_change <= max_relative_change
+        else:
+            return prediction.lower() == target.lower()
+
+
+class WebsrcSquadF1(GlobalMetric):
+    main_score = "websrc_squad_f1"
+    prediction_type = Any  # string representation is compared
+    DOMAINS = [
+        "auto",
+        "book",
+        "camera",
+        "game",
+        "jobs",
+        "movie",
+        "phone",
+        "restaurant",
+        "sports",
+        "university",
+        "hotel",
+    ]
+
+    def compute(
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
+    ) -> dict:
+        """ANLS image-text accuracy metric."""
+        evaluation_result = {}
+        # Group results by domain
+        subset_to_eval_samples = defaultdict(list)
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
+            subset_to_eval_samples[task_data_i["domain"]].append([pred, ref[0]])
+        # Evaluate each domain
+        for subset, sub_eval_samples in subset_to_eval_samples.items():
+            judge_dict, metric_dict = self.evaluate_websrc(sub_eval_samples)
+            metric_dict.update({"num_example": len(sub_eval_samples)})
+            evaluation_result[subset] = metric_dict
+
+        # Aggregate results for all domains
+        printable_results = {}
+        for domain in self.DOMAINS:
+            if domain not in evaluation_result:
+                continue
+            printable_results[domain] = {
+                "num": int(evaluation_result[domain]["num_example"]),
+                "f1": round(evaluation_result[domain]["f1"], 3),
+            }
+        all_ins_f1 = np.sum(
+            [
+                cat_results["f1"] * cat_results["num_example"]
+                for cat_results in evaluation_result.values()
+            ]
+        ) / sum(
+            [cat_results["num_example"] for cat_results in evaluation_result.values()]
+        )
+        printable_results["Overall"] = {
+            "num": sum(
+                [
+                    cat_results["num_example"]
+                    for cat_results in evaluation_result.values()
+                ]
+            ),
+            "f1": round(all_ins_f1, 3),
+        }
+        return {self.main_score: printable_results["Overall"]["f1"]}
+
+    def evaluate_websrc(self, samples):
+        def _normalize_str(string):
+            # lower it
+            string = string.lower()
+
+            # strip leading and trailing whitespaces
+            string = string.strip()
+
+            return string
+
+        def _tokenize(text):
+            # Regex pattern to match words and isolate punctuation
+            pattern = r"\w+|[^\w\s]"
+            tokens = re.findall(pattern, text)
+            return tokens
+
+        def _compute_f1(sa, sb):
+            sa = _normalize_str(sa)
+            sb = _normalize_str(sb)
+
+            sa = _tokenize(sa)
+            sb = _tokenize(sb)
+
+            sa = set(sa)
+            sb = set(sb)
+
+            if len(sa) == 0 or len(sb) == 0:
+                return 0.0
+
+            comm = sa.intersection(sb)
+            prec = len(comm) / len(sb)
+            rec = len(comm) / len(sa)
+            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
+            return f1
+
+        judge_list = []
+        for sample in samples:
+            judge_list.append(_compute_f1(sample[1], sample[0]))
+
+        f1 = np.mean(judge_list)
+        return judge_list, {"f1": f1}
 
 
 class JaccardIndex(InstanceMetric):
@@ -1489,13 +2125,17 @@ class StringContainmentRatio(InstanceMetric):
 
     Attributes:
         field: The field from the task_data that contains the values to be checked for containment.
-               Example task:
-                    Task(
-                        input_fields={"question": str},
-                        reference_fields={"entities": str},
-                        prediction_type=str,
-                        metrics=["string_containment_ratio[field=entities]"],
-                    )
+
+    Example task that contains this metric:
+
+        .. code-block:: python
+
+            Task(
+                input_fields={"question": str},
+                reference_fields={"entities": str},
+                prediction_type=str,
+                metrics=["string_containment_ratio[field=entities]"],
+            )
     """
 
     reduction_map = {"mean": ["string_containment"]}
@@ -1556,6 +2196,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        if hasattr(self, "score_prefix") and self.score_prefix:
+            self.metric.score_prefix = self.score_prefix
         has_postpreprocess = (
             hasattr(self, "postpreprocess_steps")
             and self.postpreprocess_steps is not None
@@ -1637,8 +2279,6 @@ class HuggingfaceMetric(GlobalMetric):
         default_factory=list
     )
 
-    experiment_id: str = OptionalField(default_factory=lambda: str(uuid.uuid4()))
-
     def verify(self):
         if os.path.exists(self.hf_metric_name):
             UnitxtWarning(
@@ -1663,7 +2303,7 @@ class HuggingfaceMetric(GlobalMetric):
         import evaluate
 
         self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=self.experiment_id
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
         )
 
     def compute(
@@ -1704,7 +2344,7 @@ class HuggingfaceMetric(GlobalMetric):
             **self.hf_compute_args,
         )
         if self.hf_main_score:
-            result[self.main_score] = result[self.hf_main_score]
+            result[self.main_score] = float(result[self.hf_main_score])
             del result[self.hf_main_score]
         if self.scale != 1.0:
             assert (
@@ -1724,6 +2364,8 @@ class HuggingfaceMetric(GlobalMetric):
                         result[key], float
                     ), "Scaled field '{key}' is not float: {result[key]}"
                     result[key] /= self.scale
+        if self.main_score in result:
+            result[self.main_score] = float(result[self.main_score])
         return result
 
 
@@ -1809,17 +2451,13 @@ class HuggingfaceInstanceMetric(InstanceMetric):
         return score
 
 
-class Meteor(InstanceMetric):
+class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
     main_score = "meteor"
-    ci_scores = ["meteor"]
-    reduction_map = {"mean": ["meteor"]}
-    prediction_type = str
-
-    _requirements_list: List[str] = ["nltk"]
+    reduction = MeanReduction()
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
     alpha: float = 0.9
     beta: int = 3
     gamma: float = 0.5
-    # unitxt uses nltk version >= 3.8
 
     def prepare(self):
         super().prepare()
@@ -1833,15 +2471,41 @@ class Meteor(InstanceMetric):
         self.word_tokenize = word_tokenize
         self.meteor_score = meteor_score
 
-    def verify(self):
-        import importlib.metadata as importlib_metadata
+    def map(
+        self, prediction: str, references: List[str], task_data: Dict[str, Any]
+    ) -> Dict[str, float]:
+        score = self.meteor_score.meteor_score(
+            [self.word_tokenize(ref) for ref in references],
+            self.word_tokenize(prediction),
+            alpha=self.alpha,
+            beta=self.beta,
+            gamma=self.gamma,
+        )
+        return {self.main_score: score}
 
-        from datasets.config import version
 
-        nltk_version = version.parse(importlib_metadata.version("nltk"))
-        assert nltk_version >= version.Version(
-            "3.6.6"
-        ), "nltk version must be at least 3.6.6"
+class Meteor(InstanceMetric):
+    main_score = "meteor"
+    ci_scores = ["meteor"]
+    reduction_map = {"mean": ["meteor"]}
+    prediction_type = str
+
+    _requirements_list: List[str] = ["nltk>=3.6.6"]
+    alpha: float = 0.9
+    beta: int = 3
+    gamma: float = 0.5
+
+    def prepare(self):
+        super().prepare()
+        import nltk
+
+        nltk.download("wordnet", quiet=True)
+        nltk.download("omw-1.4", quiet=True)
+        from nltk import word_tokenize
+        from nltk.translate import meteor_score
+
+        self.word_tokenize = word_tokenize
+        self.meteor_score = meteor_score
 
     def compute(self, references, prediction, task_data):
         score = self.meteor_score.meteor_score(
@@ -1863,7 +2527,7 @@ class F1(GlobalMetric):
     prediction_type = str
     single_reference_per_prediction = True
 
-    _requirements_list: List[str] = ["scikit-learn"]
+    _requirements_list: List[str] = ["scikit-learn<=1.5.2"]
 
     def prepare(self):
         super().prepare()
@@ -2281,6 +2945,11 @@ class Rouge(InstanceMetric, NLTKMixin):
         self.rouge_scorer = rouge_scorer
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        if len(references) == 0:
+            raise Exception(
+                f"No references passed passed for Rouge metric.  Rouge expects at least one reference answer per instance. The corresponding prediction is: {prediction}"
+            )
+
         # for a single instance, prediction is of type str, and references: list of str
         if self.sent_split_newline:
             prediction = "\n".join(self.nltk.sent_tokenize(prediction.strip()))
@@ -2755,119 +3424,146 @@ class TokenOverlap(InstanceMetric):
         return pr, rc, f1
 
 
-class BertScore(HuggingfaceBulkMetric):
-    hf_metric_name = "bertscore"
+class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
     main_score = "f1"
-    reduction_map = {"mean": ["f1", "precision", "recall"]}
-    hf_metric_fields = ["f1", "precision", "recall"]
-    ci_scores = ["f1", "precision", "recall"]
+    reduction: DictReduction = MeanReduction()
     model_name: str
+    batch_size: int = 32
     model_layer: int = None
-
-    prediction_type = str
 
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 32}
-        if self.model_layer:
-            self.hf_compute_args["num_layers"] = self.model_layer
+        from evaluate import load
+
+        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        predictions = []
+        references = []
+        for prediction, reference, _ in evaluation_inputs_stream:
+            predictions.append(prediction)
+            references.append(reference)
+
+        results = self.bertscore.compute(
+            predictions=predictions,
+            references=references,
+            batch_size=self.batch_size,
+            device=self.get_device(),
+            model_type=self.model_name,
+            num_layers=self.model_layer,
+        )
+
+        intermediates = []
+        for precision, recall, f1 in zip(
+            results["precision"], results["recall"], results["f1"]
+        ):
+            intermediates.append(
+                {
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                }
+            )
+
+        return intermediates
+
+    def reduce(self, intermediates: List[Dict[str, float]]) -> Dict[str, Any]:
+        return self.reduction.reduce(intermediates)
+
+    def reduce_one(self, intermidate: Dict[str, float]):
+        return recursive_copy(intermidate)
 
 
-class SentenceBert(BulkInstanceMetric):
-    main_score = "sbert_score"
-    reduction_map = {"mean": [main_score]}
-    batch_size: int = 32
-
+class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
     model_name: str
+    batch_size: int = 32
+    main_score = "sbert_score"
 
-    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
-        import torch
         from sentence_transformers import SentenceTransformer
-        from sentence_transformers import util as sbert_util
 
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.model = SentenceTransformer(self.model_name, device=self.device)
-        self.util = sbert_util
+        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
+    ):
+        # if settings.mock_inference_mode:
+        #     return [0.5 for _ in evaluation_inputs_stream]
+
+        from sentence_transformers import util
+
         scores = []
 
-        # we are in a multi-reference case (each prediction may have multiple
-        # references), so we need to flatten the refs in order to compute the
-        # embeddings in one batch, but first we have to store the spans of
-        # reference groups, so we can recover it later on.
-        ref_group_boundaries = []
-        count = 0
-        for ref_group in references:
-            ref_group_boundaries.append((count, count + len(ref_group)))
-            count += len(ref_group)
+        predictions = []
+        flattened_references = []
+        reference_group_indices = []  # More descriptive name for boundaries
 
-        # compute s-bert embeddings
-        preds_emb = self.model.encode(predictions, device=self.device)
-        refs_emb = self.model.encode(
-            [ref for ref_group in references for ref in ref_group], device=self.device
+        # Prepare data for single encoding pass
+        current_index = 0
+        for prediction, references, _ in evaluation_inputs_stream:
+            predictions.append(prediction)
+            reference_group_indices.append(
+                (current_index, current_index + len(references))
+            )
+            flattened_references.extend(references)
+            current_index += len(references)
+
+        # Compute embeddings in a single pass
+        combined = predictions + flattened_references
+        combined_emb = self.model.encode(
+            combined, device=self.get_device_id(), batch_size=self.batch_size
         )
 
-        # for each candidate, pick the reference with the highest score
-        for pred_emb, ref_group_bounds in zip(preds_emb, ref_group_boundaries):
-            refs_group_emb = refs_emb[ref_group_bounds[0] : ref_group_bounds[1]]
-            scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
+        preds_emb = combined_emb[: len(predictions)]
+        refs_emb = combined_emb[len(predictions) :]
 
-        return [{self.main_score: score} for score in scores]
+        # Calculate scores and store in the list
+        for pred_emb, (start_idx, end_idx) in zip(preds_emb, reference_group_indices):
+            refs_group_emb = refs_emb[start_idx:end_idx]
+            score = util.cos_sim(pred_emb, refs_group_emb).max().item()
+            scores.append(score)
+
+        return scores
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
 
 
-class Reward(BulkInstanceMetric):
+class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
     main_score = "reward_score"
-    reduction_map = {"mean": [main_score]}
+    model_name: str
     batch_size: int = 32
 
-    model_name: str
-
-    prediction_type = str
-    single_reference_per_prediction = True
-
-    _requirements_list: List[str] = ["transformers", "torch"]
+    _requirements_list: List[str] = ["transformers"]
 
     def prepare(self):
         super().prepare()
-        import torch
         from transformers import pipeline
 
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.pipe = pipeline(
-            "text-classification", model=self.model_name, device=device
+        self.model = pipeline(
+            "text-classification", model=self.model_name, device=self.get_device()
         )
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
-        # treat the references as the questions and the predictions as answers
-        # assume a single reference
-        questions = [refs[0] for refs in references]
-        answers = predictions
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        inputs = []
+        for prediction, references, _ in evaluation_inputs_stream:
+            inputs.append({"text": references[0], "text_pair": prediction})
 
-        # prepare for computation
-        inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
+        results = self.model(inputs, batch_size=self.batch_size)
 
-        # compute the metric
-        # add function_to_apply="none" to disable sigmoid
-        results = self.pipe(inputs, batch_size=self.batch_size)
-        for result in results:
-            result[self.main_score] = result["score"]
-        return results
+        return [result["score"] for result in results]
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
 
 
 class Detector(BulkInstanceMetric):
@@ -3045,11 +3741,12 @@ class SafetyMetric(GlobalMetric):
         else:
             device = -1  # CPU
 
-        self.model = pipeline(
-            "text-classification",
-            model=self.reward_name,
-            device=device,
-        )
+        if not settings.mock_inference_mode:
+            self.model = pipeline(
+                "text-classification",
+                model=self.reward_name,
+                device=device,
+            )
 
     def _evaluate_harmlessness_using_preference_model(
         self, predictions: List[str], inputs: List[str]
@@ -3063,7 +3760,8 @@ class SafetyMetric(GlobalMetric):
             {"text": input_text, "text_pair": pred_text}
             for input_text, pred_text in zip(inputs, predictions)
         ]
-
+        if settings.mock_inference_mode:
+            return [0.5 for result in paired_texts]
         results = self.model(paired_texts, batch_size=self.batch_size)
         return [result["score"] for result in results]
 
@@ -3136,22 +3834,23 @@ class LlamaIndexLLMMetric(InstanceMetric):
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
 
-    _requirements_list: List[str] = ["llama_index"]
+    _requirements_list: List[str] = ["llama-index-core", "llama-index-llms-openai"]
 
     def prepare(self):
+        super().prepare()
         self.model_name_normalized = self.model_name.replace(".", "_").replace("-", "_")
         self.main_score: str = f"llama_index_by_{self.model_name_normalized}_judge"
 
         self.reduction_map: Dict[str, List[str]] = {"mean": [self.main_score]}
 
-        if self.model_name in self.openai_models:
-            from llama_index.llms.openai import OpenAI
-
-            self.llm = OpenAI("gpt-3.5-turbo")
-        elif self.model_name in self.mock_models:
+        if settings.mock_inference_mode or self.model_name in self.mock_models:
             from llama_index.core.llms.mock import MockLLM
 
             self.llm = MockLLM(system_prompt="5")  # perfect score
+        elif self.model_name in self.openai_models:
+            from llama_index.llms.openai import OpenAI
+
+            self.llm = OpenAI(self.model_name)
         else:
             raise NotImplementedError(
                 f"LlamaIndexLLM metric does not support {self.model_name}, currently only gpt-3.5-turbo is supported"
@@ -3679,7 +4378,7 @@ class NDCG(GlobalMetric):
 
 
 class RetrievalMetric(InstanceMetric):
-    prediction_type = List[str]
+    prediction_type = Union[List[str], List[int]]
     single_reference_per_prediction = True
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
@@ -4025,18 +4724,21 @@ def performance_drop_rate(
 def interpret_effect_size(x: float):
     """Return a string rule-of-thumb interpretation of an effect size value, as defined by Cohen/Sawilowsky.
 
-    See https://en.wikipedia.org/wiki/Effect_size;
-    Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
-    Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
+    | See `Effect size <https://en.wikipedia.org/wiki/Effect_size>`_
+    | Cohen, Jacob (1988). Statistical Power Analysis for the Behavioral Sciences; and
+    | Sawilowsky, S (2009). "New effect size rules of thumb". Journal of Modern Applied Statistical Methods. 8 (2): 467-474.
 
     Value has interpretation of
-    - essentially 0 if |x| < 0.01
-    - very small if 0.01 <= |x| < 0.2
-    - small difference if 0.2 <= |x| < 0.5
-    - a medium difference if 0.5 <= |x| < 0.8
-    - a large difference if 0.8 <= |x| < 1.2
-    - a very large difference if 1.2 <= |x| < 2.0
-    - a huge difference if 2.0 <= |x|
+
+    .. code-block:: text
+
+        - essentially 0 if |x| < 0.01
+        - very small if 0.01 <= |x| < 0.2
+        - small difference if 0.2 <= |x| < 0.5
+        - a medium difference if 0.5 <= |x| < 0.8
+        - a large difference if 0.8 <= |x| < 1.2
+        - a very large difference if 1.2 <= |x| < 2.0
+        - a huge difference if 2.0 <= |x|
 
     Args:
         x: float effect size value
@@ -4072,7 +4774,7 @@ def normalized_cohens_h(
     """Cohen's h effect size between two proportions, normalized to interval [-1,1].
 
     Allows for change-type metric when the baseline is 0 (percentage change, and thus PDR, is undefined)
-    https://en.wikipedia.org/wiki/Cohen%27s_h
+    `Conhen's h <https://en.wikipedia.org/wiki/Cohen%27s_h>`_
 
     Cohen's h effect size metric between two proportions p2 and p1 is 2 * (arcsin(sqrt(p2)) - arcsin(sqrt(p1))).
     h in -pi, pi, with +/-pi representing the largest increase/decrease (p1=0, p2=1), or (p1=1, p2=0).
@@ -4083,6 +4785,9 @@ def normalized_cohens_h(
     Interpretation: the original unscaled Cohen's h can be interpreted according to function interpret_effect_size
 
     Thus, the rule of interpreting the effect of the normalized value is to use the same thresholds divided by pi
+
+    .. code-block:: text
+
         - essentially 0 if |norm h| < 0.0031831
         - very small if 0.0031831 <= |norm h| < 0.06366198
         - small difference if 0.06366198 <= |norm h| < 0.15915494
@@ -4090,12 +4795,17 @@ def normalized_cohens_h(
         - a large difference if 0.25464791 <= |norm h| < 0.38197186
         - a very large difference if 0.38197186 <= |norm h| < 0.63661977
         - a huge difference if 0.63661977 <= |norm h|
+
     Args:
         subgroup_scores_dict: dict where keys are subgroup types and values are lists of instance scores.
+
         control_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the control (baseline) group
+
         comparison_subgroup_types: list of subgroup types (potential keys of subgroup_scores_dict) that are the group
-            to be compared to the control group.
+        to be compared to the control group.
+
         interpret: boolean, whether to interpret the significance of the score or not
+
     Returns:
         float score between -1 and 1, and a string interpretation if interpret=True
     """
@@ -4882,14 +5592,18 @@ class IsCodeMixed(BulkInstanceMetric):
 class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
     """Metrics Ensemble class for creating ensemble of given metrics.
 
-    Attributes:
-        main_score (str): The main score label used for evaluation.
-        metrics (List[Union[Metric, str]]): List of metrics that will be ensemble.
-        weights (List[float]): Weight of each the metrics
-        InstanceMetric currently allows two reductions:
-        reduction_map (Dict[str, List[str]]. Parameter for specifying the redaction method of the global score.
-                                             (see it definition at InstanceMetric class). This class define its default
-                                             value to reduce by the mean of the main score.
+    Args:
+        main_score (str):
+            The main score label used for evaluation.
+        metrics (List[Union[Metric, str]]):
+            List of metrics that will be ensemble.
+        weights (List[float]):
+            Weight of each the metrics
+        reduction_map (Dict[str, List[str]]):
+            Specifies the redaction method of the global score.
+            InstanceMetric currently allows two reductions
+            (see it definition at InstanceMetric class).
+            This class define its default value to reduce by the mean of the main score.
 
     """
 
@@ -5124,3 +5838,112 @@ class PredictionLength(InstanceMetric):
         task_data: List[Dict],
     ) -> dict:
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
+
+
+class GraniteGuardianWMLMetric(InstanceMetric):
+    """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
+
+    main_score = "granite_guardian"
+    reduction_map: Dict[str, List[str]] = None
+    prediction_type = float
+
+    model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    safe_token = "No"
+    unsafe_token = "Yes"
+
+    inference_engine: WMLInferenceEngineGeneration = None
+    generation_params: Dict = None
+    risk_name: str = None
+
+    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
+
+    def prepare(self):
+        self.reduction_map = {"mean": [self.main_score]}
+
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        from transformers import AutoTokenizer
+
+        if not hasattr(self, "_tokenizer") or self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.model_name,
+            )
+            self.inference_engine._load_model()
+            self.model = self.inference_engine._model
+            self.generation_params = self.inference_engine._set_logprobs_params({})
+
+        messages = self.process_input_fields(task_data)
+        guardian_config = {"risk_name": self.risk_name}
+        processed_input = self._tokenizer.apply_chat_template(
+            messages,
+            guardian_config=guardian_config,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+        result = self.model.generate(
+            prompt=[processed_input],
+            params=self.generation_params,
+        )
+        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        label, prob_of_risk = self.parse_output(generated_tokens_list)
+        score = 1 - prob_of_risk if label is not None else np.nan
+        return {self.main_score: score}
+
+    def process_input_fields(self, task_data):
+        if self.risk_name == "groundedness":
+            messages = [
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "answer_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "assistant", "content": task_data["answer"]},
+            ]
+        elif self.risk_name == "context_relevance":
+            messages = [
+                {"role": "user", "content": task_data["question"]},
+                {"role": "context", "content": "\n".join(task_data["contexts"])},
+            ]
+        else:
+            raise NotImplementedError()
+
+        return messages
+
+    def parse_output(self, generated_tokens_list):
+        top_tokens_list = [
+            generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
+        ]
+        prob = self.get_probabilities(top_tokens_list)
+        prob_of_risk = prob[1]
+
+        res = next(iter(generated_tokens_list))["text"].strip()
+
+        if self.unsafe_token.lower() == res.lower():
+            label = self.unsafe_token
+        elif self.safe_token.lower() == res.lower():
+            label = self.safe_token
+        else:
+            label = None
+
+        return label, prob_of_risk
+
+    def get_probabilities(self, top_tokens_list):
+        import torch
+
+        safe_token_prob = 1e-50
+        unsafe_token_prob = 1e-50
+
+        for top_tokens in top_tokens_list:
+            for token in top_tokens:
+                if token["text"].strip().lower() == self.safe_token.lower():
+                    safe_token_prob += math.exp(token["logprob"])
+                if token["text"].strip().lower() == self.unsafe_token.lower():
+                    unsafe_token_prob += math.exp(token["logprob"])
+
+        return torch.softmax(
+            torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
+            dim=0,
+        ).numpy()

@@ -74,7 +74,7 @@ def apply_metric(
     ti = []
     for instance in test_iterable:
         ti.append(deepcopy(instance))
-    multi_stream = MultiStream.from_iterables({"test": ti})
+    multi_stream = MultiStream.from_iterables({"test": ti}, copying=True)
 
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
@@ -100,6 +100,7 @@ def test_metric(
     assert isoftype(references, List[Any]), "references must be a list"
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
+        metric = deepcopy(metric)
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
     outputs = apply_metric(metric, predictions, references, task_data)
 

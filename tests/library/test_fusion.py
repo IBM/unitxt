@@ -1,7 +1,7 @@
 from unitxt.api import evaluate
 from unitxt.fusion import FixedFusion, WeightedFusion
 from unitxt.operators import IterableSource
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase, fillna, round_values
@@ -309,22 +309,22 @@ class TestFusion(UnitxtTestCase):
     def test_end_to_end(self):
         dataset = WeightedFusion(
             subsets={
-                "wnli": StandardRecipe(
+                "wnli": DatasetRecipe(
                     card="cards.wnli",
                     template="templates.classification.multi_class.relation.default",
                     group_by=["template"],
                 ),
-                "rte": StandardRecipe(
+                "rte": DatasetRecipe(
                     card="cards.rte",
                     template="templates.classification.multi_class.relation.default",
                 ),
                 "stsb": WeightedFusion(
                     subsets={
-                        "regression": StandardRecipe(
+                        "regression": DatasetRecipe(
                             card="cards.stsb",
                             template="templates.regression.two_texts.simple",
                         ),
-                        "classification": StandardRecipe(
+                        "classification": DatasetRecipe(
                             card="cards.stsb",
                             template=[
                                 "templates.regression.two_texts.similarity.flan",
@@ -396,62 +396,62 @@ class TestFusion(UnitxtTestCase):
                         "num_of_instances": 13,
                     },
                     "wnli": {
-                        "num_of_instances": 12,
                         "f1_macro": 0.357,
                         "f1_entailment": 0.0,
                         "f1_not entailment": 0.714,
-                        "score": 0.5,
+                        "f1_macro_ci_low": 0.182,
+                        "f1_macro_ci_high": 0.467,
                         "score_name": "f1_micro",
-                        "score_ci_low": 0.235,
-                        "score_ci_high": 0.736,
-                        "f1_macro_ci_low": 0.205,
-                        "f1_macro_ci_high": 0.429,
+                        "score": 0.5,
+                        "score_ci_high": 0.762,
+                        "score_ci_low": 0.2,
+                        "num_of_instances": 12,
                         "accuracy": 0.417,
                         "accuracy_ci_low": 0.167,
                         "accuracy_ci_high": 0.667,
                         "f1_micro": 0.5,
-                        "f1_micro_ci_low": 0.235,
-                        "f1_micro_ci_high": 0.736,
+                        "f1_micro_ci_low": 0.2,
+                        "f1_micro_ci_high": 0.762,
                         "groups": {
                             "template": {
                                 "templates.classification.multi_class.relation.default": {
-                                    "num_of_instances": 12,
                                     "f1_macro": 0.357,
                                     "f1_entailment": 0.0,
                                     "f1_not entailment": 0.714,
-                                    "score": 0.5,
+                                    "f1_macro_ci_low": 0.182,
+                                    "f1_macro_ci_high": 0.467,
                                     "score_name": "f1_micro",
-                                    "score_ci_low": 0.235,
-                                    "score_ci_high": 0.736,
-                                    "f1_macro_ci_low": 0.205,
-                                    "f1_macro_ci_high": 0.429,
+                                    "score": 0.5,
+                                    "score_ci_high": 0.762,
+                                    "score_ci_low": 0.2,
+                                    "num_of_instances": 12,
                                     "accuracy": 0.417,
                                     "accuracy_ci_low": 0.167,
                                     "accuracy_ci_high": 0.667,
                                     "f1_micro": 0.5,
-                                    "f1_micro_ci_low": 0.235,
-                                    "f1_micro_ci_high": 0.736,
+                                    "f1_micro_ci_low": 0.2,
+                                    "f1_micro_ci_high": 0.762,
                                 }
                             }
                         },
                     },
                     "rte": {
-                        "num_of_instances": 5,
                         "f1_macro": 0.333,
-                        "f1_not entailment": 0.667,
                         "f1_entailment": 0.0,
-                        "score": 0.5,
-                        "score_name": "f1_micro",
-                        "score_ci_low": 0.0,
-                        "score_ci_high": 0.795,
+                        "f1_not entailment": 0.667,
                         "f1_macro_ci_low": 0.0,
-                        "f1_macro_ci_high": 0.75,
+                        "f1_macro_ci_high": 0.823,
+                        "score_name": "f1_micro",
+                        "score": 0.5,
+                        "score_ci_high": 0.889,
+                        "score_ci_low": 0.0,
+                        "num_of_instances": 5,
                         "accuracy": 0.4,
                         "accuracy_ci_low": 0.0,
                         "accuracy_ci_high": 0.8,
                         "f1_micro": 0.5,
                         "f1_micro_ci_low": 0.0,
-                        "f1_micro_ci_high": 0.795,
+                        "f1_micro_ci_high": 0.889,
                     },
                     "score": 0.161,
                     "score_name": "subsets_mean",
@@ -460,6 +460,7 @@ class TestFusion(UnitxtTestCase):
                 "global": {
                     "score": 0.161,
                     "score_name": "subsets_mean",
+                    "subsets_mean": 0.161,
                     "num_of_instances": 30,
                 },
             },
