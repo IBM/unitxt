@@ -9,6 +9,7 @@ import sys
 import time
 import uuid
 from collections import Counter
+from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
@@ -131,6 +132,15 @@ class TextGenerationInferenceOutput:
     inference_type: Optional[str] = None
 
 
+class ListWithMetadata(list):
+    def __init__(self, *args, metadata=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metadata = metadata if metadata is not None else {}
+
+    def __repr__(self):
+        return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
+
+
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
 
@@ -162,14 +172,14 @@ class InferenceEngine(Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
     def infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and perform inference on the input dataset.
 
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
@@ -187,8 +197,18 @@ class InferenceEngine(Artifact):
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
-            return self._mock_infer(dataset)
-        return self._infer(dataset, return_meta_data)
+            result = self._mock_infer(dataset)
+        else:
+            result = self._infer(dataset, return_meta_data)
+        return ListWithMetadata(
+            result,
+            metadata={
+                "init_dict": self._init_dict,
+                "inference_engine_type": self.__class__.__name__,
+                "model_details": self.get_model_details(),
+                "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            },
+        )
 
     def _mock_infer(
         self,
