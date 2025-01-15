@@ -1,0 +1,14 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Evidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_faithful}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.cast_to_float_return_zero_if_failed",
+        "processors.scale_0_10_to_0_1"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a grounding evidence and a prediction from a model. Compare the \"Prediction\" and the \"Evidence\" to determine to what extent the prediction is grounded in the evidence.\nTo be grounded in the evidence, all the information of the prediction must either be present in the evidence or deducible from the evidence.\n\nOn a scale of 0 to 10, to what extent is the prediction grounded in the evidence? Reply with your rating score without any preceding explanation.\n\n"
+}

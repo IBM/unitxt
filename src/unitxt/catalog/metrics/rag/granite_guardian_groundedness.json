@@ -15,7 +15,14 @@
                 "contexts": "task_data/contexts",
                 "question": "task_data/question"
             },
-            "not_exist_ok": true
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer"
+            },
+            "not_exist_do_nothing": true
         },
         {
             "__type__": "set",

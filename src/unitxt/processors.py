@@ -412,6 +412,7 @@ class FixWhiteSpace(FieldOperator):
         return " ".join(text.split())
 
 
+
 class AddPrefix(FieldOperator):
     prefix: str
 
@@ -449,3 +450,30 @@ class GetSQL(FieldOperator):
             out = "No query found in generation"
 
         return out
+
+class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
+    max_val = 10
+    min_val = 0
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            text = float(text)
+            return (text - self.min_val) / self.max_val
+        except Exception:
+            return 0
+
+
+class ExtractVerbalJudgment(FieldOperator):
+    classes = ["not", "somewhat", "mostly", "completely"]
+
+    def process_value(self, text: Any) -> Any:
+        max_val = len(self.classes) - 1
+        for i, c in enumerate(self.classes):
+            if text.strip().lower().startswith(c):
+                return i / (max_val)
+        return 0
+
+
+class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
+    classes = ["very bad", "bad", "mediocre", "good", "very good"]
+

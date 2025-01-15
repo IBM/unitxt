@@ -1,0 +1,25 @@
+{
+    "__type__": "benchmark",
+    "subsets": {
+        "doc_vqa": {
+            "__type__": "dataset_recipe",
+            "card": "cards.doc_vqa.lmms_eval"
+        },
+        "info_vqa": {
+            "__type__": "dataset_recipe",
+            "card": "cards.info_vqa_lmms_eval"
+        },
+        "chart_qa": {
+            "__type__": "dataset_recipe",
+            "card": "cards.chart_qa_lmms_eval"
+        },
+        "ai2d": {
+            "__type__": "dataset_recipe",
+            "card": "cards.ai2d"
+        },
+        "websrc": {
+            "__type__": "dataset_recipe",
+            "card": "cards.websrc"
+        }
+    }
+}
