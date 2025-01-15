@@ -1,5 +1,5 @@
-import os
-import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
 
 from unitxt.serializers import (
     DefaultSerializer,
@@ -7,12 +7,11 @@ from unitxt.serializers import (
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     NumberSerializer,
-    SQLSchemaSerializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
 )
 from unitxt.settings_utils import get_constants
-from unitxt.test_utils.operators import check_operator
-from unitxt.types import Dialog, Number, SQLSchemaConfig, Table, Text, Turn
+from unitxt.types import Dialog, Number, SQLDatabase, Table, Text, Turn
 
 from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
@@ -145,109 +144,70 @@ class TestSerializers(UnitxtTestCase):
         result = self.custom_serializer.serialize(number_data, {})
         self.assertEqual(result, "42")  # Should return the number as a string
 
-    def test_local_sqlite_connector(self):
-        # Create a temporary SQLite database file for testing
-        with tempfile.NamedTemporaryFile(
-            suffix=".sqlite", delete=False, mode="w"
-        ) as tmpfile:
-            db_path = tmpfile.name
-        # db_name should be equal to the db_id of one of the instance from one of unitxt datasets.
-        # for this test we use the 'concert_singer' dataset.
-        db_name = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "databases/concert_singer/concert_singer.sqlite",
+
+class TestSQLDatabaseAsSchemaSerializer(unittest.TestCase):
+    def test_serialize_in_memory_success(self):
+        db_config: SQLDatabase = {
+            "db_type": "in_memory",
+            "db_id": None,
+            "dbms": None,
+            "data": {
+                "table1": {"columns": ["col1", "col2"], "rows": [[1, "a"], [2, "b"]]},
+                "table2": {"columns": ["name", "age"], "rows": [["Alice", 30]]},
+            },
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
+        expected_schema = (
+            "CREATE TABLE `table1` (`col1` TEXT, `col2` TEXT);\n\n"
+            "CREATE TABLE `table2` (`name` TEXT, `age` TEXT);"
         )
-        # Copy the content of db_path into the temporary db file
-        with open(db_name, "rb") as f:
-            with open(db_path, "wb") as f2:
-                f2.write(f.read())
+        self.assertEqual(result, expected_schema)
 
-        serializer = SQLSchemaSerializer(db_type="sqlite")
-        schema_value = SQLSchemaConfig({"db_id": db_name})
-        instance = {}
+    @patch.dict(
+        "os.environ",
+        {"SQL_API_KEY": "test_api_key"},  # pragma: allowlist secret
+        clear=True,
+    )  # pragma: allowlist-secret
+    @patch("requests.post")
+    def test_serialize_remote_success(self, mock_post):
+        db_config: SQLDatabase = {
+            "db_type": "remote",
+            "db_id": "https://testapi.com/api,db_id=test_db_id",
+            "dbms": None,
+            "data": None,
+        }
 
-        serialized_schema = serializer.process_instance_value(schema_value, instance)
-
-        # Assertions to validate the serialized schema
-        self.assertIn("CREATE TABLE", serialized_schema)
-        self.assertIn("singer", serialized_schema)
-        self.assertIn("concert", serialized_schema)
-        self.assertIn("stadium", serialized_schema)
-
-        # Clean up: delete the temporary file
-        os.remove(db_path)
-
-    def test_mock_connector(self):
-        mock_db_config = {
-            "tables": {
-                "singers": {
-                    "columns": ["id", "name", "country", "age"],
-                    "rows": [[1, "a", "b", 50], [2, "c", "d", 60]],
-                },
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "schema": {
+                "tables": [
+                    {"table_name": "table1", "columns": [{"column_name": "col1"}]},
+                    {"table_name": "table2", "columns": [{"column_name": "name"}]},
+                ]
             }
         }
-        serializer = SQLSchemaSerializer(db_type="mock", db_config=mock_db_config)
-        schema_value = SQLSchemaConfig({"db_id": "mock_db"})
-        instance = {}
+        mock_post.return_value = mock_response
 
-        serialized_schema = serializer.process_instance_value(schema_value, instance)
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
 
-        # Assertions to validate the serialized schema
-        self.assertIn("CREATE TABLE", serialized_schema)
-        self.assertIn("singers", serialized_schema)
+        expected_schema = (
+            "Table: table1 has columns: ['col1']\n"
+            "Table: table2 has columns: ['name']\n"
+        )
+        self.assertEqual(result, expected_schema)
 
-    def test_remote_connector(self):
-        # Assuming a way to mock or skip remote calls for testing
-        remote_db_config = {
-            "api_url": "http://example.com/api",  # Replace with a mock or test URL
-            "database_id": "test_db_id",
+    def test_serialize_unsupported_db_type(self):
+        db_config: SQLDatabase = {
+            "db_type": "unsupported",
+            "db_id": "test_db_id",
+            "dbms": None,
+            "data": None,
         }
 
-        serializer = SQLSchemaSerializer(db_type="remote", db_config=remote_db_config)
-        schema_value = SQLSchemaConfig({"db_id": "remote_db"})
-        instance = {}
-
-        # Mock the requests.post call to avoid actual remote calls
-        import requests
-
-        original_post = requests.post
-
-        def mocked_post(*args, **kwargs):
-            # Simulate a successful response
-            mock_response = requests.Response()
-            mock_response.status_code = 200
-            mock_response.json = lambda: "Mocked Schema Data"
-            mock_response.raise_for_status = lambda: None
-            return mock_response
-
-        requests.post = mocked_post
-
-        try:
-            serialized_schema = serializer.process_instance_value(
-                schema_value, instance
-            )
-        finally:
-            requests.post = original_post
-
-        # Assertions to validate the serialized schema or expected behavior
-        self.assertEqual(serialized_schema, "Mocked Schema Data")
-
-    def test_invalid_db_type(self):
-        serializer = SQLSchemaSerializer(db_type="invalid_type")
-        schema_value = SQLSchemaConfig({"db_id": "some_db"})
-        instance = {}
-
+        serializer = SQLDatabaseAsSchemaSerializer()
         with self.assertRaises(ValueError):
-            serializer.process_instance_value(schema_value, instance)
-
-    def test_operator_interface(self):
-        operator = SQLSchemaSerializer(db_type="sqlite")
-        # Create a dummy database file for testing
-        db_file = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "databases/concert_singer/concert_singer.sqlite",
-        )
-
-        inputs = [{"db_id": db_file, "type": "SQLSchema"}]
-        targets = [{"db_id": db_file, "type": "SQLSchema", "text": "CREATE TABLE"}]
-        check_operator(operator=operator, inputs=inputs, targets=targets)
+            serializer.serialize(db_config, {})
