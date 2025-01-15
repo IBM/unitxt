@@ -12,7 +12,7 @@ def get_preprocess_steps(task):
     # This metric compares the answer (as the prediction) to the question (as the reference).
     # We have to wrap the question by a list (otherwise it will be a string),
     # because references are expected to be lists
-    last_step = [ListFieldValues(fields=["references"], to_field="references")]
+    last_step = ListFieldValues(fields=["references"], to_field="references")
     if task == "autorag":
         return [
             Copy(
