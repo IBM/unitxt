@@ -2,11 +2,13 @@ import glob
 import os
 import sqlite3
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import evaluate
 import requests
 from huggingface_hub import snapshot_download
+
+from .types import SQLDatabase
 
 # Constants for SQL timeout and download lock timeout.
 SQL_TIMEOUT = 100
@@ -20,7 +22,7 @@ logger = evaluate.logging.get_logger(__name__)
 class DatabaseConnector(ABC):
     """Abstract base class for database connectors."""
 
-    def __init__(self, db_config: Dict[str, Any]):
+    def __init__(self, db_config: SQLDatabase):
         self.db_config = db_config
         self.databases_folder = os.path.join(
             os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
@@ -43,7 +45,7 @@ class DatabaseConnector(ABC):
 class LocalSQLiteConnector(DatabaseConnector):
     """Database connector for SQLite databases."""
 
-    def __init__(self, db_config: Dict[str, Any]):
+    def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
         db_id = self.db_config.get("db_id")
         if not db_id:
@@ -127,7 +129,7 @@ class LocalSQLiteConnector(DatabaseConnector):
 class InMemoryDatabaseConnector(DatabaseConnector):
     """Database connector for mocking databases with in-memory data structures."""
 
-    def __init__(self, db_config: Dict[str, Any]):
+    def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
         self.tables = db_config.get("data", {})
 
@@ -184,7 +186,7 @@ class InMemoryDatabaseConnector(DatabaseConnector):
 class RemoteDatabaseConnector(DatabaseConnector):
     """Database connector for remote databases accessed via HTTP."""
 
-    def __init__(self, db_config: Dict[str, Any]):
+    def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
 
         self.api_url, self.database_id = (
@@ -212,19 +214,29 @@ class RemoteDatabaseConnector(DatabaseConnector):
     def get_table_schema(
         self,
     ) -> str:
-        """Retrieves the schema of a database.
-
-        Currently, this method is not implemented for remote databases.
-        """
-        raise NotImplementedError(
-            "get_table_schema is not implemented for RemoteDatabaseConnector"
+        """Retrieves the schema of a database."""
+        response = requests.post(
+            f"{self.api_url}/datasource",
+            headers=self.base_headers,
+            json={"dataSourceId": self.database_id},
+            verify=True,
         )
+        if response.status_code == 200:
+            schema = response.json()["schema"]
+        else:
+            raise OSError(f"Could not fetch schema from {self.api_url}")
+
+        schema_text = ""
+        for table in schema["tables"]:
+            schema_text += f"Table: {table['table_name']} has columns: {[col['column_name'] for col in table['columns']]}\n"
+
+        return schema_text
 
     def execute_query(self, query: str) -> Any:
         """Executes a query against the remote database."""
         try:
             response = requests.post(
-                self.api_url,
+                f"{self.api_url}/sql",
                 headers=self.base_headers,
                 json={"sql": query, "dataSourceId": self.database_id},
                 verify=True,
@@ -249,80 +261,3 @@ def get_db_connector(db_type: str):
         raise ValueError(f"Unsupported database type: {db_type}")
 
     return connector
-
-
-# class SQLData:
-#     """Manages SQL database connections and schemas."""
-
-#     def __init__(self, prompt_cache_location=None):
-#         self.prompt_cache_location = os.path.join(
-#             os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"),
-#             "user_cache",
-#             "text2sql_requests_cache.jsonl",
-#         )
-
-#         self.databases_folder = os.path.join(
-#             os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
-#         )
-#         os.makedirs(self.databases_folder, exist_ok=True)
-#         self.tables_json = None
-#         # self.prompt_cache = JSONCache(self.prompt_cache_location)
-
-#     def download_database(self, db_id):
-#         """Downloads the dataset from huggingface if needed."""
-#         done_file_path = os.path.join(self.databases_folder, "download_done")
-#         if "bird/" in db_id:
-#             if not os.path.exists(done_file_path):
-#                 snapshot_download(
-#                     repo_id="premai-io/birdbench",
-#                     repo_type="dataset",
-#                     local_dir=self.databases_folder,
-#                     force_download=False,
-#                     allow_patterns="*validation*",
-#                 )
-#                 open(os.path.join(self.databases_folder, "download_done"), "w").close()
-
-#     def get_db_file_path(self, db_id):
-#         """Gets the local path of a downloaded database file."""
-#         self.download_database(db_id)
-#         db_id = db_id.split("/")[-1]
-
-#         db_file_pattern = os.path.join(self.databases_folder, "**", db_id + ".sqlite")
-#         db_file_paths = glob.glob(db_file_pattern, recursive=True)
-
-#         if not db_file_paths:
-#             raise FileNotFoundError(f"Database file {db_id} not found.")
-#         if len(db_file_paths) > 1:
-#             raise FileExistsError(f"More than one files matched for {db_id}")
-#         return db_file_paths[0]
-
-#     def get_db_schema(
-#         self,
-#         db_id: str,
-#         db_type: str = "local",
-#         select_tables: Optional[List[str]] = None,
-#         select_columns: Optional[List[str]] = None,
-#         num_rows_from_table_to_add: int = 0,
-#         mock_db: Optional[Dict] = None,
-#     ) -> str:
-#         """Retrieves the schema of a database."""
-#         if db_type == "local":
-#             db_path = self.get_db_file_path(db_id)
-#             db_config = {"db_path": db_path}
-#             connector = LocalSQLiteConnector(db_config)
-#         elif db_type == "mock":
-#             if not mock_db:
-#                 raise ValueError("db_type is mock, but mock_db was not given")
-#             connector = MockConnector(db_config={"tables": mock_db})
-#         elif db_type == "remote":
-#             db_config = {
-#                 "api_url": db_id.split(",")[0],
-#                 "database_id": db_id.split("db_id=")[-1].split(",")[0],
-#             }
-#             connector = RemoteDatabaseConnector(db_config=db_config)
-#         else:
-#             raise ValueError(
-#                 f"Unsupported database type: {db_type}. Use 'sqlite' or 'mock'."
-#             )
-
-#         return connector.get_table_schema(num_rows_from_table_to_add)

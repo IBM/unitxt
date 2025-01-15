@@ -2339,7 +2339,7 @@ Answer: """,
 #             {
 #                 "db": {
 #                     "db_type": "remote",
-#                     "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
+#                     "db_id": "https://flowpilot.res.ibm.com/api,db_id=clv2h06cu00038jw9yhhpebfs",
 #                 },
 #             }
 #         ]

@@ -1,4 +1,4 @@
-from typing import Any, List, Literal, NewType, TypedDict, Union
+from typing import Any, Dict, List, Literal, NewType, Optional, TypedDict, Union
 
 from .type_utils import register_type
 
@@ -47,8 +47,9 @@ class Table(TypedDict):
 
 class SQLDatabase(TypedDict):
     db_id: str
-    db_type: Literal["local", "mock", "remote"]
-    dbms: str
+    db_type: Literal["local", "in_memory", "remote"]
+    dbms: Optional[str]
+    data: Optional[Dict[str, Dict]]
 
 
 register_type(Text)
