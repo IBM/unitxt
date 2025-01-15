@@ -1,4 +1,6 @@
 from unitxt import add_to_catalog
-from unitxt.serializers import SQLSchemaSerializer
+from unitxt.serializers import SQLDatabaseAsSchemaSerializer
 
-add_to_catalog(SQLSchemaSerializer(), "serializers.text2sql.schema", overwrite=True)
+add_to_catalog(
+    SQLDatabaseAsSchemaSerializer(), "serializers.text2sql.schema", overwrite=True
+)
