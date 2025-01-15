@@ -118,7 +118,9 @@ for metric_type, template_name in metric_type_to_template_v2.items():
                 else {"ground_truths": "reference_answers"}
             )
 
-            new_catalog_name = f"metrics.rag_per_task.{rag_unitxt_task}.{metric_type}.{inf_label}_judge"
+            new_catalog_name = (
+                f"metrics.rag_by_task.{rag_unitxt_task}.{metric_type}.{inf_label}_judge"
+            )
             metric = TaskBasedLLMasJudge(
                 inference_model=inference_model,
                 template=template,
