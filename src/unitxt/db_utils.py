@@ -1,21 +1,20 @@
 import glob
 import os
 import sqlite3
+import time
 from abc import ABC, abstractmethod
 from typing import Any, List, Optional
 
 import evaluate
 import requests
 from huggingface_hub import snapshot_download
+from requests.exceptions import ConnectionError, ReadTimeout
 
 from .types import SQLDatabase
 
-# Constants for SQL timeout and download lock timeout.
-SQL_TIMEOUT = 100
-DOWNLOAD_LOCK_TIMEOUT = 1000
-
 # Path to the user's databases cache directory.
 # Logger instance.
+
 logger = evaluate.logging.get_logger(__name__)
 
 
@@ -131,10 +130,9 @@ class InMemoryDatabaseConnector(DatabaseConnector):
 
     def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
-        self.tables = db_config.get("data", {})
+        self.tables = db_config.get("data", None)
 
-        if not self.tables:
-            raise ValueError("tables is required for InMemoryDatabaseConnector.")
+        assert self.tables, "data is required for InMemoryDatabaseConnector."
 
     def get_table_schema(
         self,
@@ -186,9 +184,17 @@ class InMemoryDatabaseConnector(DatabaseConnector):
 class RemoteDatabaseConnector(DatabaseConnector):
     """Database connector for remote databases accessed via HTTP."""
 
+    RETRYABLE_EXCEPTIONS = (ConnectionError, ReadTimeout)
+    MAX_RETRIES = 3
+    RETRY_DELAY = 5  # seconds
+    TIMEOUT = 30  # seconds
+
     def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
 
+        assert db_config[
+            "db_id"
+        ], "db_id must be in db_config for RemoteDatabaseConnector"
         self.api_url, self.database_id = (
             db_config["db_id"].split(",")[0],
             db_config["db_id"].split("db_id=")[-1].split(",")[0],
@@ -220,6 +226,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
             headers=self.base_headers,
             json={"dataSourceId": self.database_id},
             verify=True,
+            timeout=self.timeout,
         )
         if response.status_code == 200:
             schema = response.json()["schema"]
@@ -233,19 +240,55 @@ class RemoteDatabaseConnector(DatabaseConnector):
         return schema_text
 
     def execute_query(self, query: str) -> Any:
-        """Executes a query against the remote database."""
-        try:
-            response = requests.post(
-                f"{self.api_url}/sql",
-                headers=self.base_headers,
-                json={"sql": query, "dataSourceId": self.database_id},
-                verify=True,
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error executing SQL over remote DB: {e}")
-            return None
+        """Executes a query against the remote database, with retries for certain exceptions."""
+        retries = 0
+        while retries <= self.MAX_RETRIES:
+            try:
+                response = requests.post(
+                    f"{self.api_url}/sql",
+                    headers=self.base_headers,
+                    json={"sql": query, "dataSourceId": self.database_id},
+                    verify=True,
+                    timeout=self.timeout,
+                )
+                response.raise_for_status()
+                return response.json()
+
+            except self.RETRYABLE_EXCEPTIONS as e:
+                retries += 1
+                logger.warning(
+                    f"Attempt {retries} failed with error: {e}. Retrying in {self.RETRY_DELAY} seconds."
+                )
+                if retries <= self.MAX_RETRIES:
+                    time.sleep(self.RETRY_DELAY)
+                else:
+                    logger.error(
+                        f"Max retries ({self.MAX_RETRIES}) exceeded for query: {query}"
+                    )
+                    return None
+
+            except requests.exceptions.HTTPError as e:
+                if e.response.status_code >= 500:
+                    retries += 1
+                    logger.warning(
+                        f"Server error, attempt {retries} failed with error: {e}. Retrying in {self.RETRY_DELAY} seconds."
+                    )
+                    if retries <= self.MAX_RETRIES:
+                        time.sleep(self.RETRY_DELAY)
+                    else:
+                        logger.error(
+                            f"Max retries ({self.MAX_RETRIES}) exceeded for query: {query}"
+                        )
+                        return None
+                else:
+                    logger.error(f"HTTP Error on attempt {retries}: {e}")
+                    return None
+
+            except Exception as e:
+                logger.error(f"Unexpected error on attempt {retries}: {e}")
+                return None
+
+        return None
 
 
 def get_db_connector(db_type: str):
