@@ -18,10 +18,8 @@ def get_preprocess_steps(task):
         ]
     if task == "end_to_end":
         return [
-            [
-                Copy(field="prediction/contexts", to_field="references"),
-                Copy(field="task_data/question", to_field="prediction"),
-            ],
+            Copy(field="prediction/contexts", to_field="references"),
+            Copy(field="task_data/question", to_field="prediction"),
         ]
     raise ValueError(f"Unsupported rag task for {dimension}:{task}")
 

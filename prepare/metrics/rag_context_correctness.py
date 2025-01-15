@@ -21,7 +21,11 @@ def get_preprocess_steps(task):
     if task == "end_to_end":
         return [
             Copy(field="prediction/context_ids", to_field="prediction"),
-            Wrap(field="reference_context_ids", inside="list", to_field="references"),
+            Wrap(
+                field="task_data/reference_context_ids",
+                inside="list",
+                to_field="references",
+            ),
         ]
     raise ValueError(f"Unsupported rag task {task}")
 
@@ -41,7 +45,7 @@ def get_test_pipeline_task_preprocess_steps(task):
             Rename(field_to_field={"task_data/context_ids": "prediction/context_ids"}),
             Rename(
                 field_to_field={
-                    "task_data/ground_truths_context_ids": "reference_context_ids"
+                    "task_data/ground_truths_context_ids": "task_data/reference_context_ids"
                 }
             ),
         ]
