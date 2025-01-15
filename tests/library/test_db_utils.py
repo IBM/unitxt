@@ -100,6 +100,7 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
             headers=connector.base_headers,
             json={"sql": "SELECT * FROM table1", "dataSourceId": "test_db_id"},
             verify=True,
+            timeout=RemoteDatabaseConnector.TIMEOUT,
         )
 
     @patch("requests.post")

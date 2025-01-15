@@ -226,7 +226,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
             headers=self.base_headers,
             json={"dataSourceId": self.database_id},
             verify=True,
-            timeout=self.timeout,
+            timeout=self.TIMEOUT,
         )
         if response.status_code == 200:
             schema = response.json()["schema"]
@@ -249,7 +249,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
                     headers=self.base_headers,
                     json={"sql": query, "dataSourceId": self.database_id},
                     verify=True,
-                    timeout=self.timeout,
+                    timeout=self.TIMEOUT,
                 )
                 response.raise_for_status()
                 return response.json()
