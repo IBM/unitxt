@@ -1,9 +1,11 @@
 import os
+import sqlite3
+import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
-from unitxt.db_utils import RemoteDatabaseConnector
+from unitxt.db_utils import LocalSQLiteConnector, RemoteDatabaseConnector
 from unitxt.types import SQLDatabase
 
 
@@ -104,3 +106,54 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         result = connector.execute_query("SELECT * FROM table1")
 
         self.assertIsNone(result)
+
+
+class TestLocalSQLiteConnector(unittest.TestCase):
+    def setUp(self):
+        # Create a temporary directory for testing
+        self.temp_dir = tempfile.TemporaryDirectory()
+
+        # Create a dummy SQLite database
+        self.db_id = "test_db"
+        self.db_path = os.path.join(self.temp_dir.name, self.db_id + ".sqlite")
+        conn = sqlite3.connect(self.db_path)
+        cursor = conn.cursor()
+        cursor.execute("CREATE TABLE table1 (tab1col1 TEXT, tab1col2 INTEGER)")
+        cursor.execute(
+            "INSERT INTO table1 VALUES ('value1', 1), ('value2', 2)"
+        )  # Insert data into table1
+        cursor.execute("CREATE TABLE table2 (tab2col1 REAL, tab2col2 TEXT)")
+        cursor.execute(
+            "INSERT INTO table2 VALUES (3.14, 'pi'), (2.71, 'e')"
+        )  # Insert data into table2
+        cursor.execute("CREATE TABLE sequence (name,seq)")
+        cursor.execute("INSERT INTO sequence VALUES ('table1', 2), ('table2', 2)")
+        conn.commit()
+        conn.close()
+
+        self.db_config: SQLDatabase = {
+            "db_type": "local",
+            "db_id": self.db_id,
+            "dbms": "sqlite",
+            "data": None,
+        }
+
+    def tearDown(self):
+        # Clean up the temporary directory
+        self.temp_dir.cleanup()
+
+    @patch(
+        "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+        side_effect=FileNotFoundError("Database file not found."),
+    )
+    def test_init_database_not_found(self, mock_get_db_file_path):
+        with self.assertRaises(FileNotFoundError):
+            LocalSQLiteConnector(self.db_config)
+
+    @patch(
+        "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+        side_effect=FileExistsError("More than one file matched for db_id"),
+    )
+    def test_init_multiple_databases_found(self, mock_get_db_file_path):
+        with self.assertRaises(FileExistsError):
+            LocalSQLiteConnector(self.db_config)
