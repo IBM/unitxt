@@ -4,7 +4,6 @@ from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
-import pkg_resources
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .artifact import fetch_artifact
@@ -217,9 +216,6 @@ def load_dataset(
 def fill_metadata(**kwargs):
     metadata = kwargs.copy()
     metadata["unitxt_version"] = get_constants().version
-    metadata["packages_freeze"] = {
-        d.project_name: d.version for d in pkg_resources.working_set
-    }
     metadata["creation_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
     return metadata
 
