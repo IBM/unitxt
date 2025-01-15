@@ -158,6 +158,11 @@ answer_relevance_instructions = """You are given a question and a prediction fro
 Provide a rating from one of the following choices: 'Very Bad', 'Bad', 'Mediocre', 'Good', 'Very Good'. Reply using the format of [[rating]], for example: '[[Mediocre]]'.
 """
 
+answer_relevance_instructions_numeric = """You are given a question and a prediction from a model. Please determine whether or not the prediction answers the question.
+The prediction answers the question if it provides a relevant, appropriate and and complete answer to the question.
+Ignore the correctness of the prediction in your judgement.
+On a scale of 0 to 10, to what extent does the prediction answer the question? Reply with your rating score without any preceding explanation.\n"""
+
 answer_relevance_instructions_verbal_good_bad = """You are given a question and a prediction from a model. Please determine to what extent, on a scale of 0 to 10, the prediction answers the question.
 Reply with your rating score without any preceding explanation.\n"""
 
@@ -239,7 +244,7 @@ add_rag_templates(
 answer_relevance_templates_dict = {
     "judge_answer_relevance_numeric": {
         "input": answer_relevance_input_format,
-        "instruction": answer_relevance_instructions,
+        "instruction": answer_relevance_instructions_numeric,
         "template_type": "numeric",
     },
     "judge_answer_relevance_verbal_good_bad": {
