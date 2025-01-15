@@ -22,7 +22,8 @@ from typing import (
     Sequence,
     Tuple,
     TypedDict,
-    Union, TypeVar,
+    TypeVar,
+    Union,
 )
 
 from datasets import Dataset, DatasetDict
@@ -132,7 +133,7 @@ class TextGenerationInferenceOutput:
     inference_type: Optional[str] = None
 
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 class ListWithMetadata(List[T]):
@@ -142,6 +143,7 @@ class ListWithMetadata(List[T]):
 
     def __repr__(self):
         return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
+
 
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
