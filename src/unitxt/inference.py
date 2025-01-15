@@ -22,7 +22,7 @@ from typing import (
     Sequence,
     Tuple,
     TypedDict,
-    Union,
+    Union, TypeVar,
 )
 
 from datasets import Dataset, DatasetDict
@@ -132,14 +132,16 @@ class TextGenerationInferenceOutput:
     inference_type: Optional[str] = None
 
 
-class ListWithMetadata(list):
-    def __init__(self, *args, metadata=None, **kwargs):
+T = TypeVar('T')
+
+
+class ListWithMetadata(List[T]):
+    def __init__(self, *args, metadata: Optional[dict] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.metadata = metadata if metadata is not None else {}
 
     def __repr__(self):
         return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
-
 
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
@@ -205,7 +207,6 @@ class InferenceEngine(Artifact):
             metadata={
                 "init_dict": self._init_dict,
                 "inference_engine_type": self.__class__.__name__,
-                "model_details": self.get_model_details(),
                 "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
             },
         )
