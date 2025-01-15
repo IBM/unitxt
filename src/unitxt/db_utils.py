@@ -132,7 +132,8 @@ class InMemoryDatabaseConnector(DatabaseConnector):
         super().__init__(db_config)
         self.tables = db_config.get("data", None)
 
-        assert self.tables, "data is required for InMemoryDatabaseConnector."
+        if not self.tables:
+            raise ValueError("data is required for InMemoryDatabaseConnector.")
 
     def get_table_schema(
         self,
