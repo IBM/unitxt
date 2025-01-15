@@ -31,7 +31,7 @@ inference_models = {
 
 
 def get_prediction_field(metric_type):
-    return None if metric_type == "context_relevance" else "answer"
+    return "contexts" if metric_type == "context_relevance" else "answer"
 
 
 for metric_type, template_dict in metric_type_to_template_dict.items():
