@@ -5703,25 +5703,14 @@ class GraniteGuardianWMLMetric(InstanceMetric):
 
 
 class ExecutionAccuracy(InstanceMetric):
-    from .db_utils import (
-        DatabaseConnector,
-        LocalSQLiteConnector,
-        MockConnector,
-        RemoteDatabaseConnector,
-        SQLData,
-    )
-
     reduction_map = {"mean": ["execution_accuracy"]}
     main_score = "execution_accuracy"
     ci_scores = ["execution_accuracy"]
 
     prediction_type = "Any"  # string representation is compared
-    sql_data = SQLData()
     sql_timeout = 100.0
 
-    def run_sql_and_match(
-        self, predicted_sql: str, gold_sql: str, connector: DatabaseConnector
-    ) -> int:
+    def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
         try:
             pred_res = connector.execute_query(predicted_sql)
@@ -5736,6 +5725,8 @@ class ExecutionAccuracy(InstanceMetric):
             return 0
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .db_utils import get_db_connector
+
         try:
             from func_timeout import FunctionTimedOut, func_timeout
         except ImportError as err:
@@ -5751,36 +5742,17 @@ class ExecutionAccuracy(InstanceMetric):
                 predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
             if ";" in predicted_sql:
                 predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
-            db_id = task_data["db_id"]
-            db_config = {
-                "db_path": None,
-                "tables": None,
-                "api_url": None,
-                "database_id": None,
-            }
-            if task_data["db_type"] == "local":
-                db_config["db_path"] = self.sql_data.get_db_file_path(db_id)
-                connector = LocalSQLiteConnector(db_config)
-            elif task_data["db_type"] == "mock":
-                db_config["tables"] = task_data["db"]
-                connector = MockConnector(db_config)
-            elif task_data["db_type"] == "remote":
-                db_config["api_url"], db_config["database_id"] = (
-                    db_id.split(",")[0],
-                    db_id.split("db_id=")[-1].split(",")[0],
-                )
-                connector = RemoteDatabaseConnector(db_config)
-            else:
-                raise OSError(f'db_type {task_data["db_type"]} is not supported')
+
+            db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
 
             try:
                 execution_result = func_timeout(
                     self.sql_timeout,
                     self.run_sql_and_match,
-                    args=(predicted_sql, references[0], connector),
-                )
+                    args=(predicted_sql, references[0], db_connector),
+                )  # type: ignore
             except FunctionTimedOut:
-                logger.error("QUERY TIMEOUT")
+                logger.error("QUERY TIMEOUT, returning score=0 for this instance")
                 execution_result = 0.0
 
         result = {self.main_score: float(execution_result)}

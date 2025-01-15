@@ -45,10 +45,10 @@ class Table(TypedDict):
     rows: List[List[Any]]
 
 
-class SQLSchema(TypedDict):
+class SQLDatabase(TypedDict):
     db_id: str
-    db_type: Literal["local", "mock"]
-    num_table_rows_to_add: int
+    db_type: Literal["local", "mock", "remote"]
+    dbms: str
 
 
 register_type(Text)
@@ -62,4 +62,4 @@ register_type(Video)
 register_type(Document)
 register_type(MultiDocument)
 register_type(RagResponse)
-register_type(SQLSchema)
+register_type(SQLDatabase)

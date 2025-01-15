@@ -17,7 +17,7 @@
                 "question": "utterance",
                 "SQL": "query",
                 "db_id": "db_id",
-                "evidence": "evidence"
+                "evidence": "hint"
             }
         },
         {
@@ -37,17 +37,17 @@
         {
             "__type__": "copy",
             "field": "db_id",
-            "to_field": "schema/db_id"
+            "to_field": "db/db_id"
         },
         {
             "__type__": "copy",
             "field": "db_type",
-            "to_field": "schema/db_type"
+            "to_field": "db/db_type"
         },
         {
             "__type__": "copy",
-            "field": "num_table_rows_to_add",
-            "to_field": "schema/num_table_rows_to_add"
+            "field": "dbms",
+            "to_field": "db/dbms"
         }
     ],
     "task": "tasks.text2sql",

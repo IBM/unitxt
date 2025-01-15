@@ -1,17 +1,14 @@
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
-from unitxt.types import SQLSchema
+from unitxt.types import SQLDatabase
 
 add_to_catalog(
     Task(
         input_fields={
             "id": int,
             "utterance": str,
-            "db_id": str,
-            "dbms": str,
-            "evidence": str,
-            "db_type": str,
-            "schema": SQLSchema,
+            "hint": str,
+            "db": SQLDatabase,
         },
         reference_fields={"query": str},
         prediction_type=str,

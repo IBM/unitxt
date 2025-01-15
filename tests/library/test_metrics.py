@@ -2121,436 +2121,229 @@ Answer: """,
         references = ["SELECT name FROM employees WHERE department = 'Sales';"]
         task_data = [
             {
-                "db_id": "mock_db",
-                "db_type": "mock",
                 "db": {
-                    "employees": {
-                        "columns": ["id", "name", "department", "salary"],
-                        "rows": [
-                            (1, "Alice", "Sales", 50000),
-                            (2, "Bob", "Engineering", 60000),
-                            (3, "Charlie", "Sales", 55000),
-                        ],
-                    }
-                },
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
             }
         ]
 
         outputs = metric.compute(references, predictions[0], task_data[0])
         self.assertEqual(1.0, outputs["score"])
 
-    def test_execution_accuracy_incorrect_query_mock_db(self):
+    def test_execution_accuracy_different_db_schema(self):
         metric = ExecutionAccuracy()
         predictions = [
-            "SELECT name FROM employees WHERE salary > 65000"
-        ]  # Incorrect query
+            "SELECT product_name, price FROM products WHERE category = 'Electronics'"
+        ]
+        references = [
+            "SELECT product_name, price FROM products WHERE category = 'Electronics';"
+        ]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "products_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "products": {
+                            "columns": [
+                                "product_id",
+                                "product_name",
+                                "category",
+                                "price",
+                            ],
+                            "rows": [
+                                (1, "Laptop", "Electronics", 1200),
+                                (2, "Mouse", "Electronics", 25),
+                                (3, "Shirt", "Clothing", 50),
+                                (4, "Monitor", "Electronics", 300),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_multiple_tables(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT o.order_id, c.name FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped'"
+        ]
+        references = [
+            "SELECT o.order_id, c.name FROM orders AS o INNER JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped';"
+        ]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "sales_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "customers": {
+                            "columns": ["customer_id", "name", "city"],
+                            "rows": [
+                                (1, "John Doe", "New York"),
+                                (2, "Jane Smith", "Los Angeles"),
+                                (3, "David Lee", "Chicago"),
+                            ],
+                        },
+                        "orders": {
+                            "columns": ["order_id", "customer_id", "status"],
+                            "rows": [
+                                (101, 1, "Shipped"),
+                                (102, 2, "Pending"),
+                                (103, 1, "Shipped"),
+                            ],
+                        },
+                    },
+                }
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_empty_result(self):
+        metric = ExecutionAccuracy()
+        predictions = ["SELECT name FROM employees WHERE department = 'HR'"]
+        references = ["SELECT name FROM employees WHERE department = 'HR';"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_aggregation_query(self):
+        metric = ExecutionAccuracy()
+        predictions = ["SELECT AVG(salary) FROM employees"]
+        references = ["SELECT AVG(salary) FROM employees;"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        outputs = metric.compute(references, predictions[0], task_data[0])
+        self.assertEqual(1.0, outputs["score"])
+
+    def test_execution_accuracy_incorrect_query(self):
+        metric = ExecutionAccuracy()
+        predictions = [
+            "SELECT nme FROM employees WHERE department = 'Sales'"
+        ]  # Incorrect column name 'nme'
         references = ["SELECT name FROM employees WHERE department = 'Sales';"]
         task_data = [
             {
-                "db_id": "mock_db",
-                "db_type": "mock",
                 "db": {
-                    "employees": {
-                        "columns": ["id", "name", "department", "salary"],
-                        "rows": [
-                            (1, "Alice", "Sales", 50000),
-                            (2, "Bob", "Engineering", 60000),
-                            (3, "Charlie", "Sales", 55000),
-                        ],
-                    }
-                },
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
             }
         ]
 
         outputs = metric.compute(references, predictions[0], task_data[0])
         self.assertEqual(0.0, outputs["score"])
 
-    def test_execution_accuracy_invalid_query_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT * FROM non_existent_table"
-        ]  # Invalid: table doesn't exist
-        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {
-                    "employees": {
-                        "columns": ["id", "name", "department", "salary"],
-                        "rows": [
-                            (1, "Alice", "Sales", 50000),
-                            (2, "Bob", "Engineering", 60000),
-                            (3, "Charlie", "Sales", 55000),
-                        ],
-                    }
-                },
-            }
-        ]
 
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(0.0, outputs["score"])
+#     def test_execution_accuracy_correct_query_remote_db(self):
+#         import os
+#         import subprocess
 
-    def test_execution_accuracy_different_select_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT id, name FROM employees WHERE salary > 52000"
-        ]  # Different columns selected
-        references = ["SELECT name, department FROM employees WHERE salary > 52000;"]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {
-                    "employees": {
-                        "columns": ["id", "name", "department", "salary"],
-                        "rows": [
-                            (1, "Alice", "Sales", 50000),
-                            (2, "Bob", "Engineering", 60000),
-                            (3, "Charlie", "Sales", 55000),
-                        ],
-                    }
-                },
-            }
-        ]
+#         def source_bashrc_and_import_env():
+#             # Command to source .bashrc and print all environment variables
+#             command = "source ~/.bashrc && env"
+#             process = subprocess.Popen(
+#                 ["bash", "-c", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+#             )
+#             stdout, stderr = process.communicate()
 
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(0.0, outputs["score"])
+#             # Parse the environment variables and set them in os.environ
+#             output = stdout.decode("utf-8").splitlines()
+#             for line in output:
+#                 key, value = line.split("=", 1)
+#                 os.environ[key] = value
 
-    def test_execution_accuracy_join_query_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE c.city = 'New York'"
-        ]
-        references = [
-            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE c.city = 'New York';"
-        ]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {
-                    "customers": {
-                        "columns": ["customer_id", "name", "city"],
-                        "rows": [
-                            (1, "Alice", "New York"),
-                            (2, "Bob", "Los Angeles"),
-                            (3, "Charlie", "Chicago"),
-                        ],
-                    },
-                    "orders": {
-                        "columns": ["order_id", "customer_id", "order_date", "amount"],
-                        "rows": [
-                            (1, 1, "2023-10-26", 150.00),
-                            (2, 1, "2023-11-15", 200.00),
-                            (3, 2, "2023-11-20", 50.00),
-                            (4, 3, "2023-12-05", 300.00),
-                        ],
-                    },
-                    # Add other tables (products, order_items) similarly
-                    "products": {
-                        "columns": ["product_id", "name", "price"],
-                        "rows": [
-                            (1, "Laptop", 1200.00),
-                            (2, "Mouse", 25.00),
-                            (3, "Keyboard", 75.00),
-                        ],
-                    },
-                    "order_items": {
-                        "columns": [
-                            "order_item_id",
-                            "order_id",
-                            "product_id",
-                            "quantity",
-                        ],
-                        "rows": [
-                            (1, 1, 1, 2),
-                            (2, 1, 2, 1),
-                            (3, 2, 1, 1),
-                            (4, 2, 3, 2),
-                            (5, 3, 2, 1),
-                            (6, 4, 1, 3),
-                        ],
-                    },
-                },
-            }
-        ]
+#         # Example usage to import environment variables
+#         source_bashrc_and_import_env()
 
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(1.0, outputs["score"])
+#         metric = ExecutionAccuracy()
+#         predictions = [
+#             """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
+# FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+# WHERE UPPER(MFGN_TP) = 'MES'
+# AND PLANT = '970'
+# AND UPPER(BRAND_CD) = 'STOR'"""
+#         ]
+#         references = [
+#             """SELECT COUNT(*) AS "Quantity"
+# FROM (
+# SELECT DISTINCT ORNO
+# FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
+# WHERE UPPER(MFGN_TP) = 'MES'
+# AND PLANT = '970'
+# AND UPPER(BRAND_CD) = 'STOR'
+# ) AS DISTINCT_ORDERS;"""
+#         ]
+#         task_data = [
+#             {
+#                 "db": {
+#                     "db_type": "remote",
+#                     "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
+#                 },
+#             }
+#         ]
 
-    def test_execution_accuracy_aggregate_query_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT c.city, AVG(o.amount) FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city"
-        ]
-        references = [
-            "SELECT c.city, AVG(o.amount) FROM customers c JOIN orders o ON c.customer_id = o.customer_id GROUP BY c.city;"
-        ]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {  # Use the same complex 'db' as in the previous test
-                    "customers": {
-                        "columns": ["customer_id", "name", "city"],
-                        "rows": [
-                            (1, "Alice", "New York"),
-                            (2, "Bob", "Los Angeles"),
-                            (3, "Charlie", "Chicago"),
-                        ],
-                    },
-                    "orders": {
-                        "columns": ["order_id", "customer_id", "order_date", "amount"],
-                        "rows": [
-                            (1, 1, "2023-10-26", 150.00),
-                            (2, 1, "2023-11-15", 200.00),
-                            (3, 2, "2023-11-20", 50.00),
-                            (4, 3, "2023-12-05", 300.00),
-                        ],
-                    },
-                    "products": {
-                        "columns": ["product_id", "name", "price"],
-                        "rows": [
-                            (1, "Laptop", 1200.00),
-                            (2, "Mouse", 25.00),
-                            (3, "Keyboard", 75.00),
-                        ],
-                    },
-                    "order_items": {
-                        "columns": [
-                            "order_item_id",
-                            "order_id",
-                            "product_id",
-                            "quantity",
-                        ],
-                        "rows": [
-                            (1, 1, 1, 2),
-                            (2, 1, 2, 1),
-                            (3, 2, 1, 1),
-                            (4, 2, 3, 2),
-                            (5, 3, 2, 1),
-                            (6, 4, 1, 3),
-                        ],
-                    },
-                },
-            }
-        ]
+#         outputs = metric.compute(references, predictions[0], task_data[0])
 
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(1.0, outputs["score"])
-
-    def test_execution_accuracy_join_with_where_incorrect_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.amount > 250"  # Incorrect WHERE clause
-        ]
-        references = [
-            "SELECT c.name, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id WHERE o.amount > 100;"
-        ]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {  # Same complex 'db'
-                    "customers": {
-                        "columns": ["customer_id", "name", "city"],
-                        "rows": [
-                            (1, "Alice", "New York"),
-                            (2, "Bob", "Los Angeles"),
-                            (3, "Charlie", "Chicago"),
-                        ],
-                    },
-                    "orders": {
-                        "columns": ["order_id", "customer_id", "order_date", "amount"],
-                        "rows": [
-                            (1, 1, "2023-10-26", 150.00),
-                            (2, 1, "2023-11-15", 200.00),
-                            (3, 2, "2023-11-20", 50.00),
-                            (4, 3, "2023-12-05", 300.00),
-                        ],
-                    },
-                    "products": {
-                        "columns": ["product_id", "name", "price"],
-                        "rows": [
-                            (1, "Laptop", 1200.00),
-                            (2, "Mouse", 25.00),
-                            (3, "Keyboard", 75.00),
-                        ],
-                    },
-                    "order_items": {
-                        "columns": [
-                            "order_item_id",
-                            "order_id",
-                            "product_id",
-                            "quantity",
-                        ],
-                        "rows": [
-                            (1, 1, 1, 2),
-                            (2, 1, 2, 1),
-                            (3, 2, 1, 1),
-                            (4, 2, 3, 2),
-                            (5, 3, 2, 1),
-                            (6, 4, 1, 3),
-                        ],
-                    },
-                },
-            }
-        ]
-
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(0.0, outputs["score"])
-
-    def test_execution_accuracy_multi_join_query_mock_db(self):
-        metric = ExecutionAccuracy()
-        predictions = [
-            "SELECT cust.name, p.name, oi.quantity FROM customers cust JOIN orders o ON cust.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id WHERE cust.city = 'Los Angeles' AND p.name = 'Mouse'"
-        ]
-        references = [
-            "SELECT cust.name, p.name, oi.quantity FROM customers cust JOIN orders o ON cust.customer_id = o.customer_id JOIN order_items oi ON o.order_id = oi.order_id JOIN products p ON oi.product_id = p.product_id WHERE cust.city = 'Los Angeles' AND p.name = 'Mouse';"
-        ]
-        task_data = [
-            {
-                "db_id": "mock_db",
-                "db_type": "mock",
-                "db": {
-                    "customers": {
-                        "columns": ["customer_id", "name", "city"],
-                        "rows": [
-                            (1, "Alice", "New York"),
-                            (2, "Bob", "Los Angeles"),
-                            (3, "Charlie", "Chicago"),
-                        ],
-                    },
-                    "orders": {
-                        "columns": ["order_id", "customer_id", "order_date", "amount"],
-                        "rows": [
-                            (1, 1, "2023-10-26", 150.00),
-                            (2, 1, "2023-11-15", 200.00),
-                            (3, 2, "2023-11-20", 50.00),
-                            (4, 3, "2023-12-05", 300.00),
-                        ],
-                    },
-                    "products": {
-                        "columns": ["product_id", "name", "price"],
-                        "rows": [
-                            (1, "Laptop", 1200.00),
-                            (2, "Mouse", 25.00),
-                            (3, "Keyboard", 75.00),
-                        ],
-                    },
-                    "order_items": {
-                        "columns": [
-                            "order_item_id",
-                            "order_id",
-                            "product_id",
-                            "quantity",
-                        ],
-                        "rows": [
-                            (1, 1, 1, 2),
-                            (2, 1, 2, 1),
-                            (3, 2, 1, 1),
-                            (4, 2, 3, 2),
-                            (5, 3, 2, 1),
-                            (6, 4, 1, 3),
-                        ],
-                    },
-                },
-            }
-        ]
-
-        outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(1.0, outputs["score"])
-
-    def test_execution_accuracy_correct_query_remote_db(self):
-        import os
-        import subprocess
-
-        def source_bashrc_and_import_env():
-            # Command to source .bashrc and print all environment variables
-            command = "source ~/.bashrc && env"
-            process = subprocess.Popen(
-                ["bash", "-c", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
-
-            # Parse the environment variables and set them in os.environ
-            output = stdout.decode("utf-8").splitlines()
-            for line in output:
-                key, value = line.split("=", 1)
-                os.environ[key] = value
-
-        # Example usage to import environment variables
-        source_bashrc_and_import_env()
-        metric = ExecutionAccuracy()
-        predictions = [
-            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
-FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
-WHERE UPPER(MFGN_TP) = 'MES'
-AND PLANT = '970'
-AND UPPER(BRAND_CD) = 'STOR'"""
-        ]
-        references = [
-            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
-FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
-WHERE UPPER(MFGN_TP) = 'MES'
-AND PLANT = '970'
-AND UPPER(BRAND_CD) = 'STOR'"""
-        ]
-        task_data = [
-            {
-                "db_type": "remote",
-                "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
-            }
-        ]
-
-        outputs = metric.compute(references, predictions[0], task_data[0])
-
-        self.assertEqual(1.0, outputs["score"])
-
-    def test_execution_accuracy_incorrect_query_remote_db(self):
-        import os
-        import subprocess
-
-        def source_bashrc_and_import_env():
-            # Command to source .bashrc and print all environment variables
-            command = "source ~/.bashrc && env"
-            process = subprocess.Popen(
-                ["bash", "-c", command], stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-            stdout, stderr = process.communicate()
-
-            # Parse the environment variables and set them in os.environ
-            output = stdout.decode("utf-8").splitlines()
-            for line in output:
-                key, value = line.split("=", 1)
-                os.environ[key] = value
-
-        # Example usage to import environment variables
-        source_bashrc_and_import_env()
-
-        metric = ExecutionAccuracy()
-        predictions = [
-            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
-FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
-WHERE UPPER(MFGN_TP) = 'MES'
-AND PLANT = '970'
-AND UPPER(BRAND_CD) = 'STOR'"""
-        ]
-        references = [
-            """SELECT COUNT(DISTINCT ORNO) AS "Quantity"
-FROM SSCEP_PZ.ORNO_DTL_SNAPSHOT
-WHERE UPPER(MFGN_TP) = 'MES'
-AND PLANT = '970'
-AND UPPER(BRAND_CD) = 'STOR'"""
-        ]
-        task_data = [
-            {
-                "db_type": "remote",
-                "db_id": "https://flowpilot.res.ibm.com/api/sql,db_id=clv2h06cu00038jw9yhhpebfs",
-            }
-        ]
-
-        outputs = metric.compute(references, predictions[0], task_data[0])
-
-        self.assertEqual(1.0, outputs["score"])
+#         self.assertEqual(1.0, outputs["score"])

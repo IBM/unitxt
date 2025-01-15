@@ -17,7 +17,7 @@ from .serializers import (
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     Serializer,
-    SQLSchemaSerializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
     VideoSerializer,
 )
@@ -65,7 +65,7 @@ class Template(InstanceOperator):
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
-                SQLSchemaSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
             ]
         )
     )

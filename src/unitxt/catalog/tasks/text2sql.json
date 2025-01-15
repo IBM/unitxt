@@ -3,11 +3,8 @@
     "input_fields": {
         "id": "int",
         "utterance": "str",
-        "db_id": "str",
-        "dbms": "str",
-        "evidence": "str",
-        "db_type": "str",
-        "schema": "SQLSchema"
+        "hint": "str",
+        "db": "SQLDatabase"
     },
     "reference_fields": {
         "query": "str"

@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
-from .db_utils import SQLData
+from .db_utils import get_db_connector
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
@@ -14,7 +14,7 @@ from .types import (
     Image,
     MultiDocument,
     Number,
-    SQLSchema,
+    SQLDatabase,
     Table,
     Video,
 )
@@ -188,12 +188,16 @@ class MultiTypeSerializer(Serializer):
         return str(value)
 
 
-class SQLSchemaSerializer(SingleTypeSerializer):
-    serialized_type = SQLSchema
+class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
+    """Serializes a database schema into a string representation."""
 
-    def serialize(self, value: SQLSchema, instance: Dict[str, Any]) -> str:
-        return SQLData().get_db_schema(
-            db_name=value["db_id"],
-            db_type=value["db_type"],
-            num_rows_from_table_to_add=value["num_table_rows_to_add"],
-        )
+    serialized_type = SQLDatabase
+
+    def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        connector = get_db_connector(value["db_type"])(value)
+        try:
+            return connector.get_table_schema()
+        except Exception as e:
+            raise RuntimeError(
+                f"Failed to serialize SQL schema for database '{value.db_id}' using connector {connector.__class__.__name__}: {e}"
+            ) from e

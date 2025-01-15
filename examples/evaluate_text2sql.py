@@ -8,8 +8,8 @@ with settings.context(
 ):
     test_dataset = load_dataset(
         "card=cards.text2sql.bird"
-        ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix"
-        ",loader_limit=100",
+        ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix,loader_limit=10",
+        # ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
         split="validation",
     )
 
@@ -21,13 +21,6 @@ inference_model = CrossProviderInferenceEngine(
 
 predictions = inference_model.infer(test_dataset)
 evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-# for item in evaluated_dataset:
-#     print("\n\n------prediction--------")
-#     print(item["prediction"])
-#     print("------processed_prediction--------")
-#     print(item["processed_prediction"])
-#     print(evaluated_dataset[0]["score"]["instance"]["score"])
 
 print_dict(
     evaluated_dataset[0],

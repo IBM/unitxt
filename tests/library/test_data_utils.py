@@ -5,8 +5,8 @@ import unittest
 from unittest.mock import patch
 
 from unitxt.db_utils import (  # Replace 'your_module' with the actual module name
+    InMemoryDatabaseConnector,
     LocalSQLiteConnector,
-    MockConnector,
     SQLData,
 )
 
@@ -124,11 +124,11 @@ class TestMockConnector(unittest.TestCase):
                 }
             }
         }
-        self.connector = MockConnector(self.db_config)
+        self.connector = InMemoryDatabaseConnector(self.db_config)
 
     def test_init_missing_tables(self):
         with self.assertRaisesRegex(ValueError, "tables is required"):
-            MockConnector({})
+            InMemoryDatabaseConnector({})
 
     def test_get_table_schema(self):
         expected_schema = "CREATE TABLE `users` (`id` TEXT, `name` TEXT, `age` TEXT);"
