@@ -4,7 +4,6 @@
         "metrics.rag_by_task.autorag.answer_correctness.llama_3_3_70b_instruct_rits_judge",
         "metrics.rag_by_task.autorag.faithfulness.llama_3_3_70b_instruct_rits_judge",
         "metrics.rag_by_task.autorag.answer_relevance.llama_3_3_70b_instruct_rits_judge",
-        "metrics.rag_by_task.autorag.context_relevance.llama_3_3_70b_instruct_rits_judge",
-        "metrics.rag_by_task.autorag.context_correctness.mrr"
+        "metrics.rag_by_task.autorag.context_relevance.llama_3_3_70b_instruct_rits_judge"
     ]
 }

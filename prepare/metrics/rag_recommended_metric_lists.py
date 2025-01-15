@@ -69,7 +69,7 @@ def register_recommended_metric_lists():
             )
             add_to_catalog(
                 metrics,
-                f"metrics.rag_by_task.{rag_unitxt_task}.recommended_{resource_str}.all",
+                f"metrics.rag_by_task.{rag_unitxt_task}.recommended.{resource_str}.all",
                 overwrite=True,
             )
 

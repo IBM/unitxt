@@ -4,7 +4,6 @@
         "metrics.rag_by_task.end_to_end.answer_correctness.bert_score_recall_ml",
         "metrics.rag_by_task.end_to_end.faithfulness.vectara_hhem_2_1",
         "metrics.rag_by_task.end_to_end.answer_relevance.answer_reward",
-        "metrics.rag_by_task.end_to_end.context_relevance.sentence_bert_mini_lm",
-        "metrics.rag_by_task.end_to_end.context_correctness.mrr"
+        "metrics.rag_by_task.end_to_end.context_relevance.sentence_bert_mini_lm"
     ]
 }

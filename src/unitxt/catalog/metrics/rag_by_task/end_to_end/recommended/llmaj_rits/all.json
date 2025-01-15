@@ -4,7 +4,6 @@
         "metrics.rag_by_task.end_to_end.answer_correctness.llama_3_3_70b_instruct_rits_judge",
         "metrics.rag_by_task.end_to_end.faithfulness.llama_3_3_70b_instruct_rits_judge",
         "metrics.rag_by_task.end_to_end.answer_relevance.llama_3_3_70b_instruct_rits_judge",
-        "metrics.rag_by_task.end_to_end.context_relevance.llama_3_3_70b_instruct_rits_judge",
-        "metrics.rag_by_task.end_to_end.context_correctness.mrr"
+        "metrics.rag_by_task.end_to_end.context_relevance.llama_3_3_70b_instruct_rits_judge"
     ]
 }

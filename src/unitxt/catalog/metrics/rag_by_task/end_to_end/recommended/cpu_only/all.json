@@ -4,7 +4,6 @@
         "metrics.rag_by_task.end_to_end.answer_correctness.token_recall",
         "metrics.rag_by_task.end_to_end.faithfulness.token_k_precision",
         "metrics.rag_by_task.end_to_end.answer_relevance.token_recall",
-        "metrics.rag_by_task.end_to_end.context_relevance.token_precision",
-        "metrics.rag_by_task.end_to_end.context_correctness.mrr"
+        "metrics.rag_by_task.end_to_end.context_relevance.token_precision"
     ]
 }
