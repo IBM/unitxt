@@ -1,4 +1,194 @@
-# docs/docs/inference.rst
+
+# Tutorials: 
+# docs/index.rst
+.. Unitxt documentation master file, created by
+   sphinx-quickstart on Mon Jul 10 03:44:36 2023.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+.. raw:: html
+
+   <html>
+   <head>
+      <style>
+         .rounded-image {
+               width: 100%;
+               height: auto;
+               border-top-left-radius: 0.5em;
+               border-top-right-radius: 0.5em;
+               border-bottom-right-radius: 0.5em;
+               border-bottom-left-radius: 0.5em;
+         }
+      </style>
+   </head>
+   <body>
+      <img src="_static/banner.png" alt="Descriptive Image Text" class="rounded-image">
+   </body>
+   </html>
+   <html>
+   <head>
+      <style>
+         body {
+               font-family: Arial, sans-serif;
+         }
+         .custom-button {
+               display: inline-block;
+               padding: 0.75em 1em;
+               margin: 0.1em;
+               border-radius: 0.3em;
+               background-color: #fce2ff;
+               color: #141216;
+               text-align: center;
+               text-decoration: none;
+               font-weight: bold;
+               box-sizing: border-box;
+               text-transform: uppercase;
+               transition: background-color 0.3s;
+         }
+
+         .custom-button:hover {
+               background-color: #d1b3d1; /
+         }
+      </style>
+   </head>
+   <body>
+      <a href="https://www.unitxt.ai/en/latest/" class="custom-button">Video</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/demo.html" class="custom-button">Demo</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
+      <a href="https://www.unitxt.ai/en/latest/docs/examples.html" class="custom-button">Examples</a>
+      <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
+      <a href="https://www.unitxt.ai/en/latest/catalog/catalog.__dir__.html" class="custom-button">Catalog</a>
+      <a href="https://github.com/IBM/unitxt/blob/main/CONTRIBUTING.md" class="custom-button">Contributing</a>
+      <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
+      <a href="https://www.unitxt.ai/en/latest/search.html" class="custom-button">Search</a>
+      <a href="https://www.unitxt.ai/en/latest/modules.html" class="custom-button">Code Documentation</a>
+      <br>
+   </body>
+   </html>
+
+.. raw:: html
+
+   <br>
+   <video autoplay muted src="_static/video.mov" width="100%" id="controlled-video">
+   </video>
+
+
+.. raw:: html
+
+   <div>
+      <br><br><br><br><br><br><br>
+   </div>
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1> Loading datasets is easier than ever! </h1>
+      </div>
+      <div class="feed-code-box" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span><span style="color: #f321e2;">from</span> datasets <span style="color: #f321e2;">import</span> load_dataset</span>
+               <br>
+               <br>
+               <br>
+               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/data"</span>, <span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
+            </div>
+         </div>
+          <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
+   </div>
+
+   <div>
+         <br><br><br><br><br><br><br>
+         <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
+         <br><br><br><br><br><br>
+         <br><br><br><br><br><br><br>
+   </div>
+
+   <div class="feed-box-container">
+   <div class="feed-box" background-color=rgb(229, 216, 255)>
+      <div class="feed-box-text">
+         <h1>Full evaluation in one line of code</h1>
+      </div>
+      <div class="feed-code-box"  data-box="1" text-align="left">
+         <div class="code-window">
+            <div class="code-window-buttons">
+               <span class="code-window-button close-button"></span>
+               <span class="code-window-button minimize-button"></span>
+               <span class="code-window-button expand-button"></span>
+            </div>
+            <div class="code-snippet" data-code="withInstallation" style="display: block;">
+               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> evaluate</span>
+               <br>
+               <br>
+               <br>
+               <span>results <span style="color: #868bff;">=</span>  evaluate<span style="color: #f321e2;">(</span>predictions_list, dataset)</span>
+            </div>
+            <div class="code-snippet" data-code="noInstallation" style="display: none;">
+               <span><span style="color: #f321e2;">from</span> evaluate <span style="color: #f321e2;">import</span> load</span>
+               <br>
+               <br>
+               <br>
+               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)</span>.compute<span style="color: #f321e2;">(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
+            </div>
+         </div>
+         <br>
+         <div style="text-align: center;">
+            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
+            <label class="switch">
+               <input type="checkbox">
+               <span class="slider round"></span>
+            </label>
+         </div>
+      </div>
+   </div>
+   </div>
+
+--------
+Welcome!
+--------
+
+.. toctree::
+   :maxdepth: 2
+   :hidden:
+
+   docs/introduction
+   docs/demo
+   docs/installation
+   docs/loading_datasets
+   docs/evaluating_datasets
+   docs/tutorials
+   docs/examples
+   blog/index
+   documentation
+   catalog/catalog.__dir__
+
+
+# docs/documentation.rst
+.. _documentation:
+
+=====================================
+Code Documentation
+=====================================
+
+.. include:: unitxt.rst# docs/docs/inference.rst
 .. _inference:
 
 ==============
@@ -4250,280 +4440,8 @@ To register the task to the catalog
    add_to_catalog(task,"tasks.calculator.sum")
 
 
-# docs/blog/index.rst
-.. _blog:
-
-------------
-Blog 📣
-------------
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Read more...
-
-   inference_engines_blog
-   vision_robustness_blog
-# docs/blog/inference_engines_blog.rst
-.. title:: Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation
-
-:Authors: Elron Bandel
-
-:Date: 2024-11-19
-
-=================================================================================================
-[19/11/2024] Unitxt Embraces Rich Chat Format and Cross API Inference: Simplifying LLM Evaluation
-=================================================================================================
-
-**Authors**: Elron Bandel
-
-``19/11/2024``
-
-Preparing data for training and testing language models is a complex task.
-It involves handling various data formats, preprocessing, and ways of verbalizing tasks.
-Ensuring reproducibility and compatibility across platforms further adds to the complexity.
-
-Recognizing these challenges, Unitxt has always aimed to simplify data preparation.
-Today, we are introducing two major updates to redefine our support for LLM workflows.
-
-Introducing Two Major Enhancements
------------------------------------
-
-1. **Producing Data in Chat API Format**
-   Unitxt can produce data in the widely adopted Chat API format.
-   This ensures compatibility with popular LLM Provider APIs and avoid the need for custom per model formatting.
-   Additionally, the format supports multiple modalities such as text, images, and videos.
-
-2. **A Comprehensive Array of Inference Engines**
-   We added wrappers for local inference platforms like Llama and Hugging Face
-   as well as remote APIs such as LiteLLM, OpenAI, Watsonx, and more.
-   
-   These wrappers make executing evaluation and inference tasks seamless
-   and platform-agnostic, in just a `few lines of code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_with_install.py>`_.
-
-
-.. code-block:: python
-
-    # Illustration of rich chat api ready for inference:
-
-    [
-        {
-            "role": "system",
-            "content": "You are an assistant that helps classify images."
-        },
-        {
-            "role": "user",
-            "content": [
-                {
-                    "type": "text",
-                    "text": "What does this image depict?"
-                },
-                {
-                    "type": "image",
-                    "image": {
-                        "mime_type": "image/jpeg",
-                        "data": <ENCODED_IMAGE>
-                    }
-                }
-            ]
-        }
-    ]
-
-Expanding Opportunities for the Community
-------------------------------------------
-
-These updates unlock significant opportunities, including:
-
-- **Full Evaluation Pipelines**:
-  Design and execute `end-to-end workflows <https://www.unitxt.ai/en/latest/docs/examples.html#evaluation-usecases>`_ directly in the Unitxt framework.
-  For example, evaluate the impact of different templates, in-context example selection, answering multiple questions in one inference, and more.
-
-- **Multi-Modality Evaluation**:
-  Evaluate `models with diverse inputs <https://www.unitxt.ai/en/latest/docs/examples.html#multi-modality>`_, from text to images and beyond.
-
-- **Easy Assembly of LLM Judges**:
-  Quickly set up `LLMs as evaluators <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`_ using Unitxt inference engines.
-
-
-Our Commitment to Collaboration
--------------------------------
-
-Although you can now run end to end evaluation in Unitxt, Unitxt is still a general data preparation library.
-That means we remain committed to partnerships with other evaluation platforms such as `HELM <https://www.unitxt.ai/en/latest/docs/helm.html>`_, `LM Eval Harness <https://www.unitxt.ai/en/latest/docs/lm_eval.html>`_, and others.
-Our Chat API format and inference engine support enhance accessibility and compatibility.
-These updates empower our partners to adopt the latest standards seamlessly.
-
-Conclusion
-----------
-
-Unitxt is adapting to the evolving landscape of language models and their capabilities.
-By supporting the Chat API format and inference engines, we simplify model workflows.
-These updates position Unitxt as the premier platform for LLM evaluation and integration.
-
-We invite you to explore these features and join us in advancing model capabilities.
-
----
-
-For more information, visit the :ref:`inference engines guide <inference>` or see many of our :ref:`code examples <examples>`.
-
-# docs/blog/vision_robustness_blog.rst
-.. title:: If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
-
-:Authors:
-    Elron Bandel
-    Nimrod Shabtay
-
-:Date: 2024-11-01
-
-==========================================================================================================================
-[01/11/2024] If Your LLM sees White Noise, Try Asking Differently: Revealing AI’s Text and Image Sensitivities with Unitxt
-==========================================================================================================================
-
-**Authors**: Elron Bandel and Nimrod Shabtay
-
-``01/11/2024``
-
-Introduction: When Models Struggle with Visual Noise
-----------------------------------------------------
-
-AI models often appear remarkably accurate when evaluated in clean, controlled environments. But in real-world settings, these models can stumble—particularly when faced with image quality issues, like old TV-style white noise, or subtle variations in question formatting. Even for multiple-choice questions, something as simple as how answer options are enumerated (capitalized vs. lowercase) can impact performance, showing that models aren’t always as robust as they seem.
-
-In this post, we’ll use the Unitxt library to evaluate a model’s robustness by simulating “old TV” white noise, replacing 30% of pixels with random noise. We’ll also test the impact of different answer enumerations, using both uppercase and lowercase options, to reveal how sensitive the model is to these variations. The results highlight the importance of robust evaluation and tailored question formats for optimal model performance. Unitxt, as the largest hub for datasets and diverse data augmentation operators, enables precisely this kind of comprehensive testing, making it an invaluable tool for building more resilient AI models.
-
-The Challenge: White Noise and Answer Enumeration Sensitivity
--------------------------------------------------------------
-
-Imagine using a model to answer questions based on degraded images. This could happen in scenarios with low-quality visuals or historical media with degraded quality. Add to this the effect of changing the text format of multiple-choice answer options, like capitalizing the options (“A, B, C”) or using lowercase (“a, b, c”). Small differences like these reveal model sensitivities and limitations that are otherwise hidden in standard tests.
-
-With Unitxt, we can set up these tests easily, benchmarking how well the model performs under different noise and enumeration settings.
-
-Setting Up the Test with Unitxt
--------------------------------
-
-Here’s the code used to set up our tests. This example uses Unitxt to create subsets for both clear and noisy images with variations in multiple-choice answer enumeration.
-
-.. code-block:: python
-
-    subsets={}
-    for card in ["cards.seed_bench", "cards.ai2d"]:
-        for enumerator in ["capitals", "lowercase"]:
-            for augmentor in [None, "augmentors.image.white_noise"]:
-                subsets[f"{card} {enumerator} {augmentor}"] = DatasetRecipe(
-                    card=card,
-                    template=f"templates.qa.multiple_choice.with_context.lmms_eval[enumerator={enumerator}]",
-                    loader_limit=100,
-                    augmentor=augmentor,
-                )
-
-    benchmark = Benchmark(subsets=subsets)
-
-    data = list(benchmark()["test"])
-
-    model = LMMSEvalInferenceEngine(
-        model_type="llava_onevision",
-        model_args={"pretrained": "lmms-lab/llava-onevision-qwen2-7b-ov"},
-        max_new_tokens=2,
-    )
-
-    predictions = model(data)
-    results = evaluate(predictions=predictions, data=data)
-
-    print(results.subsets_scores.summary)
-
-In order to run this you will first have to install llms-eval library which might not work on mac.
-
-*Full code example at:* https://github.com/IBM/unitxt/blob/main/examples/robustness_testing_for_vision_text_models.py
-
-In this setup:
-
-* **Cards and Enumerators**: We test both “cards.ai2d” and “cards.seed_bench” datasets, varying the enumeration of multiple-choice answers with either “capitals” (A, B, C) or “lowercase” (a, b, c).
-* **Noise Augmentation**: We simulate “old TV” white noise with "augmentors.image.white_noise", obscuring 30% of the image pixels to evaluate the model’s performance on degraded visuals.
-
-The model we use is the one vision model who recently gained popularity at the open source vision-language community.
-
-Visual Examples From The Data
-------------------------------
-Example from AI2D:
-
-.. image:: ../../assets/blog/vision_rubstness/ai2d.png
-   :alt: Results
-   :width: 80%
-   :align: center
-
-.. list-table::
-   :header-rows: 1
-
-   * - With Uppercase
-     - With Lowercase
-   * - .. code-block::
-
-         Which of these define oil.
-         A. b
-         B. a
-         C. d
-         D. k.
-         Answer with the option's letter from the given choices directly.
-         D
-     - .. code-block::
-
-         Which of these define oil.
-         a. b
-         b. a
-         c. d
-         d. k.
-         Answer with the option's letter from the given choices directly.
-         d
-
-Example from Seed-bench:
-
-.. image:: ../../assets/blog/vision_rubstness/seed_bench.png
-   :alt: Results
-   :width: 80%
-   :align: center
-
-.. list-table::
-   :header-rows: 1
-
-   * - With Uppercase
-     - With Lowercase
-   * - .. code-block::
-
-         How many men are on the airplane in the image?
-         A. One
-         B. Two
-         C. Three
-         D. Four
-         Answer with the option's letter from the given choices directly.
-         B
-     - .. code-block::
-
-         How many men are on the airplane in the image?
-         a. One
-         b. Two
-         c. Three
-         d. Four
-         Answer with the option's letter from the given choices directly.
-         b
-
-Results: Performance Across Formats and Noise Levels
-----------------------------------------------------
-
-Below are the results for each setup. Note that “Uppercase” indicates multiple-choice questions with capitalized answer options, while “Lowercase” uses lowercase options. The percentage differences between clean images and those with white noise provide insight into how sensitive the model is to these variations.
-
-.. image:: ../../assets/blog/vision_rubstness/results.png
-   :alt: Results
-   :width: 80%
-   :align: center
-
-These results reveal a significant performance drop when noise is introduced, particularly with lowercase answer enumeration. On the Seed-Bench dataset, for example, the lowercase format drops from 0.24 to 0.17 with noise—a 29.17% reduction. Meanwhile, the capitalized options show a smaller but still notable drop, from 0.75 to 0.71 (a 5.33% decrease). The AI2D dataset shows similar patterns, with the capitalized options decreasing from 0.82 to 0.75 under noise (an 8.54% drop), while lowercase options remain consistent at 0.53 across conditions. This highlights variability between datasets and how sensitive performance can be to noise, particularly for lowercase answer options.
-
-These findings emphasize a crucial takeaway: if you have noisy data, framing your questions and options correctly is essential. Small changes in formatting can make a big difference, so for robust performance, remember—if your data is noisy, you’d better ask your model in the right way!
-
-Conclusion: Understanding and Addressing Model Sensitivities
-------------------------------------------------------------
-
-Our test with Unitxt demonstrates that models can be highly sensitive to seemingly minor variations, such as noise in images and the formatting of answer choices. The “old TV” white noise consistently reduced performance, especially when combined with lowercase enumeration.
-
-By using tools like Unitxt, we can quickly evaluate these nuances and gain a deeper understanding of model strengths and weaknesses. Knowing these sensitivities helps in designing more robust models and ensures they’re better suited for real-world conditions—whether they encounter noisy images or unexpected answer formats. As the largest hub for datasets and a wide range of data augmentation operators, Unitxt empowers comprehensive testing, making it a go-to resource for building resilient, real-world-ready AI models.# examples/evaluate_classification_dataset_with_given_predictions.py
+# Examples: 
+# examples/evaluate_classification_dataset_with_given_predictions.py
 from unitxt.api import create_dataset, evaluate
 
 classes = ["positive", "negative"]
@@ -4555,43 +4473,6 @@ print(results.global_scores.summary)
 
 print("Instance Results:")
 print(results.instance_scores.summary)
-
-# examples/evaluate_tables_benchmark.py
-from unitxt import evaluate, load_dataset, settings
-from unitxt.inference import (
-    CrossProviderInferenceEngine,
-)
-
-with settings.context(
-    disable_hf_datasets_cache=False,
-    allow_unverified_code=True,
-    mock_inference_mode=True,
-):
-    test_dataset = load_dataset(
-        "benchmarks.tables_benchmark[loader_limit=30,max_samples_per_subset=30]", split="test"
-    )
-
-# Infer
-model = CrossProviderInferenceEngine(
-    model="llama-3-8b-instruct",
-    max_tokens=30,
-)
-"""
-We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
-watsonx, bam, openai, azure, aws and more.
-
-For the arguments these inference engines can receive, please refer to the classes documentation or read
-about the the open ai api arguments the CrossProviderInferenceEngine follows.
-"""
-
-predictions = model(test_dataset)
-results = evaluate(predictions=predictions, data=test_dataset)
-
-results.instance_scores.to_df().to_csv("results.csv")
-print("Global scores:")
-print(results.global_scores.summary)
-print("Subsets scores:")
-print(results.subsets_scores.summary)
 
 # examples/evaluate_llm_as_judge_direct_predefined_criteria.py
 from unitxt import get_logger
@@ -5169,7 +5050,7 @@ if __name__ == "__main__":
     # all available models for this judge are under "catalog.engines.classification"
     mixtral_engine = "engines.classification.mixtral_8x7b_instruct_v01_wml"
     correctness_judge_metric_mixtral = (
-        f"{metric_name}[{mapping_override}, model={mixtral_engine}]"
+        f"{metric_name}[{mapping_override}, inference_model={mixtral_engine}]"
     )
 
     metrics = [correctness_judge_metric_llama, correctness_judge_metric_mixtral]
@@ -7408,7 +7289,7 @@ with settings.context(
 
 # Infer
 model = CrossProviderInferenceEngine(
-    model="llama-3-2-11b-vision-instruct", max_tokens=30, provider="rits"
+    model="llama-3-2-11b-vision-instruct", max_tokens=30, provider="watsonx"
 )
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
@@ -7503,3 +7384,342 @@ for num_demos in [1, 2]:
 
         df = df.round(decimals=2)
         logger.info(df.to_markdown())
+
+# Catalog: 
+id: metrics.roc_auc, type: roc_auc
+id: metrics.squad, type: metric_pipeline
+id: metrics.f1_weighted, type: f1_weighted
+id: metrics.matthews_correlation, type: matthews_correlation
+id: metrics.recall_binary, type: recall_binary
+id: metrics.normalized_sacrebleu, type: metric_pipeline
+id: metrics.jaccard_index, type: jaccard_index
+id: metrics.recall_macro_multi_label, type: recall_macro_multi_label
+id: metrics.wer, type: wer
+id: metrics.sacrebleu, type: metric_pipeline
+id: metrics.accuracy_binary, type: binary_accuracy
+id: metrics.meteor_hf, type: meteor_fast, desc: Huggingface version with bad confidence interval calculation of METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
+
+METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
+
+id: metrics.f1_strings, type: f1_strings
+id: metrics.precision_binary, type: precision_binary
+id: metrics.exact_match_mm, type: exact_match_mm
+id: metrics.max_f1_binary, type: binary_max_f1
+id: metrics.kendalltau_b, type: kendall_tau_metric
+id: metrics.bleu, type: huggingface_metric
+id: metrics.f1_micro, type: f1_fast
+id: metrics.token_overlap, type: token_overlap
+id: metrics.rouge, type: rouge, desc: This is the classical NLP Rouge metric based on the RougeScorer library (https://github.com/google-research/google-research/tree/master/rouge).
+It computes metrics several metrics (rouge1, rouge2, roughL, and rougeLsum) based lexical (word) overlap between the prediction and the ground truth references."
+
+id: metrics.string_containment_ratio, type: string_containment_ratio
+id: metrics.retrieval_at_k, type: retrieval_at_k
+id: metrics.websrc_squad_f1, type: websrc_squad_f1
+id: metrics.fuzzyner, type: fuzzy_ner
+id: metrics.f1_macro, type: f1_fast
+id: metrics.recall_micro_multi_label, type: recall_micro_multi_label
+id: metrics.relaxed_correctness, type: relaxed_correctness
+id: metrics.char_edit_dist_accuracy, type: char_edit_distance_accuracy
+id: metrics.unsorted_list_exact_match, type: unsorted_list_exact_match
+id: metrics.ndcg, type: metric_pipeline
+id: metrics.string_containment, type: string_containment
+id: metrics.safety_metric, type: safety_metric
+id: metrics.fin_qa_metric, type: fin_qa_eval
+id: metrics.char_edit_distance, type: char_edit_distance
+id: metrics.f1_macro_multi_label, type: f1_macro_multi_label
+id: metrics.weighted_win_rate_correlation, type: weighted_win_rate_correlation
+id: metrics.token_overlap_with_context, type: metric_pipeline
+id: metrics.regard_metric, type: regard_metric
+id: metrics.ner, type: ner
+id: metrics.rerank_recall, type: rerank_recall
+id: metrics.meteor, type: meteor_fast, desc: METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
+
+METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
+
+id: metrics.precision_macro_multi_label, type: precision_macro_multi_label
+id: metrics.accuracy, type: accuracy_fast
+id: metrics.is_code_mixed, type: is_code_mixed
+id: metrics.rouge_with_confidence_intervals, type: rouge
+id: metrics.precision_micro_multi_label, type: precision_micro_multi_label
+id: metrics.mrr, type: mrr
+id: metrics.map, type: map
+id: metrics.spearman, type: metric_pipeline
+id: metrics.max_accuracy_binary, type: binary_max_accuracy
+id: metrics.f1_micro_multi_label, type: f1_micro_multi_label
+id: metrics.kpa, type: kpa
+id: metrics.anls, type: anls
+id: metrics.prediction_length, type: prediction_length
+id: metrics.f1_binary, type: f1_binary
+id: system_prompts.empty, type: textual_system_prompt
+id: system_prompts.boolqa, type: textual_system_prompt
+id: tasks.language_identification, type: task
+id: tasks.grammatical_error_correction, type: task
+id: tasks.generation, type: task
+id: formats.llama2, type: system_format
+id: formats.empty, type: system_format
+id: formats.deepseek_coder, type: system_format
+id: formats.llamaguard2, type: system_format
+id: formats.textual_assistant, type: system_format
+id: formats.llama3_instruct_all_demos_in_one_turn, type: system_format
+id: formats.llama, type: system_format
+id: formats.empty_input_output_separator, type: system_format
+id: formats.user_assistant, type: system_format
+id: formats.chat_api, type: chat_api_format
+id: formats.human_assistant, type: system_format
+id: formats.llama3_instruct, type: system_format
+id: formats.user_agent, type: system_format
+id: operators.convert_to_boolean, type: convert_to_boolean
+id: operators.regex_parser, type: regex_parser
+id: operators.scale_0_10_to_0_1, type: scale_number_to_zero_one_return_zero_if_fails
+id: operators.substring, type: substring
+id: operators.lower_case, type: lower
+id: operators.extract_arena_hard_numerical_judgment, type: extract_arena_hard_numerical_judgment
+id: operators.cast_to_float_return_0_5_if_failed, type: cast
+id: operators.hate_speech_or_not_hate_speech, type: string_equals
+id: operators.predictions_yes_1_else_0, type: yes_to_one_else_zero
+id: operators.match_closest_option, type: match_closest_option
+id: operators.remove_articles, type: remove_articles
+id: operators.literal_eval, type: literal_eval
+id: operators.take_last_non_empty_line, type: take_last_non_empty_line
+id: operators.extract_verbal_judgement_bad_good, type: extract_verbal_judgement_bad_good
+id: operators.cast_to_float_return_zero_if_failed, type: cast
+id: operators.upper_case, type: upper
+id: operators.toxic_or_not_toxic, type: string_equals
+id: operators.extract_mt_bench_rating_judgment, type: extract_mt_bench_rating_judgment
+id: operators.remove_none_from_list, type: remove_values
+id: operators.capitalize, type: capitalize
+id: operators.first_character, type: first_character
+id: operators.take_first_word, type: take_first_word
+id: operators.extract_verbal_judgement, type: extract_verbal_judgment
+id: operators.lower_case_till_punc, type: lower_case_till_punc
+id: operators.arena_hard_hf_space_processing_steps, type: sequential_operator
+id: operators.to_yes_or_none, type: to_yes_or_none
+id: operators.get_string_after_colon, type: get_string_after
+id: operators.extract_mt_bench_label_judgment, type: extract_mt_bench_label_judgment
+id: operators.take_first_non_empty_line, type: take_first_non_empty_line
+id: operators.cast_to_float_return_nan_if_failed, type: cast
+id: operators.extract_from_double_brackets, type: extract_with_regex
+id: operators.stance_to_pro_con, type: stance_to_pro_con
+id: operators.str_to_float_format, type: str_to_float_format
+id: operators.remove_punctuations, type: remove_punctuations
+id: operators.fix_whitespace, type: fix_white_space
+id: operators.yes_no_to_int, type: yes_no_to_int
+id: augmentors.augment_whitespace_task_input, type: artifact_link
+id: augmentors.no_augmentation, type: null_augmentor
+id: augmentors.augment_whitespace_prefix_and_suffix_task_input, type: artifact_link
+id: cards.qqp, type: task_card, desc: The Quora Question Pairs2 dataset is a collection of question pairs from the community question-answering website Quora. The task is to determine whether a pair of questions are semantically equivalent… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.squad, type: task_card, desc: Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable. SQuAD 1.1 contains 100,000+ question-answer pairs on 500+ articles. Supported Tasks and Leaderboards Question… See the full description on the dataset page: https://huggingface.co/datasets/rajpurkar/squad.
+id: cards.20_newsgroups_short, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: 
+"The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date."
+See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups.
+id: cards.hh_rlhf, type: task_card, desc: This repository provides access to two different kinds of data: 
+1) Human preference data about helpfulness and harmlessness from Training a Helpful and Harmless Assistant with Reinforcement Learning from Human Feedback. These data are meant to train preference (or reward) models for subsequent RLHF training. These data are not meant for supervised training of dialogue agents. Training dialogue agents on these data is likely… See the full description on the dataset page: https://huggingface.co/datasets/Anthropic/hh-rlhf.
+id: cards.attaq_500, type: task_card
+id: cards.dbpedia_14, type: task_card, desc: The DBpedia ontology classification dataset is constructed by picking 14 non-overlapping classes from DBpedia 2014. They are listed in classes.txt. From each of these 14 ontology classes, we randomly choose 40,000 training samples and 5,000 testing samples. Therefore, the total size of the training dataset is 560,000 and testing dataset 70,000. There are 3 columns in the dataset (same for train and test splits)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/dbpedia_14.
+id: cards.tablebench_data_analysis, type: task_card, desc: This TableBench dataset is a Comprehensive and Complex Benchmark for Table Question Answering. For more details, refer to https://tablebench.github.io/
+id: cards.race_high, type: task_card, desc: RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The dataset is collected from English examinations in China, which are designed for middle school and high school students. The dataset can be served as the training and test sets for machine comprehension. Supported Tasks and Leaderboards More Information Needed Languages More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race.
+id: cards.billsum_document_filtered_to_10000_chars, type: task_card, desc: BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum.
+id: cards.copa, type: task_card, desc: SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after GLUE with a new set of more difficult language understanding tasks, improved resources, and a new public leaderboard… See the full description on the dataset page: https://huggingface.co/datasets/super_glue
+id: cards.wiki_bio, type: task_card, desc: This dataset gathers 728,321 biographies from wikipedia. It aims at evaluating text generation algorithms. For each article, we provide the first paragraph and the infobox (both tokenized). For each article, we extracted the first paragraph (text), the infobox (structured data). Each infobox is encoded as a list of (field name, field value) pairs. We used Stanford CoreNLP (http://stanfordnlp.github.io/CoreNLP/) to preprocess the data, i.e. we broke the text into sentences and tokenized both the text and the field values… See the full description on the dataset page: https://huggingface.co/datasets/wiki_bio
+id: cards.wsc, type: task_card, desc: SuperGLUE (https://super.gluebenchmark.com/) is a new benchmark styled after GLUE with a new set of more difficult language understanding tasks, improved resources, and a new public leaderboard… See the full description on the dataset page: https://huggingface.co/datasets/super_glue
+id: cards.info_vqa_lmms_eval, type: task_card, desc: InfographicVQA is a dataset that comprises a diverse collection of infographics along with natural language questions and answers annotations. The collected questions require methods to jointly reason over the document layout, textual content, graphical elements, and data visualizations. We curate the dataset with emphasis on questions that require elementary reasoning and basic arithmetic skills.
+id: cards.atta_q, type: task_card
+id: cards.banking77, type: task_card, desc: Dataset composed of online banking queries annotated with their corresponding intents.
+BANKING77 dataset provides a very fine-grained set of intents in a banking domain. It comprises 13,083 customer service queries labeled with 77 intents. It focuses on fine-grained single-domain intent detection. See the full description on the dataset page: https://huggingface.co/datasets/PolyAI/banking77
+id: cards.tldr_document_filtered_to_10000_chars, type: task_card, desc: This corpus contains preprocessed posts from the Reddit dataset.
+The dataset consists of 3,848,330 posts with an average length of 270 words for content,
+and 28 words for the summary.
+Features includes strings: author, body, normalizedBody, content, summary, subreddit, subreddit_id.
+Content is used as document and summary is used as summary.
+id: cards.law_stack_exchange, type: task_card, desc: Dataset from the Law Stack Exchange, as used in "Parameter-Efficient Legal Domain Adaptation"… See the full description on the dataset page: https://huggingface.co/datasets/jonathanli/law-stack-exchange.
+id: cards.race_middle, type: task_card, desc: RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The dataset is collected from English examinations in China, which are designed for middle school and high school students. The dataset can be served as the training and test sets for machine comprehension. Supported Tasks and Leaderboards More Information Needed Languages More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race.
+id: cards.tldr, type: task_card, desc: This corpus contains preprocessed posts from the Reddit dataset.
+The dataset consists of 3,848,330 posts with an average length of 270 words for content,
+and 28 words for the summary.
+Features includes strings: author, body, normalizedBody, content, summary, subreddit, subreddit_id.
+Content is used as document and summary is used as summary.
+id: cards.social_iqa, type: task_card, desc: Social IQa: Social Interaction QA, a question-answering benchmark for testing social commonsense intelligence. Contrary to many prior benchmarks that focus on physical or taxonomic knowledge, Social IQa focuses on reasoning about people's actions and their social implications. For example, given an action like "Jesse saw a concert" and a question like "Why did Jesse do this?", humans can easily infer that Jesse wanted "to see their favorite performer" or "to enjoy the music", and not "to see what's happening inside" or "to see if it works". The actions in Social IQa span a wide variety of social situations, and answer candidates contain both human-curated answers and adversarially-filtered machine-generated candidates. Social IQa contains over 37,000 QA pairs for evaluating models' abilities to reason about the social implications of everyday events and situations.
+id: cards.summarize_from_human_feedback, type: task_card, desc: Summarize from Feedback contains the human feedback data released by the "Learning to summarize from human feedback" paper… See the full description on the dataset page: https://huggingface.co/datasets/openai/summarize_from_feedback
+id: cards.medical_abstracts, type: task_card
+id: cards.info_vqa, type: task_card, desc: InfographicVQA is a dataset that comprises a diverse collection of infographics along with natural language questions and answers annotations. The collected questions require methods to jointly reason over the document layout, textual content, graphical elements, and data visualizations. We curate the dataset with emphasis on questions that require elementary reasoning and basic arithmetic skills.
+id: cards.sst2, type: task_card, desc: The Stanford Sentiment Treebank consists of sentences from movie reviews and human annotations of their sentiment. The task is to predict the sentiment of a given sentence. It uses the two-way (positive/negative) class split, with only sentence-level labels… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.20_newsgroups, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: 
+"The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date."
+See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups.
+id: cards.claim_stance_topic, type: task_card, desc: Claim Stance contains 2,394 labeled Wikipedia claims for 55 topics. The dataset includes the stance (Pro/Con) of each claim towards the topic, as well as fine-grained annotations, based on the semantic model of Stance Classification of Context-Dependent Claims (topic target, topic sentiment towards its target, claim target, claim sentiment towards its target, and the relation between the targets)… See the full description on the dataset page: https://huggingface.co/datasets/ibm/claim_stance.
+id: cards.tablebench_numerical_reasoning, type: task_card, desc: This TableBench dataset is a Comprehensive and Complex Benchmark for Table Question Answering. For more details, refer to https://tablebench.github.io/
+id: cards.fin_qa, type: task_card, desc: FINQA is an expert-annotated QA dataset that aims to tackle numerical reasoning over real-world financial data.
+id: cards.wnli, type: task_card, desc: The Winograd Schema Challenge (Levesque et al., 2011) is a reading comprehension task in which a system must read a sentence with a pronoun and select the referent of that pronoun from a list of choices. The examples are manually constructed to foil simple statistical methods: Each one is contingent on contextual information provided by a single word or phrase in the sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.qtsumm, type: task_card, desc: The QTSumm dataset is a large-scale dataset for the task of query-focused summarization over tabular data.
+id: cards.language_identification, type: task_card, desc: The Language Identification dataset is a collection of 90k samples consisting of text passages and corresponding language label. This dataset was created by collecting data from 3 sources: Multilingual Amazon Reviews Corpus, XNLI, and STSb Multi MT. See the full description on the dataset page: https://huggingface.co/datasets/papluca/language-identification.
+id: cards.sciq, type: task_card, desc: The SciQ dataset contains 13,679 crowdsourced science exam questions about Physics, Chemistry and Biology, among others. The questions are in multiple-choice format with 4 answer options each. For the majority of the questions, an additional paragraph with supporting evidence for the correct answer is provided. Supported Tasks and Leaderboards More Information Needed Languages More Information… See the full description on the dataset page: https://huggingface.co/datasets/allenai/sciq.
+id: cards.news_category_classification_headline, type: task_card
+id: cards.toxigen, type: task_card, desc: This dataset is for implicit hate speech detection. All instances were generated using GPT-3 and the methods described in our paper. Languages All text is written in English. Dataset Structure Data Fields We release TOXIGEN as a dataframe with the following fields: prompt is the prompt used for… See the full description on the dataset page: https://huggingface.co/datasets/toxigen/toxigen-data.
+id: cards.cola, type: task_card, desc: The Corpus of Linguistic Acceptability consists of English acceptability judgments drawn from books and journal articles on linguistic theory. Each example is a sequence of words annotated with whether it is a grammatical English sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.chart_qa, type: task_card, desc: ChartQA: A Benchmark for Question Answering about Charts with Visual and Logical Reasoning.
+id: cards.ethos_binary, type: task_card, desc: ETHOS: online hate speecg detection dataset. This repository contains a dataset for hate speech
+detection on social media platforms, called Ethos. There are two variations of the dataset:
+Ethos_Dataset_Binary: contains 998 comments in the dataset alongside with a label
+about hate speech presence or absence. 565 of them do not contain hate speech,
+while the rest of them, 433, contain.
+Ethos_Dataset_Multi_Label: which contains 8 labels for the 433 comments with hate speech content.
+These labels are violence (if it incites (1) or not (0) violence), directed_vs_general (if it is
+directed to a person (1) or a group (0)), and 6 labels about the category of hate speech like,
+gender, race, national_origin, disability, religion and sexual_orientation.
+id: cards.chart_qa_lmms_eval, type: task_card, desc: ChartQA: A Benchmark for Question Answering about Charts with Visual and Logical Reasoning.
+id: cards.tldr_document_filtered_to_6000_chars, type: task_card, desc: This corpus contains preprocessed posts from the Reddit dataset.
+The dataset consists of 3,848,330 posts with an average length of 270 words for content,
+and 28 words for the summary.
+Features includes strings: author, body, normalizedBody, content, summary, subreddit, subreddit_id.
+Content is used as document and summary is used as summary.
+id: cards.argument_topic, type: task_card, desc: Argument Quality Ranking
+The dataset contains 30,497 crowd-sourced arguments for 71 debatable topics labeled for quality and stance, split into train, validation and test sets. The dataset was originally published as part of our paper: A Large-scale Dataset for Argument Quality Ranking: Construction and Analysis.
+Argument Topic
+This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k.
+id: cards.coedit_gec, type: task_card, desc: This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.
+id: cards.xsum, type: task_card, desc: Extreme Summarization (XSum) Dataset. There are three features:
+- document: Input news article. 
+- summary: One sentence summary of the article. 
+- id: BBC ID of the article… See the full description on the dataset page: https://huggingface.co/datasets/EdinburghNLP/xsum
+id: cards.pop_qa_robust, type: task_card, desc: PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entity, and relationship_type annotation, as well as Wikipedia monthly page views. Languages The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA.
+id: cards.numeric_nlg, type: task_card, desc: NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.
+id: cards.long_bench_v2, type: task_card, desc: LongBench v2 is designed to assess the ability of LLMs to handle long-context problems requiring deep understanding and reasoning across real-world multitasks. LongBench v2 has the following features: (1) Length: Context length ranging from 8k to 2M words, with the majority under 128k. (2) Difficulty: Challenging enough that even human experts, using search tools within the document, cannot answer correctly in a short time. (3) Coverage: Cover various realistic scenarios. (4) Reliability: All in a multiple-choice question format for reliable evaluation.
+
+To elaborate, LongBench v2 consists of 503 challenging multiple-choice questions, with contexts ranging from 8k to 2M words, across six major task categories: single-document QA, multi-document QA, long in-context learning, long-dialogue history understanding, code repo understanding, and long structured data understanding. To ensure the breadth and the practicality, we collect data from nearly 100 highly educated individuals with diverse professional backgrounds. We employ both automated and manual review processes to maintain high quality and difficulty, resulting in human experts achieving only 53.7% accuracy under a 15-minute time constraint. Our evaluation reveals that the best-performing model, when directly answers the questions, achieves only 50.1% accuracy. In contrast, the o1-preview model, which includes longer reasoning, achieves 57.7%, surpassing the human baseline by 4%. These results highlight the importance of enhanced reasoning ability and scaling inference-time compute to tackle the long-context challenges in LongBench v2.
+id: cards.openbook_qa, type: task_card, desc: Dataset Card for OpenBookQA
+Dataset Summary
+OpenBookQA aims to promote research in advanced question-answering, probing a deeper understanding of both the topic
+(with salient facts summarized as an open book, also provided with the dataset) and the language it is expressed in. In
+particular, it contains questions that require multi-step reasoning, use of additional common and commonsense knowledge,
+and rich text comprehension.
+OpenBookQA is a new kind of… See the full description on the dataset page: https://huggingface.co/datasets/allenai/openbookqa.
+id: cards.almost_evil, type: task_card, desc: Contains Parquet of a list of instructions and WikiHow articles on different languages. See the full description (and warnings) on the dataset page: https://huggingface.co/datasets/0x22almostEvil/multilingual-wikihow-qa-16k.
+id: cards.tab_fact, type: task_card, desc: The problem of verifying whether a textual hypothesis holds the truth based on the given evidence, also known as fact verification, plays an important role in the study of natural language understanding and semantic representation. However, existing studies are restricted to dealing with unstructured textual evidence (e.g., sentences and passages, a pool of passages), while verification using structured forms of evidence, such as tables, graphs, and databases, remains unexplored. TABFACT is large scale dataset with 16k Wikipedia tables as evidence for 118k human annotated statements designed for fact verification with semi-structured evidence… See the full description on the dataset page: https://huggingface.co/datasets/ibm/tab_fact
+id: cards.mbpp, type: task_card, desc: The benchmark consists of around 1,000 crowd-sourced Python programming problems, designed to be solvable by entry level programmers, covering programming fundamentals, standard library functionality, and so on. Each problem consists of a task description, code solution and 3 automated test cases. As described in the paper, a subset of the data has been hand-verified by us. Released here as part… See the full description on the dataset page: https://huggingface.co/datasets/mbpp.
+id: cards.frames, type: task_card, desc: FRAMES is a comprehensive evaluation dataset designed to test the capabilities of Retrieval-Augmented Generation (RAG) systems across factuality, retrieval accuracy, and reasoning.
+id: cards.turl_col_type, type: task_card, desc: This TURL dataset is a large-scale dataset based on WikiTables corpus for the task of column type annotation. Given a table T and a set of semantic types L, the task is to annotate a column in T with l ∈ L so that all entities in the column have type l. Note that a column can have multiple types. See the full description on the dataset page: https://github.com/sunlab-osu/TURL
+id: cards.scigen, type: task_card, desc: SciGen is a dataset for the task of reasoning-aware data-to-text generation. It consists of tables from scientific articles(mostly containing numerical values) and their corresponding text descriptions.
+id: cards.seed_bench, type: task_card, desc: SEED-Bench-1 consists of 19K multiple-choice questions with accurate human annotations, covering 12 evaluation dimensions including both the spatial and temporal understanding.
+id: cards.tablerow_classify, type: task_card
+id: cards.financial_tweets, type: task_card, desc: Dataset Description
+The Twitter Financial News dataset is an English-language dataset containing an annotated corpus of finance-related tweets. This dataset is used to classify finance-related tweets for their topic.
+The dataset holds 21,107 documents annotated with 20 labels:
+topics = {
+"LABEL_0": "Analyst Update",
+"LABEL_1": "Fed | Central Banks",
+"LABEL_2": "Company | Product News",
+"LABEL_3": "Treasuries | Corporate Debt",
+"LABEL_4": "Dividend"… See the full description on the dataset page: https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic.
+id: cards.trec, type: task_card, desc: The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set. 
+The dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700… See the full description on the dataset page: https://huggingface.co/datasets/trec
+id: cards.mrpc, type: task_card, desc: The Microsoft Research Paraphrase Corpus (Dolan & Brockett, 2005) is a corpus of sentence pairs automatically extracted from online news sources, with human annotations for whether the sentences in the pair are semantically equivalent… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.ai2d, type: task_card, desc: AI2 Diagrams (AI2D) is a dataset of over 5000 grade school science diagrams with over 150000 rich annotations, their ground truth syntactic parses, and more than 15000 corresponding multiple choice questions.
+id: cards.dart, type: task_card, desc: DART is a large and open-domain structured DAta Record to Text generation corpus with high-quality sentence annotations with each input being a set of entity-relation triples following a tree-structured ontology. It consists of 82191 examples across different domains with each input being a semantic RDF triple set derived from data records in tables and the tree ontology of table schema, annotated with sentence description that covers all facts in the triple set. DART is released in the following paper where you can find more details and baseline results: https://arxiv.org/abs/2007.02871
+id: cards.tablebench_fact_checking, type: task_card, desc: This TableBench dataset is a Comprehensive and Complex Benchmark for Table Question Answering. For more details, refer to https://tablebench.github.io/
+id: cards.atis, type: task_card
+id: cards.piqa, type: task_card, desc: To apply eyeshadow without a brush, should I use a cotton swab or a toothpick? Questions requiring this kind of physical commonsense pose a challenge to state-of-the-art natural language understanding systems. The PIQA dataset introduces the task of physical commonsense reasoning and a corresponding benchmark dataset Physical Interaction: Question Answering or PIQA. Physical commonsense knowledge is a major challenge on the road to true AI-completeness… See the full description on the dataset page: https://huggingface.co/datasets/piqa
+id: cards.race_all, type: task_card, desc: RACE is a large-scale reading comprehension dataset with more than 28,000 passages and nearly 100,000 questions. The dataset is collected from English examinations in China, which are designed for middle school and high school students. The dataset can be served as the training and test sets for machine comprehension. Supported Tasks and Leaderboards More Information Needed Languages More… See the full description on the dataset page: https://huggingface.co/datasets/ehovy/race.
+id: cards.ag_news, type: task_card, desc: AG is a collection of more than 1 million news articles. News articles have been gathered from more than 2000 news sources by ComeToMyHead in more than 1 year of activity. ComeToMyHead is an academic news search engine which has been running since July 2004. The dataset is provided by the academic community for research purposes in data mining (clustering, classification, etc), information retrieval (ranking, search, etc)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/ag_news.
+id: cards.billsum, type: task_card, desc: BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum.
+id: cards.coedit_error_detection, type: task_card, desc: This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.
+id: cards.rte, type: task_card, desc: The Recognizing Textual Entailment (RTE) datasets come from a series of annual textual entailment challenges. The authors of the benchmark combined the data from RTE1 (Dagan et al., 2006), RTE2 (Bar Haim et al., 2006), RTE3 (Giampiccolo et al., 2007), and RTE5 (Bentivogli et al., 2009)… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.ledgar, type: task_card, desc: LEDGAR dataset aims contract provision (paragraph) classification. The contract provisions come from contracts obtained from the US Securities and Exchange Commission (SEC) filings, which are publicly available from EDGAR. Each label represents the single main topic (theme) of the corresponding contract provision… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue.
+id: cards.human_eval, type: task_card, desc: The HumanEval dataset released by OpenAI includes 164 programming problems with a function sig- nature, docstring, body, and several unit tests. They were handwritten to ensure not to be included in the training set of code generation models… See the full description on the dataset page: https://huggingface.co/datasets/openai_humaneval.
+id: cards.unfair_tos, type: task_card, desc: The UNFAIR-ToS dataset contains 50 Terms of Service (ToS) from on-line platforms (e.g., YouTube, Ebay, Facebook, etc.). The dataset has been annotated on the sentence-level with 8 types of unfair contractual terms (sentences), meaning terms that potentially violate user rights according to the European consumer law… See the full description on the dataset page: https://huggingface.co/datasets/coastalcph/lex_glue.
+id: cards.yahoo_answers_topics, type: task_card, desc: Yahoo! Answers Topic Classification is text classification dataset. The dataset is the Yahoo! Answers corpus as of 10/25/2007. The Yahoo! Answers topic classification dataset is constructed using 10 largest main categories. From all the answers and other meta-information, this dataset only used the best answer content and the main category information… See the full description on the dataset page: https://huggingface.co/datasets/yahoo_answers_topics
+id: cards.billsum_document_filtered_to_6000_chars, type: task_card, desc: BillSum, summarization of US Congressional and California state bills… See the full description on the dataset page: https://huggingface.co/datasets/billsum.
+id: cards.qnli, type: task_card, desc: The Stanford Question Answering Dataset is a question-answering dataset consisting of question-paragraph pairs, where one of the sentences in the paragraph (drawn from Wikipedia) contains the answer to the corresponding question (written by an annotator). The authors of the benchmark convert the task into sentence pair classification by forming a pair between each question and each sentence in the corresponding context, and filtering out pairs with low lexical overlap between the question and the context sentence… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.pop_qa, type: task_card, desc: PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entity, and relationship_type annotation, as well as Wikipedia monthly page views. Languages The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA.
+id: cards.wikitq, type: task_card, desc: This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables… See the full description on the dataset page: https://huggingface.co/datasets/wikitablequestions
+id: cards.tablebench, type: task_card, desc: This TableBench dataset is a Comprehensive and Complex Benchmark for Table Question Answering. For more details, refer to https://tablebench.github.io/
+id: cards.hellaswag, type: task_card, desc: HellaSwag: Can a Machine Really Finish Your Sentence? is a new dataset for commonsense NLI. A paper was published at ACL2019… See the full description on the dataset page: https://huggingface.co/datasets/hellaswag
+id: cards.websrc, type: task_card, desc: WebSRC v1.0 is a dataset for reading comprehension on structural web pages. The task is to answer questions about web pages, which requires a system to have a comprehensive understanding of the spatial structure and logical structure. WebSRC consists of 6.4K web pages and 400K question-answer pairs about web pages. This cached copy of the dataset is focused on Q&A using the web screenshots (HTML and other metadata are omitted). Questions in WebSRC were created for each segment. Answers are either text spans from web pages or yes/no.
+id: cards.stsb, type: task_card, desc: The Semantic Textual Similarity Benchmark (Cer et al., 2017) is a collection of sentence pairs drawn from news headlines, video and image captions, and natural language inference data. Each pair is human-annotated with a similarity score from 1 to 5… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.bold, type: task_card, desc: Bias in Open-ended Language Generation Dataset (BOLD) is a dataset to evaluate fairness in open-ended language generation in English language. It consists of 23,679 different text generation prompts that allow fairness measurement across five domains: profession, gender, race, religious ideologies, and political ideologies… See the full description on the dataset page: https://huggingface.co/datasets/AlexaAI/bold.
+id: cards.mnli, type: task_card, desc: The Multi-Genre Natural Language Inference Corpus is a crowdsourced collection of sentence pairs with textual entailment annotations. Given a premise sentence and a hypothesis sentence, the task is to predict whether the premise entails the hypothesis (entailment), contradicts the hypothesis (contradiction), or neither (neutral). The premise sentences are gathered from ten different sources, including transcribed speech, fiction, and government reports… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
+id: cards.cnn_dailymail, type: task_card, desc: The CNN / DailyMail Dataset is an English-language dataset containing just over 300k unique news articles as written by journalists at CNN and the Daily Mail. The current version supports both extractive and abstractive summarization, though the original version was created for machine reading and comprehension and abstractive question answering… See the full description on the dataset page: https://huggingface.co/datasets/abisee/cnn_dailymail.
+id: cards.open_australian_legal_qa, type: task_card
+id: cards.simple_qa, type: task_card, desc: A factuality benchmark called SimpleQA that measures the ability for language models to answer short, fact-seeking questions.
+id: splitters.large_no_dev, type: split_random_mix
+id: splitters.small_no_dev, type: split_random_mix
+id: splitters.diverse_labels_sampler, type: diverse_labels_sampler
+id: splitters.small_no_test, type: split_random_mix
+id: splitters.test_only, type: split_random_mix
+id: splitters.large_no_test, type: split_random_mix
+id: processors.to_list_by_comma_from_references, type: post_process
+id: processors.convert_to_boolean, type: post_process
+id: processors.scale_0_10_to_0_1, type: post_process
+id: processors.substring, type: post_process
+id: processors.load_json, type: post_process
+id: processors.lower_case, type: post_process
+id: processors.extract_arena_hard_numerical_judgment, type: post_process
+id: processors.cast_to_float_return_0_5_if_failed, type: post_process
+id: processors.hate_speech_or_not_hate_speech, type: post_process
+id: processors.to_list_by_hyphen_space, type: sequential_operator
+id: processors.load_json_from_predictions, type: post_process
+id: processors.predictions_yes_1_else_0, type: post_process
+id: processors.match_closest_option, type: post_process
+id: processors.remove_articles, type: post_process
+id: processors.literal_eval, type: post_process
+id: processors.take_last_non_empty_line, type: post_process
+id: processors.extract_verbal_judgement_bad_good, type: post_process
+id: processors.cast_to_float_return_zero_if_failed, type: post_process
+id: processors.upper_case, type: post_process
+id: processors.toxic_or_not_toxic, type: post_process
+id: processors.extract_mt_bench_rating_judgment, type: post_process
+id: processors.to_list_by_comma, type: post_process
+id: processors.remove_none_from_list, type: post_process
+id: processors.to_span_label_pairs_surface_only, type: post_process
+id: processors.capitalize, type: post_process
+id: processors.load_json_predictions, type: sequential_operator
+id: processors.first_character, type: post_process
+id: processors.regex_parser_from_prediction, type: post_process
+id: processors.to_string, type: post_process
+id: processors.infer_last_token_logprobs_to_yes_no_probs, type: sequential_operator
+id: processors.take_first_word, type: post_process
+id: processors.extract_verbal_judgement, type: post_process
+id: processors.lower_case_till_punc, type: post_process
+id: processors.to_yes_or_none, type: post_process
+id: processors.get_string_after_colon, type: post_process
+id: processors.list_to_empty_entity_tuples, type: post_process
+id: processors.extract_mt_bench_label_judgment, type: post_process
+id: processors.safe_unsafe, type: post_process
+id: processors.take_first_non_empty_line, type: post_process
+id: processors.cast_to_float_return_nan_if_failed, type: post_process
+id: processors.extract_from_double_brackets, type: post_process
+id: processors.to_string_stripped, type: post_process
+id: processors.stance_to_pro_con, type: post_process
+id: processors.infer_logprobs_to_yes_no_probs, type: sequential_operator
+id: processors.to_list_by_comma_space, type: post_process
+id: processors.str_to_float_format, type: post_process
+id: processors.remove_punctuations, type: post_process
+id: processors.fix_whitespace, type: post_process
+id: processors.dict_of_lists_to_value_key_pairs, type: post_process
+id: processors.yes_no_to_int, type: post_process
+id: processors.to_list_by_hyphen_space_from_references, type: sequential_operator
+id: processors.to_span_label_pairs, type: post_process
+id: benchmarks.vision, type: benchmark
+id: benchmarks.tables_benchmark, type: benchmark, desc: TablesBenchmark is an open-source benchmark developed by domain experts to evaluate various table-related tasks and capabilities.
+
+.. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/tables_benchmark.png
+   :alt: Optional alt text
+   :width: 30%
+   :align: center
+
+Constructed using state-of-the-art benchmarking methodologies, TablesBenchmark ensures validity, robustness, and efficiency by utilizing unitxt's dynamic and flexible text processing abilities.
+
+It encompasses diverse domains and evaluates a range of capabilities, with additional tasks and domains integrated over time.
+id: benchmarks.glue, type: benchmark
+id: benchmarks.bluebench, type: benchmark, desc: BlueBench is an open-source benchmark developed by domain experts to represent required needs of Enterprise users.
+
+.. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/blue_bench_high_res_01.png
+   :alt: Optional alt text
+   :width: 30%
+   :align: center
+
+It is constructed using state-of-the-art benchmarking methodologies to ensure validity, robustness, and efficiency by utilizing unitxt's abilities for dynamic and flexible text processing.
+
+As a dynamic and evolving benchmark, BlueBench currently encompasses diverse domains such as legal, finance, customer support, and news. It also evaluates a range of capabilities, including RAG, pro-social behavior, summarization, and chatbot performance, with additional tasks and domains to be integrated over time.
+id: templates.key_val_with_new_lines, type: key_val_template
+id: templates.empty, type: key_val_template
+id: templates.key_val, type: key_val_template

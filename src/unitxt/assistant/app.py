@@ -1,4 +1,5 @@
 import glob
+import json
 import os
 from functools import lru_cache
 
@@ -17,11 +18,33 @@ def combine_files_into_string(glob_pattern):
     return "\n".join(combined_content)
 
 
+def read_catalog_files():
+    combined_content = []
+
+    for file_path in glob.glob("src/unitxt/catalog/**/*.json"):
+        with open(file_path, encoding="utf-8") as file:
+            data = json.load(file)
+        id = (
+            file_path.replace("src/unitxt/catalog/", "")
+            .replace(".json", "")
+            .replace("/", ".")
+        )
+        item = f'id: {id}, type: {data["__type__"]}'
+        if "__description__" in data:
+            item += f', desc: {data["__description__"]}'
+        combined_content.append(item)
+
+    return "\n".join(combined_content)
+
+
 def make_context():
-    context = ""
-    context += combine_files_into_string("docs/**/*.rst")
+    context = "\n# Tutorials: \n"
+    context += combine_files_into_string("docs/*.rst")
+    context += combine_files_into_string("docs/docs/*.rst")
+    context += "\n# Examples: \n"
     context += combine_files_into_string("examples/*.py")
-    context += combine_files_into_string("src/catalog/**/*.json")
+    context += "\n# Catalog: \n"
+    context += read_catalog_files()
     return context
 
 
