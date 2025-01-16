@@ -1,0 +1,10 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rag.autorag.answer_correctness.token_recall",
+        "metrics.rag.autorag.faithfulness.token_k_precision",
+        "metrics.rag.autorag.answer_relevance.token_recall",
+        "metrics.rag.autorag.context_relevance.token_precision",
+        "metrics.rag.autorag.context_correctness.mrr"
+    ]
+}
