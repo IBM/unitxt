@@ -3,7 +3,7 @@ from typing import Dict, Union
 
 from .dataclass import NonPositionalField
 from .formats import Format
-from .fusion import FixedFusion, WeightedFusion
+from .fusion import FixedFusion
 from .operator import SourceOperator
 from .standard import DatasetRecipe
 from .stream import MultiStream
@@ -71,8 +71,6 @@ class Benchmark(BaseBenchmark):
                 max_instances_per_subset=self.max_samples_per_subset,
             )
         else:
-            operator = WeightedFusion(
-                subsets=self.subsets, max_total_samples=self.max_total_samples
-            )
+            raise NotImplementedError()
 
         return operator()

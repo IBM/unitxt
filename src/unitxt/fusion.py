@@ -32,23 +32,19 @@ class BaseFusion(SourceOperator):
         self.named_subsets = {}
         if isinstance(self.subsets, list):
             for i in range(len(self.subsets)):
-                self.named_subsets[i] = self.subsets[i]()
+                self.named_subsets[i] = self.subsets[i]
         else:
             for name, origin in self.subsets.items():
                 try:
-                    self.named_subsets[name] = origin()
+                    self.named_subsets[name] = origin
                 except Exception as e:
                     raise RuntimeError(f"Exception in subset: {name}") from e
 
     def splits(self) -> List[str]:
         self.prepare_subsets()
-        splits = []
-        for _, origin in self.named_subsets.items():
-            for s in origin.keys():
-                if s not in splits:
-                    if self.include_splits is None or s in self.include_splits:
-                        splits.append(s)
-        return splits
+        if self.include_splits is not None:
+            return self.include_splits
+        return ["train", "test", "validation"]
 
     def process(
         self,
@@ -80,11 +76,12 @@ class FixedFusion(BaseFusion):
     # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
         for origin_name, origin in self.named_subsets.items():
-            if split not in origin:
+            multi_stream = origin()
+            if split not in multi_stream:
                 continue
             emitted_from_this_split = 0
             try:
-                for instance in origin[split]:
+                for instance in multi_stream[split]:
                     if (
                         self.max_instances_per_subset is not None
                         and emitted_from_this_split >= self.max_instances_per_subset
@@ -139,7 +136,7 @@ class WeightedFusion(BaseFusion):
 
     def fusion_generator(self, split) -> Generator:
         iterators = {
-            named_origin: iter(origin[split])
+            named_origin: iter(origin()[split])
             for named_origin, origin in self.named_subsets.items()
         }
         total_examples = 0
