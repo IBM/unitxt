@@ -102,7 +102,7 @@ inference_models_v2 = {
     "llama_3_3_70b_instruct_wml": "engines.classification.llama_3_3_70b_instruct_wml",
     "llama_3_3_70b_instruct_watsonx": "engines.classification.llama_3_3_70b_instruct_watsonx",
     "llama_3_3_70b_instruct_rits": "engines.classification.llama_3_3_70b_instruct_rits",
-    "gpt_4o_azure": "engines.classification.gpt_4o_azure",
+    "gpt_4o_azure": "engines.classification.gpt_4o_2024_08_06_azure_openai",
     generic_engine_label: GenericInferenceEngine(),
 }
 
