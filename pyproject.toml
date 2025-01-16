@@ -259,6 +259,7 @@ omit = [
     "src/unitxt/inference.py",
     "src/unitxt/ui/*",
     "src/unitxt/service/*",
+    "src/unitxt/assistant/*",
     "src/unitxt/test_utils/*",
     "src/unitxt/dataset.py",
     "src/unitxt/metric.py",
