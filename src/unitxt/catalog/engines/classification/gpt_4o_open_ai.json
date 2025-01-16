@@ -1,0 +1,9 @@
+{
+    "__type__": "cross_provider_inference_engine",
+    "model": "gpt-4o",
+    "logprobs": true,
+    "max_tokens": 5,
+    "temperature": 0.0,
+    "top_logprobs": 5,
+    "provider": "open-ai"
+}

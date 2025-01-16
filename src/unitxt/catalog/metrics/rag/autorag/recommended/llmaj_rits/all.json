@@ -1,0 +1,10 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rag.autorag.answer_correctness.llama_3_3_70b_instruct_rits_judge",
+        "metrics.rag.autorag.faithfulness.llama_3_3_70b_instruct_rits_judge",
+        "metrics.rag.autorag.answer_relevance.llama_3_3_70b_instruct_rits_judge",
+        "metrics.rag.autorag.context_relevance.llama_3_3_70b_instruct_rits_judge",
+        "metrics.rag.autorag.context_correctness.mrr"
+    ]
+}

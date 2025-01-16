@@ -1,0 +1,15 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "precision",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction/contexts": "references",
+                "prediction/answer": "prediction"
+            }
+        }
+    ],
+    "metric": "metrics.token_overlap",
+    "score_prefix": "faithfulness_token_k_precision_"
+}

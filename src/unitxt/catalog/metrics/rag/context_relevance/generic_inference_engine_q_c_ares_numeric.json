@@ -7,6 +7,6 @@
     "task": "tasks.rag_eval.context_relevance.binary",
     "format": null,
     "main_score": "context_relevance_q_c_ares_numeric",
-    "prediction_field": null,
+    "prediction_field": "contexts",
     "infer_log_probs": false
 }

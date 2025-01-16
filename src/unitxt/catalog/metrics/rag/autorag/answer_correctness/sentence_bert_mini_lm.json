@@ -1,0 +1,15 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "sbert_score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "ground_truths": "references",
+                "answer": "prediction"
+            }
+        }
+    ],
+    "metric": "metrics.sentence_bert.minilm_l12_v2",
+    "score_prefix": "answer_correctness_sentence_bert_mini_lm_"
+}

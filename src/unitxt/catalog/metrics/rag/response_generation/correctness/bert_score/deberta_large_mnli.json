@@ -17,5 +17,6 @@
         }
     ],
     "metric": "metrics.bert_score.deberta_large_mnli",
-    "prediction_type": "str"
+    "prediction_type": "str",
+    "__deprecated_msg__": "Metric metrics.rag.response_generation.correctness.bert_score.deberta_large_mnli is deprecated. Please use metrics.rag.response_generation.answer_correctness.bert_score_recall instead."
 }

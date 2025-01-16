@@ -53,3 +53,15 @@ outputs = test_metric(
     global_target=global_target,
 )
 add_to_catalog(metric, "metrics.rag.faithfulness.vectara_hhem_2_1", overwrite=True)
+
+
+references = [[p[0]] for p in pairs]
+metric = FaithfulnessHHEM()
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+add_to_catalog(metric, "metrics.vectara_groundedness_hhem_2_1", overwrite=True)
