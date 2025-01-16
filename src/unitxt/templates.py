@@ -696,6 +696,21 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             )
             random_generator.shuffle(choices)
         if self.place_correct_choice_position is not None:
+            fix_pos = self.place_correct_choice_position
+
+            # Option 1: Clamping the position to the valid range
+            # Force the position to be within the valid range [0, len(choices)-1].
+            # If fix_pos is less than 0, it becomes 0.
+            # If fix_pos is greater than len(choices)-1, it becomes len(choices)-1.
+            fix_pos = max(0, min(fix_pos, len(choices) - 1))
+
+            # Option 2: Supporting negative indexes similar to Python lists
+            # If fix_pos is negative, convert it to a valid positive index by adding len(choices).
+            # For example, -1 becomes the last index, -2 becomes the one before last, etc.
+            if fix_pos < 0:
+                fix_pos += len(choices)
+            self.place_correct_choice_position = fix_pos
+            # Remove the original label choice from the list
             if not 0 <= self.place_correct_choice_position < len(choices):
                 raise ValueError(
                     f"fix_correct_choice_position={self.place_correct_choice_position} out of range (0..{len(choices) - 1})."
