@@ -1,0 +1,39 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "consistency",
+    "description": "Is the response consistent with respect to the original text? The response should be consistent with the facts in the original article. Consider whether the response does reproduce all facts accurately and does not make up false information.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "1",
+            "description": "The response is not consistent or makes up false information."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "2",
+            "description": "The response is somewhat consistent or makes up some false information."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "3",
+            "description": "The response is consistent and does not make up false information."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "4",
+            "description": "The response is very consistent and does not make up false information."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "5",
+            "description": "The response is exceptionally consistent and does not make up false information."
+        }
+    ],
+    "option_map": {
+        "1": 0.0,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 1.0
+    }
+}

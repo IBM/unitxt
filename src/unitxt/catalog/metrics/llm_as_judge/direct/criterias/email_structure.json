@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "email_structure",
+    "description": "Does the email response have a clear and logical structure?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The response has a clear, logical structure with well-organized ideas."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The response lacks a clear structure, and ideas are poorly organized."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

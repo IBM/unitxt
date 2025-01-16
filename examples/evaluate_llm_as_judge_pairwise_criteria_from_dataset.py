@@ -2,9 +2,7 @@ from typing import Any, List
 
 from unitxt import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.llm_as_judge_operators import (
-    CreateCriteriaFromString,
-)
+from unitxt.llm_as_judge import CreateCriteriaFromString
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
 

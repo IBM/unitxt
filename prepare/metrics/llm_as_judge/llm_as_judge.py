@@ -71,25 +71,29 @@ for criteria in PAIRWISE_CRITERIAS:
 
 logger.debug("Registering evaluators...")
 for evaluator_metadata in EVALUATORS_METADATA:
-    for provider in evaluator_metadata.providers:
-        for evaluator_type in [
-            EvaluatorTypeEnum.DIRECT,
-            EvaluatorTypeEnum.PAIRWISE,
-        ]:
-            evaluator = get_evaluator(
-                name=evaluator_metadata.name,
-                evaluator_type=evaluator_type,
-                provider=provider,
-            )
+    if evaluator_metadata.name not in [
+        EvaluatorNameEnum.GRANITE_GUARDIAN_2B,
+        EvaluatorNameEnum.GRANITE_GUARDIAN_8B,
+    ]:
+        for provider in evaluator_metadata.providers:
+            for evaluator_type in [
+                EvaluatorTypeEnum.DIRECT,
+                EvaluatorTypeEnum.PAIRWISE,
+            ]:
+                evaluator = get_evaluator(
+                    name=evaluator_metadata.name,
+                    evaluator_type=evaluator_type,
+                    provider=provider,
+                )
 
-            metric_name = (
-                evaluator_metadata.name.value.lower()
-                .replace("-", "_")
-                .replace(".", "_")
-                .replace(" ", "_")
-            )
-            add_to_catalog(
-                evaluator,
-                f"metrics.llm_as_judge.{evaluator_type.value}.{provider.value.lower()}.{metric_name}",
-                overwrite=True,
-            )
+                metric_name = (
+                    evaluator_metadata.name.value.lower()
+                    .replace("-", "_")
+                    .replace(".", "_")
+                    .replace(" ", "_")
+                )
+                add_to_catalog(
+                    evaluator,
+                    f"metrics.llm_as_judge.{evaluator_type.value}.{provider.value.lower()}.{metric_name}",
+                    overwrite=True,
+                )

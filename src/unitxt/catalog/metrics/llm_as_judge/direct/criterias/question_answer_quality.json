@@ -1,0 +1,33 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "question_answer_quality",
+    "description": "Does the response directly answer the question?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Excellent",
+            "description": "The response directly answers the question."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Acceptable",
+            "description": "The response is adequate but could be better."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Could be Improved",
+            "description": "The response relates to the questions but does not directly answer it."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Bad",
+            "description": "The response does not answer the question at all."
+        }
+    ],
+    "option_map": {
+        "Excellent": 1.0,
+        "Acceptable": 0.75,
+        "Could be Improved": 0.5,
+        "Bad": 0.0
+    }
+}

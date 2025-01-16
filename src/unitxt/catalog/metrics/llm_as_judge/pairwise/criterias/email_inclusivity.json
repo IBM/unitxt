@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "email_inclusivity",
+    "description": "The email is inclusive. It uses inclusive language and does not target any particular culture or group."
+}

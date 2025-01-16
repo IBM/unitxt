@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "naturalness",
+    "description": "Is the user response natural?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The user response is natural."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The user response isn't natural."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "summarization_preference",
+    "description": "The summary should be accurate and concise. It covers all the article and accurately summarizes it. Keeps the length of summary reasonable. Has no fake data generated outside of the reference article."
+}

@@ -1,0 +1,39 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "fluency",
+    "description": "Is the response fluent? The response contains sentences that are well-written and grammatically correct. Consider the quality of the individual sentences and measure the extent to which they are fluent.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "1",
+            "description": "The response is not fluent at all."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "2",
+            "description": "The response is somewhat fluent."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "3",
+            "description": "The response is fluent."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "4",
+            "description": "The response is very fluent, grammatically correct and well-written."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "5",
+            "description": "The response is exceptionally fluent, grammatically correct, and well-written."
+        }
+    ],
+    "option_map": {
+        "1": 0.0,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 1.0
+    }
+}

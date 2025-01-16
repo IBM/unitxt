@@ -14,10 +14,10 @@ from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template
 from .llm_as_judge_constants import (
     DIRECT_CRITERIAS,
     EVALUATOR_TO_MODEL_ID,
+    EVALUATORS_METADATA,
     INFERENCE_ENGINE_NAME_TO_CLASS,
     MODEL_RENAMINGS,
     PAIRWISE_CRITERIAS,
-    PROVIDER_TO_STRATEGY,
     Criteria,
     CriteriaOption,
     CriteriaWithOptions,
@@ -26,7 +26,6 @@ from .llm_as_judge_constants import (
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
-    # OptionSelectionStrategyEnum,
     PairwiseCriteriaCatalogEnum,
 )
 from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMasJudge
@@ -77,67 +76,10 @@ class LLMJudge(BulkInstanceMetric):
                 context_field: context_field for context_field in self.context_fields
             }
 
-        # if not isinstance(self.option_selection_strategy, OptionSelectionStrategyEnum):
-        #     self.option_selection_strategy = OptionSelectionStrategyEnum[
-        #         self.option_selection_strategy
-        #     ]
         if self.evaluator_name is None:
             self.evaluator_name = self.inference_engine.get_engine_id()
         elif not isinstance(self.evaluator_name, EvaluatorNameEnum):
             self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
-
-        self.assessment_template = direct_template_dict["assessment"]
-        self.summarization_template = direct_template_dict["summarization"]
-        self.option_selection_template = direct_template_dict["answer"]
-
-        self.assessment_task = Task(
-            input_fields={
-                "context_variables": str,
-                "response": str,
-                "criteria_description": str,
-                "display_options_instruction": str,
-            },
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-        self.summarization_task = Task(
-            input_fields={"assessment": str},
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-        self.option_selection_task = Task(
-            input_fields={
-                "context_variables": str,
-                "response": str,
-                "display_options_instruction": str,
-                "assessment": str,
-                "criteria_description": str,
-                "score_option_instruction": str,
-                "options": list,
-            },
-            reference_fields={},
-            prediction_type=str,
-            metrics=[],
-        )
-
-    # def verify(self):
-    #     super().verify()
-    #     if (
-    #         self.option_selection_strategy
-    #         == OptionSelectionStrategyEnum.PARSE_OPTION_LOGPROB
-    #         and not isinstance(
-    #             self.inference_engine, OptionSelectingByLogProbsInferenceEngine
-    #         )
-    #     ):
-    #         raise ValueError(
-    #             "The option selection strategy was set to 'PARSE_OPTION_LOGPROB' "
-    #             f"which requires the inference engine '{self.inference_engine.get_pretty_print_name()}' "
-    #             "to inherit from OptionSelectingByLogProbsInferenceEngine "
-    #         )
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
@@ -201,11 +143,34 @@ class LLMJudge(BulkInstanceMetric):
             if not (isinstance(v, dict) and len(v) == 0)
         }
 
+    def get_criterias(self, task_data, eval_count):
+        if self.criteria is None:
+            if self.criteria_field not in task_data[0]:
+                raise UnitxtError(
+                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
+                )
+            self.logger.info(
+                f"Reading criteria from the task_data field '{self.criteria_field}'"
+            )
+            criterias = [
+                fetch_artifact(task_data_instance[self.criteria_field])[0]
+                for task_data_instance in task_data
+            ]
+        else:
+            self.logger.info(
+                "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
+            )
+            criterias: List[Criteria] = [self.criteria] * eval_count
+        unique_criteria_names = list({criteria.name for criteria in criterias})
+
+        self.logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
+        return criterias
+
 
 class LLMJudgeDirect(LLMJudge):
     criteria: CriteriaWithOptions = None
-    reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "llm_as_judge"
+    reduction_map = {"mean": ["llm_as_judge"]}
 
     def prepare(self):
         super().prepare()
@@ -243,6 +208,16 @@ class LLMJudgeDirect(LLMJudge):
             metrics=[],
         )
 
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        if self.criteria is not None and not isinstance(
+            self.criteria, CriteriaWithOptions
+        ):
+            raise Exception(
+                f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
+            )
+        return
+
     def get_parsed_criteria(self, criteria: CriteriaWithOptions):
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
@@ -264,25 +239,11 @@ class LLMJudgeDirect(LLMJudge):
             score_option_instruction,
         )
 
-    def get_criterias(self, task_data, eval_count):
-        if self.criteria is None:
-            self.logger.info("Reading criteria from the task_data")
-            criterias = [
-                fetch_artifact(task_data_instance["criteria"])[0]
-                for task_data_instance in task_data
-            ]
-        else:
-            self.logger.info(
-                "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
-            )
-            if not isinstance(self.criteria, CriteriaWithOptions):
-                raise Exception(
-                    f"The type of the criteria must be 'CriteriaWithOptions', instead it is of type '{type(self.criteria)}'"
-                )
-            criterias: List[CriteriaWithOptions] = [self.criteria] * eval_count
-        unique_criterias = list({criteria.name for criteria in criterias})
-        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
-        return criterias
+    def set_main_score(self, criterias: List[CriteriaWithOptions]):
+        unique_criteria_names = list({criteria.name for criteria in criterias})
+        if len(unique_criteria_names) == 1 and criterias[0].name != "":
+            self.main_score = "_".join(criterias[0].name.lower().split(" "))
+            self.reduction_map = {"mean": [self.main_score]}
 
     def get_results(
         self,
@@ -308,10 +269,12 @@ class LLMJudgeDirect(LLMJudge):
             for criteria, selection in zip(criterias, selections)
         ]
 
-        return [
+        results = [
             {
-                "score": scores[i],
-                "llm_as_a_judge_score": scores[i],
+                self.main_score: scores[i],
+                f"using_{self.evaluator_name.lower()}_{self.inference_engine.label}": scores[
+                    i
+                ],
                 "positional_bias": positional_bias[i]
                 if self.check_positional_bias
                 else None,
@@ -355,6 +318,14 @@ class LLMJudgeDirect(LLMJudge):
             }
             for i in range(evaluations_count)
         ]
+        # add main_score to each result
+        return [
+            {
+                f"{self.main_score}_{k}" if k != self.main_score else self.main_score: v
+                for k, v in r.items()
+            }
+            for r in results
+        ]
 
     def compute(
         self,
@@ -368,6 +339,7 @@ class LLMJudgeDirect(LLMJudge):
         evaluations_count = len(predictions)
         # TODO: find out how to serialize and deserialize enums
         criterias = self.get_criterias(task_data, evaluations_count)
+        self.set_main_score(criterias)
         contexts = self.get_contexts(task_data)
         if self.check_positional_bias:
             criterias += [
@@ -487,7 +459,7 @@ class LLMJudgeDirect(LLMJudge):
 
 class LLMJudgePairwise(LLMJudge):
     reduction_map = {"mean": ["score"]}
-    main_score = "score"
+    main_score = "1_winrate"
     prediction_type = List[str]
 
     def prepare(self):
@@ -528,33 +500,13 @@ class LLMJudgePairwise(LLMJudge):
             metrics=[],
         )
 
-    def get_criterias(self, task_data, eval_count):
-        if self.criteria is None:
-            if self.criteria_field not in task_data[0]:
-                raise UnitxtError(
-                    f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
-                )
-            self.logger.info(
-                f"Reading criteria from the task_data field f{self.criteria_field}"
+    def before_process_multi_stream(self):
+        super().before_process_multi_stream()
+        if self.criteria is not None and not isinstance(self.criteria, Criteria):
+            raise Exception(
+                f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
             )
-            criterias = [
-                fetch_artifact(task_data_instance[self.criteria_field])[0]
-                for task_data_instance in task_data
-            ]
-        else:
-            self.logger.info(
-                "Reading criteria from self. Criteria is a single Criteria, replicating it for all predictions"
-            )
-            if not isinstance(self.criteria, Criteria):
-                raise UnitxtError(
-                    f"The type of the criteria must be 'Criteria', instead it is of type '{type(self.criteria)}'"
-                )
-
-            criterias: List[Criteria] = [self.criteria] * eval_count
-
-        unique_criterias = list({criteria.name for criteria in criterias})
-        self.logger.info(f"Criteria names are '{', '.join(unique_criterias)}'")
-        return criterias
+        return
 
     def get_instance_results(
         self,
@@ -709,14 +661,14 @@ class LLMJudgePairwise(LLMJudge):
             contest_results = per_response_results[key]["contest_results"]
             winrate = sum(contest_results) / len(contest_results)
             per_response_results[key]["winrate"] = winrate
-            per_response_results[key]["llm_as_a_judge_score"] = winrate
+            per_response_results[key]["llm_as_judge"] = winrate
         # calculate ranking
         ranking = rank_indexes(
             [result["winrate"] for result in per_response_results.values()]
         )
 
         for response_name, r_i in zip(response_names, ranking):
-            per_response_results[response_name]["ranking"] = ranking[r_i] + 1
+            per_response_results[response_name]["ranking"] = r_i + 1
 
         for response_name in response_names:
             # add response name
@@ -728,17 +680,12 @@ class LLMJudgePairwise(LLMJudge):
             for metric in single_result.keys():
                 all_results[f"{response_name}_{metric}"] = single_result[metric]
 
-        winrates = [r["winrate"] for r in per_response_results.values()]
-        all_results["score"] = max(range(len(winrates)), key=winrates.__getitem__)
         all_results["criteria"] = criteria.to_json()
         return self.clean_results(all_results)
 
     def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], List[str]]):
         if isinstance(prediction, list):
             return {f"{key + 1}": value for key, value in enumerate(prediction)}
-
-        if isinstance(prediction, dict):
-            return prediction
 
         raise Exception(
             f"Prediction may be a list or a dict. Instead got type {type(prediction)}"
@@ -752,7 +699,7 @@ class LLMJudgePairwise(LLMJudge):
     def compute(
         self,
         references: List[List[str]],
-        predictions: Union[List[Dict[str, str]], List[str]],
+        predictions: List[str],
         task_data: List[Dict[str, str]],
     ) -> dict:
         self.logger.info(
@@ -760,11 +707,9 @@ class LLMJudgePairwise(LLMJudge):
         )
         predictions = self.convert_predictions_to_dicts(predictions)
         instances_count = len(predictions)
+        self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
             [f"{key}_winrate" for key in predictions[0].keys()]
-        )
-        self.reduction_map["mean"].extend(
-            [f"{key}_ranking" for key in predictions[0].keys()]
         )
 
         predictions_count_list = [len(prediction) for prediction in predictions]
@@ -971,4 +916,5 @@ class LLMJudgePairwise(LLMJudge):
             )
             results.append(instance_results)
             slice_start = slice_end
+
         return results
