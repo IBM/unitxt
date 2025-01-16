@@ -25,17 +25,23 @@ class BaseFusion(SourceOperator):
     def fusion_generator(self, split) -> Generator:
         pass
 
-    def prepare(self):
+    def prepare_subsets(self):
         assert isoftype(self.subsets, Dict[str, SourceOperator]) or isoftype(
             self.subsets, List[SourceOperator]
         )
-        self.named_subsets = (
-            {i: self.subsets[i]() for i in range(len(self.subsets))}
-            if isinstance(self.subsets, list)
-            else {name: origin() for name, origin in self.subsets.items()}
-        )
+        self.named_subsets = {}
+        if isinstance(self.subsets, list):
+            for i in range(len(self.subsets)):
+                self.named_subsets[i] = self.subsets[i]()
+        else:
+            for name, origin in self.subsets.items():
+                try:
+                    self.named_subsets[name] = origin()
+                except Exception as e:
+                    raise RuntimeError(f"Exception in subset: {name}") from e
 
     def splits(self) -> List[str]:
+        self.prepare_subsets()
         splits = []
         for _, origin in self.named_subsets.items():
             for s in origin.keys():
@@ -158,3 +164,5 @@ class WeightedFusion(BaseFusion):
 
             except StopIteration:
                 iterators.pop(origin_name)
+            except Exception as e:
+                raise RuntimeError(f"Exception in subset: {origin_name}") from e

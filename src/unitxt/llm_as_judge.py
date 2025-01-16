@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from .api import infer
 from .artifact import fetch_artifact
+from .dict_utils import dict_get
 from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
@@ -58,7 +59,7 @@ class LLMJudge(BulkInstanceMetric):
     # )
     evaluator_name: EvaluatorNameEnum = None
     check_positional_bias: bool = True
-    context_fields: str = ["context"]
+    context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
     generate_summaries: bool = True
     format = "formats.chat_api"
     include_prompts_in_result: bool = False
@@ -70,6 +71,10 @@ class LLMJudge(BulkInstanceMetric):
         super().prepare()
         if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
+        if isinstance(self.context_fields, List):
+            self.context_fields = {
+                context_field: context_field for context_field in self.context_fields
+            }
 
         if self.evaluator_name is None:
             self.evaluator_name = self.inference_engine.get_engine_id()
@@ -91,8 +96,8 @@ class LLMJudge(BulkInstanceMetric):
         return [
             get_parsed_context(
                 {
-                    context_field: td[context_field]
-                    for context_field in self.context_fields
+                    context_field_name: dict_get(td, context_field)
+                    for context_field_name, context_field in self.context_fields.items()
                 }
             )
             for td in task_data
