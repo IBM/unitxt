@@ -4,7 +4,7 @@ from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_metric
 
 task_names = ["autorag", "response_generation", "end_to_end"]
-base = "metrics.rag_by_task"
+base = "metrics.rag"
 default = "token_recall"
 dimension = "answer_correctness"
 
@@ -137,7 +137,7 @@ for task in task_names:
             overwrite=True,
         )
 
-        if new_catalog_name == default:
+        if new_catalog_name == default and task == "autorag":
             metric = MetricPipeline(
                 main_score=main_score,
                 preprocess_steps=preprocess_steps.copy(),
@@ -253,11 +253,11 @@ def test_answer_correctness_token_recall(task_data):
     }
 
     for catalog_name, global_target, instance_targets in [
-        (
-            f"{base}.{task}.{dimension}",
-            recall_global_target,
-            recall_instance_targets,
-        ),
+        # (
+        #     f"{base}.{task}.{dimension}",
+        #     recall_global_target,
+        #     recall_instance_targets,
+        # ),
         (
             f"{base}.{task}.{dimension}.token_recall",
             recall_global_target,

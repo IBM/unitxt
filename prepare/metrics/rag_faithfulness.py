@@ -5,7 +5,7 @@ from unitxt.metrics import (
 from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_metric
 
-base = "metrics.rag_by_task"
+base = "metrics.rag"
 default = "token_k_precision"
 dimension = "faithfulness"
 task_names = ["autorag", "response_generation", "end_to_end"]
@@ -105,7 +105,7 @@ for task in task_names:
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
         )
 
-        if new_catalog_name == default:
+        if new_catalog_name == default and task == "autorag":
             metric = MetricPipeline(
                 main_score=main_score,
                 preprocess_steps=get_preprocess_steps(task),
@@ -276,11 +276,11 @@ def test_faithfulness_token_k_precision(task):
     }
 
     for catalog_name, global_target, instance_targets in [
-        (
-            f"{base}.{task}.{dimension}",
-            precision_global_target,
-            precision_instance_targets,
-        ),
+        # (
+        #     f"{base}.{task}.{dimension}",
+        #     precision_global_target,
+        #     precision_instance_targets,
+        # ),
         (
             f"{base}.{task}.{dimension}.{default}",
             precision_global_target,

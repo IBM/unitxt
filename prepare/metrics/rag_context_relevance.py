@@ -4,7 +4,7 @@ from unitxt.metrics import (
 )
 from unitxt.operators import Copy
 
-base = "metrics.rag_by_task"
+base = "metrics.rag"
 tasks = ["autorag", "end_to_end"]
 default = "perplexity_flan_t5_small"
 dimension = "context_relevance"
@@ -45,7 +45,7 @@ for task in tasks:
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
         )
 
-        if new_catalog_name == default:
+        if new_catalog_name == default and task == "autorag":
             metric = MetricPipeline(
                 main_score=main_score,
                 preprocess_steps=get_preprocess_steps(task).copy(),

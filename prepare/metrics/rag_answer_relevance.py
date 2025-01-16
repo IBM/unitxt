@@ -5,7 +5,7 @@ from unitxt.metrics import (
 from unitxt.operators import Copy, ListFieldValues
 
 task_names = ["autorag", "response_generation", "end_to_end"]
-base = "metrics.rag_by_task"
+base = "metrics.rag"
 
 
 def get_preprocess_steps(task):
@@ -52,12 +52,8 @@ for task in task_names:
         metric="metrics.reward.deberta_v3_large_v2",
         score_prefix="answer_relevance_",
     )
-    add_to_catalog(answer_reward, f"{base}.{task}.answer_relevance", overwrite=True)
-    add_to_catalog(
-        answer_reward,
-        f"{base}.{task}.answer_relevance.answer_reward",
-        overwrite=True,
-    )
+    if task == "autorag":
+        add_to_catalog(answer_reward, f"{base}.{task}.answer_reward", overwrite=True)
 
     answer_token_overlap = MetricPipeline(
         main_score="recall",

@@ -119,7 +119,7 @@ for metric_type, template_name in metric_type_to_template_v2.items():
             )
 
             new_catalog_name = (
-                f"metrics.rag_by_task.{rag_unitxt_task}.{metric_type}.{inf_label}_judge"
+                f"metrics.rag.{rag_unitxt_task}.{metric_type}.{inf_label}_judge"
             )
             metric = TaskBasedLLMasJudge(
                 inference_model=inference_model,

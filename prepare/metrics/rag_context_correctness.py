@@ -5,7 +5,7 @@ from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_metric
 
 default = "mrr"
-base = "metrics.rag_by_task"
+base = "metrics.rag"
 tasks = ["autorag", "end_to_end"]
 dimension = "context_correctness"
 
@@ -85,7 +85,7 @@ for new_catalog_name, base_catalog_name, main_score in [
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
         )
 
-        if new_catalog_name == default:
+        if new_catalog_name == default and task == "autorag":
             add_to_catalog(metric, f"{base}.{task}.{dimension}", overwrite=True)
 
 
@@ -230,12 +230,12 @@ def test_context_correctness():
             mrr_instance_targets,
             "mrr",
         ),
-        (
-            f"{base}.{task}.{dimension}",
-            mrr_global_target,
-            mrr_instance_targets,
-            "mrr",
-        ),
+        # (
+        #     f"{base}.{task}.{dimension}",
+        #     mrr_global_target,
+        #     mrr_instance_targets,
+        #     "mrr",
+        # ),
         (
             f"{base}.{task}.{dimension}.retrieval_at_k",
             retrieval_at_k_global_target,

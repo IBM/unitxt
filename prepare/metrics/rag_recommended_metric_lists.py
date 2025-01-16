@@ -56,7 +56,7 @@ def get_recommended_metrics(resources_string, rag_unitxt_task):
         )
     )
     return [
-        f"metrics.rag_by_task.{rag_unitxt_task}.{k}.{v}"
+        f"metrics.rag.{rag_unitxt_task}.{k}.{v}"
         for k, v in recommended_metrics_types_to_names.items()
     ]
 
@@ -69,7 +69,7 @@ def register_recommended_metric_lists():
             )
             add_to_catalog(
                 metrics,
-                f"metrics.rag_by_task.{rag_unitxt_task}.recommended.{resource_str}.all",
+                f"metrics.rag.{rag_unitxt_task}.recommended.{resource_str}.all",
                 overwrite=True,
             )
 
