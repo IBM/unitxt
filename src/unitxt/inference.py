@@ -2855,7 +2855,9 @@ class LiteLLMInferenceEngine(
         """Main inference entry point."""
         loop = asyncio.get_event_loop()
         responses = loop.run_until_complete(self._infer_async(dataset))
+        return self.get_return_object(return_meta_data, responses)
 
+    def get_return_object(self, responses, return_meta_data):
         if return_meta_data:
             return responses
 
@@ -3015,6 +3017,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "rits": {"model": "model_name"},
     }
 
+    def get_return_object(self, **kwargs):
+        return self.engine.get_return_object(kwargs)
+
     def get_provider_name(self):
         return self.provider if self.provider is not None else settings.default_provider
 
@@ -3128,6 +3133,12 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if return_meta_data and not hasattr(self.engine, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+            )
+
         inputs = []
 
         for instance in dataset:
