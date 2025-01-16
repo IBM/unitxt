@@ -2266,13 +2266,15 @@ class FilterEntityTypes(InstanceOperator):
     def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         
+        if set(self.entities_types_to_keep) == set(instance['labels']):
+            return instance
+        
         data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in set(self.entities_types_to_keep)]
         
-        return {
-            key:(
-                [value[i] for i in data_to_keep_indices] if key in self.fields_to_filter else value
-                ) 
+        return dict(
+            (
+                key, value[data_to_keep_indices] 
+                if key in self.fields_to_filter
+                else value)
             for key,value in instance.items()
-            }
-
-
+            )
