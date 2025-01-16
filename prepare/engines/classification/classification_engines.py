@@ -1,5 +1,6 @@
 from unitxt import add_to_catalog
 from unitxt.inference import (
+    AzureOpenAIInferenceEngine,
     CrossProviderInferenceEngine,
     WMLInferenceEngineGeneration,
 )
@@ -7,8 +8,10 @@ from unitxt.inference import (
 model_names_to_provider = {
     "llama-3-3-70b-instruct": ["watsonx", "rits"],
     "llama-3-1-70b-instruct": ["watsonx", "rits"],
-    "gpt-4o": ["open-ai", "azure"],
-    "gpt-4-turbo": ["open-ai", "azure"],
+    "gpt-4o": ["open-ai"],
+    "gpt-4-turbo": ["open-ai"],
+    "gpt-4-turbo-2024-04-09": ["azure"],
+    "gpt-4o-2024-08-06": ["azure"],
     "mistralai/mixtral-8x7b-instruct-v01": ["ibm_wml"],
     "meta-llama/llama-3-3-70b-instruct": ["ibm_wml"],
     "meta-llama/llama-3-1-70b-instruct": ["ibm_wml"],
@@ -24,6 +27,15 @@ def get_inference_engine(model_name, provider):
             max_new_tokens=5,
             random_seed=42,
             decoding_method="greedy",
+        )
+
+    if provider == "azure":
+        return AzureOpenAIInferenceEngine(
+            model_name=model_name,
+            logprobs=True,
+            max_tokens=5,
+            temperature=0.0,
+            top_logprobs=5,
         )
 
     return CrossProviderInferenceEngine(
