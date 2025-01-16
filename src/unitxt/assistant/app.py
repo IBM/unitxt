@@ -1,6 +1,8 @@
+import datetime
 import glob
 import json
 import os
+import uuid  # to generate a unique session ID
 from functools import lru_cache
 
 import litellm
@@ -53,12 +55,46 @@ def get_context():
     context_file_path = os.path.join(os.path.dirname(__file__), "context.txt")
     if not os.path.exists(context_file_path):
         context = make_context()
-        with open(context_file_path, "w") as f:
+        with open(context_file_path, "w", encoding="utf-8") as f:
             f.write(context)
     else:
-        with open(context_file_path) as f:
+        with open(context_file_path, encoding="utf-8") as f:
             context = f.read()
     return context
+
+
+def save_messages_to_disk(
+    messages, session_id, model, max_tokens, output_dir="history"
+):
+    data = {
+        "messages": messages,
+        "session_id": session_id,
+        "timestamp": str(datetime.datetime.now()),
+        "config": {
+            "model": model,
+            "max_tokens": max_tokens,
+        },
+    }
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    file_path = os.path.join(output_dir, f"{session_id}.json")
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+
+def save_feedback_to_disk(feedback, session_id, output_dir="feedback"):
+    data = {
+        "feedback": feedback,
+        "session_id": session_id,
+        "timestamp": str(datetime.datetime.now()),
+    }
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    file_path = os.path.join(output_dir, f"{session_id}.json")
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
 
 
 context = get_context()
@@ -67,6 +103,8 @@ st.set_page_config(
     page_title="Unitxt Assistant", page_icon="🦄", initial_sidebar_state="collapsed"
 )
 
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "pending_user_content" not in st.session_state:
@@ -77,8 +115,11 @@ def generate_response(messages, model, max_tokens=500):
     messages = [
         {
             "role": "system",
-            "content": "Your job is to assist users with Unitxt Library and Catalog. Refuse to do anything else.\n\n # Answer only based on the following Information:\n\n"
-            + context,
+            "content": (
+                "Your job is to assist users with Unitxt Library and Catalog. "
+                "Refuse to do anything else.\n\n"
+                "# Answer only based on the following Information:\n\n" + context
+            ),
         },
         *messages,
     ]
@@ -98,6 +139,26 @@ with st.sidebar:
     max_tokens = st.number_input(
         "Max Tokens", min_value=1, max_value=10000, value=500, step=50, format="%d"
     )
+
+    with st.popover("What do you think?"):
+        st.markdown("We value your feedback!")
+        with st.form("feedback_form"):
+            feedback = st.text_area(
+                "Your Feedback", placeholder="Write your feedback here..."
+            )
+
+            submitted = st.form_submit_button("Submit Feedback")
+
+            if submitted:
+                if feedback.strip() == "":
+                    st.error("Feedback cannot be empty. Please provide your feedback.")
+                else:
+                    save_feedback_to_disk(
+                        feedback=feedback,
+                        session_id=st.session_state.session_id,
+                        output_dir="feedback",
+                    )
+                    st.success("Thank you for your feedback!")
 
 chat_container = st.container()
 user_content = st.chat_input("Ask anything about Unitxt...")
@@ -163,6 +224,14 @@ if st.session_state.pending_user_content is not None:
 
     response = placeholder.write_stream(stream)
     st.session_state.messages.append({"role": "assistant", "content": response})
+
+    save_messages_to_disk(
+        st.session_state.messages,
+        session_id=st.session_state.session_id,
+        model=model,
+        max_tokens=max_tokens,
+        output_dir="history",
+    )
 
     st.session_state.pending_user_content = None
 

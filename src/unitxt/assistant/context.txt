@@ -1,165 +1,11 @@
 
-# Tutorials: 
+# Tutorials:
 # docs/index.rst
 .. Unitxt documentation master file, created by
    sphinx-quickstart on Mon Jul 10 03:44:36 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
-.. raw:: html
 
-   <html>
-   <head>
-      <style>
-         .rounded-image {
-               width: 100%;
-               height: auto;
-               border-top-left-radius: 0.5em;
-               border-top-right-radius: 0.5em;
-               border-bottom-right-radius: 0.5em;
-               border-bottom-left-radius: 0.5em;
-         }
-      </style>
-   </head>
-   <body>
-      <img src="_static/banner.png" alt="Descriptive Image Text" class="rounded-image">
-   </body>
-   </html>
-   <html>
-   <head>
-      <style>
-         body {
-               font-family: Arial, sans-serif;
-         }
-         .custom-button {
-               display: inline-block;
-               padding: 0.75em 1em;
-               margin: 0.1em;
-               border-radius: 0.3em;
-               background-color: #fce2ff;
-               color: #141216;
-               text-align: center;
-               text-decoration: none;
-               font-weight: bold;
-               box-sizing: border-box;
-               text-transform: uppercase;
-               transition: background-color 0.3s;
-         }
-
-         .custom-button:hover {
-               background-color: #d1b3d1; /
-         }
-      </style>
-   </head>
-   <body>
-      <a href="https://www.unitxt.ai/en/latest/" class="custom-button">Video</a>
-      <a href="https://www.unitxt.ai/en/latest/docs/demo.html" class="custom-button">Demo</a>
-      <a href="https://www.unitxt.ai/en/latest/docs/adding_dataset.html" class="custom-button">Tutorial</a>
-      <a href="https://www.unitxt.ai/en/latest/docs/examples.html" class="custom-button">Examples</a>
-      <a href="https://arxiv.org/abs/2401.14019" class="custom-button">Paper</a>
-      <a href="https://www.unitxt.ai/en/latest/catalog/catalog.__dir__.html" class="custom-button">Catalog</a>
-      <a href="https://github.com/IBM/unitxt/blob/main/CONTRIBUTING.md" class="custom-button">Contributing</a>
-      <a href="https://pypi.org/project/unitxt/" class="custom-button">PyPi</a>
-      <a href="https://www.unitxt.ai/en/latest/search.html" class="custom-button">Search</a>
-      <a href="https://www.unitxt.ai/en/latest/modules.html" class="custom-button">Code Documentation</a>
-      <br>
-   </body>
-   </html>
-
-.. raw:: html
-
-   <br>
-   <video autoplay muted src="_static/video.mov" width="100%" id="controlled-video">
-   </video>
-
-
-.. raw:: html
-
-   <div>
-      <br><br><br><br><br><br><br>
-   </div>
-   <div class="feed-box-container">
-   <div class="feed-box" background-color=rgb(229, 216, 255)>
-      <div class="feed-box-text">
-         <h1> Loading datasets is easier than ever! </h1>
-      </div>
-      <div class="feed-code-box" text-align="left">
-         <div class="code-window">
-            <div class="code-window-buttons">
-               <span class="code-window-button close-button"></span>
-               <span class="code-window-button minimize-button"></span>
-               <span class="code-window-button expand-button"></span>
-            </div>
-            <div class="code-snippet" data-code="withInstallation" style="display: block;">
-               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> load_dataset</span>
-               <br>
-               <br>
-               <br>
-               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
-            </div>
-            <div class="code-snippet" data-code="noInstallation" style="display: none;">
-               <span><span style="color: #f321e2;">from</span> datasets <span style="color: #f321e2;">import</span> load_dataset</span>
-               <br>
-               <br>
-               <br>
-               <span>dataset <span style="color: #868bff;">=</span> load_dataset<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/data"</span>, <span style="color: #fdbf02;">"card=cards.sst2"</span><span style="color: #f321e2;">)</span></span>
-            </div>
-         </div>
-          <div style="text-align: center;">
-            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
-            <label class="switch">
-               <input type="checkbox">
-               <span class="slider round"></span>
-            </label>
-         </div>
-      </div>
-   </div>
-   </div>
-
-   <div>
-         <br><br><br><br><br><br><br>
-         <h1> Thousands of datasets, templates, prompts and metrics in one place </h1>
-         <br><br><br><br><br><br>
-         <br><br><br><br><br><br><br>
-   </div>
-
-   <div class="feed-box-container">
-   <div class="feed-box" background-color=rgb(229, 216, 255)>
-      <div class="feed-box-text">
-         <h1>Full evaluation in one line of code</h1>
-      </div>
-      <div class="feed-code-box"  data-box="1" text-align="left">
-         <div class="code-window">
-            <div class="code-window-buttons">
-               <span class="code-window-button close-button"></span>
-               <span class="code-window-button minimize-button"></span>
-               <span class="code-window-button expand-button"></span>
-            </div>
-            <div class="code-snippet" data-code="withInstallation" style="display: block;">
-               <span><span style="color: #f321e2;">from</span> unitxt <span style="color: #f321e2;">import</span> evaluate</span>
-               <br>
-               <br>
-               <br>
-               <span>results <span style="color: #868bff;">=</span>  evaluate<span style="color: #f321e2;">(</span>predictions_list, dataset)</span>
-            </div>
-            <div class="code-snippet" data-code="noInstallation" style="display: none;">
-               <span><span style="color: #f321e2;">from</span> evaluate <span style="color: #f321e2;">import</span> load</span>
-               <br>
-               <br>
-               <br>
-               <span>results <span style="color: #868bff;">=</span> load<span style="color: #f321e2;">(</span><span style="color: #fdbf02;">"unitxt/metric"</span><span style="color: #f321e2;">)</span>.compute<span style="color: #f321e2;">(</span>predictions_list, dataset<span style="color: #f321e2;">)</span></span>
-            </div>
-         </div>
-         <br>
-         <div style="text-align: center;">
-            <h3 style="display: inline-block; vertical-align: middle; padding: 5px;">No installation mode:</h3>
-            <label class="switch">
-               <input type="checkbox">
-               <span class="slider round"></span>
-            </label>
-         </div>
-      </div>
-   </div>
-   </div>
 
 --------
 Welcome!
@@ -367,12 +213,12 @@ We can define a template for this task like this:
     ),
 
 
-The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above), 
-while the ``input_format`` defines the part of prompt that repeats for 
+The ``instruction`` attribute defines that part of the prompt that appears once (marked green in the second figure above),
+while the ``input_format`` defines the part of prompt that repeats for
 each in-context learning demonstration and for the final instance (marked red in the second figure above).
 
-The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).   
-The InputOutputTemplate assumes there is at most only a single reference (gold answer). 
+The ``output_format`` defines how the reference answer is verbalized as string (marked in purple in the first figure above).
+The InputOutputTemplate assumes there is at most only a single reference (gold answer).
 If you pass a field value which is a list to the InputOutputTemplate, then it is verbalized as comma separated string. For example, ["happy","angry"]
 becomes the string reference "happy,angry", and it is expected that the model will return that string as the correct answer.
 
@@ -385,9 +231,9 @@ Post Processors
 ---------------
 
 The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <adding_metric>`.
-Typically, the post processors applied both to the model prediction and to the references. 
+Typically, the post processors applied both to the model prediction and to the references.
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
-so the metric computation will ignore case. 
+so the metric computation will ignore case.
 
 .. code-block:: python
 
@@ -402,12 +248,12 @@ so the metric computation will ignore case.
             ]
     )
 
-The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats. 
-For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
+The reason the post processors are set in the template, is because different templates prompt the model to generate answers in different formats.
+For example, one template may prompt the model to answer ``Yes`` or ``No`` while another
 template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
 
 Post processors implemented as operators.  Usually they are implemented as fields operators that are applied to the ``prediction``
-and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa. 
+and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa.
 Here we see how we can lowercase only the model prediction.
 
 .. code-block:: python
@@ -425,8 +271,8 @@ Here we see how we can lowercase only the model prediction.
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
         target_prefix="Translation: ",
         output_format='{translation}',
-        postprocessors= [ 
-            PostProcess(Lower(),process_references=False)    
+        postprocessors= [
+            PostProcess(Lower(),process_references=False)
         ]
     )
 
@@ -469,7 +315,7 @@ implementing its abstract methods:
            as the 'target' - the reference used if the instance is used as a demonstration."
         pass
 
-    
+
 
 For instance, this template passes all the input fields to the model as a json string.
 It also formats the references by taking two of the dataset reference fields: the 'top_answer' and the 'alternative_answer'.
@@ -623,14 +469,14 @@ Metric Base Classes
 As described in the previous section, a metric generates a set of scores per instance (called ``instance`` scores),
 and a set of scores over all instances (called ``global`` scores).
 
-Unitxt has several base classes, subclasses of class :class:`Metric <unitxt.metric.Metric>`, that simplify the creation 
+Unitxt has several base classes, subclasses of class :class:`Metric <unitxt.metric.Metric>`, that simplify the creation
 of metrics, depending on how the scores are calculated.
 
 :class:`InstanceMetric <unitxt.metrics.InstanceMetric>` - Class for metrics in which the global scores are calculated by aggregating the instance scores.
 Typically, the global score is the average of all instance scores. :class:`InstanceMetric <unitxt.metrics.InstanceMetric>` first evaluates each instance separately,
 and then aggregates the scores of the instances. Some examples of instance metrics are ``Accuracy``, ``TokenOverlap``, ``CharEditDistance``.
 
-:class:`BulkInstanceMetric <unitxt.metrics.BulkInstanceMetric>` - Similar to :class:`InstanceMetric <unitxt.metrics.InstanceMetric>`, it is for metrics 
+:class:`BulkInstanceMetric <unitxt.metrics.BulkInstanceMetric>` - Similar to :class:`InstanceMetric <unitxt.metrics.InstanceMetric>`, it is for metrics
 in which the global score can be calculated by aggregating over the instance scores.  However,
 for the sake of efficient implementation, it's better to run them in bulks (for example, when using LLMs during score calculations).
 A ``BulkInstanceMetric`` calculates the instance scores of a batch of instances each time, but then aggregates over the scores of all the instances.
@@ -1284,7 +1130,7 @@ Explore the existing assets in the Unitxt catalog and generate your prompt.
 
 # docs/docs/rag_support.rst
 .. _rag_support:
- 
+
 =====================================
 RAG Support ✨
 =====================================
@@ -1297,10 +1143,10 @@ Retrieval-Augmented Generation (RAG) pipelines consist of the following steps:
 
 #. The user submits a question.
 #. The question is sent as a query to a retrieval system to obtain relevant texts addressing the question.
-#. A generative model is prompted to answer the user question based on the retrieved content. 
+#. A generative model is prompted to answer the user question based on the retrieved content.
 #. The generated answer is returned to the user.
 
-RAG evaluation covers the performance of both the retrieval system and the generative model. We refer to the output of the retrieval system as ``retrieved texts`` or ``contexts`` (an ordered list of texts with ids) and the output of the generative model as ``generated answer`` (a text string). 
+RAG evaluation covers the performance of both the retrieval system and the generative model. We refer to the output of the retrieval system as ``retrieved texts`` or ``contexts`` (an ordered list of texts with ids) and the output of the generative model as ``generated answer`` (a text string).
 
 
 .. _rag_task:
@@ -1345,13 +1191,13 @@ RAG evaluation is performed using both automatic `reference-based` and `referenc
 
 Context-Relevance
 -----------------
-This is a reference-less metric gauging the relevance of the retrieved texts to answering the user question. The metric range is [0, 1], where higher is better. 
+This is a reference-less metric gauging the relevance of the retrieved texts to answering the user question. The metric range is [0, 1], where higher is better.
 
-* Motivation and Approach 
+* Motivation and Approach
 
-We contend that in a comparative setup, in which two texts compete to serve as context to answer a user's question, the text which is more likely to evoke this question is more relevant to it. 
+We contend that in a comparative setup, in which two texts compete to serve as context to answer a user's question, the text which is more likely to evoke this question is more relevant to it.
 
-Thus, we use a perplexity score, which uses an LLM to act as a Judge to determine the probability a retrieved text will evoke the user's question. When applied to a set of texts, the maximum score is returned as ``Context Relevance``. 
+Thus, we use a perplexity score, which uses an LLM to act as a Judge to determine the probability a retrieved text will evoke the user's question. When applied to a set of texts, the maximum score is returned as ``Context Relevance``.
 
 By computing ``Context Relevance`` over results from different vector stores and retrieval setups, it is possible to conclude which setup provides results that are more relevant to answering the user's question.
 
@@ -1371,19 +1217,19 @@ Context Correctness
 -------------------
 This is a reference-based metric reflecting the rank of the ground-truth text in the retrieved texts. The metric range is [0, 1] where higher is better.
 
-* Motivation and Approach 
-  
+* Motivation and Approach
+
 The metric aims to indicate to what extent the retrieved context aligns with the ground truth context. As a proxy, we use the id associated with each retrieved text and match it against the id(s) of ground-truth text(s). Since the order of the retrieved texts is significant, we assign higher scores to results that rank the ground-truth text(s) higher than other texts.
 
 * Implementation Details
 
-We use the well known `Mean Reciprocal Rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_ (MRR) metric from Information Retrieval. RR is computed by ``1/rank``, where ``rank`` is the 1-based position of the first ground-truth text id found in the retrieval results. If no such text is found, the metric returns ``0``. 
+We use the well known `Mean Reciprocal Rank <https://en.wikipedia.org/wiki/Mean_reciprocal_rank>`_ (MRR) metric from Information Retrieval. RR is computed by ``1/rank``, where ``rank`` is the 1-based position of the first ground-truth text id found in the retrieval results. If no such text is found, the metric returns ``0``.
 
 * Limitations and Future Plans
 
-Currently, the metric only uses the associated ids to match the results against ground truth. We plan to add a metric that assesses context correctness based on content as well, possibly employing LLM as a Judge. 
+Currently, the metric only uses the associated ids to match the results against ground truth. We plan to add a metric that assesses context correctness based on content as well, possibly employing LLM as a Judge.
 
-Another issue with the current metric is that only the top-ranked ground truth is used in the metric score. It does not penalize the retrieval for assigning a low rank to other ground truths. In the future this will be mitigated by supplementing MRR by the `Mean Average Precision <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision>`_ (MAP) metric.  
+Another issue with the current metric is that only the top-ranked ground truth is used in the metric score. It does not penalize the retrieval for assigning a low rank to other ground truths. In the future this will be mitigated by supplementing MRR by the `Mean Average Precision <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Mean_average_precision>`_ (MAP) metric.
 
 ------------------
 
@@ -1395,9 +1241,9 @@ This is a reference-less metric gauging the groundedness of the generated answer
 
 * Motivation and Approach
 
-We based our approach on `Adlakha et. al (2023) <https://arxiv.org/abs/2307.16877>`_ - "Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering", which found that fast and inexpensive lexical analysis can provide a relatively high correlation with human judgement on faithfulness. 
+We based our approach on `Adlakha et. al (2023) <https://arxiv.org/abs/2307.16877>`_ - "Evaluating Correctness and Faithfulness of Instruction-Following Models for Question Answering", which found that fast and inexpensive lexical analysis can provide a relatively high correlation with human judgement on faithfulness.
 
-Table 4 from the paper is provided below, showing that the `K-Precision` lexical approach is close to GPT-4. The main advantage of lexical strategies over the LLM as a Judge strategy is that they are easy to implement, fast to run, and inexpensive to deploy (in other words, they do not require GPUs). 
+Table 4 from the paper is provided below, showing that the `K-Precision` lexical approach is close to GPT-4. The main advantage of lexical strategies over the LLM as a Judge strategy is that they are easy to implement, fast to run, and inexpensive to deploy (in other words, they do not require GPUs).
 
 .. image:: ../../assets/rag/adlaka_table4.png
    :alt: Table 2 of Adlakha et. al (2023)
@@ -1407,13 +1253,13 @@ Table 4 from the paper is provided below, showing that the `K-Precision` lexical
 
 * Implementation Details
 
-The `K-Precision` ("Knowledge Precision") metric that is mentioned in the paper has been part of public open source projects for a long time, and now it is also adopted in the Unitxt package for computing faithfulness scores. 
+The `K-Precision` ("Knowledge Precision") metric that is mentioned in the paper has been part of public open source projects for a long time, and now it is also adopted in the Unitxt package for computing faithfulness scores.
 
 The metric is essentially token precision: we count how many of the generated tokens in the system response are included in the context retrieved from the index.
 
 * Limitations and Future Plans
 
-Lexical strategies look at words in isolation, ignoring word order and context. This is clearly a suboptimal approach that can lead to inaccurate assessments in many cases. We plan to switch to a more robust LLM as a Judge approach once we have models that can offer a better trade-off between speed, cost and quality. 
+Lexical strategies look at words in isolation, ignoring word order and context. This is clearly a suboptimal approach that can lead to inaccurate assessments in many cases. We plan to switch to a more robust LLM as a Judge approach once we have models that can offer a better trade-off between speed, cost and quality.
 
 ------------
 
@@ -1424,26 +1270,26 @@ Answer Reward
 This is a reference-less metric that predicts which generated answer is better judged by a human, given a question. The metric range is [0, 1], where higher is better.
 
 * Motivation and Approach
-  
+
 When it comes to the assessment of answer quality, we typically see an attempt to characterize this abstract property using various more basic and apparently well-defined aspects, such as: factual correctness, naturalness, appropriateness, conciseness, faithfulness, relevance, and clarity, among others. However, due to the convoluted interrelationships between these properties, labeling each one of them in isolation effectively and consistently by humans is a non-trivial task that is hardly practical. It requires an exhaustive and well-defined, but also clear and intuitive, annotation scheme. It also requires long-term training and monitoring of the labelers.
 
-As a counter approach, the holistic view on quality aims to characterize this property using simple, direct questions in a realistic scenario. For example, in the comparative setup, instead of asking human labelers to rate answers by various abstract properties as mentioned above and then somehow mixing all the scores together to conclude which answer is better, it does something else: it directly asks the labelers to indicate which answer is better in the use case in which the answer is to be given (e.g. a chatbot about enterprise HR policies). 
+As a counter approach, the holistic view on quality aims to characterize this property using simple, direct questions in a realistic scenario. For example, in the comparative setup, instead of asking human labelers to rate answers by various abstract properties as mentioned above and then somehow mixing all the scores together to conclude which answer is better, it does something else: it directly asks the labelers to indicate which answer is better in the use case in which the answer is to be given (e.g. a chatbot about enterprise HR policies).
 
 The underlying assumption here is that the labeler implicitly considers all fine-grained properties like naturalness, conciseness, faithfulness, etc. and favors the overall better answer.
 
-For completeness, in a non-comparative setup, the holistic approach could, for example, ask the labeler to indicate if he/she would recommend the answer to a friend who asks the question, appealing, as in the comparative setup, to overall judgement.  
+For completeness, in a non-comparative setup, the holistic approach could, for example, ask the labeler to indicate if he/she would recommend the answer to a friend who asks the question, appealing, as in the comparative setup, to overall judgement.
 
-This is the approach taken by reward models that learn from holistic judgements on quality. In this way we bypass the need to distinguish between non-mutually exclusive properties, or to deal with how to fuse scores of such properties. We leave it to the human labelers to do the breaking and fusing.  
+This is the approach taken by reward models that learn from holistic judgements on quality. In this way we bypass the need to distinguish between non-mutually exclusive properties, or to deal with how to fuse scores of such properties. We leave it to the human labelers to do the breaking and fusing.
 
 * Implementation Details
-  
+
 The implementation utilizes a reward model - `OpenAssistant/reward-model-deberta-v3-large-v2 <https://huggingface.co/OpenAssistant/reward-model-deberta-v3-large-v2>`_ by `OpenAssistant <https://open-assistant.io/bye>`_. The model was trained to predict "which generated answer is better judged by a human, given a question". The training data comes from four datasets: (a) ``webgpt_comparisons``, (b) ``summarize_from_feedback``, (c) ``synthetic-instruct-gptj-pairwise``, and (d) ``anthropic_hh-rlhf``.
 
 Although the model was trained in a comparative setup (one question, multiple answers), it is commonly used as a regression model that scores each question and answer individually.
 
 * Limitations and Future Plans
-  
-The reward model provides a meaningful signal on the quality of answers, but in some cases pinpointing specific qualities such as relevance is desired. In the future, we plan to add metrics that address these qualities. 
+
+The reward model provides a meaningful signal on the quality of answers, but in some cases pinpointing specific qualities such as relevance is desired. In the future, we plan to add metrics that address these qualities.
 
 ------
 
@@ -1455,10 +1301,10 @@ Answer Correctness
 This is a reference-based metric gauging the similarity between the generated answer to a gold answer. The metric range is [0, 1], where higher is better.
 
 * Motivation and Approach
-  
+
 As with [Faithfulness](#Faithfulness), we based our approach on `Adlakha et. al (2023) <https://arxiv.org/abs/2307.16877>`_, who reported a relatively high correlation of lexical strategies with human judgement on answer correctness.
 
-Table 2 from the paper is provided below. The results indicate that the `Recall` lexical approach is close to GPT 3.5 and GPT-4 while being easier to implement, faster to run and inexpensive to deploy. 
+Table 2 from the paper is provided below. The results indicate that the `Recall` lexical approach is close to GPT 3.5 and GPT-4 while being easier to implement, faster to run and inexpensive to deploy.
 
 .. image:: ../../assets/rag/adlaka_table2.png
    :alt: Table 2 of Adlakha et. al (2023)
@@ -1467,13 +1313,13 @@ Table 2 from the paper is provided below. The results indicate that the `Recall`
 
 
 * Implementation Details
-  
-As with `K-Precision`, `Recall` has been part of public open source projects for a while. We included a common implementation in the Unitxt package for computing answer correctness scores. 
 
-The metric is essentially token recall: we count how many of the ground-truth response tokens are included in the generated response. 
+As with `K-Precision`, `Recall` has been part of public open source projects for a while. We included a common implementation in the Unitxt package for computing answer correctness scores.
+
+The metric is essentially token recall: we count how many of the ground-truth response tokens are included in the generated response.
 
 * Limitations and Future Plans
-  
+
 See :ref:`Faithfulness <faithfulness>`.
 
 # docs/docs/types_and_serializers.rst
@@ -1654,7 +1500,7 @@ Each example comes with a self contained python file that you can run and later 
 Basic Usage
 ------------
 
-Evaluate an existing dataset from the Unitxt catalog. 
+Evaluate an existing dataset from the Unitxt catalog.
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 Demonstrates how to evaluate an existing entailment dataset using Unitxt.
@@ -1691,7 +1537,7 @@ These examples demonstrate how to evaluate a datasets of different tasks when pr
 
 `Example code for QA task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_qa_dataset_with_given_predictions.py>`__
 
-`Example code for classification task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_classification_dataset_with_given_predictions.py>`__  
+`Example code for classification task  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_classification_dataset_with_given_predictions.py>`__
 
 Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`
 
@@ -1699,7 +1545,7 @@ Evaluate a Named Entity Recognition (NER) dataset
 ===================================================
 
 This example demonstrates how to evaluate a named entity recognition task.
-The ground truth entities are provided as spans within the provided texts, 
+The ground truth entities are provided as spans within the provided texts,
 and the model is prompted to identify these entities.
 Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
@@ -2160,9 +2006,9 @@ Operators ✨
 Operators are specialized functions designed to process data.
 
 They are used in the TaskCard for preparing data for specific tasks and by Post Processors
-to process the textual output of the model to the expect input of the metrics. 
+to process the textual output of the model to the expect input of the metrics.
 
-There are several types of operators. 
+There are several types of operators.
 
 1. Field Operators - Operators that modify individual fields of the instances in the input streams.  Example of such operators are operators that
 cast field values, uppercase string fields, or translate text between languages.
@@ -2184,7 +2030,7 @@ Built in operators have some benefits:
 3. **Performance**: Built-in Operators are designed to maintain high performance standards, particularly suitable for stream processing.
 4. **Security** : Built-in Operators do not require running of arbitrary user code, and hence can be run in secured environments that prohibit running user code.
 
-It is recommended to use existing operators when possible. 
+It is recommended to use existing operators when possible.
 
 However, if a highly specific or uncommon operation is needed that existing operators do not cover, and it is unlikely to be reused, you can use :class:`ExecuteExpression <unitxt.operators.ExecuteExpression>` or :class:`FilterByExpression <unitxt.operators.FilterByExpression>` operators:
 
@@ -2316,8 +2162,8 @@ MultiStream operators handle operations across multiple data streams concurrentl
                 }
             )
 
-**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream. 
-The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged". 
+**Explanation**: The `MergeAllStreams` class extends `MultiStreamOperator` and provides functionality to merge several streams into a single stream.
+The `merge` method iterates over each provided stream, yielding instances from each one consecutively. The `process` method then utilizes this merging logic to create a new `MultiStream` that consolidates all input streams into a single output stream named "merged".
 This operator is particularly useful in scenarios where data from different sources needs to be combined into a single dataset for analysis or further processing.
 
 Unit Testing Operators
@@ -2484,7 +2330,7 @@ Debugging Unitxt
 Debugging cards
 ----------------
 
-To help test and debug cards, there is a utility function called test_card imported from `unitxt.test_utils.card`. 
+To help test and debug cards, there is a utility function called test_card imported from `unitxt.test_utils.card`.
 
 .. code-block:: python
 
@@ -2504,7 +2350,7 @@ In the rest of this tutorial we will review the output of the `test_card` functi
 of the `universal_ner` card.
 
 .. code-block:: bash
-  
+
   prepare/cards/universal_ner.py
 
 ::
@@ -2512,7 +2358,7 @@ of the `universal_ner` card.
   Loading limited to 30 instances by setting LoadHF.loader_limit;
   ----------
   Showing up to 5 examples from stream 'test':
-  
+
   metrics (list):
       ['metrics.ner']
   data_classification_policy (list):
@@ -2570,7 +2416,7 @@ For example, we can see how the string "Miramar: Location" is parsed by the post
   Processed prediction: (list) []
   Processed references: (list) [[]]
   *****
-  
+
   *****
   Score output:
   {
@@ -2606,10 +2452,10 @@ For example, we can see how the string "Miramar: Location" is parsed by the post
 
 
 Most metrics should return a low score (near 0) on random text and a score of 1 when the data is equal to the references.
-Errors/warnings are printed if that is not the case. 
+Errors/warnings are printed if that is not the case.
 
-If you want to disable these tests, set ``test_exact_match_score_when_predictions_equal_references=False`` and/or 
-``test_full_mismatch_score_with_full_mismatch_prediction_values=False``.   
+If you want to disable these tests, set ``test_exact_match_score_when_predictions_equal_references=False`` and/or
+``test_full_mismatch_score_with_full_mismatch_prediction_values=False``.
 
 You can set the expected scores using the following parameters:
 
@@ -2627,7 +2473,7 @@ arguments to the test_card() function.
   # Test the templates with few shots
   test_card(card,num_demos=1,demo_pool_size=10)
 
-test_card has an optional parameter debug flag. When set to true, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps. 
+test_card has an optional parameter debug flag. When set to true, the card is executed in debug mode, one step at a time. For example, it starts with loading the dataset, then performing the defined preprocessing steps, then performing the template rendering steps.
 After each step it prints the number of instances in each split, and one example from each split.
 
 .. code-block:: python
@@ -2664,8 +2510,8 @@ you can set the UNITXT_DEFAULT_VERBOSITY environment variable or modify the glob
 Sensitive data in unitxt ✨
 =====================================
 
-The section discusses how to properly handle sensitive data in Unitxt in order to avoid accidentally exposing 
-proprietary/confidential/personal data to unauthorized services or 3rd parties. For example, sending sensitive 
+The section discusses how to properly handle sensitive data in Unitxt in order to avoid accidentally exposing
+proprietary/confidential/personal data to unauthorized services or 3rd parties. For example, sending sensitive
 data for inference by an external API in LLM as Judge metric.
 
 The problem is exacerbated since the person who owns the data and uses the metric in their card
@@ -2682,7 +2528,7 @@ When data is loaded from an external data source using a Loader, it can be tagge
 which is a list of string identifiers, such as `public`, `proprietary`, `confidential`, `pii`.
 You can define your own data classification identifiers.
 
-Each component that processes data in Unitxt ( operators, metrics, inference engines, etc.) also has 
+Each component that processes data in Unitxt ( operators, metrics, inference engines, etc.) also has
 a parameter called `data_classification_policy`.  This parameter determines which kinds of data
 it can process.  The parameter is also a list of string identifiers, each of which is a name of allowed data classification.
 
@@ -2692,7 +2538,7 @@ For example, an LLM as judge that calls an external api may set `data_classifica
 If data marked [`confidential`] is passed to the metric, it will not process the data and fail.
 
 If the data has multiple values under `data_classification_policy` then the component must be allowed to handle all of them.
-If the `data_classification_policy` is not set, the component can handle all data.  
+If the `data_classification_policy` is not set, the component can handle all data.
 
 It is possible to override the `data_classification_policy` of a component with an environment variable.  See below.
 
@@ -2702,7 +2548,7 @@ Adding `data_classification_policy` for data
 Data classification information is added to streams of data by the use of Unitxt loaders.
 Existing loaders have default data classification policies. For example, LoadHF sets the policy to `['public']` for datasets
 downloaded from the HuggingFace and `['proprietary']` for datasets loaded from local files.  You can override this by setting
-the `data_classification_policy` parameter of the loader. 
+the `data_classification_policy` parameter of the loader.
 
 The data classification value is added as an additional field to all instances within a stream.
 
@@ -3311,7 +3157,7 @@ Install Unitxt locally from pip:
   pip install unitxt
 
 The core of Unitxt has a minimal set of requirements.
-Specific metrics, inference APIs and other assets, may require additional dependencies. 
+Specific metrics, inference APIs and other assets, may require additional dependencies.
 A clear error message on what needs to be installed is provided if these dependencies are not available when the specific asset is used.
 # docs/docs/loading_datasets.rst
 .. _loading_datasets:
@@ -3547,7 +3393,7 @@ Key Capabilities:
 - Removes the requirement to run user Python code in dataset processing, reducing security risks
 
 Unitxt can be used as standalone code. It can also be integrated with common libraries and evaluation frameworks such as
-`HuggingFace`_, `Helm`_, and `LM-eval-harness`_. 
+`HuggingFace`_, `Helm`_, and `LM-eval-harness`_.
 
 To get started, you can explore the Unitxt :ref:`catalog <demo>`. Learn how you can load a :ref:`dataset<loading_datasets>` and  :ref:`evaluate <evaluating_datasets>` it in a just a few lines of code.
 You can then learn how to :ref:`add new datasets <adding_dataset>`.
@@ -4406,8 +4252,8 @@ in this case, the metrics calculate the accuracy of the sum of two integers, exp
 It is the responsibility of the templates, via its post processors to convert the model textual predictions
 into the `prediction_type`.
 
-A Task can define a `default_template` attribute that determines the default :ref:`Template <adding_template>` used to create the input to the model, 
-when the template is not explicitly specified by the user in the :ref:`Card <adding_dataset>` 
+A Task can define a `default_template` attribute that determines the default :ref:`Template <adding_template>` used to create the input to the model,
+when the template is not explicitly specified by the user in the :ref:`Card <adding_dataset>`
 definition or in the  :ref:`load_dataset <evaluating_datasets>` template argument.
 
 .. code-block:: python
@@ -4418,8 +4264,8 @@ definition or in the  :ref:`load_dataset <evaluating_datasets>` template argumen
    template = InputOutputTemplate(
          input_format="How much is {num1} plus {num2}?",
          output_format="{sum}",
-   ) 
-    
+   )
+
    task = Task(
         input_fields={"num1" : int, "num2" : int},
         reference_fields={"sum" : int},
@@ -4440,7 +4286,7 @@ To register the task to the catalog
    add_to_catalog(task,"tasks.calculator.sum")
 
 
-# Examples: 
+# Examples:
 # examples/evaluate_classification_dataset_with_given_predictions.py
 from unitxt.api import create_dataset, evaluate
 
@@ -7385,7 +7231,7 @@ for num_demos in [1, 2]:
         df = df.round(decimals=2)
         logger.info(df.to_markdown())
 
-# Catalog: 
+# Catalog:
 id: metrics.roc_auc, type: roc_auc
 id: metrics.squad, type: metric_pipeline
 id: metrics.f1_weighted, type: f1_weighted
@@ -7509,10 +7355,10 @@ id: augmentors.no_augmentation, type: null_augmentor
 id: augmentors.augment_whitespace_prefix_and_suffix_task_input, type: artifact_link
 id: cards.qqp, type: task_card, desc: The Quora Question Pairs2 dataset is a collection of question pairs from the community question-answering website Quora. The task is to determine whether a pair of questions are semantically equivalent… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
 id: cards.squad, type: task_card, desc: Stanford Question Answering Dataset (SQuAD) is a reading comprehension dataset, consisting of questions posed by crowdworkers on a set of Wikipedia articles, where the answer to every question is a segment of text, or span, from the corresponding reading passage, or the question might be unanswerable. SQuAD 1.1 contains 100,000+ question-answer pairs on 500+ articles. Supported Tasks and Leaderboards Question… See the full description on the dataset page: https://huggingface.co/datasets/rajpurkar/squad.
-id: cards.20_newsgroups_short, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: 
+id: cards.20_newsgroups_short, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs:
 "The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date."
 See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups.
-id: cards.hh_rlhf, type: task_card, desc: This repository provides access to two different kinds of data: 
+id: cards.hh_rlhf, type: task_card, desc: This repository provides access to two different kinds of data:
 1) Human preference data about helpfulness and harmlessness from Training a Helpful and Harmless Assistant with Reinforcement Learning from Human Feedback. These data are meant to train preference (or reward) models for subsequent RLHF training. These data are not meant for supervised training of dialogue agents. Training dialogue agents on these data is likely… See the full description on the dataset page: https://huggingface.co/datasets/Anthropic/hh-rlhf.
 id: cards.attaq_500, type: task_card
 id: cards.dbpedia_14, type: task_card, desc: The DBpedia ontology classification dataset is constructed by picking 14 non-overlapping classes from DBpedia 2014. They are listed in classes.txt. From each of these 14 ontology classes, we randomly choose 40,000 training samples and 5,000 testing samples. Therefore, the total size of the training dataset is 560,000 and testing dataset 70,000. There are 3 columns in the dataset (same for train and test splits)… See the full description on the dataset page: https://huggingface.co/datasets/fancyzhx/dbpedia_14.
@@ -7543,7 +7389,7 @@ id: cards.summarize_from_human_feedback, type: task_card, desc: Summarize from F
 id: cards.medical_abstracts, type: task_card
 id: cards.info_vqa, type: task_card, desc: InfographicVQA is a dataset that comprises a diverse collection of infographics along with natural language questions and answers annotations. The collected questions require methods to jointly reason over the document layout, textual content, graphical elements, and data visualizations. We curate the dataset with emphasis on questions that require elementary reasoning and basic arithmetic skills.
 id: cards.sst2, type: task_card, desc: The Stanford Sentiment Treebank consists of sentences from movie reviews and human annotations of their sentiment. The task is to predict the sentiment of a given sentence. It uses the two-way (positive/negative) class split, with only sentence-level labels… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
-id: cards.20_newsgroups, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs: 
+id: cards.20_newsgroups, type: task_card, desc: This is a version of the 20 newsgroups dataset that is provided in Scikit-learn. From the Scikit-learn docs:
 "The 20 newsgroups dataset comprises around 18000 newsgroups posts on 20 topics split in two subsets: one for training (or development) and the other one for testing (or for performance evaluation). The split between the train and test set is based upon a message posted before and after a specific date."
 See the full description on the dataset page: https://huggingface.co/datasets/SetFit/20_newsgroups.
 id: cards.claim_stance_topic, type: task_card, desc: Claim Stance contains 2,394 labeled Wikipedia claims for 55 topics. The dataset includes the stance (Pro/Con) of each claim towards the topic, as well as fine-grained annotations, based on the semantic model of Stance Classification of Context-Dependent Claims (topic target, topic sentiment towards its target, claim target, claim sentiment towards its target, and the relation between the targets)… See the full description on the dataset page: https://huggingface.co/datasets/ibm/claim_stance.
@@ -7578,8 +7424,8 @@ Argument Topic
 This subset contains 9,487 of the… See the full description on the dataset page: https://huggingface.co/datasets/ibm/argument_quality_ranking_30k.
 id: cards.coedit_gec, type: task_card, desc: This is the dataset that was used to train the CoEdIT text editing models. Full details of the dataset can be found in our paper… See the full description on the dataset page: https://huggingface.co/datasets/grammarly/coedit.
 id: cards.xsum, type: task_card, desc: Extreme Summarization (XSum) Dataset. There are three features:
-- document: Input news article. 
-- summary: One sentence summary of the article. 
+- document: Input news article.
+- summary: One sentence summary of the article.
 - id: BBC ID of the article… See the full description on the dataset page: https://huggingface.co/datasets/EdinburghNLP/xsum
 id: cards.pop_qa_robust, type: task_card, desc: PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entity, and relationship_type annotation, as well as Wikipedia monthly page views. Languages The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA.
 id: cards.numeric_nlg, type: task_card, desc: NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a paragraph of a table description with richer inference from scientific papers.
@@ -7610,7 +7456,7 @@ topics = {
 "LABEL_2": "Company | Product News",
 "LABEL_3": "Treasuries | Corporate Debt",
 "LABEL_4": "Dividend"… See the full description on the dataset page: https://huggingface.co/datasets/zeroshot/twitter-financial-news-topic.
-id: cards.trec, type: task_card, desc: The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set. 
+id: cards.trec, type: task_card, desc: The Text REtrieval Conference (TREC) Question Classification dataset contains 5500 labeled questions in training set and another 500 for test set.
 The dataset has 6 coarse class labels and 50 fine class labels. Average length of each sentence is 10, vocabulary size of 8700… See the full description on the dataset page: https://huggingface.co/datasets/trec
 id: cards.mrpc, type: task_card, desc: The Microsoft Research Paraphrase Corpus (Dolan & Brockett, 2005) is a corpus of sentence pairs automatically extracted from online news sources, with human annotations for whether the sentences in the pair are semantically equivalent… See the full description on the dataset page: https://huggingface.co/datasets/nyu-mll/glue.
 id: cards.ai2d, type: task_card, desc: AI2 Diagrams (AI2D) is a dataset of over 5000 grade school science diagrams with over 150000 rich annotations, their ground truth syntactic parses, and more than 15000 corresponding multiple choice questions.
