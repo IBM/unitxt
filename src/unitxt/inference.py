@@ -2855,7 +2855,7 @@ class LiteLLMInferenceEngine(
         """Main inference entry point."""
         loop = asyncio.get_event_loop()
         responses = loop.run_until_complete(self._infer_async(dataset))
-        return self.get_return_object(return_meta_data, responses)
+        return self.get_return_object(responses, return_meta_data)
 
     def get_return_object(self, responses, return_meta_data):
         if return_meta_data:
