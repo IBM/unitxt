@@ -124,6 +124,7 @@ On a scale of 0 to 10, to what extent is the prediction grounded in the evidence
 
 faithfilness_instructions_with_question_simplified_category = """You are given a question, the corresponding evidence and a prediction from a model. Compare the "Prediction" and the "Evidence" to determine to what extent the prediction is grounded in the evidence.
 To be grounded in the evidence, all the information of the prediction must either be present in the evidence or deducible from the evidence.\n
+Base your answer only on the information in the evidence. If the prediction is correct but not present in the evidence - it is not grounded.
 The question is only given for context, and is irrelevant for determining the groundedness of the prediction.
 Reply with one of the 4 options, without any further explanations:
 "Completely Grounded" - if the prediction is grounded in the evidence.
@@ -134,6 +135,7 @@ Reply with one of the 4 options, without any further explanations:
 
 faithfulness_instructions_no_question_simplified_category = """You are given a grounding evidence and a prediction from a model. Compare the "Prediction" and the "Evidence" to determine to what extent the prediction is grounded in the evidence.
 To be grounded in the evidence, all the information of the prediction must either be present in the evidence or deducible from the evidence.\n
+Base your answer only on the information in the evidence. If the prediction is correct but not present in the evidence than it is not grounded.
 Reply with one of the 4 options, without any further explanations:
 "Completely Grounded" - if the prediction is grounded in the evidence.
 "Mostly grounded" - if the vast majority of the information in the prediction is grounded in the evidence, but there is a small or negligible part of the prediction which is not present in the evidence.
@@ -144,6 +146,7 @@ Reply with one of the 4 options, without any further explanations:
 faithfilness_instructions_with_question_simplified_verbal_good_bad = """You are given a question, the corresponding evidence and a prediction from a model.
 Compare the "Prediction" and the "Evidence" to determine whether or not the prediction is grounded in the evidence.
 A good prediction is a prediction which is grounded in the evidence, i.e. all the information of the prediction must either be present in the evidence or deducible from the evidence.\n
+Base your answer only on the information in the evidence. If the prediction is correct but not present in the evidence - it is not grounded.
 The question is only given for context, and is irrelevant for determining the groundedness of the prediction.
 Provide a rating from one of the following choices: 'Very Bad', 'Bad', 'Mediocre', 'Good', 'Very Good'. Reply using the format of [[rating]], for example: '[[Mediocre]]'.
 """
@@ -151,6 +154,7 @@ Provide a rating from one of the following choices: 'Very Bad', 'Bad', 'Mediocre
 faithfulness_instructions_no_question_simplified_verbal_good_bad = """You are given a grounding evidence and a prediction from a model.
 Compare the "Prediction" and the "Evidence" to determine whether or not the prediction is grounded in the evidence.
 A good prediction is a prediction which is grounded in the evidence, i.e. all the information of the prediction must either be present in the evidence or deducible from the evidence.\n
+Base your answer only on the information in the evidence. If the prediction is correct but not present in the evidence - it is not grounded.
 Provide a rating from one of the following choices: 'Very Bad', 'Bad', 'Mediocre', 'Good', 'Very Good'. Reply using the format of [[rating]], for example: '[[Mediocre]]'.
 """
 
