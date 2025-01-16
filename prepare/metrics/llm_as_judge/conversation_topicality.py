@@ -1,17 +1,13 @@
 import json
 
 from unitxt import add_to_catalog
-from unitxt.inference import (
-    IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
-)
+from unitxt.inference import WMLInferenceEngineGeneration
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.metrics import (
     RandomForestMetricsEnsemble,
 )
 
 platform = "ibm_gen_ai"
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=256)
 
 config_filepath = "prepare/metrics/llm_as_judge/ensemble_topicality_v1.json"
 
@@ -25,8 +21,8 @@ model_lst = [sublist[1] for sublist in metric_version_models]
 
 inference_model_lst = []
 for model_name in model_lst:
-    inference_model = IbmGenAiInferenceEngine(
-        model_name=model_name, parameters=gen_params
+    inference_model = WMLInferenceEngineGeneration(
+        model_name=model_name, max_new_tokens=256
     )
     inference_model_lst.append(inference_model)
 
@@ -60,6 +56,6 @@ ensemble_metric = RandomForestMetricsEnsemble(
 # ensemble_metric.load_weights(config_filepath)
 add_to_catalog(
     ensemble_metric,
-    "metrics.llm_as_judge.conversation_answer_topicality.ensemble_v1_ibmgenai_judges",
+    "metrics.llm_as_judge.conversation_answer_topicality.ensemble_v1_wml_judges",
     overwrite=True,
 )

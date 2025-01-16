@@ -1783,7 +1783,7 @@ Answer: """,
 
         inference_model = MockInferenceEngine(model_name=model_id)
         model_label = model_id.split("/")[1].replace("-", "_")
-        model_label = f"{model_label}_ibm_genai"
+        model_label = f"{model_label}_wml"
         template_label = template.split(".")[-1]
         metric_label = f"{model_label}_template_{template_label}"
         metric = LLMAsJudge(
@@ -1873,7 +1873,7 @@ Answer: """,
 
         inference_model = MockInferenceEngine(model_name=model_id)
         model_label = model_id.split("/")[1].replace("-", "_")
-        model_label = f"{model_label}_ibm_genai"
+        model_label = f"{model_label}_wml"
         template_label = template.split(".")[-1]
         metric_label = f"{model_label}_template_{template_label}"
         metric = LLMAsJudge(

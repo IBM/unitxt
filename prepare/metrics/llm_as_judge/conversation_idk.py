@@ -1,19 +1,14 @@
 from unitxt import add_to_catalog
-from unitxt.inference import (
-    GenericInferenceEngine,
-    IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
-)
+from unitxt.inference import GenericInferenceEngine, WMLInferenceEngineGeneration
 from unitxt.llm_as_judge import LLMAsJudge
 
 template_name = "templates.response_assessment.judges.idk.v1"
 
 inference_models = {
-    "llama3_v1_ibmgenai": {
+    "llama3_v1_wml": {
         "model_name": "llama370binstruct",
-        "inference_model": IbmGenAiInferenceEngine(
-            model_name="meta-llama/llama-3-70b-instruct",
-            parameters=IbmGenAiInferenceEngineParams(max_new_tokens=256),
+        "inference_model": WMLInferenceEngineGeneration(
+            model_name="meta-llama/llama-3-70b-instruct", max_new_tokens=256
         ),
     },
     "generic_inference_engine": {
