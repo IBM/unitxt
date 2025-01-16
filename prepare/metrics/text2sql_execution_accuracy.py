@@ -31,13 +31,11 @@ task_data = [
 instance_targets = [
     {
         "execution_accuracy": 0.0,
-        "num_of_instances": 1,
         "score": 0.0,
         "score_name": "execution_accuracy",
     },
     {
         "execution_accuracy": 1.0,
-        "num_of_instances": 1,
         "score": 1.0,
         "score_name": "execution_accuracy",
     },
