@@ -10,6 +10,23 @@ tasks = ["autorag", "end_to_end"]
 dimension = "context_correctness"
 
 
+def get_scores_prefix(metric_catalog_name, dim_name):
+    return f"{dim_name}_"
+
+
+def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
+    prefix = get_scores_prefix(metric_catalog_name, dim_name)
+    new_target = {
+        f"{prefix}" + k
+        if k not in ["score", "score_name", "num_of_instances"]
+        and not k.startswith("score")
+        else k: v
+        for k, v in target.items()
+    }
+    new_target["score_name"] = prefix + new_target["score_name"]
+    return new_target
+
+
 def get_preprocess_steps(task):
     if task == "autorag":
         return [
@@ -62,6 +79,7 @@ for new_catalog_name, base_catalog_name, main_score in [
             main_score=main_score,
             preprocess_steps=get_preprocess_steps(task).copy(),
             metric=base_catalog_name,
+            score_prefix=get_scores_prefix(new_catalog_name, dimension),
         )
         add_to_catalog(
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
@@ -240,6 +258,14 @@ def test_context_correctness():
             main_score=main_score,
             preprocess_steps=get_test_pipeline_task_preprocess_steps(task),
             metric=f"{catalog_name}",
+        )
+        short_catalog_name = catalog_name.split(".")[-1]
+        instance_targets = [
+            add_scores_prefix_to_target(i, short_catalog_name, dimension)
+            for i in instance_targets
+        ]
+        global_target = add_scores_prefix_to_target(
+            global_target, short_catalog_name, dimension
         )
         test_metric(
             metric=test_pipeline,

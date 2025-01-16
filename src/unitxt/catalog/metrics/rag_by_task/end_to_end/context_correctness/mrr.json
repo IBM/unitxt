@@ -14,5 +14,6 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.mrr"
+    "metric": "metrics.mrr",
+    "score_prefix": "context_correctness_"
 }

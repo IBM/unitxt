@@ -14,5 +14,6 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.retrieval_at_k"
+    "metric": "metrics.retrieval_at_k",
+    "score_prefix": "context_correctness_"
 }
