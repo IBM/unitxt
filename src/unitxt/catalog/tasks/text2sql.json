@@ -1,0 +1,17 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "id": "int",
+        "utterance": "str",
+        "hint": "str",
+        "db": "SQLDatabase"
+    },
+    "reference_fields": {
+        "query": "str"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.text2sql.execution_accuracy",
+        "metrics.anls"
+    ]
+}

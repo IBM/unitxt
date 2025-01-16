@@ -7,14 +7,16 @@ import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
 from dataclasses import field
 from functools import lru_cache
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
+import evaluate
 import numpy
 import numpy as np
 import pandas as pd
+import requests
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -50,6 +52,8 @@ from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+
+logger = evaluate.logging.get_logger(__name__)
 
 logger = get_logger()
 settings = get_settings()
@@ -374,8 +378,7 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-from typing import Generic, TypeVar, NamedTuple
-from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -627,8 +630,9 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         from sklearn.metrics import f1_score
 
         self._metric = f1_score
-        import regex
         from functools import partial
+
+        import regex
 
         self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
 
@@ -2727,8 +2731,6 @@ class FinQAEval(InstanceMetric):
         import importlib.util as iua
         import os
 
-        import requests
-
         # download finqa evaluation script, load as a module and use it on the fly
         def download_finqa_eval_script_file(url, local_path, hash_of_script):
             if not os.path.exists(local_path):
@@ -4612,8 +4614,6 @@ class RemoteMetric(StreamOperator, Metric):
         return MetricRequest(instance_inputs=instance_inputs)
 
     def get_metric_response(self, metric_request: MetricRequest) -> MetricResponse:
-        import requests
-
         response = requests.post(
             url=self.get_metric_url(),
             json=metric_request.to_dict(),
@@ -5947,3 +5947,63 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
             dim=0,
         ).numpy()
+
+
+class ExecutionAccuracy(InstanceMetric):
+    reduction_map = {"mean": ["execution_accuracy"]}
+    main_score = "execution_accuracy"
+    ci_scores = ["execution_accuracy"]
+
+    prediction_type = "Any"  # string representation is compared
+    sql_timeout = 100.0
+
+    def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
+        """Runs SQL queries using the provided connector and checks if the results match."""
+        try:
+            pred_res = connector.execute_query(predicted_sql)
+            gold_res = connector.execute_query(gold_sql)
+
+            if pred_res is None or gold_res is None:
+                return 0  # Treat execution error as mismatch
+
+            return int(set(pred_res) == set(gold_res))
+        except Exception as e:
+            logger.error(f"Error in run_sql_and_match: {e}")
+            return 0
+
+    def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .db_utils import get_db_connector
+
+        try:
+            from func_timeout import FunctionTimedOut, func_timeout
+        except ImportError as err:
+            raise ImportError(
+                "func_timeout should be installed for this metric"
+            ) from err
+
+        predicted_sql = prediction
+        execution_result: float = 0.0
+
+        if predicted_sql and predicted_sql.strip() != "":
+            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
+                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
+            if ";" in predicted_sql:
+                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+
+            db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+
+            try:
+                execution_result = func_timeout(
+                    self.sql_timeout,
+                    self.run_sql_and_match,
+                    args=(predicted_sql, references[0], db_connector),
+                )  # type: ignore
+            except FunctionTimedOut:
+                logger.error("QUERY TIMEOUT, returning score=0 for this instance")
+                execution_result = 0.0
+
+        result = {self.main_score: float(execution_result)}
+        logger.debug(f"Result: {result}")
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result

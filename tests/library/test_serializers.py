@@ -1,13 +1,17 @@
+import unittest
+from unittest.mock import MagicMock, patch
+
 from unitxt.serializers import (
     DefaultSerializer,
     DialogSerializer,
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     NumberSerializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
 )
 from unitxt.settings_utils import get_constants
-from unitxt.types import Dialog, Number, Table, Text, Turn
+from unitxt.types import Dialog, Number, SQLDatabase, Table, Text, Turn
 
 from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
@@ -139,3 +143,71 @@ class TestSerializers(UnitxtTestCase):
         number_data = Number(42)
         result = self.custom_serializer.serialize(number_data, {})
         self.assertEqual(result, "42")  # Should return the number as a string
+
+
+class TestSQLDatabaseAsSchemaSerializer(unittest.TestCase):
+    def test_serialize_in_memory_success(self):
+        db_config: SQLDatabase = {
+            "db_type": "in_memory",
+            "db_id": None,
+            "dbms": None,
+            "data": {
+                "table1": {"columns": ["col1", "col2"], "rows": [[1, "a"], [2, "b"]]},
+                "table2": {"columns": ["name", "age"], "rows": [["Alice", 30]]},
+            },
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
+        expected_schema = (
+            "CREATE TABLE `table1` (`col1` TEXT, `col2` TEXT);\n\n"
+            "CREATE TABLE `table2` (`name` TEXT, `age` TEXT);"
+        )
+        self.assertEqual(result, expected_schema)
+
+    @patch.dict(
+        "os.environ",
+        {"SQL_API_KEY": "test_api_key"},  # pragma: allowlist secret
+        clear=True,
+    )  # pragma: allowlist-secret
+    @patch("requests.post")
+    def test_serialize_remote_success(self, mock_post):
+        db_config: SQLDatabase = {
+            "db_type": "remote",
+            "db_id": "https://testapi.com/api,db_id=test_db_id",
+            "dbms": None,
+            "data": None,
+        }
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "schema": {
+                "tables": [
+                    {"table_name": "table1", "columns": [{"column_name": "col1"}]},
+                    {"table_name": "table2", "columns": [{"column_name": "name"}]},
+                ]
+            }
+        }
+        mock_post.return_value = mock_response
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
+
+        expected_schema = (
+            "Table: table1 has columns: ['col1']\n"
+            "Table: table2 has columns: ['name']\n"
+        )
+        self.assertEqual(result, expected_schema)
+
+    def test_serialize_unsupported_db_type(self):
+        db_config: SQLDatabase = {
+            "db_type": "unsupported",
+            "db_id": "test_db_id",
+            "dbms": None,
+            "data": None,
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        with self.assertRaises(ValueError):
+            serializer.serialize(db_config, {})

@@ -159,3 +159,4 @@ benchmark_output/*
 .litellm_cache
 
 docs/_static/data.js
+cache
