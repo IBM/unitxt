@@ -412,7 +412,6 @@ class FixWhiteSpace(FieldOperator):
         return " ".join(text.split())
 
 
-
 class AddPrefix(FieldOperator):
     prefix: str
 
@@ -451,6 +450,7 @@ class GetSQL(FieldOperator):
 
         return out
 
+
 class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
     max_val = 10
     min_val = 0
@@ -476,4 +476,3 @@ class ExtractVerbalJudgment(FieldOperator):
 
 class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
     classes = ["very bad", "bad", "mediocre", "good", "very good"]
-
