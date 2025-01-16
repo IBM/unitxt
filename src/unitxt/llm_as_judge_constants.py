@@ -78,8 +78,10 @@ class EvaluatorNameEnum(str, Enum):
     PROMETHEUS = "Prometheus"
     GPT4 = "GPT-4o"
     GRANITE_13B = "Granite-13b"
-    GRANITE3_2B = "Granite3-2b"
-    GRANITE3_8B = "Granite3-8b"
+    GRANITE3_2B = "Granite3.0-2b"
+    GRANITE3_8B = "Granite3.0-8b"
+    GRANITE3_1_2B = "Granite3.1-2b"
+    GRANITE3_1_8B = "Granite3.1-8b"
     GRANITE_GUARDIAN_2B = "Granite Guardian 3.0 2B"
     GRANITE_GUARDIAN_8B = "Granite Guardian 3.0 8B"
 
@@ -103,6 +105,8 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE_13B: "ibm/granite-13b-instruct-v2",
     EvaluatorNameEnum.GRANITE3_2B: "ibm/granite-3-2b-instruct",
     EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
+    EvaluatorNameEnum.GRANITE3_1_2B: "ibm/granite-3.1-2b-instruct",
+    EvaluatorNameEnum.GRANITE3_1_8B: "ibm/granite-3.1-8b-instruct",
     EvaluatorNameEnum.GRANITE_GUARDIAN_2B: "ibm/granite-guardian-3-2b",
     EvaluatorNameEnum.GRANITE_GUARDIAN_8B: "ibm/granite-guardian-3-8b",
 }
@@ -111,7 +115,8 @@ MODEL_RENAMINGS = {
     ModelProviderEnum.RITS: {
         "meta-llama/llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
         "mistralai/mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
-        "ibm/granite-guardian-3-2b": "ibm-granite/granite-3.0-8b-instruct",
+        "ibm/granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+        "ibm/granite-3.1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
         "meta-llama/llama-3-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
         "mistralai/mistral-large": "mistralai/mistral-large-instruct-2407",
     },
@@ -154,7 +159,11 @@ EVALUATORS_METADATA = [
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GRANITE3_8B,
-        [ModelProviderEnum.WATSONX],
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GRANITE3_1_8B,
+        [ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GPT4,
