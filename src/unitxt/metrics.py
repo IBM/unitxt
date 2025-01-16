@@ -31,6 +31,7 @@ from .error_utils import Documentation, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
+    TorchDeviceMixin,
     WMLInferenceEngineGeneration,
 )
 from .logging_utils import get_logger
@@ -2195,6 +2196,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        if hasattr(self, "score_prefix") and self.score_prefix:
+            self.metric.score_prefix = self.score_prefix
         has_postpreprocess = (
             hasattr(self, "postpreprocess_steps")
             and self.postpreprocess_steps is not None
@@ -3421,119 +3424,146 @@ class TokenOverlap(InstanceMetric):
         return pr, rc, f1
 
 
-class BertScore(HuggingfaceBulkMetric):
-    hf_metric_name = "bertscore"
+class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
     main_score = "f1"
-    reduction_map = {"mean": ["f1", "precision", "recall"]}
-    hf_metric_fields = ["f1", "precision", "recall"]
-    ci_scores = ["f1", "precision", "recall"]
+    reduction: DictReduction = MeanReduction()
     model_name: str
+    batch_size: int = 32
     model_layer: int = None
-
-    prediction_type = str
 
     _requirements_list: List[str] = ["bert_score"]
 
     def prepare(self):
         super().prepare()
-        self.hf_compute_args = {"model_type": self.model_name, "batch_size": 32}
-        if self.model_layer:
-            self.hf_compute_args["num_layers"] = self.model_layer
+        from evaluate import load
+
+        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        predictions = []
+        references = []
+        for prediction, reference, _ in evaluation_inputs_stream:
+            predictions.append(prediction)
+            references.append(reference)
+
+        results = self.bertscore.compute(
+            predictions=predictions,
+            references=references,
+            batch_size=self.batch_size,
+            device=self.get_device(),
+            model_type=self.model_name,
+            num_layers=self.model_layer,
+        )
+
+        intermediates = []
+        for precision, recall, f1 in zip(
+            results["precision"], results["recall"], results["f1"]
+        ):
+            intermediates.append(
+                {
+                    "precision": precision,
+                    "recall": recall,
+                    "f1": f1,
+                }
+            )
+
+        return intermediates
+
+    def reduce(self, intermediates: List[Dict[str, float]]) -> Dict[str, Any]:
+        return self.reduction.reduce(intermediates)
+
+    def reduce_one(self, intermidate: Dict[str, float]):
+        return recursive_copy(intermidate)
 
 
-class SentenceBert(BulkInstanceMetric):
-    main_score = "sbert_score"
-    reduction_map = {"mean": [main_score]}
-    batch_size: int = 32
-
+class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
     model_name: str
+    batch_size: int = 32
+    main_score = "sbert_score"
 
-    _requirements_list: List[str] = ["sentence_transformers", "torch", "transformers"]
+    _requirements_list: List[str] = ["sentence_transformers"]
 
     def prepare(self):
         super().prepare()
-        import torch
         from sentence_transformers import SentenceTransformer
-        from sentence_transformers import util as sbert_util
 
-        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.model = SentenceTransformer(self.model_name, device=self.device)
-        self.util = sbert_util
+        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
+    ):
+        # if settings.mock_inference_mode:
+        #     return [0.5 for _ in evaluation_inputs_stream]
+
+        from sentence_transformers import util
+
         scores = []
 
-        # we are in a multi-reference case (each prediction may have multiple
-        # references), so we need to flatten the refs in order to compute the
-        # embeddings in one batch, but first we have to store the spans of
-        # reference groups, so we can recover it later on.
-        ref_group_boundaries = []
-        count = 0
-        for ref_group in references:
-            ref_group_boundaries.append((count, count + len(ref_group)))
-            count += len(ref_group)
+        predictions = []
+        flattened_references = []
+        reference_group_indices = []  # More descriptive name for boundaries
 
-        # compute s-bert embeddings
-        preds_emb = self.model.encode(predictions, device=self.device)
-        refs_emb = self.model.encode(
-            [ref for ref_group in references for ref in ref_group], device=self.device
+        # Prepare data for single encoding pass
+        current_index = 0
+        for prediction, references, _ in evaluation_inputs_stream:
+            predictions.append(prediction)
+            reference_group_indices.append(
+                (current_index, current_index + len(references))
+            )
+            flattened_references.extend(references)
+            current_index += len(references)
+
+        # Compute embeddings in a single pass
+        combined = predictions + flattened_references
+        combined_emb = self.model.encode(
+            combined, device=self.get_device_id(), batch_size=self.batch_size
         )
 
-        # for each candidate, pick the reference with the highest score
-        for pred_emb, ref_group_bounds in zip(preds_emb, ref_group_boundaries):
-            refs_group_emb = refs_emb[ref_group_bounds[0] : ref_group_bounds[1]]
-            scores.append(self.util.cos_sim(pred_emb, refs_group_emb).max().item())
+        preds_emb = combined_emb[: len(predictions)]
+        refs_emb = combined_emb[len(predictions) :]
 
-        return [{self.main_score: score} for score in scores]
+        # Calculate scores and store in the list
+        for pred_emb, (start_idx, end_idx) in zip(preds_emb, reference_group_indices):
+            refs_group_emb = refs_emb[start_idx:end_idx]
+            score = util.cos_sim(pred_emb, refs_group_emb).max().item()
+            scores.append(score)
+
+        return scores
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
 
 
-class Reward(BulkInstanceMetric):
+class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
     main_score = "reward_score"
-    reduction_map = {"mean": [main_score]}
+    model_name: str
     batch_size: int = 32
 
-    model_name: str
-
-    prediction_type = str
-    single_reference_per_prediction = True
-
-    _requirements_list: List[str] = ["transformers", "torch"]
+    _requirements_list: List[str] = ["transformers"]
 
     def prepare(self):
         super().prepare()
-        import torch
         from transformers import pipeline
 
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.pipe = pipeline(
-            "text-classification", model=self.model_name, device=device
+        self.model = pipeline(
+            "text-classification", model=self.model_name, device=self.get_device()
         )
 
-    def compute(
-        self,
-        references: List[List[Any]],
-        predictions: List[Any],
-        task_data: List[Dict],
-    ) -> List[Dict[str, Any]]:
-        # treat the references as the questions and the predictions as answers
-        # assume a single reference
-        questions = [refs[0] for refs in references]
-        answers = predictions
+    def map_stream(
+        self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
+    ):
+        inputs = []
+        for prediction, references, _ in evaluation_inputs_stream:
+            inputs.append({"text": references[0], "text_pair": prediction})
 
-        # prepare for computation
-        inputs = [{"text": q, "text_pair": a} for q, a in zip(questions, answers)]
+        results = self.model(inputs, batch_size=self.batch_size)
 
-        # compute the metric
-        # add function_to_apply="none" to disable sigmoid
-        results = self.pipe(inputs, batch_size=self.batch_size)
-        for result in results:
-            result[self.main_score] = result["score"]
-        return results
+        return [result["score"] for result in results]
+
+    def reduce(self, intermediates: List[float]) -> Dict[str, Any]:
+        return {self.main_score: nan_mean(intermediates)}
 
 
 class Detector(BulkInstanceMetric):

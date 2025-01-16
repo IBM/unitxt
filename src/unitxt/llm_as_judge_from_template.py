@@ -413,7 +413,7 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
     def set_format_for_inference_engine(self):
         model_name = self.inference_model.get_engine_id()
         # TODO : better format resolution to support more chat_api options
-        if "rits" in model_name:
+        if "rits" in model_name or "openai" in model_name:
             format_name = "formats.chat_api"
         elif re.search("llama.?3.*instruct", model_name):
             format_name = "formats.llama3_instruct"

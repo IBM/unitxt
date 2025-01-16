@@ -1,0 +1,14 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nEvidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_correct}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.cast_to_float_return_zero_if_failed",
+        "processors.scale_0_10_to_0_1"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question, some corresponding evidence and a prediction from a model. Please determine whether the prediction is a correct and complete answer to the question given the provided evidence.\n\nOn a scale of 0 to 10, to what extent does the prediction answer the question? Reply with your rating score without any preceding explanation.\n"
+}

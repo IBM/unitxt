@@ -36,7 +36,29 @@
         }
     ],
     "task": "tasks.qa.with_context",
-    "templates": "templates.qa.with_context.all",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\n{question}\nAnswer the question using a single word.",
+            "references_field": "answers",
+            "__description__": "lmms-evals default template for chartqa."
+        },
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
+    "default_template": {
+        "__type__": "multi_reference_template",
+        "input_format": "{context}\n{question}\nAnswer the question using a single word.",
+        "references_field": "answers",
+        "__description__": "lmms-evals default template for chartqa."
+    },
     "__tags__": {
         "license": "GPL-3.0",
         "multilinguality": "monolingual",

@@ -1,0 +1,12 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine"
+    },
+    "template": "templates.rag_eval.faithfulness.judge_no_question_simplified_verbal",
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "format": null,
+    "main_score": "faithfulness_c_a_verbal",
+    "prediction_field": "answer",
+    "infer_log_probs": false
+}

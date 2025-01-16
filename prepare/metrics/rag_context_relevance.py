@@ -11,12 +11,19 @@ for new_catalog_name, base_catalog_name, main_score in [
     ("perplexity_flan_t5_small", "metrics.perplexity_q.flan_t5_small", "perplexity"),
     ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
     ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
+    ("token_precision", "metrics.token_overlap", "precision"),
 ]:
     metric = MetricPipeline(
         main_score=main_score,
         preprocess_steps=[
-            Copy(field="contexts", to_field="references"),
-            Copy(field="question", to_field="prediction"),
+            Copy(
+                field_to_field={
+                    "task_data/contexts": "references",
+                    "question": "prediction",
+                },
+                not_exist_do_nothing=True,
+            ),
+            Copy(field_to_field={"contexts": "references"}, not_exist_do_nothing=True),
         ],
         metric=base_catalog_name,
     )

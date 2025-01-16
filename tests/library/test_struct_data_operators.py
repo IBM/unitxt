@@ -140,7 +140,7 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        serialized_str = 'pd.DataFrame({\n{"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]}},\nindex=[0, 1, 2])'
+        serialized_str = 'pd.DataFrame({\n"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]},\nindex=[0, 1, 2])'
 
         targets = [
             {
