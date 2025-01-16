@@ -26,7 +26,8 @@
                 "dbms": "sqlite",
                 "db_type": "local",
                 "use_oracle_knowledge": true,
-                "num_table_rows_to_add": 0
+                "num_table_rows_to_add": 0,
+                "data": null
             }
         },
         {
@@ -48,6 +49,11 @@
             "__type__": "copy",
             "field": "dbms",
             "to_field": "db/dbms"
+        },
+        {
+            "__type__": "copy",
+            "field": "data",
+            "to_field": "db/data"
         }
     ],
     "task": "tasks.text2sql",

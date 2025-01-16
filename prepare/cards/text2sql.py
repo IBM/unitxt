@@ -24,6 +24,7 @@ card = TaskCard(
                 "db_type": "local",
                 "use_oracle_knowledge": True,
                 "num_table_rows_to_add": 0,
+                "data": None,
             }
         ),
         ExecuteExpression(
@@ -33,15 +34,13 @@ card = TaskCard(
         Copy(field="db_id", to_field="db/db_id"),
         Copy(field="db_type", to_field="db/db_type"),
         Copy(field="dbms", to_field="db/dbms"),
+        Copy(field="data", to_field="db/data"),
     ],
     task="tasks.text2sql",
     templates="templates.text2sql.all",
 )
 
-
-# test_card(
-#     card,
-# )
+# test_card(card, num_demos=0, demos_pool_size=0, )
 
 add_to_catalog(
     card,
