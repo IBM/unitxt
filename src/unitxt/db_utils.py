@@ -193,9 +193,9 @@ class RemoteDatabaseConnector(DatabaseConnector):
     def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
 
-        assert db_config[
-            "db_id"
-        ], "db_id must be in db_config for RemoteDatabaseConnector"
+        assert db_config["db_id"], (
+            "db_id must be in db_config for RemoteDatabaseConnector"
+        )
         self.api_url, self.database_id = (
             db_config["db_id"].split(",")[0],
             db_config["db_id"].split("db_id=")[-1].split(",")[0],
@@ -222,17 +222,17 @@ class RemoteDatabaseConnector(DatabaseConnector):
         self,
     ) -> str:
         """Retrieves the schema of a database."""
-        response = requests.post(
-            f"{self.api_url}/datasource",
+        cur_api_url = f"{self.api_url}/datasource/{self.database_id}"
+        response = requests.get(
+            cur_api_url,
             headers=self.base_headers,
-            json={"dataSourceId": self.database_id},
             verify=True,
             timeout=self.TIMEOUT,
         )
         if response.status_code == 200:
             schema = response.json()["schema"]
         else:
-            raise OSError(f"Could not fetch schema from {self.api_url}")
+            raise OSError(f"Could not fetch schema from {cur_api_url}")
 
         schema_text = ""
         for table in schema["tables"]:
