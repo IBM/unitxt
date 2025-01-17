@@ -1,0 +1,10 @@
+{
+    "__type__": "input_output_template",
+    "input_format": "{utterance}",
+    "instruction": "",
+    "target_prefix": "",
+    "output_format": "{query}",
+    "postprocessors": [
+        "processors.text2sql.get_sql"
+    ]
+}

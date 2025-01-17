@@ -33,6 +33,12 @@ template_details = [
         "",
         "Answer:\n```sql\n",
     ),
+    (
+        "templates.text2sql.empty",
+        "{utterance}",
+        "",
+        "",
+    ),
 ]
 
 template_names = []
