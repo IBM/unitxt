@@ -1121,9 +1121,9 @@ class BulkInstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             )
 
         for reduction, fields in self.reduction_map.items():
-            assert (
-                reduction in self.implemented_reductions
-            ), f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+            assert reduction in self.implemented_reductions, (
+                f"Reduction {reduction} is not implemented, use one of {self.implemented_reductions}"
+            )
 
             if reduction == "mean":
                 for field_name in fields:
@@ -1392,12 +1392,12 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
     def _validate_group_mean_task_data(self, instance):
         # instances need to all have task_data field with field group_id
         assert "task_data" in instance, "each instance must have an task_data field"
-        assert isinstance(
-            instance["task_data"], dict
-        ), "each instance must have an task_data field that is a dict"
-        assert (
-            "group_id" in instance["task_data"]
-        ), "each instance task_data dict must have a key group_id"
+        assert isinstance(instance["task_data"], dict), (
+            "each instance must have an task_data field that is a dict"
+        )
+        assert "group_id" in instance["task_data"], (
+            "each instance task_data dict must have a key group_id"
+        )
 
     def _validate_group_mean_reduction(self):
         """Ensure that group_mean reduction_map is properly formatted.
@@ -1450,30 +1450,30 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
             2           'Why are ants eating my food?'               'original'
         """
         # validate the reduction_map
-        assert (
-            "group_mean" in self.reduction_map
-        ), "reduction_map must have a 'group_mean' key"
+        assert "group_mean" in self.reduction_map, (
+            "reduction_map must have a 'group_mean' key"
+        )
         fields = self.reduction_map["group_mean"]
         # for group_mean, expects a dict
         assert isinstance(fields, dict)
-        assert (
-            "agg_func" in fields
-        ), "fields should have a key 'agg_func' whose value is a 3-element list of a function name, function definition, and a boolean indicator"
-        assert isinstance(
-            fields["agg_func"], list
-        ), "fields['agg_func'] should be a list"
-        assert (
-            len(fields["agg_func"]) == 3
-        ), "fields['agg_func'] should be a 3-element list"
-        assert isinstance(
-            fields["agg_func"][0], str
-        ), "first item in fields['agg_func'] should be a string name of a function"
-        assert callable(
-            fields["agg_func"][1]
-        ), "second item in fields['agg_func'] should be a callable function"
-        assert isinstance(
-            fields["agg_func"][2], bool
-        ), "third item in fields['agg_func'] should be a boolean value"
+        assert "agg_func" in fields, (
+            "fields should have a key 'agg_func' whose value is a 3-element list of a function name, function definition, and a boolean indicator"
+        )
+        assert isinstance(fields["agg_func"], list), (
+            "fields['agg_func'] should be a list"
+        )
+        assert len(fields["agg_func"]) == 3, (
+            "fields['agg_func'] should be a 3-element list"
+        )
+        assert isinstance(fields["agg_func"][0], str), (
+            "first item in fields['agg_func'] should be a string name of a function"
+        )
+        assert callable(fields["agg_func"][1]), (
+            "second item in fields['agg_func'] should be a callable function"
+        )
+        assert isinstance(fields["agg_func"][2], bool), (
+            "third item in fields['agg_func'] should be a boolean value"
+        )
         if "score_fields" in fields:
             assert isinstance(fields["score_fields"], list)
 
@@ -1481,9 +1481,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
         instance_scores = self.compute_instance_scores(stream)
         global_score = {"num_of_instances": len(instance_scores)}
         for reduction_type, reduction_params in self.reduction_map.items():
-            assert (
-                reduction_type in self.implemented_reductions
-            ), f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
+            assert reduction_type in self.implemented_reductions, (
+                f"Reduction {reduction_type} is not implemented, use one of {self.implemented_reductions}"
+            )
 
             field_name_full_prefix = ""
             # used for passing to the bootstrapping, depends on whether the groups are fixed or not
@@ -1581,7 +1581,9 @@ class InstanceMetric(StreamOperator, MetricWithConfidenceInterval):
                 assert (
                     "task_data" in instance
                     and self.subgroup_column in instance["task_data"]
-                ), f"each instance task_data dict must have a key {self.subgroup_column}"
+                ), (
+                    f"each instance task_data dict must have a key {self.subgroup_column}"
+                )
 
             task_data = instance["task_data"] if "task_data" in instance else {}
 
@@ -1785,13 +1787,13 @@ class ExactMatchMM(InstanceMetric):
         try:
             if answer == predict[0]:
                 return 1.0
-            elif predict[0] == "(" and answer == predict[1]:
+            if predict[0] == "(" and answer == predict[1]:
                 return 1.0
-            elif predict[0:7] == "option " and answer == predict[7]:
+            if predict[0:7] == "option " and answer == predict[7]:
                 return 1.0
-            elif predict[0:14] == "the answer is " and answer == predict[14]:
+            if predict[0:14] == "the answer is " and answer == predict[14]:
                 return 1.0
-        except Exception as e:
+        except Exception:
             return 0.0
         return 0.0
 
@@ -1908,8 +1910,7 @@ class RelaxedCorrectness(GlobalMetric):
             if text.endswith("%"):
                 # Convert percentages to floats.
                 return float(text.rstrip("%")) / 100.0
-            else:
-                return float(text)
+            return float(text)
         except ValueError:
             return None
 
@@ -1940,8 +1941,7 @@ class RelaxedCorrectness(GlobalMetric):
         if prediction_float is not None and target_float:
             relative_change = abs(prediction_float - target_float) / abs(target_float)
             return relative_change <= max_relative_change
-        else:
-            return prediction.lower() == target.lower()
+        return prediction.lower() == target.lower()
 
 
 class WebsrcSquadF1(GlobalMetric):
@@ -2185,15 +2185,15 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def verify(self):
         super().verify()
-        assert (
-            self.metric is not None
-        ), f"'metric' is not set in {self.get_metric_name()}"
-        assert (
-            self.main_score is not None
-        ), f"'main_score' is not set in {self.get_metric_name()}"
-        assert isinstance(
-            self.metric, Metric
-        ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
+        assert self.metric is not None, (
+            f"'metric' is not set in {self.get_metric_name()}"
+        )
+        assert self.main_score is not None, (
+            f"'main_score' is not set in {self.get_metric_name()}"
+        )
+        assert isinstance(self.metric, Metric), (
+            f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
+        )
         if self.postpreprocess_steps is not None:
             depr_message = "Field 'postpreprocess_steps' is deprecated. Please use 'postprocess_steps' for the same purpose."
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
@@ -2214,9 +2214,9 @@ class MetricPipeline(MultiStreamOperator, Metric):
             and isinstance(self.postprocess_steps, list)
             and len(self.postprocess_steps) > 0
         )
-        assert not (
-            has_postpreprocess and has_postprocess
-        ), "Must define at most one of postpreprocess_steps (which is deprecated) and postprocess_steps (to be used from now on)"
+        assert not (has_postpreprocess and has_postprocess), (
+            "Must define at most one of postpreprocess_steps (which is deprecated) and postprocess_steps (to be used from now on)"
+        )
         if has_postpreprocess:
             self.postprocess_steps = self.postpreprocess_steps
         self.prepare_score = SequentialOperator(
@@ -2291,14 +2291,16 @@ class HuggingfaceMetric(GlobalMetric):
                 Documentation.HUGGINGFACE_METRICS,
             )
 
-        assert (
-            self.hf_additional_input_fields is None
-            or isoftype(self.hf_additional_input_fields, List[str])
-        ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
-        assert (
-            self.hf_additional_input_fields_pass_one_value is None
-            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
-        ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
+        assert self.hf_additional_input_fields is None or isoftype(
+            self.hf_additional_input_fields, List[str]
+        ), (
+            f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
+        )
+        assert self.hf_additional_input_fields_pass_one_value is None or isoftype(
+            self.hf_additional_input_fields_pass_one_value, List[str]
+        ), (
+            f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
+        )
 
         return super().verify()
 
@@ -2318,25 +2320,25 @@ class HuggingfaceMetric(GlobalMetric):
     ) -> dict:
         passed_task_data = {}
         for additional_input_field in self.hf_additional_input_fields:
-            assert (
-                additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            assert additional_input_field in task_data[0], (
+                f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            )
             passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
                 for additional_input in task_data
             ]
         for additional_input_field in self.hf_additional_input_fields_pass_one_value:
-            assert (
-                additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            assert additional_input_field in task_data[0], (
+                f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            )
 
             values = {
                 additional_input[additional_input_field]
                 for additional_input in task_data
             }
-            assert (
-                len(values) == 1
-            ), f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
+            assert len(values) == 1, (
+                f"Values of '{additional_input_field}' field required by {__class__.__name__}  should all be the same, but have multiple values {values}"
+            )
 
             passed_task_data[additional_input_field] = next(iter(values))
 
@@ -2351,22 +2353,22 @@ class HuggingfaceMetric(GlobalMetric):
             result[self.main_score] = float(result[self.hf_main_score])
             del result[self.hf_main_score]
         if self.scale != 1.0:
-            assert (
-                self.scaled_fields is not None
-            ), f"Scaling factor was set to {self.scale}, but no fields specified"
+            assert self.scaled_fields is not None, (
+                f"Scaling factor was set to {self.scale}, but no fields specified"
+            )
             for key in self.scaled_fields:
-                assert (
-                    key in result
-                ), f"Trying to scale field '{key}' which is not in results of metrics: {result}"
+                assert key in result, (
+                    f"Trying to scale field '{key}' which is not in results of metrics: {result}"
+                )
                 if isinstance(result[key], list):
-                    assert all(
-                        isinstance(v, float) for v in result[key]
-                    ), "Not all scaled field '{key}' values are floats: {result[key]}"
+                    assert all(isinstance(v, float) for v in result[key]), (
+                        "Not all scaled field '{key}' values are floats: {result[key]}"
+                    )
                     result[key] = [v / self.scale for v in result[key]]
                 else:
-                    assert isinstance(
-                        result[key], float
-                    ), "Scaled field '{key}' is not float: {result[key]}"
+                    assert isinstance(result[key], float), (
+                        "Scaled field '{key}' is not float: {result[key]}"
+                    )
                     result[key] /= self.scale
         if self.main_score in result:
             result[self.main_score] = float(result[self.main_score])
@@ -2396,9 +2398,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
     ) -> List[Dict[str, Any]]:
         passed_task_data = {}
         for additional_input_field in self.hf_additional_input_fields:
-            assert (
-                additional_input_field in task_data[0]
-            ), f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            assert additional_input_field in task_data[0], (
+                f"'{additional_input_field}' field required by {__class__.__name__} is not in passed in task_data: {task_data[0]}"
+            )
             passed_task_data[additional_input_field] = [
                 additional_input[additional_input_field]
                 for additional_input in task_data
@@ -2737,9 +2739,9 @@ class FinQAEval(InstanceMetric):
                 response = requests.get(url)
                 response.raise_for_status()
                 content = response.content
-                assert (
-                    hashlib.md5(content).hexdigest() == hash_of_script
-                ), f'URL ("{url}") is different than expected. Make sure you added the right one.'
+                assert hashlib.md5(content).hexdigest() == hash_of_script, (
+                    f'URL ("{url}") is different than expected. Make sure you added the right one.'
+                )
 
                 with open(local_path, "wb") as file:
                     file.write(content)
@@ -2874,9 +2876,9 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            assert (
-                len(result[self.metric]) == len(labels)
-            ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
+            assert len(result[self.metric]) == len(labels), (
+                f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
+            )
             final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
                 final_result[self.metric + "_" + label] = result[self.metric][i]
@@ -4659,12 +4661,12 @@ def validate_subgroup_types(
             for subgroup_name, score_list in subgroup_scores_dict.items()
         }
     )
-    assert isinstance(
-        control_subgroup_types, list
-    ), "control_subgroup_types must be a list"
-    assert isinstance(
-        comparison_subgroup_types, list
-    ), "comparison_subgroup_types must be a list"
+    assert isinstance(control_subgroup_types, list), (
+        "control_subgroup_types must be a list"
+    )
+    assert isinstance(comparison_subgroup_types, list), (
+        "comparison_subgroup_types must be a list"
+    )
     # make sure each list is unique, so that labels aren't double-counted
     control_subgroup_types = list(set(control_subgroup_types))
     comparison_subgroup_types = list(set(comparison_subgroup_types))
@@ -4819,9 +4821,9 @@ def normalized_cohens_h(
 
     # requires scores to be in [0,1]
     for subgroup_name, score_list in subgroup_scores_dict.items():
-        assert all(
-            0 <= score <= 1 for score in score_list
-        ), f"all {subgroup_name} scores must be in [0,1]"
+        assert all(0 <= score <= 1 for score in score_list), (
+            f"all {subgroup_name} scores must be in [0,1]"
+        )
 
     # combine all scores from each label (if there are more than 1 in each group) into a list
     group_scores_list = [
@@ -5625,9 +5627,9 @@ class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
 
     def create_ensemble_scores(self, instance):
         score = self.ensemble(instance)
-        instance[
-            "prediction"
-        ] = score  # We use here the prediction field to pass the score to the compute method.
+        instance["prediction"] = (
+            score  # We use here the prediction field to pass the score to the compute method.
+        )
         return instance
 
     def ensemble(self, instance):
@@ -5807,9 +5809,9 @@ class RandomForestMetricsEnsemble(MetricsEnsemble):
             return json.load(file)
 
     def ensemble(self, instance):
-        assert (
-            self.weights is not None
-        ), "RandomForestMetricsEnsemble must set self.weights before it can be used"
+        assert self.weights is not None, (
+            "RandomForestMetricsEnsemble must set self.weights before it can be used"
+        )
         ensemble_model = self.decode_forest(self.weights)
 
         prediction_lst = []
@@ -5959,6 +5961,9 @@ class ExecutionAccuracy(InstanceMetric):
 
     def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
+        if predicted_sql.strip() == gold_sql.strip():
+            return 1
+
         try:
             pred_res = connector.execute_query(predicted_sql)
             gold_res = connector.execute_query(gold_sql)
@@ -5966,7 +5971,7 @@ class ExecutionAccuracy(InstanceMetric):
             if pred_res is None or gold_res is None:
                 return 0  # Treat execution error as mismatch
 
-            return int(set(pred_res) == set(gold_res))
+            return int(pred_res["results"] == gold_res["results"])
         except Exception as e:
             logger.error(f"Error in run_sql_and_match: {e}")
             return 0
