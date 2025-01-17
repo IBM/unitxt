@@ -43,11 +43,10 @@ for lang in langs:
             ],
         },
         __description__=(
-            "We present MLSUM, the first large-scale MultiLingual SUMmarization dataset.\n"
-            "Obtained from online newspapers, it contains 1.5M+ article/summary pairs in five different languages -- namely, French, German, Spanish, Russian, Turkish.\n"
-            "Together with English newspapers from the popular CNN/Daily mail dataset, the collected data form a large scale multilingual dataset which can enable new research directions for the text summarization community.\n"
-            "We report cross-lingual comparative analyses based on state-of-the-art systems.\n"
-            "These highlight existing biases which motivate the use of a multi-lingual dataset."
+            "MLSUM is a large-scale MultiLingual SUMmarization dataset. Obtained from online newspapers, it contains 1.5M+ article/summary pairs in five different languages: French, German, Spanish, Russian, Turkish. Together with English newspapers from the popular CNN/Daily mail dataset, the collected data form a large scale multilingual dataset which can enable new research directions for the text summarization community."
+        ),
+        __short_description__=(
+            "Uses a dataset with over 1.5 M article-and-summary pairs from online newspapers in 5 languages (French, German, Spanish, Russian, Turkish) and English newspapers from CNN and Daily Mail to evaluate a model's ability to summarize multilingual text. Metric shows the ROUGE-L score for the generated summary."
         ),
     )
     if lang == langs[0]:

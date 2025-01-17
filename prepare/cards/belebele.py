@@ -266,7 +266,10 @@ for lang in language_codes:
             ],
         },
         __description__=(
-            "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset. The human annotation procedure was carefully curated to create questions that… See the full description on the dataset page: https://huggingface.co/datasets/facebook/belebele."
+            "Belebele is a multiple-choice machine reading comprehension (MRC) dataset spanning 122 language variants. This dataset enables the evaluation of mono- and multi-lingual models in high-, medium-, and low-resource languages. Each question has four multiple-choice answers and is linked to a short passage from the FLORES-200 dataset."
+        ),
+        __short_description__=(
+            "Uses a dataset with questions, related passages, and multiple-choice answers in 122 languages from FLORES-200 dataset to evaluate a model's multilingual reading-comprehension and question-answering ability. Metric measures the accuracy of answers."
         ),
     )
 

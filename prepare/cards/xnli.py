@@ -70,7 +70,10 @@ for lang in langs:
             "region": "us",
         },
         __description__=(
-            "XNLI is a subset of a few thousand examples from MNLI which has been translated into 14 different languages (some low-ish resource). As with MNLI, the goal is to predict textual entailment (does sentence A imply/contradict/neither sentence B) and is a classification task (given two sentences, predict one of three labels)… See the full description on the dataset page: https://huggingface.co/datasets/xnli."
+            "XNLI is a subset of MNLI with a few thousand examples translated into 14 different languages, including some low-resource ones. The task is to predict textual entailment, classifying whether sentence A implies, contradicts, or is neutral with respect to sentence B."
+        ),
+        __short_description__=(
+            "Uses a subset of data from the MNLI (Multi-Genre Natural Language Inference) dataset, which has crowd-sourced sentence pairs that are annotated with textual entailment information, translated into 14 languages to evaluate how well a model can classify multilingual sentences. Metric measures the accuracy of answers."
         ),
     )
     if lang == langs[0]:

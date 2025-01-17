@@ -23,7 +23,10 @@ for lang in ["pt", "ru", "zh", "en", "jp"]:
             "region": "us",
         },
         __description__=(
-            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities… See the full description on the dataset page: https://huggingface.co/datasets/Muennighoff/xwinograd"
+            "A multilingual collection of Winograd Schemas in six languages that can be used for evaluation of cross-lingual commonsense reasoning capabilities"
+        ),
+        __short_description__=(
+            "Uses a multilingual collection of Winograd Schemas, which are pairs of sentences with different meanings due to slight word changes, to evaluate a model's ability to understand context and resolve ambiguity in multilingual text. Metric measures the accuracy of answers."
         ),
     )
     if lang == "pt":

@@ -104,7 +104,10 @@ for lang in langs:
             "task_ids": ["intent-classification", "multi-class-classification"],
         },
         __description__=(
-            "MASSIVE is a parallel dataset of > 1M utterances across 51 languages with annotations for the Natural Language Understanding tasks of intent prediction and slot annotation. Utterances span 60 intents and include 55 slot types. MASSIVE was created by localizing the SLURP dataset, composed of general Intelligent Voice Assistant single-shot interactions. See the full description on the dataset page: https://huggingface.co/datasets/AmazonScience/massive."
+            "Amazon's MASSIVE is a dataset with over 1M utterances across 52 languages with annotations for the Natural Language Understanding tasks of intent prediction and slot annotation. It covers 60 intents and 55 slot types, created by localizing dataset for voice assistant interactions."
+        ),
+        __short_description__=(
+            "Uses a dataset of over 1M utterances from interactions with Amazon's voice assistant that is localized into 52 languages and annotated with intent and slot type information to evaluate a model's ability to classify multilingual text. Metric shows the F1 score."
         ),
     )
 

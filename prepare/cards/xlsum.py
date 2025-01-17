@@ -36,7 +36,10 @@ for lang in langs:
             "task_categories": "summarization",
         },
         __description__=(
-            "We present XLSum, a comprehensive and diverse dataset comprising 1.35 million professionally annotated article-summary pairs from BBC, extracted using a set of carefully designed heuristics. The dataset covers 45 languages ranging from low to high-resource, for many of which no public dataset is currently available. XL-Sum is highly abstractive, concise, and of high quality, as indicated by human and intrinsic evaluation… See the full description on the dataset page: https://huggingface.co/datasets/GEM/xlsum"
+            "XLSum is a multilingual summarization dataset supporting 44 languages. It consists of 1.35 M professionallly annotated article-summary pairs from BBC news articles."
+        ),
+        __short_description__=(
+            "Uses a dataset with 1.35 M professionally-annotated summaries of BBC news articles in 44 languages to evaluate a model's ability to summarize multilingual text. Metric shows the ROUGE-L score for the generated summary."
         ),
     )
     if lang == langs[0]:
