@@ -5,7 +5,7 @@ from unitxt.types import SQLDatabase
 add_to_catalog(
     Task(
         input_fields={
-            "id": int,
+            "id": str,
             "utterance": str,
             "hint": str,
             "db": SQLDatabase,

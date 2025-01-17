@@ -1,7 +1,7 @@
 {
     "__type__": "task",
     "input_fields": {
-        "id": "int",
+        "id": "str",
         "utterance": "str",
         "hint": "str",
         "db": "SQLDatabase"
