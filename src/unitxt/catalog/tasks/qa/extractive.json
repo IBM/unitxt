@@ -13,5 +13,9 @@
     "metrics": [
         "metrics.squad"
     ],
-    "default_template": "templates.qa.extractive"
+    "default_template": "templates.qa.extractive",
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ]
 }

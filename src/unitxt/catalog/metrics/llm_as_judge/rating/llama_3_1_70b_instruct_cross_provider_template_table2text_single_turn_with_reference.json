@@ -1,0 +1,14 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "cross_provider_inference_engine",
+        "model": "llama-3-1-70b-instruct",
+        "max_tokens": 252,
+        "seed": 42
+    },
+    "template": "templates.response_assessment.rating.table2text_single_turn_with_reference",
+    "task": "rating.single_turn_with_reference",
+    "format": "formats.chat_api",
+    "main_score": "llama_3_1_70b_instruct_cross_provider_template_table2text_single_turn_with_reference",
+    "prediction_type": "str"
+}
