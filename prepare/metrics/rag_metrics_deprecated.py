@@ -180,6 +180,16 @@ for new_catalog_name, base_catalog_name, main_score in [
         default_context_relevance,
     )
 
+context_perplexity = MetricPipeline(
+    main_score="score",
+    preprocess_steps=preprocess_steps,
+    metric="metrics.perplexity_q.flan_t5_small",
+    postprocess_steps=[
+        Copy(field="score/instance/reference_scores", to_field="score/instance/score")
+    ],
+    __deprecated_msg__="This metric is deprecated. Use metrics.rag.autorag.context_relevance instead.",
+)
+add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
 
 ##############
 # faithfulness
