@@ -18,5 +18,6 @@
             "not_exist_do_nothing": true
         }
     ],
-    "metric": "metrics.sentence_bert.minilm_l12_v2"
+    "metric": "metrics.sentence_bert.minilm_l12_v2",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.answer_correctness.sentence_bert_mini_lm"
 }

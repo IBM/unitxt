@@ -25,5 +25,6 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.token_overlap"
+    "metric": "metrics.token_overlap",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.answer_relevance.token_recall"
 }

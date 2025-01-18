@@ -18,8 +18,6 @@
             "not_exist_do_nothing": true
         }
     ],
-    "metric": {
-        "__type__": "faithfulness_hhem"
-    },
-    "__description__": "Vectara's halucination detection model, HHEM2.1, compares contexts and generated answer to determine faithfulness."
+    "metric": "metrics.vectara_groundedness_hhem_2_1",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.faithfulness.vectara_hhem_2_1"
 }
