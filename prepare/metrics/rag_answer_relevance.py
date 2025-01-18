@@ -52,6 +52,9 @@ for task in task_names:
         metric="metrics.reward.deberta_v3_large_v2",
         score_prefix="answer_relevance_",
     )
+    add_to_catalog(
+        answer_reward, f"{base}.{task}.answer_relevance.answer_reward", overwrite=True
+    )
     if task == "autorag":
         add_to_catalog(answer_reward, f"{base}.{task}.answer_reward", overwrite=True)
 
