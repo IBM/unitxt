@@ -99,7 +99,6 @@ metric_type_to_template_v2 = {
 }
 
 inference_models_v2 = {
-    "llama_3_3_70b_instruct_wml": "engines.classification.llama_3_3_70b_instruct_wml",
     "llama_3_3_70b_instruct_watsonx": "engines.classification.llama_3_3_70b_instruct_watsonx",
     "llama_3_3_70b_instruct_rits": "engines.classification.llama_3_3_70b_instruct_rits",
     "gpt_4o_azure": "engines.classification.gpt_4o_2024_08_06_azure_openai",
@@ -112,6 +111,12 @@ for metric_type, template_name in metric_type_to_template_v2.items():
     template = f"templates.rag_eval.{metric_type}.{template_name}{realization_sufffix}"
     for inf_label, inference_model in inference_models_v2.items():
         for rag_unitxt_task in ["autorag", "response_generation", "end_to_end"]:
+            if (
+                rag_unitxt_task == "response_generation"
+                and metric_type == "context_relevance"
+            ):
+                continue
+
             judge_to_generator_fields_mapping = (
                 {}
                 if rag_unitxt_task == "autorag"
