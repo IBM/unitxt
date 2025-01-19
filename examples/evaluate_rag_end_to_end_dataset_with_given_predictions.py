@@ -45,11 +45,21 @@ predictions = [
     },
 ]
 
+# select recommended metrics according to your available resources.
+metrics = [
+    "metrics.rag.end_to_end.recommended.cpu_only.all",
+    # "metrics.rag.end_to_end.recommended.small_llm.all",
+    # "metrics.rag.end_to_end.recommended.llmaj_watsonx.all",
+    # "metrics.rag.end_to_end.recommended.llmaj_rits.all"
+    # "metrics.rag.end_to_end.recommended.llmaj_azure.all"
+]
+
 dataset = create_dataset(
     task="tasks.rag.end_to_end",
     test_set=dataset,
     split="test",
     postprocessors=[],
+    metrics=metrics,
 )
 
 results = evaluate(predictions, dataset)

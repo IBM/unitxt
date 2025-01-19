@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_3_70b_instruct_watsonx",
+    "template": "templates.rag_eval.answer_relevance.judge_answer_relevance_numeric",
+    "task": "tasks.rag_eval.answer_relevance.binary",
+    "format": null,
+    "main_score": "answer_relevance_judge",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "judge_to_generator_fields_mapping": {
+        "ground_truths": "reference_answers"
+    }
+}
