@@ -26,5 +26,5 @@
             "to_field": "score/instance/score"
         }
     ],
-    "__deprecated_msg__": "This metric is deprecated. Use metrics.rag.autorag.context_relevance instead."
+    "__deprecated_msg__": "This metric is deprecated. Use metrics.rag.external_rag.context_relevance instead."
 }

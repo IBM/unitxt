@@ -19,5 +19,5 @@
         }
     ],
     "metric": "metrics.sentence_bert.bge_large_en_1_5",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.context_relevance.sentence_bert_bge"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.context_relevance.sentence_bert_bge"
 }

@@ -4,7 +4,7 @@ from unitxt.metrics import (
 )
 from unitxt.operators import Copy, ListFieldValues
 
-task_names = ["autorag", "response_generation", "end_to_end"]
+task_names = ["external_rag", "response_generation", "end_to_end"]
 base = "metrics.rag"
 
 
@@ -13,7 +13,7 @@ def get_preprocess_steps(task):
     # We have to wrap the question by a list (otherwise it will be a string),
     # because references are expected to be lists
     last_step = ListFieldValues(fields=["references"], to_field="references")
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Copy(
                 field_to_field={
@@ -55,7 +55,7 @@ for task in task_names:
     add_to_catalog(
         answer_reward, f"{base}.{task}.answer_relevance.answer_reward", overwrite=True
     )
-    if task == "autorag":
+    if task == "external_rag":
         add_to_catalog(answer_reward, f"{base}.{task}.answer_reward", overwrite=True)
 
     answer_token_overlap = MetricPipeline(

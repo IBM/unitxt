@@ -19,5 +19,5 @@
         }
     ],
     "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.answer_correctness.bert_score_recall_ml"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.answer_correctness.bert_score_recall_ml"
 }

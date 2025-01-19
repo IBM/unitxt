@@ -19,5 +19,5 @@
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.context_relevance"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.context_relevance"
 }

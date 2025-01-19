@@ -15,5 +15,5 @@
         }
     ],
     "metric": "metrics.map",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.context_correctness.map"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.context_correctness.map"
 }

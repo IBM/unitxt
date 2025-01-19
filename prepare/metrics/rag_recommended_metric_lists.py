@@ -63,7 +63,7 @@ def get_recommended_metrics(resources_string, rag_unitxt_task):
 
 def register_recommended_metric_lists():
     for resource_str in recommended_metrics.keys():
-        for rag_unitxt_task in ["response_generation", "end_to_end", "autorag"]:
+        for rag_unitxt_task in ["response_generation", "end_to_end", "external_rag"]:
             metrics = MetricsList(
                 get_recommended_metrics(resource_str, rag_unitxt_task)
             )

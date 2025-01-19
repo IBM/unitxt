@@ -3,7 +3,7 @@ from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy, Rename
 from unitxt.test_utils.metrics import test_metric
 
-task_names = ["autorag", "response_generation", "end_to_end"]
+task_names = ["external_rag", "response_generation", "end_to_end"]
 base = "metrics.rag"
 default = "token_recall"
 dimension = "answer_correctness"
@@ -29,7 +29,7 @@ def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
 
 
 def get_test_pipeline_task_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Rename(field_to_field={"task_data/ground_truths": "ground_truths"}),
             Rename(field_to_field={"task_data/answer": "answer"}),
@@ -83,7 +83,7 @@ def test_answer_correctness(
 
 
 def get_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Copy(
                 field_to_field={
@@ -137,7 +137,7 @@ for task in task_names:
             overwrite=True,
         )
 
-        if new_catalog_name == default and task == "autorag":
+        if new_catalog_name == default and task == "external_rag":
             metric = MetricPipeline(
                 main_score=main_score,
                 preprocess_steps=preprocess_steps.copy(),

@@ -110,7 +110,7 @@ for metric_type, template_name in metric_type_to_template_v2.items():
     realization_sufffix = metric_type_to_realization[metric_type]
     template = f"templates.rag_eval.{metric_type}.{template_name}{realization_sufffix}"
     for inf_label, inference_model in inference_models_v2.items():
-        for rag_unitxt_task in ["autorag", "response_generation", "end_to_end"]:
+        for rag_unitxt_task in ["external_rag", "response_generation", "end_to_end"]:
             if (
                 rag_unitxt_task == "response_generation"
                 and metric_type == "context_relevance"
@@ -119,7 +119,7 @@ for metric_type, template_name in metric_type_to_template_v2.items():
 
             judge_to_generator_fields_mapping = (
                 {}
-                if rag_unitxt_task == "autorag"
+                if rag_unitxt_task == "external_rag"
                 else {"ground_truths": "reference_answers"}
             )
 

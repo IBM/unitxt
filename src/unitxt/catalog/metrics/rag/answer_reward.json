@@ -26,5 +26,5 @@
         }
     ],
     "metric": "metrics.reward.deberta_v3_large_v2",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.answer_reward"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.answer_reward"
 }

@@ -6,7 +6,7 @@ from unitxt.test_utils.metrics import test_metric
 
 default = "mrr"
 base = "metrics.rag"
-tasks = ["autorag", "end_to_end"]
+tasks = ["external_rag", "end_to_end"]
 dimension = "context_correctness"
 
 
@@ -28,7 +28,7 @@ def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
 
 
 def get_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Copy(field="context_ids", to_field="prediction"),
             Wrap(
@@ -48,7 +48,7 @@ def get_preprocess_steps(task):
 
 
 def get_test_pipeline_task_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Rename(field_to_field={"task_data/context_ids": "context_ids"}),
             Rename(
@@ -85,7 +85,7 @@ for new_catalog_name, base_catalog_name, main_score in [
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
         )
 
-        if new_catalog_name == default and task == "autorag":
+        if new_catalog_name == default and task == "external_rag":
             add_to_catalog(metric, f"{base}.{task}.{dimension}", overwrite=True)
 
 

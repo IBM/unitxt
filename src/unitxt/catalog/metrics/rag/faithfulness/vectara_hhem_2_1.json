@@ -19,5 +19,5 @@
         }
     ],
     "metric": "metrics.vectara_groundedness_hhem_2_1",
-    "__deprecated_msg__": "This metric should be replaced with metrics.rag.autorag.faithfulness.vectara_hhem_2_1"
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.faithfulness.vectara_hhem_2_1"
 }

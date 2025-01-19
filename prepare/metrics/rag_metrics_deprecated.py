@@ -4,7 +4,7 @@ from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy, ListFieldValues
 
 base = "metrics.rag"
-new_base = "metrics.rag.autorag"
+new_base = "metrics.rag.external_rag"
 
 
 def add_metric_pipeline_to_catalog(
@@ -187,7 +187,7 @@ context_perplexity = MetricPipeline(
     postprocess_steps=[
         Copy(field="score/instance/reference_scores", to_field="score/instance/score")
     ],
-    __deprecated_msg__="This metric is deprecated. Use metrics.rag.autorag.context_relevance instead.",
+    __deprecated_msg__="This metric is deprecated. Use metrics.rag.external_rag.context_relevance instead.",
 )
 add_to_catalog(context_perplexity, "metrics.rag.context_perplexity", overwrite=True)
 

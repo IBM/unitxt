@@ -8,7 +8,7 @@ from unitxt.test_utils.metrics import test_metric
 base = "metrics.rag"
 default = "token_k_precision"
 dimension = "faithfulness"
-task_names = ["autorag", "response_generation", "end_to_end"]
+task_names = ["external_rag", "response_generation", "end_to_end"]
 
 
 def get_scores_prefix(metric_catalog_name, dim_name):
@@ -31,7 +31,7 @@ def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
 
 
 def get_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Copy(
                 field_to_field={
@@ -61,7 +61,7 @@ def get_preprocess_steps(task):
 
 
 def get_test_pipeline_task_preprocess_steps(task):
-    if task == "autorag":
+    if task == "external_rag":
         return [
             Rename(field_to_field={"task_data/contexts": "contexts"}),
             Rename(field_to_field={"task_data/answer": "answer"}),
@@ -105,7 +105,7 @@ for task in task_names:
             metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
         )
 
-        if new_catalog_name == default and task == "autorag":
+        if new_catalog_name == default and task == "external_rag":
             metric = MetricPipeline(
                 main_score=main_score,
                 preprocess_steps=get_preprocess_steps(task),
