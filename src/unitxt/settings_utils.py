@@ -1,3 +1,85 @@
+"""Library Settings and Constants.
+
+This module provides a mechanism for managing application-wide configuration and immutable constants. It includes the `Settings` and `Constants` classes, which are implemented as singleton patterns to ensure a single shared instance across the application. Additionally, it defines utility functions to access these objects and configure application behavior.
+
+### Key Components:
+
+1. **Settings Class**:
+   - A singleton class for managing mutable configuration settings.
+   - Supports type enforcement for settings to ensure correct usage.
+   - Allows dynamic modification of settings using a context manager for temporary changes.
+   - Retrieves environment variable overrides for settings, enabling external customization.
+
+   #### Available Settings:
+   - `allow_unverified_code` (bool, default: False): Whether to allow unverified code execution.
+   - `use_only_local_catalogs` (bool, default: False): Restrict operations to local catalogs only.
+   - `global_loader_limit` (int, default: None): Limit for global data loaders.
+   - `num_resamples_for_instance_metrics` (int, default: 1000): Number of resamples for instance-level metrics.
+   - `num_resamples_for_global_metrics` (int, default: 100): Number of resamples for global metrics.
+   - `max_log_message_size` (int, default: 100000): Maximum size of log messages.
+   - `catalogs` (default: None): List of catalog configurations.
+   - `artifactories` (default: None): Artifact storage configurations.
+   - `default_recipe` (str, default: "dataset_recipe"): Default recipe for dataset operations.
+   - `default_verbosity` (str, default: "info"): Default verbosity level for logging.
+   - `use_eager_execution` (bool, default: False): Enable eager execution for tasks.
+   - `remote_metrics` (list, default: []): List of remote metrics configurations.
+   - `test_card_disable` (bool, default: False): Disable test cards if set to True.
+   - `test_metric_disable` (bool, default: False): Disable test metrics if set to True.
+   - `metrics_master_key_token` (default: None): Master token for metrics.
+   - `seed` (int, default: 42): Default seed for random operations.
+   - `skip_artifacts_prepare_and_verify` (bool, default: False): Skip artifact preparation and verification.
+   - `data_classification_policy` (default: None): Policy for data classification.
+   - `mock_inference_mode` (bool, default: False): Enable mock inference mode.
+   - `disable_hf_datasets_cache` (bool, default: True): Disable caching for Hugging Face datasets.
+   - `loader_cache_size` (int, default: 1): Cache size for data loaders.
+   - `task_data_as_text` (bool, default: True): Represent task data as text.
+   - `default_provider` (str, default: "watsonx"): Default service provider.
+   - `default_format` (default: None): Default format for data processing.
+
+   #### Usage:
+   - Access settings using `get_settings()` function.
+   - Modify settings temporarily using the `context` method:
+     ```python
+     settings = get_settings()
+     with settings.context(default_verbosity="debug"):
+         # Code within this block uses "debug" verbosity.
+     ```
+
+2. **Constants Class**:
+   - A singleton class for managing immutable constants used across the application.
+   - Constants cannot be modified once set.
+   - Provides centralized access to paths, URLs, and other fixed application parameters.
+
+   #### Available Constants:
+   - `dataset_file`: Path to the dataset file.
+   - `metric_file`: Path to the metric file.
+   - `local_catalog_path`: Path to the local catalog directory.
+   - `package_dir`: Directory of the installed package.
+   - `default_catalog_path`: Default catalog directory path.
+   - `dataset_url`: URL for dataset resources.
+   - `metric_url`: URL for metric resources.
+   - `version`: Current version of the application.
+   - `catalog_hierarchy_sep`: Separator for catalog hierarchy levels.
+   - `env_local_catalogs_paths_sep`: Separator for local catalog paths in environment variables.
+   - `non_registered_files`: List of files excluded from registration.
+   - `codebase_url`: URL of the codebase repository.
+   - `website_url`: Official website URL.
+   - `inference_stream`: Name of the inference stream constant.
+   - `instance_stream`: Name of the instance stream constant.
+   - `image_tag`: Default image tag for operations.
+   - `demos_pool_field`: Field name for demos pool.
+
+   #### Usage:
+   - Access constants using `get_constants()` function:
+     ```python
+     constants = get_constants()
+     print(constants.dataset_file)
+     ```
+
+3. **Helper Functions**:
+   - `get_settings()`: Returns the singleton `Settings` instance.
+   - `get_constants()`: Returns the singleton `Constants` instance.
+"""
 import importlib.metadata
 import importlib.util
 import os
