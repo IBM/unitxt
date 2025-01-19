@@ -140,7 +140,7 @@ class WeightedFusion(BaseFusion):
             multi_stream = origin()
             if split not in multi_stream:
                 continue
-            iterators[origin_name] = iter(origin()[split])
+            iterators[origin_name] = iter(multi_stream[split])
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
