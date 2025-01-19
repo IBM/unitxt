@@ -1,0 +1,39 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "relevance",
+    "description": "Is the response relevant with respect to the original text? The response captures the key points of the article. Consider whether all and only the important aspects are contained in the response. Penalize responses that contain redundancies or excess information.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "1",
+            "description": "The response is not relevant at all to the article."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "2",
+            "description": "The response is somewhat relevant to the article."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "3",
+            "description": "The response is relevant to the article."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "4",
+            "description": "The response is very relevant to the article."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "5",
+            "description": "The response is exceptionally relevant to the article and contains only the important aspects."
+        }
+    ],
+    "option_map": {
+        "1": 0.0,
+        "2": 0.25,
+        "3": 0.5,
+        "4": 0.75,
+        "5": 1.0
+    }
+}

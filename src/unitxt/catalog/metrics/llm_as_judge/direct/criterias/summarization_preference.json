@@ -1,0 +1,33 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "summarization_preference",
+    "description": "Does the response capture the summary in the best possible way?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Excellent",
+            "description": "The response includes details such as key figures, numbers, dates and details which are crucial for the entire understanding."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Good",
+            "description": "The response includes statements expressing emotions and acclamations."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Average",
+            "description": "The order of events in the response follows a suitable chronological order."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Poor",
+            "description": "The response includes minor and irrelevant details which add no value in a summary."
+        }
+    ],
+    "option_map": {
+        "Excellent": 1.0,
+        "Good": 0.75,
+        "Average": 0.5,
+        "Poor": 0.0
+    }
+}

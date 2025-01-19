@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "conversational",
+    "description": "Does the user response come across as conversational?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The user response comes across as conversational."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The user response doesn't come across as conversational."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "assistant_message_groundedness",
+    "description": "Assistant message is not grounded or faithful to the information provided in the Context.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": ""
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": ""
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

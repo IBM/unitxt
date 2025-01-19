@@ -2,10 +2,10 @@
     "__type__": "llm_judge_direct",
     "inference_engine": {
         "__type__": "lite_llm_inference_engine",
-        "model": "watsonx/ibm/granite-guardian-3-2b",
+        "model": "gpt-4o-2024-08-06",
         "max_tokens": 1024,
         "seed": 42
     },
-    "evaluator_name": "GRANITE_GUARDIAN_2B",
+    "evaluator_name": "GPT4",
     "generate_summaries": false
 }
