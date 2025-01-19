@@ -60,6 +60,7 @@ class TestFusion(UnitxtTestCase):
 
     def test_nonoverlapping_splits_fusion(self):
         operator = FixedFusion(
+            include_splits=["train", "test"],
             subsets={
                 "origin_train": IterableSource(
                     {"train": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
@@ -217,7 +218,7 @@ class TestFusion(UnitxtTestCase):
                 {"b": "y2", "subset": ["origin2"]},
             ],
         }
-        for key in res:
+        for key in ["train", "test"]:
             self.compare_stream(targets[key], list(res[key]))
 
         operator = WeightedFusion(
@@ -290,7 +291,7 @@ class TestFusion(UnitxtTestCase):
                 {"b": "y5", "subset": ["origin2"]},
             ],
         }
-        for key in res:
+        for key in ["train", "test"]:
             self.compare_stream(targets[key], list(res[key]))
 
         targets = [
