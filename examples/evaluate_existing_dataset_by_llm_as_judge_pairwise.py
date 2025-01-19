@@ -10,15 +10,15 @@ from unitxt.templates import NullTemplate
 logger = get_logger()
 settings = get_settings()
 
-test_instances = 10
+num_test_instances = 10
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
 
 dataset = load_dataset(
     card="cards.squad",
-    loader_limit=test_instances,
-    max_test_instances=test_instances,
+    loader_limit=num_test_instances,
+    max_test_instances=num_test_instances,
     split="test",
 )
 
@@ -65,8 +65,8 @@ metrics = [
 ]
 dataset = load_dataset(
     card="cards.squad",
-    loader_limit=test_instances,
-    max_test_instances=test_instances,
+    loader_limit=num_test_instances,
+    max_test_instances=num_test_instances,
     metrics=metrics,
     template=NullTemplate(),
     split="test",
