@@ -26,11 +26,23 @@ print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
 
 ratio1 = (
-    pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time_no_initial_ms"]
-) / (
-    main_perf["generate_benchmark_dataset_time"] - main_perf["load_time_no_initial_ms"]
+    (pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time_no_initial_ms"])
+    / (
+        main_perf["generate_benchmark_dataset_time"]
+        - main_perf["load_time_no_initial_ms"]
+    )
+    if (
+        main_perf["generate_benchmark_dataset_time"]
+        - main_perf["load_time_no_initial_ms"]
+    )
+    > 0
+    else 1
 )
-ratio2 = pr_perf["evaluation_time"] / main_perf["evaluation_time"]
+ratio2 = (
+    pr_perf["evaluation_time"] / main_perf["evaluation_time"]
+    if main_perf["evaluation_time"] > 0
+    else 1
+)
 # Markdown table formatting
 
 line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
