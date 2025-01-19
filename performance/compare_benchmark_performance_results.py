@@ -48,7 +48,12 @@ ratio2 = (
 line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
 line2 = "--------------------|-------------|-------------|---------------\n"
 line3 = f" Total time         | {main_perf['total_time']:>11} | {pr_perf['total_time']:>11} | {pr_perf['total_time']/main_perf['total_time']:.2f}\n"
-line4 = f" Load time          | {main_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']/main_perf['load_time_no_initial_ms']:.2f}\n"
+ratio_line4 = (
+    pr_perf["load_time_no_initial_ms"] / main_perf["load_time_no_initial_ms"]
+    if main_perf["load_time_no_initial_ms"] > 0
+    else 1
+)
+line4 = f" Load time          | {main_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']:>11} | {ratio_line4:.2f}\n"
 line5 = f" DS Gen. inc. Load  | {main_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time']/main_perf['generate_benchmark_dataset_time']:.2f}\n"
 line6 = f" DS Gen. exc. Load  | {round(main_perf['generate_benchmark_dataset_time']-main_perf['load_time_no_initial_ms'], 3):>11} | {round(pr_perf['generate_benchmark_dataset_time']-pr_perf['load_time_no_initial_ms'], 3):>11} | {ratio1:.2f}\n"
 line7 = f" Inference time     | {main_perf['inference_time']:>11} | {pr_perf['inference_time']:>11} | {pr_perf['inference_time']/main_perf['inference_time']:.2f}\n"
