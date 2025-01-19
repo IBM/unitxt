@@ -6,6 +6,26 @@ Library Settings and Constants
 
 This guide explains the rationale behind the :class:`Settings <settings_utils.Settings>` and :class:`Constants <settings_utils.Constants>` system, how to extend and configure them, and how to use them effectively in your application.
 
+All the settings can be easily accessed with:
+
+.. code-block:: python
+
+    import unitxt
+
+    print(unitxt.settings.default_verbosity)  # Output: "info"
+
+All the settings can be easily modified with:
+
+.. code-block:: python
+
+    settings.default_verbosity = "debug"
+
+Or through environment variables:
+
+.. code-block::
+
+    export UNITXT_DEFAULT_VERBOSITY = "debug"
+    
 Rationale
 =========
 
@@ -82,78 +102,103 @@ Below is the list of available settings, their types, and default values:
    * - Setting
      - Type
      - Default Value
+     - Environment Variable
    * - allow_unverified_code
      - bool
      - False
+     - UNITXT_ALLOW_UNVERIFIED_CODE
    * - use_only_local_catalogs
      - bool
      - False
+     - UNITXT_USE_ONLY_LOCAL_CATALOGS
    * - global_loader_limit
      - int
      - None
+     - UNITXT_GLOBAL_LOADER_LIMIT
    * - num_resamples_for_instance_metrics
      - int
      - 1000
+     - UNITXT_NUM_RESAMPLES_FOR_INSTANCE_METRICS
    * - num_resamples_for_global_metrics
      - int
      - 100
+     - UNITXT_NUM_RESAMPLES_FOR_GLOBAL_METRICS
    * - max_log_message_size
      - int
      - 100000
+     - UNITXT_MAX_LOG_MESSAGE_SIZE
    * - catalogs
      - None
      - None
+     - UNITXT_CATALOGS
    * - artifactories
      - None
      - None
+     - UNITXT_ARTIFACTORIES
    * - default_recipe
      - str
      - "dataset_recipe"
+     - UNITXT_DEFAULT_RECIPE
    * - default_verbosity
      - str
      - "info"
+     - UNITXT_DEFAULT_VERBOSITY
    * - use_eager_execution
      - bool
      - False
+     - UNITXT_USE_EAGER_EXECUTION
    * - remote_metrics
      - list
      - []
+     - UNITXT_REMOTE_METRICS
    * - test_card_disable
      - bool
      - False
+     - UNITXT_TEST_CARD_DISABLE
    * - test_metric_disable
      - bool
      - False
+     - UNITXT_TEST_METRIC_DISABLE
    * - metrics_master_key_token
      - None
      - None
+     - UNITXT_METRICS_MASTER_KEY_TOKEN
    * - seed
      - int
      - 42
+     - UNITXT_SEED
    * - skip_artifacts_prepare_and_verify
      - bool
      - False
+     - UNITXT_SKIP_ARTIFACTS_PREPARE_AND_VERIFY
    * - data_classification_policy
      - None
      - None
+     - UNITXT_DATA_CLASSIFICATION_POLICY
    * - mock_inference_mode
      - bool
      - False
+     - UNITXT_MOCK_INFERENCE_MODE
    * - disable_hf_datasets_cache
      - bool
      - True
+     - UNITXT_DISABLE_HF_DATASETS_CACHE
    * - loader_cache_size
      - int
      - 1
+     - UNITXT_LOADER_CACHE_SIZE
    * - task_data_as_text
      - bool
      - True
+     - UNITXT_TASK_DATA_AS_TEXT
    * - default_provider
      - str
      - "watsonx"
+     - UNITXT_DEFAULT_PROVIDER
    * - default_format
      - None
      - None
+     - UNITXT_DEFAULT_FORMAT
 
 List of Constants
 =================
