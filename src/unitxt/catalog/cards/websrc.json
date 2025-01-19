@@ -36,7 +36,23 @@
         }
     ],
     "task": "tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
-    "templates": "templates.qa.with_context.all",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\nAnswer the question using a single word or phrase.\n{question}",
+            "references_field": "answers",
+            "__description__": "lmms-evals default template for websrc."
+        },
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
     "default_template": {
         "__type__": "multi_reference_template",
         "input_format": "{context}\nAnswer the question using a single word or phrase.\n{question}",

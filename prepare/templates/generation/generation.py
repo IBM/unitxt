@@ -33,8 +33,8 @@ add_to_catalog(
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format="Given the following {type_of_input_a} and {type_of_input_b}, generate the corresponding {type_of_output}."
-        "\n{type_of_input_a}: \n{input_a} \n{type_of_input_b}: \n{input_b} \n{type_of_output}:",
+        instruction="Given the following {type_of_input_a} and {type_of_input_b}, generate the corresponding {type_of_output}.",
+        input_format="{type_of_input_a}: \n{input_a} \n{type_of_input_b}: \n{input_b} \n{type_of_output}:",
         output_format="{output}",
         postprocessors=[
             "processors.take_first_non_empty_line",
