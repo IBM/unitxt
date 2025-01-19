@@ -18,7 +18,7 @@ class BaseBenchmark(SourceOperator):
     splits: List[str] = NonPositionalField(
         default_factory=lambda: ["train", "validation", "test"]
     )
-    subset: Optional[str] = None
+    subset: Optional[str] = NonPositionalField(default=None)
 
     @abstractmethod
     def reset(self):
