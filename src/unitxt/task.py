@@ -1,14 +1,14 @@
 import warnings
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
 from .metrics import MetricsList
 from .operator import InstanceOperator
 from .operators import ArtifactFetcherMixin
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .templates import Template
 from .type_utils import (
     Type,
@@ -25,6 +25,7 @@ from .type_utils import (
 
 constants = get_constants()
 logger = get_logger()
+settings = get_settings()
 
 
 @deprecation(
@@ -213,9 +214,9 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         return data
 
     @classmethod
-    @lru_cache(maxsize=None)
-    def get_metrics_artifacts(cls, metric_id: str):
-        metric = cls.get_artifact(metric_id)
+    def get_metrics_artifact_without_load(cls, metric_id: str):
+        with settings.context(skip_artifacts_prepare_and_verify=True):
+            metric, _ = fetch_artifact(metric_id)
         if isinstance(metric, MetricsList):
             return metric.items
         return [metric]
@@ -223,7 +224,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     def check_metrics_type(self) -> None:
         prediction_type = self.prediction_type
         for metric_id in self.metrics:
-            metric_artifacts_list = Task.get_metrics_artifacts(metric_id)
+            metric_artifacts_list = Task.get_metrics_artifact_without_load(metric_id)
             for metric_artifact in metric_artifacts_list:
                 metric_prediction_type = metric_artifact.prediction_type
                 if (
