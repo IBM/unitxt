@@ -18,14 +18,14 @@ All the settings can be easily modified with:
 
 .. code-block:: python
 
-    settings.default_verbosity = "debug"
+    unitxt.settings.default_verbosity = "debug"
 
 Or through environment variables:
 
 .. code-block::
 
     export UNITXT_DEFAULT_VERBOSITY = "debug"
-    
+
 Rationale
 =========
 
@@ -94,7 +94,7 @@ This feature is useful for scenarios like testing or running specific tasks with
 List of Settings
 ================
 
-Below is the list of available settings, their types, and default values:
+Below is the list of available settings, their types, default values, corresponding environment variable names, and descriptions:
 
 .. list-table::
    :header-rows: 1
@@ -103,102 +103,127 @@ Below is the list of available settings, their types, and default values:
      - Type
      - Default Value
      - Environment Variable
+     - Description
    * - allow_unverified_code
      - bool
      - False
      - UNITXT_ALLOW_UNVERIFIED_CODE
+     - Enables or disables execution of unverified code.
    * - use_only_local_catalogs
      - bool
      - False
      - UNITXT_USE_ONLY_LOCAL_CATALOGS
+     - Restricts operations to use only local catalogs.
    * - global_loader_limit
      - int
      - None
      - UNITXT_GLOBAL_LOADER_LIMIT
+     - Sets a limit on the number of global data loaders.
    * - num_resamples_for_instance_metrics
      - int
      - 1000
      - UNITXT_NUM_RESAMPLES_FOR_INSTANCE_METRICS
+     - Number of resamples used for calculating instance-level metrics.
    * - num_resamples_for_global_metrics
      - int
      - 100
      - UNITXT_NUM_RESAMPLES_FOR_GLOBAL_METRICS
+     - Number of resamples used for calculating global metrics.
    * - max_log_message_size
      - int
      - 100000
      - UNITXT_MAX_LOG_MESSAGE_SIZE
+     - Maximum size allowed for log messages.
    * - catalogs
      - None
      - None
      - UNITXT_CATALOGS
+     - Specifies the catalogs configuration.
    * - artifactories
      - None
      - None
      - UNITXT_ARTIFACTORIES
+     - Defines the artifact storage configuration.
    * - default_recipe
      - str
      - "dataset_recipe"
      - UNITXT_DEFAULT_RECIPE
+     - Specifies the default recipe for datasets.
    * - default_verbosity
      - str
      - "info"
      - UNITXT_DEFAULT_VERBOSITY
+     - Sets the default verbosity level for logging.
    * - use_eager_execution
      - bool
      - False
      - UNITXT_USE_EAGER_EXECUTION
+     - Enables eager execution for tasks.
    * - remote_metrics
      - list
      - []
      - UNITXT_REMOTE_METRICS
+     - Defines a list of configurations for remote metrics.
    * - test_card_disable
      - bool
      - False
      - UNITXT_TEST_CARD_DISABLE
+     - Disables the use of test cards when enabled.
    * - test_metric_disable
      - bool
      - False
      - UNITXT_TEST_METRIC_DISABLE
+     - Disables the use of test metrics when enabled.
    * - metrics_master_key_token
      - None
      - None
      - UNITXT_METRICS_MASTER_KEY_TOKEN
+     - Specifies the master token for accessing metrics.
    * - seed
      - int
      - 42
      - UNITXT_SEED
+     - Default seed value for random operations.
    * - skip_artifacts_prepare_and_verify
      - bool
      - False
      - UNITXT_SKIP_ARTIFACTS_PREPARE_AND_VERIFY
+     - Skips preparation and verification of artifacts.
    * - data_classification_policy
      - None
      - None
      - UNITXT_DATA_CLASSIFICATION_POLICY
+     - Specifies the policy for data classification.
    * - mock_inference_mode
      - bool
      - False
      - UNITXT_MOCK_INFERENCE_MODE
+     - Enables mock inference mode for testing.
    * - disable_hf_datasets_cache
      - bool
      - True
      - UNITXT_DISABLE_HF_DATASETS_CACHE
+     - Disables caching for Hugging Face datasets.
    * - loader_cache_size
      - int
      - 1
      - UNITXT_LOADER_CACHE_SIZE
+     - Sets the cache size for data loaders.
    * - task_data_as_text
      - bool
      - True
      - UNITXT_TASK_DATA_AS_TEXT
+     - Enables representation of task data as plain text.
    * - default_provider
      - str
      - "watsonx"
      - UNITXT_DEFAULT_PROVIDER
+     - Specifies the default provider for tasks.
    * - default_format
      - None
      - None
      - UNITXT_DEFAULT_FORMAT
+     - Defines the default format for data processing.
 
 List of Constants
 =================
