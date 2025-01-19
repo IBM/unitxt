@@ -135,10 +135,12 @@ class WeightedFusion(BaseFusion):
         )
 
     def fusion_generator(self, split) -> Generator:
-        iterators = {
-            named_origin: iter(origin()[split])
-            for named_origin, origin in self.named_subsets.items()
-        }
+        iterators = {}
+        for origin_name, origin in self.named_subsets.items():
+            multi_stream = origin()
+            if split not in multi_stream:
+                continue
+            iterators[origin_name] = iter(origin()[split])
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
