@@ -1,3 +1,5 @@
+from typing import Optional
+
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
 from unitxt.types import SQLDatabase
@@ -7,7 +9,7 @@ add_to_catalog(
         input_fields={
             "id": str,
             "utterance": str,
-            "hint": str,
+            "hint": Optional[str],
             "db": SQLDatabase,
         },
         reference_fields={"query": str},

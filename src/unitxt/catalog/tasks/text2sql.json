@@ -3,7 +3,7 @@
     "input_fields": {
         "id": "str",
         "utterance": "str",
-        "hint": "str",
+        "hint": "Optional[str]",
         "db": "SQLDatabase"
     },
     "reference_fields": {
