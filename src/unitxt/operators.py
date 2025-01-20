@@ -1448,33 +1448,40 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
         self.min_frequency_percent = 0
 
 
-class Intersect(FieldOperator):
+class Intersect(InstanceOperator):
     """Intersects the value of a field, which must be a list, with a given list.
 
     Args:
-        allowed_values (list) - list to intersect.
+        allowed_field_values (list) - list to intersect.
+        fields_to_intersect (list) - list of fields to be filtered
     """
 
-    allowed_values: List[Any]
+    allowed_field_values: List[str]
+    fields_to_intersect: List[str]
 
     def verify(self):
         super().verify()
-        if self.process_every_value:
+
+        if not isinstance(self.allowed_field_values, list):
             raise ValueError(
-                "'process_every_value=True' is not supported in Intersect operator"
+                f"The allowed_field_values is not a type list but '{type(self.allowed_field_values)}'"
             )
 
-        if not isinstance(self.allowed_values, list):
-            raise ValueError(
-                f"The allowed_values is not a list but '{self.allowed_values}'"
+    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        
+        if set(self.allowed_field_values) == set(instance['labels']):
+            return instance
+        
+        data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in set(self.allowed_field_values)]
+        
+        return dict(
+            (
+                key, value[data_to_keep_indices] 
+                if key in self.fields_to_intersect
+                else value)
+            for key,value in instance.items()
             )
-
-    def process_value(self, value: Any) -> Any:
-        super().process_value(value)
-        if not isinstance(value, list):
-            raise ValueError(f"The value in field is not a list but '{value}'")
-        return [e for e in value if e in self.allowed_values]
-
 
 class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
@@ -2257,24 +2264,3 @@ class WikipediaFetcher(FieldOperator):
         page = self.wikipedia.page(title)
 
         return {"title": page.title, "body": getattr(page, self.mode)}
-
-class FilterEntityTypes(InstanceOperator):
-    
-    entities_types_to_keep: List[str]
-    fields_to_filter: List[str]
-    
-    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        
-        if set(self.entities_types_to_keep) == set(instance['labels']):
-            return instance
-        
-        data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in set(self.entities_types_to_keep)]
-        
-        return dict(
-            (
-                key, value[data_to_keep_indices] 
-                if key in self.fields_to_filter
-                else value)
-            for key,value in instance.items()
-            )

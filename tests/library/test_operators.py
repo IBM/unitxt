@@ -580,47 +580,68 @@ class TestOperators(UnitxtTestCase):
         )
 
     def test_intersect(self):
-        inputs = [
-            {"label": ["a", "b"]},
-            {"label": ["a", "c", "d"]},
-            {"label": ["a", "b", "f"]},
-        ]
-
-        targets = [
-            {"label": ["b"]},
-            {"label": []},
-            {"label": ["b", "f"]},
-        ]
-
-        check_operator(
-            operator=Intersect(field="label", allowed_values=["b", "f"]),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
-        )
-        with self.assertRaises(ValueError) as cm:
-            check_operator(
-                operator=Intersect(field="label", allowed_values=3),
+        
+        def __test_intersect(inputs, targets, fields_to_intersect, allowed_field_values):
+            return check_operator(
+                operator=Intersect(fields_to_intersect, allowed_field_values),
                 inputs=inputs,
                 targets=targets,
-                tester=self,
-            )
-        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
+                )
+        
+        ## basic test
+        __test_intersect(
+            inputs=[{"label": [1,2]}], 
+            targets=[{"label": [1]}],
+            fields_to_intersect=["label"],
+            allowed_field_values=[1]
+                        )
 
-        with self.assertRaises(ValueError) as cm:
-            check_operator(
-                operator=Intersect(
-                    field="label", allowed_values=["3"], process_every_value=True
-                ),
-                inputs=inputs,
-                targets=targets,
-                tester=self,
-            )
-        self.assertEqual(
-            str(cm.exception),
-            "'process_every_value=True' is not supported in Intersect operator",
+        # multiple fields of the same name
+        __test_intersect(
+            inputs = [
+                {"label": ["a", "b"]},
+                {"label": ["a", "c", "d"]},
+                {"name": ["a", "b", "f"]},
+            ],
+            targets = [
+                {"label": ["b"]},
+                {"label": []},
+                {"name": ["b", "f"]},
+            ],
+            fields_to_intersect=["label",'name'],
+            allowed_field_values=["b", "f"]
         )
+        
+        __test_intersect(
+            inputs = [
+                {"label": ["a", "b"]},
+                {"label": ["a", "c", "d"]},
+                {"label": ["a", "b", "f"]},
+            ],
+            targets = [
+                {"label": ["b"]},
+                {"label": []},
+                {"label": ["b", "f"]},
+            ],
+            fields_to_intersect=["label"], 
+            allowed_field_values=["b", "f"]
+        )
+        
+        
+        with self.assertRaises(ValueError) as cm:
+            __test_intersect(
+                inputs = [
+                    {"label": ["a", "b"]},
+                ],
+                targets = [
+                {"label": ["b"]},
+                ],
+                fields_to_intersect=["label"], 
+                allowed_field_values=3
+                )
+        self.assertEqual(str(cm.exception), "The allowed_field_values is not a list but '<class 'int'>'")
 
+        
         inputs = [
             {"label": "b"},
         ]
@@ -630,7 +651,7 @@ class TestOperators(UnitxtTestCase):
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
-            operator=Intersect(field="label", allowed_values=["c"]),
+            operator=Intersect(field=["label"], allowed_field_values=["c"]),
             inputs=inputs,
             exception_texts=exception_texts,
             tester=self,
@@ -3206,3 +3227,5 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
+        
+    def test_
