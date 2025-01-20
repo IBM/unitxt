@@ -1766,33 +1766,6 @@ class Shuffle(PagedStreamOperator):
         yield from page
 
 
-class Balance(StreamOperator):
-    """Create a stream with balanced representation based on specified fields.
-
-    Args:
-        by_fields (List[str]): The fields to balance the stream on.
-    """
-
-    by_fields: List[str]
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
-        grouped_instances = {}
-
-        for instance in stream:
-            key = tuple(
-                (field, type(instance[field]), instance[field])
-                for field in self.by_fields
-            )
-            grouped_instances.setdefault(key, []).append(instance)
-
-        while grouped_instances:
-            for key in list(grouped_instances.keys()):
-                if grouped_instances[key]:
-                    yield grouped_instances[key].pop(0)
-                if not grouped_instances[key]:
-                    del grouped_instances[key]
-
-
 class FeatureGroupedShuffle(Shuffle):
     """Class for shuffling an input dataset by instance 'blocks', not on the individual instance level.
 
@@ -1934,7 +1907,7 @@ class StreamRefiner(StreamOperator):
             yield from stream
 
 
-class DeterministicBalancer(StreamRefiner):
+class Balance(StreamRefiner):
     """A class used to balance streams deterministically.
 
     For each instance, a signature is constructed from the values of the instance in specified input 'fields'.
@@ -1987,6 +1960,10 @@ class DeterministicBalancer(StreamRefiner):
             if counter[sign] < max_total_instances_per_sign:
                 counter[sign] += 1
                 yield instance
+
+
+class DeterministicBalancer(Balance):
+    pass
 
 
 class MinimumOneExamplePerLabelRefiner(StreamRefiner):

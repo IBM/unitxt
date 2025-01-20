@@ -1,7 +1,0 @@
-{
-    "__type__": "open_ai_inference_engine",
-    "model_name": "gpt-4-turbo",
-    "logprobs": true,
-    "max_tokens": 5,
-    "temperature": 0.0
-}

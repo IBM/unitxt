@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.gpt_4o_2024_08_06_azure_openai",
+    "template": "templates.rag_eval.context_relevance.judge_context_relevance_ares_numeric",
+    "task": "tasks.rag_eval.context_relevance.binary",
+    "format": null,
+    "main_score": "context_relevance_judge",
+    "prediction_field": "contexts",
+    "infer_log_probs": false,
+    "judge_to_generator_fields_mapping": {
+        "ground_truths": "reference_answers"
+    }
+}

@@ -59,4 +59,4 @@ print("Global Scores:")
 print(results.global_scores.summary)
 
 print("Instance Scores:")
-print(results.instance_scores.summary)
+print(results.instance_scores)

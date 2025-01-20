@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nEvidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_faithful}",
+    "postprocessors": [
+        "processors.extract_from_double_brackets",
+        "processors.extract_verbal_judgement_bad_good",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question, the corresponding evidence and a prediction from a model.\nCompare the \"Prediction\" and the \"Evidence\" to determine whether or not the prediction is grounded in the evidence.\nA good prediction is a prediction which is grounded in the evidence, i.e. all the information of the prediction must either be present in the evidence or deducible from the evidence.\n\nBase your answer only on the information in the evidence. If the prediction is correct but not present in the evidence - it is not grounded.\nThe question is only given for context, and is irrelevant for determining the groundedness of the prediction.\nProvide a rating from one of the following choices: 'Very Bad', 'Bad', 'Mediocre', 'Good', 'Very Good'. Reply using the format of [[rating]], for example: '[[Mediocre]]'.\n"
+}

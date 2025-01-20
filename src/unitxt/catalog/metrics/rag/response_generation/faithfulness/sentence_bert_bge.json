@@ -1,0 +1,14 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "sbert_score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/contexts": "references"
+            }
+        }
+    ],
+    "metric": "metrics.sentence_bert.bge_large_en_1_5",
+    "score_prefix": "faithfulness_sentence_bert_bge_"
+}

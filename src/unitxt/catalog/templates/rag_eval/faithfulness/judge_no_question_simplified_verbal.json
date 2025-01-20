@@ -1,0 +1,13 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Evidence: {contexts}\n\nPrediction: {answer}\n",
+    "output_format": "{is_faithful}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.extract_verbal_judgement"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a grounding evidence and a prediction from a model. Compare the \"Prediction\" and the \"Evidence\" to determine to what extent the prediction is grounded in the evidence.\nTo be grounded in the evidence, all the information of the prediction must either be present in the evidence or deducible from the evidence.\n\nBase your answer only on the information in the evidence. If the prediction is correct but not present in the evidence than it is not grounded.\nReply with one of the 4 options, without any further explanations:\n\"Completely Grounded\" - if the prediction is grounded in the evidence.\n\"Mostly grounded\" - if the vast majority of the information in the prediction is grounded in the evidence, but there is a small or negligible part of the prediction which is not present in the evidence.\n\"Somewhat grounded\" - If some of the information in the prediction is grounded in the evidence.\n\"Not grounded\" - If most or all of the information in the prediction is not grounded in the evidence\n"
+}

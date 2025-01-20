@@ -4,14 +4,20 @@
     "preprocess_steps": [
         {
             "__type__": "copy",
-            "field": "ground_truths",
-            "to_field": "references"
+            "field_to_field": {
+                "task_data/reference_answers": "references",
+                "answer": "prediction"
+            },
+            "not_exist_do_nothing": true
         },
         {
             "__type__": "copy",
-            "field": "answer",
-            "to_field": "prediction"
+            "field_to_field": {
+                "ground_truths": "references"
+            },
+            "not_exist_do_nothing": true
         }
     ],
-    "metric": "metrics.token_overlap"
+    "metric": "metrics.token_overlap",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.answer_correctness"
 }

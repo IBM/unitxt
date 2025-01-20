@@ -9,6 +9,7 @@ import sys
 import time
 import uuid
 from collections import Counter
+from datetime import datetime
 from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
@@ -21,6 +22,7 @@ from typing import (
     Sequence,
     Tuple,
     TypedDict,
+    TypeVar,
     Union,
 )
 
@@ -131,6 +133,18 @@ class TextGenerationInferenceOutput:
     inference_type: Optional[str] = None
 
 
+T = TypeVar("T")
+
+
+class ListWithMetadata(List[T]):
+    def __init__(self, *args, metadata: Optional[dict] = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metadata = metadata if metadata is not None else {}
+
+    def __repr__(self):
+        return f"ListWithMetadata(data={super().__repr__()}, metadata={self.metadata})"
+
+
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
 
@@ -162,14 +176,14 @@ class InferenceEngine(Artifact):
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
     def infer(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         """Verifies instances of a dataset and perform inference on the input dataset.
 
         If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
@@ -187,8 +201,17 @@ class InferenceEngine(Artifact):
 
         [self.verify_instance(instance) for instance in dataset]
         if settings.mock_inference_mode:
-            return self._mock_infer(dataset)
-        return self._infer(dataset, return_meta_data)
+            result = self._mock_infer(dataset)
+        else:
+            result = self._infer(dataset, return_meta_data)
+        return ListWithMetadata(
+            result,
+            metadata={
+                "init_dict": self._init_dict,
+                "inference_engine_type": self.__class__.__name__,
+                "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
+            },
+        )
 
     def _mock_infer(
         self,
@@ -1628,6 +1651,44 @@ class OpenAiInferenceEngine(
         return predict_result
 
 
+class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
+    label: str = "azure_openai"
+
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        api_key_var_name = f"{self.label.upper()}_API_KEY"
+        api_key = self.credentials.get(
+            "api_key", os.environ.get(api_key_var_name, None)
+        )
+        assert api_key, (
+            f"Error while trying to run {self.label}. "
+            f"Please set the env variable: '{api_key_var_name}'"
+        )
+
+        azure_openapi_host = self.credentials.get(
+            "azure_openapi_host", os.environ.get(f"{self.label.upper()}_HOST", None)
+        )
+
+        api_version = self.credentials.get(
+            "api_version", os.environ.get("OPENAI_API_VERSION", None)
+        )
+        assert (
+            api_version and azure_openapi_host
+        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
+
+        return {"api_key": api_key, "api_url": api_url}
+
+    def create_client(self):
+        from openai import AzureOpenAI
+
+        self.credentials = self._prepare_credentials()
+        return AzureOpenAI(
+            api_key=self.credentials["api_key"],
+            base_url=self.credentials["api_url"],
+            default_headers=self.get_default_headers(),
+        )
+
+
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
     label: str = "vllm"
 
@@ -1636,6 +1697,7 @@ class RITSInferenceEngine(
     OpenAiInferenceEngine,
 ):
     label: str = "rits"
+    data_classification_policy = ["public", "proprietary"]
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
@@ -2816,7 +2878,9 @@ class LiteLLMInferenceEngine(
         """Main inference entry point."""
         loop = asyncio.get_event_loop()
         responses = loop.run_until_complete(self._infer_async(dataset))
+        return self.get_return_object(responses, return_meta_data)
 
+    def get_return_object(self, responses, return_meta_data):
         if return_meta_data:
             return responses
 
@@ -2833,6 +2897,7 @@ _supported_apis = Literal[
     "watsonx-sdk",
     "rits",
     "azure",
+    "vertex-ai",
 ]
 
 
@@ -2847,7 +2912,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai"]
 
     Args:
         provider (Optional):
@@ -2867,6 +2932,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
             "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
+            "llama-3-3-70b-instruct": "watsonx/meta-llama/llama-3-3-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
@@ -2903,6 +2969,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+            "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
@@ -2914,8 +2982,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4o": "gpt-4o",
             "gpt-4o-2024-08-06": "gpt-4o-2024-08-06",
             "gpt-4o-2024-05-13": "gpt-4o-2024-05-13",
-            "gpt-4-turbo": "gpt-4-turbo",
             "gpt-4-turbo-preview": "gpt-4-0125-preview",
+            "gpt-4-turbo": "gpt-4-turbo",
             "gpt-4-0125-preview": "gpt-4-0125-preview",
             "gpt-4-1106-preview": "gpt-4-1106-preview",
             "gpt-3.5-turbo-1106": "gpt-3.5-turbo-1106",
@@ -2945,12 +3013,18 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-32k-0613": "azure/gpt-4-32k-0613",
             "gpt-4-1106-preview": "azure/gpt-4-1106-preview",
             "gpt-4-0125-preview": "azure/gpt-4-0125-preview",
+            "gpt-4-turbo": "azure/gpt-4-turbo-2024-04-09",
             "gpt-3.5-turbo": "azure/gpt-3.5-turbo",
             "gpt-3.5-turbo-0301": "azure/gpt-3.5-turbo-0301",
             "gpt-3.5-turbo-0613": "azure/gpt-3.5-turbo-0613",
             "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
             "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
             "gpt-4-vision": "azure/gpt-4-vision",
+        },
+        "vertex-ai": {
+            "llama-3-1-8b-instruct": "vertex_ai/meta/llama-3.1-8b-instruct-maas",
+            "llama-3-1-70b-instruct": "vertex_ai/meta/llama-3.1-70b-instruct-maas",
+            "llama-3-1-405b-instruct": "vertex_ai/meta/llama-3.1-405b-instruct-maas",
         },
     }
 
@@ -2964,6 +3038,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": WMLInferenceEngine,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
+        "vertex-ai": LiteLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
@@ -2971,6 +3046,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "rits": {"model": "model_name"},
     }
+
+    def get_return_object(self, **kwargs):
+        return self.engine.get_return_object(kwargs)
 
     def get_provider_name(self):
         return self.provider if self.provider is not None else settings.default_provider
@@ -3085,6 +3163,12 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if return_meta_data and not hasattr(self.engine, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+            )
+
         inputs = []
 
         for instance in dataset:

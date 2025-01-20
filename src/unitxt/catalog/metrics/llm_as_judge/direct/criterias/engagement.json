@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "engagement",
+    "description": "Does the email response encourage engagement or action?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The email response is engaging and encourages action from the recipient."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The email response lacks engagement and does not encourage action."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

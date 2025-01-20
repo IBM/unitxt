@@ -1,0 +1,9 @@
+{
+    "__type__": "cross_provider_inference_engine",
+    "model": "llama-3-1-70b-instruct",
+    "logprobs": true,
+    "max_tokens": 5,
+    "temperature": 0.0,
+    "top_logprobs": 5,
+    "provider": "watsonx"
+}

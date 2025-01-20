@@ -38,7 +38,7 @@ packages = {find = {where = ["src"]}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-unitxt = ["catalog/**/*.json", "ui/banner.png"]
+unitxt = ["catalog/**/*.json", "ui/banner.png", "assistant/embeddings.npz", "assistant/metadata.parquet"]
 
 [tool.setuptools.dynamic]
 version = {attr = "unitxt.version.version"}
@@ -120,6 +120,11 @@ inference-tests = [
   "diskcache",
   "numpy==1.26.4"
 ]
+assistant = [
+    "streamlit",
+    "watchdog",
+    "litellm"
+]
 
 # Combine all extras by referencing other groups
 all = [
@@ -130,11 +135,13 @@ all = [
     "unitxt[service]",
     "unitxt[tests]",
     "unitxt[ui]",
-    "unitxt[watsonx]"
+    "unitxt[watsonx]",
+    "unitxt[assistant]"
 ]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
+unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
 
 [tool.ruff]
@@ -252,6 +259,7 @@ omit = [
     "src/unitxt/inference.py",
     "src/unitxt/ui/*",
     "src/unitxt/service/*",
+    "src/unitxt/assistant/*",
     "src/unitxt/test_utils/*",
     "src/unitxt/dataset.py",
     "src/unitxt/metric.py",
