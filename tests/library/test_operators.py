@@ -3146,5 +3146,4 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
-        
-    def test_
+    
