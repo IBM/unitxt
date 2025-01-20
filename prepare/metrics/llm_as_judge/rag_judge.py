@@ -1,5 +1,4 @@
 from unitxt import add_to_catalog
-from unitxt.artifact import UnitxtArtifactNotFoundError, fetch_artifact
 from unitxt.inference import GenericInferenceEngine
 from unitxt.llm_as_judge import (
     TaskBasedLLMasJudge,
@@ -31,12 +30,12 @@ inference_models = {
 
 
 def get_prediction_field(metric_type):
-    return None if metric_type == "context_relevance" else "answer"
+    return "contexts" if metric_type == "context_relevance" else "answer"
 
 
 for metric_type, template_dict in metric_type_to_template_dict.items():
     for template_short_name, template_name in template_dict.items():
-        task_name = f"tasks.rag_eval.{metric_type}.binary"
+        judge_task_name = f"tasks.rag_eval.{metric_type}.binary"
         for logprobs_label in [
             "",
             "_logprobs",
@@ -46,10 +45,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
             template = (
                 f"templates.rag_eval.{metric_type}.{template_name}{logprobs_label}"
             )
-            try:
-                t = fetch_artifact(template)[0]
-            except UnitxtArtifactNotFoundError:
-                continue
+
             for inf_label, inference_model in inference_models.items():
                 if (
                     use_logprobs and inf_label == generic_engine_label
@@ -60,7 +56,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                 metric = TaskBasedLLMasJudge(
                     inference_model=inference_model,
                     template=template,
-                    task=task_name,
+                    task=judge_task_name,
                     format=None,
                     main_score=metric_label,
                     prediction_field=get_prediction_field(metric_type),
@@ -79,7 +75,7 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                     metric = TaskBasedLLMasJudge(
                         inference_model=inference_model,
                         template=template,
-                        task=task_name,
+                        task=judge_task_name,
                         format=None,
                         main_score=metric_label,
                         prediction_field=get_prediction_field(metric_type),
@@ -92,3 +88,56 @@ for metric_type, template_dict in metric_type_to_template_dict.items():
                         f"metrics.llm_as_judge.binary.{inf_label}_{metric_label}",
                         overwrite=True,
                     )
+
+
+# now add new metrics under unitxt rag tasks
+metric_type_to_template_v2 = {
+    "faithfulness": "judge_with_question_simplified",
+    "context_relevance": "judge_context_relevance_ares",
+    "answer_correctness": "judge_loose_match_no_context",
+    "answer_relevance": "judge_answer_relevance",
+}
+
+inference_models_v2 = {
+    "llama_3_3_70b_instruct_watsonx": "engines.classification.llama_3_3_70b_instruct_watsonx",
+    "llama_3_3_70b_instruct_rits": "engines.classification.llama_3_3_70b_instruct_rits",
+    "gpt_4o_azure": "engines.classification.gpt_4o_2024_08_06_azure_openai",
+    generic_engine_label: GenericInferenceEngine(),
+}
+
+for metric_type, template_name in metric_type_to_template_v2.items():
+    judge_task_name = f"tasks.rag_eval.{metric_type}.binary"
+    realization_sufffix = metric_type_to_realization[metric_type]
+    template = f"templates.rag_eval.{metric_type}.{template_name}{realization_sufffix}"
+    for inf_label, inference_model in inference_models_v2.items():
+        for rag_unitxt_task in ["external_rag", "response_generation", "end_to_end"]:
+            if (
+                rag_unitxt_task == "response_generation"
+                and metric_type == "context_relevance"
+            ):
+                continue
+
+            judge_to_generator_fields_mapping = (
+                {}
+                if rag_unitxt_task == "external_rag"
+                else {"ground_truths": "reference_answers"}
+            )
+
+            new_catalog_name = (
+                f"metrics.rag.{rag_unitxt_task}.{metric_type}.{inf_label}_judge"
+            )
+            metric = TaskBasedLLMasJudge(
+                inference_model=inference_model,
+                template=template,
+                task=judge_task_name,
+                format=None,
+                main_score=f"{metric_type}_judge",
+                prediction_field=get_prediction_field(metric_type),
+                infer_log_probs=False,
+                judge_to_generator_fields_mapping=judge_to_generator_fields_mapping,
+            )
+            add_to_catalog(
+                metric,
+                new_catalog_name,
+                overwrite=True,
+            )

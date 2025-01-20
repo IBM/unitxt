@@ -1,0 +1,15 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "recall",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/reference_answers": "references",
+                "prediction/answer": "prediction"
+            }
+        }
+    ],
+    "metric": "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
+    "score_prefix": "answer_correctness_bert_score_recall_ml_"
+}

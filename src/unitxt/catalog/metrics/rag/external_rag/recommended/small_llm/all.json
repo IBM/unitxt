@@ -1,0 +1,10 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rag.external_rag.answer_correctness.bert_score_recall_ml",
+        "metrics.rag.external_rag.faithfulness.vectara_hhem_2_1",
+        "metrics.rag.external_rag.answer_relevance.answer_reward",
+        "metrics.rag.external_rag.context_relevance.sentence_bert_mini_lm",
+        "metrics.rag.external_rag.context_correctness.mrr"
+    ]
+}
