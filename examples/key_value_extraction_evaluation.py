@@ -101,17 +101,9 @@ dataset = create_dataset(
     format="formats.chat_api",
 )
 
-# Infer using Llama-3.2-1B base using HF API
-# model = HFPipelineBasedInferenceEngine(
-#   model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
-# )
-# Change to this to infer with external APIs:
-
 model = CrossProviderInferenceEngine(
     model="llama-3-2-11b-vision-instruct", provider="watsonx"
 )
-# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
-
 
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
