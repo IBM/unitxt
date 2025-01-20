@@ -39,7 +39,9 @@ def search(query, metadata_df, embeddings, max_tokens=5000, min_text_length=50):
     sorted_indices = torch.argsort(similarities, descending=True).numpy()
 
     # Initialize tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("meta-llama/Meta-Llama-3-8B-Instruct")
+    tokenizer = AutoTokenizer.from_pretrained(
+        "nvidia/Llama-3.1-Nemotron-70B-Instruct-HF"
+    )
 
     # Collect results until max_tokens is reached
     total_tokens = 0
