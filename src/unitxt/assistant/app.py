@@ -87,8 +87,10 @@ def generate_response(messages, metadata_df, embeddings, model, max_tokens=500):
 
     system_prompt = (
         "Your job is to assist users with Unitxt Library and Catalog. "
-        "Refuse to do anything else.\n\n"
-        "# Answer only based on the following Information:\n\n" + context
+        "Refuse to do anything else. "
+        "Based your answers on the information below add link to its origin Path with this format: https://www.unitxt.ai/en/latest/{path}.html"
+        "\n\n"
+        "# Answer only based on the following information:\n\n" + context
     )
 
     messages = [
