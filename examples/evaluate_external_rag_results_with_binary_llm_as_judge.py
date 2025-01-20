@@ -53,22 +53,17 @@ test_examples = [
 
 # Select the desired metric(s).
 # Each metric measures a certain aspect of the generated answer (answer_correctness, faithfulness,
-# answer_relevance, context_relevance and correctness_holistic).
-# All available metrics are under "catalog.metrics.rag"
-# Those with extension "logprobs" provide a real value prediction in [0,1], the others provide a binary prediction.
-# By default, all judges use llama_3_1_70b_instruct_wml. We will soon see how to change this.
+# answer_relevance and context_relevance).
+# All available metrics are under "catalog.metrics.rag.autorag.", ending with "judge"
+# By default, all judges use llama_3_3_70b_instruct. We will soon see how to change this.
 metric_names = [
-    "metrics.rag.answer_correctness.llama_3_1_70b_instruct_wml_q_a_gt_loose_logprobs",
-    "metrics.rag.faithfulness.llama_3_1_70b_instruct_wml_q_c_a_logprobs",
+    "metrics.rag.autorag.answer_correctness.llama_3_3_70b_instruct_wml_judge",
+    "metrics.rag.autorag.faithfulness.llama_3_3_70b_instruct_wml_judge",
 ]
 
 # select the desired model.
 # all available models are under "catalog.engines.classification"
-model_names = [
-    "engines.classification.mixtral_8x7b_instruct_v01_wml",
-    "engines.classification.llama_3_1_70b_instruct_wml",
-    # "engines.classification.gpt_4_turbo_openai",
-]
+model_names = ["engines.classification.mixtral_8x7b_instruct_v01_wml"]
 
 if __name__ == "__main__":
     multi_stream = MultiStream.from_iterables({"test": test_examples}, copying=True)
@@ -79,9 +74,8 @@ if __name__ == "__main__":
 
     for metric_name in metric_names:
         for model_name in model_names:
-            # override the metric with the inference model. the default model is llama_3_1_70b_instruct_wml so
-            # no need to override when using it.
-            llmaj_metric_name = f"{metric_name}[model={model_name}]"
+            # override the metric with the inference model (to use a model different from the one in the metric name)
+            llmaj_metric_name = f"{metric_name}[inference_model={model_name}]"
 
             # apply the metric over the input
             metrics_operator = SequentialOperator(steps=[llmaj_metric_name])

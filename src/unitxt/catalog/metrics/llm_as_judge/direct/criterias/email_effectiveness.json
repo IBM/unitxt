@@ -1,0 +1,33 @@
+{
+    "__type__": "criteria_with_options",
+    "option_map": {
+        "Excellent": 1.0,
+        "Acceptable": 0.5,
+        "Could be Improved": 0.25,
+        "Bad": 0.0
+    },
+    "name": "email_effectiveness",
+    "description": "Does the email response effectively communicate the desired message?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Excellent",
+            "description": "The email response clearly and effectively communicates the desired message with no ambiguity."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Acceptable",
+            "description": "The email response communicates the desired message but may have minor ambiguities or areas for improvement."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Could be Improved",
+            "description": "The email response struggles to communicate the desired message, leading to confusion or misunderstanding."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Bad",
+            "description": "The email response fails to communicate the desired message effectively."
+        }
+    ]
+}

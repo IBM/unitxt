@@ -2,7 +2,7 @@ from typing import Any
 
 from unitxt import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.llm_as_judge_operators import CreateYesNoCriteriaFromString
+from unitxt.llm_as_judge import CreateYesNoCriteriaFromString
 from unitxt.loaders import LoadFromDictionary
 
 data = {
