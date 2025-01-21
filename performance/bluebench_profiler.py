@@ -69,20 +69,6 @@ class BlueBenchProfiler:
             # to charge here for the time of generating all instances
             return list(stream)
 
-    # def profiler_instantiate_model(self) -> InferenceEngine:
-    #     return CrossProviderInferenceEngine(
-    #         model="llama-3-8b-instruct",
-    #         max_tokens=30,
-    #     )
-
-    # def profiler_infer_predictions(
-    #     self, model: InferenceEngine, dataset: List[Dict[str, Any]]
-    # ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-    #     return model.infer(dataset=dataset)
-
-    # def profiler_evaluate_predictions(self, predictions, dataset) -> dict:
-    #     return evaluate(predictions=predictions, data=dataset)
-
     def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
         benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
             dataset_query=dataset_query, **kwargs
@@ -92,13 +78,6 @@ class BlueBenchProfiler:
             benchmark_recipe=benchmark_recipe, split=split, **kwargs
         )
 
-        # model = self.profiler_instantiate_model()
-
-        # predictions = self.profiler_infer_predictions(model=model, dataset=dataset)
-
-        # evaluation_result = self.profiler_evaluate_predictions(
-        #     predictions=predictions, dataset=dataset
-        # )
         logger.critical(f"length of evaluation_result: {len(dataset)}")
 
 
@@ -170,15 +149,6 @@ def main():
         generate_benchmark_dataset_time = find_cummtime_of(
             "profiler_generate_benchmark_dataset", "bluebench_profiler.py", s
         )
-        # instantiate_model_time = find_cummtime_of(
-        #     "profiler_instantiate_model", "bluebench_profiler.py", s
-        # )
-        # inference_time = find_cummtime_of(
-        #     "profiler_infer_predictions", "bluebench_profiler.py", s
-        # )
-        # evaluation_time = find_cummtime_of(
-        #     "profiler_evaluate_predictions", "bluebench_profiler.py", s
-        # )
 
         # Data to be written
         dictionary = {

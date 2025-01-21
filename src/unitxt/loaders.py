@@ -162,6 +162,8 @@ class Loader(SourceOperator):
             iterables = self.load_iterables()
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
+        if isoftype(iterables, Dict[str, ReusableGenerator]):
+            return MultiStream.from_generators(iterables)
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
@@ -311,7 +313,7 @@ class LoadHF(Loader):
         self
     ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
         if not isinstance(self, LoadFromHFSpace):
-            # try the following just for LoadHF
+            # try the following for LoadHF only
             if self.split is not None:
                 return {
                     self.split: ReusableGenerator(
@@ -381,16 +383,6 @@ class LoadHF(Loader):
 
         yield from dataset
 
-    def load_data(self) -> MultiStream:
-        iterables = self.__class__._loader_cache.get(str(self), None)
-        if iterables is None:
-            iterables = self.load_iterables()
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self)] = iterables
-        if isoftype(iterables, Dict[str, ReusableGenerator]):
-            return MultiStream.from_generators(iterables)
-        return MultiStream.from_iterables(iterables, copying=True)
-
     def process(self) -> MultiStream:
         self._maybe_set_classification_policy()
         return self.add_data_classification(self.load_data())
@@ -451,14 +443,23 @@ class LoadCSV(Loader):
 
     def load_iterables(self):
         iterables = {}
-        for split_name, file_path in self.files.items():
-            reader = self.get_reader()
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
-                "records"
+        for split_name in self.files.keys():
+            iterables[split_name] = ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
             )
+
         return iterables
+
+    def split_generator(self, split: str) -> Generator:
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+            dataset = pd.read_csv(
+                self.files[split], nrows=self.get_limit(), sep=self.sep
+            ).to_dict("records")
+        else:
+            dataset = pd.read_csv(self.files[split], sep=self.sep).to_dict("records")
+
+        yield from dataset
 
 
 class LoadFromSklearn(Loader):

@@ -1,6 +1,5 @@
 import argparse
 import json
-import os
 import sys
 
 # Argument parser to get file paths from the command line
@@ -23,7 +22,6 @@ with open(args.pr_perf_file) as openfile:
 print(f'dataset_query = "{main_perf["dataset_query"]}"')
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
-print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
 
 ratio1 = (
     (pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time_no_initial_ms"])
@@ -57,7 +55,7 @@ line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | 
 line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time'] / main_perf['instantiate_model_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
-print(line1 + line2 + line3 + line4 + line5 + line6 + line9)
+print(line1 + line2 + line3 + line4 + line5 + line6 + line7)
 print("\n\n")
 # Performance degradation check (5% threshold)
 if ratio1 > 1.05:
