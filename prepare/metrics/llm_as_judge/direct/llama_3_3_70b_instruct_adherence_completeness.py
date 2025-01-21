@@ -43,6 +43,11 @@ adherence_criteria = CriteriaWithOptions.from_obj(
         "option_map": option_map,
     }
 )
+add_to_catalog(
+    adherence_criteria,
+    f"metrics.llm_as_judge.direct.criterias.{adherence_criteria.name}",
+    overwrite=True,
+)
 
 completeness_criteria = CriteriaWithOptions.from_obj(
     {
@@ -74,6 +79,12 @@ completeness_criteria = CriteriaWithOptions.from_obj(
         "option_map": option_map,
     }
 )
+add_to_catalog(
+    completeness_criteria,
+    f"metrics.llm_as_judge.direct.criterias.{completeness_criteria.name}",
+    overwrite=True,
+)
+
 
 # now = define the judge metric using the criteria
 adherence_metric = LLMJudgeDirect(
