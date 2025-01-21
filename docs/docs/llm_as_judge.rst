@@ -120,14 +120,14 @@ print(results.instance_scores.summary)
 
 Positional Bias
 --------------------------------------------
-Positional bias determines if the judge model favors an option owing to its placement within the list of available options rather than its instrinsic merit.
+Positional bias determines if the judge model favors an option owing to its placement within the list of available options rather than its intrinsic merit.
 Unitxt reports if the judge model has positional bias in the instance level summary.
 
 Creating a custom criterion
 -------------------------------------
 As described above, the user can either choose a pre-defined criteria from the catalog or define their own criterion. Below is an example of how the user can define their own criterion.
 The criteria must have options and their descriptions for the judge model to choose from.
-Below is an example where the user mandates that the model respond with the temperature in both Celcius and Fahrenheit. The various possibilities are described in the options and each option is associated with a score that is specified in the score map.
+Below is an example where the user mandates that the model respond with the temperature in both Celsius and Fahrenheit. The various possibilities are described in the options and each option is associated with a score that is specified in the score map.
 
 .. code-block:: python
 
