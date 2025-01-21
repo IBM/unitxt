@@ -17,7 +17,7 @@ option_map = {
 adherence_criteria = CriteriaWithOptions.from_obj(
     {
         "name": "adherence_with_format",
-        "description": "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing)?",
+        "description": "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing).",
         "options": [
             {
                 "name": "Excellent",
@@ -52,7 +52,7 @@ add_to_catalog(
 completeness_criteria = CriteriaWithOptions.from_obj(
     {
         "name": "answer_completeness",
-        "description": "The response is complete: all the aspects of the reference answer are addressed in the response. The"
+        "description": "The response is complete: all the aspects of the reference answer are addressed in the response. The "
         "response might use different phrasing or wording from the reference answer.",
         "options": [
             {

@@ -8,7 +8,7 @@
     "criteria": {
         "__type__": "criteria_with_options",
         "name": "adherence_with_format",
-        "description": "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing)?",
+        "description": "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing).",
         "options": [
             {
                 "__type__": "criteria_option",

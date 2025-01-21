@@ -1,7 +1,7 @@
 {
     "__type__": "criteria_with_options",
     "name": "answer_completeness",
-    "description": "The response is complete: all the aspects of the reference answer are addressed in the response. Theresponse might use different phrasing or wording from the reference answer.",
+    "description": "The response is complete: all the aspects of the reference answer are addressed in the response. The response might use different phrasing or wording from the reference answer.",
     "options": [
         {
             "__type__": "criteria_option",
