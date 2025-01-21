@@ -347,12 +347,24 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
 
-for axis, base_metric, main_score in [
-    ("correctness", "token_overlap", "f1"),
-    ("correctness", "bert_score.deberta_large_mnli", "recall"),
-    ("correctness", "bert_score.deberta_v3_base_mnli_xnli_ml", "recall"),
-    ("faithfullness", "token_overlap", "precision"),
+for axis, base_metric, main_score, new_metric in [
+    ("correctness", "token_overlap", "f1", "answer_correctness.token_recall"),
+    (
+        "correctness",
+        "bert_score.deberta_large_mnli",
+        "recall",
+        "answer_correctness.bert_score_recall",
+    ),
+    (
+        "correctness",
+        "bert_score.deberta_v3_base_mnli_xnli_ml",
+        "recall",
+        "answer_correctness.bert_score_recall_ml",
+    ),
+    ("faithfullness", "token_overlap", "precision", "faithfulness.token_k_precision"),
 ]:
+    deprecated_path = f"metrics.rag.response_generation.{axis}.{base_metric}"
+    new_metric_path = f"metrics.rag.response_generation.{new_metric}"
     preprocess_steps = (
         [
             Copy(field="task_data/contexts", to_field="references"),
@@ -379,10 +391,13 @@ for axis, base_metric, main_score in [
         ],
         metric=f"metrics.{base_metric}",
         prediction_type=str,
+        __deprecated_msg__=f"Metric {deprecated_path} is deprecated. Please use {new_metric_path} instead.",
     )
 
     add_to_catalog(
-        metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
+        metric,
+        f"metrics.rag.response_generation.{axis}.{base_metric}",
+        overwrite=True,
     )
 
 # end to end

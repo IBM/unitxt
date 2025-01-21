@@ -7,7 +7,7 @@
     "task": "tasks.rag_eval.context_relevance.binary",
     "format": null,
     "main_score": "context_relevance_q_c_ares",
-    "prediction_field": null,
+    "prediction_field": "contexts",
     "infer_log_probs": false,
     "__deprecated_msg__": "This metric should be replaced with metrics.rag.context_relevance.generic_inference_engine_q_c_ares"
 }
