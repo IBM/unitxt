@@ -82,40 +82,40 @@ We pass the criterion to the judge model's metric as criteria and the question a
     {"question": "Who is Harry Potter?"},
     {"question": "How can I protect myself from the wind while walking outside?"},
     {"question": "What is a good low cost of living city in the US?"},
-]
+    ]
 
-criterion = "metrics.llm_as_judge.direct.criterias.answer_relevance"
-metrics = [
+    criterion = "metrics.llm_as_judge.direct.criterias.answer_relevance"
+    metrics = [
     f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criterion}, context_fields=[question]]"
-]
+    ]
 
-dataset = create_dataset(
-    task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
-)
+    dataset = create_dataset(
+        task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
+    )
 
 Once the metric is created, a dataset is created for the appropriate task.
 
 .. code-block:: python
-    dataset = create_dataset(
-    task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
-)
+
+    dataset = create_dataset(task="tasks.qa.open", test_set=data, metrics=metrics, split="test")
 
 The model's responses are then evaluated by the judge model as follows:
 
 .. code-block:: python
-predictions = [
-    """Harry Potter is a young wizard who becomes famous for surviving an attack by the dark wizard Voldemort, and later embarks on a journey to defeat him and uncover the truth about his past.""",
-    """You can protect yourself from the wind by wearing windproof clothing, layering up, and using accessories like hats, scarves, and gloves to cover exposed skin.""",
-    """A good low-cost-of-living city in the U.S. is San Francisco, California, known for its affordable housing and budget-friendly lifestyle.""",
-]
 
-results = evaluate(predictions=predictions, data=dataset)
+    predictions = [
+        """Harry Potter is a young wizard who becomes famous for surviving an attack by the dark wizard Voldemort, and later embarks on a journey to defeat him and uncover the truth about his past.""",
+        """You can protect yourself from the wind by wearing windproof clothing, layering up, and using accessories like hats, scarves, and gloves to cover exposed skin.""",
+        """A good low-cost-of-living city in the U.S. is San Francisco, California, known for its affordable housing and budget-friendly lifestyle.""",
+    ]
 
-print("Global Scores:")
-print(results.global_scores.summary)
+    results = evaluate(predictions=predictions, data=dataset)
 
-print("Instance Scores:")
-print(results.instance_scores.summary)
+    print("Global Scores:")
+    print(results.global_scores.summary)
+
+    print("Instance Scores:")
+    print(results.instance_scores.summary)
 
 
 Positional Bias
@@ -131,29 +131,29 @@ Below is an example where the user mandates that the model respond with the temp
 
 .. code-block:: python
 
-from unitxt.llm_as_judge_constants import  CriteriaWithOptions
+    from unitxt.llm_as_judge_constants import  CriteriaWithOptions
 
-criteria = CriteriaWithOptions.from_obj(
-    {
-        "name": "Temperature in Fahrenheit and Celsius",
-        "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
-        "options": [
-            {
-                "name": "Correct",
-                "description": "The temperature reading is provided in both Fahrenheit and Celsius.",
-            },
-            {
-                "name": "Partially Correct",
-                "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both.",
-            },
-            {
-                "name": "Incorrect",
-                "description": "There is no numerical temperature reading in the response.",
-            },
-        ],
-        "option_map": {"Correct": 1.0, "Partially Correct": 0.5, "Incorrect": 0.0},
-    }
-)
+    criteria = CriteriaWithOptions.from_obj(
+        {
+            "name": "Temperature in Fahrenheit and Celsius",
+            "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+            "options": [
+                {
+                    "name": "Correct",
+                    "description": "The temperature reading is provided in both Fahrenheit and Celsius.",
+                },
+                {
+                    "name": "Partially Correct",
+                    "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both.",
+                },
+                {
+                    "name": "Incorrect",
+                    "description": "There is no numerical temperature reading in the response.",
+                },
+            ],
+            "option_map": {"Correct": 1.0, "Partially Correct": 0.5, "Incorrect": 0.0},
+        }
+    )
 
 
 End to end example
@@ -162,6 +162,7 @@ Unitxt can also obtain model's responses for a given dataset and then run LLM-as
 Here, we will get llama-3.2 1B instruct's responses and then evaluate them for answer relevance, coherence and conciseness using llama3_1_70b judge model
 
 .. code-block:: python
+
     criterias = ["answer_relevance", "coherence", "conciseness"]
     metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
@@ -181,6 +182,7 @@ Here, we will get llama-3.2 1B instruct's responses and then evaluate them for a
 We use CrossProviderInferenceEngine for inference.
 
 .. code-block:: python
+
     inference_model = CrossProviderInferenceEngine(
         model="llama-3-2-1b-instruct", provider="watsonx"
     )
@@ -241,6 +243,7 @@ We use CrossProviderInferenceEngine for inference.
         )
 
 .. code-block:: text
+
     Output with 100 examples
 
     Scores for criteria 'answer_relevance'
