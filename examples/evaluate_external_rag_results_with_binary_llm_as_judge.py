@@ -54,16 +54,16 @@ test_examples = [
 # Select the desired metric(s).
 # Each metric measures a certain aspect of the generated answer (answer_correctness, faithfulness,
 # answer_relevance and context_relevance).
-# All available metrics are under "catalog.metrics.rag.autorag.", ending with "judge"
+# All available metrics are under "catalog.metrics.rag.external_rag.", ending with "judge"
 # By default, all judges use llama_3_3_70b_instruct. We will soon see how to change this.
 metric_names = [
-    "metrics.rag.autorag.answer_correctness.llama_3_3_70b_instruct_wml_judge",
-    "metrics.rag.autorag.faithfulness.llama_3_3_70b_instruct_wml_judge",
+    "metrics.rag.external_rag.answer_correctness.llama_3_3_70b_instruct_watsonx_judge",
+    "metrics.rag.external_rag.faithfulness.llama_3_3_70b_instruct_watsonx_judge",
 ]
 
-# select the desired model.
+# select the desired model, including provider.
 # all available models are under "catalog.engines.classification"
-model_names = ["engines.classification.mixtral_8x7b_instruct_v01_wml"]
+model_names = ["engines.classification.llama_3_3_70b_instruct_rits"]
 
 if __name__ == "__main__":
     multi_stream = MultiStream.from_iterables({"test": test_examples}, copying=True)
