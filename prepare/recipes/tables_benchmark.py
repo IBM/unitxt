@@ -22,7 +22,6 @@ cards = (
 serializers = ",".join(list(SERIALIZERS))
 max_augmentors = 10
 max_pred_tokens = 100
-num_demos = 5
 recipes_only = False
 
 # Process parameters
@@ -35,6 +34,7 @@ all_augment = [None] + [[i] for i in TABLE_AUGMENTORS]
 for card in cards_parsed:
     for augment in all_augment:
         for serializer in serializers_parsed:
+            num_demos = 1 if card == "wikitq" else 5
             kwargs = {
                 "card": "cards." + card,
                 "serializer": f"serializers.table.{serializer}"
