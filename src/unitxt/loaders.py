@@ -572,15 +572,15 @@ class LoadFromIBMCloud(Loader):
 
     def lazy_verify(self):
         super().verify()
-        assert self.endpoint_url is not None, (
-            f"Please set the {self.endpoint_url_env} environmental variable"
-        )
-        assert self.aws_access_key_id is not None, (
-            f"Please set {self.aws_access_key_id_env} environmental variable"
-        )
-        assert self.aws_secret_access_key is not None, (
-            f"Please set {self.aws_secret_access_key_env} environmental variable"
-        )
+        assert (
+            self.endpoint_url is not None
+        ), f"Please set the {self.endpoint_url_env} environmental variable"
+        assert (
+            self.aws_access_key_id is not None
+        ), f"Please set {self.aws_access_key_id_env} environmental variable"
+        assert (
+            self.aws_secret_access_key is not None
+        ), f"Please set {self.aws_secret_access_key_env} environmental variable"
         if self.streaming:
             raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
 
@@ -1095,4 +1095,3 @@ class LoadFromAPI(Loader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
-
