@@ -5948,22 +5948,48 @@ class ExecutionAccuracy(InstanceMetric):
     prediction_type = "Any"  # string representation is compared
     sql_timeout = 100.0
 
+    @staticmethod
+    def equivalent_sqls(expected: str, generated: str) -> int:
+        try:
+            from sqlglot import diff, parse_one
+            from sqlglot.optimizer import optimize
+
+        except:
+            logger.info(
+                'sqlglot is not installed, to optimize the metric please install it by running pip3 install "sqlglot[rs]"'
+            )
+            return 0
+
+        t_diff = diff(
+            optimize(parse_one(expected.lower()).sql(pretty=True)),
+            optimize(parse_one(generated.lower()).sql(pretty=True)),
+        )
+        sql_diff = sum(0 if (e.__class__.__name__ == "Keep") else 1 for e in t_diff)
+
+        return 1 if sql_diff == 0 else 0
+
     def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
         if predicted_sql.strip() == gold_sql.strip():
-            return 1
+            score = 1  # if the SQLs are exactly the same, return 1
 
-        try:
-            pred_res = connector.execute_query(predicted_sql)
-            gold_res = connector.execute_query(gold_sql)
+        elif self.equivalent_sqls(gold_sql, predicted_sql):
+            score = 1  # if the SQLs are equivalent, return 1
 
-            if pred_res is None or gold_res is None:
-                return 0  # Treat execution error as mismatch
+        else:  # if the SQLs are not equivalent, execute, maybe they are equivalent in execution
+            try:
+                pred_res = connector.execute_query(predicted_sql)
+                gold_res = connector.execute_query(gold_sql)
 
-            return int(pred_res["results"] == gold_res["results"])
-        except Exception as e:
-            logger.error(f"Error in run_sql_and_match: {e}")
-            return 0
+                if pred_res is None or gold_res is None:
+                    score = 0  # Treat execution error as mismatch
+                else:
+                    score = int(pred_res["results"] == gold_res["results"])
+            except Exception as e:
+                logger.error(f"Error in run_sql_and_match: {e}")
+                score = 0
+
+        return int(score)
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         from .db_utils import get_db_connector
