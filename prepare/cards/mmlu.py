@@ -1,5 +1,6 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Unique
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -70,6 +71,7 @@ def main():
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
                 RenameSplits({"dev": "train"}),
+                Unique(['question', 'subject', 'choices', 'answer']),
                 Set({"topic": subtask.replace("_", " ")}),
             ],
             task="tasks.qa.multiple_choice.with_topic",

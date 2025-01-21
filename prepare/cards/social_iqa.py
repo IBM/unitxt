@@ -6,7 +6,7 @@ from unitxt.operators import (
     ListFieldValues,
     MapInstanceValues,
     Rename,
-    Set,
+    Set, Unique,
 )
 from unitxt.test_utils.card import test_card
 
@@ -17,6 +17,7 @@ with unitxt.settings.context(allow_unverified_code=True):
         ),
         preprocess_steps=[
             "splitters.small_no_test",
+            Unique(['context', 'question', 'answerA', 'answerB', 'answerC']),
             ListFieldValues(
                 fields=["answerA", "answerB", "answerC"], to_field="choices"
             ),

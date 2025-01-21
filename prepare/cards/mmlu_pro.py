@@ -1,7 +1,10 @@
 from unitxt.blocks import LoadHF, Rename, Set, TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.operators import Unique
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
+import unitxt
+unitxt.settings.allow_unverified_code=True
 
 topics = [
     "history",
@@ -28,6 +31,7 @@ for topic in topics:
         ),
         preprocess_steps=[
             RenameSplits({"validation": "train"}),
+            Unique(['question', 'options', 'answer', 'category']),
             Rename(
                 field_to_field={
                     "options": "choices",

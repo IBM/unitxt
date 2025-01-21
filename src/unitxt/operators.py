@@ -1520,11 +1520,15 @@ class Unique(SingleStreamReducer):
 
     def process(self, stream: Stream) -> Stream:
         seen = set()
-        for instance in stream:
-            values = self.to_tuple(instance, self.fields)
-            if values not in seen:
-                seen.add(values)
-        return list(seen)
+
+        def generator():
+            for instance in stream:
+                values = self.to_tuple(instance, self.fields)
+                if values not in seen:
+                    seen.add(values)
+                    yield instance
+
+        return DynamicStream(generator)
 
 
 class SplitByValue(MultiStreamOperator):
