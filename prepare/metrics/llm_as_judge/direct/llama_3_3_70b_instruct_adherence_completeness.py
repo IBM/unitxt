@@ -104,7 +104,7 @@ adherence_metric = LLMJudgeDirect(
 )
 add_to_catalog(
     adherence_metric,
-    f"metrics.llm_as_judge.direct.criteria_judges.llama_3_3_70b_instruct_{adherence_criteria.name}",
+    "metrics.rag.response_generation.adherence_with_format.llama_3_3_70b_instruct_judge",
     overwrite=True,
 )
 
@@ -124,6 +124,6 @@ completeness_metric = LLMJudgeDirect(
 
 add_to_catalog(
     completeness_metric,
-    f"metrics.llm_as_judge.direct.criteria_judges.llama_3_3_70b_instruct_{completeness_criteria.name}",
+    "metrics.rag.response_generation.answer_completeness.llama_3_3_70b_instruct_judge",
     overwrite=True,
 )
