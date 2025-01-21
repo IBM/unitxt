@@ -1908,7 +1908,7 @@ class WMLInferenceEngineBase(
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
-        if self.credentials is None:
+        if self.credentials is None or len(self.credentials) == 0: # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
 
@@ -2488,7 +2488,7 @@ class LMMSEvalBaseInferenceEngine(
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
-    image_token = "<image>"
+    image_token: str = "<image>"
 
     _requirements_list = {
         "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
@@ -2514,6 +2514,7 @@ class LMMSEvalBaseInferenceEngine(
             {
                 "batch_size": self.batch_size,
                 "device": self.device,
+                "device_map": self.device,
             },
         )
 
@@ -2770,6 +2771,7 @@ class LiteLLMInferenceEngine(
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
+            messages[0]['content'][1]['text'] = messages[0]['content'][1]['text'] # TODO: remove
             kwargs = self.to_dict([StandardAPIParamsMixin])
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
             del kwargs["credentials"]
@@ -2779,6 +2781,7 @@ class LiteLLMInferenceEngine(
                     max_retries=self.max_retries,
                     caching=True,
                     drop_params=False,
+                    # stream=True,
                     **self.credentials,
                     **kwargs,
                 )
@@ -2874,6 +2877,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
         },
         "watsonx-sdk": {
+            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
             "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
