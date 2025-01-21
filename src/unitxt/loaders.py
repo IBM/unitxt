@@ -320,7 +320,11 @@ class LoadHF(Loader):
                 }
 
             try:
-                ds_builder = load_dataset_builder(self.path, self.name)
+                ds_builder = load_dataset_builder(
+                    self.path,
+                    self.name,
+                    trust_remote_code=settings.allow_unverified_code,
+                )
                 dataset_info = ds_builder.info
                 if dataset_info.splits is not None:
                     # split names are known before the split themselves are pulled from HF,

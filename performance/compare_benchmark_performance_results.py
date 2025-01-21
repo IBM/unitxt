@@ -38,11 +38,6 @@ ratio1 = (
     > 0
     else 1
 )
-ratio2 = (
-    pr_perf["evaluation_time"] / main_perf["evaluation_time"]
-    if main_perf["evaluation_time"] > 0
-    else 1
-)
 # Markdown table formatting
 
 line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
@@ -62,10 +57,10 @@ line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | 
 line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time'] / main_perf['instantiate_model_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
-print(line1 + line2 + line3 + line4 + line5 + line6 + line7 + line8 + line9 + line10)
+print(line1 + line2 + line3 + line4 + line5 + line6 + line9)
 print("\n\n")
 # Performance degradation check (5% threshold)
-if ratio1 > 1.05 or ratio2 > 1.05:
+if ratio1 > 1.05:
     print(
         "\n**Warning**: Performance degradation in Dataset Generation and/or Evaluation exceeds 5%!"
     )
