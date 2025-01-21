@@ -43,6 +43,7 @@ Setting New Standards with Benchmarks
 ----------------------------------------
 
 The introduction of `Unitxt Benchmarks <https://www.unitxt.ai/en/latest/docs/benchmark.html>`_ represents a significant milestone, delivering a robust suite for constructing and analyzing comprehensive benchmarks. Full integration with IBM's `Blue Bench <https://www.unitxt.ai/en/latest/catalog/catalog.benchmarks.bluebench.html>`_ has streamlined complex evaluations into efficient operations, demonstrating our commitment to technical excellence and usability.
+We call on the open-source community and all passionate researchers dedicated to robust and reproducible evaluation of AI systems to contribute their datasets and benchmarks to Unitxt!
 
 Breaking Ground in Multimodal Understanding
 --------------------------------------------
@@ -54,7 +55,7 @@ Advancing LLM Evaluation with AI Judges
 ----------------------------------------
 
 The platform's robust infrastructure for accessing multiple inference APIs and libraries has enabled `sophisticated support for LLMs as judges <https://www.unitxt.ai/en/latest/docs/llm_as_judge.html>`_.
-Through collaboration with the Eval-Assist project, Unitxt now supports  `customizable LLM judges that evaluate based on user-defined criteria <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_pairwise_user_criteria_no_catalog.py>`_.
+Moreover, Unitxt recently introduced a comprehensive set of `customizable LLM judges that evaluate based on user-defined criteria <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_pairwise_user_criteria_no_catalog.py>`_.
 
 Excellence in Data Preparation
 -------------------------------
