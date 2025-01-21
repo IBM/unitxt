@@ -71,7 +71,7 @@ def main():
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
                 RenameSplits({"dev": "train"}),
-                Unique(['question', 'subject', 'choices', 'answer']),
+                Unique(["question", "subject", "choices", "answer"]),
                 Set({"topic": subtask.replace("_", " ")}),
             ],
             task="tasks.qa.multiple_choice.with_topic",
