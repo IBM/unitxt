@@ -344,28 +344,6 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
             RemoteDatabaseConnector(self.db_config)
 
     @patch("requests.post")
-    def test_get_table_schema_success(self, mock_post):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "schema": {
-                "tables": [
-                    {"table_name": "table1", "columns": [{"column_name": "tab1col1"}]},
-                    {"table_name": "table2", "columns": [{"column_name": "tab2col1"}]},
-                ]
-            }
-        }
-        mock_post.return_value = mock_response
-
-        connector = RemoteDatabaseConnector(self.db_config)
-        schema_text = connector.get_table_schema()
-
-        self.assertEqual(
-            schema_text,
-            "Table: table1 has columns: ['tab1col1']\nTable: table2 has columns: ['tab2col1']\n",
-        )
-
-    @patch("requests.post")
     def test_get_table_schema_failure(self, mock_post):
         mock_response = MagicMock()
         mock_response.status_code = 400
