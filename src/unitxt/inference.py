@@ -3078,6 +3078,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                 else:
                     del args[param]
         self.engine = cls(**args)
+        self.data_classification_policy = self.engine.data_classification_policy
 
     def _infer(
         self,
