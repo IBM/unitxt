@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "professional_tone",
+    "description": "Is the tone of the email response professional?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The tone of the email in the response is professional, respectful, and appropriate for formal communication."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The tone of the email in the response is not professional, it may be too casual, rude, or inappropriate."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

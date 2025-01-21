@@ -18,5 +18,6 @@
             "not_exist_do_nothing": true
         }
     ],
-    "metric": "metrics.perplexity_nli.t5_nli_mixture"
+    "metric": "metrics.perplexity_nli.t5_nli_mixture",
+    "__deprecated_msg__": "This metric is deprecated"
 }

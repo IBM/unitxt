@@ -1,0 +1,8 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rag.response_generation.answer_correctness.bert_score_recall_ml",
+        "metrics.rag.response_generation.faithfulness.vectara_hhem_2_1",
+        "metrics.rag.response_generation.answer_relevance.answer_reward"
+    ]
+}

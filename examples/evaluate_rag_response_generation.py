@@ -58,6 +58,15 @@ card = TaskCard(
     ),
 )
 
+# select recommended metrics according to your available resources.
+metrics = [
+    "metrics.rag.response_generation.recommended.cpu_only.all",
+    # "metrics.rag.response_generation.recommended.small_llm.all",
+    # "metrics.rag.response_generation.recommended.llmaj_watsonx.all",
+    # "metrics.rag.response_generation.recommended.llmaj_rits.all"
+    # "metrics.rag.response_generation.recommended.llmaj_azure.all"
+]
+
 # Verbalize the dataset using the template
 dataset = load_dataset(
     card=card,
@@ -65,6 +74,7 @@ dataset = load_dataset(
     format="formats.chat_api",
     split="test",
     max_test_instances=10,
+    metrics=metrics,
 )
 
 

@@ -1,0 +1,15 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "hhem_score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "references",
+                "answer": "prediction"
+            }
+        }
+    ],
+    "metric": "metrics.vectara_groundedness_hhem_2_1",
+    "score_prefix": "faithfulness_vectara_hhem_2_1_"
+}
