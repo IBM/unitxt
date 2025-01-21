@@ -13,6 +13,15 @@
             }
         },
         {
+            "__type__": "unique",
+            "fields": [
+                "question",
+                "options",
+                "answer",
+                "category"
+            ]
+        },
+        {
             "__type__": "rename",
             "field_to_field": {
                 "options": "choices",

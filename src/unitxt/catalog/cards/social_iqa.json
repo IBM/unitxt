@@ -10,6 +10,16 @@
     "preprocess_steps": [
         "splitters.small_no_test",
         {
+            "__type__": "unique",
+            "fields": [
+                "context",
+                "question",
+                "answerA",
+                "answerB",
+                "answerC"
+            ]
+        },
+        {
             "__type__": "list_field_values",
             "fields": [
                 "answerA",

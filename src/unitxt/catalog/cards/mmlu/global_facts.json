@@ -13,6 +13,15 @@
             }
         },
         {
+            "__type__": "unique",
+            "fields": [
+                "question",
+                "subject",
+                "choices",
+                "answer"
+            ]
+        },
+        {
             "__type__": "set",
             "fields": {
                 "topic": "global facts"
