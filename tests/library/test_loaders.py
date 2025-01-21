@@ -161,7 +161,7 @@ class TestLoaders(UnitxtTestCase):
         ms = loader.process()
         dataset = ms.to_dataset()
         self.assertEqual(
-            ms.to_dataset()["train"][0]["url"],
+            dataset["train"][0]["url"],
             "https://www.bbc.com/igbo/afirika-43986554",
         )
         assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
