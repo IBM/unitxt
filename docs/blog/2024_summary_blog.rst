@@ -8,7 +8,7 @@
 
 **Authors**: Unitxt Team
 
-``19/11/2024``
+``01/01/2025``
 
 In 2024, Unitxt has evolved from its foundation as a specialized data preparation library into a comprehensive evaluation platform, driving significant impact within IBM.
 This annual review highlights our key developments, achievements, and the strategic direction that has shaped our platform's growth.
