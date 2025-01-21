@@ -55,6 +55,8 @@ An LLM as a Judge metric consists of several essential components:
    The model uses these descriptions to identify which option the given response is closest to and returns them.
    The user can also specify their own custom criteria. An example of this is included under the section **Creating a custom criterion**.
    The user can specify more than one criteria too. This is illustrated in the **End to end example** section
+4. The Context fields are the additional fields beyond the evaluated response that are passed to the LLM as judge. This could be the reference answer, the question or the context provided to the model etc.
+    In the example below, the question that was input to the model is passed as a context field.
 
 Understanding these components is crucial for effectively leveraging LLM as a judge metrics. With this foundation, let's examine  how to utilize and create these metrics in the Unitxt package.
 
