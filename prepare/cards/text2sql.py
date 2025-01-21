@@ -31,6 +31,10 @@ card = TaskCard(
             expression="'bird/'+db_id",
             to_field="db_id",
         ),
+        ExecuteExpression(
+            expression="str(id)",
+            to_field="id",
+        ),
         Copy(field="db_id", to_field="db/db_id"),
         Copy(field="db_type", to_field="db/db_type"),
         Copy(field="dbms", to_field="db/dbms"),
@@ -40,7 +44,10 @@ card = TaskCard(
     templates="templates.text2sql.all",
 )
 
-# test_card(card, num_demos=0, demos_pool_size=0, )
+
+# test_card(
+#     card, num_demos=0, demos_pool_size=0, demos_taken_from="test"
+# )
 
 add_to_catalog(
     card,

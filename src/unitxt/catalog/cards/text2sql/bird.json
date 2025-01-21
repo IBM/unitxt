@@ -36,6 +36,11 @@
             "to_field": "db_id"
         },
         {
+            "__type__": "execute_expression",
+            "expression": "str(id)",
+            "to_field": "id"
+        },
+        {
             "__type__": "copy",
             "field": "db_id",
             "to_field": "db/db_id"
