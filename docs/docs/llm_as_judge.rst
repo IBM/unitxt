@@ -48,12 +48,12 @@ An LLM as a Judge metric consists of several essential components:
    A lot of these model and catalog combinations are already predefined in our catalog. The models are prefixed by metrics.llm_as_judge.direct followed by the platform and the model name.
    For instance, metrics.llm_as_judge.direct.rits.llama3_1_70b refers to llama3 70B model that uses RITS deployment service.
 
-3. The criterion or criteria to evaluate the model's response. There are predefined criteria in the catalog and the user can also define a custom criterion.
-   Each criterion specifies fine-grained options that help steer the model to evaluate the response more precisely.
+3. The criteria to evaluate the model's response. There are predefined criteria in the catalog and the user can also define a custom criteria.
+   Each criteria specifies fine-grained options that help steer the model to evaluate the response more precisely.
    For instance the critertion "metrics.llm_as_judge.direct.criterias.answer_relevance" quantifies how much the model's response is relevant to the user's question.
    It has four options that the model can choose from and they are excellent, acceptable, could be improved and bad. Each option also has a description of itself and a score associated with it.
    The model uses these descriptions to identify which option the given response is closest to and returns them.
-   The user can also specify their own custom criteria. An example of this is included under the section **Creating a custom criterion**.
+   The user can also specify their own custom criteria. An example of this is included under the section **Creating a custom criteria**.
    The user can specify more than one criteria too. This is illustrated in the **End to end example** section
 4. The Context fields are the additional fields beyond the evaluated response that are passed to the LLM as judge. This could be the reference answer, the question or the context provided to the model etc.
     In the example below, the question that was input to the model is passed as a context field.
@@ -72,9 +72,9 @@ To accomplish this evaluation, we require the following:
 
 1. The questions that were input to the model
 2. The judge model and its deployment platform
-3. The pre-defined criterion, which in this case is metrics.llm_as_judge.direct.criterias.answer_relevance.
+3. The pre-defined criteria, which in this case is metrics.llm_as_judge.direct.criterias.answer_relevance.
 
-We pass the criterion to the judge model's metric as criteria and the question as the context fields.
+We pass the criteria to the judge model's metric as criteria and the question as the context fields.
 
 .. code-block:: python
 
@@ -84,9 +84,9 @@ We pass the criterion to the judge model's metric as criteria and the question a
     {"question": "What is a good low cost of living city in the US?"},
     ]
 
-    criterion = "metrics.llm_as_judge.direct.criterias.answer_relevance"
+    criteria = "metrics.llm_as_judge.direct.criterias.answer_relevance"
     metrics = [
-    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criterion}, context_fields=[question]]"
+    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
     ]
 
     dataset = create_dataset(
@@ -123,9 +123,9 @@ Positional Bias
 Positional bias determines if the judge model favors an option owing to its placement within the list of available options rather than its intrinsic merit.
 Unitxt reports if the judge model has positional bias in the instance level summary.
 
-Creating a custom criterion
+Creating a custom criteria
 -------------------------------------
-As described above, the user can either choose a pre-defined criteria from the catalog or define their own criterion. Below is an example of how the user can define their own criterion.
+As described above, the user can either choose a pre-defined criteria from the catalog or define their own criteria. Below is an example of how the user can define their own criteria.
 The criteria must have options and their descriptions for the judge model to choose from.
 Below is an example where the user mandates that the model respond with the temperature in both Celsius and Fahrenheit. The various possibilities are described in the options and each option is associated with a score that is specified in the score map.
 
