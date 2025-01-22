@@ -12,7 +12,8 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="isaacus/open-australian-legal-qa",
+        path="umarbutler/open-australian-legal-qa",
+        name="default",
     ),
     preprocess_steps=[
         SplitRandomMix(
@@ -51,6 +52,7 @@ add_to_catalog(
 card = TaskCard(
     loader=LoadHF(
         path="umarbutler/open-australian-legal-qa",
+        name="default",
     ),
     preprocess_steps=[
         SplitRandomMix(
