@@ -12,7 +12,7 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="umarbutler/open-australian-legal-qa",
+        path="isaacus/open-australian-legal-qa",
     ),
     preprocess_steps=[
         SplitRandomMix(
