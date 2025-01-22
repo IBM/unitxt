@@ -331,7 +331,6 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         self.assertEqual(connector.api_url, "https://testapi.com/api")
         self.assertEqual(connector.database_id, "test_db_id")
         self.assertEqual(connector.api_key, "test_api_key")
-        self.assertEqual(connector.base_headers["Authorization"], "Bearer test_api_key")
 
     def test_init_missing_api_url(self):
         self.db_config["db_id"] = ",db_id=test_db_id"
@@ -367,10 +366,9 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         self.assertEqual(result, {"result": "success"})
         mock_post.assert_called_once_with(
             "https://testapi.com/api/sql",
-            headers=connector.base_headers,
             json={"sql": "SELECT * FROM table1", "dataSourceId": "test_db_id"},
             verify=True,
-            timeout=RemoteDatabaseConnector.TIMEOUT,
+            timeout=30,
         )
 
     @patch("requests.post")

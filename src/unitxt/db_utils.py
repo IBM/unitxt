@@ -308,7 +308,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
     def execute_query(self, query: str) -> Any:
         """Executes a query against the remote database, with retries for certain exceptions."""
-        execute_query_remote(
+        return execute_query_remote(
             api_url=self.api_url,
             database_id=self.database_id,
             api_key=self.api_key,
