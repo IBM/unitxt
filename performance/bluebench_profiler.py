@@ -14,7 +14,6 @@ from unitxt.settings_utils import get_settings
 
 logger = get_logger()
 settings = get_settings()
-settings.allow_unverified_code = True
 
 
 class BlueBenchProfiler:
@@ -59,26 +58,25 @@ class BlueBenchProfiler:
     def profiler_generate_benchmark_dataset(
         self, benchmark_recipe: Benchmark, split: str, **kwargs
     ) -> List[Dict[str, Any]]:
+        stream = benchmark_recipe()[split]
+
+        # to charge here for the time of generating all instances of the split
+        return list(stream)
+
+    def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
         with settings.context(
             disable_hf_datasets_cache=False,
             allow_unverified_code=True,
-            mock_inference_mode=True,
         ):
-            stream = benchmark_recipe()[split]
+            benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
+                dataset_query=dataset_query, **kwargs
+            )
 
-            # to charge here for the time of generating all instances
-            return list(stream)
+            dataset = self.profiler_generate_benchmark_dataset(
+                benchmark_recipe=benchmark_recipe, split=split, **kwargs
+            )
 
-    def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
-        benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
-            dataset_query=dataset_query, **kwargs
-        )
-
-        dataset = self.profiler_generate_benchmark_dataset(
-            benchmark_recipe=benchmark_recipe, split=split, **kwargs
-        )
-
-        logger.critical(f"length of evaluation_result: {len(dataset)}")
+            logger.critical(f"length of bluegench generated dataset: {len(dataset)}")
 
 
 dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"
@@ -140,9 +138,7 @@ def main():
             "profile_benchmark_blue_bench", "bluebench_profiler.py", s
         )
         load_time = find_cummtime_of("load_data", "loaders.py", s)
-        just_load_no_initial_ms_time = find_cummtime_of(
-            "load_iterables", "loaders.py", s
-        )
+
         instantiate_benchmark_time = find_cummtime_of(
             "profiler_instantiate_benchmark_recipe", "bluebench_profiler.py", s
         )
@@ -155,7 +151,6 @@ def main():
             "dataset_query": dataset_query,
             "total_time": overall_tot_time,
             "load_time": load_time,
-            "load_time_no_initial_ms": just_load_no_initial_ms_time,
             "instantiate_benchmark_time": instantiate_benchmark_time,
             "generate_benchmark_dataset_time": generate_benchmark_dataset_time,
             "used_eager_mode": settings.use_eager_execution,

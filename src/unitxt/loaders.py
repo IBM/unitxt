@@ -53,7 +53,12 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import IterableDataset, IterableDatasetDict, load_dataset_builder
+from datasets import (
+    IterableDataset,
+    IterableDatasetDict,
+    get_dataset_split_names,
+    load_dataset_builder,
+)
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -232,11 +237,6 @@ class LoadHF(Loader):
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return dataset.filter(eval(self.filtering_lambda))
 
-    def log_limited_loading(self, split: str):
-        logger.info(
-            f"\nLoading of split {split} limited to {self.get_limit()} instances by setting {self.get_limiter()};"
-        )
-
     # returns Dict when split names are not known in advance, and just the single split dataset - if known
     def stream_dataset(self, split: str) -> Union[IterableDatasetDict, IterableDataset]:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
@@ -259,6 +259,9 @@ class LoadHF(Loader):
                 )
             except ValueError as e:
                 if "trust_remote_code" in str(e):
+                    logger.critical(
+                        f"while raising trust_remote error, settings.allow_unverified_code = {settings.allow_unverified_code}"
+                    )
                     raise ValueError(
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
@@ -312,6 +315,10 @@ class LoadHF(Loader):
     def load_iterables(
         self
     ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
+        # log limit once for the whole data
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+
         if not isinstance(self, LoadFromHFSpace):
             # try the following for LoadHF only
             if self.split is not None:
@@ -322,22 +329,17 @@ class LoadHF(Loader):
                 }
 
             try:
-                ds_builder = load_dataset_builder(
-                    self.path,
-                    self.name,
+                split_names = get_dataset_split_names(
+                    path=self.path,
+                    config_name=self.name,
                     trust_remote_code=settings.allow_unverified_code,
                 )
-                dataset_info = ds_builder.info
-                if dataset_info.splits is not None:
-                    # split names are known before the split themselves are pulled from HF,
-                    # and we can postpone that pulling of the splits until actually demanded
-                    split_names = list(dataset_info.splits.keys())
-                    return {
-                        split_name: ReusableGenerator(
-                            self.split_generator, gen_kwargs={"split": split_name}
-                        )
-                        for split_name in split_names
-                    }
+                return {
+                    split_name: ReusableGenerator(
+                        self.split_generator, gen_kwargs={"split": split_name}
+                    )
+                    for split_name in split_names
+                }
 
             except:
                 pass  # do nothing, and just continue to the usual load dataset
@@ -356,8 +358,6 @@ class LoadHF(Loader):
 
         limit = self.get_limit()
         if limit is not None:
-            for split_name in dataset:
-                self.log_limited_loading(split_name)
             result = {}
             for split_name in dataset:
                 result[split_name] = dataset[split_name].take(limit)
@@ -366,26 +366,24 @@ class LoadHF(Loader):
         return dataset
 
     def split_generator(self, split: str) -> Generator:
-        try:
-            dataset = self.stream_dataset(split)
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset(split)
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            try:
+                dataset = self.stream_dataset(split)
+            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+                dataset = self.load_dataset(split)
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+            if self.filtering_lambda is not None:
+                dataset = self.filter_load(dataset)
 
-        limit = self.get_limit()
-        if limit is not None:
-            self.log_limited_loading(split)
-            dataset = dataset.take(limit)
+            limit = self.get_limit()
+            if limit is not None:
+                dataset = dataset.take(limit)
+
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
 
         yield from dataset
-
-    def process(self) -> MultiStream:
-        self._maybe_set_classification_policy()
-        return self.add_data_classification(self.load_data())
 
 
 class LoadCSV(Loader):
@@ -442,6 +440,9 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
+        # log once for the whole data
+        if self.get_limit() is not None:
+            self.log_limited_loading()
         iterables = {}
         for split_name in self.files.keys():
             iterables[split_name] = ReusableGenerator(
@@ -451,14 +452,9 @@ class LoadCSV(Loader):
         return iterables
 
     def split_generator(self, split: str) -> Generator:
-        if self.get_limit() is not None:
-            self.log_limited_loading()
-            dataset = pd.read_csv(
-                self.files[split], nrows=self.get_limit(), sep=self.sep
-            ).to_dict("records")
-        else:
-            dataset = pd.read_csv(self.files[split], sep=self.sep).to_dict("records")
-
+        dataset = pd.read_csv(
+            self.files[split], nrows=self.get_limit(), sep=self.sep
+        ).to_dict("records")
         yield from dataset
 
 

@@ -4,8 +4,11 @@ from typing import Dict, Generator, List, Optional, Union
 from .dataclass import NonPositionalField
 from .operator import SourceOperator
 from .random_utils import new_random_generator
+from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
+
+settings = get_settings()
 
 
 class BaseFusion(SourceOperator):
@@ -75,26 +78,30 @@ class FixedFusion(BaseFusion):
 
     # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
-        for origin_name, origin in self.named_subsets.items():
-            multi_stream = origin()
-            if split not in multi_stream:
-                continue
-            emitted_from_this_split = 0
-            try:
-                for instance in multi_stream[split]:
-                    if (
-                        self.max_instances_per_subset is not None
-                        and emitted_from_this_split >= self.max_instances_per_subset
-                    ):
-                        break
-                    if isinstance(origin_name, str):
-                        if "subset" not in instance:
-                            instance["subset"] = []
-                        instance["subset"].insert(0, origin_name)
-                    emitted_from_this_split += 1
-                    yield instance
-            except Exception as e:
-                raise RuntimeError(f"Exception in subset: {origin_name}") from e
+        with settings.context(
+            disable_hf_datasets_cache=False,
+            allow_unverified_code=True,
+        ):
+            for origin_name, origin in self.named_subsets.items():
+                multi_stream = origin()
+                if split not in multi_stream:
+                    continue
+                emitted_from_this_split = 0
+                try:
+                    for instance in multi_stream[split]:
+                        if (
+                            self.max_instances_per_subset is not None
+                            and emitted_from_this_split >= self.max_instances_per_subset
+                        ):
+                            break
+                        if isinstance(origin_name, str):
+                            if "subset" not in instance:
+                                instance["subset"] = []
+                            instance["subset"].insert(0, origin_name)
+                        emitted_from_this_split += 1
+                        yield instance
+                except Exception as e:
+                    raise RuntimeError(f"Exception in subset: {origin_name}") from e
 
 
 class WeightedFusion(BaseFusion):
