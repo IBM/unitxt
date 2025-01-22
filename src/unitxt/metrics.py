@@ -5966,26 +5966,36 @@ class ExecutionAccuracy(InstanceMetric):
 
     def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
-        if predicted_sql.strip() == gold_sql.strip():
-            score = 1  # if the SQLs are exactly the same, return 1
+        if predicted_sql.lower().strip() == gold_sql.lower().strip():
+            return 1  # if the SQLs are exactly the same, return 1
 
-        elif self.equivalent_sqls(gold_sql, predicted_sql):
-            score = 1  # if the SQLs are equivalent, return 1
+        try:
+            if self.equivalent_sqls(gold_sql, predicted_sql):
+                return 1
+        except Exception as e:  # Catch specific exceptions if possible
+            logger.warning(
+                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+            )
 
-        else:  # if the SQLs are not equivalent, execute, maybe they are equivalent in execution
-            try:
-                pred_res = connector.execute_query(predicted_sql)
-                gold_res = connector.execute_query(gold_sql)
+        try:
+            gold_res = connector.execute_query(gold_sql)
+        except Exception as e:
+            raise OSError(
+                "Error executing gold SQL, if gold does not execute metric should fail"
+            ) from e
 
-                if pred_res is None or gold_res is None:
-                    score = 0  # Treat execution error as mismatch
-                else:
-                    score = int(pred_res["results"] == gold_res["results"])
-            except Exception as e:
-                logger.error(f"Error in run_sql_and_match: {e}")
-                score = 0
+        try:
+            pred_res = connector.execute_query(predicted_sql)
+        except Exception as e:
+            logger.error(f"Error executing predicted SQL: {e}")
+            return 0  # if the predicted SQL fails to execute, result is 0
 
-        return int(score)
+        # if pred_res is dict with results take this as the result
+        if isinstance(pred_res, dict):
+            pred_res = pred_res["results"]
+            gold_res = gold_res["results"]
+
+        return int(pred_res == gold_res)
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         from func_timeout import FunctionTimedOut, func_timeout
