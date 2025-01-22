@@ -5947,7 +5947,7 @@ class ExecutionAccuracy(InstanceMetric):
     ci_scores = ["execution_accuracy"]
 
     prediction_type = "Any"  # string representation is compared
-    sql_timeout = 100.0
+    sql_timeout = 350.0
 
     _requirements_list = ["sqlglot", "func_timeout"]
 
@@ -5966,16 +5966,16 @@ class ExecutionAccuracy(InstanceMetric):
 
     def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
-        if predicted_sql.lower().strip() == gold_sql.lower().strip():
-            return 1  # if the SQLs are exactly the same, return 1
+        # if predicted_sql.lower().strip() == gold_sql.lower().strip():
+        #     return 1  # if the SQLs are exactly the same, return 1
 
-        try:
-            if self.equivalent_sqls(gold_sql, predicted_sql):
-                return 1
-        except Exception as e:  # Catch specific exceptions if possible
-            logger.warning(
-                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
-            )
+        # try:
+        #     if self.equivalent_sqls(gold_sql, predicted_sql):
+        #         return 1
+        # except Exception as e:  # Catch specific exceptions if possible
+        #     logger.info(
+        #         f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+        #     )
 
         try:
             gold_res = connector.execute_query(gold_sql)
@@ -5987,7 +5987,7 @@ class ExecutionAccuracy(InstanceMetric):
         try:
             pred_res = connector.execute_query(predicted_sql)
         except Exception as e:
-            logger.error(f"Error executing predicted SQL: {e}")
+            logger.info(f"Error executing predicted SQL: {e}")
             return 0  # if the predicted SQL fails to execute, result is 0
 
         # if pred_res is dict with results take this as the result
