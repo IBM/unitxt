@@ -36,12 +36,13 @@ data = [
 
 metric = LLMJudgeDirect(
     inference_engine=CrossProviderInferenceEngine(
-        model="llama-3-1-70b-instruct", max_tokens=1024
+        model="llama-3-1-70b-instruct", max_tokens=1024, data_classification_policy=["public"]
     ),
     criteria=criteria,
     context_fields=["question"],
     criteria_field="criteria",
 )
+
 
 dataset = create_dataset(
     task="tasks.qa.open", test_set=data, metrics=[metric], split="test"

@@ -8,43 +8,16 @@ from .dict_utils import dict_get
 from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
-    OptionSelectingByLogProbsInferenceEngine,
 )
 from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template_dict
 from .llm_as_judge_constants import (
-    DIRECT_CRITERIAS,
-    EVALUATOR_TO_MODEL_ID,
-    EVALUATORS_METADATA,
-    INFERENCE_ENGINE_NAME_TO_CLASS,
-    MODEL_RENAMINGS,
-    PAIRWISE_CRITERIAS,
     Criteria,
-    CriteriaOption,
     CriteriaWithOptions,
-    DirectCriteriaCatalogEnum,
-    EvaluatorMetadata,
     EvaluatorNameEnum,
-    EvaluatorTypeEnum,
-    ModelProviderEnum,
-    PairwiseCriteriaCatalogEnum,
-)
-from .llm_as_judge_from_template import LLMAsJudge, LLMAsJudgeBase, TaskBasedLLMasJudge
-from .llm_as_judge_operators import (
-    CreateCriteriaFromDict,
-    CreateCriteriaFromJson,
-    CreateCriteriaFromString,
-    CreateCriteriaWithOptionsFromDict,
-    CreateCriteriaWithOptionsFromJson,
-    CreateYesNoCriteriaFromString,
-    CreateYesNoPartiallyCriteriaFromString,
-    LoadCriteria,
-    LoadCriteriaWithOptions,
 )
 from .llm_as_judge_utils import (
-    get_evaluator_metadata,
     get_parsed_context,
     rank_indexes,
-    rename_model_if_required,
 )
 from .logging_utils import get_logger
 from .metrics import BulkInstanceMetric

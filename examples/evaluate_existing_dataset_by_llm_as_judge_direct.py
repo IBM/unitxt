@@ -5,18 +5,20 @@ from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
+from unitxt.text_utils import print_dict
 
 logger = get_logger()
 settings = get_settings()
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
-criterias = ["answer_relevance", "coherence", "conciseness"]
+criteria = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria}]"
-    for criteria in criterias
+    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion},"
+    f"score_prefix={criterion}_]"
+    for criterion in criteria
 ]
 dataset = load_dataset(
     card="cards.squad",
@@ -46,20 +48,37 @@ gold_answers = [d[0] for d in dataset["references"]]
 evaluated_predictions = evaluate(predictions=predictions, data=dataset)
 evaluated_gold_answers = evaluate(predictions=gold_answers, data=dataset)
 
-for criteria in criterias:
-    logger.info(f"Scores for criteria '{criteria}'")
+print_dict(
+    evaluated_predictions[0],
+    keys_to_print=[
+        "source",
+        "score",
+    ],
+)
+print_dict(
+    evaluated_gold_answers[0],
+    keys_to_print=[
+        "source",
+        "score",
+    ],
+)
+
+for criterion in criteria:
+    logger.info(f"Scores for criteria '{criterion}'")
     gold_answer_scores = [
-        instance["score"]["instance"][criteria] for instance in evaluated_gold_answers
+        instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
+        for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
-        instance["score"]["instance"][f"{criteria}_positional_bias"]
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][criteria] for instance in evaluated_predictions
+        instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
+        for instance in evaluated_predictions
     ]
-    prediction_scores_position_bias = [
-        instance["score"]["instance"][f"{criteria}_positional_bias"]
+    prediction_position_bias = [
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_predictions
     ]
 

@@ -46,11 +46,11 @@ An LLM as a Judge metric consists of several essential components:
 1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface, OpenAI API and IBM's deployment platforms such as WatsonX and RITS.
    A lot of these model and catalog combinations are already predefined in our catalog. The models are prefixed by metrics.llm_as_judge.direct followed by the platform and the model name.
-   For instance, metrics.llm_as_judge.direct.rits.llama3_1_70b refers to llama3 70B model that uses RITS deployment service.
+   For instance, *metrics.llm_as_judge.direct.rits.llama3_1_70b* refers to llama3 70B model that uses RITS deployment service.
 
 3. The criteria to evaluate the model's response. There are predefined criteria in the catalog and the user can also define a custom criteria.
    Each criteria specifies fine-grained options that help steer the model to evaluate the response more precisely.
-   For instance the critertion "metrics.llm_as_judge.direct.criterias.answer_relevance" quantifies how much the model's response is relevant to the user's question.
+   For instance the critertion *metrics.llm_as_judge.direct.criteria.answer_relevance* quantifies how much the model's response is relevant to the user's question.
    It has four options that the model can choose from and they are excellent, acceptable, could be improved and bad. Each option also has a description of itself and a score associated with it.
    The model uses these descriptions to identify which option the given response is closest to and returns them.
    The user can also specify their own custom criteria. An example of this is included under the section **Creating a custom criteria**.
@@ -72,7 +72,7 @@ To accomplish this evaluation, we require the following:
 
 1. The questions that were input to the model
 2. The judge model and its deployment platform
-3. The pre-defined criteria, which in this case is metrics.llm_as_judge.direct.criterias.answer_relevance.
+3. The pre-defined criteria, which in this case is metrics.llm_as_judge.direct.criteria.answer_relevance.
 
 We pass the criteria to the judge model's metric as criteria and the question as the context fields.
 
@@ -84,14 +84,10 @@ We pass the criteria to the judge model's metric as criteria and the question as
     {"question": "What is a good low cost of living city in the US?"},
     ]
 
-    criteria = "metrics.llm_as_judge.direct.criterias.answer_relevance"
+    criteria = "metrics.llm_as_judge.direct.criteria.answer_relevance"
     metrics = [
     f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
     ]
-
-    dataset = create_dataset(
-        task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
-    )
 
 Once the metric is created, a dataset is created for the appropriate task.
 
@@ -156,20 +152,20 @@ Below is an example where the user mandates that the model respond with the temp
     )
 
 
-End to end example
---------------------------------------------
+End to end Direct example
+----------------------------
 Unitxt can also obtain model's responses for a given dataset and then run LLM-as-a-judge evaluations on the model's responses.
-Here, we will get llama-3.2 1B instruct's responses and then evaluate them for answer relevance, coherence and conciseness using llama3_1_70b judge model
+Here, we will get *llama-3.2 1B* instruct's responses and then evaluate them for answer relevance, coherence and conciseness using *llama3_1_70b* judge model
 
 .. code-block:: python
 
-    criterias = ["answer_relevance", "coherence", "conciseness"]
+    criteria = ["answer_relevance", "coherence", "conciseness"]
     metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria},"
-    f"score_prefix={criteria}_]"
-    for criteria in criterias
+    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion},"
+    f"score_prefix={criterion}_]"
+    for criterion in criteria
     ]
     dataset = load_dataset(
         card="cards.squad",
@@ -210,22 +206,22 @@ We use CrossProviderInferenceEngine for inference.
         ],
     )
 
-    for criteria in criterias:
-        logger.info(f"Scores for criteria '{criteria}'")
+    for criterion in criteria:
+        logger.info(f"Scores for criteria '{criterion}'")
         gold_answer_scores = [
-            instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
+            instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
             for instance in evaluated_gold_answers
         ]
         gold_answer_position_bias = [
-            int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+            int(instance["score"]["instance"][f"{criterion}_positional_bias"])
             for instance in evaluated_gold_answers
         ]
         prediction_scores = [
-            instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
+            instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
             for instance in evaluated_predictions
         ]
         prediction_position_bias = [
-            int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+            int(instance["score"]["instance"][f"{criterion}_positional_bias"])
             for instance in evaluated_predictions
         ]
 
@@ -263,3 +259,70 @@ We use CrossProviderInferenceEngine for inference.
     Scores of predicted answers: 0.34 +/- 0.47609522856952335
     Positional bias occurrence on gold answers: 0.03
     Positional bias occurrence on predicted answers: 0.01
+
+End to end Pairwise example
+----------------------------
+
+So far we showcased pointwise evaluators where the judge model takes responses from one model and evaluates its efficacy. Unitxt also supports pairwise evaluations, where the judge model takes responses from two models and ranks them based on the specified criteria.
+The winrate metric determines how many times the current model's response was better than the other models' responses according to the criteria. Similar to pointwise, pairwise evaluators also detect positional bias.
+Below is an example where we compare the responses of three models for two questions each with a different criteria to evaluate against and the judge model is *Llama 3 70B* .
+
+.. code-block:: python
+
+    from unitxt import evaluate, load_dataset
+    from unitxt.blocks import Task, TaskCard
+    from unitxt.llm_as_judge_operators import LoadCriteria
+    from unitxt.loaders import LoadFromDictionary
+    from unitxt.templates import NullTemplate
+
+    data = {
+        "test": [
+            {
+                "question": "How is the weather?",
+                "criteria": "metrics.llm_as_judge.pairwise.criteria.temperature_in_celsius_and_fahrenheit",
+            },
+            {
+                "question": "Tell me a joke about cats",
+                "criteria": "metrics.llm_as_judge.pairwise.criteria.funny_joke",
+            },
+        ]
+    }
+
+    card = TaskCard(
+        loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
+        preprocess_steps=[
+            LoadCriteria(field="criteria", to_field="criteria"),
+        ],
+        task=Task(
+            input_fields={"question": str},
+            reference_fields={"criteria": Any},
+            prediction_type=List[str],
+            metrics=[
+                "metrics.llm_as_judge.pairwise.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
+            ],
+            default_template=NullTemplate(),
+        ),
+    )
+
+    dataset = load_dataset(card=card, split="test")
+
+    predictions = [
+        [
+            """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+            """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+            """On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+        ],
+        [
+            """Why did the cat cross the road? To cat to the other side.""",
+            """Why did the cat sit on the computer? Because it wanted to keep an eye on the mouse!""",
+            """What is red, yellow and green? A traffic light.""",
+        ],
+    ]
+
+    results = evaluate(predictions=predictions, data=dataset)
+
+    print("Global Scores:")
+    print(results.global_scores.summary)
+
+    print("Instance Scores:")
+    print(results.instance_scores.summary)
