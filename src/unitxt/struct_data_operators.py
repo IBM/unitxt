@@ -517,6 +517,15 @@ class TruncateTableRows(FieldOperator):
         return table_content
 
 
+class GetNumOfTableCells(FieldOperator):
+    """Get the number of cells in the given table."""
+
+    def process_value(self, table: Any) -> Any:
+        num_of_rows = len(table.get("rows"))
+        num_of_cols = len(table.get("header"))
+        return num_of_rows * num_of_cols
+
+
 class SerializeTableRowAsText(InstanceOperator):
     """Serializes a table row as text.
 
