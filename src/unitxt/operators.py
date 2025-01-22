@@ -652,6 +652,81 @@ class Apply(InstanceOperator):
         return instance
 
 
+class GroupByProcessor(StreamOperator):
+    """Class to group a dataset by a specified field and apply a custom function to each group.
+
+        Similar to the Apply class, which operates on individual instances, this class operates on groups.
+
+    Args:
+        function (str): name of function
+        groupby_field (str): the name of the field to group data by.
+
+    Example:
+        data = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 2, "category": "A", "value": 20},
+            {"id": 3, "category": "B", "value": 30},
+            {"id": 4, "category": "B", "value": 40}
+        ]
+
+        Group the rows based on field category and apply find_sum function to each group.
+        GroupByProcessor(groupby_field="category", function=find_sum)
+
+        output:
+        [
+            {"category": "A", "result": {"total_value": 30}},
+            {"category": "B", "result": {"total_value": 70}}
+        ]
+    """
+
+    function: Callable = NonPositionalField(required=True)
+    groupby_field: str = NonPositionalField(required=True)
+
+    def function_to_str(self, function: Callable) -> str:
+        parts = []
+
+        if hasattr(function, "__module__"):
+            parts.append(function.__module__)
+        if hasattr(function, "__qualname__"):
+            parts.append(function.__qualname__)
+        else:
+            parts.append(function.__name__)
+
+        return ".".join(parts)
+
+    def str_to_function(self, function_str: str) -> Callable:
+        parts = function_str.split(".", 1)
+        if len(parts) == 1:
+            return __builtins__[parts[0]]
+
+        module_name, function_name = parts
+        if module_name in __builtins__:
+            obj = __builtins__[module_name]
+        elif module_name in globals():
+            obj = globals()[module_name]
+        else:
+            obj = __import__(module_name)
+        for part in function_name.split("."):
+            obj = getattr(obj, part)
+        return obj
+
+    def prepare(self):
+        super().prepare()
+        if isinstance(self.function, str):
+            self.function = self.str_to_function(self.function)
+        self._init_dict["function"] = self.function_to_str(self.function)
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        grouped_data = {}
+        for instance in stream:
+            key = instance[self.groupby_field]
+            if key not in grouped_data:
+                grouped_data[key] = []
+            grouped_data[key].append(instance)
+        for each_instance in grouped_data.values():
+            yield self.function(each_instance)
+
+
 class ListFieldValues(InstanceOperator):
     """Concatenates values of multiple fields into a list, and assigns it to a new field."""
 
