@@ -5990,15 +5990,15 @@ class ExecutionAccuracy(InstanceMetric):
             logger.info(f"Error executing predicted SQL: {e}")
             return 0  # if the predicted SQL fails to execute, result is 0
 
-        # if pred_res is dict with results take this as the result
-        if isinstance(pred_res, dict):
-            pred_res = pred_res["results"]
-            gold_res = gold_res["results"]
-
         if pred_res is None:
             if gold_res is None:
                 return 1
             return 0
+
+        # if pred_res is dict with results take this as the result
+        if isinstance(pred_res, dict):
+            pred_res = pred_res["results"]
+            gold_res = gold_res["results"]
 
         def normalize_tuple(tup):
             """Normalizes a tuple by sorting its non-None elements.
