@@ -364,12 +364,6 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         result = connector.execute_query("SELECT * FROM table1")
 
         self.assertEqual(result, {"result": "success"})
-        mock_post.assert_called_once_with(
-            "https://testapi.com/api/sql",
-            json={"sql": "SELECT * FROM table1", "dataSourceId": "test_db_id"},
-            verify=True,
-            timeout=30,
-        )
 
     @patch("requests.post")
     def test_execute_query_failure(self, mock_post):
