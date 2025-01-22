@@ -28,6 +28,7 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
+from .db_utils import get_db_connector
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
 from .inference import (
@@ -5948,17 +5949,12 @@ class ExecutionAccuracy(InstanceMetric):
     prediction_type = "Any"  # string representation is compared
     sql_timeout = 100.0
 
+    _requirements_list = ["sqlglot", "func_timeout"]
+
     @staticmethod
     def equivalent_sqls(expected: str, generated: str) -> int:
-        try:
-            from sqlglot import diff, parse_one
-            from sqlglot.optimizer import optimize
-
-        except:
-            logger.info(
-                'sqlglot is not installed, to optimize the metric please install it by running pip3 install "sqlglot[rs]"'
-            )
-            return 0
+        from sqlglot import diff, parse_one
+        from sqlglot.optimizer import optimize
 
         t_diff = diff(
             optimize(parse_one(expected.lower()).sql(pretty=True)),
@@ -5992,14 +5988,7 @@ class ExecutionAccuracy(InstanceMetric):
         return int(score)
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from .db_utils import get_db_connector
-
-        try:
-            from func_timeout import FunctionTimedOut, func_timeout
-        except ImportError as err:
-            raise ImportError(
-                "func_timeout should be installed for this metric"
-            ) from err
+        from func_timeout import FunctionTimedOut, func_timeout
 
         predicted_sql = prediction
         execution_result: float = 0.0

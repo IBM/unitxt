@@ -106,7 +106,8 @@ tests = [
     "accelerate",
     "spacy", 
     "func_timeout==4.3.5",
-    "Wikipedia-API"
+    "Wikipedia-API",
+    "sqlglot",
 ]
 ui = [
     "gradio",
