@@ -15,14 +15,16 @@ card = TaskCard(
     preprocess_steps=[
         Set({"context_type": "table"}),
         Copy(field="table", to_field="context"),
+        # TruncateTableRows(field="table", to_field="context"),
     ],
     task="tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[
         MultiReferenceTemplate(
-            input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",
+            instruction="Answer the question based on the provided table. You should only output the final answer. Do not add any explanation or other information.",
+            input_format="\nQuestion: {question}" "\nTable: {context}" "\nAnswer: ",
             references_field="answers",
             postprocessors=[
-                # "processors.to_list_by_comma_space",
+                "processors.to_list_by_comma_space",
                 "processors.str_to_float_format",
             ],
         ),
@@ -45,5 +47,5 @@ card = TaskCard(
     },
 )
 
-test_card(card, strict=False)
+test_card(card, strict=False, num_demos=2, demos_pool_size=5)
 add_to_catalog(card, "cards.wikitq", overwrite=True)

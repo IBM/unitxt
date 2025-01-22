@@ -4,13 +4,18 @@
     "preprocess_steps": [
         {
             "__type__": "copy",
-            "field": "question",
-            "to_field": "references"
+            "field_to_field": {
+                "task_data/question": "references",
+                "answer": "prediction"
+            },
+            "not_exist_do_nothing": true
         },
         {
             "__type__": "copy",
-            "field": "answer",
-            "to_field": "prediction"
+            "field_to_field": {
+                "question": "references"
+            },
+            "not_exist_do_nothing": true
         },
         {
             "__type__": "list_field_values",
@@ -20,5 +25,6 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.reward.deberta_v3_large_v2"
+    "metric": "metrics.reward.deberta_v3_large_v2",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.answer_reward"
 }

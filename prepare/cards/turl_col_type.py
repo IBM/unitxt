@@ -31,12 +31,27 @@ card = TaskCard(
             "metrics.accuracy",
             "metrics.f1_macro_multi_label",
         ],
+        augmentable_inputs=[
+            "page_title",
+            "section_title",
+            "table_caption",
+            "table",
+            "colname",
+            "vocab",
+        ],
     ),
     templates=[
         InputOutputTemplate(
-            input_format="""
-                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
+            instruction="""
+                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types.
+                    Candidate Types: {vocab} \nOutput only the correct column types for the mentioned from the candidate types.
                 """.strip(),
+            input_format="\nColumn name: {colname}"
+            "\nPage Title: {page_title} "
+            "\nSection Title: {section_title} "
+            "\nTable caption: {table_caption} "
+            "\nTable: \n{table} "
+            "\nSelected Column: {colname} ",
             output_format="{annotations}",
             postprocessors=[
                 "processors.take_first_non_empty_line",
@@ -55,5 +70,5 @@ card = TaskCard(
     },
 )
 
-test_card(card)
+test_card(card, strict=False, demos_pool_size=-1, num_demos=1)
 add_to_catalog(card, "cards.turl_col_type", overwrite=True)

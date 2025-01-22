@@ -1,0 +1,18 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "precision",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "contexts",
+            "to_field": "references"
+        },
+        {
+            "__type__": "copy",
+            "field": "question",
+            "to_field": "prediction"
+        }
+    ],
+    "metric": "metrics.token_overlap",
+    "score_prefix": "context_relevance_token_precision_"
+}

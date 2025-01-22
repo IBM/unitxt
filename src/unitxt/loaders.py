@@ -306,12 +306,18 @@ class LoadHF(Loader):
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
 
-        if self.get_limit() is not None:
+        limit = self.get_limit()
+        if limit is not None:
             self.log_limited_loading()
-            return {
-                split_name: dataset[split_name].take(self.get_limit())
-                for split_name in dataset
-            }
+            result = {}
+            for split_name in dataset:
+                try:
+                    split_limit = min(limit, len(dataset[split_name]))
+                except:
+                    split_limit = limit
+                result[split_name] = dataset[split_name].take(split_limit)
+
+            return result
 
         return dataset
 

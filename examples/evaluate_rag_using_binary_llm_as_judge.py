@@ -64,7 +64,7 @@ if __name__ == "__main__":
     # all available models for this judge are under "catalog.engines.classification"
     mixtral_engine = "engines.classification.mixtral_8x7b_instruct_v01_wml"
     correctness_judge_metric_mixtral = (
-        f"{metric_name}[{mapping_override}, model={mixtral_engine}]"
+        f"{metric_name}[{mapping_override}, inference_model={mixtral_engine}]"
     )
 
     metrics = [correctness_judge_metric_llama, correctness_judge_metric_mixtral]

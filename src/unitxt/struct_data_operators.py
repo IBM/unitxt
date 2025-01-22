@@ -145,8 +145,7 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
         row_cell_values = [
             str(value) if isinstance(value, (int, float)) else value for value in row
         ]
-
-        serialized_row_str += " | ".join(row_cell_values)
+        serialized_row_str += " | ".join([str(value) for value in row_cell_values])
 
         return f"row {row_index} : {serialized_row_str}"
 
@@ -237,7 +236,7 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         return (
             "pd.DataFrame({\n"
-            + json.dumps(data_dict)
+            + json.dumps(data_dict)[1:-1]
             + "},\nindex="
             + str(list(range(len(rows))))
             + ")"

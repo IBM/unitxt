@@ -75,9 +75,12 @@ class CreateDemosPool(MultiStreamOperator):
         for num_scanned, instance in enumerate(from_stream):
             if "input_fields" not in instance:
                 raise ValueError(f"'input_fields' field is missing from '{instance}'.")
-            input_fields_signature = json.dumps(
-                instance["input_fields"], sort_keys=True
-            )
+            try:
+                input_fields_signature = json.dumps(
+                    instance["input_fields"], sort_keys=True
+                )
+            except TypeError:
+                input_fields_signature = str(instance["input_fields"])
             if input_fields_signature in input_fields_of_demos_pool:
                 not_selected_from_from_stream.append(instance)
                 continue
