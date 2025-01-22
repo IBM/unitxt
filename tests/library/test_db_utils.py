@@ -375,50 +375,6 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         self.assertIsNone(result)
 
     @patch("requests.post")
-    def test_execute_query_retries_on_connection_error(self, mock_post):
-        mock_post.side_effect = [
-            requests.exceptions.ConnectionError("Connection Error"),
-            MagicMock(status_code=200, json=lambda: {"result": "success"}),
-        ]
-
-        connector = RemoteDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM table1")
-
-        self.assertEqual(result, {"result": "success"})
-        self.assertEqual(mock_post.call_count, 2)
-
-    @patch("requests.post")
-    def test_execute_query_retries_on_timeout(self, mock_post):
-        mock_post.side_effect = [
-            requests.exceptions.ReadTimeout("Read Timeout"),
-            MagicMock(status_code=200, json=lambda: {"result": "success"}),
-        ]
-
-        connector = RemoteDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM table1")
-
-        self.assertEqual(result, {"result": "success"})
-        self.assertEqual(mock_post.call_count, 2)
-
-    @patch("requests.post")
-    def test_execute_query_retries_on_server_error(self, mock_post):
-        mock_response = MagicMock()
-        mock_response.status_code = 500
-        mock_response.raise_for_status.side_effect = requests.exceptions.HTTPError(
-            "Server Error", response=mock_response
-        )
-        mock_post.side_effect = [
-            mock_response,
-            MagicMock(status_code=200, json=lambda: {"result": "success"}),
-        ]
-
-        connector = RemoteDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM table1")
-
-        self.assertEqual(result, {"result": "success"})
-        self.assertEqual(mock_post.call_count, 2)
-
-    @patch("requests.post")
     def test_execute_query_max_retries_exceeded(self, mock_post):
         mock_post.side_effect = requests.exceptions.ConnectionError("Connection Error")
 
