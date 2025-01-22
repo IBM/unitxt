@@ -76,7 +76,7 @@ class BlueBenchProfiler:
                 benchmark_recipe=benchmark_recipe, split=split, **kwargs
             )
 
-            logger.critical(f"length of bluegench generated dataset: {len(dataset)}")
+            logger.critical(f"length of bluebench generated dataset: {len(dataset)}")
 
 
 dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"

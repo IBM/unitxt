@@ -45,6 +45,7 @@ from typing import (
     Generator,
     Iterable,
     List,
+    Literal,
     Mapping,
     Optional,
     Sequence,
@@ -57,7 +58,6 @@ from datasets import (
     IterableDataset,
     IterableDatasetDict,
     get_dataset_split_names,
-    load_dataset_builder,
 )
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
@@ -168,7 +168,7 @@ class Loader(SourceOperator):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         if isoftype(iterables, Dict[str, ReusableGenerator]):
-            return MultiStream.from_generators(iterables)
+            return MultiStream.from_generators(iterables, copying=True)
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
@@ -259,9 +259,6 @@ class LoadHF(Loader):
                 )
             except ValueError as e:
                 if "trust_remote_code" in str(e):
-                    logger.critical(
-                        f"while raising trust_remote error, settings.allow_unverified_code = {settings.allow_unverified_code}"
-                    )
                     raise ValueError(
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
@@ -319,30 +316,28 @@ class LoadHF(Loader):
         if self.get_limit() is not None:
             self.log_limited_loading()
 
-        if not isinstance(self, LoadFromHFSpace):
-            # try the following for LoadHF only
-            if self.split is not None:
-                return {
-                    self.split: ReusableGenerator(
-                        self.split_generator, gen_kwargs={"split": self.split}
-                    )
-                }
-
-            try:
-                split_names = get_dataset_split_names(
-                    path=self.path,
-                    config_name=self.name,
-                    trust_remote_code=settings.allow_unverified_code,
+        if self.split is not None:
+            return {
+                self.split: ReusableGenerator(
+                    self.split_generator, gen_kwargs={"split": self.split}
                 )
-                return {
-                    split_name: ReusableGenerator(
-                        self.split_generator, gen_kwargs={"split": split_name}
-                    )
-                    for split_name in split_names
-                }
+            }
 
-            except:
-                pass  # do nothing, and just continue to the usual load dataset
+        try:
+            split_names = get_dataset_split_names(
+                path=self.path,
+                config_name=self.name,
+                trust_remote_code=settings.allow_unverified_code,
+            )
+            return {
+                split_name: ReusableGenerator(
+                    self.split_generator, gen_kwargs={"split": split_name}
+                )
+                for split_name in split_names
+            }
+
+        except:
+            pass  # do nothing, and just continue to the usual load dataset
             # self.split is None and
             # split names are not known before the splits themselves are loaded, and we need to load them here
 
@@ -495,14 +490,24 @@ class LoadFromSklearn(Loader):
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
     def load_iterables(self):
-        with TemporaryDirectory() as temp_directory:
-            for split in self.splits:
-                split_data = self.downloader(subset=split)
-                targets = [split_data["target_names"][t] for t in split_data["target"]]
-                df = pd.DataFrame([split_data["data"], targets]).T
-                df.columns = ["data", "target"]
-                df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
-            return hf_load_dataset(temp_directory, streaming=False)
+        return {
+            split_name: ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
+            )
+            for split_name in self.splits
+        }
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            split_data = self.downloader(subset=split)
+            targets = [split_data["target_names"][t] for t in split_data["target"]]
+            df = pd.DataFrame([split_data["data"], targets]).T
+            df.columns = ["data", "target"]
+            dataset = df.to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+        yield from dataset
 
 
 class MissingKaggleCredentialsError(ValueError):
