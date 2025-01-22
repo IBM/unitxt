@@ -2184,9 +2184,9 @@ class MetricPipeline(MultiStreamOperator, Metric):
         assert (
             self.metric is not None
         ), f"'metric' is not set in {self.get_metric_name()}"
-        assert (
-            self.main_score is not None
-        ), f"'main_score' is not set in {self.get_metric_name()}"
+        # assert (
+        #     self.main_score is not None
+        # ), f"'main_score' is not set in {self.get_metric_name()}"
         assert isinstance(
             self.metric, Metric
         ), f"'metric' is not set to a Metric class in {self.get_metric_name()} (type{self.metric})"
@@ -2196,6 +2196,8 @@ class MetricPipeline(MultiStreamOperator, Metric):
 
     def prepare(self):
         super().prepare()
+        if self.main_score is None:
+            self.main_score = self.metric.main_score
         if hasattr(self, "score_prefix") and self.score_prefix:
             self.metric.score_prefix = self.score_prefix
         has_postpreprocess = (
