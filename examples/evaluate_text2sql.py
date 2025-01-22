@@ -8,14 +8,13 @@ with settings.context(
 ):
     test_dataset = load_dataset(
         "card=cards.text2sql.bird"
-        # ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix,loader_limit=10",
-        ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
+        ",template=templates.text2sql.you_are_given_with_hint_with_sql_prefix,loader_limit=100",
         split="validation",
     )
 
 # Infer
 inference_model = CrossProviderInferenceEngine(
-    model="llama-3-70b-instruct",
+    model="llama-3-3-70b-instruct",
     max_tokens=256,
 )
 
@@ -34,13 +33,19 @@ print_dict(
     evaluated_dataset[0]["score"]["global"],
 )
 
+assert (
+    evaluated_dataset[0]["score"]["global"]["score"] >= 0.44
+), "results have been degraded, something is wrong with the metric"
+
 # with llama-3-70b-instruct
 # num_of_instances (int):
-#     1534
+#     100
 # execution_accuracy (float):
-#     0.482
+#     0.44
 
-# like GPT4 (rank 40 in the benchmark https://bird-bench.github.io/)
+# CI is 0.34,0.54
+# like GPT4 that goes to 46 (rank 40 in the benchmark https://bird-bench.github.io/)
+# makes sense
 
 # from transformers import AutoModelForCausalLM, AutoTokenizer
 
