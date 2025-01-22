@@ -5947,7 +5947,7 @@ class ExecutionAccuracy(InstanceMetric):
     ci_scores = ["execution_accuracy"]
 
     prediction_type = "Any"  # string representation is compared
-    sql_timeout = 350.0
+    sql_timeout = 100.0
 
     _requirements_list = ["sqlglot", "func_timeout"]
 
@@ -5966,16 +5966,16 @@ class ExecutionAccuracy(InstanceMetric):
 
     def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
         """Runs SQL queries using the provided connector and checks if the results match."""
-        # if predicted_sql.lower().strip() == gold_sql.lower().strip():
-        #     return 1  # if the SQLs are exactly the same, return 1
+        if predicted_sql.lower().strip() == gold_sql.lower().strip():
+            return 1  # if the SQLs are exactly the same, return 1
 
-        # try:
-        #     if self.equivalent_sqls(gold_sql, predicted_sql):
-        #         return 1
-        # except Exception as e:  # Catch specific exceptions if possible
-        #     logger.info(
-        #         f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
-        #     )
+        try:
+            if self.equivalent_sqls(gold_sql, predicted_sql):
+                return 1
+        except Exception as e:  # Catch specific exceptions if possible
+            logger.info(
+                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+            )
 
         try:
             gold_res = connector.execute_query(gold_sql)
@@ -5995,7 +5995,26 @@ class ExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
             gold_res = gold_res["results"]
 
-        return int(pred_res == gold_res)
+        if pred_res is None:
+            if gold_res is None:
+                return 1
+            return 0
+
+        def normalize_tuple(tup):
+            """Normalizes a tuple by sorting its non-None elements.
+
+            Args:
+                tup: The input tuple.
+
+            Returns:
+                A tuple with non-None elements sorted first, followed by None values.
+            """
+            return sorted([str(item) for item in tup])
+
+        return int(
+            sorted([normalize_tuple(t) for t in pred_res])
+            == sorted([normalize_tuple(t) for t in gold_res])
+        )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
         from func_timeout import FunctionTimedOut, func_timeout
