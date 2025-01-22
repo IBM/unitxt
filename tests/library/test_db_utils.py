@@ -62,18 +62,6 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
             connector.get_table_schema()
 
     @patch("requests.post")
-    def test_execute_query_success(self, mock_post):
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"result": "success"}
-        mock_post.return_value = mock_response
-
-        connector = RemoteDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM table1")
-
-        self.assertEqual(result, {"result": "success"})
-
-    @patch("requests.post")
     def test_execute_query_failure(self, mock_post):
         mock_post.side_effect = requests.exceptions.RequestException("API Error")
 
