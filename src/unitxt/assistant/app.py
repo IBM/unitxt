@@ -1,4 +1,5 @@
 import datetime
+import importlib
 import json
 import os
 import uuid
@@ -22,6 +23,7 @@ def load_data():
 
 def search(query, metadata_df, embeddings, max_tokens=5000, min_text_length=50):
     # Generate embedding for the query using litellm
+    importlib.reload(litellm)  # Reload the litellm module to clear any cached state
     response = litellm.embedding(
         model="watsonx/intfloat/multilingual-e5-large",
         input=[query],
