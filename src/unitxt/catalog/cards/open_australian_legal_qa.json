@@ -2,7 +2,8 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "umarbutler/open-australian-legal-qa"
+        "path": "umarbutler/open-australian-legal-qa",
+        "name": "default"
     },
     "preprocess_steps": [
         {
