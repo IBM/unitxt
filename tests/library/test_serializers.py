@@ -1,13 +1,16 @@
+import unittest
+
 from unitxt.serializers import (
     DefaultSerializer,
     DialogSerializer,
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     NumberSerializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
 )
 from unitxt.settings_utils import get_constants
-from unitxt.types import Dialog, Number, Table, Text, Turn
+from unitxt.types import Dialog, Number, SQLDatabase, Table, Text, Turn
 
 from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
@@ -139,3 +142,36 @@ class TestSerializers(UnitxtTestCase):
         number_data = Number(42)
         result = self.custom_serializer.serialize(number_data, {})
         self.assertEqual(result, "42")  # Should return the number as a string
+
+
+class TestSQLDatabaseAsSchemaSerializer(unittest.TestCase):
+    def test_serialize_in_memory_success(self):
+        db_config: SQLDatabase = {
+            "db_type": "in_memory",
+            "db_id": None,
+            "dbms": None,
+            "data": {
+                "table1": {"columns": ["col1", "col2"], "rows": [[1, "a"], [2, "b"]]},
+                "table2": {"columns": ["name", "age"], "rows": [["Alice", 30]]},
+            },
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
+        expected_schema = (
+            "CREATE TABLE `table1` (`col1` TEXT, `col2` TEXT);\n\n"
+            "CREATE TABLE `table2` (`name` TEXT, `age` TEXT);"
+        )
+        self.assertEqual(result, expected_schema)
+
+    def test_serialize_unsupported_db_type(self):
+        db_config: SQLDatabase = {
+            "db_type": "unsupported",
+            "db_id": "test_db_id",
+            "dbms": None,
+            "data": None,
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        with self.assertRaises(ValueError):
+            serializer.serialize(db_config, {})
