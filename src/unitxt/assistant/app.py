@@ -1,5 +1,4 @@
 import datetime
-import importlib
 import json
 import logging
 import os
@@ -10,10 +9,23 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
-from litellm import AuthenticationError
+from litellm.llms.watsonx.common_utils import IBMWatsonXMixin
 from transformers import AutoTokenizer
 
 logger = logging.getLogger("unitxt-assistance")
+
+
+logger = logging.getLogger("unitxt-assistance")
+
+original_validate_environment = IBMWatsonXMixin.validate_environment
+
+
+def wrapped_validate_environment(self, *args, **kwargs):
+    kwargs = {**kwargs, "headers": {}}
+    return original_validate_environment(self, *args, **kwargs)
+
+
+IBMWatsonXMixin.validate_environment = wrapped_validate_environment
 
 
 @st.cache_resource
@@ -25,36 +37,9 @@ def load_data():
     return metadata_df, embeddings
 
 
-def get_embedding_with_retry(model, input, max_retries=3):
-    """This function calls the litellm.embedding method and handles token expiration.
-
-    It will retry the call up to `max_retries` times if an AuthenticationError is raised.
-    """
-    retries = 0
-    actual_exception = None
-    while retries < max_retries:
-        try:
-            return litellm.embedding(model=model, input=input)
-
-        except AuthenticationError as e:
-            actual_exception = e
-            retries += 1
-            logger.info(
-                f"Authentication error: {e}. Retrying... ({retries}/{max_retries})"
-            )
-            importlib.reload(
-                litellm
-            )  # Reload the litellm module to clear any cached state
-
-    # If all retries fail, raise an error
-    raise Exception(
-        f"Failed to get embedding after {max_retries} attempts. Exception: {actual_exception}"
-    )
-
-
 def search(query, metadata_df, embeddings, max_tokens=5000, min_text_length=50):
     # Generate embedding for the query using litellm
-    response = get_embedding_with_retry(
+    response = litellm.embedding(
         model="watsonx/intfloat/multilingual-e5-large",
         input=[query],
     )
