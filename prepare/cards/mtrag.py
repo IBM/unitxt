@@ -1,5 +1,4 @@
 import json
-from typing import Any, Dict
 
 from unitxt import add_to_catalog
 from unitxt.blocks import (
@@ -10,21 +9,12 @@ from unitxt.loaders import LoadCSV
 from unitxt.operators import (
     Cast,
     Copy,
-    InstanceOperator,
     MapInstanceValues,
     Set,
     ZipFieldValues,
 )
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
-
-
-class TempOperator(InstanceOperator):
-    def process(
-        self, instance: Dict[str, Any], stream_name: str | None = None
-    ) -> Dict[str, Any]:
-        return instance
-
 
 card = TaskCard(
     loader=LoadCSV(
@@ -123,7 +113,6 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
                     "metadata_field": "",
                 }
             ),
-            TempOperator(),
         ],
         task="tasks.rag.corpora",
         templates={

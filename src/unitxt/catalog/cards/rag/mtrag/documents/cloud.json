@@ -30,9 +30,6 @@
             "fields": {
                 "metadata_field": ""
             }
-        },
-        {
-            "__type__": "temp_operator"
         }
     ],
     "task": "tasks.rag.corpora",
