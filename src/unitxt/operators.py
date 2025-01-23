@@ -1907,11 +1907,7 @@ class Deduplicate(StreamOperator):
         by (List[str]): A list of field names to deduplicate by. The combination of these fields' values will be used to determine uniqueness.
 
     Examples:
-        >>> from some_module import Deduplicate
-        >>> deduplicator = Deduplicate(by=["field1", "field2"])
-        >>> unique_stream = deduplicator.process(input_stream)
-        >>> for item in unique_stream:
-        >>>     print(item)
+        >>> dedup = Deduplicate(by=["field1", "field2"])
     """
 
     by: List[str]
