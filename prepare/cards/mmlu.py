@@ -1,5 +1,7 @@
-from unitxt.blocks import LoadHF, Set, TaskCard
+from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import LoadHF
+from unitxt.operators import Deduplicate, Set
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -69,6 +71,7 @@ def main():
         card = TaskCard(
             loader=LoadHF(path="cais/mmlu", name=subtask),
             preprocess_steps=[
+                Deduplicate(by=["question", "subject", "choices", "answer"]),
                 RenameSplits({"dev": "train"}),
                 Set({"topic": subtask.replace("_", " ")}),
             ],

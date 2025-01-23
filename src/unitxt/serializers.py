@@ -4,10 +4,20 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
+from .db_utils import get_db_connector
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Document, Image, MultiDocument, Number, Table, Video
+from .types import (
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Number,
+    SQLDatabase,
+    Table,
+    Video,
+)
 
 constants = get_constants()
 
@@ -177,3 +187,13 @@ class MultiTypeSerializer(Serializer):
                 return serializer.serialize(value, instance)
 
         return str(value)
+
+
+class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
+    """Serializes a database schema into a string representation."""
+
+    serialized_type = SQLDatabase
+
+    def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        connector = get_db_connector(value["db_type"])(value)
+        return connector.get_table_schema()
