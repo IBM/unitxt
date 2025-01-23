@@ -447,9 +447,13 @@ class LoadCSV(Loader):
         return iterables
 
     def split_generator(self, split: str) -> Generator:
-        dataset = pd.read_csv(
-            self.files[split], nrows=self.get_limit(), sep=self.sep
-        ).to_dict("records")
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            reader = self.get_reader()
+            dataset = reader(self.files[split], **self.get_args()).to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+
         yield from dataset
 
 
