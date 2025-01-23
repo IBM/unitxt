@@ -11,6 +11,10 @@
             "__type__": "copy",
             "field": "question",
             "to_field": "prediction"
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "prediction"
         }
     ],
     "metric": "metrics.sentence_bert.minilm_l12_v2",
