@@ -64,7 +64,7 @@ While expanding its capabilities, Unitxt maintains strong performance in data pr
 The platform's `data fusion tools <https://www.unitxt.ai/en/latest/unitxt.fusion.html>`_ have proven effective for creating large-scale, multi-dataset compilations for supervised fine-tuning.
 Ongoing collaboration with IBM teams conducting large-scale supervised fine-tuning demonstrates the practical impact of these capabilities, with further developments planned for 2025.
 
-Strategic Focus for 2025: Enhancing Accessibility
+Strategic Focus for 2025: Enhancing Usability
 --------------------------------------------------
 
 As Unitxt has matured into a sophisticated platform offering comprehensive capabilities in data preparation, inference, and quality estimation, usability becomes increasingly important. Building on 2024's improvements in error handling and documentation, the 2025 roadmap focuses on two key initiatives:
