@@ -38,7 +38,17 @@ import tempfile
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import pandas as pd
 from datasets import IterableDatasetDict
@@ -347,24 +357,43 @@ class LoadCSV(Loader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
+    compression: Optional[str] = None
+    lines: Optional[bool] = None
+    file_type: Literal["csv", "json"] = "csv"
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
 
+    def get_reader(self):
+        if self.file_type == "csv":
+            return pd.read_csv
+        if self.file_type == "json":
+            return pd.read_json
+        raise ValueError()
+
+    def get_args(self):
+        args = {}
+        if self.file_type == "csv":
+            args["sep"] = self.sep
+        if self.compression is not None:
+            args["compression"] = self.compression
+        if self.lines is not None:
+            args["lines"] = self.lines
+        if self.get_limit() is not None:
+            args["nrows"] = self.get_limit()
+        return args
+
     def load_iterables(self):
         iterables = {}
         for split_name, file_path in self.files.items():
+            reader = self.get_reader()
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                iterables[split_name] = pd.read_csv(
-                    file_path, nrows=self.get_limit(), sep=self.sep
-                ).to_dict("records")
-            else:
-                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
-                    "records"
-                )
+            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
+                "records"
+            )
         return iterables
 
 

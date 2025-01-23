@@ -148,6 +148,7 @@ class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
             DocumentSerializer(),
+            DialogSerializer(),
             MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
