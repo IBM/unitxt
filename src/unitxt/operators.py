@@ -1921,7 +1921,7 @@ class Deduplicate(StreamOperator):
 
         for instance in stream:
             # Compute a lightweight hash for the signature
-            signature = hash(tuple(dict_get(instance, field) for field in self.by))
+            signature = hash(str(tuple(dict_get(instance, field) for field in self.by)))
 
             if signature not in seen:
                 seen.add(signature)
