@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 import uuid
 
@@ -8,7 +9,23 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
+from litellm.llms.watsonx.common_utils import IBMWatsonXMixin
 from transformers import AutoTokenizer
+
+logger = logging.getLogger("unitxt-assistance")
+
+
+logger = logging.getLogger("unitxt-assistance")
+
+original_validate_environment = IBMWatsonXMixin.validate_environment
+
+
+def wrapped_validate_environment(self, *args, **kwargs):
+    kwargs = {**kwargs, "headers": {}}
+    return original_validate_environment(self, *args, **kwargs)
+
+
+IBMWatsonXMixin.validate_environment = wrapped_validate_environment
 
 
 @st.cache_resource
