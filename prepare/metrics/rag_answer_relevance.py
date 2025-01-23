@@ -3,6 +3,7 @@ from unitxt.metrics import (
     MetricPipeline,
 )
 from unitxt.operators import Copy, ListFieldValues
+from unitxt.serializers import MultiTypeSerializer
 
 task_names = ["external_rag", "response_generation", "end_to_end"]
 base = "metrics.rag"
@@ -30,6 +31,7 @@ def get_preprocess_steps(task):
                     "task_data/question": "references",
                 }
             ),
+            MultiTypeSerializer(field="references", process_every_value=True),
             last_step,
         ]
     if task == "end_to_end":
@@ -40,6 +42,7 @@ def get_preprocess_steps(task):
                     "prediction/answer": "prediction",
                 }
             ),
+            MultiTypeSerializer(field="references", process_every_value=True),
             last_step,
         ]
     raise ValueError(f"Unsupported rag task {task}")

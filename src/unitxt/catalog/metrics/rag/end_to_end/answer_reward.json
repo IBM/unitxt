@@ -17,6 +17,11 @@
                 "task_data/question"
             ],
             "to_field": "references"
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "references",
+            "process_every_value": true
         }
     ],
     "metric": "metrics.reward.deberta_v3_large_v2[score_prefix=answer_reward_]"

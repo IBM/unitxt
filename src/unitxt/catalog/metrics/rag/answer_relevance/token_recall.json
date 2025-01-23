@@ -18,6 +18,10 @@
             "not_exist_do_nothing": true
         },
         {
+            "__type__": "multi_type_serializer",
+            "field": "references"
+        },
+        {
             "__type__": "list_field_values",
             "fields": [
                 "references"
