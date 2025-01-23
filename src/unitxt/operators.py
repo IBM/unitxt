@@ -1900,6 +1900,34 @@ class StreamRefiner(StreamOperator):
             yield from stream
 
 
+class Deduplicate(StreamOperator):
+    """Deduplicate the stream based on the given fields.
+
+    Args:
+        by (List[str]): A list of field names to deduplicate by. The combination of these fields' values will be used to determine uniqueness.
+
+    Examples:
+        >>> from some_module import Deduplicate
+        >>> deduplicator = Deduplicate(by=["field1", "field2"])
+        >>> unique_stream = deduplicator.process(input_stream)
+        >>> for item in unique_stream:
+        >>>     print(item)
+    """
+
+    by: List[str]
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None) -> Generator:
+        seen = set()
+
+        for instance in stream:
+            # Compute a lightweight hash for the signature
+            signature = hash(tuple(dict_get(instance, field) for field in self.by))
+
+            if signature not in seen:
+                seen.add(signature)
+                yield instance
+
+
 class Balance(StreamRefiner):
     """A class used to balance streams deterministically.
 
