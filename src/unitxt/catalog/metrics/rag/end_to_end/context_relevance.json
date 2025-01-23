@@ -19,6 +19,10 @@
                     "prediction"
                 ]
             ]
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "prediction"
         }
     ],
     "metric": "metrics.perplexity_q.flan_t5_small[score_prefix=context_relevance_]"

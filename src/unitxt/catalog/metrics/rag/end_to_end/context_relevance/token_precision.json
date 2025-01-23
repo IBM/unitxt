@@ -11,6 +11,10 @@
             "__type__": "copy",
             "field": "task_data/question",
             "to_field": "prediction"
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "prediction"
         }
     ],
     "metric": "metrics.token_overlap",

@@ -11,7 +11,7 @@ add_to_catalog(
         For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.
 """,
         input_fields={
-            "question": str,
+            "question": Union[str, Dialog],
             "question_id": Any,
             "metadata_field": str,
         },
@@ -44,43 +44,6 @@ add_to_catalog(
     overwrite=True,
 )
 
-add_to_catalog(
-    Task(
-        __description__="""This is a task corresponding to an end to end RAG evaluation.  It assumes the user provides a question, and
-        the RAG system returns an answer and a set of retrieved contexts (documents or passages).
-        For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.
-""",
-        input_fields={
-            "conversation": Dialog,
-            "turn_id": Any,
-            "metadata_field": str,
-        },
-        reference_fields={
-            "reference_answers": List[str],
-            "reference_contexts": List[str],
-            "reference_context_ids": Union[List[int], List[str]],
-            "is_answerable_label": bool,
-        },
-        metrics=[
-            "metrics.rag.end_to_end.answer_correctness",
-            "metrics.rag.end_to_end.answer_faithfulness",
-            "metrics.rag.end_to_end.answer_reward",
-            "metrics.rag.end_to_end.context_correctness",
-        ],
-        prediction_type=RagResponse,
-        defaults={
-            "turn_id": "",
-            "metadata_field": "",
-            "reference_answers": [],
-            "reference_contexts": [],
-            "reference_context_ids": [],
-            "is_answerable_label": True,
-        },
-        default_template="templates.rag.end_to_end.json_predictions",
-    ),
-    "tasks.rag.end_to_end.multi_turn",
-    overwrite=True,
-)
 
 add_to_catalog(
     Task(

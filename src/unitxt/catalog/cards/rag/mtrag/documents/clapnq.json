@@ -7,7 +7,10 @@
         },
         "compression": "zip",
         "file_type": "json",
-        "lines": true
+        "lines": true,
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
@@ -27,6 +30,9 @@
             "fields": {
                 "metadata_field": ""
             }
+        },
+        {
+            "__type__": "temp_operator"
         }
     ],
     "task": "tasks.rag.corpora",

@@ -2,6 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy, ListFieldValues
+from unitxt.serializers import MultiTypeSerializer
 
 base = "metrics.rag"
 new_base = "metrics.rag.external_rag"
@@ -100,6 +101,7 @@ answer_relevance_preprocess_steps = preprocess_steps = [
     # This metric compares the answer (as the prediction) to the question (as the reference).
     # We have to wrap the question by a list (otherwise it will be a string),
     # because references are expected to be lists
+    MultiTypeSerializer(field="references"),
     ListFieldValues(fields=["references"], to_field="references"),
 ]
 add_metric_pipeline_to_catalog(
