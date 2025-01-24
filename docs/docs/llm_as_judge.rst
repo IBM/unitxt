@@ -271,7 +271,7 @@ Below is an example where we compare the responses of three models for two quest
 
     from unitxt import evaluate, load_dataset
     from unitxt.blocks import Task, TaskCard
-    from unitxt.llm_as_judge_operators import LoadCriteria
+    from unitxt.llm_as_judge import LoadCriteria
     from unitxt.loaders import LoadFromDictionary
     from unitxt.templates import NullTemplate
 

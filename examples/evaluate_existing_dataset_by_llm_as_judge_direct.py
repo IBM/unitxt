@@ -92,7 +92,7 @@ for criterion in criteria:
         f"Positional bias occurrence on gold answers: {statistics.mean(gold_answer_position_bias)}"
     )
     logger.info(
-        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_scores_position_bias)}\n"
+        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_position_bias)}\n"
     )
 
 """
