@@ -8,6 +8,7 @@ from .dict_utils import dict_get
 from .error_utils import UnitxtError
 from .inference import (
     InferenceEngine,
+    OptionSelectingByLogProbsInferenceEngine,
 )
 from .llm_as_judge_chat_templates import direct_template_dict, pairwise_template_dict
 from .llm_as_judge_constants import (
