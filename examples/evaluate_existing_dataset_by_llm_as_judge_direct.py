@@ -16,15 +16,14 @@ criteria = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion},"
-    f"score_prefix={criterion}_]"
+    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion}]"
     for criterion in criteria
 ]
 dataset = load_dataset(
     card="cards.squad",
     metrics=metrics,
-    loader_limit=20,
-    max_test_instances=20,
+    loader_limit=2,
+    max_test_instances=2,
     split="test",
 )
 
@@ -66,7 +65,7 @@ print_dict(
 for criterion in criteria:
     logger.info(f"Scores for criteria '{criterion}'")
     gold_answer_scores = [
-        instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
+        instance["score"]["instance"][criterion]
         for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
@@ -74,7 +73,7 @@ for criterion in criteria:
         for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][f"{criterion}_llm_as_a_judge_score"]
+        instance["score"]["instance"][criterion]
         for instance in evaluated_predictions
     ]
     prediction_position_bias = [
