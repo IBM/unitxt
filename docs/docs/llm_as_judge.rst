@@ -46,7 +46,7 @@ An LLM as a Judge metric consists of several essential components:
 1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface, OpenAI API and IBM's deployment platforms such as WatsonX and RITS.
    A lot of these model and catalog combinations are already predefined in our catalog. The models are prefixed by metrics.llm_as_judge.direct followed by the platform and the model name.
-   For instance, *metrics.llm_as_judge.direct.rits.llama3_1_70b* refers to llama3 70B model that uses RITS deployment service.
+   For instance, *metrics.llm_as_judge.direct.rits.llama3_1_70b* refers to *llama3 70B* model that uses RITS deployment service.
 
 3. The criteria to evaluate the model's response. There are predefined criteria in the catalog and the user can also define a custom criteria.
    Each criteria specifies fine-grained options that help steer the model to evaluate the response more precisely.
