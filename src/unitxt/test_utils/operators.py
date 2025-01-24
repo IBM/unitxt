@@ -33,9 +33,9 @@ def check_operator_exception(
     tester=None,
 ):
     assert isoftype(operator, StreamingOperator), "operator must be an Operator"
-    assert inputs is None or isoftype(inputs, List[dict]), (
-        "inputs must be a list of dicts or None for stream source"
-    )
+    assert inputs is None or isoftype(
+        inputs, List[dict]
+    ), "inputs must be a list of dicts or None for stream source"
     try:
         apply_operator(operator, inputs)
     except Exception as e:
@@ -62,16 +62,16 @@ def check_operator(
     test_artfifact_saving_and_loading(operator, tester=tester)
 
     assert isoftype(operator, StreamingOperator), "operator must be an Operator"
-    assert inputs is None or isoftype(inputs, List[dict]), (
-        "inputs must be a list of dicts or None for stream source"
-    )
+    assert inputs is None or isoftype(
+        inputs, List[dict]
+    ), "inputs must be a list of dicts or None for stream source"
     assert isoftype(targets, List[dict]), "targets must be a list of dicts"
 
     outputs = apply_operator(operator, inputs)
 
-    assert len(list(outputs)) == len(targets), (
-        f"outputs '{list(outputs)}' and targets '{targets}' must have the same number of instances"
-    )
+    assert (
+        len(list(outputs)) == len(targets)
+    ), f"outputs '{list(outputs)}' and targets '{targets}' must have the same number of instances"
 
     if sort_outputs_by is not None:
         outputs = sorted(outputs, key=lambda x: x[sort_outputs_by])

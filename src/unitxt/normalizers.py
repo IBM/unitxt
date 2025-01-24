@@ -14,9 +14,9 @@ class NormalizeListFields(InstanceOperator):
     ) -> Dict[str, Any]:
         for field in self.fields:
             assert field in instance, f"Field {field} not found in instance {instance}"
-            assert isinstance(instance[field], list), (
-                f"Field {field} should be a list, got {type(instance[field])}"
-            )
+            assert isinstance(
+                instance[field], list
+            ), f"Field {field} should be a list, got {type(instance[field])}"
 
             target_key = self.key_prefix + field
 

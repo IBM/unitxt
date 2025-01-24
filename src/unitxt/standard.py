@@ -659,9 +659,9 @@ class DatasetRecipe(SourceSequentialOperator):
         self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
     def prepare(self):
-        assert self.template_card_index is None or self.template is None, (
-            f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
-        )
+        assert (
+            self.template_card_index is None or self.template is None
+        ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
 
         if self.template_card_index is None and self.template is None:
             # First try to use the defined defaults

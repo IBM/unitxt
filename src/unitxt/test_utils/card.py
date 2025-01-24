@@ -24,9 +24,9 @@ def test_adding_to_catalog(card):
         add_to_catalog(
             card, TEMP_NAME, overwrite=True, catalog_path=tmp_dir, verbose=False
         )
-        assert os.path.exists(os.path.join(tmp_dir, TEMP_NAME + ".json")), (
-            "Card was not added to catalog"
-        )
+        assert os.path.exists(
+            os.path.join(tmp_dir, TEMP_NAME + ".json")
+        ), "Card was not added to catalog"
 
 
 def test_metrics_exist(card):

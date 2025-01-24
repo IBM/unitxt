@@ -41,9 +41,9 @@ def is_name_legal_for_catalog(name):
 
 
 def verify_legal_catalog_name(name):
-    assert is_name_legal_for_catalog(name), (
-        f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
-    )
+    assert is_name_legal_for_catalog(
+        name
+    ), f'Artifict name ("{name}") should be alphanumeric. Use "." for nesting (e.g. myfolder.my_artifact)'
 
 
 def dict_diff_string(dict1, dict2, max_diff=200):
@@ -100,17 +100,17 @@ class Catalogs:
         raise StopIteration
 
     def register(self, catalog):
-        assert isinstance(catalog, AbstractCatalog), (
-            "catalog must be an instance of AbstractCatalog"
-        )
+        assert isinstance(
+            catalog, AbstractCatalog
+        ), "catalog must be an instance of AbstractCatalog"
         assert hasattr(catalog, "__contains__"), "catalog must have __contains__ method"
         assert hasattr(catalog, "__getitem__"), "catalog must have __getitem__ method"
         self.catalogs = [catalog, *self.catalogs]
 
     def unregister(self, catalog):
-        assert isinstance(catalog, AbstractCatalog), (
-            "catalog must be an instance of Catalog"
-        )
+        assert isinstance(
+            catalog, AbstractCatalog
+        ), "catalog must be an instance of Catalog"
         assert hasattr(catalog, "__contains__"), "catalog must have __contains__ method"
         assert hasattr(catalog, "__getitem__"), "catalog must have __getitem__ method"
         self.catalogs.remove(catalog)
@@ -209,19 +209,19 @@ class Artifact(Dataclass):
 
     @classmethod
     def register_class(cls, artifact_class):
-        assert issubclass(artifact_class, Artifact), (
-            f"Artifact class must be a subclass of Artifact, got '{artifact_class}'"
-        )
-        assert is_camel_case(artifact_class.__name__), (
-            f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
-        )
+        assert issubclass(
+            artifact_class, Artifact
+        ), f"Artifact class must be a subclass of Artifact, got '{artifact_class}'"
+        assert is_camel_case(
+            artifact_class.__name__
+        ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
 
         snake_case_key = camel_to_snake_case(artifact_class.__name__)
 
         if cls.is_registered_type(snake_case_key):
-            assert str(cls._class_register[snake_case_key]) == str(artifact_class), (
-                f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
-            )
+            assert (
+                str(cls._class_register[snake_case_key]) == str(artifact_class)
+            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
 
             return snake_case_key
 

@@ -79,9 +79,7 @@ class SeparateSplit(Splitter):
         assert (
             len(self.to_split_names) == len(self.to_split_sizes)
             or len(self.to_split_names) == len(self.to_split_sizes) + 1
-        ), (
-            f"Examples num should be specified to all or all but the last splits, instead given {len(self.to_split_names)} split names and {len(self.to_split_sizes)} split sizes. \n split names:{self.to_split_names} split sizes {self.to_split_sizes}"
-        )
+        ), f"Examples num should be specified to all or all but the last splits, instead given {len(self.to_split_names)} split names and {len(self.to_split_sizes)} split sizes. \n split names:{self.to_split_names} split sizes {self.to_split_sizes}"
         return super().verify()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -160,9 +158,9 @@ class FixedIndicesSampler(Sampler):
     indices: List[int]
 
     def verify(self):
-        assert isoftype(self.indices, List[int]), (
-            f"'indices' of {self.__class__.__name__} must be List[int]. Value {self.indices} is of type {type(self.indices)}"
-        )
+        assert isoftype(
+            self.indices, List[int]
+        ), f"'indices' of {self.__class__.__name__} must be List[int]. Value {self.indices} is of type {type(self.indices)}"
         super().verify()
 
     def sample(

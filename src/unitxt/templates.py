@@ -72,9 +72,9 @@ class Template(InstanceOperator):
 
     def verify(self):
         super().verify()
-        assert isoftype(self.postprocessors, List[Union[Operator, str]]), (
-            f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
-        )
+        assert isoftype(
+            self.postprocessors, List[Union[Operator, str]]
+        ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
 
     def input_fields_to_instruction_and_target_prefix(self, input_fields):
         instruction = self.apply_formatting(

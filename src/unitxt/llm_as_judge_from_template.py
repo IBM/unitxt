@@ -473,9 +473,9 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             data_classification_policy = input_instance.get("metadata", {}).get(
                 "data_classification_policy"
             )
-            instance_task_data["data_classification_policy"] = (
-                data_classification_policy
-            )
+            instance_task_data[
+                "data_classification_policy"
+            ] = data_classification_policy
             instances.append(instance_task_data)
 
         return instances

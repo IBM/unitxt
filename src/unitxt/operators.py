@@ -182,13 +182,13 @@ class MapInstanceValues(InstanceOperator):
     def verify(self):
         # make sure the mappers are valid
         for key, mapper in self.mappers.items():
-            assert isinstance(mapper, dict), (
-                f"Mapper for given field {key} should be a dict, got {type(mapper)}"
-            )
+            assert isinstance(
+                mapper, dict
+            ), f"Mapper for given field {key} should be a dict, got {type(mapper)}"
             for k in mapper.keys():
-                assert isinstance(k, str), (
-                    f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
-                )
+                assert isinstance(
+                    k, str
+                ), f'Key "{k}" in mapper for field "{key}" should be a string, got {type(k)}'
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -379,12 +379,12 @@ class InstanceFieldOperator(InstanceOperator):
     def verify_field_definition(self):
         if hasattr(self, "_field_to_field") and self._field_to_field is not None:
             return
-        assert (self.field is None) != (self.field_to_field is None), (
-            "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
-        )
-        assert self.to_field is None or self.field_to_field is None, (
-            f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
-        )
+        assert (
+            (self.field is None) != (self.field_to_field is None)
+        ), "Must uniquely define the field to work on, through exactly one of either 'field' or 'field_to_field'"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both {self.to_field} and the to fields in the mapping {self.field_to_field}"
 
         if self.field_to_field is None:
             self._field_to_field = [
@@ -396,21 +396,21 @@ class InstanceFieldOperator(InstanceOperator):
                 if isinstance(self.field_to_field, dict)
                 else self.field_to_field
             )
-        assert self.field is not None or self.field_to_field is not None, (
-            "Must supply a field to work on"
-        )
-        assert self.to_field is None or self.field_to_field is None, (
-            f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
-        )
-        assert self.field is None or self.field_to_field is None, (
-            f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
-        )
-        assert self._field_to_field is not None, (
-            f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
-        )
-        assert len(self._field_to_field) > 0, (
-            f"'input argument '{self.__class__.__name__}.field_to_field' should convey at least one field to process. Got {self.field_to_field}"
-        )
+        assert (
+            self.field is not None or self.field_to_field is not None
+        ), "Must supply a field to work on"
+        assert (
+            self.to_field is None or self.field_to_field is None
+        ), f"Can not apply operator to create both on {self.to_field} and on the mapping from fields to fields {self.field_to_field}"
+        assert (
+            self.field is None or self.field_to_field is None
+        ), f"Can not apply operator both on {self.field} and on the from fields in the mapping {self.field_to_field}"
+        assert (
+            self._field_to_field is not None
+        ), f"the from and to fields must be defined or implied from the other inputs got: {self._field_to_field}"
+        assert (
+            len(self._field_to_field) > 0
+        ), f"'input argument '{self.__class__.__name__}.field_to_field' should convey at least one field to process. Got {self.field_to_field}"
         # self._field_to_field is built explicitly by pairs, or copied from argument 'field_to_field'
         if self.field_to_field is None:
             return
@@ -419,9 +419,9 @@ class InstanceFieldOperator(InstanceOperator):
             self.field_to_field, List[Tuple[str, str]]
         ):
             for pair in self._field_to_field:
-                assert len(pair) == 2, (
-                    f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
-                )
+                assert (
+                    len(pair) == 2
+                ), f"when 'field_to_field' is defined as a list of lists, the inner lists should all be of length 2. {self.field_to_field}"
             # order of field processing is uniquely determined by the input field_to_field when a list
             return
         if isoftype(self.field_to_field, Dict[str, str]):
@@ -431,12 +431,12 @@ class InstanceFieldOperator(InstanceOperator):
                 for f, t in self.field_to_field.items():
                     if f == ff:
                         continue
-                    assert t != ff, (
-                        f"In input argument 'field_to_field': {self.field_to_field}, field {f} is mapped to field {t}, while the latter is mapped to {tt}. Whether {f} or {t} is processed first might impact end result."
-                    )
-                    assert tt != t, (
-                        f"In input argument 'field_to_field': {self.field_to_field}, two different fields: {ff} and {f} are mapped to field {tt}. Whether {ff} or {f} is processed last might impact end result."
-                    )
+                    assert (
+                        t != ff
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, field {f} is mapped to field {t}, while the latter is mapped to {tt}. Whether {f} or {t} is processed first might impact end result."
+                    assert (
+                        tt != t
+                    ), f"In input argument 'field_to_field': {self.field_to_field}, two different fields: {ff} and {f} are mapped to field {tt}. Whether {ff} or {f} is processed last might impact end result."
             return
         raise ValueError(
             "Input argument 'field_to_field': {self.field_to_field} is neither of type List{List[str]] nor of type Dict[str, str]."
@@ -736,11 +736,10 @@ class InterleaveListsToDialogOperator(InstanceOperator):
         user_turns = instance[self.user_turns_field]
         assistant_turns = instance[self.assistant_turns_field]
 
-        assert len(user_turns) == len(assistant_turns) or (
-            len(user_turns) - len(assistant_turns) == 1
-        ), (
-            "user_turns must have either the same length as assistant_turns or one more turn."
-        )
+        assert (
+            len(user_turns) == len(assistant_turns)
+            or (len(user_turns) - len(assistant_turns) == 1)
+        ), "user_turns must have either the same length as assistant_turns or one more turn."
 
         interleaved_dialog = []
         i, j = 0, 0  # Indices for the user and assistant lists
@@ -826,9 +825,9 @@ class Perturb(FieldOperator):
     percentage_to_perturb: int = 1  # 1 percent
 
     def verify(self):
-        assert 0 <= self.percentage_to_perturb and self.percentage_to_perturb <= 100, (
-            f"'percentage_to_perturb' should be in the range 0..100. Received {self.percentage_to_perturb}"
-        )
+        assert (
+            0 <= self.percentage_to_perturb and self.percentage_to_perturb <= 100
+        ), f"'percentage_to_perturb' should be in the range 0..100. Received {self.percentage_to_perturb}"
 
     def prepare(self):
         super().prepare()
@@ -1002,9 +1001,9 @@ class CastFields(InstanceOperator):
         for field_name, type in self.fields.items():
             value = dict_get(instance, field_name)
             if self.process_every_value:
-                assert isinstance(value, list), (
-                    f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{field_name}' is '{value}'"
-                )
+                assert isinstance(
+                    value, list
+                ), f"'process_every_field' == True is allowed only for fields whose values are lists, but value of field '{field_name}' is '{value}'"
                 casted_value = self._cast_multiple(value, type, field_name)
             else:
                 casted_value = self._cast_single(value, type, field_name)
@@ -1099,9 +1098,9 @@ class ApplyOperatorsField(InstanceOperator):
     ) -> Dict[str, Any]:
         operator_names = instance.get(self.operators_field)
         if operator_names is None:
-            assert self.default_operators is not None, (
-                f"No operators found in field '{self.operators_field}', and no default operators provided."
-            )
+            assert (
+                self.default_operators is not None
+            ), f"No operators found in field '{self.operators_field}', and no default operators provided."
             operator_names = self.default_operators
 
         if isinstance(operator_names, str):
@@ -1384,14 +1383,12 @@ class ExtractMostCommonFieldValues(MultiStreamOperator):
             self.overall_top_frequency_percent <= 100
             and self.overall_top_frequency_percent >= 0
         ), "'overall_top_frequency_percent' must be between 0 and 100"
-        assert self.min_frequency_percent <= 100 and self.min_frequency_percent >= 0, (
-            "'min_frequency_percent' must be between 0 and 100"
-        )
+        assert (
+            self.min_frequency_percent <= 100 and self.min_frequency_percent >= 0
+        ), "'min_frequency_percent' must be between 0 and 100"
         assert not (
             self.overall_top_frequency_percent < 100 and self.min_frequency_percent > 0
-        ), (
-            "At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default value"
-        )
+        ), "At most one of 'overall_top_frequency_percent' and 'min_frequency_percent' is allowed to move from their default value"
         super().verify()
 
     def process(self, multi_stream: MultiStream) -> MultiStream:
@@ -1628,9 +1625,9 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
 
         for operator_name in operators:
             operator = self.get_artifact(operator_name)
-            assert isinstance(operator, StreamingOperator), (
-                f"Operator {operator_name} must be a StreamOperator"
-            )
+            assert isinstance(
+                operator, StreamingOperator
+            ), f"Operator {operator_name} must be a StreamOperator"
 
             stream = operator(MultiStream({stream_name: stream}))[stream_name]
 

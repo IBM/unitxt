@@ -99,9 +99,9 @@ class TestRemoteMetrics(UnitxtTestCase):
 
         def request_callback(request, uri, response_headers):
             content_type = request.headers.get("Content-Type")
-            assert content_type == "application/json", (
-                f"expected application/json but received Content-Type: {content_type}"
-            )
+            assert (
+                content_type == "application/json"
+            ), f"expected application/json but received Content-Type: {content_type}"
 
             # Check that the input is as expected
             inputs = json.loads(request.body)

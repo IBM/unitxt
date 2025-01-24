@@ -33,9 +33,9 @@ def is_local_catalog_registered(catalog_path: str):
 
 def register_local_catalog(catalog_path: str):
     assert os.path.exists(catalog_path), f"Catalog path {catalog_path} does not exist."
-    assert os.path.isdir(catalog_path), (
-        f"Catalog path {catalog_path} is not a directory."
-    )
+    assert os.path.isdir(
+        catalog_path
+    ), f"Catalog path {catalog_path} is not a directory."
     if not is_local_catalog_registered(catalog_path=catalog_path):
         _register_catalog(LocalCatalog(location=catalog_path))
 

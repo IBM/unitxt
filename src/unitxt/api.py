@@ -30,9 +30,9 @@ settings = get_settings()
 
 
 def load(source: Union[SourceOperator, str]):
-    assert isinstance(source, (SourceOperator, str)), (
-        "source must be a SourceOperator or a string"
-    )
+    assert isinstance(
+        source, (SourceOperator, str)
+    ), "source must be a SourceOperator or a string"
     if isinstance(source, str):
         source, _ = fetch_artifact(source)
     return source().to_dataset()

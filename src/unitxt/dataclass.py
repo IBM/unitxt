@@ -275,9 +275,9 @@ def get_field_default(field):
 
 
 def asdict(obj):
-    assert is_dataclass(obj), (
-        f"{obj} must be a dataclass, got {type(obj)} with bases {obj.__class__.__bases__}"
-    )
+    assert is_dataclass(
+        obj
+    ), f"{obj} must be a dataclass, got {type(obj)} with bases {obj.__class__.__bases__}"
     return _asdict_inner(obj)
 
 
@@ -442,9 +442,9 @@ class Dataclass(metaclass=DataclassMeta):
             unexpected_argv = argv[len(_init_positional_fields_names) :]
 
         if expected_unexpected_argv is not None:
-            assert len(unexpected_argv) == 0, (
-                f"Cannot specify both _argv and unexpected positional arguments. Got {unexpected_argv}"
-            )
+            assert (
+                len(unexpected_argv) == 0
+            ), f"Cannot specify both _argv and unexpected positional arguments. Got {unexpected_argv}"
             unexpected_argv = tuple(expected_unexpected_argv)
 
         expected_unexpected_kwargs = kwargs.pop("_kwargs", None)
@@ -458,9 +458,9 @@ class Dataclass(metaclass=DataclassMeta):
             intersection = set(unexpected_kwargs.keys()) & set(
                 expected_unexpected_kwargs.keys()
             )
-            assert len(intersection) == 0, (
-                f"Cannot specify the same arguments in both _kwargs and in unexpected keyword arguments. Got {intersection} in both."
-            )
+            assert (
+                len(intersection) == 0
+            ), f"Cannot specify the same arguments in both _kwargs and in unexpected keyword arguments. Got {intersection} in both."
             unexpected_kwargs = {**unexpected_kwargs, **expected_unexpected_kwargs}
 
         if self.__allow_unexpected_arguments__:

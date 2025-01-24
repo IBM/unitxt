@@ -1921,8 +1921,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
                 "score": 0.0,
                 "score_name": main_score,
                 main_score + "_judge_raw_output": "no",
-                main_score
-                + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+                main_score + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
 You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
 There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.

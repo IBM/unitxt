@@ -7,11 +7,11 @@ format = SystemFormat(
 )
 
 default_format = SystemFormat()
-assert format.demo_format == default_format.demo_format, (
-    f"{format.demo_format} != {default_format.demo_format}"
-)
-assert format.model_input_format == default_format.model_input_format, (
-    f"{format.model_input_format} != {default_format.model_input_format}"
-)
+assert (
+    format.demo_format == default_format.demo_format
+), f"{format.demo_format} != {default_format.demo_format}"
+assert (
+    format.model_input_format == default_format.model_input_format
+), f"{format.model_input_format} != {default_format.model_input_format}"
 
 add_to_catalog(format, "formats.empty", overwrite=True)

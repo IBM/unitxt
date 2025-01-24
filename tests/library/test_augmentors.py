@@ -43,9 +43,9 @@ class TestOperators(UnitxtTestCase):
         outputs = apply_operator(operator, inputs)
         normalized_output_source = outputs[0]["input_fields"]["text"].split()
         normalized_input_source = text.split()
-        assert normalized_output_source == normalized_input_source, (
-            f"{normalized_output_source} is not equal to f{normalized_input_source}"
-        )
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
 
     def test_augment_null_task_input(self):
         text = "The dog ate my cat"
@@ -55,9 +55,9 @@ class TestOperators(UnitxtTestCase):
         outputs = apply_operator(operator, inputs)
         normalized_output_source = outputs[0]["input_fields"]["text"]
         normalized_input_source = text
-        assert normalized_output_source == normalized_input_source, (
-            f"{normalized_output_source} is not equal to f{normalized_input_source}"
-        )
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
 
     def test_augment_prefix_suffix_task_input(self):
         text = "\n She is riding a black horse  \t\t  "
@@ -72,12 +72,12 @@ class TestOperators(UnitxtTestCase):
         operator.set_fields(["text"])
         outputs = apply_operator(operator, inputs)
         output0 = str(outputs[0]["input_fields"]["text"]).rstrip("".join(suffixes))
-        assert " \t\t " not in output0 and "\n" not in output0, (
-            f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
-        )
-        assert output0 == text.strip()[: len(output0)], (
-            f"The prefix of {outputs[0]['input_fields']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
-        )
+        assert (
+            " \t\t " not in output0 and "\n" not in output0
+        ), f"Leading and trailing whitespaces should have been removed, but still found in the output: {output0}"
+        assert (
+            output0 == text.strip()[: len(output0)]
+        ), f"The prefix of {outputs[0]['input_fields']['text']!s} is not equal to the prefix of the stripped input: {text.strip()}"
 
     def test_augment_prefix_suffix_with_non_string_suffixes_error(self):
         prefixes = [10, 20, "O", "P"]

@@ -820,14 +820,14 @@ class TestRecipes(UnitxtTestCase):
         assert result, f"Unable to find '{pattern}' in '{source}'"
         result = result.group(4)
         original_text = "unflinchingly bleak and desperate "
-        assert result != original_text, (
-            f"Augmented text '{result}' is equal to text without '{original_text}' and was not augmented"
-        )
+        assert (
+            result != original_text
+        ), f"Augmented text '{result}' is equal to text without '{original_text}' and was not augmented"
         normalized_output_source = result.split()
         normalized_input_source = original_text.split()
-        assert normalized_output_source == normalized_input_source, (
-            f"{normalized_output_source} is not equal to f{normalized_input_source}"
-        )
+        assert (
+            normalized_output_source == normalized_input_source
+        ), f"{normalized_output_source} is not equal to f{normalized_input_source}"
 
     def test_dataset_recipe_with_train_size_limit(self):
         recipe = DatasetRecipe(

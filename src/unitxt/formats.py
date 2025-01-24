@@ -74,9 +74,9 @@ class BaseFormat(Format):
             field_value = instance[field_name]
             if do_pop:
                 instance.pop(field_name)
-            assert field_value is not None, (
-                f"Value in field '{field_name}' should not be none. Received instance: {instance}"
-            )
+            assert (
+                field_value is not None
+            ), f"Value in field '{field_name}' should not be none. Received instance: {instance}"
             return field_value
         return ""
 
@@ -93,9 +93,9 @@ class BaseFormat(Format):
         instance_fields["demos"] = []
         if self.demos_field is not None and self.demos_field in instance:
             demos = instance[self.demos_field]
-            assert demos is not None and isoftype(demos, List[Dict[str, Any]]), (
-                f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
-            )
+            assert (
+                demos is not None and isoftype(demos, List[Dict[str, Any]])
+            ), f"A list of dict-s is expected in field '{self.demos_field}'. Received instance: {instance}"
             for demo_instance in demos:
                 demo = {}
                 for field in ["source", "target", "target_prefix"]:

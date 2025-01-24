@@ -115,9 +115,9 @@ class WeightedFusion(BaseFusion):
         super().verify()
         assert self.subsets is not None, "subsets must be specified"
         assert self.weights is not None, "weights must be specified"
-        assert len(self.subsets) == len(self.weights), (
-            "subsets and weights must have the same length"
-        )
+        assert len(self.subsets) == len(
+            self.weights
+        ), "subsets and weights must have the same length"
         assert isoftype(self.subsets, Dict[str, SourceOperator]) or isoftype(
             self.subsets, List[SourceOperator]
         )

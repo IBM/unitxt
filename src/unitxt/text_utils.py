@@ -198,9 +198,9 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
 
     indent_delta_str = " " * indent_delta
     ticked_indent_delta_str = indent_delta_str[:-2] + "- "
-    assert indent_delta >= 2, (
-        f"Needs at least 2 position indentations, for the case of list elements, that are to be preceded each by ' -'. Got indent_delta={indent_delta}."
-    )
+    assert (
+        indent_delta >= 2
+    ), f"Needs at least 2 position indentations, for the case of list elements, that are to be preceded each by ' -'. Got indent_delta={indent_delta}."
     res = []  # conputed hereunder as a list of lines, that are indented only at the end
 
     if isinstance(d, dict):

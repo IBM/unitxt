@@ -26,9 +26,9 @@ for file in sorted(os.listdir(bluebench_dir)):
             if subscenario_name.endswith(".json")
             else subscenario_name
         )
-        bluebench_scenarios[scenario_name][subscenario_name] = (
-            f"recipes.bluebench.{scenario_name}.{subscenario_name}"
-        )
+        bluebench_scenarios[scenario_name][
+            subscenario_name
+        ] = f"recipes.bluebench.{scenario_name}.{subscenario_name}"
     bluebench_scenarios[scenario_name] = Benchmark(bluebench_scenarios[scenario_name])
 
 benchmark = Benchmark(

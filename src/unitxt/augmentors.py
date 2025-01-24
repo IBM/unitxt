@@ -121,23 +121,21 @@ class AugmentPrefixSuffix(TextAugmentor):
     remove_existing_whitespaces: Optional[bool] = False
 
     def verify(self):
-        assert self.prefixes or self.suffixes, (
-            "At least one of prefixes/suffixes should be not None."
-        )
+        assert (
+            self.prefixes or self.suffixes
+        ), "At least one of prefixes/suffixes should be not None."
         for arg, arg_name in zip(
             [self.prefixes, self.suffixes], ["prefixes", "suffixes"]
         ):
             assert (
                 arg is None or isoftype(arg, List[str]) or isoftype(arg, Dict[str, int])
-            ), (
-                f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
-            )
-        assert self.prefix_len > 0, (
-            f"prefix_len must be positive, got {self.prefix_len}"
-        )
-        assert self.suffix_len > 0, (
-            f"suffix_len must be positive, got {self.suffix_len}"
-        )
+            ), f"Argument {arg_name} should be either None or a list of strings or a dictionary str->int. {arg} is none of the above."
+        assert (
+            self.prefix_len > 0
+        ), f"prefix_len must be positive, got {self.prefix_len}"
+        assert (
+            self.suffix_len > 0
+        ), f"suffix_len must be positive, got {self.suffix_len}"
         super().verify()
 
     def _calculate_distributions(self, prefs_or_suffs):
