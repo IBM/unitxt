@@ -25,9 +25,9 @@ _registered_types = {
 
 
 def register_type(new_type):
-    assert is_new_type(new_type) or is_typed_dict(
-        new_type
-    ), "Can register only typing.NewType or typing.TypedDict"
+    assert is_new_type(new_type) or is_typed_dict(new_type), (
+        "Can register only typing.NewType or typing.TypedDict"
+    )
     _registered_types[new_type.__name__] = new_type
 
 

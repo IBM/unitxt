@@ -15,16 +15,16 @@ class ValidateSchema(Validator, InstanceOperator):
     schema: Features = None
 
     def verify(self):
-        assert isinstance(
-            self.schema, Features
-        ), "Schema must be an instance of Features"
+        assert isinstance(self.schema, Features), (
+            "Schema must be an instance of Features"
+        )
         assert self.schema is not None, "Schema must be specified"
 
     def verify_first_instance(self, instance):
         for std_field in self.standard_fields:
-            assert (
-                std_field in instance
-            ), f'Field "{std_field}" is missing in the first instance'
+            assert std_field in instance, (
+                f'Field "{std_field}" is missing in the first instance'
+            )
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None

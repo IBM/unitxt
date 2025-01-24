@@ -64,4 +64,4 @@ for topic in topics:
             strict=False,  # random generation here does not produce 0 results (MCQA)
             # loader_limit=2 * len(ds["test"]),
         )
-    add_to_catalog(card, f"cards.mmlu_pro.{topic.replace(' ','_')}", overwrite=True)
+    add_to_catalog(card, f"cards.mmlu_pro.{topic.replace(' ', '_')}", overwrite=True)

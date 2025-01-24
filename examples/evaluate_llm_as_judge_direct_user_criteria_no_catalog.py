@@ -36,7 +36,9 @@ data = [
 
 metric = LLMJudgeDirect(
     inference_engine=CrossProviderInferenceEngine(
-        model="llama-3-1-70b-instruct", max_tokens=1024, data_classification_policy=["public"]
+        model="llama-3-1-70b-instruct",
+        max_tokens=1024,
+        data_classification_policy=["public"],
     ),
     criteria=criteria,
     context_fields=["question"],

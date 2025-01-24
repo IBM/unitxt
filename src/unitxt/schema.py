@@ -198,11 +198,11 @@ class FinalizeDataset(InstanceOperatorValidator):
     def validate(self, instance: Dict[str, Any], stream_name: Optional[str] = None):
         # verify the instance has the required schema
         assert instance is not None, "Instance is None"
-        assert isinstance(
-            instance, dict
-        ), f"Instance should be a dict, got {type(instance)}"
+        assert isinstance(instance, dict), (
+            f"Instance should be a dict, got {type(instance)}"
+        )
         schema = get_schema(stream_name)
-        assert all(
-            key in instance for key in schema
-        ), f"Instance should have the following keys: {schema}. Instance is: {instance}"
+        assert all(key in instance for key in schema), (
+            f"Instance should have the following keys: {schema}. Instance is: {instance}"
+        )
         schema.encode_example(instance)

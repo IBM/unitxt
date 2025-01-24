@@ -224,7 +224,7 @@ class LLMJudgeDirect(LLMJudge):
 
         display_options_instruction = "Choose an answer:\n" + "\n".join(
             [
-                f"- \"{o.name}\"{f' if {o.description}' if o.description != '' else ''}"
+                f'- "{o.name}"{f" if {o.description}" if o.description != "" else ""}'
                 for o in criteria.options
             ]
         )
@@ -722,7 +722,7 @@ class LLMJudgePairwise(LLMJudge):
         ]
 
         self.logger.info(
-            f"The evaluation will perform {sum(contests_count_list) * [1,2][self.check_positional_bias]} ({' + '.join([f'{c * [1,2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
+            f"The evaluation will perform {sum(contests_count_list) * [1, 2][self.check_positional_bias]} ({' + '.join([f'{c * [1, 2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
         )
 
         response_pairs_list: List[List[List[str]]] = []

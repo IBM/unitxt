@@ -41,7 +41,7 @@ class EnumeratedListSerializer(SingleTypeSerializer):
     serialized_type = EnumeratedList
 
     def serialize(self, value: EnumeratedList, instance: Dict[str, Any]) -> str:
-        return "\n".join([f"{i+1}. {v}" for i, v in enumerate(value)])
+        return "\n".join([f"{i + 1}. {v}" for i, v in enumerate(value)])
 
 
 task = Task(

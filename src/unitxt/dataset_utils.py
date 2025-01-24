@@ -26,9 +26,9 @@ def parse(query: str):
 def get_dataset_artifact(dataset):
     if isinstance(dataset, DatasetRecipe):
         return dataset
-    assert isinstance(
-        dataset, str
-    ), "dataset should be string description of recipe, or recipe object."
+    assert isinstance(dataset, str), (
+        "dataset should be string description of recipe, or recipe object."
+    )
     _reset_env_local_catalogs()
     register_all_artifacts()
     recipe = fetch(dataset)

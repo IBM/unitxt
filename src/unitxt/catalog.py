@@ -38,17 +38,17 @@ class LocalCatalog(Catalog):
     is_local: bool = True
 
     def path(self, artifact_identifier: str):
-        assert (
-            artifact_identifier.strip()
-        ), "artifact_identifier should not be an empty string."
+        assert artifact_identifier.strip(), (
+            "artifact_identifier should not be an empty string."
+        )
         parts = artifact_identifier.split(constants.catalog_hierarchy_sep)
         parts[-1] = parts[-1] + ".json"
         return os.path.join(self.location, *parts)
 
     def load(self, artifact_identifier: str, overwrite_args=None):
-        assert (
-            artifact_identifier in self
-        ), f"Artifact with name {artifact_identifier} does not exist"
+        assert artifact_identifier in self, (
+            f"Artifact with name {artifact_identifier} does not exist"
+        )
         path = self.path(artifact_identifier)
         return Artifact.load(
             path,
@@ -77,13 +77,13 @@ class LocalCatalog(Catalog):
         overwrite: bool = False,
         verbose: bool = True,
     ):
-        assert isinstance(
-            artifact, Artifact
-        ), f"Input artifact must be an instance of Artifact, got {type(artifact)}"
+        assert isinstance(artifact, Artifact), (
+            f"Input artifact must be an instance of Artifact, got {type(artifact)}"
+        )
         if not overwrite:
-            assert (
-                artifact_identifier not in self
-            ), f"Artifact with name {artifact_identifier} already exists in catalog {self.name}"
+            assert artifact_identifier not in self, (
+                f"Artifact with name {artifact_identifier} already exists in catalog {self.name}"
+            )
         path = self.path(artifact_identifier)
         os.makedirs(Path(path).parent.absolute(), exist_ok=True)
         artifact.save(path)

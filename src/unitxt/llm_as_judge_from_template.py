@@ -208,7 +208,7 @@ class LLMAsJudge(LLMAsJudgeBase):
                 else:  # num demos > 0
                     turns = []
                     for turn in input_instance:
-                        turns.append(f'{turn["role"]}: {turn["content"]}')
+                        turns.append(f"{turn['role']}: {turn['content']}")
                     string_input_instances.append("\n".join(turns))
 
         if self.task == "rating.single_turn":
@@ -473,9 +473,9 @@ class TaskBasedLLMasJudge(LLMAsJudgeBase):
             data_classification_policy = input_instance.get("metadata", {}).get(
                 "data_classification_policy"
             )
-            instance_task_data[
-                "data_classification_policy"
-            ] = data_classification_policy
+            instance_task_data["data_classification_policy"] = (
+                data_classification_policy
+            )
             instances.append(instance_task_data)
 
         return instances

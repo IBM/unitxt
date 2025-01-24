@@ -186,9 +186,9 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         self.check_metrics_type()
 
         for augmentable_input in self.augmentable_inputs:
-            assert (
-                augmentable_input in self.input_fields
-            ), f"augmentable_input {augmentable_input} is not part of {self.input_fields}"
+            assert augmentable_input in self.input_fields, (
+                f"augmentable_input {augmentable_input} is not part of {self.input_fields}"
+            )
 
         self.verify_defaults()
 

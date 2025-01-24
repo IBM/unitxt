@@ -54,7 +54,7 @@ for name in config_names:
             MapReplace(
                 field_to_field={"question": "question", "options": "choices"},
                 mapping={
-                    f"<image {i}>": f'<img src="media/images/{i-1}">'
+                    f"<image {i}>": f'<img src="media/images/{i - 1}">'
                     for i in range(1, 8)
                 },
             ),

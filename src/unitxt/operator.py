@@ -201,9 +201,9 @@ class MultiStreamOperator(StreamingOperator):
         self, multi_stream: Optional[MultiStream] = None
     ) -> MultiStream:
         result = self.process(multi_stream)
-        assert isinstance(
-            result, MultiStream
-        ), "MultiStreamOperator must return a MultiStream"
+        assert isinstance(result, MultiStream), (
+            "MultiStreamOperator must return a MultiStream"
+        )
         return result
 
     @abstractmethod
@@ -234,9 +234,9 @@ class SourceOperator(MultiStreamOperator):
         self, multi_stream: Optional[MultiStream] = None
     ) -> MultiStream:
         result = self.process()
-        assert isinstance(
-            result, MultiStream
-        ), "MultiStreamOperator must return a MultiStream"
+        assert isinstance(result, MultiStream), (
+            "MultiStreamOperator must return a MultiStream"
+        )
         return result
 
     @abstractmethod
@@ -533,9 +533,9 @@ class SequentialMixin(Artifact):
         return len(self.steps)
 
     def set_max_steps(self, max_steps):
-        assert (
-            max_steps <= self.num_steps()
-        ), f"Max steps requested ({max_steps}) is larger than defined steps {self.num_steps()}"
+        assert max_steps <= self.num_steps(), (
+            f"Max steps requested ({max_steps}) is larger than defined steps {self.num_steps()}"
+        )
         assert max_steps >= 1, f"Max steps requested ({max_steps}) is less than 1"
         self.max_steps = max_steps
 
@@ -571,9 +571,9 @@ class SourceSequentialOperator(SourceOperator, SequentialMixin):
     """
 
     def process(self, multi_stream: Optional[MultiStream] = None) -> MultiStream:
-        assert (
-            self.num_steps() > 0
-        ), "Calling process on a SourceSequentialOperator without any steps"
+        assert self.num_steps() > 0, (
+            "Calling process on a SourceSequentialOperator without any steps"
+        )
         multi_stream = self.steps[0]()
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)
@@ -590,13 +590,13 @@ class SequentialOperatorInitializer(SequentialOperator):
         return self.process(*args, **kwargs)
 
     def process(self, *args, **kwargs) -> MultiStream:
-        assert (
-            self.num_steps() > 0
-        ), "Calling process on a SequentialOperatorInitializer without any steps"
+        assert self.num_steps() > 0, (
+            "Calling process on a SequentialOperatorInitializer without any steps"
+        )
 
-        assert isinstance(
-            self.steps[0], StreamInitializerOperator
-        ), "The first step in a SequentialOperatorInitializer must be a StreamInitializerOperator"
+        assert isinstance(self.steps[0], StreamInitializerOperator), (
+            "The first step in a SequentialOperatorInitializer must be a StreamInitializerOperator"
+        )
         multi_stream = self.steps[0](*args, **kwargs)
         for operator in self.steps[1 : self._get_max_steps()]:
             multi_stream = operator(multi_stream)

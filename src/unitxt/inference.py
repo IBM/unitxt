@@ -1203,9 +1203,9 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: List[
-            List[Dict[str, Union[float, str]]]
-        ] = self.get_options_log_probs(dataset_with_options)
+        dataset_with_options_logprobs: List[List[Dict[str, Union[float, str]]]] = (
+            self.get_options_log_probs(dataset_with_options)
+        )
 
         dataset_iterator = iter(dataset_with_options_logprobs)
 
@@ -1364,9 +1364,9 @@ class IbmGenAiInferenceEngine(
         predict_results = []
         for prediction in predictions:
             result: TextGenerationResult = prediction.results[0]
-            assert isinstance(
-                result.generated_tokens, list
-            ), "result.generated_tokens should be a list"
+            assert isinstance(result.generated_tokens, list), (
+                "result.generated_tokens should be a list"
+            )
 
             predict_result = []
             for base_token in result.generated_tokens:
@@ -1671,9 +1671,9 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert (
-            api_version and azure_openapi_host
-        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        assert api_version and azure_openapi_host, (
+            "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        )
         api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url}
@@ -1779,7 +1779,7 @@ class TogetherAiInferenceEngine(
         }
         model_type = together_model_id_to_type.get(self.model_name)
         assert model_type is not None, (
-            f"Could not find model {self.model_name} " "in Together AI model list"
+            f"Could not find model {self.model_name} in Together AI model list"
         )
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
@@ -1956,7 +1956,9 @@ class WMLInferenceEngineBase(
             self.model_name
             or self.deployment_id
             and not (self.model_name and self.deployment_id)
-        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+        ), (
+            "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+        )
 
     def process_data_before_dump(self, data):
         if "credentials" in data:
@@ -2045,9 +2047,9 @@ class WMLInferenceEngineBase(
             "['url', 'apikey', 'username', 'password']."
         )
 
-        assert credentials.get(
-            "url"
-        ), "'url' is a mandatory key for WML credentials dict."
+        assert credentials.get("url"), (
+            "'url' is a mandatory key for WML credentials dict."
+        )
         assert "space_id" in credentials or "project_id" in credentials, (
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
