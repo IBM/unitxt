@@ -29,6 +29,7 @@ from unitxt.operators import (
     FromIterables,
     IndexOf,
     Intersect,
+    IntersectCorrespondingFields,
     IterableSource,
     JoinStr,
     LengthBalancer,
@@ -579,68 +580,47 @@ class TestOperators(UnitxtTestCase):
         )
 
     def test_intersect(self):
-        
-        def __test_intersect(inputs, targets, fields_to_intersect, allowed_field_values):
-            return check_operator(
-                operator=Intersect(fields_to_intersect, allowed_field_values),
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["a", "b", "f"]},
+        ]
+
+        targets = [
+            {"label": ["b"]},
+            {"label": []},
+            {"label": ["b", "f"]},
+        ]
+
+        check_operator(
+            operator=Intersect(field="label", allowed_values=["b", "f"]),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+        with self.assertRaises(ValueError) as cm:
+            check_operator(
+                operator=Intersect(field="label", allowed_values=3),
                 inputs=inputs,
                 targets=targets,
-                )
-        
-        ## basic test
-        __test_intersect(
-            inputs=[{"label": [1,2]}], 
-            targets=[{"label": [1]}],
-            fields_to_intersect=["label"],
-            allowed_field_values=[1]
-                        )
+                tester=self,
+            )
+        self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
-        # multiple fields of the same name
-        __test_intersect(
-            inputs = [
-                {"label": ["a", "b"]},
-                {"label": ["a", "c", "d"]},
-                {"name": ["a", "b", "f"]},
-            ],
-            targets = [
-                {"label": ["b"]},
-                {"label": []},
-                {"name": ["b", "f"]},
-            ],
-            fields_to_intersect=["label",'name'],
-            allowed_field_values=["b", "f"]
-        )
-        
-        __test_intersect(
-            inputs = [
-                {"label": ["a", "b"]},
-                {"label": ["a", "c", "d"]},
-                {"label": ["a", "b", "f"]},
-            ],
-            targets = [
-                {"label": ["b"]},
-                {"label": []},
-                {"label": ["b", "f"]},
-            ],
-            fields_to_intersect=["label"], 
-            allowed_field_values=["b", "f"]
-        )
-        
-        
         with self.assertRaises(ValueError) as cm:
-            __test_intersect(
-                inputs = [
-                    {"label": ["a", "b"]},
-                ],
-                targets = [
-                {"label": ["b"]},
-                ],
-                fields_to_intersect=["label"], 
-                allowed_field_values=3
-                )
-        self.assertEqual(str(cm.exception), "The allowed_field_values is not a list but '<class 'int'>'")
+            check_operator(
+                operator=Intersect(
+                    field="label", allowed_values=["3"], process_every_value=True
+                ),
+                inputs=inputs,
+                targets=targets,
+                tester=self,
+            )
+        self.assertEqual(
+            str(cm.exception),
+            "'process_every_value=True' is not supported in Intersect operator",
+        )
 
-        
         inputs = [
             {"label": "b"},
         ]
@@ -650,7 +630,135 @@ class TestOperators(UnitxtTestCase):
             "The value in field is not a list but 'b'",
         ]
         check_operator_exception(
-            operator=Intersect(field=["label"], allowed_field_values=["c"]),
+            operator=Intersect(field="label", allowed_values=["c"]),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+    def test_intersect_corresponding_fields(self):
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+
+        targets = [
+            {"label": ["b"], "position": [1], "other": "not"},
+            {"label": [], "position": [], "other": "relevant"},
+            {"label": ["b", "f"], "position": [1, 2], "other": "field"},
+        ]
+
+        check_operator(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="acme_field",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["acme_field"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            "Value of field 'other' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\nother (str):\n    not\n",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="other",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1, 2], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Number of elements in field 'position' is not the same as the number of elements in field 'label' so the IntersectCorrespondingFields can not remove corresponding values.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+    [2] (int):
+        2
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
             inputs=inputs,
             exception_texts=exception_texts,
             tester=self,
@@ -3146,4 +3254,3 @@ Agent:"""
             }
         ]
         TestOperators().compare_streams(joined_stream, expected_joined_stream)
-    

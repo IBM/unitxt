@@ -84,7 +84,7 @@ from .operator import (
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
-from .text_utils import nested_tuple_to_string
+from .text_utils import nested_tuple_to_string, to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -1448,40 +1448,140 @@ class ExtractFieldValues(ExtractMostCommonFieldValues):
         self.min_frequency_percent = 0
 
 
-class Intersect(InstanceOperator):
+class Intersect(FieldOperator):
     """Intersects the value of a field, which must be a list, with a given list.
 
     Args:
-        allowed_field_values (list) - list to intersect.
-        fields_to_intersect (list) - list of fields to be filtered
+        allowed_values (list) - list to intersect.
     """
 
-    allowed_field_values: List[str]
-    fields_to_intersect: List[str]
+    allowed_values: List[Any]
+
+    def verify(self):
+        super().verify()
+        if self.process_every_value:
+            raise ValueError(
+                "'process_every_value=True' is not supported in Intersect operator"
+            )
+
+        if not isinstance(self.allowed_values, list):
+            raise ValueError(
+                f"The allowed_values is not a list but '{self.allowed_values}'"
+            )
+
+    def process_value(self, value: Any) -> Any:
+        super().process_value(value)
+        if not isinstance(value, list):
+            raise ValueError(f"The value in field is not a list but '{value}'")
+        return [e for e in value if e in self.allowed_values]
+
+
+class IntersectCorrespondingFields(InstanceOperator):
+    """Intersects the value of a field, which must be a list, with a given list.
+
+    For example:
+
+    Assume the instances contain a field of 'labels' and  a field with their corresponding 'positions' in the text.
+
+    IntersectCorrespondingFields(field="label",
+                                 allowed_values=["b", "f"],
+                                 corresponding_fields_to_intersect=["position"])
+
+    would keep only "b" and "f" values in 'labels' field and
+    their respective values in the 'position' field.
+    (All other fields aer not effected)
+
+    Given this input:
+
+    [
+        {"label": ["a", "b"],"position": [0,1],"other" : "not"},
+        {"label": ["a", "c", "d"], "position": [0,1,2], "other" : "relevant"},
+        {"label": ["a", "b", "f"], "position": [0,1,2], "other" : "field"}
+    ]
+
+    So the output would be:
+    [
+            {"label": ["b"], "position":[1],"other" : "not"},
+            {"label": [], "position": [], "other" : "relevant"},
+            {"label": ["b", "f"],"position": [1,2], "other" : "field"},
+    ]
+
+    Args:
+        field - the field to intersected (must contain list values)
+        allowed_values (list) - list of values to keep
+        corresponding_fields_to_intersect (list) - additional list fields from which values
+        are removed based the corresponding index of values removed from the 'field'
+    """
+
+    field: str
+    allowed_values: List[str]
+    corresponding_fields_to_intersect: List[str]
 
     def verify(self):
         super().verify()
 
-        if not isinstance(self.allowed_field_values, list):
+        if not isinstance(self.allowed_values, list):
             raise ValueError(
                 f"The allowed_field_values is not a type list but '{type(self.allowed_field_values)}'"
             )
 
-    def process(self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
-        
-        if set(self.allowed_field_values) == set(instance['labels']):
-            return instance
-        
-        data_to_keep_indices = [i for i, label in enumerate(instance['labels']) if label in set(self.allowed_field_values)]
-        
-        return dict(
-            (
-                key, value[data_to_keep_indices] 
-                if key in self.fields_to_intersect
-                else value)
-            for key,value in instance.items()
+        if self.field not in instance:
+            raise ValueError(
+                f"Field '{self.field}' is not in provided instance.\n"
+                + to_pretty_string(instance)
             )
+
+        for corresponding_field in self.corresponding_fields_to_intersect:
+            if corresponding_field not in instance:
+                raise ValueError(
+                    f"Field '{corresponding_field}' is not in provided instance.\n"
+                    + to_pretty_string(instance)
+                )
+
+        if not isinstance(instance[self.field], list):
+            raise ValueError(
+                f"Value of field '{self.field}' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\n"
+                + to_pretty_string(instance, keys=[self.field])
+            )
+
+        num_values_in_field = len(instance[self.field])
+
+        if set(self.allowed_values) == set(instance[self.field]):
+            return instance
+
+        indices_to_keep = [
+            i
+            for i, value in enumerate(instance[self.field])
+            if value in set(self.allowed_values)
+        ]
+
+        result_instance = {}
+        for field_name, field_value in instance.items():
+            if (
+                field_name in self.corresponding_fields_to_intersect
+                or field_name == self.field
+            ):
+                if not isinstance(field_value, list):
+                    raise ValueError(
+                        f"Value of field '{field_name}' is not a list, IntersectCorrespondingFields can not intersect with allowed values."
+                    )
+                if len(field_value) != num_values_in_field:
+                    raise ValueError(
+                        f"Number of elements in field '{field_name}' is not the same as the number of elements in field '{self.field}' so the IntersectCorrespondingFields can not remove corresponding values.\n"
+                        + to_pretty_string(instance, keys=[self.field, field_name])
+                    )
+                result_instance[field_name] = [
+                    value
+                    for index, value in enumerate(field_value)
+                    if index in indices_to_keep
+                ]
+            else:
+                result_instance[field_name] = field_value
+        return result_instance
+
 
 class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
