@@ -1477,11 +1477,11 @@ class Intersect(FieldOperator):
 
 
 class IntersectCorrespondingFields(InstanceOperator):
-    """Intersects the value of a field, which must be a list, with a given list.
+    """Intersects the value of a field, which must be a list, with a given list , and removes corresponding elements from other list fields.
 
     For example:
 
-    Assume the instances contain a field of 'labels' and  a field with their corresponding 'positions' in the text.
+    Assume the instances contain a field of 'labels' and a field with the labels' corresponding 'positions' in the text.
 
     IntersectCorrespondingFields(field="label",
                                  allowed_values=["b", "f"],
@@ -1489,7 +1489,7 @@ class IntersectCorrespondingFields(InstanceOperator):
 
     would keep only "b" and "f" values in 'labels' field and
     their respective values in the 'position' field.
-    (All other fields aer not effected)
+    (All other fields are not effected)
 
     Given this input:
 
@@ -1510,7 +1510,7 @@ class IntersectCorrespondingFields(InstanceOperator):
         field - the field to intersected (must contain list values)
         allowed_values (list) - list of values to keep
         corresponding_fields_to_intersect (list) - additional list fields from which values
-        are removed based the corresponding index of values removed from the 'field'
+        are removed based the corresponding indices of values removed from the 'field'
     """
 
     field: str
