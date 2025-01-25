@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 import uuid
 
@@ -8,7 +9,23 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 import torch
+from litellm.llms.watsonx.common_utils import IBMWatsonXMixin
 from transformers import AutoTokenizer
+
+logger = logging.getLogger("unitxt-assistance")
+
+
+logger = logging.getLogger("unitxt-assistance")
+
+original_validate_environment = IBMWatsonXMixin.validate_environment
+
+
+def wrapped_validate_environment(self, *args, **kwargs):
+    kwargs = {**kwargs, "headers": {}}
+    return original_validate_environment(self, *args, **kwargs)
+
+
+IBMWatsonXMixin.validate_environment = wrapped_validate_environment
 
 
 @st.cache_resource
@@ -87,8 +104,10 @@ def generate_response(messages, metadata_df, embeddings, model, max_tokens=500):
 
     system_prompt = (
         "Your job is to assist users with Unitxt Library and Catalog. "
-        "Refuse to do anything else.\n\n"
-        "# Answer only based on the following Information:\n\n" + context
+        "Refuse to do anything else. "
+        "Based your answers on the information below add link to its origin Path with this format: https://www.unitxt.ai/en/latest/{path}.html"
+        "\n\n"
+        "# Answer only based on the following information:\n\n" + context
     )
 
     messages = [

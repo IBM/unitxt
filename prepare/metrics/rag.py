@@ -7,6 +7,7 @@ from unitxt.metrics import (
     TokenOverlap,
 )
 from unitxt.operators import Copy, ListFieldValues
+from unitxt.serializers import MultiTypeSerializer
 from unitxt.test_utils.metrics import test_metric
 
 metrics = {
@@ -494,6 +495,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.answer_reward": [
         copy_field_prediction_answer_to_prediction,
         copy_field_question_to_references_in_a_list,
+        MultiTypeSerializer(field="references", process_every_value=True),
     ],
     "metrics.rag.end_to_end.answer_faithfulness": [
         copy_field_prediction_contexts_to_references,
@@ -506,6 +508,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.context_relevance": [
         copy_field_prediction_contexts_to_references,
         copy_field_question_to_prediction,
+        MultiTypeSerializer(field="prediction"),
     ],
 }
 

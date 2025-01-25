@@ -1,5 +1,7 @@
-from unitxt.blocks import LoadHF, Rename, Set, TaskCard
+from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import LoadHF
+from unitxt.operators import Deduplicate, Rename, Set
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -27,6 +29,7 @@ for topic in topics:
             filtering_lambda=f"lambda x: x['category'] == '{topic}'",
         ),
         preprocess_steps=[
+            Deduplicate(by=["question", "options", "answer", "category"]),
             RenameSplits({"validation": "train"}),
             Rename(
                 field_to_field={

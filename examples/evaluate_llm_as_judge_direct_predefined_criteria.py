@@ -4,14 +4,14 @@ from unitxt.api import create_dataset, evaluate
 logger = get_logger()
 
 data = [
-    {"question": "How is the weather?"},
-    {"question": "How is the weather?"},
-    {"question": "How is the weather?"},
+    {"question": "Who is Harry Potter?"},
+    {"question": "How can I protect myself from the wind while walking outside?"},
+    {"question": "What is a good low cost of living city in the US?"},
 ]
 
-criteria = "metrics.llm_as_judge.direct.criterias.temperature_in_celsius_and_fahrenheit"
+criterion = "metrics.llm_as_judge.direct.criterias.answer_relevance"
 metrics = [
-    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
+    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criterion}, context_fields=[question]]"
 ]
 
 dataset = create_dataset(
@@ -19,9 +19,9 @@ dataset = create_dataset(
 )
 
 predictions = [
-    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit (around 31-34°C). The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
-    """On most days, the weather is warm and humid, with temperatures often soaring into the high 80s and low 90s Fahrenheit. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
-    """On most days, the weather is warm and humid. The dense foliage of the jungle acts as a natural air conditioner, keeping the temperature relatively stable and comfortable for the inhabitants.""",
+    """Harry Potter is a young wizard who becomes famous for surviving an attack by the dark wizard Voldemort, and later embarks on a journey to defeat him and uncover the truth about his past.""",
+    """You can protect yourself from the wind by wearing windproof clothing, layering up, and using accessories like hats, scarves, and gloves to cover exposed skin.""",
+    """A good low-cost-of-living city in the U.S. is San Francisco, California, known for its affordable housing and budget-friendly lifestyle.""",
 ]
 
 results = evaluate(predictions=predictions, data=dataset)
