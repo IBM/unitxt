@@ -1,8 +1,9 @@
 import unitxt
-from unitxt.blocks import LoadHF
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import LoadHF
 from unitxt.operators import (
+    Deduplicate,
     ListFieldValues,
     MapInstanceValues,
     Rename,
@@ -16,6 +17,7 @@ with unitxt.settings.context(allow_unverified_code=True):
             path="allenai/social_i_qa", data_classification_policy=["public"]
         ),
         preprocess_steps=[
+            Deduplicate(by=["context", "question", "answerA", "answerB", "answerC"]),
             "splitters.small_no_test",
             ListFieldValues(
                 fields=["answerA", "answerB", "answerC"], to_field="choices"

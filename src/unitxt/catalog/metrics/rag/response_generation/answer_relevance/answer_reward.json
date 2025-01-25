@@ -9,6 +9,11 @@
             }
         },
         {
+            "__type__": "multi_type_serializer",
+            "field": "references",
+            "process_every_value": true
+        },
+        {
             "__type__": "list_field_values",
             "fields": [
                 "references"
