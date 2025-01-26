@@ -17,6 +17,7 @@ from .serializers import (
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     Serializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
     VideoSerializer,
 )
@@ -64,6 +65,7 @@ class Template(InstanceOperator):
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
             ]
         )
     )
@@ -270,7 +272,34 @@ class OutputFormatTemplate(Template):
         return target, references
 
 
+class JsonOutputFormatTemplate(Template):
+    output_fields: Dict[str, str]
+    wrap_with_list_fields: List[str]
+
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
+        data = {}
+        for field, target_field in self.output_fields.items():
+            value = reference_fields[field]
+            if field in self.wrap_with_list_fields:
+                value = [value]
+            data[target_field] = value
+        target = json.dumps(data, ensure_ascii=False)
+        references = [target]
+        return target, references
+
+
 class InputOutputTemplate(InputFormatTemplate, OutputFormatTemplate):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
+    pass
+
+
+class JsonOutputTemplate(InputFormatTemplate, JsonOutputFormatTemplate):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
     Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
@@ -696,13 +725,7 @@ class MultipleChoiceTemplate(InputFormatTemplate):
         if self.place_correct_choice_position is not None:
             fix_pos = self.place_correct_choice_position
 
-            # Option 1: Clamping the position to the valid range
-            # Force the position to be within the valid range [0, len(choices)-1].
-            # If fix_pos is less than 0, it becomes 0.
-            # If fix_pos is greater than len(choices)-1, it becomes len(choices)-1.
-            fix_pos = max(0, min(fix_pos, len(choices) - 1))
-
-            # Option 2: Supporting negative indexes similar to Python lists
+            # Supporting negative indexes similar to Python lists
             # If fix_pos is negative, convert it to a valid positive index by adding len(choices).
             # For example, -1 becomes the last index, -2 becomes the one before last, etc.
             if fix_pos < 0:

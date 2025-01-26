@@ -1327,6 +1327,51 @@ class TestTemplates(UnitxtTestCase):
 
         check_operator(template, inputs, targets, tester=self)
 
+    def test_multiple_choice_template_with_negative_index(self):
+        template = MultipleChoiceTemplate(
+            input_format="Text: {text}, Choices: {choices}.",
+            enumerator="capitals",
+            place_correct_choice_position=-1,  # Negative index to place correct choice last
+        )
+
+        inputs = [
+            {
+                "input_fields": {
+                    "choices": ["Option A", "Option B", "Option C", "Option D"],
+                    "text": "example negative index",
+                },
+                "reference_fields": {
+                    "choices": ["Option A", "Option B", "Option C", "Option D"],
+                    "label": 1,  # "Option B" is the correct choice at index 1
+                },
+            }
+        ]
+
+        # After placing correct choice ("Option B") at the last index:
+        # => ["Option A", "Option C", "Option D", "Option B"]
+        # => "Option B" is now at index 3 => enumerator => "D"
+        targets = [
+            {
+                "input_fields": {
+                    "choices": ["Option A", "Option C", "Option D", "Option B"],
+                    "text": "example negative index",
+                    "options": ["A", "B", "C", "D"],
+                },
+                "reference_fields": {
+                    "choices": ["Option A", "Option C", "Option D", "Option B"],
+                    "label": 3,  # "Option B" is now at index 3
+                },
+                "source": "Text: example negative index, Choices: A. Option A, B. Option C, C. Option D, D. Option B.",
+                "target": "D",
+                "references": ["D"],
+                "instruction": "",
+                "target_prefix": "",
+                "postprocessors": ["processors.to_string_stripped"],
+            }
+        ]
+
+        check_operator(template, inputs, targets, tester=self)
+
     def test_multiple_choice_template_verify_flags(self):
         with self.subTest("shuffle_choices + sort_choices_by_length"):
             with self.assertRaises(UnitxtError) as ve:

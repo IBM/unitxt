@@ -54,13 +54,13 @@ Focus on the evaluation criteria during assessment, do not provide a general ass
 Assessment: """
     ),
     "summarization": InputOutputTemplate(
-        input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself.
+        input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself. The summary must clearly state which response won.
 
 Assessment: {assessment}
 Summary:"""
     ),
     "answer": InputOutputTemplate(
-        input_format="""Now considering the evaluation criteria, which response is better quality?
+        input_format="""Now considering the evaluation criteria, which response is better quality? Only include the chosen response.
 {score_option_instruction}
 Answer: """,
         postprocessors=["processors.match_closest_option"],

@@ -1778,9 +1778,9 @@ class TogetherAiInferenceEngine(
             together_model.id: together_model.type for together_model in together_models
         }
         model_type = together_model_id_to_type.get(self.model_name)
-        assert model_type is not None, (
-            f"Could not find model {self.model_name} " "in Together AI model list"
-        )
+        assert (
+            model_type is not None
+        ), f"Could not find model {self.model_name} in Together AI model list"
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
             "supported types are 'chat', 'language' and 'code'."
@@ -2878,7 +2878,9 @@ class LiteLLMInferenceEngine(
         """Main inference entry point."""
         loop = asyncio.get_event_loop()
         responses = loop.run_until_complete(self._infer_async(dataset))
+        return self.get_return_object(responses, return_meta_data)
 
+    def get_return_object(self, responses, return_meta_data):
         if return_meta_data:
             return responses
 
@@ -2895,6 +2897,8 @@ _supported_apis = Literal[
     "watsonx-sdk",
     "rits",
     "azure",
+    "vertex-ai",
+    "replicate",
 ]
 
 
@@ -2909,7 +2913,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     user requests.
 
     Current _supported_apis = ["watsonx", "together-ai", "open-ai", "aws", "ollama",
-    "bam", "watsonx-sdk", "rits"]
+    "bam", "watsonx-sdk", "rits", "vertex-ai"]
 
     Args:
         provider (Optional):
@@ -2929,6 +2933,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
             "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
+            "llama-3-3-70b-instruct": "watsonx/meta-llama/llama-3-3-70b-instruct",
             "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
             "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
@@ -2965,6 +2970,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
+            "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
@@ -2976,8 +2983,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4o": "gpt-4o",
             "gpt-4o-2024-08-06": "gpt-4o-2024-08-06",
             "gpt-4o-2024-05-13": "gpt-4o-2024-05-13",
-            "gpt-4-turbo": "gpt-4-turbo",
             "gpt-4-turbo-preview": "gpt-4-0125-preview",
+            "gpt-4-turbo": "gpt-4-turbo",
             "gpt-4-0125-preview": "gpt-4-0125-preview",
             "gpt-4-1106-preview": "gpt-4-1106-preview",
             "gpt-3.5-turbo-1106": "gpt-3.5-turbo-1106",
@@ -3007,12 +3014,40 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "gpt-4-32k-0613": "azure/gpt-4-32k-0613",
             "gpt-4-1106-preview": "azure/gpt-4-1106-preview",
             "gpt-4-0125-preview": "azure/gpt-4-0125-preview",
+            "gpt-4-turbo": "azure/gpt-4-turbo-2024-04-09",
             "gpt-3.5-turbo": "azure/gpt-3.5-turbo",
             "gpt-3.5-turbo-0301": "azure/gpt-3.5-turbo-0301",
             "gpt-3.5-turbo-0613": "azure/gpt-3.5-turbo-0613",
             "gpt-3.5-turbo-16k": "azure/gpt-3.5-turbo-16k",
             "gpt-3.5-turbo-16k-0613": "azure/gpt-3.5-turbo-16k-0613",
             "gpt-4-vision": "azure/gpt-4-vision",
+        },
+        "vertex-ai": {
+            "llama-3-1-8b-instruct": "vertex_ai/meta/llama-3.1-8b-instruct-maas",
+            "llama-3-1-70b-instruct": "vertex_ai/meta/llama-3.1-70b-instruct-maas",
+            "llama-3-1-405b-instruct": "vertex_ai/meta/llama-3.1-405b-instruct-maas",
+        },
+        "replicate": {
+            "granite-20b-code-instruct-8k": "replicate/ibm-granite/granite-20b-code-instruct-8k",
+            "granite-3-2b-instruct": "replicate/ibm-granite/granite-3.0-2b-instruct",
+            "granite-3-8b-instruct": "replicate/ibm-granite/granite-3.0-8b-instruct",
+            "granite-3-1-2b-instruct": "replicate/ibm-granite/granite-3.1-2b-instruct",
+            "granite-3-1-8b-instruct": "replicate/ibm-granite/granite-3.1-8b-instruct",
+            "granite-8b-code-instruct-128k": "replicate/ibm-granite/granite-8b-code-instruct-128k",
+            "llama-2-13b": "replicate/meta/llama-2-13b",
+            "llama-2-13b-chat": "replicate/meta/llama-2-13b-chat",
+            "llama-2-70b": "replicate/meta/llama-2-70b",
+            "llama-2-70b-chat": "replicate/meta/llama-2-70b-chat",
+            "llama-2-7b": "replicate/meta/llama-2-7b",
+            "llama-2-7b-chat": "replicate/meta/llama-2-7b-chat",
+            "llama-3-1-405b-instruct": "replicate/meta/meta-llama-3.1-405b-instruct",
+            "llama-3-70b": "replicate/meta/meta-llama-3-70b",
+            "llama-3-70b-instruct": "replicate/meta/meta-llama-3-70b-instruct",
+            "llama-3-8b": "replicate/meta/meta-llama-3-8b",
+            "llama-3-8b-instruct": "replicate/meta/meta-llama-3-8b-instruct",
+            "mistral-7b-instruct-v0.2": "replicate/mistralai/mistral-7b-instruct-v0.2",
+            "mistral-7b-v0.1": "replicate/mistralai/mistral-7b-v0.1",
+            "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
         },
     }
 
@@ -3026,6 +3061,8 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": WMLInferenceEngine,
         "rits": RITSInferenceEngine,
         "azure": LiteLLMInferenceEngine,
+        "vertex-ai": LiteLLMInferenceEngine,
+        "replicate": LiteLLMInferenceEngine,
     }
 
     _provider_param_renaming = {
@@ -3033,6 +3070,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "watsonx-sdk": {"max_tokens": "max_new_tokens", "model": "model_name"},
         "rits": {"model": "model_name"},
     }
+
+    def get_return_object(self, **kwargs):
+        return self.engine.get_return_object(kwargs)
 
     def get_provider_name(self):
         return self.provider if self.provider is not None else settings.default_provider
@@ -3062,6 +3102,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                 else:
                     del args[param]
         self.engine = cls(**args)
+        self.data_classification_policy = self.engine.data_classification_policy
 
     def _infer(
         self,
@@ -3147,6 +3188,12 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        if return_meta_data and not hasattr(self.engine, "get_return_object"):
+            raise NotImplementedError(
+                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data as it "
+                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+            )
+
         inputs = []
 
         for instance in dataset:

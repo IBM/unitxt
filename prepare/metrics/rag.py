@@ -7,6 +7,7 @@ from unitxt.metrics import (
     TokenOverlap,
 )
 from unitxt.operators import Copy, ListFieldValues
+from unitxt.serializers import MultiTypeSerializer
 from unitxt.test_utils.metrics import test_metric
 
 metrics = {
@@ -347,12 +348,24 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
 
-for axis, base_metric, main_score in [
-    ("correctness", "token_overlap", "f1"),
-    ("correctness", "bert_score.deberta_large_mnli", "recall"),
-    ("correctness", "bert_score.deberta_v3_base_mnli_xnli_ml", "recall"),
-    ("faithfullness", "token_overlap", "precision"),
+for axis, base_metric, main_score, new_metric in [
+    ("correctness", "token_overlap", "f1", "answer_correctness.token_recall"),
+    (
+        "correctness",
+        "bert_score.deberta_large_mnli",
+        "recall",
+        "answer_correctness.bert_score_recall",
+    ),
+    (
+        "correctness",
+        "bert_score.deberta_v3_base_mnli_xnli_ml",
+        "recall",
+        "answer_correctness.bert_score_recall_ml",
+    ),
+    ("faithfullness", "token_overlap", "precision", "faithfulness.token_k_precision"),
 ]:
+    deprecated_path = f"metrics.rag.response_generation.{axis}.{base_metric}"
+    new_metric_path = f"metrics.rag.response_generation.{new_metric}"
     preprocess_steps = (
         [
             Copy(field="task_data/contexts", to_field="references"),
@@ -379,10 +392,13 @@ for axis, base_metric, main_score in [
         ],
         metric=f"metrics.{base_metric}",
         prediction_type=str,
+        __deprecated_msg__=f"Metric {deprecated_path} is deprecated. Please use {new_metric_path} instead.",
     )
 
     add_to_catalog(
-        metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
+        metric,
+        f"metrics.rag.response_generation.{axis}.{base_metric}",
+        overwrite=True,
     )
 
 # end to end
@@ -479,6 +495,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.answer_reward": [
         copy_field_prediction_answer_to_prediction,
         copy_field_question_to_references_in_a_list,
+        MultiTypeSerializer(field="references", process_every_value=True),
     ],
     "metrics.rag.end_to_end.answer_faithfulness": [
         copy_field_prediction_contexts_to_references,
@@ -491,6 +508,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.context_relevance": [
         copy_field_prediction_contexts_to_references,
         copy_field_question_to_prediction,
+        MultiTypeSerializer(field="prediction"),
     ],
 }
 

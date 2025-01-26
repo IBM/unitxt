@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "objectivity",
+    "description": "Is the response objective and unbiased?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The response is objective and unbiased, presenting facts without personal opinions or judgment."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The response is subjective, biased, or includes personal opinions or judgment."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

@@ -49,6 +49,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "piccolo_theme"
 html_logo = "./static/logo.png"
 html_theme_options = {
+    "banner_text": 'Read our <a href="https://www.unitxt.ai/en/latest/blog/2024_summary_blog.html">2024 Summary</a> blog post!',
+    "banner_hiding": "temporary",
     "show_theme_credit": False,
     "source_url": "https://github.com/IBM/unitxt/",
 }

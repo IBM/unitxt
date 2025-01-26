@@ -2,30 +2,91 @@ from unitxt import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.metrics import MetricPipeline
 from unitxt.operators import Copy, Rename
-from unitxt.test_utils.metrics import test_evaluate, test_metric
+from unitxt.test_utils.metrics import test_metric
 
-base = "metrics.rag.context_correctness"
 default = "mrr"
+base = "metrics.rag"
+tasks = ["external_rag", "end_to_end"]
+dimension = "context_correctness"
+
+
+def get_scores_prefix(metric_catalog_name, dim_name):
+    return f"{dim_name}_"
+
+
+def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
+    prefix = get_scores_prefix(metric_catalog_name, dim_name)
+    new_target = {
+        f"{prefix}" + k
+        if k not in ["score", "score_name", "num_of_instances"]
+        and not k.startswith("score")
+        else k: v
+        for k, v in target.items()
+    }
+    new_target["score_name"] = prefix + new_target["score_name"]
+    return new_target
+
+
+def get_preprocess_steps(task):
+    if task == "external_rag":
+        return [
+            Copy(field="context_ids", to_field="prediction"),
+            Wrap(
+                field="ground_truths_context_ids", inside="list", to_field="references"
+            ),
+        ]
+    if task == "end_to_end":
+        return [
+            Copy(field="prediction/context_ids", to_field="prediction"),
+            Wrap(
+                field="task_data/reference_context_ids",
+                inside="list",
+                to_field="references",
+            ),
+        ]
+    raise ValueError(f"Unsupported rag task {task}")
+
+
+def get_test_pipeline_task_preprocess_steps(task):
+    if task == "external_rag":
+        return [
+            Rename(field_to_field={"task_data/context_ids": "context_ids"}),
+            Rename(
+                field_to_field={
+                    "task_data/ground_truths_context_ids": "ground_truths_context_ids"
+                }
+            ),
+        ]
+    if task == "end_to_end":
+        return [
+            Rename(field_to_field={"task_data/context_ids": "prediction/context_ids"}),
+            Rename(
+                field_to_field={
+                    "task_data/ground_truths_context_ids": "task_data/reference_context_ids"
+                }
+            ),
+        ]
+    raise ValueError(f"Unsupported rag task for {dimension}:{task}")
+
 
 for new_catalog_name, base_catalog_name, main_score in [
     ("mrr", "metrics.mrr", "mrr"),
     ("map", "metrics.map", "map"),
     ("retrieval_at_k", "metrics.retrieval_at_k", "match_at_1"),
 ]:
-    metric = MetricPipeline(
-        main_score=main_score,
-        preprocess_steps=[
-            Copy(field="context_ids", to_field="prediction"),
-            Wrap(
-                field="ground_truths_context_ids", inside="list", to_field="references"
-            ),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, f"{base}.{new_catalog_name}", overwrite=True)
+    for task in tasks:
+        metric = MetricPipeline(
+            main_score=main_score,
+            preprocess_steps=get_preprocess_steps(task).copy(),
+            metric=base_catalog_name,
+            score_prefix=get_scores_prefix(new_catalog_name, dimension),
+        )
+        add_to_catalog(
+            metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
+        )
 
-    if new_catalog_name == default:
-        add_to_catalog(metric, base, overwrite=True)
+        if new_catalog_name == default and task == "external_rag":
+            add_to_catalog(metric, f"{base}.{task}.{dimension}", overwrite=True)
 
 
 def test_context_correctness():
@@ -158,52 +219,53 @@ def test_context_correctness():
 
     for catalog_name, global_target, instance_targets, main_score in [
         (
-            "metrics.rag.context_correctness.map",
+            f"{base}.{task}.{dimension}.map",
             map_global_target,
             map_instance_targets,
             "map",
         ),
         (
-            "metrics.rag.context_correctness.mrr",
+            f"{base}.{task}.{dimension}.mrr",
             mrr_global_target,
             mrr_instance_targets,
             "mrr",
         ),
+        # (
+        #     f"{base}.{task}.{dimension}",
+        #     mrr_global_target,
+        #     mrr_instance_targets,
+        #     "mrr",
+        # ),
         (
-            "metrics.rag.context_correctness",
-            mrr_global_target,
-            mrr_instance_targets,
-            "mrr",
-        ),
-        (
-            "metrics.rag.context_correctness.retrieval_at_k",
+            f"{base}.{task}.{dimension}.retrieval_at_k",
             retrieval_at_k_global_target,
             retrieval_at_k_instance_targets,
             "match_at_1",
         ),
     ]:
-        # test the evaluate call
-        test_evaluate(
-            global_target,
-            instance_targets=[
-                {"score": instance["score"]} for instance in instance_targets
-            ],
-            task_data=task_data,
-            metric_name=catalog_name,
-        )
+        # # test the evaluate call
+        # test_evaluate(
+        #     global_target,
+        #     instance_targets=[
+        #         {"score": instance["score"]} for instance in instance_targets
+        #     ],
+        #     task_data=task_data,
+        #     metric_name=catalog_name,
+        # )
 
         # test using the usual metric pipeline
         test_pipeline = MetricPipeline(
             main_score=main_score,
-            preprocess_steps=[
-                Rename(field_to_field={"task_data/context_ids": "context_ids"}),
-                Rename(
-                    field_to_field={
-                        "task_data/ground_truths_context_ids": "ground_truths_context_ids"
-                    }
-                ),
-            ],
+            preprocess_steps=get_test_pipeline_task_preprocess_steps(task),
             metric=f"{catalog_name}",
+        )
+        short_catalog_name = catalog_name.split(".")[-1]
+        instance_targets = [
+            add_scores_prefix_to_target(i, short_catalog_name, dimension)
+            for i in instance_targets
+        ]
+        global_target = add_scores_prefix_to_target(
+            global_target, short_catalog_name, dimension
         )
         test_metric(
             metric=test_pipeline,

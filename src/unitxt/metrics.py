@@ -7,14 +7,16 @@ import string
 import uuid
 import warnings
 from abc import ABC, abstractmethod
-from collections import Counter, defaultdict, namedtuple
+from collections import Counter, defaultdict
 from dataclasses import field
 from functools import lru_cache
 from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
 
+import evaluate
 import numpy
 import numpy as np
 import pandas as pd
+import requests
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -26,6 +28,7 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
+from .db_utils import get_db_connector
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtWarning
 from .inference import (
@@ -374,8 +377,7 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-from typing import Generic, TypeVar, NamedTuple
-from dataclasses import dataclass
+from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -627,8 +629,9 @@ class F1Fast(MapReduceMetric[str, Tuple[int, int]]):
         from sklearn.metrics import f1_score
 
         self._metric = f1_score
-        import regex
         from functools import partial
+
+        import regex
 
         self.remove_punc = partial(regex.compile(r"\p{P}+").sub, "")
 
@@ -1781,13 +1784,13 @@ class ExactMatchMM(InstanceMetric):
         try:
             if answer == predict[0]:
                 return 1.0
-            elif predict[0] == "(" and answer == predict[1]:
+            if predict[0] == "(" and answer == predict[1]:
                 return 1.0
-            elif predict[0:7] == "option " and answer == predict[7]:
+            if predict[0:7] == "option " and answer == predict[7]:
                 return 1.0
-            elif predict[0:14] == "the answer is " and answer == predict[14]:
+            if predict[0:14] == "the answer is " and answer == predict[14]:
                 return 1.0
-        except Exception as e:
+        except Exception:
             return 0.0
         return 0.0
 
@@ -1904,8 +1907,7 @@ class RelaxedCorrectness(GlobalMetric):
             if text.endswith("%"):
                 # Convert percentages to floats.
                 return float(text.rstrip("%")) / 100.0
-            else:
-                return float(text)
+            return float(text)
         except ValueError:
             return None
 
@@ -1936,8 +1938,7 @@ class RelaxedCorrectness(GlobalMetric):
         if prediction_float is not None and target_float:
             relative_change = abs(prediction_float - target_float) / abs(target_float)
             return relative_change <= max_relative_change
-        else:
-            return prediction.lower() == target.lower()
+        return prediction.lower() == target.lower()
 
 
 class WebsrcSquadF1(GlobalMetric):
@@ -2300,7 +2301,6 @@ class HuggingfaceMetric(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        import evaluate
 
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
@@ -2378,7 +2378,6 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import evaluate
 
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
@@ -2426,7 +2425,6 @@ class HuggingfaceInstanceMetric(InstanceMetric):
 
     def prepare(self):
         super().prepare()
-        import evaluate
 
         self.metric = evaluate.load(
             self.hf_metric_name, experiment_id=str(uuid.uuid4())
@@ -2531,7 +2529,6 @@ class F1(GlobalMetric):
 
     def prepare(self):
         super().prepare()
-        import evaluate
 
         self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
 
@@ -2727,8 +2724,6 @@ class FinQAEval(InstanceMetric):
         import importlib.util as iua
         import os
 
-        import requests
-
         # download finqa evaluation script, load as a module and use it on the fly
         def download_finqa_eval_script_file(url, local_path, hash_of_script):
             if not os.path.exists(local_path):
@@ -2811,7 +2806,6 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
 
     def prepare(self):
         super().prepare()
-        import evaluate
 
         self._metric = evaluate.load(
             self.metric, "multilabel", experiment_id=str(uuid.uuid4())
@@ -4610,8 +4604,6 @@ class RemoteMetric(StreamOperator, Metric):
         return MetricRequest(instance_inputs=instance_inputs)
 
     def get_metric_response(self, metric_request: MetricRequest) -> MetricResponse:
-        import requests
-
         response = requests.post(
             url=self.get_metric_url(),
             json=metric_request.to_dict(),
@@ -5945,3 +5937,109 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             torch.tensor([math.log(safe_token_prob), math.log(unsafe_token_prob)]),
             dim=0,
         ).numpy()
+
+
+class ExecutionAccuracy(InstanceMetric):
+    reduction_map = {"mean": ["execution_accuracy"]}
+    main_score = "execution_accuracy"
+    ci_scores = ["execution_accuracy"]
+
+    prediction_type = "Any"  # string representation is compared
+    sql_timeout = 100.0
+
+    _requirements_list = ["sqlglot", "func_timeout"]
+
+    @staticmethod
+    def equivalent_sqls(expected: str, generated: str) -> int:
+        from sqlglot import diff, parse_one
+        from sqlglot.optimizer import optimize
+
+        t_diff = diff(
+            optimize(parse_one(expected.lower()).sql(pretty=True)),
+            optimize(parse_one(generated.lower()).sql(pretty=True)),
+        )
+        sql_diff = sum(0 if (e.__class__.__name__ == "Keep") else 1 for e in t_diff)
+
+        return 1 if sql_diff == 0 else 0
+
+    def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
+        """Runs SQL queries using the provided connector and checks if the results match."""
+        if predicted_sql.lower().strip() == gold_sql.lower().strip():
+            return 1  # if the SQLs are exactly the same, return 1
+
+        try:
+            if self.equivalent_sqls(gold_sql, predicted_sql):
+                return 1
+        except Exception as e:  # Catch specific exceptions if possible
+            logger.info(
+                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+            )
+
+        try:
+            gold_res = connector.execute_query(gold_sql)
+        except Exception as e:
+            raise OSError(
+                "Error executing gold SQL, if gold does not execute metric should fail"
+            ) from e
+
+        try:
+            pred_res = connector.execute_query(predicted_sql)
+        except Exception as e:
+            logger.info(f"Error executing predicted SQL: {e}")
+            return 0  # if the predicted SQL fails to execute, result is 0
+
+        if pred_res is None:
+            if gold_res is None:
+                return 1
+            return 0
+
+        # if pred_res is dict with results take this as the result
+        if isinstance(pred_res, dict):
+            pred_res = pred_res["results"]
+            gold_res = gold_res["results"]
+
+        def normalize_tuple(tup):
+            """Normalizes a tuple by sorting its non-None elements.
+
+            Args:
+                tup: The input tuple.
+
+            Returns:
+                A tuple with non-None elements sorted first, followed by None values.
+            """
+            return sorted([str(item) for item in tup])
+
+        return int(
+            sorted([normalize_tuple(t) for t in pred_res])
+            == sorted([normalize_tuple(t) for t in gold_res])
+        )
+
+    def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from func_timeout import FunctionTimedOut, func_timeout
+
+        predicted_sql = prediction
+        execution_result: float = 0.0
+
+        if predicted_sql and predicted_sql.strip() != "":
+            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
+                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
+            if ";" in predicted_sql:
+                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+
+            db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
+
+            try:
+                execution_result = func_timeout(
+                    self.sql_timeout,
+                    self.run_sql_and_match,
+                    args=(predicted_sql, references[0], db_connector),
+                )  # type: ignore
+            except FunctionTimedOut:
+                logger.error("QUERY TIMEOUT, returning score=0 for this instance")
+                execution_result = 0.0
+
+        result = {self.main_score: float(execution_result)}
+        logger.debug(f"Result: {result}")
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        return result

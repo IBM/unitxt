@@ -64,6 +64,6 @@ for split in splits_random_mixes:
         )
         add_to_catalog(
             card,
-            f"cards.rag.response_generation.chat_rag_bench.{'train.' if split=='train' else ''}user_assistant_format.{subset}",
+            f"cards.rag.response_generation.chat_rag_bench.{'train.' if split == 'train' else ''}user_assistant_format.{subset}",
             overwrite=True,
         )

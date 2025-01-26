@@ -12,19 +12,18 @@ settings = get_settings()
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
-criterias = ["answer_relevance", "coherence", "conciseness"]
+criteria = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria},"
-    f"score_prefix={criteria}_]"
-    for criteria in criterias
+    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion}]"
+    for criterion in criteria
 ]
 dataset = load_dataset(
     card="cards.squad",
     metrics=metrics,
-    loader_limit=10,
-    max_test_instances=10,
+    loader_limit=2,
+    max_test_instances=2,
     split="test",
 )
 
@@ -63,22 +62,20 @@ print_dict(
     ],
 )
 
-for criteria in criterias:
-    logger.info(f"Scores for criteria '{criteria}'")
+for criterion in criteria:
+    logger.info(f"Scores for criteria '{criterion}'")
     gold_answer_scores = [
-        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
-        for instance in evaluated_gold_answers
+        instance["score"]["instance"][criterion] for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
-        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][f"{criteria}_llm_as_a_judge_score"]
-        for instance in evaluated_predictions
+        instance["score"]["instance"][criterion] for instance in evaluated_predictions
     ]
     prediction_position_bias = [
-        int(instance["score"]["instance"][f"{criteria}_positional_bias"])
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_predictions
     ]
 
@@ -96,23 +93,23 @@ for criteria in criterias:
     )
 
 """
-Output with 100 examples
+Output with 20 examples
 
 Scores for criteria 'answer_relevance'
-Scores of gold answers: 0.9625 +/- 0.14811526360619054
-Scores of predicted answers: 0.5125 +/- 0.4638102516061385
-Positional bias occurrence on gold answers: 0.03
-Positional bias occurrence on predicted answers: 0.12
+Scores of gold answers: 0.8875 +/- 0.18978866362906205
+Scores of predicted answers: 0.7625 +/- 0.3390679950439998
+Positional bias occurrence on gold answers: 0.25
+Positional bias occurrence on predicted answers: 0.25
 
 Scores for criteria 'coherence'
-Scores of gold answers: 0.159 +/- 0.15689216524464028
-Scores of predicted answers: 0.066 +/- 0.11121005695384194
-Positional bias occurrence on gold answers: 0.16
-Positional bias occurrence on predicted answers: 0.07
+Scores of gold answers: 0.8125 +/- 0.2910394257972982
+Scores of predicted answers: 0.6875 +/- 0.39632356531129037
+Positional bias occurrence on gold answers: 0.3
+Positional bias occurrence on predicted answers: 0.3
 
 Scores for criteria 'conciseness'
 Scores of gold answers: 1.0 +/- 0.0
-Scores of predicted answers: 0.34 +/- 0.47609522856952335
-Positional bias occurrence on gold answers: 0.03
-Positional bias occurrence on predicted answers: 0.01
+Scores of predicted answers: 0.6 +/- 0.5026246899500346
+Positional bias occurrence on gold answers: 0
+Positional bias occurrence on predicted answers: 0.05
 """
