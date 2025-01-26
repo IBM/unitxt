@@ -45,7 +45,7 @@ adherence_criteria = CriteriaWithOptions.from_obj(
 )
 add_to_catalog(
     adherence_criteria,
-    f"metrics.llm_as_judge.direct.criterias.{adherence_criteria.name}",
+    f"metrics.llm_as_judge.direct.criteria.{adherence_criteria.name}",
     overwrite=True,
 )
 
@@ -81,7 +81,7 @@ completeness_criteria = CriteriaWithOptions.from_obj(
 )
 add_to_catalog(
     completeness_criteria,
-    f"metrics.llm_as_judge.direct.criterias.{completeness_criteria.name}",
+    f"metrics.llm_as_judge.direct.criteria.{completeness_criteria.name}",
     overwrite=True,
 )
 

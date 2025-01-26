@@ -56,12 +56,12 @@ predictions = [
 
 print(json.dumps(predictions, indent=4))
 
-criterias = ["factually_consistent"]
+criteria = ["factually_consistent"]
 metrics = [
     "metrics.llm_as_judge.pairwise.rits.llama3_1_405b"
-    f"[criteria=metrics.llm_as_judge.pairwise.criterias.{criteria},"
+    f"[criteria=metrics.llm_as_judge.pairwise.criteria.{criterion},"
     "context_fields=[context,question]]"
-    for criteria in criterias
+    for criterion in criteria
 ]
 dataset = load_dataset(
     card="cards.squad",
