@@ -4,22 +4,19 @@
     "preprocess_steps": [
         {
             "__type__": "copy",
-            "field_to_field": {
-                "task_data/question": "references",
-                "prediction/answer": "prediction"
-            }
+            "field": "prediction/answer",
+            "to_field": "prediction"
+        },
+        {
+            "__type__": "wrap",
+            "field": "task_data/question",
+            "inside": "list",
+            "to_field": "references"
         },
         {
             "__type__": "multi_type_serializer",
             "field": "references",
             "process_every_value": true
-        },
-        {
-            "__type__": "list_field_values",
-            "fields": [
-                "references"
-            ],
-            "to_field": "references"
         }
     ],
     "metric": "metrics.token_overlap",
