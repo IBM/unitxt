@@ -20,7 +20,7 @@ judge_summary_rating_template = InputOutputTemplate(
         "For example: [[9]] The summary catches the main text ideas."
         ".\n\n"
     ),
-    input_format="[Text:\n{question}\n\n" "Assistant's summary:\n{answer}\n",
+    input_format="[Text:\n{question}\n\nAssistant's summary:\n{answer}\n",
     output_format="[[{rating}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",

@@ -1,0 +1,22 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "sbert_score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "contexts",
+            "to_field": "references"
+        },
+        {
+            "__type__": "copy",
+            "field": "question",
+            "to_field": "prediction"
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "prediction"
+        }
+    ],
+    "metric": "metrics.sentence_bert.bge_large_en_1_5",
+    "score_prefix": "context_relevance_sentence_bert_bge_"
+}

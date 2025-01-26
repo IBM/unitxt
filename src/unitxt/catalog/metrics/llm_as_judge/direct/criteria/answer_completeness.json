@@ -1,0 +1,39 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "answer_completeness",
+    "description": "The response is complete: all the aspects of the reference answer are addressed in the response. The response might use different phrasing or wording from the reference answer.",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Excellent",
+            "description": "The response addresses all aspects of the reference answer."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Good",
+            "description": "The response addresses most aspects of the reference answer, with minor omissions."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "mediocre",
+            "description": "The response covers the essential aspects of the reference answer but has notable omissions."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Bad",
+            "description": "The response covers only a few aspects of the reference answer, with significant omissions."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Very Bad",
+            "description": "The response fails to address the reference answer meaningfully, with most aspects omitted."
+        }
+    ],
+    "option_map": {
+        "Excellent": 1.0,
+        "Good": 0.75,
+        "mediocre": 0.5,
+        "Bad": 0.25,
+        "Very Bad": 0
+    }
+}

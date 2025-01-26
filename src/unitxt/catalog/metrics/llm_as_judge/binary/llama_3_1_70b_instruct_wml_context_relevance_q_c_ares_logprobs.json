@@ -5,7 +5,7 @@
     "task": "tasks.rag_eval.context_relevance.binary",
     "format": null,
     "main_score": "context_relevance_q_c_ares_logprobs",
-    "prediction_field": null,
+    "prediction_field": "contexts",
     "infer_log_probs": true,
     "__deprecated_msg__": "This metric should be replaced with metrics.rag.context_relevance.llama_3_1_70b_instruct_wml_q_c_ares_logprobs"
 }

@@ -86,11 +86,11 @@ for metric_to_check in metrics_to_check:
         f"Average score of wrong predictions: {statistics.mean(wrong_prediction_scores)} +/- {statistics.stdev(wrong_prediction_scores)}"
     )
     logger.info(
-        f"% Wrong predictions scores greater than correct prediction scores: {np.sum(np.greater(wrong_prediction_scores, correct_prediction_scores)) * 100/ len(correct_predictions)}"
+        f"% Wrong predictions scores greater than correct prediction scores: {np.sum(np.greater(wrong_prediction_scores, correct_prediction_scores)) * 100 / len(correct_predictions)}"
     )
     logger.info(
         f"Average score of truncated predictions: {statistics.mean(truncated_prediction_scores)} +/- {statistics.stdev(truncated_prediction_scores)}"
     )
     logger.info(
-        f"% Truncated predictions scores greater than correct prediction scores: {np.sum(np.greater(truncated_prediction_scores, correct_prediction_scores)) * 100/ len(correct_predictions)}"
+        f"% Truncated predictions scores greater than correct prediction scores: {np.sum(np.greater(truncated_prediction_scores, correct_prediction_scores)) * 100 / len(correct_predictions)}"
     )

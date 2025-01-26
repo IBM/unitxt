@@ -1,0 +1,8 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.rag.response_generation.answer_correctness.llama_3_3_70b_instruct_watsonx_judge",
+        "metrics.rag.response_generation.faithfulness.llama_3_3_70b_instruct_watsonx_judge",
+        "metrics.rag.response_generation.answer_relevance.llama_3_3_70b_instruct_watsonx_judge"
+    ]
+}

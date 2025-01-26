@@ -7,6 +7,15 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "deduplicate",
+            "by": [
+                "question",
+                "options",
+                "answer",
+                "category"
+            ]
+        },
+        {
             "__type__": "rename_splits",
             "mapper": {
                 "validation": "train"

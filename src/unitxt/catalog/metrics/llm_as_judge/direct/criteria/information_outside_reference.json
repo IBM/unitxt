@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "information_outside_reference",
+    "description": "Does the user response contain information outside of the reference document?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The user response contains information outside of the reference document."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The user response doesn't contain information outside of the reference document."
+        }
+    ],
+    "option_map": {
+        "Yes": 0.0,
+        "No": 1.0
+    }
+}

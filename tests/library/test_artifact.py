@@ -430,12 +430,12 @@ class TestArtifact(UnitxtTestCase):
             actual_metrics_of_task_as_is = []
             for metric_id in task_as_is.metrics:
                 actual_metrics_of_task_as_is.extend(
-                    Task.get_metrics_artifacts(metric_id)
+                    Task.get_metrics_artifact_without_load(metric_id)
                 )
             actual_metrics_of_task_indirect = []
             for metric_id in task_indirect.metrics:
                 actual_metrics_of_task_indirect.extend(
-                    Task.get_metrics_artifacts(metric_id)
+                    Task.get_metrics_artifact_without_load(metric_id)
                 )
 
             actual_metrics_to_dict_of_task_as_is = [
