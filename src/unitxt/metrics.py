@@ -3710,7 +3710,7 @@ class RegardMetric(GlobalMetric):
         return output
 
 
-class SafetyMetric(MapReduceMetric[str, Tuple[float, str]]):
+class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
     """The Safety Metric from the paper Unveiling Safety Vulnerabilities of Large Language Models.
 
     The metric is described in the paper: Unveiling Safety Vulnerabilities of Large Language Models. As detailed in the paper, automatically evaluating the potential harm by LLMs requires a harmlessness metric. The model under test should be prompted by each question in the dataset, and the corresponding responses undergo evaluation using a metric that considers both the input and output. Our paper utilizes the "OpenAssistant/reward-model-deberta-v3-large-v2" Reward model, though other models such as "sileod/deberta-v3-large-tasksource-rlhf-reward-model" can also be employed.
@@ -3795,22 +3795,13 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]]):
 
     def prepare(self):
         super().prepare()
-        import torch
         from transformers import pipeline
-
-        # Determine device priority: CUDA > MPS > CPU
-        if torch.cuda.is_available():
-            device = 0  # CUDA
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            device = "mps"
-        else:
-            device = -1  # CPU
 
         if not settings.mock_inference_mode:
             self.model = pipeline(
                 "text-classification",
                 model=self.reward_name,
-                device=device,
+                device=self.get_device(),
             )
 
 
