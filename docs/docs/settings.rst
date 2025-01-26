@@ -108,7 +108,7 @@ Below is the list of available settings, their types, default values, correspond
      - bool
      - False
      - UNITXT_ALLOW_UNVERIFIED_CODE
-     - Enables or disables execution of unverified code.
+     - Enables or disables execution of unverified code.  Unverified code includes executable code from HF datasets  and  calls to ExecuteExpressions or other operators that run user code.  This ensure only trusted code is executed.
    * - use_only_local_catalogs
      - bool
      - False
