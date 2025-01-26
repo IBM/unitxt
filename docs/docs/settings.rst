@@ -113,7 +113,7 @@ Below is the list of available settings, their types, default values, correspond
      - bool
      - False
      - UNITXT_USE_ONLY_LOCAL_CATALOGS
-     - Restricts operations to use only local catalogs.
+     - Restricts loading of artifacts  to only  use local catalogs on local filesystems (and not remote GitHub repos).
    * - global_loader_limit
      - int
      - None
