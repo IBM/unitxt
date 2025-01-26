@@ -33,9 +33,7 @@ card = TaskCard(
         input_fields={"inquiry": "str"},
         reference_fields={},
         prediction_type="str",
-        metrics=[
-            "metrics.llm_as_judge.conversation_answer_idk.llama3_v1_ibmgenai_judges"
-        ],
+        metrics=["metrics.llm_as_judge.conversation_answer_idk.llama3_v1_wml_judges"],
     ),
     templates=TemplatesDict(
         {
