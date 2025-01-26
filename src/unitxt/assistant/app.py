@@ -30,6 +30,7 @@ class Assistant:
         assistant_dir=None,
         model_name="watsonx/meta-llama/llama-3-3-70b-instruct",
         tokenizer_name="nvidia/Llama-3.1-Nemotron-70B-Instruct-HF",
+        embedding_model_name="watsonx/intfloat/multilingual-e5-large",
     ):
         if assistant_dir is None:
             assistant_dir = os.path.dirname(os.path.abspath(__file__))
@@ -44,10 +45,11 @@ class Assistant:
 
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(tokenizer_name)
+        self.embedding_model_name = embedding_model_name
 
     def search(self, query, max_tokens=5000, min_text_length=50):
         response = litellm.embedding(
-            model="watsonx/intfloat/multilingual-e5-large",
+            model=self.embedding_model_name,
             input=[query],
         )
 
