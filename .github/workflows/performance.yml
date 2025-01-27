@@ -40,12 +40,12 @@ jobs:
     - name: Prepare the dirs for performance evaluation in main
       run: |
         mkdir -p performance_action
-        cp performance/bluebench_profiler.py performance_action/bluebench_profiler.py
-        cp performance/compare_benchmark_performance_results.py performance_action/compare_benchmark_performance_results.py
+        cp performance/card_profiler.py performance_action/card_profiler.py
+        cp performance/compare_performance_results.py performance_action/compare_performance_results.py
 
     - name: Run performance on PR just to warm the cache, output will be overwritten
       run : |
-        python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json
+        python performance_action/card_profiler.py --output_file performance_action/pr_results.json
 
     - name: Checkout main branch
       uses: actions/checkout@v4
@@ -55,7 +55,7 @@ jobs:
 
     - name: Run performance on main branch
       run: |
-        python performance_action/bluebench_profiler.py --output_file performance_action/main_results.json
+        python performance_action/card_profiler.py --output_file performance_action/main_results.json
 
     - name: Checkout PR branch
       uses: actions/checkout@v4
@@ -65,8 +65,8 @@ jobs:
 
     - name: Run performance on PR branch
       run: |
-        python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json
+        python performance_action/card_profiler.py --output_file performance_action/pr_results.json
 
     - name: Compare main and PR performance results
       run: |
-        python performance_action/compare_benchmark_performance_results.py performance_action/main_results.json performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
+        python performance_action/compare_performance_results.py performance_action/main_results.json performance_action/pr_results.json >> $GITHUB_STEP_SUMMARY
