@@ -290,9 +290,9 @@ class LoadHF(Loader):
 
         if self.split is None:
             for split in dataset.keys():
-                dataset[split] = dataset[split].to_iterable_dataset()
+                dataset[split] = dataset[split]
         else:
-            dataset = {self.split: dataset.to_iterable_dataset()}
+            dataset = {self.split: dataset}
 
         return dataset
 
@@ -308,12 +308,12 @@ class LoadHF(Loader):
             )
 
     def load_iterables(self) -> IterableDatasetDict:
-        try:
-            dataset = self.stream_dataset()
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset()
+        # try:
+        #     dataset = self.stream_dataset()
+        # except (
+        #     NotImplementedError
+        # ):  # streaming is not supported for zipped files so we load without streaming
+        dataset = self.load_dataset()
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)

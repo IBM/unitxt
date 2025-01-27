@@ -1,4 +1,3 @@
-import inspect
 import json
 from datetime import datetime
 from functools import lru_cache
@@ -19,7 +18,7 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import UNITXT_DATASET_SCHEMA, loads_instance
+from .schema import loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
@@ -183,34 +182,7 @@ def load_dataset(
 
     """
     recipe = load_recipe(dataset_query, **kwargs)
-
-    stream = recipe()
-    if split is not None:
-        stream = stream[split]
-
-    if disable_cache is None:
-        disable_cache = settings.disable_hf_datasets_cache
-
-    if streaming:
-        dataset = stream.to_iterable_dataset(
-            features=UNITXT_DATASET_SCHEMA,
-        ).map(loads_instance, batched=True)
-    else:
-        dataset = stream.to_dataset(
-            features=UNITXT_DATASET_SCHEMA, disable_cache=disable_cache
-        ).with_transform(loads_instance)
-
-    frame = inspect.currentframe()
-    args, _, _, values = inspect.getargvalues(frame)
-    all_kwargs = {key: values[key] for key in args if key != "kwargs"}
-    all_kwargs.update(kwargs)
-    metadata = fill_metadata(**all_kwargs)
-    if isinstance(dataset, dict):
-        for ds in dataset.values():
-            ds.info.description = metadata.copy()
-    else:
-        dataset.info.description = metadata
-    return dataset
+    return recipe()
 
 
 def fill_metadata(**kwargs):

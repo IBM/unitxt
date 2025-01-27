@@ -77,7 +77,7 @@ class CardProfiler:
 
     def profiler_list_all_streams(self, ms: MultiStream, card_name: str):
         logger.info(
-            f"The multistream generated for card '{card_name}' has {len(ms)} streams of the following lengths:"
+            f"The multistream generated for card '{card_name}' has {len(ms)} streams: {list(ms.keys())}, of the following lengths:"
         )
         for stream_name in ms:
             logger.info(f"{stream_name} is of length {len(list(ms[stream_name]))}")
@@ -99,7 +99,11 @@ def profile_from_cards():
             template = task_card.templates.items[0]
         elif isinstance(task_card.templates, list):
             template = task_card.templates[0]
-        elif isinstance(task_card, TemplatesDict):
+        elif isinstance(task_card.templates, dict):
+            for templ in task_card.templates.values():
+                template = templ
+                break
+        elif isinstance(task_card.templates, TemplatesDict):
             for templ in task_card.templates.items.values():
                 template = templ
                 break
@@ -110,7 +114,7 @@ def profile_from_cards():
 
         card_profiler = CardProfiler()
         card_profiler.profiler_do_the_profiling(
-            card_name=card, card=task_card, template=template, loader_limit=5000
+            card_name=card, card=task_card, template=template
         )
 
 
@@ -128,7 +132,7 @@ def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float
     )
 
 
-cards = ["cards.cola", "cards.wnli"]  # the benchmark
+cards = ["cards.rag.documents.clap_nq.en"]  # the benchmark
 
 
 def main():
