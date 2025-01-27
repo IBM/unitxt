@@ -3,11 +3,11 @@ from typing import Union
 from unitxt import add_to_catalog, get_logger
 from unitxt.llm_as_judge import LLMJudgeDirect, LLMJudgePairwise
 from unitxt.llm_as_judge_constants import (
-    DIRECT_CRITERIAS,
+    DIRECT_CRITERIA,
     EVALUATOR_TO_MODEL_ID,
     EVALUATORS_METADATA,
     INFERENCE_ENGINE_NAME_TO_CLASS,
-    PAIRWISE_CRITERIAS,
+    PAIRWISE_CRITERIA,
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
@@ -53,19 +53,19 @@ def get_evaluator(
     return evaluator_klass(**params)
 
 
-logger.debug("Registering criterias...")
+logger.debug("Registering criteria...")
 # Register all the predefined criterisa
-for criteria in DIRECT_CRITERIAS:
+for criteria in DIRECT_CRITERIA:
     add_to_catalog(
         criteria,
-        f"metrics.llm_as_judge.direct.criterias.{criteria.name}",
+        f"metrics.llm_as_judge.direct.criteria.{criteria.name}",
         overwrite=True,
     )
 
-for criteria in PAIRWISE_CRITERIAS:
+for criteria in PAIRWISE_CRITERIA:
     add_to_catalog(
         criteria,
-        f"metrics.llm_as_judge.pairwise.criterias.{criteria.name}",
+        f"metrics.llm_as_judge.pairwise.criteria.{criteria.name}",
         overwrite=True,
     )
 

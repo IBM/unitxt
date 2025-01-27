@@ -1,5 +1,7 @@
-from unitxt.blocks import LoadHF, Rename, Set, TaskCard
+from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
+from unitxt.loaders import LoadHF
+from unitxt.operators import Deduplicate, Rename, Set
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
@@ -27,6 +29,7 @@ for topic in topics:
             filtering_lambda=f"lambda x: x['category'] == '{topic}'",
         ),
         preprocess_steps=[
+            Deduplicate(by=["question", "options", "answer", "category"]),
             RenameSplits({"validation": "train"}),
             Rename(
                 field_to_field={
@@ -64,4 +67,4 @@ for topic in topics:
             strict=False,  # random generation here does not produce 0 results (MCQA)
             # loader_limit=2 * len(ds["test"]),
         )
-    add_to_catalog(card, f"cards.mmlu_pro.{topic.replace(' ','_')}", overwrite=True)
+    add_to_catalog(card, f"cards.mmlu_pro.{topic.replace(' ', '_')}", overwrite=True)

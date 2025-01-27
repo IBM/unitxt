@@ -5,24 +5,25 @@ from unitxt.api import evaluate
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
+from unitxt.text_utils import print_dict
 
 logger = get_logger()
 settings = get_settings()
 
 # Use the HF load_dataset API, to load the squad QA dataset using the standard template in the catalog.
 # We set loader_limit to 20 to reduce download time.
-criterias = ["answer_relevance", "coherence", "conciseness"]
+criteria = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
     "metrics.llm_as_judge.direct.rits.llama3_1_70b"
     "[context_fields=[context,question],"
-    f"criteria=metrics.llm_as_judge.direct.criterias.{criteria}]"
-    for criteria in criterias
+    f"criteria=metrics.llm_as_judge.direct.criteria.{criterion}]"
+    for criterion in criteria
 ]
 dataset = load_dataset(
     card="cards.squad",
     metrics=metrics,
-    loader_limit=20,
-    max_test_instances=20,
+    loader_limit=2,
+    max_test_instances=2,
     split="test",
 )
 
@@ -46,20 +47,35 @@ gold_answers = [d[0] for d in dataset["references"]]
 evaluated_predictions = evaluate(predictions=predictions, data=dataset)
 evaluated_gold_answers = evaluate(predictions=gold_answers, data=dataset)
 
-for criteria in criterias:
-    logger.info(f"Scores for criteria '{criteria}'")
+print_dict(
+    evaluated_predictions[0],
+    keys_to_print=[
+        "source",
+        "score",
+    ],
+)
+print_dict(
+    evaluated_gold_answers[0],
+    keys_to_print=[
+        "source",
+        "score",
+    ],
+)
+
+for criterion in criteria:
+    logger.info(f"Scores for criteria '{criterion}'")
     gold_answer_scores = [
-        instance["score"]["instance"][criteria] for instance in evaluated_gold_answers
+        instance["score"]["instance"][criterion] for instance in evaluated_gold_answers
     ]
     gold_answer_position_bias = [
-        instance["score"]["instance"][f"{criteria}_positional_bias"]
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_gold_answers
     ]
     prediction_scores = [
-        instance["score"]["instance"][criteria] for instance in evaluated_predictions
+        instance["score"]["instance"][criterion] for instance in evaluated_predictions
     ]
-    prediction_scores_position_bias = [
-        instance["score"]["instance"][f"{criteria}_positional_bias"]
+    prediction_position_bias = [
+        int(instance["score"]["instance"][f"{criterion}_positional_bias"])
         for instance in evaluated_predictions
     ]
 
@@ -73,7 +89,7 @@ for criteria in criterias:
         f"Positional bias occurrence on gold answers: {statistics.mean(gold_answer_position_bias)}"
     )
     logger.info(
-        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_scores_position_bias)}\n"
+        f"Positional bias occurrence on predicted answers: {statistics.mean(prediction_position_bias)}\n"
     )
 
 """
