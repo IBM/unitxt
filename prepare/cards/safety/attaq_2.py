@@ -22,7 +22,7 @@ card = TaskCard(
         prediction_type=str,
         metrics=[
                  # "metrics.llm_as_judge.direct.watsonx.granite_guardian_3_0_2b"
-                 "metrics.llm_as_judge.direct.watsonx.llama3_1_70b[context_fields=[input],criteria=metrics.llm_as_judge.direct.criterias.harmfulness,score_prefix=harmfulness_]",
+                 "metrics.llm_as_judge.direct.watsonx.llama3_1_70b[context_fields=[input],criteria=metrics.llm_as_judge.direct.criterias.harmfulness,score_prefix=judge_]",
                  "metrics.safety_metric[score_prefix=safety_]"],
     ),
     templates=[
