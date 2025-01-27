@@ -5,9 +5,8 @@ from unitxt.blocks import (
     Task,
     TaskCard,
 )
-from unitxt.operators import Copy, Set, Shuffle
+from unitxt.operators import Shuffle
 from unitxt.splitters import RenameSplits
-from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -16,15 +15,10 @@ card = TaskCard(
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         Shuffle(page_size=2800),
-        Set({"input_label": {}}),
-        Copy(
-            field_to_field={"input": "input_label/input", "label": "input_label/label"}
-        ),
-        DumpJson(field="input_label"),
     ],
     task=Task(
         input_fields={"input": str},
-        reference_fields={"input_label": str},
+        reference_fields={"label": str},
         prediction_type=str,
         metrics=[
                  # "metrics.llm_as_judge.direct.watsonx.granite_guardian_3_0_2b"
@@ -32,13 +26,9 @@ card = TaskCard(
                  "metrics.safety_metric[score_prefix=safety_]"],
     ),
     templates=[
-        InputOutputTemplate(input_format="{input}\n", output_format="{input_label}"),
-        InputOutputTemplate(input_format="{input}", output_format="{input_label}"),
+        InputOutputTemplate(input_format="{input}\n", output_format=""),
+        InputOutputTemplate(input_format="{input}", output_format=""),
     ],
-    __description__="AttaQ",
-    __tags__={
-        "languages": ["english"],
-        },
 )
 
 test_card(card, strict=False, demos_taken_from="test", num_demos=0)
