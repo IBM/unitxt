@@ -12,12 +12,12 @@ Introduction: Bridging the Gap Between Humans and Data – A New Era of Accessib
 
 In today's data-saturated world, the ability to extract meaningful insights from databases is paramount. But for many, the complex language of SQL remains an imposing barrier. Imagine a world where you could simply ask a question in plain English and get the data you need—no SQL knowledge required. This is the promise of Text-to-SQL models: they act as translators, turning human language into database queries.
 
-However, how can we be sure these models are accurately translating our intentions? How do we measure their effectiveness and ensure they generate reliable queries? This is where **Unitxt's latest innovation** comes into play: a comprehensive **Text-to-SQL evaluation framework** that addresses these challenges head-on. With this framework, developers can build more accurate, reliable, and user-friendly data access tools. In this post, we’ll unveil this feature and show you how to harness its full potential, unlocking a new level of data accessibility.
+However, how can we be sure these models are accurately translating our intentions? How do we measure their effectiveness and ensure they generate reliable queries? This is where **Unitxt's latest addition** comes into play: comprehensive **Text-to-SQL evaluations** that addresses these challenges head-on. With this, developers can build more accurate, reliable, and user-friendly data access tools. In this post, we’ll unveil this feature and show you how to harness its full potential, unlocking a new level of data accessibility.
 
 The Hurdles of Text-to-SQL Evaluation: Beyond Code Generation
 -------------------------------------------------------------
 
-Before diving into the specifics of Unitxt’s evaluation capabilities, it's important to understand the unique challenges of evaluating Text-to-SQL models. Unlike many other natural language processing tasks, evaluating Text-to-SQL models is more than just assessing whether the generated code is syntactically correct. The evaluation process is complex and multi-faceted, requiring a deep interaction with the underlying database.
+Before diving into the specifics of the new Unitxt’s capabilities, it's important to understand the unique challenges of evaluating Text-to-SQL models. Unlike many other natural language processing tasks, evaluating Text-to-SQL models is more than just assessing whether the generated code is syntactically correct. The evaluation process is complex and multi-faceted, requiring a deep interaction with the underlying database.
 
 Here are two key factors that make this evaluation process so challenging:
 
