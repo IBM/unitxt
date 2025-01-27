@@ -85,7 +85,7 @@ Let’s break down this code step-by-step to understand the magic happening behi
 
 1. **Loading the Dataset: Setting the Stage**
 
-   We kick things off by loading the [BIRD validation dataset]_ using the ``load_dataset`` function. Here, we specify the dataset card (``cards.text2sql.bird``) and the template (``templates.text2sql.you_are_given_with_hint_with_sql_prefix``). This template acts as a guide, instructing Unitxt on how to format natural language queries into well-structured SQL prompts for the model. **Note** that this is where much of the magic happens—when the template is rendered, the database is accessed, and the schema is fetched.
+   We kick things off by loading the [BIRD validation dataset](https://bird-bench.github.io/) using the ``load_dataset`` function. Here, we specify the dataset card (``cards.text2sql.bird``) and the template (``templates.text2sql.you_are_given_with_hint_with_sql_prefix``). This template acts as a guide, instructing Unitxt on how to format natural language queries into well-structured SQL prompts for the model. **Note** that this is where much of the magic happens—when the template is rendered, the database is accessed, and the schema is fetched.
 
 2. **Setting Up Inference: Choosing Your Powerhouse**
 
@@ -127,6 +127,3 @@ Conclusion: Shaping the Future of Data Interaction – Empowering Everyone with 
 Unitxt’s groundbreaking Text-to-SQL evaluation feature is a game-changer for developers working on models that aim to translate natural language into SQL queries. By providing an automated, standardized, and rigorous evaluation framework, Unitxt dramatically accelerates the development of more accurate, reliable, and user-friendly Text-to-SQL systems.
 
 We invite you to dive into this exciting new feature and join us on this journey to shape the future of data interaction. With Unitxt, you can unlock the true potential of your data, making it more accessible than ever before. Empower everyone—regardless of their SQL expertise—to effortlessly query, explore, and understand the wealth of information hidden
-
-
-[BIRD validation dataset]_ https://bird-bench.github.io/
