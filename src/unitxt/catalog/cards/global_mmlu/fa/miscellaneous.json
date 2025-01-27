@@ -1,0 +1,83 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "CohereForAI/Global-MMLU",
+        "name": "fa"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "subject": "miscellaneous"
+            },
+            "condition": "eq"
+        },
+        {
+            "__type__": "deduplicate",
+            "by": [
+                "question",
+                "subject",
+                "answer"
+            ]
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "dev": "train"
+            }
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "answer": {
+                    "A": 0,
+                    "B": 1,
+                    "C": 2,
+                    "D": 3
+                }
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "option_a",
+                "option_b",
+                "option_c",
+                "option_d"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "remove_fields",
+            "fields": [
+                "option_a",
+                "option_b",
+                "option_c",
+                "option_d"
+            ]
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "language": "fa",
+                "topic": "miscellaneous"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": "templates.qa.multiple_choice.with_topic.all",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "language": "fa",
+        "language_creators": "expert-generated",
+        "license": "apache-2.0",
+        "multilinguality": "multilingual",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "multiple-choice-qa",
+        "region": "global"
+    },
+    "__description__": "Global-MMLU is a multilingual extension of the MMLU benchmark, featuring multiple-choice questions across various subjects and languages. The dataset includes cultural sensitivity annotations and regional information."
+}
