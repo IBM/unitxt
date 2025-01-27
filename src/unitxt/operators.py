@@ -2224,7 +2224,7 @@ class CollateInstanceByField(StreamOperator):
 
     Args:
         by_field str: the name of the fields to group data by.
-        aggregate_fields list(str): the field names to aggregate into lists.
+        aggregate_fields optional[list(str)]: the field names to aggregate into lists.
 
     Example:
         1. With aggregate fields defined:
