@@ -140,9 +140,13 @@ def create_global_mmlu_card(language, subject):
             "region": "global"
         },
         __description__=(
-            "Global-MMLU is a multilingual extension of the MMLU benchmark, "
-            "featuring multiple-choice questions across various subjects and languages. "
-            "The dataset includes cultural sensitivity annotations and regional information."
+            "Global-MMLU is a multilingual evaluation set spanning 42 languages, combining machine translations "
+            "for MMLU questions along with professional translations and crowd-sourced post-edits. The dataset "
+            "includes cultural sensitivity annotations, classifying questions as Culturally Sensitive (CS) or "
+            "Culturally Agnostic (CA)️. This initiative was led by Cohere For AI in collaboration with external "
+            "contributors from industry and academia. The test spans subjects in humanities, social sciences, hard "
+            "sciences, and other areas. See the full description on the dataset page: "
+            "https://huggingface.co/datasets/CohereForAI/Global-MMLU"
         ),
     )
     return card
