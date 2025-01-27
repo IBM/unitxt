@@ -1,6 +1,3 @@
-Of course! Below is the updated blog post in reStructuredText (RST) format, incorporating the suggested changes:
-
-```rst
 From Natural Language to Database Queries: Unleashing the Power of Text-to-SQL Evaluation with Unitxt
 ====================================================================================================
 
