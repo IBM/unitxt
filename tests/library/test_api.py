@@ -103,8 +103,8 @@ class TestAPI(UnitxtTestCase):
         dataset = load_dataset(
             "benchmarks.glue[max_samples_per_subset=1,loader_limit=300]"
         )
-        first_result = dataset["test"].to_list()[0]
-        last_result = dataset["test"].to_list()[-1]
+        first_result = dataset["test"][0]
+        last_result = dataset["test"][-1]
         first_result_task_data = json.loads(first_result.pop("task_data"))
         last_result_task_data = json.loads(last_result.pop("task_data"))
         first_target = {
@@ -431,12 +431,12 @@ class TestAPI(UnitxtTestCase):
 
         self.assertEqual(len(dataset["train"]), 5)
         self.assertEqual(
-            dataset["train"]["source"][0].strip(),
+            dataset["train"][0]["source"].strip(),
             "Sentence2: The carrot had a hole. "
             "Sentence1: I stuck a pin through a carrot. "
             "When I pulled the pin out, it had a hole.",
         )
-        self.assertEqual(dataset["train"]["metrics"][0], ["metrics.accuracy"])
+        self.assertEqual(dataset["train"][0]["metrics"], ["metrics.accuracy"])
 
     def test_infer(self):
         engine = "engines.model.flan.t5_small.hf"

@@ -182,7 +182,8 @@ def load_dataset(
 
     """
     recipe = load_recipe(dataset_query, **kwargs)
-    return recipe()
+    ms = recipe()
+    return {stream_name: list(ms[stream_name]) for stream_name in ms}
 
 
 def fill_metadata(**kwargs):
