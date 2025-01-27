@@ -652,81 +652,6 @@ class Apply(InstanceOperator):
         return instance
 
 
-class GroupByProcessor(StreamOperator):
-    """Class to group a dataset by a specified field and apply a custom function to each group.
-
-        Similar to the Apply class, which operates on individual instances, this class operates on groups.
-
-    Args:
-        function (str): name of function
-        groupby_field (str): the name of the field to group data by.
-
-    Example:
-        data = [
-            {"id": 1, "category": "A", "value": 10},
-            {"id": 2, "category": "A", "value": 20},
-            {"id": 3, "category": "B", "value": 30},
-            {"id": 4, "category": "B", "value": 40}
-        ]
-
-        Group the rows based on field category and apply find_sum function to each group.
-        GroupByProcessor(groupby_field="category", function=find_sum)
-
-        output:
-        [
-            {"category": "A", "result": {"total_value": 30}},
-            {"category": "B", "result": {"total_value": 70}}
-        ]
-    """
-
-    function: Callable = NonPositionalField(required=True)
-    groupby_field: str = NonPositionalField(required=True)
-
-    def function_to_str(self, function: Callable) -> str:
-        parts = []
-
-        if hasattr(function, "__module__"):
-            parts.append(function.__module__)
-        if hasattr(function, "__qualname__"):
-            parts.append(function.__qualname__)
-        else:
-            parts.append(function.__name__)
-
-        return ".".join(parts)
-
-    def str_to_function(self, function_str: str) -> Callable:
-        parts = function_str.split(".", 1)
-        if len(parts) == 1:
-            return __builtins__[parts[0]]
-
-        module_name, function_name = parts
-        if module_name in __builtins__:
-            obj = __builtins__[module_name]
-        elif module_name in globals():
-            obj = globals()[module_name]
-        else:
-            obj = __import__(module_name)
-        for part in function_name.split("."):
-            obj = getattr(obj, part)
-        return obj
-
-    def prepare(self):
-        super().prepare()
-        if isinstance(self.function, str):
-            self.function = self.str_to_function(self.function)
-        self._init_dict["function"] = self.function_to_str(self.function)
-
-    def process(self, stream: Stream, stream_name: Optional[str] = None):
-        grouped_data = {}
-        for instance in stream:
-            key = instance[self.groupby_field]
-            if key not in grouped_data:
-                grouped_data[key] = []
-            grouped_data[key].append(instance)
-        for each_instance in grouped_data.values():
-            yield self.function(each_instance)
-
-
 class ListFieldValues(InstanceOperator):
     """Concatenates values of multiple fields into a list, and assigns it to a new field."""
 
@@ -2292,6 +2217,69 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class CollateInstanceByField(StreamOperator):
+    """Groups a list of dictionaries by a specific field and optionally aggregates specified fields into lists.
+
+    Args:
+        by_field str: the name of the fields to group data by.
+        aggregate_fields list(str): the field names to aggregate into lists.
+
+    Example:
+        1. With aggregate fields defined:
+        Collate the rows based on field "category" and aggregate field "value".
+
+        CollateInstanceByField(by_fields=["category"], aggregate_field="value")
+
+        data = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 2, "category": "A", "value": 20},
+            {"id": 3, "category": "B", "value": 30},
+            {"id": 4, "category": "B", "value": 40}
+        ]
+
+        output:
+        [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 3, "value": [30, 40]}
+        ]
+
+        2. Without aggregate fields:
+        If no aggregate fields are provided, Fields like "id" and "value" will not be aggregated
+        and will retain the values from the first occurrence in each group.
+
+        CollateInstanceByField(by_fields=["category"])
+
+        [
+            {"category": "A", "id": 1, "value": 10},
+            {"category": "B", "id": 3, "value": 30}
+        ]
+    """
+
+    by_field: str = NonPositionalField(required=True)
+    aggregate_fields: Optional[List[str]] = []
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        grouped_data = {}
+
+        # Group data by the specified field
+        for instance in stream:
+            key = instance[self.by_field]
+            if key not in grouped_data:
+                # Initialize the group entry
+                grouped_data[key] = {
+                    k: v for k, v in instance.items() if k not in self.aggregate_fields
+                }
+                # Add empty lists for fields to aggregate
+                for agg_field in self.aggregate_fields:
+                    grouped_data[key][agg_field] = []
+
+            # Append values for aggregate fields
+            for agg_field in self.aggregate_fields:
+                grouped_data[key][agg_field].append(instance[agg_field])
+
+        yield from grouped_data.values()
 
 
 class WikipediaFetcher(FieldOperator):
