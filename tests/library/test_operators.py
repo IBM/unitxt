@@ -12,6 +12,7 @@ from unitxt.operators import (
     ApplyStreamOperatorsField,
     CastFields,
     CollateInstances,
+    CollateInstancesByField,
     Copy,
     DeterministicBalancer,
     DivideAllFieldsBy,
@@ -2626,6 +2627,28 @@ references (str):
 
         check_operator(
             operator=CollateInstances(batch_size=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_collate_instances_by_field(self):
+        inputs = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 2, "category": "A", "value": 20},
+            {"id": 3, "category": "B", "value": 30},
+            {"id": 4, "category": "B", "value": 40},
+        ]
+
+        targets = [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 3, "value": [30, 40]},
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
             inputs=inputs,
             targets=targets,
             tester=self,

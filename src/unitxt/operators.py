@@ -2219,18 +2219,23 @@ class CollateInstances(StreamOperator):
             )
 
 
-class CollateInstanceByField(StreamOperator):
-    """Groups a list of dictionaries by a specific field and optionally aggregates specified fields into lists.
+class CollateInstancesByField(StreamOperator):
+    """Groups a list of dictionaries by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregatedfields.
 
     Args:
-        by_field str: the name of the fields to group data by.
-        aggregate_fields optional[list(str)]: the field names to aggregate into lists.
+        by_field str: the name of the field to group data by.
+        aggregate_fields list(str): the field names to aggregate into lists.
+
+    Returns:
+        list of dict: A dataset grouped and aggregated by the specified field.
+
+    Raises:
+        ValueError: If non-aggregate fields have inconsistent values.
 
     Example:
-        1. With aggregate fields defined:
         Collate the rows based on field "category" and aggregate field "value".
 
-        CollateInstanceByField(by_fields=["category"], aggregate_field="value")
+        CollateInstancesByField(by_field="category", aggregate_fields=["value"])
 
         data = [
             {"id": 1, "category": "A", "value": 10},
@@ -2244,30 +2249,35 @@ class CollateInstanceByField(StreamOperator):
             {"category": "A", "id": 1, "value": [10, 20]},
             {"category": "B", "id": 3, "value": [30, 40]}
         ]
-
-        2. Without aggregate fields:
-        If no aggregate fields are provided, Fields like "id" and "value" will not be aggregated
-        and will retain the values from the first occurrence in each group.
-
-        CollateInstanceByField(by_fields=["category"])
-
-        [
-            {"category": "A", "id": 1, "value": 10},
-            {"category": "B", "id": 3, "value": 30}
-        ]
     """
 
     by_field: str = NonPositionalField(required=True)
-    aggregate_fields: Optional[List[str]] = []
+    aggregate_fields: List[str] = NonPositionalField(required=True)
+
+    def prepare(self):
+        super().prepare()
+        # add field "int_docid" to the list of aggregate fields by default
+        self.aggregate_fields.extend(["int_docid"])
+
+    def verify(self):
+        super().verify()
+        if not isinstance(self.by_field, str):
+            raise ValueError(
+                f"The by_field value is not a string but '{type(self.by_field)}'"
+            )
+
+        if not isinstance(self.aggregate_fields, list):
+            raise ValueError(
+                f"The allowed_field_values is not a list but '{type(self.aggregate_fields)}'"
+            )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None):
         grouped_data = {}
 
-        # Group data by the specified field
         for instance in stream:
             key = instance[self.by_field]
+
             if key not in grouped_data:
-                # Initialize the group entry
                 grouped_data[key] = {
                     k: v for k, v in instance.items() if k not in self.aggregate_fields
                 }
@@ -2275,9 +2285,33 @@ class CollateInstanceByField(StreamOperator):
                 for agg_field in self.aggregate_fields:
                     grouped_data[key][agg_field] = []
 
+            for k, v in instance.items():
+                if k == "data_classification_policy" and instance[k]:
+                    flattened_list = [
+                        classification
+                        for classification in instance[k]
+                        if classification is not None
+                    ]
+                    instance[k] = (
+                        sorted(set(flattened_list))
+                        if flattened_list
+                        else flattened_list
+                    )
+                # Check consistency for all non-aggregate fields
+                elif k != self.by_field and k not in self.aggregate_fields:
+                    if k in grouped_data[key] and grouped_data[key][k] != v:
+                        raise ValueError(
+                            f"Inconsistent value for field '{k}' in group '{key}': "
+                            f"'{grouped_data[key][k]}' vs '{v}. Ensure that all non-aggregated fields are consistent.'"
+                        )
+
             # Append values for aggregate fields
             for agg_field in self.aggregate_fields:
-                grouped_data[key][agg_field].append(instance[agg_field])
+                if (
+                    agg_field in grouped_data[key]
+                    and instance.get(agg_field) is not None
+                ):
+                    grouped_data[key][agg_field].append(instance[agg_field])
 
         yield from grouped_data.values()
 
