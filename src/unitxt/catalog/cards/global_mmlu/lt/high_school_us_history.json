@@ -49,15 +49,6 @@
             "to_field": "choices"
         },
         {
-            "__type__": "remove_fields",
-            "fields": [
-                "option_a",
-                "option_b",
-                "option_c",
-                "option_d"
-            ]
-        },
-        {
             "__type__": "set",
             "fields": {
                 "topic": "high school us history"
