@@ -2233,9 +2233,9 @@ class CollateInstancesByField(StreamOperator):
         ValueError: If non-aggregate fields have inconsistent values.
 
     Example:
-        Collate the rows based on field "category" and aggregate field "value".
+        Collate the rows based on field "category" and aggregate fields "value" and "id".
 
-        CollateInstancesByField(by_field="category", aggregate_fields=["value"])
+        CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
 
         data = [
             {"id": 1, "category": "A", "value": 10},
@@ -2283,7 +2283,8 @@ class CollateInstancesByField(StreamOperator):
                 }
                 # Add empty lists for fields to aggregate
                 for agg_field in self.aggregate_fields:
-                    grouped_data[key][agg_field] = []
+                    if agg_field in instance:
+                        grouped_data[key][agg_field] = []
 
             for k, v in instance.items():
                 if k == "data_classification_policy" and instance[k]:
@@ -2307,10 +2308,7 @@ class CollateInstancesByField(StreamOperator):
 
             # Append values for aggregate fields
             for agg_field in self.aggregate_fields:
-                if (
-                    agg_field in grouped_data[key]
-                    and instance.get(agg_field) is not None
-                ):
+                if agg_field in instance:
                     grouped_data[key][agg_field].append(instance[agg_field])
 
         yield from grouped_data.values()
