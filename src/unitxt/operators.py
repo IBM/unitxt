@@ -2246,8 +2246,8 @@ class CollateInstancesByField(StreamOperator):
 
         output:
         [
-            {"category": "A", "id": 1, "value": [10, 20]},
-            {"category": "B", "id": 3, "value": [30, 40]}
+            {"category": "A", "id": [1, 2], "value": [10, 20]},
+            {"category": "B", "id": [3, 4], "value": [30, 40]}
         ]
     """
 
