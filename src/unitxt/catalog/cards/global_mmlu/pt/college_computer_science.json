@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "pt",
                 "topic": "college computer science"
             }
         }

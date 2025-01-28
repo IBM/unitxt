@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "nl",
                 "topic": "high school geography"
             }
         }

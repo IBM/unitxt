@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "tr",
                 "topic": "high school psychology"
             }
         }

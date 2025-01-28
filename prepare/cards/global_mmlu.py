@@ -121,7 +121,6 @@ def create_global_mmlu_card(language, subject):
 
             # Set additional metadata
             Set({
-                "language": language,
                 "topic": subject.replace("_", " ")
             }),
         ],

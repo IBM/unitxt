@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "ru",
                 "topic": "human aging"
             }
         }

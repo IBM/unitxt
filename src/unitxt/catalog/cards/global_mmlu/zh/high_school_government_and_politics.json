@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "zh",
                 "topic": "high school government and politics"
             }
         }

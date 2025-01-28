@@ -60,7 +60,6 @@
         {
             "__type__": "set",
             "fields": {
-                "language": "mg",
                 "topic": "logical fallacies"
             }
         }
