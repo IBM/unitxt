@@ -210,7 +210,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = True
+    streaming: bool = False
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
     requirements_list: List[str] = OptionalField(default_factory=list)
@@ -308,11 +308,12 @@ class LoadHF(Loader):
             )
 
     def load_iterables(self) -> IterableDatasetDict:
-        try:
-            dataset = self.stream_dataset()
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
+        if self.streaming:
+            try:
+                dataset = self.stream_dataset()
+            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+                dataset = self.load_dataset()
+        else:
             dataset = self.load_dataset()
 
         if self.filtering_lambda is not None:
