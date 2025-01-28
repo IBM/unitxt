@@ -2654,6 +2654,18 @@ references (str):
             tester=self,
         )
 
+        exception_texts = [
+            "Inconsistent value for field 'id' in group 'A': '1' vs '2'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances.",
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
 
 class TestApplyMetric(UnitxtTestCase):
     def _test_apply_metric(

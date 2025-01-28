@@ -67,6 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .error_utils import UnitxtError
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -2262,13 +2263,13 @@ class CollateInstancesByField(StreamOperator):
     def verify(self):
         super().verify()
         if not isinstance(self.by_field, str):
-            raise ValueError(
-                f"The by_field value is not a string but '{type(self.by_field)}'"
+            raise UnitxtError(
+                f"The 'by_field' value is not a string but '{type(self.by_field)}'"
             )
 
         if not isinstance(self.aggregate_fields, list):
-            raise ValueError(
-                f"The allowed_field_values is not a list but '{type(self.aggregate_fields)}'"
+            raise UnitxtError(
+                f"The 'allowed_field_values' is not a list but '{type(self.aggregate_fields)}'"
             )
 
     def process(self, stream: Stream, stream_name: Optional[str] = None):
@@ -2303,7 +2304,7 @@ class CollateInstancesByField(StreamOperator):
                     if k in grouped_data[key] and grouped_data[key][k] != v:
                         raise ValueError(
                             f"Inconsistent value for field '{k}' in group '{key}': "
-                            f"'{grouped_data[key][k]}' vs '{v}. Ensure that all non-aggregated fields are consistent.'"
+                            f"'{grouped_data[key][k]}' vs '{v}'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances."
                         )
 
             # Append values for aggregate fields
