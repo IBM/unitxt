@@ -41,20 +41,12 @@ def load_quality_split(split: str,
             for question in article_data.get('questions', []):
                 # Use 'gold_label' as the answer and handle missing values
                 gold_label = question.get('gold_label', None)
-                if gold_label is None:
-                    gold_label = -1
-                    # continue
 
                 processed_question = {
                     'context': article_info['article'],
                     'question': question['question'],
-                    'question_id': question['question_unique_id'],
                     'choices': question['options'],
                     'answer': gold_label,  # Use the 'gold_label' as the answer
-                    'difficulty': question.get('difficult', 0),
-                    'title': article_info['title'],
-                    'author': article_info['author'],
-                    'year': article_info['year'],
                     'topic': article_info['topic']
                 }
                 processed_data.append(processed_question)
@@ -65,7 +57,7 @@ def load_quality_split(split: str,
 def load_quality_data():
     """Load all splits of the QuALITY dataset."""
     data = {}
-    for split_name, file_split in [('train', 'train'),  ('validation', 'dev')]:
+    for split_name, file_split in [('train', 'train'), ('validation', 'dev')]:
         try:
             data[split_name] = load_quality_split(file_split)
         except Exception as e:
@@ -88,10 +80,11 @@ with unitxt.settings.context(allow_unverified_code=True):
             MapInstanceValues(
                 mappers={
                     "answer": {
-                        "A": 0,
-                        "B": 1,
-                        "C": 2,
-                        "D": 3,
+                        "1": 0,
+                        "2": 1,
+                        "3": 2,
+                        "4": 3,
+                        "5": 4,
                     }
                 }
             ),
