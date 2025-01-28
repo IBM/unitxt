@@ -2276,6 +2276,10 @@ class CollateInstancesByField(StreamOperator):
         grouped_data = {}
 
         for instance in stream:
+            if self.by_field not in instance:
+                raise UnitxtError(
+                    f"The field '{self.by_field}' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+                )
             key = instance[self.by_field]
 
             if key not in grouped_data:

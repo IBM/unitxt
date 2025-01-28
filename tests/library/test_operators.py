@@ -2635,6 +2635,27 @@ references (str):
     def test_collate_instances_by_field(self):
         inputs = [
             {"id": 1, "category": "A", "value": 10},
+            {"id": 1, "category": "A", "value": 20},
+            {"id": 2, "category": "B", "value": 30},
+            {"id": 2, "category": "B", "value": 40},
+        ]
+
+        targets = [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 2, "value": [30, 40]},
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {"id": 1, "category": "A", "value": 10},
             {"id": 2, "category": "A", "value": 20},
             {"id": 3, "category": "B", "value": 30},
             {"id": 4, "category": "B", "value": 40},
@@ -2665,6 +2686,31 @@ references (str):
             exception_texts=exception_texts,
             tester=self,
         )
+
+        exception_texts = [
+            "The field 'not_exist' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="not_exist", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+
+#        exception_texts = [
+#           "ERROR"
+#       ]
+#        check_operator_exception(
+#            operator=CollateInstancesByField(
+#                by_field="category", aggregate_fields=["id","value","not_exist"]
+#            ),
+#            inputs=inputs,
+#            exception_texts=exception_texts,
+#            tester=self,
+#        )
 
 
 class TestApplyMetric(UnitxtTestCase):
