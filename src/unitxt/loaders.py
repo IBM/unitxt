@@ -823,6 +823,7 @@ class LoadFromHFSpace(LoadHF):
     use_token: Optional[bool] = None
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
+    streaming = True
 
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
@@ -953,45 +954,6 @@ class LoadFromHFSpace(LoadHF):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()
-
-        # url: str
-
-        # _requirements_list: List[str] = ["opendatasets"]
-        # data_classification_policy = ["public"]
-
-        # def verify(self):
-        #     super().verify()
-        #     if not os.path.isfile("kaggle.json"):
-        #         raise MissingKaggleCredentialsError(
-        #             "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
-        #         )
-
-        #     if self.streaming:
-        #         raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
-
-        # def prepare(self):
-        #     super().prepare()
-        #     from opendatasets import download
-
-        #     self.downloader = download
-
-        # def load_iterables(self):
-        #     with TemporaryDirectory() as temp_directory:
-        #         self.downloader(self.url, temp_directory)
-        #         return hf_load_dataset(temp_directory, streaming=False)
-
-        # class LoadFromAPI(Loader):
-        #     """Loads data from from API"""
-
-        #     urls: Dict[str, str]
-        #     chunksize: int = 100000
-        #     loader_limit: Optional[int] = None
-        #     streaming: bool = False
-
-        #     def _maybe_set_classification_policy(self):
-        #         self.set_default_data_classification(["proprietary"], "when loading from API")
-
-        #     def load_iterables(self):
         self.api_key = os.getenv("SQL_API_KEY", None)
         if not self.api_key:
             raise ValueError(
