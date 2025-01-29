@@ -13,6 +13,7 @@ from typing import (
 
 from .dataclass import OptionalField
 from .dict_utils import dict_get
+from .error_utils import UnitxtError
 from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
@@ -23,6 +24,55 @@ constants = get_constants()
 
 class Format(InstanceOperator):
     pass
+
+
+class GraniteDocumentsFormat(Format):
+    model: str = "ibm-granite/granite-3.1-8b-instruct"
+    citations: bool = True
+    length: str = "long"
+
+    _requirements_list = ["transformers"]
+
+    def prepare(self):
+        super().prepare()
+        from transformers import AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: str | None = None
+    ) -> Dict[str, Any]:
+        inputs = instance["input_fields"]
+        if "question" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'question'"
+            )
+        if "context" not in inputs and "contexts" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'context' or 'contexts"
+            )
+
+        if "context" in inputs:
+            texts = [inputs["context"]]
+        if "contexts" in inputs:
+            texts = inputs["contexts"]
+
+        documents = []
+        for text in texts:
+            documents.append({"title": "", "text": text})
+
+        question = inputs["question"]
+
+        instance["source"] = self.tokenizer.apply_chat_template(
+            [
+                {"role": "user", "content": question},
+            ],
+            documents=documents,
+            controls={"citations": self.citations, "length": self.length},
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+        return instance
 
 
 def apply_capital_new_line_notation(text: str) -> str:
