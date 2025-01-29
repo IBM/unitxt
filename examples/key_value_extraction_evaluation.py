@@ -62,12 +62,12 @@ model = CrossProviderInferenceEngine(
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
-print("Global Results:")
-print(results.global_scores.summary)
-
 print("Example prompt:")
 
 print(json.dumps(results.instance_scores[0]["source"], indent=4))
 
 print("Instance Results:")
 print(results.instance_scores)
+
+print("Global Results:")
+print(results.global_scores.summary)
