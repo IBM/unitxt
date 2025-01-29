@@ -50,7 +50,8 @@ card = TaskCard(
                 ["table-average", "table header", "number", "the average of one table row"],
                 ["table-max", "table header", "number", "the maximum number of one table row"],
                 ["table-min", "table header", "number", "the minimum number of one table row"]]
-                Answer with only the program, without any additional explanation.
+                \nAnswer with only the program, without any additional explanation or introductory text.
+                \nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.
                 """,
             input_format="""Pre-table text: {pre_text}
                 Table: {table}
@@ -59,7 +60,9 @@ card = TaskCard(
                 Program:
                     """,
             output_format="{program_re}",
-            postprocessors=[],
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+            ],
         ),
     ],
     __description__=(
