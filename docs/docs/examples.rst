@@ -62,7 +62,7 @@ Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
 Example code <https://github.com/IBM/unitxt/blob/main/examples/ner_evaluation.py>`__
 
-Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
 
 Evaluation usecases
 -----------------------
@@ -278,6 +278,18 @@ Evaluate Image-Text to Text Models with different templates and explore the sens
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text_with_different_templates.py>`__
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
+
+Evaluate Image Key Value Extraction task
++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates an image key value extraction task.  It renders several images og given texts and then prompts a vision model to extract key value pairs from the images.
+This requires the vision model to understand the text in the image. It returns F1 scores for each of keys, compared to ground truth key value pairs.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/key_value_extraction_evaluation.py>`__
+
+Related documentation: :ref:`Key Value Extraction task in catalog <catalog.tasks.key_value_extraction>`, :ref:`Inference Engines <inference>`.
+:ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
+
 
 Advanced topics
 ----------------------------
