@@ -12,6 +12,7 @@ from unitxt.operators import (
     ApplyStreamOperatorsField,
     CastFields,
     CollateInstances,
+    CollateInstancesByField,
     Copy,
     Deduplicate,
     DeterministicBalancer,
@@ -2779,6 +2780,115 @@ references (str):
             operator=CollateInstances(batch_size=2),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+    def test_collate_instances_by_field(self):
+        inputs = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 1, "category": "A", "value": 20},
+            {"id": 2, "category": "B", "value": 30},
+            {"id": 2, "category": "B", "value": 40},
+        ]
+
+        targets = [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 2, "value": [30, 40]},
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {
+                "id": 1,
+                "category": "A",
+                "value": 10,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 2,
+                "category": "A",
+                "value": 20,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 3,
+                "category": "B",
+                "value": 30,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 4,
+                "category": "B",
+                "value": 40,
+                "data_classification_policy": ["private"],
+            },
+        ]
+
+        targets = [
+            {
+                "category": "A",
+                "id": [1, 2],
+                "value": [10, 20],
+                "data_classification_policy": ["public"],
+            },
+            {
+                "category": "B",
+                "id": [3, 4],
+                "value": [30, 40],
+                "data_classification_policy": ["private", "public"],
+            },
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value", "id"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Inconsistent value for field 'id' in group 'A': '1' vs '2'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances.",
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="not_exist", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["id", "value", "not_exist"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
             tester=self,
         )
 

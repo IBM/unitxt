@@ -26,7 +26,7 @@ card = TaskCard(
     templates=[
         MultiReferenceTemplate(
             instruction="Answer the question based on the provided table. You should only output the final answer. Do not add any explanation or other information.",
-            input_format="\nQuestion: {question}" "\nTable: {context}" "\nAnswer: ",
+            input_format="\nQuestion: {question}\nTable: {context}\nAnswer: ",
             references_field="answers",
             postprocessors=[
                 "processors.to_list_by_comma_space",

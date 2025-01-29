@@ -25,7 +25,7 @@ def _get_default_logging_level():
         return log_levels[settings.default_verbosity]
     except KeyError as e:
         raise ValueError(
-            f"unitxt.settings.default_verobsity or env variable UNITXT_DEFAULT_VERBOSITY has to be one of: { ', '.join(log_levels.keys()) }. Got {settings.default_verbosity}."
+            f"unitxt.settings.default_verobsity or env variable UNITXT_DEFAULT_VERBOSITY has to be one of: {', '.join(log_levels.keys())}. Got {settings.default_verbosity}."
         ) from e
 
 

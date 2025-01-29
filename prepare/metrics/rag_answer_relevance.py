@@ -1,8 +1,9 @@
 from unitxt import add_to_catalog
+from unitxt.collections_operators import Wrap
 from unitxt.metrics import (
     MetricPipeline,
 )
-from unitxt.operators import Copy, ListFieldValues
+from unitxt.operators import Copy
 from unitxt.serializers import MultiTypeSerializer
 
 task_names = ["external_rag", "response_generation", "end_to_end"]
@@ -13,37 +14,21 @@ def get_preprocess_steps(task):
     # This metric compares the answer (as the prediction) to the question (as the reference).
     # We have to wrap the question by a list (otherwise it will be a string),
     # because references are expected to be lists
-    last_step = ListFieldValues(fields=["references"], to_field="references")
     if task == "external_rag":
         return [
-            Copy(
-                field_to_field={
-                    "question": "references",
-                    "answer": "prediction",
-                },
-            ),
-            last_step,
+            Copy(field="prediction/answer", to_field="prediction"),
+            Wrap(field="task_data/question", inside="list", to_field="references"),
         ]
     if task == "response_generation":
         return [
-            Copy(
-                field_to_field={
-                    "task_data/question": "references",
-                }
-            ),
+            Wrap(field="task_data/question", inside="list", to_field="references"),
             MultiTypeSerializer(field="references", process_every_value=True),
-            last_step,
         ]
     if task == "end_to_end":
         return [
-            Copy(
-                field_to_field={
-                    "task_data/question": "references",
-                    "prediction/answer": "prediction",
-                }
-            ),
+            Copy(field="prediction/answer", to_field="prediction"),
+            Wrap(field="task_data/question", inside="list", to_field="references"),
             MultiTypeSerializer(field="references", process_every_value=True),
-            last_step,
         ]
     raise ValueError(f"Unsupported rag task {task}")
 
@@ -72,16 +57,3 @@ for task in task_names:
         f"{base}.{task}.answer_relevance.token_recall",
         overwrite=True,
     )
-#
-# answer_inference = MetricPipeline(
-#     main_score="perplexity",
-#     preprocess_steps=[
-#         Copy(
-#             field_to_field={"task_data/contexts": "references", "answer": "prediction"},
-#             not_exist_do_nothing=True,
-#         ),
-#         Copy(field_to_field={"contexts": "references"}, not_exist_do_nothing=True),
-#     ],
-#     metric="metrics.perplexity_nli.t5_nli_mixture",
-# )
-# add_to_catalog(answer_inference, "metrics.rag.answer_inference", overwrite=True)

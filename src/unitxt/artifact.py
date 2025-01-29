@@ -147,7 +147,7 @@ class UnrecognizedArtifactTypeError(ValueError):
         message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         closest_artifact_type = get_closest_artifact_type(type)
         if closest_artifact_type is not None:
-            message += "\n\n" f"Did you mean '{closest_artifact_type}'?"
+            message += f"\n\nDid you mean '{closest_artifact_type}'?"
         super().__init__(message)
 
 

@@ -208,7 +208,7 @@ class LLMAsJudge(LLMAsJudgeBase):
                 else:  # num demos > 0
                     turns = []
                     for turn in input_instance:
-                        turns.append(f'{turn["role"]}: {turn["content"]}')
+                        turns.append(f"{turn['role']}: {turn['content']}")
                     string_input_instances.append("\n".join(turns))
 
         if self.task == "rating.single_turn":
