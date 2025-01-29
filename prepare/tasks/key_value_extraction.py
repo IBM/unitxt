@@ -10,6 +10,7 @@ add_to_catalog(
         reference_fields={"key_value_pairs_answer": Dict[str, str]},
         prediction_type=List[Tuple[str, str]],
         metrics=["metrics.key_value_extraction"],
+        default_template="templates.key_value_extraction.extract_in_json_format",
     ),
     "tasks.key_value_extraction",
     overwrite=True,

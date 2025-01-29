@@ -11,5 +11,6 @@
     "prediction_type": "List[Tuple[str, str]]",
     "metrics": [
         "metrics.key_value_extraction"
-    ]
+    ],
+    "default_template": "templates.key_value_extraction.extract_in_json_format"
 }
