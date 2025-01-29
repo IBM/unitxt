@@ -2729,18 +2729,17 @@ references (str):
             tester=self,
         )
 
-
-#        exception_texts = [
-#           "ERROR"
-#       ]
-#        check_operator_exception(
-#            operator=CollateInstancesByField(
-#                by_field="category", aggregate_fields=["id","value","not_exist"]
-#            ),
-#            inputs=inputs,
-#            exception_texts=exception_texts,
-#            tester=self,
-#        )
+        exception_texts = [
+            "The field 'not_exist' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["id", "value", "not_exist"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
 
 
 class TestApplyMetric(UnitxtTestCase):

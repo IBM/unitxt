@@ -2257,8 +2257,6 @@ class CollateInstancesByField(StreamOperator):
 
     def prepare(self):
         super().prepare()
-        # add field "int_docid" to the list of aggregate fields by default
-        self.aggregate_fields.extend(["int_docid"])
 
     def verify(self):
         super().verify()
@@ -2280,6 +2278,11 @@ class CollateInstancesByField(StreamOperator):
                 raise UnitxtError(
                     f"The field '{self.by_field}' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
                 )
+            for k in self.aggregate_fields:
+                if k not in instance:
+                    raise UnitxtError(
+                        f"The field '{k}' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+                    )
             key = instance[self.by_field]
 
             if key not in grouped_data:
