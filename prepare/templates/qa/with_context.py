@@ -92,7 +92,8 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query.",
+        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query."
+        + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
         input_format="{context_type}:\n{context}\nQuery:\n{question}",
         output_format="{answers}",
         target_prefix="Answer:\n",
