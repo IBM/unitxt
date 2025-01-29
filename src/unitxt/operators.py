@@ -2245,35 +2245,39 @@ class CollateInstances(StreamOperator):
 
 
 class CollateInstancesByField(StreamOperator):
-    """Groups a list of dictionaries by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregatedfields.
+    """Groups a list of instances by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregated fields.
 
     Args:
         by_field str: the name of the field to group data by.
         aggregate_fields list(str): the field names to aggregate into lists.
 
     Returns:
-        list of dict: A dataset grouped and aggregated by the specified field.
+        A stream of instances grouped and aggregated by the specified field.
 
     Raises:
-        ValueError: If non-aggregate fields have inconsistent values.
+        UnitxtError: If non-aggregate fields have inconsistent values.
 
     Example:
-        Collate the rows based on field "category" and aggregate fields "value" and "id".
+        Collate the instances based on field "category" and aggregate fields "value" and "id".
 
         CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
 
-        data = [
-            {"id": 1, "category": "A", "value": 10},
-            {"id": 2, "category": "A", "value": 20},
-            {"id": 3, "category": "B", "value": 30},
-            {"id": 4, "category": "B", "value": 40}
+        given input:
+        [
+            {"id": 1, "category": "A", "value": 10", "flag" : True},
+            {"id": 2, "category": "B", "value": 20", "flag" : False},
+            {"id": 3, "category": "A", "value": 30", "flag" : True},
+            {"id": 4, "category": "B", "value": 40", "flag" : False}
         ]
 
-        output:
+        the output is:
         [
-            {"category": "A", "id": [1, 2], "value": [10, 20]},
-            {"category": "B", "id": [3, 4], "value": [30, 40]}
+            {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
+            {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
         ]
+
+        Note that the "flag" field is not aggregated, and must be the same
+        in all instances in the same category, or an error is raised.
     """
 
     by_field: str = NonPositionalField(required=True)
