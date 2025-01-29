@@ -3361,10 +3361,24 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
+    """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
+
     prediction_type = List[Tuple[str, str]]
 
     def get_element_group(self, element, additional_input):
         return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+
+
+class KeyValueExtraction(CustomF1):
+    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
+
+    prediction_type = List[Tuple[str, str]]
+
+    def get_element_group(self, element, additional_input):
+        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
