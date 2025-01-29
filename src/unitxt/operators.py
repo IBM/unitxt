@@ -2324,7 +2324,7 @@ class CollateInstancesByField(StreamOperator):
 
             for k, v in instance.items():
                 # Merge classification policy list across instance with same key
-                if k == "data_classification_policy":
+                if k == "data_classification_policy" and instance[k]:
                     grouped_data[key][k] = sorted(set(grouped_data[key][k] + v))
                 # Check consistency for all non-aggregate fields
                 elif k != self.by_field and k not in self.aggregate_fields:
