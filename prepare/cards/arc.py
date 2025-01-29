@@ -37,5 +37,5 @@ for subtask in subtasks:
     )
     test_card(card, strict=False)
     add_to_catalog(
-        card, f'cards.ai2_arc.{subtask.replace("-", "_").lower()}', overwrite=True
+        card, f"cards.ai2_arc.{subtask.replace('-', '_').lower()}", overwrite=True
     )

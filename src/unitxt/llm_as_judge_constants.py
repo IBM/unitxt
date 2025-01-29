@@ -947,7 +947,7 @@ class DirectCriteriaCatalogEnum(Enum):
     )
 
 
-DIRECT_CRITERIAS = [c.value for c in DirectCriteriaCatalogEnum]
+DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]
 
 
 class PairwiseCriteriaCatalogEnum(Enum):
@@ -988,4 +988,4 @@ class PairwiseCriteriaCatalogEnum(Enum):
     )
 
 
-PAIRWISE_CRITERIAS = [c.value for c in PairwiseCriteriaCatalogEnum]
+PAIRWISE_CRITERIA = [c.value for c in PairwiseCriteriaCatalogEnum]

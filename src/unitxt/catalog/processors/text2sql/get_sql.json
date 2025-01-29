@@ -1,0 +1,9 @@
+{
+    "__type__": "sequential_operator",
+    "steps": [
+        {
+            "__type__": "get_sql",
+            "field": "prediction"
+        }
+    ]
+}

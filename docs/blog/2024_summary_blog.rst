@@ -1,9 +1,9 @@
-.. title:: Unitxt 2024 End-of-Year Summary
+.. title:: 2024 End-of-Year Summary
 :Authors: Unitxt Team
 :Date: 2025-01-01
 
 =================================================================================================
-[01/01/2025] Unitxt 2024 End-of-Year Summary
+[01/01/2025] 2024 End-of-Year Summary
 =================================================================================================
 
 **Authors**: Unitxt Team
@@ -64,15 +64,15 @@ While expanding its capabilities, Unitxt maintains strong performance in data pr
 The platform's `data fusion tools <https://www.unitxt.ai/en/latest/unitxt.fusion.html>`_ have proven effective for creating large-scale, multi-dataset compilations for supervised fine-tuning.
 Ongoing collaboration with IBM teams conducting large-scale supervised fine-tuning demonstrates the practical impact of these capabilities, with further developments planned for 2025.
 
-Strategic Focus for 2025: Enhancing Accessibility
+Strategic Focus for 2025: Enhancing Usability
 --------------------------------------------------
 
-As Unitxt has matured into a sophisticated platform offering comprehensive capabilities in data preparation, inference, and quality estimation, accessibility becomes increasingly important. Building on 2024's improvements in error handling and documentation, the 2025 roadmap focuses on two key initiatives:
+As Unitxt has matured into a sophisticated platform offering comprehensive capabilities in data preparation, inference, and quality estimation, usability becomes increasingly important. Building on 2024's improvements in error handling and documentation, the 2025 roadmap focuses on two key initiatives:
 1.	Streamlining the Unitxt API for enhanced user interaction
 2.	Developing intelligent navigation tools to optimize platform utilization
 We are now testing internally an `AI assistant <https://github.com/IBM/unitxt/tree/main/src/unitxt/assistant>`_ that is specialized in Unitxt.
 The Unitxt AI Assistant will provide our users real-time support, guiding them through complex workflows and offering contextual help based on their specific tasks.
 
-The 2025 strategy aims to increase platform accessibility while maintaining the robust capabilities that drive value for our users.
+The 2025 strategy aims to increase platform usability while maintaining the robust capabilities that drive value for our users.
 This annual review reflects significant progress in Unitxt's development and implementation. We look forward to continued innovation and advancement in the year ahead.
 

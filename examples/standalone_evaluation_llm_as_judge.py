@@ -47,7 +47,7 @@ judge_correctness_template = InputOutputTemplate(
     'Please use the exact format of the verdict as "[[rate]]". '
     "You can explain your answer after the verdict"
     ".\n\n",
-    input_format="[User's input]\n{question}\n" "[Assistant's Answer]\n{answer}\n",
+    input_format="[User's input]\n{question}\n[Assistant's Answer]\n{answer}\n",
     output_format="[[{rating}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",

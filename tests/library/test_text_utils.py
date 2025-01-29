@@ -135,7 +135,7 @@ class TestTextUtils(UnitxtTestCase):
     def test_pretty_string_simple_dict(self):
         data = {"key1": "value1", "key2": 123}
         result = to_pretty_string(data, max_chars=80)
-        expected = "key1 (str):\n" "    value1\n" "key2 (int):\n" "    123\n"
+        expected = "key1 (str):\n    value1\nkey2 (int):\n    123\n"
         self.assertEqual(result, expected)
 
     def test_pretty_string_nested_structures(self):

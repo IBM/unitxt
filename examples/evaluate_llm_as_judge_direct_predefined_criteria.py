@@ -9,7 +9,7 @@ data = [
     {"question": "What is a good low cost of living city in the US?"},
 ]
 
-criterion = "metrics.llm_as_judge.direct.criterias.answer_relevance"
+criterion = "metrics.llm_as_judge.direct.criteria.answer_relevance"
 metrics = [
     f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criterion}, context_fields=[question]]"
 ]

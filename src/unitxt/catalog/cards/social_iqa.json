@@ -8,6 +8,16 @@
         ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "deduplicate",
+            "by": [
+                "context",
+                "question",
+                "answerA",
+                "answerB",
+                "answerC"
+            ]
+        },
         "splitters.small_no_test",
         {
             "__type__": "list_field_values",

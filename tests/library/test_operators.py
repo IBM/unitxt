@@ -14,6 +14,7 @@ from unitxt.operators import (
     CollateInstances,
     CollateInstancesByField,
     Copy,
+    Deduplicate,
     DeterministicBalancer,
     DivideAllFieldsBy,
     DuplicateInstances,
@@ -308,6 +309,27 @@ class TestOperators(UnitxtTestCase):
 
         check_operator(
             operator=FlattenInstances(sep="..."),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_deduplicate_by_fields(self):
+        inputs = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 2, "b": {"c": 3}},
+            {"a": 1, "b": {"c": 2}},  # Duplicate based on "a" and "b/c"
+            {"a": 1, "b": {"c": 3}},  # Duplicate based on "a" and "b/c"
+        ]
+
+        targets = [
+            {"a": 1, "b": {"c": 2}},
+            {"a": 2, "b": {"c": 3}},
+            {"a": 1, "b": {"c": 3}},
+        ]
+
+        check_operator(
+            operator=Deduplicate(by=["a", "b/c"]),
             inputs=inputs,
             targets=targets,
             tester=self,
