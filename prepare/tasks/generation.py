@@ -29,9 +29,9 @@ add_to_catalog(
         reference_fields={"output": str},
         prediction_type=str,
         metrics=[
-            "metrics.bleu",
             "metrics.rouge",
             "metrics.bert_score.bert_base_uncased",
+            "metrics.bleu",
             "metrics.meteor",
         ],
         augmentable_inputs=["input_a", "input_b"],
