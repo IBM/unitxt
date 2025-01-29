@@ -1778,9 +1778,9 @@ class TogetherAiInferenceEngine(
             together_model.id: together_model.type for together_model in together_models
         }
         model_type = together_model_id_to_type.get(self.model_name)
-        assert model_type is not None, (
-            f"Could not find model {self.model_name} " "in Together AI model list"
-        )
+        assert (
+            model_type is not None
+        ), f"Could not find model {self.model_name} in Together AI model list"
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
             "supported types are 'chat', 'language' and 'code'."
@@ -3102,6 +3102,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                 else:
                     del args[param]
         self.engine = cls(**args)
+        self.data_classification_policy = self.engine.data_classification_policy
 
     def _infer(
         self,

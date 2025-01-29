@@ -3,7 +3,8 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, FilterByCondition, Set
+from unitxt.struct_data_operators import GetNumOfTableCells
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
@@ -14,6 +15,10 @@ card = TaskCard(
     ),
     preprocess_steps=[
         Set({"context_type": "table"}),
+        GetNumOfTableCells(field="table", to_field="table_cell_size"),
+        FilterByCondition(
+            values={"table_cell_size": 200}, condition="le"
+        ),  # filter out tables with more than 200 cells
         Copy(field="table", to_field="context"),
         # TruncateTableRows(field="table", to_field="context"),
     ],

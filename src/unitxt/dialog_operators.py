@@ -13,6 +13,7 @@ The format of the dialog is:
         {"user": "kkk", "system": ""},
     ]
 """
+
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat

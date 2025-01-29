@@ -33,14 +33,26 @@ Available Loaders Overview:
 
 import fnmatch
 import itertools
+import json
 import os
 import tempfile
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import pandas as pd
+import requests
 from datasets import IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
@@ -347,24 +359,43 @@ class LoadCSV(Loader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
+    compression: Optional[str] = None
+    lines: Optional[bool] = None
+    file_type: Literal["csv", "json"] = "csv"
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
 
+    def get_reader(self):
+        if self.file_type == "csv":
+            return pd.read_csv
+        if self.file_type == "json":
+            return pd.read_json
+        raise ValueError()
+
+    def get_args(self):
+        args = {}
+        if self.file_type == "csv":
+            args["sep"] = self.sep
+        if self.compression is not None:
+            args["compression"] = self.compression
+        if self.lines is not None:
+            args["lines"] = self.lines
+        if self.get_limit() is not None:
+            args["nrows"] = self.get_limit()
+        return args
+
     def load_iterables(self):
         iterables = {}
         for split_name, file_path in self.files.items():
+            reader = self.get_reader()
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                iterables[split_name] = pd.read_csv(
-                    file_path, nrows=self.get_limit(), sep=self.sep
-                ).to_dict("records")
-            else:
-                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
-                    "records"
-                )
+            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
+                "records"
+            )
         return iterables
 
 
@@ -922,3 +953,174 @@ class LoadFromHFSpace(LoadHF):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()
+
+        # url: str
+
+        # _requirements_list: List[str] = ["opendatasets"]
+        # data_classification_policy = ["public"]
+
+        # def verify(self):
+        #     super().verify()
+        #     if not os.path.isfile("kaggle.json"):
+        #         raise MissingKaggleCredentialsError(
+        #             "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
+        #         )
+
+        #     if self.streaming:
+        #         raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
+
+        # def prepare(self):
+        #     super().prepare()
+        #     from opendatasets import download
+
+        #     self.downloader = download
+
+        # def load_iterables(self):
+        #     with TemporaryDirectory() as temp_directory:
+        #         self.downloader(self.url, temp_directory)
+        #         return hf_load_dataset(temp_directory, streaming=False)
+
+        # class LoadFromAPI(Loader):
+        #     """Loads data from from API"""
+
+        #     urls: Dict[str, str]
+        #     chunksize: int = 100000
+        #     loader_limit: Optional[int] = None
+        #     streaming: bool = False
+
+        #     def _maybe_set_classification_policy(self):
+        #         self.set_default_data_classification(["proprietary"], "when loading from API")
+
+        #     def load_iterables(self):
+        self.api_key = os.getenv("SQL_API_KEY", None)
+        if not self.api_key:
+            raise ValueError(
+                "The environment variable 'SQL_API_KEY' must be set to use the RemoteDatabaseConnector."
+            )
+
+        self.base_headers = {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": f"Bearer {self.api_key}",
+        }
+
+        iterables = {}
+        for split_name, url in self.urls.items():
+            response = requests.get(
+                url,
+                headers=self.base_headers,
+                verify=True,
+            )
+
+            iterables[split_name] = pd.DataFrame(
+                json.loads(response.text)["embeddings"]
+            )
+
+        return iterables
+
+
+class LoadFromAPI(Loader):
+    """Loads data from from API.
+
+    This loader is designed to fetch data from an API endpoint,
+    handling authentication through an API key. It supports
+    customizable chunk sizes and limits for data retrieval.
+
+    Args:
+        urls (Dict[str, str]):
+            A dictionary mapping split names to their respective API URLs.
+        chunksize (int, optional):
+            The size of data chunks to fetch in each request. Defaults to 100,000.
+        loader_limit (int, optional):
+            Limits the number of records to load. Applied per split. Defaults to None.
+        streaming (bool, optional):
+            Determines if data should be streamed. Defaults to False.
+        api_key_env_var (str, optional):
+            The name of the environment variable holding the API key.
+            Defaults to "SQL_API_KEY".
+        headers (Dict[str, Any], optional):
+            Additional headers to include in API requests. Defaults to None.
+        data_field (str, optional):
+            The name of the field in the API response that contains the data.
+            Defaults to "data".
+        method (str, optional):
+            The HTTP method to use for API requests. Defaults to "GET".
+    """
+
+    urls: Dict[str, str]
+    chunksize: int = 100000
+    loader_limit: Optional[int] = None
+    streaming: bool = False
+    api_key_env_var: str = "SQL_API_KEY"
+    headers: Optional[Dict[str, Any]] = None
+    data_field: str = "data"
+    method: str = "GET"
+
+    # class level shared cache:
+    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
+
+    def _maybe_set_classification_policy(self):
+        self.set_default_data_classification(["proprietary"], "when loading from API")
+
+    def load_iterables(self) -> Dict[str, Iterable]:
+        api_key = os.getenv(self.api_key_env_var, None)
+        if not api_key:
+            raise ValueError(
+                f"The environment variable '{self.api_key_env_var}' must be set to use the LoadFromAPI loader."
+            )
+
+        base_headers = {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+        if self.headers:
+            base_headers.update(self.headers)
+
+        iterables = {}
+        for split_name, url in self.urls.items():
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+
+            if self.method == "GET":
+                response = requests.get(
+                    url,
+                    headers=base_headers,
+                    verify=True,
+                )
+            elif self.method == "POST":
+                response = requests.post(
+                    url,
+                    headers=base_headers,
+                    verify=True,
+                    json={},
+                )
+            else:
+                raise ValueError(f"Method {self.method} not supported")
+
+            response.raise_for_status()
+
+            data = json.loads(response.text)
+
+            if self.data_field:
+                if self.data_field not in data:
+                    raise ValueError(
+                        f"Data field '{self.data_field}' not found in API response."
+                    )
+                data = data[self.data_field]
+
+            if self.get_limit() is not None:
+                data = data[: self.get_limit()]
+
+            iterables[split_name] = data
+
+        return iterables
+
+    def process(self) -> MultiStream:
+        self._maybe_set_classification_policy()
+        iterables = self.__class__._loader_cache.get(str(self), None)
+        if iterables is None:
+            iterables = self.load_iterables()
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self)] = iterables
+        return MultiStream.from_iterables(iterables, copying=True)

@@ -77,6 +77,6 @@ for split in splits.keys():
     )
     add_to_catalog(
         card,
-        f'cards.rag.response_generation.{"train." if split == "train" else ""}clapnq',
+        f"cards.rag.response_generation.{'train.' if split == 'train' else ''}clapnq",
         overwrite=True,
     )
