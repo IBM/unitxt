@@ -210,7 +210,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = True
+    streaming: bool = False
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
     requirements_list: List[str] = OptionalField(default_factory=list)

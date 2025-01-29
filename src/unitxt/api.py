@@ -139,7 +139,7 @@ def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
     streaming: bool = False,
-    disable_cache: Optional[bool] = None,
+    disable_cache: Optional[bool] = True,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
@@ -187,9 +187,6 @@ def load_dataset(
     stream = recipe()
     if split is not None:
         stream = stream[split]
-
-    if disable_cache is None:
-        disable_cache = settings.disable_hf_datasets_cache
 
     if streaming:
         dataset = stream.to_iterable_dataset(
