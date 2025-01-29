@@ -232,7 +232,7 @@ def construct_dict_as_yaml_lines(d, indent_delta=2) -> List[str]:
 
     # d1 = re.sub(r"(\n+)", r'"\1"', str(d))
     d1 = str(d).replace("\n", "\\n").replace('"', '\\"')
-    if "\\n" in d1:
+    if "\\n" in d1 or d1 == "":
         d1 = f'"{d1}"'
     return [d1]
 
