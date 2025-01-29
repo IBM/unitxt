@@ -2655,15 +2655,45 @@ references (str):
         )
 
         inputs = [
-            {"id": 1, "category": "A", "value": 10},
-            {"id": 2, "category": "A", "value": 20},
-            {"id": 3, "category": "B", "value": 30},
-            {"id": 4, "category": "B", "value": 40},
+            {
+                "id": 1,
+                "category": "A",
+                "value": 10,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 2,
+                "category": "A",
+                "value": 20,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 3,
+                "category": "B",
+                "value": 30,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 4,
+                "category": "B",
+                "value": 40,
+                "data_classification_policy": ["private"],
+            },
         ]
 
         targets = [
-            {"category": "A", "id": [1, 2], "value": [10, 20]},
-            {"category": "B", "id": [3, 4], "value": [30, 40]},
+            {
+                "category": "A",
+                "id": [1, 2],
+                "value": [10, 20],
+                "data_classification_policy": ["public"],
+            },
+            {
+                "category": "B",
+                "id": [3, 4],
+                "value": [30, 40],
+                "data_classification_policy": ["private", "public"],
+            },
         ]
 
         check_operator(

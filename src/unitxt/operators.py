@@ -2292,17 +2292,9 @@ class CollateInstancesByField(StreamOperator):
                         grouped_data[key][agg_field] = []
 
             for k, v in instance.items():
-                if k == "data_classification_policy" and instance[k]:
-                    flattened_list = [
-                        classification
-                        for classification in instance[k]
-                        if classification is not None
-                    ]
-                    instance[k] = (
-                        sorted(set(flattened_list))
-                        if flattened_list
-                        else flattened_list
-                    )
+                # Merge classification policy list across instance with same key
+                if k == "data_classification_policy":
+                    grouped_data[key][k] = sorted(set(grouped_data[key][k] + v))
                 # Check consistency for all non-aggregate fields
                 elif k != self.by_field and k not in self.aggregate_fields:
                     if k in grouped_data[key] and grouped_data[key][k] != v:
@@ -2310,11 +2302,9 @@ class CollateInstancesByField(StreamOperator):
                             f"Inconsistent value for field '{k}' in group '{key}': "
                             f"'{grouped_data[key][k]}' vs '{v}'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances."
                         )
-
-            # Append values for aggregate fields
-            for agg_field in self.aggregate_fields:
-                if agg_field in instance:
-                    grouped_data[key][agg_field].append(instance[agg_field])
+                # Aggregate fields
+                elif k in self.aggregate_fields:
+                    grouped_data[key][k].append(instance[k])
 
         yield from grouped_data.values()
 
