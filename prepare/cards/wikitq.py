@@ -25,10 +25,12 @@ card = TaskCard(
     task="tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[
         MultiReferenceTemplate(
-            instruction="Answer the question based on the provided table. You should only output the final answer. Do not add any explanation or other information.",
-            input_format="\nQuestion: {question}\nTable: {context}\nAnswer: ",
+            instruction="Answer the question based on the provided table. Extract and output only the final answer—the exact phrase or data from the table that directly answers the question. Do not include any alterations, explanations, or introductory text"
+            + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
+            input_format="\nQuestion: {question}" "\nTable: {context}" "\nAnswer: ",
             references_field="answers",
             postprocessors=[
+                "processors.take_first_non_empty_line",
                 "processors.to_list_by_comma_space",
                 "processors.str_to_float_format",
             ],
