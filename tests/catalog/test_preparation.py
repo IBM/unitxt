@@ -95,8 +95,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for file in all_preparation_files:
-            if file.split("prepare")[-1] in skip_files:
-                continue
+            # if file.split("prepare")[-1] in skip_files:
+            #     continue
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Testing preparation file:\n  {file}."
