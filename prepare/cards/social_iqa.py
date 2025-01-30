@@ -9,13 +9,14 @@ from unitxt.operators import (
     Rename,
     Set,
 )
+from unitxt.test_utils.card import test_card
 
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
         loader=LoadHF(
             path="allenai/social_i_qa",
             data_classification_policy=["public"],
-            streaming=True,
+            revision="refs/pr/3",
         ),
         preprocess_steps=[
             Deduplicate(by=["context", "question", "answerA", "answerB", "answerC"]),
@@ -65,5 +66,5 @@ with unitxt.settings.context(allow_unverified_code=True):
         },
     )
 
-    # test_card(card, strict=False)
+    test_card(card, strict=False)
     add_to_catalog(card, "cards.social_iqa", overwrite=True)
