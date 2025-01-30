@@ -32,7 +32,9 @@ with settings.context(allow_unverified_code=True):
         task="tasks.classification.multi_class.relation",
         templates=[
             InputOutputTemplate(
-                instruction="Given a {text_a_type} and {text_b_type} classify the {type_of_relation} of the {text_b_type} to one of {classes}. You should only output the result. Do not add any explanation or other information.",
+                instruction="Given a {text_a_type} and {text_b_type} classify the {type_of_relation} of the {text_b_type} to one of {classes}."
+                + "\nOutput only the final answer without any explanations, extra information, or introductory text."
+                + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
                 input_format="{text_a_type}: {text_a}\n{text_b_type}: {text_b} ",
                 output_format="{label}",
                 postprocessors=[
@@ -52,5 +54,5 @@ with settings.context(allow_unverified_code=True):
         ),
     )
 
-    test_card(card)
+    test_card(card, num_demos=2, demos_pool_size=20)
     add_to_catalog(card, "cards.tab_fact", overwrite=True)

@@ -67,6 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .error_utils import UnitxtError
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -2241,6 +2242,102 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class CollateInstancesByField(StreamOperator):
+    """Groups a list of instances by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregated fields.
+
+    Args:
+        by_field str: the name of the field to group data by.
+        aggregate_fields list(str): the field names to aggregate into lists.
+
+    Returns:
+        A stream of instances grouped and aggregated by the specified field.
+
+    Raises:
+        UnitxtError: If non-aggregate fields have inconsistent values.
+
+    Example:
+        Collate the instances based on field "category" and aggregate fields "value" and "id".
+
+        CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
+
+        given input:
+        [
+            {"id": 1, "category": "A", "value": 10", "flag" : True},
+            {"id": 2, "category": "B", "value": 20", "flag" : False},
+            {"id": 3, "category": "A", "value": 30", "flag" : True},
+            {"id": 4, "category": "B", "value": 40", "flag" : False}
+        ]
+
+        the output is:
+        [
+            {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
+            {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
+        ]
+
+        Note that the "flag" field is not aggregated, and must be the same
+        in all instances in the same category, or an error is raised.
+    """
+
+    by_field: str = NonPositionalField(required=True)
+    aggregate_fields: List[str] = NonPositionalField(required=True)
+
+    def prepare(self):
+        super().prepare()
+
+    def verify(self):
+        super().verify()
+        if not isinstance(self.by_field, str):
+            raise UnitxtError(
+                f"The 'by_field' value is not a string but '{type(self.by_field)}'"
+            )
+
+        if not isinstance(self.aggregate_fields, list):
+            raise UnitxtError(
+                f"The 'allowed_field_values' is not a list but '{type(self.aggregate_fields)}'"
+            )
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        grouped_data = {}
+
+        for instance in stream:
+            if self.by_field not in instance:
+                raise UnitxtError(
+                    f"The field '{self.by_field}' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+                )
+            for k in self.aggregate_fields:
+                if k not in instance:
+                    raise UnitxtError(
+                        f"The field '{k}' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+                    )
+            key = instance[self.by_field]
+
+            if key not in grouped_data:
+                grouped_data[key] = {
+                    k: v for k, v in instance.items() if k not in self.aggregate_fields
+                }
+                # Add empty lists for fields to aggregate
+                for agg_field in self.aggregate_fields:
+                    if agg_field in instance:
+                        grouped_data[key][agg_field] = []
+
+            for k, v in instance.items():
+                # Merge classification policy list across instance with same key
+                if k == "data_classification_policy" and instance[k]:
+                    grouped_data[key][k] = sorted(set(grouped_data[key][k] + v))
+                # Check consistency for all non-aggregate fields
+                elif k != self.by_field and k not in self.aggregate_fields:
+                    if k in grouped_data[key] and grouped_data[key][k] != v:
+                        raise ValueError(
+                            f"Inconsistent value for field '{k}' in group '{key}': "
+                            f"'{grouped_data[key][k]}' vs '{v}'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances."
+                        )
+                # Aggregate fields
+                elif k in self.aggregate_fields:
+                    grouped_data[key][k].append(instance[k])
+
+        yield from grouped_data.values()
 
 
 class WikipediaFetcher(FieldOperator):
