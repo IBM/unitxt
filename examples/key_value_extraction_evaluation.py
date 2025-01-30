@@ -17,7 +17,7 @@ def text_to_image(text: str):
     bg_color = (255, 255, 255)
     text_color = (0, 0, 0)
     font_size = 10
-    font = ImageFont.truetype("Arial", font_size)
+    font = ImageFont.load_default(size=font_size)
 
     img = Image.new("RGB", (1, 1), bg_color)
 
