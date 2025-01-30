@@ -282,7 +282,7 @@ Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Infer
 Evaluate Image Key Value Extraction task
 +++++++++++++++++++++++++++++++++++++++++
 
-This example demonstrates an image key value extraction task.  It renders several images og given texts and then prompts a vision model to extract key value pairs from the images.
+This example demonstrates an image key value extraction task.  It renders several images of given texts and then prompts a vision model to extract key value pairs from the images.
 This requires the vision model to understand the text in the image. It returns F1 scores for each of keys, compared to ground truth key value pairs.
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/key_value_extraction_evaluation.py>`__
