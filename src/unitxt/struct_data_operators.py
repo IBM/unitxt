@@ -1027,4 +1027,8 @@ class JsonStrToListOfKeyValuePairs(FieldOperator):
                 f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
             )
             dict_value = {}
-        return [(key, value) for key, value in dict_value.items() if value is not None]
+        return [
+            (str(key), str(value))
+            for key, value in dict_value.items()
+            if value is not None
+        ]
