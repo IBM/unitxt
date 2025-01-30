@@ -87,7 +87,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         all_preparation_files_as_string = "\n".join(
-            [file.split("prepare")[-1] for file in all_preparation_files]
+            [file.split("prepare")[-1][1:] for file in all_preparation_files]
         )
         logger.critical(
             f"Testing {len(all_preparation_files)} preparation files: \n{all_preparation_files_as_string}\n"
@@ -154,7 +154,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                 )
 
                 stats[
-                    file.split("prepare")[-1]
+                    file.split("prepare")[-1][1:]
                 ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB"
             except Exception as e:
                 logger.critical(f"Testing preparation file '{file}' failed:")
