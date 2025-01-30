@@ -1886,7 +1886,6 @@ class RelaxedCorrectness(GlobalMetric):
             "relaxed_augmented_split": [],
         }
         for pred, ref, task_data_i in zip(predictions, references, task_data):
-            print(task_data_i)
             type = task_data_i["type"]
             score = self.relaxed_correctness(pred, ref[0])
             score = 1.0 if score else 0.0
