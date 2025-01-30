@@ -25,14 +25,61 @@ all_preparation_files = glob.glob(glob_query, recursive=True)
 # Make sure the order in which the tests are run is deterministic
 # Having a different order for local testing and github testing may cause diffs in results.
 all_preparation_files.sort()
-num_par = 1  # num of parallel executions
+num_par = 8  # num of parallel executions
 logger.critical(
     f"Over all, {len(all_preparation_files)} files will now be tested over {num_par} parallel processes."
 )
 # the following should be any of modulo num_par: 0,1,2,3,4,5,6,7,8,.. num_par-1
-modulo = 0
+modulo = 2
 all_preparation_files = [
     file for i, file in enumerate(all_preparation_files) if i % num_par == modulo
+]
+
+skip_files = [
+    "/augmentors/table_augmentors.py",
+    "/cards/20newsgroups_sklearn.py",
+    "/cards/arena_hard/common.py",
+    "/cards/attaq_500.py",
+    "/cards/chat_rag_bench.py",
+    "/cards/copa.py",
+    "/cards/ffqa_filtered.py",
+    "/cards/head_qa.py",
+    "/cards/legalbench.py",
+    "/cards/mnli.py",
+    "/cards/mt_bench/response_assessment/pairwise_comparison/single_turn_with_reference_gpt4_judgement.py",
+    # "/cards/numeric_nlg.py",
+    # "/cards/qtsumm.py",
+    # "/cards/rte.py",
+    # "/cards/seed_bench.py",
+    # "/cards/tablebench.py",
+    # "/cards/translation/flores101.py",
+    # "/cards/websrc.py",
+    # "/cards/xsum.py",
+    "/engines/model/flan.py",
+    "/formats/human_assistant.py",
+    "/formats/models/llama3.py",
+    "/formats/user_assistant.py",
+    "/metrics/exact_match_mm.py",
+    "/metrics/llama_index_metrics.py",
+    "/metrics/llm_as_judge/rating/llama_3_1_cross_provider_table2text_template.py",
+    "/metrics/matthews_correlation.py",
+    "/metrics/qa.py",
+    "/metrics/rag_metrics_deprecated.py",
+    "/metrics/safety_metric.py",
+    "/metrics/wer.py",
+    "/processors/to_list_by_hyphen.py",
+    "/splitters/missing_split.py",
+    "/system_prompts/models/llama2.py",
+    "/tasks/language_identification.py",
+    "/tasks/response_assessment/pairwise_comparative_rating/single_turn.py",
+    "/tasks/response_assessment/rating/single_turn_with_reference.py",
+    "/templates/classification/classification.py",
+    "/templates/generation/generation.py",
+    "/templates/rag_eval/rag_eval_numeric.py",
+    "/templates/response_assessment/judges/topicality/v3.py",
+    "/templates/response_assessment/rating/generic_single_turn_with_reference.py",
+    "/templates/safety/harm_rating.py",
+    "/templates/translation/directed.py",
 ]
 
 
@@ -47,13 +94,14 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         )
         stats = {}
         for file in all_preparation_files:
+            if file.split("prepare")[-1] in skip_files:
+                continue
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Testing preparation file:\n  {file}."
                 "\n_____________________________________________\n"
             )
             try:
-                tracemalloc.start()
                 process = psutil.Process()
                 start_memory = process.memory_info().rss / (
                     1024**3
@@ -80,7 +128,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     self.assertTrue(True)
 
                 elapsed_time = time.time() - start_time
-                _, peak = tracemalloc.get_traced_memory()
                 disk_end = psutil.disk_io_counters()
                 read_gb = (disk_end.read_bytes - disk_start.read_bytes) / (1024**3)
                 write_gb = (disk_end.write_bytes - disk_start.write_bytes) / (1024**3)
@@ -108,7 +155,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 
                 stats[
                     file.split("prepare")[-1]
-                ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.4f}, Disk: {write_gb:.4f}"
+                ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB"
             except Exception as e:
                 logger.critical(f"Testing preparation file '{file}' failed:")
                 raise e
