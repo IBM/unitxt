@@ -55,7 +55,7 @@ for provider in [
                 demos_pool_size=10,
                 loader_limit=1000,
                 max_test_instances=10,
-                disable_cache=False,
+                use_cache=True,
                 split="test",
             )
 

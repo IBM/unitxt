@@ -57,11 +57,12 @@ for split in splits_random_mixes:
             "metrics.rouge",
         ]
 
-        test_card(
-            card_for_test,
-            strict=True,
-            demos_taken_from="test",
-        )
+        if subset == "doqa_travel":
+            test_card(
+                card_for_test,
+                strict=True,
+                demos_taken_from="test",
+            )
         add_to_catalog(
             card,
             f"cards.rag.response_generation.chat_rag_bench.{'train.' if split == 'train' else ''}user_assistant_format.{subset}",

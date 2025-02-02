@@ -40,7 +40,7 @@ mappers = {
 }
 for subset, url in subset_and_urls.items():
     card = TaskCard(
-        loader=LoadCSV(files={"train": url}),
+        loader=LoadCSV(files={"train": url}, streaming=False),
         preprocess_steps=[
             SplitRandomMix(
                 {
