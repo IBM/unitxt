@@ -94,8 +94,11 @@ settings = get_settings()
 with settings.context(allow_unverified_code=True):
     for language in languages:
         card = TaskCard(
-            loader=LoadHF(path="CohereForAI/Global-MMLU-Lite", name=language,
-                          filtering_lambda=f"lambda x: x['cultural_sensitivity_label'] == 'CA'"),
+            loader=LoadHF(
+                path="CohereForAI/Global-MMLU-Lite",
+                name=language,
+                filtering_lambda=f"lambda x: x['cultural_sensitivity_label'] == 'CA'",
+            ),
             preprocess_steps=[
                 SplitRandomMix({"test": "test[100%]", "train": "test[10%]"}),
                 Deduplicate(by=["question", "subject", "answer"]),
@@ -114,9 +117,7 @@ with settings.context(allow_unverified_code=True):
                     to_field="choices",
                 ),
                 Rename(field_to_field={"subject": "topic"}),
-                MapInstanceValues(
-                    mappers={"topic": subject_mapping}
-                ),
+                MapInstanceValues(mappers={"topic": subject_mapping}),
             ],
             task="tasks.qa.multiple_choice.with_topic",
             templates="templates.qa.multiple_choice.with_topic.all",
