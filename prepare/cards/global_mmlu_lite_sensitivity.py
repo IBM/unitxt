@@ -153,4 +153,8 @@ with settings.context(allow_unverified_code=True):
             if is_first:
                 test_card(card, strict=False)
                 is_first = False
-            add_to_catalog(card, f"cards.global_mmlu_lite_{sensitivity_type}.{language}", overwrite=True)
+            add_to_catalog(
+                card,
+                f"cards.global_mmlu_lite_{sensitivity_type}.{language}",
+                overwrite=True,
+            )
