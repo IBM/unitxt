@@ -160,7 +160,10 @@ def load_dataset(
         split (str, optional):
             The split of the data to load
         disable_cache (str, optional):
-            Disable caching process of the data
+            If set to True (default), the returned Huggingface dataset is not cached.
+            If set to False, the returned datasets is cached on local ,disk  such that if the same dataset is loaded again, it will be loaded from local disk, resulting in faster runs.
+            Note that if caching is enabled and the dataset card definition is changed, the old version in the cache may be returned.
+            Enable caching only, if you are sure you working with fixed Unitxt datasets and definitions (e.g. running using predefined datasets from the Unitxt catalog).
         **kwargs:
             Arguments used to load dataset from provided card, which is not present in local catalog.
 
