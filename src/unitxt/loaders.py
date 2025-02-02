@@ -53,7 +53,7 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import IterableDatasetDict
+from datasets import DatasetDict, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -210,7 +210,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = True
+    streaming: bool = None
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
     requirements_list: List[str] = OptionalField(default_factory=list)
@@ -221,7 +221,7 @@ class LoadHF(Loader):
                 self._requirements_list.append(requirement)
         super().verify()
 
-    def filter_load(self, dataset):
+    def filter_load(self, dataset: DatasetDict):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
@@ -229,9 +229,14 @@ class LoadHF(Loader):
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return dataset.filter(eval(self.filtering_lambda))
 
+    def is_streaming(self) -> bool:
+        if self.streaming is None:
+            return settings.stream_hf_datasets_by_default
+        return self.streaming
+
     def stream_dataset(self):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-            if settings.disable_hf_datasets_cache and not self.streaming:
+            if settings.disable_hf_datasets_cache and not self.is_streaming():
                 cache_dir = dir_to_be_deleted
             else:
                 cache_dir = None
@@ -242,7 +247,7 @@ class LoadHF(Loader):
                     data_dir=self.data_dir,
                     data_files=self.data_files,
                     revision=self.revision,
-                    streaming=self.streaming,
+                    streaming=self.is_streaming(),
                     cache_dir=cache_dir,
                     split=self.split,
                     trust_remote_code=settings.allow_unverified_code,
@@ -288,11 +293,8 @@ class LoadHF(Loader):
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
 
-        if self.split is None:
-            for split in dataset.keys():
-                dataset[split] = dataset[split].to_iterable_dataset()
-        else:
-            dataset = {self.split: dataset.to_iterable_dataset()}
+        if self.split is not None:
+            dataset = {self.split: dataset}
 
         return dataset
 
@@ -824,6 +826,8 @@ class LoadFromHFSpace(LoadHF):
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
 
+    streaming: bool = True
+
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
             token = os.getenv(self.token_env)
@@ -953,70 +957,6 @@ class LoadFromHFSpace(LoadHF):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()
-
-        # url: str
-
-        # _requirements_list: List[str] = ["opendatasets"]
-        # data_classification_policy = ["public"]
-
-        # def verify(self):
-        #     super().verify()
-        #     if not os.path.isfile("kaggle.json"):
-        #         raise MissingKaggleCredentialsError(
-        #             "Please obtain kaggle credentials https://christianjmills.com/posts/kaggle-obtain-api-key-tutorial/ and save them to local ./kaggle.json file"
-        #         )
-
-        #     if self.streaming:
-        #         raise NotImplementedError("LoadFromKaggle cannot load with streaming.")
-
-        # def prepare(self):
-        #     super().prepare()
-        #     from opendatasets import download
-
-        #     self.downloader = download
-
-        # def load_iterables(self):
-        #     with TemporaryDirectory() as temp_directory:
-        #         self.downloader(self.url, temp_directory)
-        #         return hf_load_dataset(temp_directory, streaming=False)
-
-        # class LoadFromAPI(Loader):
-        #     """Loads data from from API"""
-
-        #     urls: Dict[str, str]
-        #     chunksize: int = 100000
-        #     loader_limit: Optional[int] = None
-        #     streaming: bool = False
-
-        #     def _maybe_set_classification_policy(self):
-        #         self.set_default_data_classification(["proprietary"], "when loading from API")
-
-        #     def load_iterables(self):
-        self.api_key = os.getenv("SQL_API_KEY", None)
-        if not self.api_key:
-            raise ValueError(
-                "The environment variable 'SQL_API_KEY' must be set to use the RemoteDatabaseConnector."
-            )
-
-        self.base_headers = {
-            "Content-Type": "application/json",
-            "accept": "application/json",
-            "Authorization": f"Bearer {self.api_key}",
-        }
-
-        iterables = {}
-        for split_name, url in self.urls.items():
-            response = requests.get(
-                url,
-                headers=self.base_headers,
-                verify=True,
-            )
-
-            iterables[split_name] = pd.DataFrame(
-                json.loads(response.text)["embeddings"]
-            )
-
-        return iterables
 
 
 class LoadFromAPI(Loader):

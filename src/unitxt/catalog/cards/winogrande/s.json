@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "winogrande",
-        "name": "winogrande_s"
+        "name": "winogrande_s",
+        "revision": "refs/pr/6"
     },
     "preprocess_steps": [
         "splitters.small_no_test",
