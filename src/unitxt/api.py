@@ -11,7 +11,6 @@ from datasets.exceptions import DatasetGenerationError
 
 from .artifact import fetch_artifact
 from .card import TaskCard
-from .dataset import Dataset as UnitxtDataset
 from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
 from .inference import (
@@ -186,6 +185,8 @@ def load_dataset(
             dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
 
     """
+    from .dataset import Dataset as UnitxtDataset
+
     recipe = load_recipe(dataset_query, **kwargs)
     stream = recipe()
 
