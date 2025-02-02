@@ -74,6 +74,8 @@ class UnitxtExamplesTestCase(unittest.TestCase):
         unitxt.settings.max_log_message_size = 10000
         unitxt.settings.loader_cache_size = 10
         unitxt.settings.mock_inference_mode = True
+        unitxt.settings.disable_hf_datasets_cache = True
+        unitxt.settings.stream_hf_datasets_by_default = True
         sys.tracebacklimit = None
         register_local_catalog_for_tests()
         cls.maxDiff = None
