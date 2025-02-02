@@ -40,7 +40,7 @@ class GraniteDocumentsFormat(Format):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model)
 
     def process(
-        self, instance: Dict[str, Any], stream_name: str | None = None
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         inputs = instance["input_fields"]
         if "question" not in inputs:
