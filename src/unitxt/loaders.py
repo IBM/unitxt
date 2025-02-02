@@ -53,7 +53,7 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import IterableDatasetDict
+from datasets import DatasetDict, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -221,7 +221,7 @@ class LoadHF(Loader):
                 self._requirements_list.append(requirement)
         super().verify()
 
-    def filter_load(self, dataset):
+    def filter_load(self, dataset: DatasetDict):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
@@ -293,11 +293,8 @@ class LoadHF(Loader):
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
 
-        if self.split is None:
-            for split in dataset.keys():
-                dataset[split] = dataset[split].to_iterable_dataset()
-        else:
-            dataset = {self.split: dataset.to_iterable_dataset()}
+        if self.split is not None:
+            dataset = {self.split: dataset}
 
         return dataset
 
@@ -828,6 +825,8 @@ class LoadFromHFSpace(LoadHF):
     use_token: Optional[bool] = None
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
+
+    streaming: bool = True
 
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
