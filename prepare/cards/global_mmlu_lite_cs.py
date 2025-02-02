@@ -133,13 +133,13 @@ with settings.context(allow_unverified_code=True):
                 "region": "global",
             },
             __description__=(
-                "Global-MMLU is a multilingual evaluation set spanning 42 languages, combining machine translations "
-                "for MMLU questions along with professional translations and crowd-sourced post-edits. The dataset "
-                "includes cultural sensitivity annotations, classifying questions as Culturally Sensitive (CS) or "
-                "Culturally Agnostic (CA)️. This initiative was led by Cohere For AI in collaboration with external "
-                "contributors from industry and academia. The test spans subjects in humanities, social sciences, hard "
-                "sciences, and other areas. See the full description on the dataset page: "
-                "https://huggingface.co/datasets/CohereForAI/Global-MMLU"
+                "Global-MMLU-Lite is a streamlined multilingual evaluation set covering 15 languages. The dataset "
+                "includes 200 Culturally Sensitive (CS) and 200 Culturally Agnostic (CA) questions per language. "
+                "The samples in Global-MMLU-Lite correspond to languages that were fully human-translated or "
+                "post-edited in the original dataset. This initiative was led by Cohere For AI in collaboration "
+                "with external contributors from industry and academia. The test spans subjects in humanities, "
+                "social sciences, hard sciences, and other areas. For more information, see: "
+                "https://huggingface.co/datasets/CohereForAI/Global-MMLU-Lite"
             ),
         )
 
