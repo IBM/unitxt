@@ -5,7 +5,6 @@ from .api import (
     create_dataset,
     evaluate,
     infer,
-    load,
     load_dataset,
     post_process,
     produce,
