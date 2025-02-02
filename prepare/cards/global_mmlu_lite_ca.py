@@ -97,7 +97,7 @@ with settings.context(allow_unverified_code=True):
             loader=LoadHF(
                 path="CohereForAI/Global-MMLU-Lite",
                 name=language,
-                filtering_lambda=f"lambda x: x['cultural_sensitivity_label'] == 'CA'",
+                filtering_lambda="lambda x: x['cultural_sensitivity_label'] == 'CA'",
             ),
             preprocess_steps=[
                 SplitRandomMix({"test": "test[100%]", "train": "test[10%]"}),
