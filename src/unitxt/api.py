@@ -21,6 +21,7 @@ from .inference import (
 from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
+from .operator import SourceOperator
 from .schema import loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
@@ -133,6 +134,39 @@ def create_dataset(
     return load_dataset(card=card, split=split, **kwargs)
 
 
+def _source_to_dataset(
+    source: SourceOperator, split=None, use_cache=False, streaming=False
+):
+    from .dataset import Dataset as UnitxtDataset
+
+    stream = source()
+
+    with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+        cache_dir = dir_to_be_deleted if not use_cache else None
+        ds_builder = UnitxtDataset(
+            dataset_name="unitxt",
+            config_name="recipe-" + short_hex_hash(source.to_json()),
+            hash=hash(source.to_json()),
+            version=constants.version,
+            cache_dir=cache_dir,
+        )
+        if split is not None:
+            stream = {split: stream[split]}
+        ds_builder._generators = stream
+
+        try:
+            ds_builder.download_and_prepare()
+
+            if streaming:
+                return ds_builder.as_streaming_dataset(split=split)
+
+            return ds_builder.as_dataset(
+                split=split, run_post_process=False, verification_mode="no_checks"
+            )
+        except DatasetGenerationError as e:
+            raise e.__cause__
+
+
 def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
@@ -185,47 +219,23 @@ def load_dataset(
             dataset = load_dataset(card=card, template=template, loader_limit=loader_limit)
 
     """
-    from .dataset import Dataset as UnitxtDataset
-
     recipe = load_recipe(dataset_query, **kwargs)
-    stream = recipe()
 
-    with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-        cache_dir = dir_to_be_deleted if not use_cache else None
-        ds_builder = UnitxtDataset(
-            dataset_name="unitxt",
-            config_name="recipe-" + short_hex_hash(recipe.to_json()),
-            hash=hash(recipe.to_json()),
-            version=constants.version,
-            cache_dir=cache_dir,
-        )
-        if split is not None:
-            stream = {split: stream[split]}
-        ds_builder._generators = stream
+    dataset = _source_to_dataset(
+        source=recipe, split=split, use_cache=use_cache, streaming=streaming
+    )
 
-        try:
-            ds_builder.download_and_prepare()
-
-            if streaming:
-                dataset = ds_builder.as_streaming_dataset(split=split)
-            else:
-                dataset = ds_builder.as_dataset(
-                    split=split, run_post_process=False, verification_mode="no_checks"
-                )
-        except DatasetGenerationError as e:
-            raise e.__cause__
-
-        frame = inspect.currentframe()
-        args, _, _, values = inspect.getargvalues(frame)
-        all_kwargs = {key: values[key] for key in args if key != "kwargs"}
-        all_kwargs.update(kwargs)
-        metadata = fill_metadata(**all_kwargs)
-        if isinstance(dataset, dict):
-            for ds in dataset.values():
-                ds.info.description = metadata.copy()
-        else:
-            dataset.info.description = metadata
-        return dataset
+    frame = inspect.currentframe()
+    args, _, _, values = inspect.getargvalues(frame)
+    all_kwargs = {key: values[key] for key in args if key != "kwargs"}
+    all_kwargs.update(kwargs)
+    metadata = fill_metadata(**all_kwargs)
+    if isinstance(dataset, dict):
+        for ds in dataset.values():
+            ds.info.description = metadata.copy()
+    else:
+        dataset.info.description = metadata
+    return dataset
 
 
 def fill_metadata(**kwargs):

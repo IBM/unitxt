@@ -4,7 +4,7 @@ from unitxt.inference import CrossProviderInferenceEngine
 data = load_dataset(
     "benchmarks.glue[max_samples_per_subset=5, format=formats.chat_api, system_prompt=system_prompts.general.be_concise]",
     split="test",
-    disable_cache=False,
+    use_cache=True,
 )
 
 model = CrossProviderInferenceEngine(
