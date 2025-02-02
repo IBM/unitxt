@@ -1,0 +1,7 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.schema_linking.default",
+        "templates.schema_linking.with_hint"
+    ]
+}
