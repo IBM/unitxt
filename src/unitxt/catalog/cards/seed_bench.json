@@ -2,7 +2,8 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "lmms-lab/SEED-Bench"
+        "path": "lmms-lab/SEED-Bench",
+        "streaming": true
     },
     "preprocess_steps": [
         {
