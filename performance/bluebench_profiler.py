@@ -5,15 +5,24 @@ import os
 import pstats
 import tempfile
 from io import StringIO
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
-from unitxt.api import load_recipe
+from unitxt.api import _source_to_dataset, evaluate, load_recipe
 from unitxt.benchmark import Benchmark
+from unitxt.inference import (
+    CrossProviderInferenceEngine,
+    InferenceEngine,
+    TextGenerationInferenceOutput,
+)
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
 
 logger = get_logger()
 settings = get_settings()
+
+settings.allow_unverified_code = True
+settings.disable_hf_datasets_cache = False
+settings.mock_inference_mode = True
 
 
 class BlueBenchProfiler:
@@ -58,25 +67,33 @@ class BlueBenchProfiler:
     def profiler_generate_benchmark_dataset(
         self, benchmark_recipe: Benchmark, split: str, **kwargs
     ) -> List[Dict[str, Any]]:
-        stream = benchmark_recipe()[split]
+        dataset = _source_to_dataset(benchmark_recipe, split=split)
+        return list(dataset)
 
-        # to charge here for the time of generating all instances of the split
-        return list(stream)
+    def profiler_instantiate_model(self) -> InferenceEngine:
+        return CrossProviderInferenceEngine(
+            model="llama-3-8b-instruct",
+            max_tokens=30,
+        )
+
+    def profiler_infer_predictions(
+        self, model: InferenceEngine, dataset: List[Dict[str, Any]]
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return model.infer(dataset=dataset)
+
+    def profiler_evaluate_predictions(self, predictions, dataset) -> dict:
+        return evaluate(predictions=predictions, data=dataset)
 
     def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
-        with settings.context(
-            disable_hf_datasets_cache=False,
-            allow_unverified_code=True,
-        ):
-            benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
-                dataset_query=dataset_query, **kwargs
-            )
+        benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
+            dataset_query=dataset_query, **kwargs
+        )
 
-            dataset = self.profiler_generate_benchmark_dataset(
-                benchmark_recipe=benchmark_recipe, split=split, **kwargs
-            )
+        dataset = self.profiler_generate_benchmark_dataset(
+            benchmark_recipe=benchmark_recipe, split=split, **kwargs
+        )
 
-            logger.critical(f"length of bluebench generated dataset: {len(dataset)}")
+        logger.critical(f"length of bluebench generated dataset: {len(dataset)}")
 
 
 dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"
