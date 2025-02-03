@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import NER
+from unitxt.metrics import NER, KeyValueExtraction
 from unitxt.test_utils.metrics import test_metric
 
 metric = NER()
@@ -434,3 +434,50 @@ outputs = test_metric(
 )
 
 add_to_catalog(metric, "metrics.ner", overwrite=True)
+
+
+metric = KeyValueExtraction()
+
+predictions = [
+    [("key1", "value1"), ("key2", "value2"), ("unknown_key", "unknown_value")]
+]
+
+references = [[[("key1", "value1"), ("key2", "value3")]]]
+#
+instance_targets = [
+    {
+        "f1_key1": 1.0,
+        "f1_key2": 0.0,
+        "f1_macro": 0.5,
+        "f1_micro": 0.4,
+        "in_classes_support": 0.67,
+        "precision_macro": 0.5,
+        "precision_micro": 0.33,
+        "recall_macro": 0.5,
+        "recall_micro": 0.5,
+        "score": 0.4,
+        "score_name": "f1_micro",
+    }
+]
+global_target = {
+    "f1_key1": 1.0,
+    "f1_key2": 0.0,
+    "f1_macro": 0.5,
+    "in_classes_support": 0.67,
+    "f1_micro": 0.4,
+    "recall_micro": 0.5,
+    "recall_macro": 0.5,
+    "precision_micro": 0.33,
+    "precision_macro": 0.5,
+    "score": 0.4,
+    "score_name": "f1_micro",
+    "num_of_instances": 1,
+}
+outputs = test_metric(
+    metric=metric,
+    predictions=predictions,
+    references=references,
+    instance_targets=instance_targets,
+    global_target=global_target,
+)
+add_to_catalog(metric, "metrics.key_value_extraction", overwrite=True)

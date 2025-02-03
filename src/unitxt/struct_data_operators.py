@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -31,12 +32,14 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
 )
 
 import pandas as pd
 
 from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
+from .error_utils import UnitxtWarning
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
@@ -1019,3 +1022,21 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         random.shuffle(shuffled_header)
 
         return {"header": shuffled_header, "rows": table["rows"]}
+
+
+class JsonStrToListOfKeyValuePairs(FieldOperator):
+    def process_value(self, text: str) -> List[Tuple[str, str]]:
+        text = text.replace("null", "None")
+
+        try:
+            dict_value = ast.literal_eval(text)
+        except Exception as e:
+            UnitxtWarning(
+                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+            )
+            dict_value = {}
+        return [
+            (str(key), str(value))
+            for key, value in dict_value.items()
+            if value is not None
+        ]
