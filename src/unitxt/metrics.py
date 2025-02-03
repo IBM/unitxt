@@ -5974,6 +5974,9 @@ class ExecutionAccuracy(InstanceMetric):
                 "Error executing gold SQL, if gold does not execute metric should fail"
             ) from e
 
+        if gold_res is None:
+            raise OSError("DB returned None when gold query executed, exiting...")
+
         try:
             pred_res = connector.execute_query(predicted_sql)
         except Exception as e:
@@ -5981,8 +5984,6 @@ class ExecutionAccuracy(InstanceMetric):
             return 0  # if the predicted SQL fails to execute, result is 0
 
         if pred_res is None:
-            if gold_res is None:
-                return 1
             return 0
 
         # if pred_res is dict with results take this as the result
