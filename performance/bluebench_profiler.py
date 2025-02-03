@@ -5,15 +5,10 @@ import os
 import pstats
 import tempfile
 from io import StringIO
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List
 
-from unitxt.api import _source_to_dataset, evaluate, load_recipe
+from unitxt.api import _source_to_dataset, load_recipe
 from unitxt.benchmark import Benchmark
-from unitxt.inference import (
-    CrossProviderInferenceEngine,
-    InferenceEngine,
-    TextGenerationInferenceOutput,
-)
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
 
@@ -69,20 +64,6 @@ class BlueBenchProfiler:
     ) -> List[Dict[str, Any]]:
         dataset = _source_to_dataset(benchmark_recipe, split=split)
         return list(dataset)
-
-    def profiler_instantiate_model(self) -> InferenceEngine:
-        return CrossProviderInferenceEngine(
-            model="llama-3-8b-instruct",
-            max_tokens=30,
-        )
-
-    def profiler_infer_predictions(
-        self, model: InferenceEngine, dataset: List[Dict[str, Any]]
-    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        return model.infer(dataset=dataset)
-
-    def profiler_evaluate_predictions(self, predictions, dataset) -> dict:
-        return evaluate(predictions=predictions, data=dataset)
 
     def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
         benchmark_recipe = self.profiler_instantiate_benchmark_recipe(

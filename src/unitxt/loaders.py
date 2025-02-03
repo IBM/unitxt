@@ -1083,10 +1083,11 @@ class LoadFromAPI(Loader):
             base_headers.update(self.headers)
 
         iterables = {}
-        for split_name, url in self.urls.items():
-            if self.get_limit() is not None:
-                self.log_limited_loading()
+        # log limited only once, because all splits are limited the same
+        if self.get_limit() is not None:
+            self.log_limited_loading()
 
+        for split_name, url in self.urls.items():
             if self.method == "GET":
                 response = requests.get(
                     url,

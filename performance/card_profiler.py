@@ -95,10 +95,14 @@ class CardProfiler:
 def profile_from_cards():
     for card in cards:
         task_card, _ = fetch_artifact(card)
-        if isinstance(task_card.templates, TemplatesList):
-            template = task_card.templates.items[0]
-        elif isinstance(task_card.templates, list):
+        if isinstance(task_card.templates, list):
             template = task_card.templates[0]
+        elif isinstance(task_card.templates, TemplatesList):
+            template = task_card.templates.items[0]
+        elif isinstance(task_card.templates, dict):
+            for templ in task_card.templates.values():
+                template = templ
+                break
         elif isinstance(task_card, TemplatesDict):
             for templ in task_card.templates.items.values():
                 template = templ
