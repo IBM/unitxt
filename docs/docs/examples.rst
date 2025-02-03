@@ -133,96 +133,61 @@ Related documentation: :ref:`Benchmarks tutorial <adding_benchmark>`, :ref:`Form
 LLM as Judges
 --------------
 
-Evaluate an existing dataset using a predefined LLM as judge
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Using LLM as judge for direct comparison using a predefined criteria
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This example demonstrates how to evaluate an existing QA dataset (squad) using the HuggingFace Datasets and Evaluate APIs and leveraging a predefine LLM as a judge metric.
+This example demonstrates how to use LLM-as-a-Judge with a predefined criteria, in this case *answer_relevance*. The unitxt catalog has more than 40 predefined criteria for direct evaluators.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge.py>`__
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_direct_predefined_criteria.py>`__
 
-Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`, :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
-
-Evaluate a custom dataset using a custom LLM as Judge
-+++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-This example demonstrates how to evaluate a user QA answering dataset in a standalone file using a user-defined task and template. In addition, it shows how to define an LLM as a judge metric, specify the template it uses to produce the input to the judge, and select the judge model and platform.
-
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/standalone_evaluation_llm_as_judge.py>`__
-
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
-
-Evaluate an existing dataset from the catalog comparing two custom LLM as judges
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-This example demonstrates how to evaluate a document summarization dataset by defining an LLM as a judge metric, specifying the template it uses to produce the input to the judge, and selecting the judge model and platform.
-The example adds two LLM judges, one that uses the ground truth (references) from the dataset and one that does not.
-
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_summarization_dataset_llm_as_judge.py>`__
-
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`.
-
-Evaluate the quality of an LLM as judge
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-This example demonstrates how to evaluate an LLM as judge by checking its scores using the gold references of a dataset.
-It checks if the judge consistently prefers correct outputs over clearly wrong ones.
-Note that to check the the ability of the LLM as judge to discern suitable differences between
-partially correct answers requires more refined tests and corresponding labeled data.
-The example shows an 8b llama based judge is not a good judge for a summarization task,
-while the 70b model performs much better.
-
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge.py>`__
-
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Using LLM as a Judge in Unitxt`
 
 
-Evaluate your model on the Arena Hard benchmark using a custom LLMaJ
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Using LLM as judge for direct comparison using a custom criteria
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This example demonstrates how to evaluate a user model on the Arena Hard benchmark, using an LLMaJ other than the GPT4.
+The user can also specify a bespoke criteria that the judge model uses as a guide to evaluate the responses.
+This example demonstrates how to use LLM-as-a-Judge with a user-defined criteria. The criteria must have options and option_map.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_model_using_arena_hard.py>`__
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_direct_user_criteria_no_catalog.py>`__
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <dir_catalog.cards.arena_hard>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Creating a custom criteria`
 
-Evaluate a judge model performance judging the Arena Hard Benchmark
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This example demonstrates how to evaluate the capabilities of a user model, to act as a judge on the Arena Hard benchmark.
-The model is evaluated on its capability to give a judgment that is in correlation with GPT4 judgment on the benchmark.
+Evaluate an existing dataset using an LLM-as-a-Judge for direct comparison
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_a_judge_model_capabilities_on_arena_hard.py>`__
+This example demonstrates how to evaluate an existing QA dataset (squad) using the HuggingFace Datasets and Evaluate APIs and leveraging a predefined criteria for direct evaluation.
+Note that here we also showcase unitxt's ability to evaluate the dataset on multiple criteria, namely, *answer_relevance*, *coherence* and *conciseness*
 
-Related documentation: :ref:`Evaluate a Model on Arena Hard Benchmark <dir_catalog.cards.arena_hard>`, :ref:`Inference Engines <inference>`.
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge_direct.py>`__
 
-Evaluate using ensemble of LLM as a judge metrics
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Related documentation: :ref:`End to end Direct example`
 
-This example demonstrates how to create a metric which is an ensemble of LLM as a judge metrics.
-The example shows how to ensemble two judges which uses different templates.
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_using_metrics_ensemble.py>`__
+Using LLM as a judge for pairwise comparison using a predefined criteria
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
+This example demonstrates how to use LLM-as-a-Judge for pairwise comparison using a predefined criteria from the catalog. The unitxt catalog has 7 predefined criteria for pairwise evaluators.
+We also showcase that the criteria does not need to be the same across the entire dataset and that the framework can handle different criteria for each datapoint.
 
-Evaluate predictions of models using pre-trained ensemble of LLM as judges
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_pairwise_predefined_criteria.py>`__
 
-This example demonstrates how to use a pre-trained ensemble model or an off-the-shelf LLM as judge to assess multi-turn conversation quality of models on a set of pre-defined metrics.
+This example demonstrates using LLM-as-a-Judge for pairwise comparison using a single predefined criteria for the entire dataset
 
-Topicality: Response of the model only contains information that is related to and helpful for the user inquiry.
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_pairwise_criteria_from_dataset.py>`__
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_ensemble_judge.py>`__
 
-Groundedness: Every substantial claim in the response of the model is derivable from the content of the document
+Evaluate an existing dataset using an LLM-as-a-Judge for direct comparison
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_grounded_ensemble_judge.py>`__
+This example demonstrates how to evaluate an existing QA dataset (squad) using the HuggingFace Datasets and Evaluate APIs and leveraging a predefined criteria for pairwise evaluation.
+Note that here we also showcase unitxt's ability to evaluate the dataset on multiple criteria, namely, *answer_relevance*, *coherence* and *conciseness*
 
-IDK: Does the model response say I don't know?
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_existing_dataset_by_llm_as_judge_direct.py>`__
 
-`Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_idk_judge.py>`__
+Related documentation: :ref:`End to end Pairwise example`
 
-Related documentation: :ref:`LLM as a Judge Metrics Guide <llm_as_judge>`, :ref:`Inference Engines <inference>`.
 
 RAG
 ---

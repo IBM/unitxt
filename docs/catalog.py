@@ -175,7 +175,7 @@ def make_content(artifact, label, all_labels):
 
     # Replacement function
     html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
-    source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace('.','/')}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
+    source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace(".", "/")}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
     html_for_dict = f"""<div class="admonition note">
 <p class="admonition-title">{catalog_id}</p>
 <div class="highlight-json notranslate">

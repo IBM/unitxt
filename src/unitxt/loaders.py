@@ -33,15 +33,27 @@ Available Loaders Overview:
 
 import fnmatch
 import itertools
+import json
 import os
 import tempfile
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Union
+from typing import (
+    Any,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Union,
+)
 
 import pandas as pd
-from datasets import IterableDatasetDict
+import requests
+from datasets import DatasetDict, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -198,7 +210,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = True
+    streaming: bool = None
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
     requirements_list: List[str] = OptionalField(default_factory=list)
@@ -209,7 +221,7 @@ class LoadHF(Loader):
                 self._requirements_list.append(requirement)
         super().verify()
 
-    def filter_load(self, dataset):
+    def filter_load(self, dataset: DatasetDict):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
@@ -217,9 +229,14 @@ class LoadHF(Loader):
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
         return dataset.filter(eval(self.filtering_lambda))
 
+    def is_streaming(self) -> bool:
+        if self.streaming is None:
+            return settings.stream_hf_datasets_by_default
+        return self.streaming
+
     def stream_dataset(self):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-            if settings.disable_hf_datasets_cache and not self.streaming:
+            if settings.disable_hf_datasets_cache and not self.is_streaming():
                 cache_dir = dir_to_be_deleted
             else:
                 cache_dir = None
@@ -230,7 +247,7 @@ class LoadHF(Loader):
                     data_dir=self.data_dir,
                     data_files=self.data_files,
                     revision=self.revision,
-                    streaming=self.streaming,
+                    streaming=self.is_streaming(),
                     cache_dir=cache_dir,
                     split=self.split,
                     trust_remote_code=settings.allow_unverified_code,
@@ -276,11 +293,8 @@ class LoadHF(Loader):
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
 
-        if self.split is None:
-            for split in dataset.keys():
-                dataset[split] = dataset[split].to_iterable_dataset()
-        else:
-            dataset = {self.split: dataset.to_iterable_dataset()}
+        if self.split is not None:
+            dataset = {self.split: dataset}
 
         return dataset
 
@@ -347,24 +361,43 @@ class LoadCSV(Loader):
     loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
+    compression: Optional[str] = None
+    lines: Optional[bool] = None
+    file_type: Literal["csv", "json"] = "csv"
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
             ["proprietary"], "when loading from local files"
         )
 
+    def get_reader(self):
+        if self.file_type == "csv":
+            return pd.read_csv
+        if self.file_type == "json":
+            return pd.read_json
+        raise ValueError()
+
+    def get_args(self):
+        args = {}
+        if self.file_type == "csv":
+            args["sep"] = self.sep
+        if self.compression is not None:
+            args["compression"] = self.compression
+        if self.lines is not None:
+            args["lines"] = self.lines
+        if self.get_limit() is not None:
+            args["nrows"] = self.get_limit()
+        return args
+
     def load_iterables(self):
         iterables = {}
         for split_name, file_path in self.files.items():
+            reader = self.get_reader()
             if self.get_limit() is not None:
                 self.log_limited_loading()
-                iterables[split_name] = pd.read_csv(
-                    file_path, nrows=self.get_limit(), sep=self.sep
-                ).to_dict("records")
-            else:
-                iterables[split_name] = pd.read_csv(file_path, sep=self.sep).to_dict(
-                    "records"
-                )
+            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
+                "records"
+            )
         return iterables
 
 
@@ -793,6 +826,8 @@ class LoadFromHFSpace(LoadHF):
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
 
+    streaming: bool = True
+
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
             token = os.getenv(self.token_env)
@@ -922,3 +957,110 @@ class LoadFromHFSpace(LoadHF):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
         return super().load_data()
+
+
+class LoadFromAPI(Loader):
+    """Loads data from from API.
+
+    This loader is designed to fetch data from an API endpoint,
+    handling authentication through an API key. It supports
+    customizable chunk sizes and limits for data retrieval.
+
+    Args:
+        urls (Dict[str, str]):
+            A dictionary mapping split names to their respective API URLs.
+        chunksize (int, optional):
+            The size of data chunks to fetch in each request. Defaults to 100,000.
+        loader_limit (int, optional):
+            Limits the number of records to load. Applied per split. Defaults to None.
+        streaming (bool, optional):
+            Determines if data should be streamed. Defaults to False.
+        api_key_env_var (str, optional):
+            The name of the environment variable holding the API key.
+            Defaults to "SQL_API_KEY".
+        headers (Dict[str, Any], optional):
+            Additional headers to include in API requests. Defaults to None.
+        data_field (str, optional):
+            The name of the field in the API response that contains the data.
+            Defaults to "data".
+        method (str, optional):
+            The HTTP method to use for API requests. Defaults to "GET".
+    """
+
+    urls: Dict[str, str]
+    chunksize: int = 100000
+    loader_limit: Optional[int] = None
+    streaming: bool = False
+    api_key_env_var: str = "SQL_API_KEY"
+    headers: Optional[Dict[str, Any]] = None
+    data_field: str = "data"
+    method: str = "GET"
+
+    # class level shared cache:
+    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
+
+    def _maybe_set_classification_policy(self):
+        self.set_default_data_classification(["proprietary"], "when loading from API")
+
+    def load_iterables(self) -> Dict[str, Iterable]:
+        api_key = os.getenv(self.api_key_env_var, None)
+        if not api_key:
+            raise ValueError(
+                f"The environment variable '{self.api_key_env_var}' must be set to use the LoadFromAPI loader."
+            )
+
+        base_headers = {
+            "Content-Type": "application/json",
+            "accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+        if self.headers:
+            base_headers.update(self.headers)
+
+        iterables = {}
+        for split_name, url in self.urls.items():
+            if self.get_limit() is not None:
+                self.log_limited_loading()
+
+            if self.method == "GET":
+                response = requests.get(
+                    url,
+                    headers=base_headers,
+                    verify=True,
+                )
+            elif self.method == "POST":
+                response = requests.post(
+                    url,
+                    headers=base_headers,
+                    verify=True,
+                    json={},
+                )
+            else:
+                raise ValueError(f"Method {self.method} not supported")
+
+            response.raise_for_status()
+
+            data = json.loads(response.text)
+
+            if self.data_field:
+                if self.data_field not in data:
+                    raise ValueError(
+                        f"Data field '{self.data_field}' not found in API response."
+                    )
+                data = data[self.data_field]
+
+            if self.get_limit() is not None:
+                data = data[: self.get_limit()]
+
+            iterables[split_name] = data
+
+        return iterables
+
+    def process(self) -> MultiStream:
+        self._maybe_set_classification_policy()
+        iterables = self.__class__._loader_cache.get(str(self), None)
+        if iterables is None:
+            iterables = self.load_iterables()
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self)] = iterables
+        return MultiStream.from_iterables(iterables, copying=True)

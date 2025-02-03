@@ -148,8 +148,7 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
         row_cell_values = [
             str(value) if isinstance(value, (int, float)) else value for value in row
         ]
-
-        serialized_row_str += " | ".join(row_cell_values)
+        serialized_row_str += " | ".join([str(value) for value in row_cell_values])
 
         return f"row {row_index} : {serialized_row_str}"
 
@@ -519,6 +518,15 @@ class TruncateTableRows(FieldOperator):
         table_content["rows"] = remaining_rows
 
         return table_content
+
+
+class GetNumOfTableCells(FieldOperator):
+    """Get the number of cells in the given table."""
+
+    def process_value(self, table: Any) -> Any:
+        num_of_rows = len(table.get("rows"))
+        num_of_cols = len(table.get("header"))
+        return num_of_rows * num_of_cols
 
 
 class SerializeTableRowAsText(InstanceOperator):

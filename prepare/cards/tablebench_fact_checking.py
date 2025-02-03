@@ -56,11 +56,14 @@ card = TaskCard(
     ),
     templates=[
         InputOutputTemplate(
-            instruction="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}",
+            instruction="You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter}"
+            + "\nOutput only the final answer without any explanations, extra information, or introductory text."
+            + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
             input_format="{context_type}: {context} \nQuestion: {question}",
             target_prefix="Final Answer: ",
             output_format="{answers}",
             postprocessors=[
+                "processors.take_first_non_empty_line",
                 "processors.lower_case",
                 "processors.remove_punctuations",
                 "processors.remove_articles",

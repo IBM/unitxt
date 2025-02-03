@@ -4,16 +4,13 @@
     "preprocess_steps": [
         {
             "__type__": "copy",
-            "field_to_field": {
-                "question": "references",
-                "answer": "prediction"
-            }
+            "field": "prediction/answer",
+            "to_field": "prediction"
         },
         {
-            "__type__": "list_field_values",
-            "fields": [
-                "references"
-            ],
+            "__type__": "wrap",
+            "field": "task_data/question",
+            "inside": "list",
             "to_field": "references"
         }
     ],

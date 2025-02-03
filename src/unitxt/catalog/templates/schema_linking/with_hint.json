@@ -1,0 +1,9 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "Select the most relevant SQL columns to the given text. You are also given a hint.",
+    "input_format": "Text: {utterance}\n\nHint: {hint}\n\nColumns:{schema}",
+    "output_format": "{linked_schema}",
+    "postprocessors": [
+        "processors.to_list_by_comma_space"
+    ]
+}

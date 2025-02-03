@@ -1,11 +1,21 @@
+from datetime import datetime
+
+from unitxt.api import load_dataset
 from unitxt.card import TaskCard
-from unitxt.formats import ChatAPIFormat, HFSystemFormat, SystemFormat
+from unitxt.collections_operators import Wrap
+from unitxt.formats import (
+    ChatAPIFormat,
+    GraniteDocumentsFormat,
+    HFSystemFormat,
+    SystemFormat,
+)
 from unitxt.loaders import LoadFromDictionary
+from unitxt.operators import Rename, Set
 from unitxt.settings_utils import get_constants
 from unitxt.standard import DatasetRecipe
 from unitxt.system_prompts import TextualSystemPrompt
 from unitxt.task import Task
-from unitxt.templates import InputOutputTemplate
+from unitxt.templates import InputOutputTemplate, MultiReferenceTemplate, TemplatesDict
 from unitxt.test_utils.operators import (
     check_operator,
 )
@@ -13,6 +23,7 @@ from unitxt.test_utils.operators import (
 from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
 
+# Assume
 constants = get_constants()
 
 
@@ -325,6 +336,132 @@ class TestFormats(UnitxtTestCase):
             inputs=inputs,
             targets=targets,
             tester=self,
+        )
+
+    def test_granite_documents_format(self):
+        inputs = [
+            {
+                "input_fields": {
+                    "question": "what is love?",
+                    "contexts": ["love is love"],
+                },
+            },
+            {
+                "input_fields": {
+                    "question": "what is love?",
+                    "context": "love is love",
+                },
+            },
+        ]
+
+        system_format = GraniteDocumentsFormat()
+
+        today = datetime.today().strftime("%B %d, %Y")
+        targets = [
+            {
+                "input_fields": {
+                    "question": "what is love?",
+                    "contexts": ["love is love"],
+                },
+                "source": "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date: April 2024.\nToday's Date: "
+                + today
+                + '.\nYou are Granite, developed by IBM. Write the response to the user\'s input by strictly aligning with the facts in the provided documents. If the information needed to answer the question is not available in the documents, inform the user that the question cannot be answered based on the available data.\n\nIn your response, use the symbols <co> and </co> to indicate when a fact comes from a document in the search result, e.g <co>0</co> for a fact from document 0. Afterwards, list all the citations with their corresponding documents in an ordered list.<|end_of_text|>\n<|start_of_role|>documents<|end_of_role|>Document 0\nlove is love<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>what is love?<|end_of_text|>\n<|start_of_role|>assistant {"citations": true, "length": "long"}<|end_of_role|>',
+            },
+            {
+                "input_fields": {
+                    "question": "what is love?",
+                    "context": "love is love",
+                },
+                "source": "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date: April 2024.\nToday's Date: "
+                + today
+                + '.\nYou are Granite, developed by IBM. Write the response to the user\'s input by strictly aligning with the facts in the provided documents. If the information needed to answer the question is not available in the documents, inform the user that the question cannot be answered based on the available data.\n\nIn your response, use the symbols <co> and </co> to indicate when a fact comes from a document in the search result, e.g <co>0</co> for a fact from document 0. Afterwards, list all the citations with their corresponding documents in an ordered list.<|end_of_text|>\n<|start_of_role|>documents<|end_of_role|>Document 0\nlove is love<|end_of_text|>\n<|start_of_role|>user<|end_of_role|>what is love?<|end_of_text|>\n<|start_of_role|>assistant {"citations": true, "length": "long"}<|end_of_role|>',
+            },
+        ]
+
+        check_operator(
+            operator=system_format,
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        data = {
+            "test": [
+                {
+                    "query": "What city is the largest in Texas?",
+                    "extracted_chunks": "Austin is the capital of Texas.\nHouston is the the largest city in Texas but not the capital of it. ",
+                    "expected_answer": "Houston",
+                },
+                {
+                    "query": "What city is the capital of Texas?",
+                    "extracted_chunks": "Houston is the the largest city in Texas but not the capital of it. ",
+                    "expected_answer": "Austin",
+                },
+            ]
+        }
+
+        card = TaskCard(
+            # Assumes this csv, contains 3 fields
+            # question (string), extracted_chunks (string), expected_answer (string)
+            loader=LoadFromDictionary(data=data),
+            # Map these fields to the fields of the task.rag.response_generation task.
+            # See https://www.unitxt.ai/en/latest/catalog/catalog.tasks.rag.response_generation.html
+            preprocess_steps=[
+                Rename(field_to_field={"query": "question"}),
+                Wrap(field="extracted_chunks", inside="list", to_field="contexts"),
+                Wrap(
+                    field="expected_answer", inside="list", to_field="reference_answers"
+                ),
+                Set(
+                    fields={
+                        "contexts_ids": [],
+                    }
+                ),
+            ],
+            # Specify the task and the desired metrics (note that these are part of the default
+            # metrics for the task, so the metrics selection can be omitted).
+            task="tasks.rag.response_generation",
+            # Specify a default template
+            templates=TemplatesDict(
+                {
+                    "simple": MultiReferenceTemplate(
+                        instruction="Answer the question based on the information provided in the document given below.\n\n",
+                        input_format="Document: {contexts}\nQuestion: {question}",
+                        references_field="reference_answers",
+                    ),
+                }
+            ),
+        )
+
+        # select recommended metrics according to your available resources.
+        metrics = [
+            "metrics.rag.response_generation.recommended.cpu_only.all",
+            # "metrics.rag.response_generation.recommended.small_llm.all",
+            # "metrics.rag.response_generation.recommended.llmaj_watsonx.all",
+            # "metrics.rag.response_generation.recommended.llmaj_rits.all"
+            # "metrics.rag.response_generation.recommended.llmaj_azure.all"
+        ]
+
+        # Verbalize the dataset using the template
+        dataset = load_dataset(
+            card=card,
+            template_card_index="simple",
+            format=GraniteDocumentsFormat(),
+            split="test",
+            max_test_instances=10,
+            metrics=metrics,
+        )
+
+        self.assertListEqual(
+            dataset["source"],
+            [
+                "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date: April 2024.\nToday's Date: "
+                + today
+                + '.\nYou are Granite, developed by IBM. Write the response to the user\'s input by strictly aligning with the facts in the provided documents. If the information needed to answer the question is not available in the documents, inform the user that the question cannot be answered based on the available data.\n\nIn your response, use the symbols <co> and </co> to indicate when a fact comes from a document in the search result, e.g <co>0</co> for a fact from document 0. Afterwards, list all the citations with their corresponding documents in an ordered list.<|end_of_text|>\n<|start_of_role|>documents<|end_of_role|>Document 0\nAustin is the capital of Texas.\nHouston is the the largest city in Texas but not the capital of it. <|end_of_text|>\n<|start_of_role|>user<|end_of_role|>What city is the largest in Texas?<|end_of_text|>\n<|start_of_role|>assistant {"citations": true, "length": "long"}<|end_of_role|>',
+                "<|start_of_role|>system<|end_of_role|>Knowledge Cutoff Date: April 2024.\nToday's Date: "
+                + today
+                + '.\nYou are Granite, developed by IBM. Write the response to the user\'s input by strictly aligning with the facts in the provided documents. If the information needed to answer the question is not available in the documents, inform the user that the question cannot be answered based on the available data.\n\nIn your response, use the symbols <co> and </co> to indicate when a fact comes from a document in the search result, e.g <co>0</co> for a fact from document 0. Afterwards, list all the citations with their corresponding documents in an ordered list.<|end_of_text|>\n<|start_of_role|>documents<|end_of_role|>Document 0\nHouston is the the largest city in Texas but not the capital of it. <|end_of_text|>\n<|start_of_role|>user<|end_of_role|>What city is the capital of Texas?<|end_of_text|>\n<|start_of_role|>assistant {"citations": true, "length": "long"}<|end_of_role|>',
+            ],
         )
 
     def test_system_format(self):
