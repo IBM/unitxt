@@ -1,7 +1,14 @@
 import json
 
 import numpy as np
-from unitxt.api import evaluate, infer, load_dataset, post_process, produce
+from unitxt.api import (
+    create_dataset,
+    evaluate,
+    infer,
+    load_dataset,
+    post_process,
+    produce,
+)
 from unitxt.card import TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.task import Task
@@ -469,3 +476,32 @@ class TestAPI(UnitxtTestCase):
             "Question: If a ate an apple in the morning, and one in the evening, how many apples did I eat?\nAnswer:",
         ]
         self.assertListEqual(predictions, targets)
+
+    def test_create_dataset_with_non_seralizble_object(self):
+        import numpy as np
+        from PIL import Image
+
+        random_image = Image.fromarray(
+            np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
+        )
+
+        dataset = [
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the capital of Texas?",
+                "answers": ["Austin"],
+            },
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the color of the sky?",
+                "answers": ["Blue"],
+            },
+        ]
+
+        dataset = create_dataset(
+            task="tasks.qa.with_context",
+            format="formats.chat_api",
+            test_set=dataset,
+        )

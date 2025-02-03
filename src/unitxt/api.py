@@ -145,8 +145,8 @@ def _source_to_dataset(
         cache_dir = dir_to_be_deleted if not use_cache else None
         ds_builder = UnitxtDataset(
             dataset_name="unitxt",
-            config_name="recipe-" + short_hex_hash(source.to_json()),
-            hash=hash(source.to_json()),
+            config_name="recipe-" + short_hex_hash(repr(source)),
+            hash=hash(repr(source)),
             version=constants.version,
             cache_dir=cache_dir,
         )
