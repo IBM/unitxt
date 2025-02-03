@@ -34,11 +34,7 @@ class BaseFusion(SourceOperator):
             for i in range(len(self.subsets)):
                 self.named_subsets[i] = self.subsets[i]
         else:
-            for name, origin in self.subsets.items():
-                try:
-                    self.named_subsets[name] = origin
-                except Exception as e:
-                    raise RuntimeError(f"Exception in subset: {name}") from e
+            self.named_subsets = self.subsets
 
     def splits(self) -> List[str]:
         self.prepare_subsets()

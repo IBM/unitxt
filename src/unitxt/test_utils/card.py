@@ -291,18 +291,21 @@ def test_card(
     else:
         template_card_indices = range(len(card.templates))
 
-    for template_card_index in template_card_indices:
-        examples = load_examples_from_dataset_recipe(
-            card, template_card_index=template_card_index, debug=debug, **kwargs
-        )
-        if test_exact_match_score_when_predictions_equal_references:
-            test_correct_predictions(
-                examples=examples, strict=strict, exact_match_score=exact_match_score
+    with settings.context(allow_unverified_code=True):
+        for template_card_index in template_card_indices:
+            examples = load_examples_from_dataset_recipe(
+                card, template_card_index=template_card_index, debug=debug, **kwargs
             )
-        if test_full_mismatch_score_with_full_mismatch_prediction_values:
-            test_wrong_predictions(
-                examples=examples,
-                strict=strict,
-                maximum_full_mismatch_score=maximum_full_mismatch_score,
-                full_mismatch_prediction_values=full_mismatch_prediction_values,
-            )
+            if test_exact_match_score_when_predictions_equal_references:
+                test_correct_predictions(
+                    examples=examples,
+                    strict=strict,
+                    exact_match_score=exact_match_score,
+                )
+            if test_full_mismatch_score_with_full_mismatch_prediction_values:
+                test_wrong_predictions(
+                    examples=examples,
+                    strict=strict,
+                    maximum_full_mismatch_score=maximum_full_mismatch_score,
+                    full_mismatch_prediction_values=full_mismatch_prediction_values,
+                )

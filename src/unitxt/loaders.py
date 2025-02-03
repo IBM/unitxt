@@ -42,6 +42,7 @@ from tempfile import TemporaryDirectory
 from typing import (
     Any,
     Dict,
+    Generator,
     Iterable,
     List,
     Literal,
@@ -53,13 +54,19 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import DatasetDict, IterableDatasetDict
+from datasets import (
+    DatasetDict,
+    IterableDataset,
+    IterableDatasetDict,
+    get_dataset_split_names,
+)
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import OptionalField
 from .fusion import FixedFusion
+from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
@@ -161,6 +168,8 @@ class Loader(SourceOperator):
             iterables = self.load_iterables()
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
+        if isoftype(iterables, Dict[str, ReusableGenerator]):
+            return MultiStream.from_generators(iterables, copying=True)
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
@@ -234,7 +243,7 @@ class LoadHF(Loader):
             return settings.stream_hf_datasets_by_default
         return self.streaming
 
-    def stream_dataset(self):
+    def stream_dataset(self, split=None):
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             if settings.disable_hf_datasets_cache and not self.is_streaming():
                 cache_dir = dir_to_be_deleted
@@ -249,7 +258,7 @@ class LoadHF(Loader):
                     revision=self.revision,
                     streaming=self.is_streaming(),
                     cache_dir=cache_dir,
-                    split=self.split,
+                    split=split,
                     trust_remote_code=settings.allow_unverified_code,
                     num_proc=self.num_proc,
                 )
@@ -260,15 +269,10 @@ class LoadHF(Loader):
                     ) from e
                 raise e
 
-        if self.split is not None:
-            dataset = {self.split: dataset}
-
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
-
         return dataset
 
-    def load_dataset(self):
+    # returns Dict when split names are not known in advance, and just the the single split dataset - if known
+    def load_dataset(self, split: str) -> Union[IterableDatasetDict, IterableDataset]:
         with tempfile.TemporaryDirectory() as dir_to_be_deleted:
             if settings.disable_hf_datasets_cache:
                 cache_dir = dir_to_be_deleted
@@ -283,7 +287,7 @@ class LoadHF(Loader):
                     streaming=False,
                     keep_in_memory=True,
                     cache_dir=cache_dir,
-                    split=self.split,
+                    split=split,
                     trust_remote_code=settings.allow_unverified_code,
                     num_proc=self.num_proc,
                 )
@@ -309,31 +313,76 @@ class LoadHF(Loader):
                 None,  # No warning when loading from public hub
             )
 
-    def load_iterables(self) -> IterableDatasetDict:
+    def load_iterables(
+        self
+    ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
+        # log limit once for the whole data
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+
+        if self.split is not None:
+            return {
+                self.split: ReusableGenerator(
+                    self.split_generator, gen_kwargs={"split": self.split}
+                )
+            }
+
         try:
-            dataset = self.stream_dataset()
+            split_names = get_dataset_split_names(
+                path=self.path,
+                config_name=self.name,
+                trust_remote_code=settings.allow_unverified_code,
+            )
+            return {
+                split_name: ReusableGenerator(
+                    self.split_generator, gen_kwargs={"split": split_name}
+                )
+                for split_name in split_names
+            }
+
+        except:
+            pass  # do nothing, and just continue to the usual load dataset
+            # self.split is None and
+            # split names are not known before the splits themselves are loaded, and we need to load them here
+
+        try:
+            dataset = self.stream_dataset(split=None)
         except (
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset()
+            dataset = self.load_dataset(split=None)
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
 
         limit = self.get_limit()
         if limit is not None:
-            self.log_limited_loading()
             result = {}
             for split_name in dataset:
-                try:
-                    split_limit = min(limit, len(dataset[split_name]))
-                except:
-                    split_limit = limit
-                result[split_name] = dataset[split_name].take(split_limit)
-
+                result[split_name] = dataset[split_name].take(limit)
             return result
 
         return dataset
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            try:
+                dataset = self.stream_dataset(split)
+            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+                dataset = self.load_dataset(split)
+
+            if self.filtering_lambda is not None:
+                dataset = self.filter_load(dataset)
+
+            limit = self.get_limit()
+            if limit is not None:
+                dataset = dataset.take(limit)
+
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+
+        yield from dataset
 
 
 class LoadCSV(Loader):
@@ -390,15 +439,26 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
+        # log once for the whole data
+        if self.get_limit() is not None:
+            self.log_limited_loading()
         iterables = {}
-        for split_name, file_path in self.files.items():
-            reader = self.get_reader()
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
-                "records"
+        for split_name in self.files.keys():
+            iterables[split_name] = ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
             )
+
         return iterables
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            reader = self.get_reader()
+            dataset = reader(self.files[split], **self.get_args()).to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+
+        yield from dataset
 
 
 class LoadFromSklearn(Loader):
@@ -438,14 +498,24 @@ class LoadFromSklearn(Loader):
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
     def load_iterables(self):
-        with TemporaryDirectory() as temp_directory:
-            for split in self.splits:
-                split_data = self.downloader(subset=split)
-                targets = [split_data["target_names"][t] for t in split_data["target"]]
-                df = pd.DataFrame([split_data["data"], targets]).T
-                df.columns = ["data", "target"]
-                df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
-            return hf_load_dataset(temp_directory, streaming=False)
+        return {
+            split_name: ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
+            )
+            for split_name in self.splits
+        }
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            split_data = self.downloader(subset=split)
+            targets = [split_data["target_names"][t] for t in split_data["target"]]
+            df = pd.DataFrame([split_data["data"], targets]).T
+            df.columns = ["data", "target"]
+            dataset = df.to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+        yield from dataset
 
 
 class MissingKaggleCredentialsError(ValueError):
