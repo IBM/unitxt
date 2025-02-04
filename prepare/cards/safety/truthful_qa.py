@@ -9,6 +9,7 @@ card = TaskCard(
         path="truthfulqa/truthful_qa",
         name="multiple_choice",
         data_classification_policy=["public"],
+        all_splits=["validation"],
     ),
     preprocess_steps=[
         RenameSplits({"validation": "test"}),

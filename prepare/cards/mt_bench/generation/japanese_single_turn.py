@@ -12,7 +12,7 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="shi3z/MTbenchJapanese", split="train"),
+    loader=LoadHF(path="shi3z/MTbenchJapanese", split="train", all_splits=["train"]),
     preprocess_steps=[
         RenameSplits({"train": "test"}),
         Copy(field="turns/0", to_field="turns"),

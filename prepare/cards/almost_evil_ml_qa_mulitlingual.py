@@ -13,7 +13,9 @@ langs = ["en", "de", "it", "fr", "es", "ru", "nl", "pt"]
 # Counter({'en': 1995, 'de': 2302, 'it': 2210, 'fr': 2156, 'es': 2090, 'ru': 2058, 'nl': 2017, 'pt': 1994})
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
+        loader=LoadHF(
+            path="0x22almostEvil/multilingual-wikihow-qa-16k", all_splits=["train"]
+        ),
         preprocess_steps=[
             LoadJson(field="METADATA", to_field="metadata"),
             Copy(field="metadata/language", to_field="extracted_language"),

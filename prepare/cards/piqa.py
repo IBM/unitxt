@@ -4,7 +4,9 @@ from unitxt.operators import ListFieldValues, Rename
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="piqa", revision="refs/pr/9"),
+    loader=LoadHF(
+        path="piqa", revision="refs/pr/9", all_splits=["train", "test", "validation"]
+    ),
     preprocess_steps=[
         ListFieldValues(fields=["sol1", "sol2"], to_field="choices"),
         Rename(

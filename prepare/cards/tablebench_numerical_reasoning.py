@@ -15,6 +15,7 @@ card = TaskCard(
     loader=LoadHF(
         path="Multilingual-Multimodal-NLP/TableBench",
         data_classification_policy=["public"],
+        all_splits=["test"],
     ),
     preprocess_steps=[
         SplitRandomMix(

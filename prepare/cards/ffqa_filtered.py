@@ -78,7 +78,9 @@ token_limit_map = {
 
 def add_card(split: str):
     card = TaskCard(
-        loader=LoadHF(path="abacusai/WikiQA-Free_Form_QA"),
+        loader=LoadHF(
+            path="abacusai/WikiQA-Free_Form_QA", all_splits=["2k", "4k", "8k", "16k"]
+        ),
         preprocess_steps=[
             Copy(
                 field_to_field={

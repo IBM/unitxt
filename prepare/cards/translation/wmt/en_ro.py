@@ -3,7 +3,12 @@ from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="wmt16", name="ro-en", streaming=True),
+    loader=LoadHF(
+        path="wmt16",
+        name="ro-en",
+        streaming=True,
+        all_splits=["train", "validation", "test"],
+    ),
     preprocess_steps=[
         Copy(
             field_to_field=[

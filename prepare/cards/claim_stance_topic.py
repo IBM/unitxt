@@ -64,7 +64,11 @@ class_names = [
 
 
 card = TaskCard(
-    loader=LoadHF(path="ibm/claim_stance", name=f"{dataset_name}"),
+    loader=LoadHF(
+        path="ibm/claim_stance",
+        name=f"{dataset_name}",
+        all_splits=["train", "validation", "test"],
+    ),
     preprocess_steps=[
         Set(
             fields={

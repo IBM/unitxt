@@ -13,7 +13,7 @@ settings = get_settings()
 
 with settings.context(allow_unverified_code=True):
     card_abstractive = TaskCard(
-        loader=LoadHF(path="multidoc2dial"),
+        loader=LoadHF(path="multidoc2dial", all_splits=["validation", "train", "test"]),
         preprocess_steps=[
             Rename(
                 field_to_field={"answers/text/0": "relevant_context"},
@@ -46,7 +46,7 @@ with settings.context(allow_unverified_code=True):
     )
 
     card_extractive = TaskCard(
-        loader=LoadHF(path="multidoc2dial"),
+        loader=LoadHF(path="multidoc2dial", all_splits=["validation", "train", "test"]),
         preprocess_steps=[
             Rename(
                 field_to_field={"answers/text/0": "relevant_context"},

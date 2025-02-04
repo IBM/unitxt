@@ -10,7 +10,7 @@ from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="akariasai/PopQA"),
+    loader=LoadHF(path="akariasai/PopQA", all_splits=["test"]),
     preprocess_steps=[
         Shuffle(page_size=14267),
         LoadJson(field="possible_answers"),

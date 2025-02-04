@@ -17,6 +17,7 @@ for dataset_name in ["explicit", "implicit"]:
             path="Anthropic/discrim-eval",
             name=dataset_name,
             data_classification_policy=["public"],
+            all_splits=["train"],
         ),
         preprocess_steps=[
             RenameSplits({"train": "test"}),

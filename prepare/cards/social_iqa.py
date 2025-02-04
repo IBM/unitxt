@@ -17,6 +17,7 @@ with unitxt.settings.context(allow_unverified_code=True):
             path="allenai/social_i_qa",
             data_classification_policy=["public"],
             revision="refs/pr/3",
+            all_splits=["train", "validation"],
         ),
         preprocess_steps=[
             Deduplicate(by=["context", "question", "answerA", "answerB", "answerC"]),

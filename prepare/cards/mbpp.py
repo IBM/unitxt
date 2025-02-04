@@ -11,7 +11,12 @@ from unitxt.operators import JoinStr
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="mbpp", name="full", split="test"),
+    loader=LoadHF(
+        path="mbpp",
+        name="full",
+        split="test",
+        all_splits=["train", "test", "validation", "prompt"],
+    ),
     preprocess_steps=[
         JoinStr(field_to_field={"test_list": "test_list_str"}, separator=os.linesep),
     ],

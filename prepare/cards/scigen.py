@@ -12,7 +12,11 @@ from unitxt.test_utils.card import test_card
 
 with unitxt.settings.context(mock_inference_mode=True):
     card = TaskCard(
-        loader=LoadHF(path="kasnerz/scigen", data_classification_policy=["public"]),
+        loader=LoadHF(
+            path="kasnerz/scigen",
+            data_classification_policy=["public"],
+            all_splits=["train", "validation", "test"],
+        ),
         preprocess_steps=[
             FilterByCondition(values={"table_content_values": "[]"}, condition="ne"),
             ConstructTableFromRowsCols(

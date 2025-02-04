@@ -5,7 +5,7 @@ from unitxt.test_utils.card import test_card
 
 for lang in ["pt", "ru", "zh", "en", "jp"]:
     card = TaskCard(
-        loader=LoadHF(path="Muennighoff/xwinograd", name=lang),
+        loader=LoadHF(path="Muennighoff/xwinograd", name=lang, all_splits=["test"]),
         preprocess_steps=[
             ListFieldValues(fields=["option1", "option2"], to_field="choices"),
             CastFields(fields={"answer": "int"}),

@@ -7,7 +7,7 @@ from unitxt.collections_operators import Wrap
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="EdinburghNLP/xsum"),
+    loader=LoadHF(path="EdinburghNLP/xsum", all_splits=["train", "validation", "test"]),
     task="tasks.summarization.abstractive",
     preprocess_steps=[Wrap(field="summary", inside="list", to_field="summaries")],
     templates="templates.summarization.abstractive.all",

@@ -15,7 +15,9 @@ from unitxt.types import Table
 settings = get_settings()
 
 card = TaskCard(
-    loader=LoadHF(path="ibm/finqa", streaming=False),
+    loader=LoadHF(
+        path="ibm/finqa", streaming=False, all_splits=["train", "validation", "test"]
+    ),
     preprocess_steps=[
         GetLength(field="table", to_field="table_length"),
         FilterByCondition(values={"table_length": 1}, condition="gt"),

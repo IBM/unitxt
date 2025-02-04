@@ -9,7 +9,7 @@ from unitxt.templates import MultiReferenceTemplate, TemplatesList
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="akariasai/PopQA"),
+    loader=LoadHF(path="akariasai/PopQA", all_splits=["test"]),
     preprocess_steps=[
         # FeatureGroupedShuffle(grouping_features=["id"], page_size=250000),
         # dafna: the above seems strange to me. I think "id" is unique per instance

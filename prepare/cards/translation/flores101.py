@@ -131,7 +131,9 @@ pairs = [{"src": lang, "tgt": "eng"} for lang in langs] + [
 
 for pair in pairs:
     card = TaskCard(
-        loader=LoadHF(path="gsarti/flores_101", name="all"),
+        loader=LoadHF(
+            path="gsarti/flores_101", name="all", all_splits=["dev", "devtest"]
+        ),
         preprocess_steps=[
             SplitRandomMix({"validation": "dev", "test": "devtest"}),
             Copy(

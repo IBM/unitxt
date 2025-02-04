@@ -4,7 +4,7 @@ from unitxt.operators import ExtractFieldValues, Rename, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="glue", name="sst2"),
+    loader=LoadHF(path="glue", name="sst2", all_splits=["train", "validation", "test"]),
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "negative", "1": "positive"}}),

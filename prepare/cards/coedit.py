@@ -22,6 +22,7 @@ gec_card = TaskCard(
         path="grammarly/coedit",
         streaming=True,
         filtering_lambda="lambda x: x['task'] == 'gec'",
+        all_splits=["train", "validation"],
     ),
     preprocess_steps=[
         "splitters.small_no_test",
@@ -58,6 +59,7 @@ error_detection_card = TaskCard(
         path="grammarly/coedit",
         streaming=True,
         filtering_lambda="lambda x: x['task'] == 'gec'",
+        all_splits=["train", "validation"],
     ),
     preprocess_steps=[
         "splitters.small_no_test",
@@ -101,7 +103,9 @@ add_to_catalog(error_detection_card, "cards.coedit_error_detection", overwrite=T
 
 
 card = TaskCard(
-    loader=LoadHF(path="grammarly/coedit", streaming=True),
+    loader=LoadHF(
+        path="grammarly/coedit", streaming=True, all_splits=["train", "validation"]
+    ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         "splitters.small_no_test",
@@ -146,6 +150,7 @@ card = TaskCard(
         path="grammarly/coedit",
         streaming=True,
         filtering_lambda="lambda x: x['task'] in ['gec', 'simplification', 'coherence', 'neutralize']",
+        all_splits=["train", "validation"],
     ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
@@ -211,6 +216,7 @@ card = TaskCard(
         path="grammarly/coedit",
         streaming=True,
         filtering_lambda="lambda x: x['task'] in ['gec', 'simplification', 'coherence', 'neutralize']",
+        all_splits=["train", "validation"],
     ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
@@ -272,6 +278,7 @@ card = TaskCard(
         path="grammarly/coedit",
         streaming=True,
         filtering_lambda="lambda x: x['task'] == 'paraphrase'",
+        all_splits=["train", "validation"],
     ),
     preprocess_steps=[
         "splitters.small_no_test",

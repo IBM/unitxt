@@ -23,7 +23,11 @@ for i in range(len(classlabels.names)):
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="AmazonScience/massive", name=lang),
+        loader=LoadHF(
+            path="AmazonScience/massive",
+            name=lang,
+            all_splits=["train", "validation", "test"],
+        ),
         preprocess_steps=[
             MapInstanceValues(mappers={"intent": mappers}),
             Rename(field_to_field={"utt": "text", "intent": "label"}),

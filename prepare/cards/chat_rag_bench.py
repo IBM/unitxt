@@ -19,7 +19,12 @@ subsets = ["doqa_travel", "doqa_cooking", "doqa_movies", "doc2dial", "hybridial"
 for split in splits_random_mixes:
     for subset in subsets:
         card = TaskCard(
-            loader=LoadHF(path="nvidia/ChatRAG-Bench", name=subset, split="test"),
+            loader=LoadHF(
+                path="nvidia/ChatRAG-Bench",
+                name=subset,
+                split="test",
+                all_splits=["test"],
+            ),
             preprocess_steps=[
                 splits_random_mixes[split],
                 Shuffle(),

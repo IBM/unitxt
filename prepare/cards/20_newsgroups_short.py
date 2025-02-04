@@ -36,7 +36,9 @@ map_labels = {
 }
 
 card = TaskCard(
-    loader=LoadHF(path=f"SetFit/{dataset_name}", streaming=True),
+    loader=LoadHF(
+        path=f"SetFit/{dataset_name}", streaming=True, all_splits=["train", "test"]
+    ),
     preprocess_steps=[
         FilterByCondition(values={"text": ""}, condition="ne"),
         FilterByExpression(

@@ -11,7 +11,11 @@ from unitxt.test_utils.card import test_card
 with unitxt.settings.context(allow_unverified_code=True):
     for subset in ["es", "en"]:
         card = TaskCard(
-            loader=LoadHF(path="dvilares/head_qa", name=subset),
+            loader=LoadHF(
+                path="dvilares/head_qa",
+                name=subset,
+                all_splits=["train", "test", "validation"],
+            ),
             preprocess_steps=[
                 Rename(field_to_field={"qtext": "text", "category": "label"}),
                 Set(

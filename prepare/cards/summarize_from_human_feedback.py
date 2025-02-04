@@ -9,7 +9,11 @@ from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="openai/summarize_from_feedback", name="comparisons"),
+    loader=LoadHF(
+        path="openai/summarize_from_feedback",
+        name="comparisons",
+        all_splits=["train", "validation"],
+    ),
     preprocess_steps=[
         "splitters.small_no_test",
         Copy(

@@ -15,7 +15,7 @@ with settings.context(allow_unverified_code=True):
     get_asserts = '[t for t in re.findall(r"assert.*?(?=\\n\\s*assert|$)", test.replace("candidate", entry_point), re.DOTALL)]'
 
     card = TaskCard(
-        loader=LoadHF(path="openai_humaneval", split="test"),
+        loader=LoadHF(path="openai_humaneval", split="test", all_splits=["test"]),
         preprocess_steps=[
             ExecuteExpression(
                 expression=get_asserts, imports_list=["re"], to_field="test_list"

@@ -171,7 +171,9 @@ classes = [label.replace("_", " ") for label in classes_names]
 
 for subset in ["small", "imbalanced", "plus"]:
     card = TaskCard(
-        loader=LoadHF(path="clinc_oos", name=subset),
+        loader=LoadHF(
+            path="clinc_oos", name=subset, all_splits=["train", "validation", "test"]
+        ),
         preprocess_steps=[
             Shuffle(page_size=sys.maxsize),
             Rename(field_to_field={"intent": "label"}),

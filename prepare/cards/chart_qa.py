@@ -16,7 +16,7 @@ template = MultiReferenceTemplate(
 )
 
 card = TaskCard(
-    loader=LoadHF(path="HuggingFaceM4/ChartQA"),
+    loader=LoadHF(path="HuggingFaceM4/ChartQA", all_splits=["train", "val", "test"]),
     preprocess_steps=[
         RenameSplits(mapper={"train": "train", "val": "validation", "test": "test"}),
         Rename(field="label", to_field="answers"),
@@ -45,7 +45,7 @@ add_to_catalog(card, "cards.chart_qa", overwrite=True)
 
 
 card = TaskCard(
-    loader=LoadHF(path="lmms-lab/ChartQA"),
+    loader=LoadHF(path="lmms-lab/ChartQA", all_splits=["train", "val", "test"]),
     preprocess_steps=[
         Wrap(field="answer", inside="list", to_field="answers"),
         ToImage(field="image", to_field="context"),

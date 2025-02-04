@@ -11,7 +11,10 @@ from unitxt.test_utils.card import test_card
 card = TaskCard(
     # Adjust the num_proc value according to the number of CPU cores available for faster loading
     loader=LoadHF(
-        path="wikitablequestions", data_classification_policy=["public"], num_proc=10
+        path="wikitablequestions",
+        data_classification_policy=["public"],
+        num_proc=10,
+        all_splits=["train", "test", "validation"],
     ),
     preprocess_steps=[
         Set({"context_type": "table"}),

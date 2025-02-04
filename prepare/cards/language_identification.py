@@ -30,7 +30,10 @@ language_codes = {
 }
 
 card = TaskCard(
-    loader=LoadHF(path="papluca/language-identification"),
+    loader=LoadHF(
+        path="papluca/language-identification",
+        all_splits=["train", "validation", "test"],
+    ),
     preprocess_steps=[
         Rename(field_to_field={"labels": "label"}),
         MapInstanceValues(mappers={"label": language_codes}),

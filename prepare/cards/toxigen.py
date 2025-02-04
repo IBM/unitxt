@@ -11,7 +11,7 @@ After that, incorporate your HF token into the environment settings by adding HU
 """
 
 card = TaskCard(
-    loader=LoadHF(path="skg/toxigen-data", name="train"),
+    loader=LoadHF(path="skg/toxigen-data", name="train", all_splits=["train"]),
     preprocess_steps=[
         Shuffle(page_size=251000),
         SplitRandomMix({"train": "train[20%]", "test": "train[80%]"}),

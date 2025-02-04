@@ -346,7 +346,7 @@ def lines_defining_obj_in_card(
             if starts_with_parent:
                 ending_line += 1
 
-            # we conrinue in card, having passed the description, ending line points
+            # we continue in card, having passed the description, ending line points
             # to the line that follows description
 
         num_of_opens += len(re.findall(r"[({[]", all_lines[ending_line]))

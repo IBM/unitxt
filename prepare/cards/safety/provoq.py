@@ -3,7 +3,9 @@ from unitxt.blocks import InputOutputTemplate, LoadHF, Task, TaskCard, Templates
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="IBM/ProvoQ", data_classification_policy=["public"]),
+    loader=LoadHF(
+        path="IBM/ProvoQ", data_classification_policy=["public"], all_splits=["test"]
+    ),
     task=Task(
         input_fields={"question": str, "stigma": str, "group": str},
         reference_fields={},

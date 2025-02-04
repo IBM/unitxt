@@ -14,7 +14,9 @@ from unitxt.test_utils.card import test_card
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
         loader=LoadHF(
-            path="google/frames-benchmark", data_classification_policy=["public"]
+            path="google/frames-benchmark",
+            data_classification_policy=["public"],
+            all_splits=["test"],
         ),
         preprocess_steps=[
             Rename(field="Prompt", to_field="question"),

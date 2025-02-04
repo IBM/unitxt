@@ -69,7 +69,9 @@ subtasks = [
 def main():
     for i, subtask in enumerate(subtasks):
         card = TaskCard(
-            loader=LoadHF(path="cais/mmlu", name=subtask),
+            loader=LoadHF(
+                path="cais/mmlu", name=subtask, all_splits=["test", "validation", "dev"]
+            ),
             preprocess_steps=[
                 Deduplicate(by=["question", "subject", "choices", "answer"]),
                 RenameSplits({"dev": "train"}),

@@ -11,7 +11,7 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="ibm/AttaQ"),
+    loader=LoadHF(path="ibm/AttaQ", all_splits=["train"]),
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         Shuffle(page_size=2800),

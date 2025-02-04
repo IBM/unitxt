@@ -7,7 +7,9 @@ subtasks = ["ARC-Challenge", "ARC-Easy"]
 
 for subtask in subtasks:
     card = TaskCard(
-        loader=LoadHF(path="ai2_arc", name=subtask),
+        loader=LoadHF(
+            path="ai2_arc", name=subtask, all_splits=["train", "test", "validation"]
+        ),
         preprocess_steps=[
             Set({"topic": "science"}),
             Rename(field_to_field={"answerKey": "label", "choices": "_choices"}),

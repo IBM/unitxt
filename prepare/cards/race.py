@@ -7,7 +7,9 @@ numbering = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
 for subset in ["all", "high", "middle"]:
     card = TaskCard(
-        loader=LoadHF(path="race", name=subset),
+        loader=LoadHF(
+            path="race", name=subset, all_splits=["test", "train", "validation"]
+        ),
         preprocess_steps=[
             Set({"numbering": numbering}),
             IndexOf(search_in="numbering", index_of="answer", to_field="answer"),

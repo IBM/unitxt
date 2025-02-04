@@ -35,7 +35,7 @@ classlabels = [
 
 
 card = TaskCard(
-    loader=LoadHF(path=huggingface_name),
+    loader=LoadHF(path=huggingface_name, all_splits=["train", "validation", "test"]),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "test", "test": "train", "validation": "validation"}

@@ -10,7 +10,7 @@ from unitxt.operators import (
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="sciq"),
+    loader=LoadHF(path="sciq", all_splits=["train", "validation", "test"]),
     preprocess_steps=[
         ListFieldValues(
             fields=["distractor1", "distractor2", "distractor3", "correct_answer"],

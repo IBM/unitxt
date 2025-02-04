@@ -9,7 +9,9 @@ from unitxt.collections_operators import Wrap
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="cnn_dailymail", name="3.0.0"),
+    loader=LoadHF(
+        path="cnn_dailymail", name="3.0.0", all_splits=["train", "validation", "test"]
+    ),
     preprocess_steps=[
         Rename(field_to_field={"article": "document"}),
         Wrap(field="highlights", inside="list", to_field="summaries"),

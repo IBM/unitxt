@@ -43,7 +43,11 @@ subset_dict = {
 
 for subset in subset_dict.keys():
     card = TaskCard(
-        loader=LoadHF(path="allenai/reward-bench", split="filtered"),
+        loader=LoadHF(
+            path="allenai/reward-bench",
+            split="filtered",
+            all_splits=["raw", "filtered"],
+        ),
         preprocess_steps=[
             RenameSplits({"filtered": "test"}),
             Rename(

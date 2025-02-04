@@ -43,7 +43,10 @@ config_names = [
 for name in config_names:
     card = TaskCard(
         loader=LoadHF(
-            path="MMMU/MMMU", name=name, data_classification_policy=["public"]
+            path="MMMU/MMMU",
+            name=name,
+            data_classification_policy=["public"],
+            all_splits=["dev", "validation", "test"],
         ),
         preprocess_steps=[
             RenameSplits(mapper={"dev": "train", "validation": "test"}),

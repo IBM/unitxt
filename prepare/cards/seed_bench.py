@@ -6,7 +6,7 @@ from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="lmms-lab/SEED-Bench"),
+    loader=LoadHF(path="lmms-lab/SEED-Bench", all_splits=["test"]),
     preprocess_steps=[
         ToImage(field="image", to_field="context", process_every_value=True),
         ToRGB(field="context", process_every_value=True),

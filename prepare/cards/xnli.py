@@ -29,7 +29,9 @@ langs = [
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="xnli", name=lang),
+        loader=LoadHF(
+            path="xnli", name=lang, all_splits=["train", "test", "validation"]
+        ),
         preprocess_steps=[
             "splitters.small_no_test",
             Rename(field_to_field={"premise": "text_a", "hypothesis": "text_b"}),

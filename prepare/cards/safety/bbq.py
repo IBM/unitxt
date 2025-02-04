@@ -25,6 +25,7 @@ with settings.context(allow_unverified_code=True):
                 path="heegyu/bbq",
                 name=dataset_name,
                 data_classification_policy=["public"],
+                all_splits=["test"],
             ),
             preprocess_steps=[
                 Set({"context_type": "description"}),

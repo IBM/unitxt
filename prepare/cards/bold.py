@@ -16,7 +16,7 @@ from unitxt.struct_data_operators import DumpJson
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="AlexaAI/bold"),
+    loader=LoadHF(path="AlexaAI/bold", all_splits=["train"]),
     preprocess_steps=[
         RenameSplits(mapper={"train": "test"}),
         Set({"input_label": {}}),

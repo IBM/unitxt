@@ -23,7 +23,7 @@ map_label_to_text = {
 classes = [label.replace("_", " ") for label in classlabels.names]
 
 card = TaskCard(
-    loader=LoadHF(path=f"PolyAI/{dataset_name}"),
+    loader=LoadHF(path=f"PolyAI/{dataset_name}", all_splits=["train", "test"]),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(

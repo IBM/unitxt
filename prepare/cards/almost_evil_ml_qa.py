@@ -4,7 +4,9 @@ from unitxt.operators import ListFieldValues
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="0x22almostEvil/multilingual-wikihow-qa-16k"),
+    loader=LoadHF(
+        path="0x22almostEvil/multilingual-wikihow-qa-16k", all_splits=["train"]
+    ),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}

@@ -12,6 +12,7 @@ card = TaskCard(
     loader=LoadHF(
         path="umarbutler/open-australian-legal-qa",
         name="default",
+        all_splits=["train"],
     ),
     preprocess_steps=[
         SplitRandomMix(
@@ -52,6 +53,7 @@ card = TaskCard(
     loader=LoadHF(
         path="umarbutler/open-australian-legal-qa",
         name="default",
+        all_splits=["train"],
     ),
     preprocess_steps=[
         SplitRandomMix(

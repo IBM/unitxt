@@ -19,7 +19,11 @@ for i in range(len(classlabels.feature.names)):
     mappers[str(i)] = classlabels.feature.names[i]
 
 card = TaskCard(
-    loader=LoadHF(path="lex_glue", name=f"{dataset_name}"),
+    loader=LoadHF(
+        path="lex_glue",
+        name=f"{dataset_name}",
+        all_splits=["train", "test", "validation"],
+    ),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
         Set(

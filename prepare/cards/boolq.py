@@ -12,7 +12,7 @@ from unitxt.operators import (
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="google/boolq"),
+    loader=LoadHF(path="google/boolq", all_splits=["train", "validation"]),
     preprocess_steps=[
         "splitters.small_no_test",
         Set(
@@ -57,7 +57,7 @@ test_card(card, demos_taken_from="test")
 add_to_catalog(card, "cards.boolq.classification", overwrite=True)
 
 card = TaskCard(
-    loader=LoadHF(path="google/boolq"),
+    loader=LoadHF(path="google/boolq", all_splits=["train", "validation"]),
     preprocess_steps=[
         "splitters.small_no_test",
         Set(

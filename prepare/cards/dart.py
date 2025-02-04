@@ -10,7 +10,7 @@ from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="dart"),
+    loader=LoadHF(path="dart", all_splits=["train", "validation", "test"]),
     preprocess_steps=[
         "splitters.small_no_test",
         SerializeTriples(field_to_field=[["tripleset", "serialized_triples"]]),

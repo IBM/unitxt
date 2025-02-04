@@ -38,7 +38,9 @@ mappers = {
 
 
 card = TaskCard(
-    loader=LoadHF(path="zeroshot/twitter-financial-news-topic"),
+    loader=LoadHF(
+        path="zeroshot/twitter-financial-news-topic", all_splits=["train", "validation"]
+    ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(

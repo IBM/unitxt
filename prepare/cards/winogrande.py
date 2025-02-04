@@ -6,7 +6,10 @@ from unitxt.test_utils.card import test_card
 for subtask in ["debiased", "l", "m", "s", "xl", "xs"]:
     card = TaskCard(
         loader=LoadHF(
-            path="winogrande", name=f"winogrande_{subtask}", revision="refs/pr/6"
+            path="winogrande",
+            name=f"winogrande_{subtask}",
+            revision="refs/pr/6",
+            all_splits=["train", "test", "validation"],
         ),
         preprocess_steps=[
             "splitters.small_no_test",
