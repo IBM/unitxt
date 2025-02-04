@@ -1,9 +1,12 @@
 from unitxt import add_to_catalog
 from unitxt.processors import PostProcess
-from unitxt.struct_data_operators import (
-    JsonStrToListOfKeyValuePairs,
-    LiteralStrToListOfKeyValuePairs,
+from unitxt.serializers import (
+    DictAsJsonSerializer,
+    ImageSerializer,
+    ListSerializer,
+    MultiTypeSerializer,
 )
+from unitxt.struct_data_operators import JsonStrToListOfKeyValuePairs
 from unitxt.templates import (
     InputOutputTemplate,
 )
@@ -14,9 +17,11 @@ add_to_catalog(
         input_format="{input}",
         output_format="{key_value_pairs_answer}",
         postprocessors=[
-            PostProcess(JsonStrToListOfKeyValuePairs(), process_references=False),
-            PostProcess(LiteralStrToListOfKeyValuePairs(), process_prediction=False),
+            PostProcess(JsonStrToListOfKeyValuePairs()),
         ],
+        serializer=MultiTypeSerializer(
+            serializers=[ImageSerializer(), DictAsJsonSerializer(), ListSerializer()]
+        ),
     ),
     "templates.key_value_extraction.extract_in_json_format",
     overwrite=True,

@@ -1,5 +1,6 @@
 import csv
 import io
+import json
 from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
@@ -59,6 +60,13 @@ class ListSerializer(SingleTypeSerializer):
 
     def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
         return ", ".join(str(item) for item in value)
+
+
+class DictAsJsonSerializer(SingleTypeSerializer):
+    serialized_type = dict
+
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
 
 
 class DialogSerializer(SingleTypeSerializer):

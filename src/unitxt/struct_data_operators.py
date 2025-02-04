@@ -23,7 +23,6 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
-import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -1039,29 +1038,6 @@ class JsonStrToListOfKeyValuePairs(FieldOperator):
         if not isoftype(dict_value, Dict[str, Any]):
             UnitxtWarning(
                 f"Unable to convert input text to dictionary in JsonStrToListOfKeyValuePairs. Text: {text}"
-            )
-            dict_value = {}
-        return [
-            (str(key), str(value))
-            for key, value in dict_value.items()
-            if value is not None
-        ]
-
-
-class LiteralStrToListOfKeyValuePairs(FieldOperator):
-    """Convert a python literal string representtion of dictionary to list of key value pairs."""
-
-    def process_value(self, text: str) -> List[Tuple[str, str]]:
-        try:
-            dict_value = ast.literal_eval(text)
-        except Exception as e:
-            UnitxtWarning(
-                f"Unable to convert input text to python format in LiteralStrToListOfKeyValuePairs due to {e}. Text: {text}"
-            )
-            dict_value = {}
-        if not isoftype(dict_value, Dict[str, Any]):
-            UnitxtWarning(
-                f"Unable to convert input text to dictionary in LiteralStrToListOfKeyValuePairs. Text: {text}"
             )
             dict_value = {}
         return [

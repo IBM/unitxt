@@ -6,17 +6,23 @@
     "postprocessors": [
         {
             "__type__": "post_process",
-            "process_references": false,
             "operator": {
                 "__type__": "json_str_to_list_of_key_value_pairs"
             }
-        },
-        {
-            "__type__": "post_process",
-            "process_prediction": false,
-            "operator": {
-                "__type__": "literal_str_to_list_of_key_value_pairs"
-            }
         }
-    ]
+    ],
+    "serializer": {
+        "__type__": "multi_type_serializer",
+        "serializers": [
+            {
+                "__type__": "image_serializer"
+            },
+            {
+                "__type__": "dict_as_json_serializer"
+            },
+            {
+                "__type__": "list_serializer"
+            }
+        ]
+    }
 }
