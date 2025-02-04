@@ -60,9 +60,9 @@ The ground truth entities are provided as spans within the provided texts,
 and the model is prompted to identify these entities.
 Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
-Example code <https://github.com/IBM/unitxt/blob/main/examples/ner_evaluation.py>`__
+`Example code  <https://github.com/IBM/unitxt/blob/main/examples/ner_evaluation.py>`__
 
-Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Open NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
+Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
 
 Evaluation usecases
 -----------------------
@@ -140,7 +140,7 @@ This example demonstrates how to use LLM-as-a-Judge with a predefined criteria, 
 
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_llm_as_judge_direct_predefined_criteria.py>`__
 
-Related documentation: :ref:`Using LLM as a Judge in Unitxt`
+Related documentation: :ref:`Using LLM as a Judge in Unitxt <llm_as_judge>`
 
 
 Using LLM as judge for direct comparison using a custom criteria
@@ -166,7 +166,7 @@ Related documentation: :ref:`End to end Direct example`
 
 
 Using LLM as a judge for pairwise comparison using a predefined criteria
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 This example demonstrates how to use LLM-as-a-Judge for pairwise comparison using a predefined criteria from the catalog. The unitxt catalog has 7 predefined criteria for pairwise evaluators.
 We also showcase that the criteria does not need to be the same across the entire dataset and that the framework can handle different criteria for each datapoint.
@@ -243,6 +243,19 @@ Evaluate Image-Text to Text Models with different templates and explore the sens
 `Example code <https://github.com/IBM/unitxt/blob/main/examples/evaluate_image_text_to_text_with_different_templates.py>`__
 
 Related documentation: :ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
+
+Evaluate Image Key Value Extraction task
++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to evaluate an image key value extraction task.  It renders several images of given texts and then prompts a vision model to extract key value pairs from the images.
+This requires the vision model to understand the texts in the images, and extract relevant values. It computes overall F1 scores and F1 scores for each of the keys based on ground truth key value pairs.
+Note the same code can be used for textual key value extraction, just py providing input texts instead of input images.
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/key_value_extraction_evaluation.py>`__
+
+Related documentation: :ref:`Key Value Extraction task in catalog <catalog.tasks.key_value_extraction>`, :ref:`Inference Engines <inference>`.
+:ref:`Multi-Modality Guide <multi_modality>`, :ref:`Inference Engines <inference>`.
+
 
 Advanced topics
 ----------------------------
