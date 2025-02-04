@@ -326,11 +326,11 @@ class LoadHF(Loader):
             # split names are not known before the splits themselves are loaded, and we need to load them here
 
         try:
-            dataset = self.stream_dataset(split=None)
+            dataset = self.load_dataset(split=None)
         except (
             NotImplementedError
         ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset(split=None)
+            dataset = self.load_dataset(split=None, streaming=False)
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
@@ -356,10 +356,10 @@ class LoadHF(Loader):
             dataset = self.filter_load(dataset)
 
         limit = self.get_limit()
-        if limit is not None:
-            dataset = dataset.take(limit)
-
-        yield from dataset
+        for i, instance in enumerate(dataset):
+            yield instance
+            if i + 1 > limit:
+                break
 
 
 class LoadCSV(Loader):
