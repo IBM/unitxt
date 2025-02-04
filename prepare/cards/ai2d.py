@@ -15,7 +15,7 @@ template = MultipleChoiceTemplate(
 )
 
 card = TaskCard(
-    loader=LoadHF(path="lmms-lab/ai2d", all_splits=["test"]),
+    loader=LoadHF(path="lmms-lab/ai2d"),
     preprocess_steps=[
         ToImage(field="image", to_field="context"),
         Rename(field="options", to_field="choices"),

@@ -11,7 +11,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="wiki_bio", streaming=True, all_splits=["train", "test", "val"]),
+    loader=LoadHF(path="wiki_bio", streaming=True),
     preprocess_steps=[
         SplitRandomMix({"train": "train", "validation": "val", "test": "test"}),
         ListToKeyValPairs(

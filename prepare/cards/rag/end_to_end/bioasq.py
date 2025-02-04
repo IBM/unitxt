@@ -14,7 +14,6 @@ card = TaskCard(
         path="enelpol/rag-mini-bioasq",
         name="question-answer-passages",
         data_classification_policy=["public"],
-        all_splits=["train", "test"],
     ),
     preprocess_steps=[
         Copy(
@@ -82,7 +81,6 @@ card = TaskCard(
         path="enelpol/rag-mini-bioasq",
         name="text-corpus",
         data_classification_policy=["public"],
-        all_splits=["train", "test"],
     ),
     preprocess_steps=[
         RenameSplits({"test": "train"}),

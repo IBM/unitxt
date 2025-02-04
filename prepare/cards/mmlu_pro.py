@@ -27,7 +27,6 @@ for topic in topics:
         loader=LoadHF(
             path="TIGER-Lab/MMLU-Pro",
             filtering_lambda=f"lambda x: x['category'] == '{topic}'",
-            all_splits=["test", "validation"],
         ),
         preprocess_steps=[
             Deduplicate(by=["question", "options", "answer", "category"]),

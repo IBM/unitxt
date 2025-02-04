@@ -243,7 +243,6 @@ class LoadHF(LazyLoader):
     name: Optional[str] = None
     data_dir: Optional[str] = None
     split: Optional[str] = None
-    all_splits: Optional[List[str]] = None
     data_files: Optional[
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None

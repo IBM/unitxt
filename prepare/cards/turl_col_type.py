@@ -15,7 +15,6 @@ card = TaskCard(
         path="ibm/turl_table_col_type",
         data_classification_policy=["public"],
         streaming=True,
-        all_splits=["train", "validation", "test"],
     ),
     task=Task(
         input_fields={

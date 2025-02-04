@@ -33,7 +33,6 @@ for split in splits.keys():
     card = TaskCard(
         loader=LoadHF(
             path="PrimeQA/clapnq",
-            all_splits=["train", "validation"],
         ),
         preprocess_steps=[
             SplitRandomMix(splits[split]),

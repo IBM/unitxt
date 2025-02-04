@@ -15,10 +15,7 @@ settings = get_settings()
 with settings.context(allow_unverified_code=True):
     card = TaskCard(
         loader=LoadHF(
-            path="ibm/tab_fact",
-            streaming=False,
-            data_classification_policy=["public"],
-            all_splits=["train", "validation", "test"],
+            path="ibm/tab_fact", streaming=False, data_classification_policy=["public"]
         ),
         preprocess_steps=[
             Rename(field_to_field={"table": "text_a", "statement": "text_b"}),

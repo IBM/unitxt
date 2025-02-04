@@ -16,11 +16,7 @@ template = MultiReferenceTemplate(
 
 for language in ["en", "fr"]:
     card = TaskCard(
-        loader=LoadHF(
-            path="cmarkea/doc-vqa",
-            data_classification_policy=["public"],
-            all_splits=["train", "test"],
-        ),
+        loader=LoadHF(path="cmarkea/doc-vqa", data_classification_policy=["public"]),
         preprocess_steps=[
             "splitters.small_no_dev",
             Explode(field=f"qa/{language}", to_field="pair"),
@@ -52,10 +48,7 @@ for language in ["en", "fr"]:
 
 card = TaskCard(
     loader=LoadHF(
-        path="lmms-lab/DocVQA",
-        name="DocVQA",
-        data_classification_policy=["public"],
-        all_splits=["train", "test"],
+        path="lmms-lab/DocVQA", name="DocVQA", data_classification_policy=["public"]
     ),
     preprocess_steps=[
         RenameSplits(mapper={"validation": "test"}),

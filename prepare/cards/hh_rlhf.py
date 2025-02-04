@@ -9,7 +9,7 @@ from unitxt.string_operators import Join, Replace, Split, Strip
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="Anthropic/hh-rlhf", all_splits=["train", "test"]),
+    loader=LoadHF(path="Anthropic/hh-rlhf"),
     preprocess_steps=[
         "splitters.small_no_dev",
         Strip(field="chosen"),

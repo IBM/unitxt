@@ -14,7 +14,6 @@ card = TaskCard(
         path="rag-datasets/rag-mini-wikipedia",
         name="question-answer",
         data_classification_policy=["public"],
-        all_splits=["test"],
     ),
     preprocess_steps=[
         SplitRandomMix(
@@ -64,7 +63,6 @@ card = TaskCard(
         path="rag-datasets/rag-mini-wikipedia",
         name="text-corpus",
         data_classification_policy=["public"],
-        all_splits=["test"],
     ),
     preprocess_steps=[
         RenameSplits(

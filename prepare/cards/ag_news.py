@@ -20,7 +20,7 @@ for i in range(len(classlabels.names)):
 
 
 card = TaskCard(
-    loader=LoadHF(path=f"{dataset_name}", all_splits=["train", "test"]),
+    loader=LoadHF(path=f"{dataset_name}"),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}

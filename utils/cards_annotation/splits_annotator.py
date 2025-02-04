@@ -1,8 +1,21 @@
 # Enriches the cards, whose loader= LoadHF (to begin with) with split-names scraped from hf.
 # Copies the exhastive search for task-card generators - from test_preparation,
 # and assumes a tweaking of test_card to read, right as its first lines:
-# card_info = {"path" : card.loader.path if hasattr(card.loader, "path") else "",
-#              "name": card.loader.name if hasattr(card.loader, "name") else ""}
+# from unitxt.loaders import LoadHF
+# from datasets import get_dataset_split_names
+# if hasattr(card.loader, "splits") and card.loader.splits is not None:
+#     print("     ")
+#     return
+# splits = None
+# if isinstance(card.loader, LoadHF):
+#     try:
+#         splits = get_dataset_split_names(path=card.loader.path, config_name=card.loader.name, trust_remote_code=True)
+#     except:
+#         splits = None
+# if splits is None:
+#     print("    ")
+#     return
+# card_info = {"splits": splits}
 # jsoned_card_info = str(json.dumps(card_info))
 # print(jsoned_card_info)
 # return
@@ -23,7 +36,6 @@ import os
 import sys
 from subprocess import PIPE, Popen
 
-from datasets import get_dataset_split_names
 from unitxt.logging_utils import get_logger
 from unitxt.text_utils import lines_defining_obj_in_card
 
@@ -72,37 +84,11 @@ for file in all_preparation_files:
     # have the same info. (see e.g. coedit.py)
     # We scrape info by the first card, and plant in all of them
     #
-    card = json.loads(for_jsons[0])
-    if "path" not in card or card["path"] is None or len(card["path"]) == 0:
-        # not a decent LoadHF
+    splits = json.loads(for_jsons[0])
+    if "splits" not in splits:
+        # not a decent splits
         continue
-    split_names = []
-    try:
-        split_names = get_dataset_split_names(
-            path=card["path"], config_name=card["name"], trust_remote_code=True
-        )
-        if card["name"] is None:
-            card["name"] = ""  # for printouts
-
-    except Exception:
-        if card["name"] is None:
-            card["name"] = ""  # for printouts
-
-        with open("all_infos.txt", "a") as writer:
-            writer.write(
-                "\n!!!!!! tried get_dataset_split_names on path and name but failed -------------\n"
-            )
-            writer.write(
-                f"LoadHF of path '{card['path']}' and name '{card['name']}' failed to return split names\n"
-            )
-        continue  # to next prepare file
-
-    with open("all_infos.txt", "a") as writer:
-        if split_names is not None and len(split_names) > 0:
-            writer.write("\n--------------scraped info-----------------------\n")
-            writer.write(
-                f"LoadHF of path '{card['path']}' and name '{card['name']}' leads to splits {split_names}\n"
-            )
+    split_names = splits["splits"]
 
     if split_names is None or len(split_names) == 0:
         continue  # to next prepare file
@@ -132,7 +118,7 @@ for file in all_preparation_files:
             major_closing = last_line_of_loadhf.rfind(")")
             new_last_line = (
                 last_line_of_loadhf[:major_closing]
-                + f", all_splits={split_names}"
+                + f", splits={split_names}"
                 + last_line_of_loadhf[major_closing:]
             )
             to_lines.append(new_last_line)
@@ -142,7 +128,7 @@ for file in all_preparation_files:
                 to_lines[-1] = to_lines[-1][:-1] + ",\n"
             indent = 4 + all_lines[starting_card].index("loader")
             prepend = " " * indent
-            to_lines.append(prepend + f"all_splits={split_names},\n")
+            to_lines.append(prepend + f"splits={split_names},\n")
             to_lines.append(last_line_of_loadhf)
 
         current_line = ending_card + 1

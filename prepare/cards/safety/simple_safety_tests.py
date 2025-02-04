@@ -11,9 +11,7 @@ from unitxt.test_utils.card import test_card
 
 card = TaskCard(
     loader=LoadHF(
-        path="Bertievidgen/SimpleSafetyTests",
-        data_classification_policy=["public"],
-        all_splits=["test"],
+        path="Bertievidgen/SimpleSafetyTests", data_classification_policy=["public"]
     ),
     preprocess_steps=[
         Rename(field_to_field={"prompt": "input"}),

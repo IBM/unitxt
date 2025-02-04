@@ -10,9 +10,7 @@ from unitxt.task import Task
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(
-        path="super_glue", name="wsc", all_splits=["test", "train", "validation"]
-    ),
+    loader=LoadHF(path="super_glue", name="wsc"),
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "False", "1": "True"}}),

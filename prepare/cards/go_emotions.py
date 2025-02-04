@@ -17,9 +17,7 @@ classes = ds_builder.info.features["labels"].feature.names
 mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
-    loader=LoadHF(
-        path=dataset_name, name=subset, all_splits=["train", "validation", "test"]
-    ),
+    loader=LoadHF(path=dataset_name, name=subset),
     preprocess_steps=[
         MapInstanceValues(mappers={"labels": mappers}, process_every_value=True),
         Set(

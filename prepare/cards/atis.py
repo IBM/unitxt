@@ -93,7 +93,6 @@ entity_types = [
 card = TaskCard(
     loader=LoadHF(
         path="tuetschek/atis",
-        all_splits=["train", "test"],
     ),
     preprocess_steps=[
         SplitStrip(

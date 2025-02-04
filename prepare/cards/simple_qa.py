@@ -10,11 +10,7 @@ from unitxt.test_utils.card import test_card
 
 with unitxt.settings.context(allow_unverified_code=True):
     card = TaskCard(
-        loader=LoadHF(
-            path="basicv8vc/SimpleQA",
-            data_classification_policy=["public"],
-            all_splits=["test"],
-        ),
+        loader=LoadHF(path="basicv8vc/SimpleQA", data_classification_policy=["public"]),
         preprocess_steps=[
             Rename(field="problem", to_field="question"),
             Wrap(field="answer", inside="list", to_field="answers"),

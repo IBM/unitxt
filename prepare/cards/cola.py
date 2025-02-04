@@ -9,7 +9,7 @@ from unitxt.catalog import add_to_catalog
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="glue", name="cola", all_splits=["train", "validation", "test"]),
+    loader=LoadHF(path="glue", name="cola"),
     preprocess_steps=[
         "splitters.small_no_test",
         MapInstanceValues(mappers={"label": {"0": "unacceptable", "1": "acceptable"}}),

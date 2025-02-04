@@ -10,17 +10,7 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(
-        path="glue",
-        name="mnli",
-        all_splits=[
-            "train",
-            "validation_matched",
-            "validation_mismatched",
-            "test_matched",
-            "test_mismatched",
-        ],
-    ),
+    loader=LoadHF(path="glue", name="mnli"),
     preprocess_steps=[
         RenameSplits({"validation_matched": "validation"}),
         "splitters.small_no_test",

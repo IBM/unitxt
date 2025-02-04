@@ -11,7 +11,7 @@ from unitxt.operators import Shuffle
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="ethos", name="binary", all_splits=["train"]),
+    loader=LoadHF(path="ethos", name="binary"),
     preprocess_steps=[
         Shuffle(page_size=1000000),
         SplitRandomMix({"train": "train[20%]", "test": "train[80%]"}),

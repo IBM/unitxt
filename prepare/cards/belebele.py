@@ -137,7 +137,7 @@ language_codes = [
 
 for lang in language_codes:
     card = TaskCard(
-        loader=LoadHF(path="facebook/belebele", name=lang, all_splits=["test"]),
+        loader=LoadHF(path="facebook/belebele", name=lang),
         preprocess_steps=[
             ListFieldValues(
                 fields=["mc_answer1", "mc_answer2", "mc_answer3", "mc_answer4"],

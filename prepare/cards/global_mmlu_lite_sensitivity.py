@@ -104,7 +104,6 @@ with settings.context(allow_unverified_code=True):
                     path="CohereForAI/Global-MMLU-Lite",
                     name=language,
                     filtering_lambda=filtering_lambda,
-                    all_splits=["test", "dev"],
                 ),
                 preprocess_steps=[
                     SplitRandomMix({"test": "test[100%]", "train": "test[10%]"}),

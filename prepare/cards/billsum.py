@@ -10,7 +10,7 @@ from unitxt.test_utils.card import test_card
 n_chars_to_filter_by_list = ["max", 6000, 10000]
 for n_chars_to_filter_by in n_chars_to_filter_by_list:
     card = TaskCard(
-        loader=LoadHF(path="billsum", all_splits=["train", "test", "ca_test"]),
+        loader=LoadHF(path="billsum"),
         preprocess_steps=[
             SplitRandomMix(
                 {"train": "train[87.5%]", "validation": "train[12.5%]", "test": "test"}

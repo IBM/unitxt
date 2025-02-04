@@ -4,7 +4,7 @@ from unitxt.operators import ListFieldValues
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="Muennighoff/babi", all_splits=["train", "validation", "test"]),
+    loader=LoadHF(path="Muennighoff/babi"),
     preprocess_steps=[
         Rename(field_to_field={"passage": "context"}),
         Set({"context_type": "description"}),

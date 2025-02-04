@@ -6,7 +6,7 @@ from unitxt.operators import Copy, ZipFieldValues
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="stanfordnlp/coqa", all_splits=["train", "validation"]),
+    loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
         Set(fields={"context_type": "story"}),
@@ -62,7 +62,7 @@ test_card(card)
 add_to_catalog(card, "cards.coqa.qa", overwrite=True)
 
 card = TaskCard(
-    loader=LoadHF(path="stanfordnlp/coqa", all_splits=["train", "validation"]),
+    loader=LoadHF(path="stanfordnlp/coqa"),
     preprocess_steps=[
         "splitters.small_no_test",
         Set(fields={"context_type": "dialog", "completion_type": "response"}),

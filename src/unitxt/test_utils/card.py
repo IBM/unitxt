@@ -6,6 +6,7 @@ import tempfile
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
 from ..collections import Collection
+from ..loaders import LoadHF
 from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
@@ -59,6 +60,24 @@ def load_examples_from_dataset_recipe(card, template_card_index, debug, **kwargs
     kwargs["template_card_index"] = template_card_index
 
     recipe = DatasetRecipe(card=card, **kwargs)
+    loader = recipe.loading.steps[0]
+    if (
+        isinstance(loader, LoadHF)
+        and hasattr(loader, "splits")
+        and loader.splits is not None
+        and isinstance(loader.splits, list)
+    ):
+        loaded_splits = loader()
+        keys_loaded_splits = str(sorted(loaded_splits.keys()))
+        saved_splits = loader.splits
+        loader.splits = None
+        non_splits_loaded_splits = loader()
+        keys_non_splits_loaded_splits = str(sorted(non_splits_loaded_splits.keys()))
+        loader.splits = saved_splits
+        assert (
+            keys_loaded_splits == keys_non_splits_loaded_splits
+        ), f"splits names {keys_non_splits_loaded_splits}, at end of loader() when starting with self.splits=None, are different from {keys_loaded_splits} -- obtained at the end of loader() when starting with the hard coded splits: {saved_splits}, for card of path {loader.path}"
+
     logger.info(f"Using these card recipe parameters: {kwargs}")
 
     if debug:

@@ -4,7 +4,7 @@ from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="squad", all_splits=["train", "validation"]),
+    loader=LoadHF(path="squad"),
     preprocess_steps=[
         "splitters.small_no_test",
         Copy(field="answers/text", to_field="answers"),

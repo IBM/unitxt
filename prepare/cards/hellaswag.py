@@ -4,7 +4,7 @@ from unitxt.operators import CastFields, Rename, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="hellaswag", all_splits=["train", "test", "validation"]),
+    loader=LoadHF(path="hellaswag"),
     preprocess_steps=[
         "splitters.large_no_test",
         Rename(

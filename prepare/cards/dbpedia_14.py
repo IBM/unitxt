@@ -34,7 +34,7 @@ classes = [
 mappers = {str(i): cls for i, cls in enumerate(classes)}
 
 card = TaskCard(
-    loader=LoadHF(path=f"{dataset_name}", all_splits=["train", "test"]),
+    loader=LoadHF(path=f"{dataset_name}"),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         SplitRandomMix(

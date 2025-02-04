@@ -120,11 +120,7 @@ is_first = True
 for language in languages:
     for subject in subtasks:
         card = TaskCard(
-            loader=LoadHF(
-                path="CohereForAI/Global-MMLU",
-                name=language,
-                all_splits=["dev", "test"],
-            ),
+            loader=LoadHF(path="CohereForAI/Global-MMLU", name=language),
             preprocess_steps=[
                 FilterByCondition(values={"subject": subject}, condition="eq"),
                 Deduplicate(by=["question", "subject", "answer"]),

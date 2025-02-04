@@ -15,11 +15,7 @@ with unitxt.settings.context(
     disable_hf_datasets_cache=False,
 ):
     card = TaskCard(
-        loader=LoadHF(
-            path="THUDM/LongBench-v2",
-            data_classification_policy=["public"],
-            all_splits=["train"],
-        ),
+        loader=LoadHF(path="THUDM/LongBench-v2", data_classification_policy=["public"]),
         preprocess_steps=[
             RenameSplits({"train": "test"}),
             ListFieldValues(

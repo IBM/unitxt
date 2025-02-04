@@ -24,7 +24,6 @@ for subset in subsets:
                 name=subset,
                 streaming=True,
                 filtering_lambda=f'lambda instance: instance["language"]=="{lang}"',
-                all_splits=["test"],
             ),
             preprocess_steps=[
                 SplitRandomMix(

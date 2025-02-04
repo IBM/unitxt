@@ -17,7 +17,7 @@ template = MultiReferenceTemplate(
 
 
 card = TaskCard(
-    loader=LoadHF(path="vidore/infovqa_train", all_splits=["train"]),
+    loader=LoadHF(path="vidore/infovqa_train"),
     preprocess_steps=[
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
@@ -52,7 +52,6 @@ card = TaskCard(
         path="lmms-lab/DocVQA",
         name="InfographicVQA",
         data_classification_policy=["public"],
-        all_splits=["train"],
     ),
     preprocess_steps=[
         RenameSplits(mapper={"validation": "test"}),
