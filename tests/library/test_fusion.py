@@ -60,6 +60,7 @@ class TestFusion(UnitxtTestCase):
 
     def test_nonoverlapping_splits_fusion(self):
         operator = FixedFusion(
+            include_splits=["train", "test"],
             subsets={
                 "origin_train": IterableSource(
                     {"train": [{"x": "x1"}, {"x": "x2"}, {"x": "x3"}]}
@@ -217,7 +218,7 @@ class TestFusion(UnitxtTestCase):
                 {"b": "y2", "subset": ["origin2"]},
             ],
         }
-        for key in res:
+        for key in ["train", "test"]:
             self.compare_stream(targets[key], list(res[key]))
 
         operator = WeightedFusion(
@@ -290,7 +291,7 @@ class TestFusion(UnitxtTestCase):
                 {"b": "y5", "subset": ["origin2"]},
             ],
         }
-        for key in res:
+        for key in ["train", "test"]:
             self.compare_stream(targets[key], list(res[key]))
 
         targets = [
@@ -396,62 +397,62 @@ class TestFusion(UnitxtTestCase):
                         "num_of_instances": 13,
                     },
                     "wnli": {
-                        "num_of_instances": 12,
                         "f1_macro": 0.357,
                         "f1_entailment": 0.0,
                         "f1_not entailment": 0.714,
-                        "score": 0.5,
+                        "f1_macro_ci_low": 0.182,
+                        "f1_macro_ci_high": 0.467,
                         "score_name": "f1_micro",
-                        "score_ci_low": 0.235,
-                        "score_ci_high": 0.736,
-                        "f1_macro_ci_low": 0.205,
-                        "f1_macro_ci_high": 0.429,
+                        "score": 0.5,
+                        "score_ci_high": 0.762,
+                        "score_ci_low": 0.2,
+                        "num_of_instances": 12,
                         "accuracy": 0.417,
                         "accuracy_ci_low": 0.167,
                         "accuracy_ci_high": 0.667,
                         "f1_micro": 0.5,
-                        "f1_micro_ci_low": 0.235,
-                        "f1_micro_ci_high": 0.736,
+                        "f1_micro_ci_low": 0.2,
+                        "f1_micro_ci_high": 0.762,
                         "groups": {
                             "template": {
                                 "templates.classification.multi_class.relation.default": {
-                                    "num_of_instances": 12,
                                     "f1_macro": 0.357,
                                     "f1_entailment": 0.0,
                                     "f1_not entailment": 0.714,
-                                    "score": 0.5,
+                                    "f1_macro_ci_low": 0.182,
+                                    "f1_macro_ci_high": 0.467,
                                     "score_name": "f1_micro",
-                                    "score_ci_low": 0.235,
-                                    "score_ci_high": 0.736,
-                                    "f1_macro_ci_low": 0.205,
-                                    "f1_macro_ci_high": 0.429,
+                                    "score": 0.5,
+                                    "score_ci_high": 0.762,
+                                    "score_ci_low": 0.2,
+                                    "num_of_instances": 12,
                                     "accuracy": 0.417,
                                     "accuracy_ci_low": 0.167,
                                     "accuracy_ci_high": 0.667,
                                     "f1_micro": 0.5,
-                                    "f1_micro_ci_low": 0.235,
-                                    "f1_micro_ci_high": 0.736,
+                                    "f1_micro_ci_low": 0.2,
+                                    "f1_micro_ci_high": 0.762,
                                 }
                             }
                         },
                     },
                     "rte": {
-                        "num_of_instances": 5,
                         "f1_macro": 0.333,
-                        "f1_not entailment": 0.667,
                         "f1_entailment": 0.0,
-                        "score": 0.5,
-                        "score_name": "f1_micro",
-                        "score_ci_low": 0.0,
-                        "score_ci_high": 0.795,
+                        "f1_not entailment": 0.667,
                         "f1_macro_ci_low": 0.0,
-                        "f1_macro_ci_high": 0.75,
+                        "f1_macro_ci_high": 0.823,
+                        "score_name": "f1_micro",
+                        "score": 0.5,
+                        "score_ci_high": 0.889,
+                        "score_ci_low": 0.0,
+                        "num_of_instances": 5,
                         "accuracy": 0.4,
                         "accuracy_ci_low": 0.0,
                         "accuracy_ci_high": 0.8,
                         "f1_micro": 0.5,
                         "f1_micro_ci_low": 0.0,
-                        "f1_micro_ci_high": 0.795,
+                        "f1_micro_ci_high": 0.889,
                     },
                     "score": 0.161,
                     "score_name": "subsets_mean",

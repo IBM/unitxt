@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -31,15 +32,17 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
 )
 
 import pandas as pd
 
 from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
+from .error_utils import UnitxtWarning
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
-from .serializers import TableSerializer
+from .serializers import ImageSerializer, TableSerializer
 from .types import Table
 from .utils import recursive_copy
 
@@ -145,8 +148,7 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
         row_cell_values = [
             str(value) if isinstance(value, (int, float)) else value for value in row
         ]
-
-        serialized_row_str += " | ".join(row_cell_values)
+        serialized_row_str += " | ".join([str(value) for value in row_cell_values])
 
         return f"row {row_index} : {serialized_row_str}"
 
@@ -237,7 +239,7 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         return (
             "pd.DataFrame({\n"
-            + json.dumps(data_dict)
+            + json.dumps(data_dict)[1:-1]
             + "},\nindex="
             + str(list(range(len(rows))))
             + ")"
@@ -359,6 +361,67 @@ class SerializeTableAsConcatenation(SerializeTable):
         return serialized_tbl_str.strip()
 
 
+class SerializeTableAsImage(SerializeTable):
+    _requirements_list = ["matplotlib", "pillow"]
+
+    def serialize_table(self, table_content: Dict) -> str:
+        raise NotImplementedError()
+
+    def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
+        table_content = recursive_copy(value)
+        if self.shuffle_columns:
+            table_content = shuffle_columns(table=table_content, seed=self.seed)
+
+        if self.shuffle_rows:
+            table_content = shuffle_rows(table=table_content, seed=self.seed)
+
+        import io
+
+        import matplotlib.pyplot as plt
+        import pandas as pd
+        from PIL import Image
+
+        # Extract headers and rows from the dictionary
+        header = table_content.get("header", [])
+        rows = table_content.get("rows", [])
+
+        assert header and rows, "Incorrect input table format"
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        header = [
+            f"{col}_{header[:i].count(col)}" if header[:i].count(col) > 0 else col
+            for i, col in enumerate(header)
+        ]
+
+        # Create a pandas DataFrame
+        df = pd.DataFrame(rows, columns=header)
+
+        # Fix duplicate columns, ensuring the first occurrence has no suffix
+        df.columns = [
+            f"{col}_{i}" if df.columns.duplicated()[i] else col
+            for i, col in enumerate(df.columns)
+        ]
+
+        # Create a matplotlib table
+        plt.rcParams["font.family"] = "Serif"
+        fig, ax = plt.subplots(figsize=(len(header) * 1.5, len(rows) * 0.5))
+        ax.axis("off")  # Turn off the axes
+
+        table = pd.plotting.table(ax, df, loc="center", cellLoc="center")
+        table.auto_set_column_width(col=range(len(df.columns)))
+        table.scale(1.5, 1.5)
+
+        # Save the plot to a BytesIO buffer
+        buf = io.BytesIO()
+        plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
+        plt.close(fig)  # Close the figure to free up memory
+        buf.seek(0)
+
+        # Load the image from the buffer using PIL
+        image = Image.open(buf)
+        return ImageSerializer().serialize({"image": image, "format": "png"}, instance)
+
+
 # truncate cell value to maximum allowed length
 def truncate_cell(cell_value, max_len):
     if cell_value is None:
@@ -455,6 +518,15 @@ class TruncateTableRows(FieldOperator):
         table_content["rows"] = remaining_rows
 
         return table_content
+
+
+class GetNumOfTableCells(FieldOperator):
+    """Get the number of cells in the given table."""
+
+    def process_value(self, table: Any) -> Any:
+        num_of_rows = len(table.get("rows"))
+        num_of_cols = len(table.get("header"))
+        return num_of_rows * num_of_cols
 
 
 class SerializeTableRowAsText(InstanceOperator):
@@ -950,3 +1022,21 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         random.shuffle(shuffled_header)
 
         return {"header": shuffled_header, "rows": table["rows"]}
+
+
+class JsonStrToListOfKeyValuePairs(FieldOperator):
+    def process_value(self, text: str) -> List[Tuple[str, str]]:
+        text = text.replace("null", "None")
+
+        try:
+            dict_value = ast.literal_eval(text)
+        except Exception as e:
+            UnitxtWarning(
+                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+            )
+            dict_value = {}
+        return [
+            (str(key), str(value))
+            for key, value in dict_value.items()
+            if value is not None
+        ]

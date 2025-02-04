@@ -38,7 +38,11 @@ constants = get_constants()
 
 
 def nan_mean(scores):
-    return mean(score for score in scores if score == score)
+    result = mean(score for score in scores if score == score)
+    try:
+        return float(result)
+    except:
+        return result
 
 
 class FromPredictionsAndOriginalData(StreamInitializerOperator):
@@ -695,6 +699,10 @@ class InstanceScores(list):
 
 
 class EvaluationResults(list):
+    def __init__(self, *args, metadata=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.metadata = metadata if metadata is not None else {}
+
     @property
     def global_scores(self):
         return GlobalScores(self[0]["score"]["global"])

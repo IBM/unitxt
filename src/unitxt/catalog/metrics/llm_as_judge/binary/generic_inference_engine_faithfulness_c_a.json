@@ -8,5 +8,6 @@
     "format": null,
     "main_score": "faithfulness_c_a",
     "prediction_field": "answer",
-    "infer_log_probs": false
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.faithfulness.generic_inference_engine_c_a"
 }

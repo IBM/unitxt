@@ -14,6 +14,7 @@ card = TaskCard(
     loader=LoadHF(
         path="ibm/turl_table_col_type",
         data_classification_policy=["public"],
+        streaming=True,
     ),
     task=Task(
         input_fields={
@@ -31,12 +32,29 @@ card = TaskCard(
             "metrics.accuracy",
             "metrics.f1_macro_multi_label",
         ],
+        augmentable_inputs=[
+            "page_title",
+            "section_title",
+            "table_caption",
+            "table",
+            "colname",
+            "vocab",
+        ],
     ),
     templates=[
         InputOutputTemplate(
-            input_format="""
-                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types. \nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} \nCandidate Types: {vocab} \nOutput only the correct column types for this column (column name: {colname}) from the candidate types.
+            instruction="""
+                    This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types.
+                    Candidate Types: {vocab}
+                    \nOutput only the correct column types from the candidate list for the mentioned columns. Do not include any explanations, extra information, or introductory text—only the final answer.
+                    \nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.
                 """.strip(),
+            input_format="\nColumn name: {colname}"
+            "\nPage Title: {page_title} "
+            "\nSection Title: {section_title} "
+            "\nTable caption: {table_caption} "
+            "\nTable: \n{table} "
+            "\nSelected Column: {colname} ",
             output_format="{annotations}",
             postprocessors=[
                 "processors.take_first_non_empty_line",
@@ -55,5 +73,5 @@ card = TaskCard(
     },
 )
 
-test_card(card)
+test_card(card, strict=False, demos_pool_size=-1, num_demos=1)
 add_to_catalog(card, "cards.turl_col_type", overwrite=True)

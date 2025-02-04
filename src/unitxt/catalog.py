@@ -153,7 +153,7 @@ def add_link_to_catalog(
         deprecated_msg = None
 
     artifact_link = ArtifactLink(
-        artifact_linked_to=artifact_linked_to, __deprecated_msg__=deprecated_msg
+        to=artifact_linked_to, __deprecated_msg__=deprecated_msg
     )
 
     add_to_catalog(

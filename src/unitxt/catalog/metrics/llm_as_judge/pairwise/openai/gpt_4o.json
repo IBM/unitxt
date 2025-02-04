@@ -2,7 +2,7 @@
     "__type__": "llm_judge_pairwise",
     "inference_engine": {
         "__type__": "lite_llm_inference_engine",
-        "model": "openai/gpt-4o",
+        "model": "openai/gpt-4o-2024-08-06",
         "max_tokens": 1024,
         "seed": 42
     },

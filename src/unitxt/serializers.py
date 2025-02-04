@@ -4,10 +4,20 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
+from .db_utils import get_db_connector
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Image, Number, Table, Video
+from .types import (
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Number,
+    SQLDatabase,
+    Table,
+    Video,
+)
 
 constants = get_constants()
 
@@ -127,9 +137,29 @@ class VideoSerializer(ImageSerializer):
         return "".join(serialized_images)
 
 
+class DocumentSerializer(SingleTypeSerializer):
+    serialized_type = Document
+
+    def serialize(self, value: Document, instance: Dict[str, Any]) -> str:
+        return f"# {value['title']}\n\n{value['body']}"
+
+
+class MultiDocumentSerializer(DocumentSerializer):
+    serialized_type = MultiDocument
+
+    def serialize(self, value: MultiDocument, instance: Dict[str, Any]) -> str:
+        documents = []
+        for document in value:
+            documents.append(super().serialize(document, instance))
+        return "\n\n".join(documents)
+
+
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
+            DocumentSerializer(),
+            DialogSerializer(),
+            MultiDocumentSerializer(),
             ImageSerializer(),
             VideoSerializer(),
             TableSerializer(),
@@ -157,3 +187,13 @@ class MultiTypeSerializer(Serializer):
                 return serializer.serialize(value, instance)
 
         return str(value)
+
+
+class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
+    """Serializes a database schema into a string representation."""
+
+    serialized_type = SQLDatabase
+
+    def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        connector = get_db_connector(value["db_type"])(value)
+        return connector.get_table_schema()

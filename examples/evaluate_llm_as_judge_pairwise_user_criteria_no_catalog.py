@@ -4,8 +4,7 @@ from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.card import Task, TaskCard
 from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.llm_as_judge import LLMJudgePairwise
-from unitxt.llm_as_judge_operators import CreateCriteriaFromDict
+from unitxt.llm_as_judge import CreateCriteriaFromDict, LLMJudgePairwise
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
 

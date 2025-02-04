@@ -65,9 +65,7 @@ add_to_catalog(
 
 add_to_catalog(
     InputOutputTemplate(
-        input_format=(
-            'Problem: Sentence: "{text_a}";\n' 'Another sentence: "{text_b}"?'
-        ),
+        input_format=('Problem: Sentence: "{text_a}";\nAnother sentence: "{text_b}"?'),
         output_format="{label}",
         target_prefix="A: ",
         postprocessors=[
@@ -82,7 +80,7 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format=(
-            'question: "{text_a}" is true.\n' 'So, is "{text_b}" true as well?\n'
+            'question: "{text_a}" is true.\nSo, is "{text_b}" true as well?\n'
         ),
         output_format="{label}\n",
         target_prefix="prediction: ",
@@ -98,11 +96,7 @@ add_to_catalog(
 add_to_catalog(
     InputOutputTemplate(
         input_format=(
-            "Question:\n"
-            'SA: "{text_a}"\n\n'
-            'SB: "{text_b}"\n'
-            "\n"
-            "Is SB true, based on SA?\n"
+            'Question:\nSA: "{text_a}"\n\nSB: "{text_b}"\n\nIs SB true, based on SA?\n'
         ),
         output_format="{label}",
         target_prefix="Answer: ",

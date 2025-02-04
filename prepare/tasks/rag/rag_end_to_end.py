@@ -2,7 +2,7 @@ from typing import Any, List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
-from unitxt.types import RagResponse
+from unitxt.types import Dialog, RagResponse
 
 add_to_catalog(
     Task(
@@ -11,7 +11,7 @@ add_to_catalog(
         For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.
 """,
         input_fields={
-            "question": str,
+            "question": Union[str, Dialog],
             "question_id": Any,
             "metadata_field": str,
         },
@@ -43,6 +43,7 @@ add_to_catalog(
     "tasks.rag.end_to_end",
     overwrite=True,
 )
+
 
 add_to_catalog(
     Task(

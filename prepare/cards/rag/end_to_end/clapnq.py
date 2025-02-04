@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadCSV, LoadHF
 from unitxt.operators import Copy, ListFieldValues, Set
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -14,12 +14,6 @@ class ClapNqBenchmark:
     # Raw_data
     TRAIN_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/train/question_train_answerable.tsv"
     TEST_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
-
-
-@dataclass(frozen=True)
-class ClapNqDocuments:
-    # Raw_data
-    RAW_FILE_URL: str = "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
 
 
 card = TaskCard(
@@ -78,9 +72,8 @@ add_to_catalog(card, "cards.rag.benchmark.clap_nq.en", overwrite=True)
 
 # Documents
 card = TaskCard(
-    loader=LoadCSV(
-        sep="\t",
-        files={"train": ClapNqDocuments.RAW_FILE_URL},
+    loader=LoadHF(
+        path="PrimeQA/clapnq_passages",
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
