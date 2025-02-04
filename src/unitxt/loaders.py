@@ -64,7 +64,7 @@ from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from .dataclass import OptionalField
+from .error_utils import UnitxtWarning
 from .fusion import FixedFusion
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
@@ -222,14 +222,7 @@ class LoadHF(Loader):
     streaming: bool = None
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
-    requirements_list: List[str] = OptionalField(default_factory=list)
     splits: Optional[List[str]] = None
-
-    def verify(self):
-        for requirement in self.requirements_list:
-            if requirement not in self._requirements_list:
-                self._requirements_list.append(requirement)
-        super().verify()
 
     def filter_load(self, dataset: DatasetDict):
         if not settings.allow_unverified_code:
@@ -246,7 +239,7 @@ class LoadHF(Loader):
 
     # returns Dict when split names are not known in advance, and just the the single split dataset - if known
     def load_dataset(
-        self, split: str, streaming=None
+        self, split: str, streaming=None, disable_memory_caching=False
     ) -> Union[IterableDatasetDict, IterableDataset]:
         dataset = self.__class__._loader_cache.get(str(self) + "_" + str(split), None)
         if dataset is None:
@@ -279,7 +272,8 @@ class LoadHF(Loader):
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
         self.__class__._loader_cache.max_size = settings.loader_cache_size
-        self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset
+        if not disable_memory_caching:
+            self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset
         return dataset
 
     def _maybe_set_classification_policy(self):
@@ -293,58 +287,43 @@ class LoadHF(Loader):
                 None,  # No warning when loading from public hub
             )
 
-    def load_iterables(
-        self
-    ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
-        # log limit once for the whole data
-        if self.get_limit() is not None:
-            self.log_limited_loading()
-
-        if self.split is not None:
-            return {
-                self.split: ReusableGenerator(
-                    self.split_generator, gen_kwargs={"split": self.split}
-                )
-            }
-
+    def get_splits(self):
+        if self.splits is not None:
+            return self.splits
         try:
-            split_names = get_dataset_split_names(
+            return get_dataset_split_names(
                 path=self.path,
                 config_name=self.name,
                 trust_remote_code=settings.allow_unverified_code,
             )
-            return {
-                split_name: ReusableGenerator(
-                    self.split_generator, gen_kwargs={"split": split_name}
-                )
-                for split_name in split_names
-            }
-
         except:
-            pass  # do nothing, and just continue to the usual load dataset
-            # self.split is None and
-            # split names are not known before the splits themselves are loaded, and we need to load them here
+            UnitxtWarning(
+                f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
+            )
+            try:
+                dataset = self.load_dataset(
+                    split=None, disable_memory_caching=True, streaming=True
+                )
+            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+                dataset = self.load_dataset(split=None, streaming=False)
+            return list(dataset.keys())
 
-        try:
-            dataset = self.load_dataset(split=None)
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset(split=None, streaming=False)
+    def load_iterables(
+        self
+    ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
+        if self.split is not None:
+            splits = [self.split]
+        else:
+            splits = self.get_splits()
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
-
-        limit = self.get_limit()
-        if limit is not None:
-            result = {}
-            for split_name in dataset:
-                result[split_name] = dataset[split_name].take(limit)
-            return result
-
-        return dataset
+        return {
+            split: ReusableGenerator(self.split_generator, gen_kwargs={"split": split})
+            for split in splits
+        }
 
     def split_generator(self, split: str) -> Generator:
+        if self.get_limit() is not None:
+            self.log_limited_loading()
         try:
             dataset = self.load_dataset(split=split)
         except (
@@ -358,7 +337,7 @@ class LoadHF(Loader):
         limit = self.get_limit()
         for i, instance in enumerate(dataset):
             yield instance
-            if i + 1 > limit:
+            if i + 1 >= limit:
                 break
 
 
