@@ -6030,7 +6030,17 @@ class GraniteGuardianWMLMetric(InstanceMetric):
 
         result = self.model.generate(
             prompt=[processed_input],
-            params=self.generation_params,
+            params={
+                "decoding_method": "greedy",
+                "max_new_tokens": 20,
+                "temperature": 0,
+                "return_options": {
+                    "token_logprobs": True,
+                    "generated_tokens": True,
+                    "input_text": True,
+                    "top_n_tokens": 5,
+                },
+            },
         )
         generated_tokens_list = result[0]["results"][0]["generated_tokens"]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
