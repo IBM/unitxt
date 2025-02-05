@@ -5853,20 +5853,20 @@ class PredictionLength(InstanceMetric):
 class RiskType(str, Enum):
     """Risk type for the Granite Guardian models"""
 
-    RAG = "rag"
-    USER_MESSAGE = "user_message"
-    ASSISTANT_MESSAGE = "assistant_message"
-    AGENTIC = "agentic_workflows"
+    RAG = "rag_risk"
+    USER_MESSAGE = "user_risk"
+    ASSISTANT_MESSAGE = "assistant_risk"
+    AGENTIC = "agentic_risk"
     CUSTOM_RISK = "custom_risk"
 
 
 class GraniteGuardianWMLMetric(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
-    main_score = "granite_guardian"
     reduction_map: Dict[str, List[str]] = None
     prediction_type = float
-
+    main_score = None
+    reduction_map = {}
     model_name: str = "ibm/granite-guardian-3-8b"
     hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
@@ -5901,7 +5901,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             "unethical_behavior",
         ],
         RiskType.RAG: ["context_relevance", "groundedness", "answer_relevance"],
-        RiskType.AGENTIC: ["function_calling_hallucination"],
+        RiskType.AGENTIC: ["function_call"],
     }
 
     _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
@@ -5966,11 +5966,21 @@ class GraniteGuardianWMLMetric(InstanceMetric):
                 f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
             )
         else:
-            logger.debug("Using custom risk")
+            # even though this is a custom risks, we will limit the
+            # message roles to be a subset of the roles Granite Guardian
+            # was trained with: user, assistant, context & tools.
+            # we just checked whether at least one of them is provided
             self.risk_type = RiskType.CUSTOM_RISK
+            assert (
+                self.tools_field in task_data
+                or self.user_message_field in task_data
+                or self.assistant_message_field in task_data
+                or self.contexts_field in task_data
+            ), UnitxtError(
+                f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.contexts_field}" fields'
+            )
 
     def prepare(self):
-        self.reduction_map = {"mean": [self.main_score]}
         if isinstance(self.risk_type, str):
             self.risk_type = RiskType[self.risk_type]
 
@@ -5981,10 +5991,19 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self.model_name.split("-")[-2][0] == self.hf_model_name.split("-")[-2][0]
         ), UnitxtError("Major version from WatsonX and HF model names must be the same")
 
+    def set_main_score(self):
+        self.main_score = (
+            f"granite_guardian_{self.risk_type.value}_{self.risk_name}"
+            if self.main_score is None
+            else self.main_score
+        )
+        self.reduction_map = {"mean": [self.main_score]}
+
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
 
         self.verify_guardian_config(task_data)
+        self.set_main_score()
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
@@ -5993,7 +6012,9 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self.inference_engine._load_model()
             self.model = self.inference_engine._model
             self.generation_params = self.inference_engine._set_logprobs_params({})
-
+        logger.debug(
+            f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
+        )
         messages = self.process_input_fields(task_data)
 
         guardian_config = {"risk_name": self.risk_name}
@@ -6013,14 +6034,17 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         )
         generated_tokens_list = result[0]["results"][0]["generated_tokens"]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
-        score = 1 - prob_of_risk if label is not None else np.nan
-        return {self.main_score: score}
+        score = prob_of_risk if label is not None else np.nan
+        result = {self.main_score: score, f"{self.main_score}_label": label}
+        logger.debug(f"Results are ready:\n{result}")
+        return result
 
     def create_message(self, role: str, content: str) -> list[dict[str, str]]:
         return [{"role": role, "content": content}]
 
     def process_input_fields(self, task_data):
         messages = []
+        logger.debug(f"Preparing messages for Granite Guardian.")
         if self.risk_type == RiskType.RAG:
             if self.risk_name == "context_relevance":
                 messages += self.create_message(
@@ -6049,7 +6073,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             )
             messages += self.create_message("user", task_data[self.user_message_field])
             messages += self.create_message(
-                "assistant", json.loads(task_data[self.assistant_message_field])
+                "assistant", task_data[self.assistant_message_field]
             )
         elif self.risk_type == RiskType.ASSISTANT_MESSAGE:
             messages += self.create_message("user", task_data[self.user_message_field])
@@ -6058,9 +6082,26 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             )
         elif self.risk_type == RiskType.USER_MESSAGE:
             messages += self.create_message("user", task_data[self.user_message_field])
+        elif self.risk_type == RiskType.CUSTOM_RISK:
+            if self.contexts_field in task_data:
+                messages += self.create_message(
+                    "context", "\n".join(task_data[self.contexts_field])
+                )
+            if self.tools_field in task_data:
+                messages += self.create_message(
+                    "tools", json.loads(task_data[self.tools_field])
+                )
+            if self.user_message_field in task_data:
+                messages += self.create_message(
+                    "user", task_data[self.user_message_field]
+                )
+            if self.assistant_message_field in task_data:
+                messages += self.create_message(
+                    "assistant", task_data[self.assistant_message_field]
+                )
         else:
-            raise NotImplementedError("Bring your own risk is not fully supported yet.")
-
+            raise NotImplementedError("Something went wrong generating the messages")
+        logger.debug(f"Input messages are:\n{messages}")
         return messages
 
     def parse_output(self, generated_tokens_list):

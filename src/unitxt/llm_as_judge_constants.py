@@ -85,6 +85,7 @@ class EvaluatorNameEnum(str, Enum):
     GRANITE3_1_2B = "Granite3.1-2b"
     GRANITE3_1_8B = "Granite3.1-8b"
 
+
 class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
     OPENAI = "openai"
@@ -183,7 +184,7 @@ EVALUATORS_METADATA = [
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_405B,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
-    )
+    ),
 ]
 
 ################################  Direct Assessment Criterias ################################
