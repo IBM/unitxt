@@ -1,9 +1,10 @@
-from typing import List
-
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
 from unitxt.templates import NullTemplate
+from typing import List
+
+print("Answer relevance evaluation")
 
 data = [
     {
@@ -17,15 +18,15 @@ dataset = create_dataset(
     task=Task(
         input_fields={"contexts": List[str], "answer": str, "question": str},
         reference_fields={},
-        prediction_type=str,
+        prediction_type=float,
         default_template=NullTemplate(),
-        metrics=["metrics.granite_guardian.rag.answer_relevance"],
+        metrics=["metrics.granite_guardian.rag_risk.answer_relevance"],
     ),
     test_set=data,
     split="test",
 )
 
-results = evaluate(predictions=["0"], data=dataset)
+results = evaluate(predictions=[0.0], data=dataset)
 
 print("Global Scores:")
 print(results.global_scores.summary)
