@@ -558,6 +558,37 @@ class AggregationReduction(Artifact, Generic[IntermediateType]):
         pass
 
 
+class MultiTurnMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    metric: MapReduceMetric[PredictionType, IntermediateType]
+
+    def map(
+        self,
+        prediction: PredictionType,
+        references: List[PredictionType],
+        task_data: Dict[str, Any],
+    ) -> IntermediateType:
+        intermidate = self.metric.map_stream([(prediction, references, task_data)])[0]
+
+        dialog_id = task_data["conversation"]["id"]
+        turn_id = len(task_data["conversation"]["dialog"])
+
+        return (intermidate, dialog_id, turn_id)
+
+    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
+        data = {}
+        for intermidate, dialog_id, turn_id in intermediates:
+            if dialog_id not in data:
+                data[dialog_id] = {}
+            if turn_id not in data[dialog_id]:
+                data[dialog_id][turn_id] = intermidate
+
+            for dialog_id, dialog_data in data.items():
+                pass
+
+
 class DictReduction(AggregationReduction[Dict[str, float]]):
     def reduce_list(self, lst: List[float]):
         pass

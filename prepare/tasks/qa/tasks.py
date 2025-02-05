@@ -2,7 +2,16 @@ from typing import List, Union
 
 from unitxt.blocks import Task
 from unitxt.catalog import add_link_to_catalog, add_to_catalog
-from unitxt.types import Audio, Dialog, Document, Image, MultiDocument, Table, Text
+from unitxt.types import (
+    Audio,
+    Conversation,
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Table,
+    Text,
+)
 
 add_link_to_catalog(
     artifact_linked_to="tasks.qa.extractive",
@@ -19,7 +28,7 @@ By default, classical Squad metric is used , but list of additional applicable m
         input_fields={
             "context": Union[Text, Table, Dialog],
             "context_type": str,
-            "question": str,
+            "question": Union[Text, Dialog],
         },
         reference_fields={"answers": List[str]},
         prediction_type=str,
@@ -28,6 +37,23 @@ By default, classical Squad metric is used , but list of additional applicable m
         augmentable_inputs=["context", "question"],
     ),
     "tasks.qa.extractive",
+    overwrite=True,
+)
+
+add_to_catalog(
+    Task(
+        __description__="""""",
+        input_fields={
+            "context": Union[Text, Table],
+            "conversation": Conversation,
+        },
+        reference_fields={"answers": List[str]},
+        prediction_type=str,
+        metrics=["metrics.squad"],
+        default_template="templates.qa.extractive",
+        augmentable_inputs=["context"],
+    ),
+    "tasks.qa.extractive.multi_turn",
     overwrite=True,
 )
 

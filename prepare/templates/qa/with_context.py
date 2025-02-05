@@ -131,3 +131,13 @@ add_to_catalog(
     "templates.qa.with_context.all",
     overwrite=True,
 )
+
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="Context: {context}\n{conversation}",
+        references_field="answers",
+    ),
+    "templates.qa.multi_turn.with_context.simple",
+    overwrite=True,
+)

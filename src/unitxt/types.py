@@ -21,6 +21,11 @@ class RagResponse(TypedDict):
 Dialog = NewType("Dialog", List[Turn])
 
 
+class Conversation(TypedDict):
+    id: str
+    dialog: Dialog
+
+
 class Image(TypedDict):
     image: Any
     format: str
@@ -60,6 +65,7 @@ register_type(Table)
 register_type(Audio)
 register_type(Image)
 register_type(Video)
+register_type(Conversation)
 register_type(Document)
 register_type(MultiDocument)
 register_type(RagResponse)
