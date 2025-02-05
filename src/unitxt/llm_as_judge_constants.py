@@ -84,9 +84,6 @@ class EvaluatorNameEnum(str, Enum):
     GRANITE3_8B = "Granite3.0-8b"
     GRANITE3_1_2B = "Granite3.1-2b"
     GRANITE3_1_8B = "Granite3.1-8b"
-    GRANITE_GUARDIAN3_1_2B = "Granite Guardian 3.1 2B"
-    GRANITE_GUARDIAN3_1_8B = "Granite Guardian 3.1 8B"
-
 
 class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
@@ -112,8 +109,6 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
     EvaluatorNameEnum.GRANITE3_1_2B: "ibm/granite-3.1-2b-instruct",
     EvaluatorNameEnum.GRANITE3_1_8B: "ibm/granite-3.1-8b-instruct",
-    EvaluatorNameEnum.GRANITE_GUARDIAN3_1_2B: "ibm/granite-guardian-3-2b",
-    EvaluatorNameEnum.GRANITE_GUARDIAN3_1_8B: "ibm/granite-guardian-3-8b",
 }
 
 MODEL_RENAMINGS = {
@@ -188,15 +183,7 @@ EVALUATORS_METADATA = [
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_405B,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
-    ),
-    EvaluatorMetadata(
-        EvaluatorNameEnum.GRANITE_GUARDIAN3_1_2B,
-        [ModelProviderEnum.WATSONX],
-    ),
-    EvaluatorMetadata(
-        EvaluatorNameEnum.GRANITE_GUARDIAN3_1_8B,
-        [ModelProviderEnum.WATSONX],
-    ),
+    )
 ]
 
 ################################  Direct Assessment Criterias ################################
