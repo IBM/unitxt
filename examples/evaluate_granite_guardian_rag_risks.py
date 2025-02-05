@@ -1,8 +1,9 @@
+from typing import List
+
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
 from unitxt.templates import NullTemplate
-from typing import List
 
 print("Answer relevance evaluation")
 
