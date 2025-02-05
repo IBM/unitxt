@@ -6,9 +6,7 @@ from unitxt.image_operators import DecodeImage, ToImage
 from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
-from unitxt.templates import MultiReferenceTemplate
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.148.189.104', 55557)
+
 
 templates = get_from_catalog("templates.qa.with_context.all")
 template = MultiReferenceTemplate(

@@ -7,8 +7,6 @@ from unitxt.operators import Rename
 from unitxt.splitters import RenameSplits, SplitRandomMix
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
-from unitxt.templates import MultiReferenceTemplate
-from unitxt.splitters import RenameSplits
 
 
 templates = get_from_catalog("templates.qa.with_context.all")

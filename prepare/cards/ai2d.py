@@ -5,7 +5,6 @@ from unitxt.image_operators import ToImage
 from unitxt.operators import Cast, Rename
 from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.card import test_card
-from unitxt.templates import MultipleChoiceTemplate
 
 
 templates = get_from_catalog("templates.qa.multiple_choice.with_context.no_intro.all")
