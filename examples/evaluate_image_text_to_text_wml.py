@@ -1,6 +1,6 @@
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import CrossProviderInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine, WMLInferenceEngineChat
 from unitxt.templates import MultipleChoiceTemplate, MultiReferenceTemplate
 
 import os
@@ -25,51 +25,44 @@ if False:
     import cvar_pyutils.debugging_tools
     cvar_pyutils.debugging_tools.set_remote_debugger('9.148.189.104', 55557) # 9.148.189.104
 with settings.context(disable_hf_datasets_cache=False):
-    inference_model = CrossProviderInferenceEngine(model="llama-3-2-11b-vision-instruct", provider="watsonx")
 
-    # # ai2d 11b template chain of thought
+
+    # ai2d 90b template
     # template = MultipleChoiceTemplate(
-    #     input_format="{context}Look at the scientific diagram carefully and answer the following question: "
-    #                  "{question}\n{choices}\n Think step by step and finally respond to the question with only the"
-    #                  " correct option number as 'FINAL ANSWER'. Last token needs to the answer number Let's think step by step.",
+    #     input_format="{context} Look at the scientific diagram carefully and answer the following question: {question}\n{choices}\nRespond only with the correct option digit.",
     #     choices_separator="\n",
     #     target_field="answer",
     #     enumerator="capitals",
     # )
-    # # ai2d 90b template
-    # template = MultipleChoiceTemplate(
-    #     input_format="{context}Look at the scientific diagram carefully and answer the following question: {question}\n{choices}\nRespond only with the correct option digit.",
-    #     choices_separator="\n",
-    #     target_field="answer",
-    #     enumerator="capitals",
-    # )
+    # max_tokens = 16
     # doc_vqa 11b/90b template
-    # template = MultiReferenceTemplate(
-    #     input_format= "{context} Read the text in the image carefully and answer the question with the text as seen exactly in the image." \
-    #                   " For yes/no questions, just respond Yes or No. If the answer is numeric, just respond with the number and nothing else. " \
-    #                   "If the answer has multiple words, just respond with the words and absolutely nothing else. Never respond in a sentence or a phrase.\n Question: {question}",
-    #     references_field="answers",
-    # )
-    # websrc template
     template = MultiReferenceTemplate(
-        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
+        input_format= "{context} Read the text in the image carefully and answer the question with the text as seen exactly in the image." \
+                      " For yes/no questions, just respond Yes or No. If the answer is numeric, just respond with the number and nothing else. " \
+                      "If the answer has multiple words, just respond with the words and absolutely nothing else. Never respond in a sentence or a phrase.\n Question: {question}",
         references_field="answers",
-        __description__="lmms-evals default template for websrc.",
     )
-    # # chart_qa template
+    max_tokens = 32
+    # chart_qa template
     # template = MultiReferenceTemplate(
-    #     input_format="{context}\n{question}\nAnswer the question using a single word.",
+    #     input_format="{context} {question}\nAnswer the question with a single word.",
     #     references_field="answers",
     #     __description__="lmms-evals default template for chartqa.",
     # )
+    # max_tokens = 16
     dataset = load_dataset(
-        card="cards.websrc",
+        card="cards.doc_vqa.lmms_eval",
         format="formats.chat_api",
         split="test",
         template=template,
         # max_test_instances=20,
+        disable_cache=False
     )
 
+    inference_model = CrossProviderInferenceEngine(model="llama-3-2-11b-vision-instruct", provider="watsonx",
+                                                   max_tokens=max_tokens, temperature=0.0)
+    # inference_model = WMLInferenceEngineChat(model_name="meta-llama/llama-3-2-11b-vision-instruct",
+    #                                          max_tokens=max_tokens, temperature=0.0)
 
     predictions = inference_model.infer(dataset)
     results = evaluate(predictions=predictions, data=dataset)
