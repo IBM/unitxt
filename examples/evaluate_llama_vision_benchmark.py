@@ -15,7 +15,10 @@ with settings.context(
 
 # Infer
 model = CrossProviderInferenceEngine(
-    model="llama-3-2-11b-vision-instruct", max_tokens=32, provider="watsonx", temperature=0.0
+    model="llama-3-2-11b-vision-instruct",
+    max_tokens=32,
+    provider="watsonx",
+    temperature=0.0,
 )
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
@@ -40,4 +43,3 @@ print(results.subsets_scores.summary)
 # | info_vqa | 0.596854 | anls            |                 30 |
 # | chart_qa | 0.333333 | relaxed_overall |                 30 |
 # | ai2d     | 0.866667 | exact_match_mm  |                 30 |
-

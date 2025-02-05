@@ -7,7 +7,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
-
 templates = get_from_catalog("templates.qa.with_context.all")
 template = MultiReferenceTemplate(
     input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",

@@ -14,7 +14,10 @@ with settings.context(
 
 # Infer
 model = CrossProviderInferenceEngine(
-    model="llama-3-2-11b-vision-instruct", max_tokens=30, provider="watsonx", temperature=0.0
+    model="llama-3-2-11b-vision-instruct",
+    max_tokens=30,
+    provider="watsonx",
+    temperature=0.0,
 )
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:

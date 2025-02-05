@@ -2,7 +2,6 @@ from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import LMMSEvalInferenceEngine
 
-
 with settings.context(disable_hf_datasets_cache=False):
     inference_model = LMMSEvalInferenceEngine(
         model_type="llama_vision",
@@ -10,7 +9,7 @@ with settings.context(disable_hf_datasets_cache=False):
         # model_type="llava",
         # model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
         max_new_tokens=32,
-        image_token=""
+        image_token="",
     )
 
     dataset = load_dataset(

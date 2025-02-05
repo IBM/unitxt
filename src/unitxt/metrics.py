@@ -1872,14 +1872,20 @@ class ANLS(InstanceMetric):
             distances = distances_
         return distances[-1]
 
+
 class RelaxedCorrectness(GlobalMetric):
     main_score = "relaxed_overall"
     prediction_type = str  # string representation is compared
-    def compute(self, references: List[List[str]],
-                predictions: List[str],
-                task_data: List[Dict]) -> dict:
-        return_dict = {self.main_score: [],  "relaxed_human_split": [], "relaxed_augmented_split": []}
-        for pred, ref, task_data_i in zip(predictions, references,  task_data):
+
+    def compute(
+        self, references: List[List[str]], predictions: List[str], task_data: List[Dict]
+    ) -> dict:
+        return_dict = {
+            self.main_score: [],
+            "relaxed_human_split": [],
+            "relaxed_augmented_split": [],
+        }
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
             print(task_data_i)
             type = task_data_i["type"]
             score = self.relaxed_correctness(pred, ref[0])
@@ -1889,7 +1895,11 @@ class RelaxedCorrectness(GlobalMetric):
                 return_dict["relaxed_human_split"].append(score)
             else:
                 return_dict["relaxed_augmented_split"].append(score)
-        return_dict = {key: sum(value)/len(value) for key, value in return_dict.items() if len(value)>0}
+        return_dict = {
+            key: sum(value) / len(value)
+            for key, value in return_dict.items()
+            if len(value) > 0
+        }
         return return_dict
 
     @staticmethod
@@ -1903,7 +1913,9 @@ class RelaxedCorrectness(GlobalMetric):
         except ValueError:
             return None
 
-    def relaxed_correctness(self, prediction, target, max_relative_change: float = 0.05) -> bool:
+    def relaxed_correctness(
+        self, prediction, target, max_relative_change: float = 0.05
+    ) -> bool:
         """Calculates relaxed correctness.
 
         The correctness tolerates certain error ratio defined by max_relative_change.
@@ -1914,7 +1926,7 @@ class RelaxedCorrectness(GlobalMetric):
         5% of the gold answer. For non-numeric answers, we still need an exact match
         to consider an answer to be correct.”
 
-        This funcion is taken from https://github.com/QwenLM/Qwen-VL/blob/34b4c0ee7b07726371b960911f249fe61b362ca3/eval_mm/evaluate_vqa.py#L113
+        This function is taken from https://github.com/QwenLM/Qwen-VL/blob/34b4c0ee7b07726371b960911f249fe61b362ca3/eval_mm/evaluate_vqa.py#L113
         Args:
           target: List of target string.
           prediction: List of predicted string.
@@ -1935,19 +1947,31 @@ class RelaxedCorrectness(GlobalMetric):
 class WebsrcSquadF1(GlobalMetric):
     main_score = "websrc_squad_f1"
     prediction_type = Any  # string representation is compared
-    DOMAINS = ["auto", "book", "camera", "game", "jobs", "movie", "phone", "restaurant","sports", "university", "hotel"]
+    DOMAINS = [
+        "auto",
+        "book",
+        "camera",
+        "game",
+        "jobs",
+        "movie",
+        "phone",
+        "restaurant",
+        "sports",
+        "university",
+        "hotel",
+    ]
 
     def compute(
-            self,
-            references: List[List[str]],
-            predictions: List[str],
-            task_data: List[Dict],
+        self,
+        references: List[List[str]],
+        predictions: List[str],
+        task_data: List[Dict],
     ) -> dict:
         """ANLS image-text accuracy metric."""
         evaluation_result = {}
         # Group results by domain
         subset_to_eval_samples = defaultdict(list)
-        for pred, ref, task_data_i in zip(predictions, references,  task_data):
+        for pred, ref, task_data_i in zip(predictions, references, task_data):
             subset_to_eval_samples[task_data_i["domain"]].append([pred, ref[0]])
         # Evaluate each domain
         for subset, sub_eval_samples in subset_to_eval_samples.items():
@@ -1964,9 +1988,21 @@ class WebsrcSquadF1(GlobalMetric):
                 "num": int(evaluation_result[domain]["num_example"]),
                 "f1": round(evaluation_result[domain]["f1"], 3),
             }
-        all_ins_f1 = np.sum([cat_results["f1"] * cat_results["num_example"] for cat_results in evaluation_result.values()]) / sum([cat_results["num_example"] for cat_results in evaluation_result.values()])
+        all_ins_f1 = np.sum(
+            [
+                cat_results["f1"] * cat_results["num_example"]
+                for cat_results in evaluation_result.values()
+            ]
+        ) / sum(
+            [cat_results["num_example"] for cat_results in evaluation_result.values()]
+        )
         printable_results["Overall"] = {
-            "num": sum([cat_results["num_example"] for cat_results in evaluation_result.values()]),
+            "num": sum(
+                [
+                    cat_results["num_example"]
+                    for cat_results in evaluation_result.values()
+                ]
+            ),
             "f1": round(all_ins_f1, 3),
         }
         return {self.main_score: printable_results["Overall"]["f1"]}

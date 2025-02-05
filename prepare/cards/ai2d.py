@@ -6,7 +6,6 @@ from unitxt.operators import Cast, Rename
 from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.card import test_card
 
-
 templates = get_from_catalog("templates.qa.multiple_choice.with_context.no_intro.all")
 template = MultipleChoiceTemplate(
     input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",

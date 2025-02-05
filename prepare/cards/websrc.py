@@ -7,7 +7,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
-
 templates = get_from_catalog("templates.qa.with_context.all")
 template = MultiReferenceTemplate(
     input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
@@ -43,4 +42,3 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.websrc", overwrite=True)
-

@@ -1,7 +1,9 @@
+import os
+
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import CrossProviderInferenceEngine, WMLInferenceEngineChat
-import os
+from unitxt.inference import CrossProviderInferenceEngine
+
 os.environ["WML_URL"] = "https://us-south.ml.cloud.ibm.com"
 os.environ["WML_APIKEY"] = ""
 os.environ["WML_PROJECT_ID"] = ""
@@ -12,6 +14,7 @@ os.environ["WATSONX_PROJECT_ID"] = ""
 if False:
     os.environ["LITELLM_LOG"] = "DEBUG"
     import logging
+
     logging.basicConfig(level=logging.DEBUG)
     # additional settings for clean logs
     httpcore_logging = logging.getLogger("httpcore")
@@ -19,7 +22,6 @@ if False:
     httpx_logging = logging.getLogger("httpx")
     httpx_logging.setLevel(logging.ERROR)
 with settings.context(disable_hf_datasets_cache=False):
-
     max_tokens = 32
     dataset = load_dataset(
         card="cards.doc_vqa.lmms_eval",
@@ -28,8 +30,12 @@ with settings.context(disable_hf_datasets_cache=False):
         # max_test_instances=20,
     )
 
-    inference_model = CrossProviderInferenceEngine(model="llama-3-2-90b-vision-instruct", provider="watsonx",
-                                                   max_tokens=max_tokens, temperature=0.0)
+    inference_model = CrossProviderInferenceEngine(
+        model="llama-3-2-90b-vision-instruct",
+        provider="watsonx",
+        max_tokens=max_tokens,
+        temperature=0.0,
+    )
     # inference_model = WMLInferenceEngineChat(model_name="meta-llama/llama-3-2-11b-vision-instruct",
     #                                          max_tokens=max_tokens, temperature=0.0)
 

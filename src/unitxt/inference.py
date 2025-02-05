@@ -1970,7 +1970,7 @@ class WMLInferenceEngineBase(
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
-        if self.credentials is None or len(self.credentials) == 0: # TODO: change
+        if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
 
@@ -2732,14 +2732,21 @@ class VLLMParamsMixin(Artifact):
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
-
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
         from vllm import LLM, SamplingParams
-        self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model, device="auto", trust_remote_code=True, max_num_batched_tokens=4096,
-                       gpu_memory_utilization=0.7, max_model_len=4096, max_num_seqs=64, enforce_eager=True)
 
+        self.sampling_params = SamplingParams(**args)
+        self.llm = LLM(
+            model=self.model,
+            device="auto",
+            trust_remote_code=True,
+            max_num_batched_tokens=4096,
+            gpu_memory_utilization=0.7,
+            max_model_len=4096,
+            max_num_seqs=64,
+            enforce_eager=True,
+        )
 
     def _infer(
         self,
