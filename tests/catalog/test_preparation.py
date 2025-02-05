@@ -1,7 +1,9 @@
 import glob
 import os
 import time
+import tracemalloc
 
+import psutil
 from huggingface_hub.utils import GatedRepoError
 from unitxt.loaders import MissingKaggleCredentialsError
 from unitxt.logging_utils import get_logger
@@ -38,20 +40,29 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
     def test_preparations(self):
         logger.info(glob_query)
         all_preparation_files_as_string = "\n".join(
-            [file.split("prepare")[-1] for file in all_preparation_files]
+            [file.split("prepare")[-1][1:] for file in all_preparation_files]
         )
         logger.critical(
             f"Testing {len(all_preparation_files)} preparation files: \n{all_preparation_files_as_string}\n"
         )
-        times = {}
+        stats = {}
         for file in all_preparation_files:
+            # if file.split("prepare")[-1] in skip_files:
+            #     continue
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Testing preparation file:\n  {file}."
                 "\n_____________________________________________\n"
             )
             try:
+                process = psutil.Process()
+                start_memory = process.memory_info().rss / (
+                    1024**3
+                )  # Convert bytes to GB
+                disk_start = psutil.disk_io_counters()
                 start_time = time.time()
+                tracemalloc.start()
+
                 with self.subTest(file=file):
                     try:
                         import_module_from_file(file)
@@ -70,21 +81,38 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     self.assertTrue(True)
 
                 elapsed_time = time.time() - start_time
+                disk_end = psutil.disk_io_counters()
+                read_gb = (disk_end.read_bytes - disk_start.read_bytes) / (1024**3)
+                write_gb = (disk_end.write_bytes - disk_start.write_bytes) / (1024**3)
+
+                tracemalloc.stop()
+                _, peak = tracemalloc.get_traced_memory()
+                # Convert to GB
+                peak_memory_python = peak / (1024**3)  # Convert bytes to GB
+                peak_memory_system = (
+                    process.memory_info().rss / (1024**3) - start_memory
+                )  # Convert bytes to GB
+
                 minutes = int(elapsed_time // 60)
                 seconds = int(elapsed_time % 60)
                 formatted_time = f"{minutes:02}:{seconds:02}"
                 logger.info(
                     "\n_____________________________________________\n"
                     f"  Finished testing preparation file:\n  {file}."
-                    f"  Preparation Time: {formatted_time}"
+                    f"  Elapsed Time: {formatted_time}\n"
+                    f"  Peak Python Memory Usage: {peak_memory_python:.4f} GB\n"
+                    f"  Peak System RAM Usage: {peak_memory_system:.4f} GB\n"
+                    f"  Disk Write: {write_gb:.4f} GB, Disk Read: {read_gb:.4f} GB"
                     "\n_____________________________________________\n"
                 )
 
-                times[file.split("prepare")[-1]] = formatted_time
+                stats[
+                    file.split("prepare")[-1][1:]
+                ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB"
             except Exception as e:
                 logger.critical(f"Testing preparation file '{file}' failed:")
                 raise e
 
-        logger.critical(f"Preparation times table for {len(times)} files:")
-        times = dict(sorted(times.items(), key=lambda item: item[1], reverse=True))
+        logger.critical(f"Preparation times table for {len(stats)} files:")
+        times = dict(sorted(stats.items(), key=lambda item: item[1], reverse=True))
         print_dict(times, log_level="critical")

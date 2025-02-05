@@ -533,7 +533,8 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             input and reference dictionaries.
         target_field (str): The key under which the correct choice is stored in the
             reference dictionary (can be integer index or textual label).
-        choices_separator (str): A string used to join formatted choices (e.g. ", ").
+        choices_separator (str): A string used to join formatted
+            choices (e.g. ", ").
         source_choice_format (str): A Python format string used for displaying each choice
             in the input fields (e.g. "{choice_numeral}. {choice_text}").
         target_choice_format (str): A Python format string used for displaying each choice
@@ -544,8 +545,10 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             set with `shuffle_choices_seed`.
         shuffle_choices_seed (int, optional): If provided, the choices are shuffled with
             this fixed integer seed for reproducibility.
-        sort_choices_by_length (bool): If True, sorts choices by their length (ascending).
-        sort_choices_alphabetically (bool): If True, sorts choices in alphabetical order.
+        sort_choices_by_length (bool): If True, sorts choices
+            by their length (ascending).
+        sort_choices_alphabetically (bool): If True, sorts choices
+            in alphabetical order.
         reverse_choices (bool): If True, reverses the order of the choices after any
             sorting has been applied. Defaults to False to preserve backward compatibility.
     """

@@ -4,14 +4,14 @@ from unitxt.inference import (
 )
 
 with settings.context(
-    disable_hf_datasets_cache=False,
     allow_unverified_code=True,
     mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]", split="test"
+        "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]",
+        split="test",
+        use_cache=True,
     )
-
 # Infer
 model = CrossProviderInferenceEngine(
     model="llama-3-8b-instruct",

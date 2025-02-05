@@ -150,17 +150,8 @@ for pair in pairs:
         task="tasks.translation.directed",
         templates="templates.translation.directed.all",
     )
-
-    test_card(card, demos_taken_from="test")
+    if pair == pairs[0]:
+        test_card(card, demos_taken_from="test")
     add_to_catalog(
         card, f"cards.mt.flores_101.{pair['src']}_{pair['tgt']}", overwrite=True
     )
-
-if __name__ == "__main__":
-    from unitxt import load_dataset
-
-    ds = load_dataset(
-        "card=cards.mt.flores_101.eng_deu,template_card_index=0",
-    )
-
-    ds["test"][0]

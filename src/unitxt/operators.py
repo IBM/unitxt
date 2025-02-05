@@ -67,6 +67,7 @@ from .artifact import Artifact, fetch_artifact
 from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
+from .error_utils import UnitxtError
 from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
@@ -84,7 +85,7 @@ from .operator import (
 from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, Stream
-from .text_utils import nested_tuple_to_string
+from .text_utils import nested_tuple_to_string, to_pretty_string
 from .type_utils import isoftype
 from .utils import (
     LRUCache,
@@ -1476,6 +1477,113 @@ class Intersect(FieldOperator):
         return [e for e in value if e in self.allowed_values]
 
 
+class IntersectCorrespondingFields(InstanceOperator):
+    """Intersects the value of a field, which must be a list, with a given list , and removes corresponding elements from other list fields.
+
+    For example:
+
+    Assume the instances contain a field of 'labels' and a field with the labels' corresponding 'positions' in the text.
+
+    IntersectCorrespondingFields(field="label",
+                                 allowed_values=["b", "f"],
+                                 corresponding_fields_to_intersect=["position"])
+
+    would keep only "b" and "f" values in 'labels' field and
+    their respective values in the 'position' field.
+    (All other fields are not effected)
+
+    Given this input:
+
+    [
+        {"label": ["a", "b"],"position": [0,1],"other" : "not"},
+        {"label": ["a", "c", "d"], "position": [0,1,2], "other" : "relevant"},
+        {"label": ["a", "b", "f"], "position": [0,1,2], "other" : "field"}
+    ]
+
+    So the output would be:
+    [
+            {"label": ["b"], "position":[1],"other" : "not"},
+            {"label": [], "position": [], "other" : "relevant"},
+            {"label": ["b", "f"],"position": [1,2], "other" : "field"},
+    ]
+
+    Args:
+        field - the field to intersected (must contain list values)
+        allowed_values (list) - list of values to keep
+        corresponding_fields_to_intersect (list) - additional list fields from which values
+        are removed based the corresponding indices of values removed from the 'field'
+    """
+
+    field: str
+    allowed_values: List[str]
+    corresponding_fields_to_intersect: List[str]
+
+    def verify(self):
+        super().verify()
+
+        if not isinstance(self.allowed_values, list):
+            raise ValueError(
+                f"The allowed_field_values is not a type list but '{type(self.allowed_field_values)}'"
+            )
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if self.field not in instance:
+            raise ValueError(
+                f"Field '{self.field}' is not in provided instance.\n"
+                + to_pretty_string(instance)
+            )
+
+        for corresponding_field in self.corresponding_fields_to_intersect:
+            if corresponding_field not in instance:
+                raise ValueError(
+                    f"Field '{corresponding_field}' is not in provided instance.\n"
+                    + to_pretty_string(instance)
+                )
+
+        if not isinstance(instance[self.field], list):
+            raise ValueError(
+                f"Value of field '{self.field}' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\n"
+                + to_pretty_string(instance, keys=[self.field])
+            )
+
+        num_values_in_field = len(instance[self.field])
+
+        if set(self.allowed_values) == set(instance[self.field]):
+            return instance
+
+        indices_to_keep = [
+            i
+            for i, value in enumerate(instance[self.field])
+            if value in set(self.allowed_values)
+        ]
+
+        result_instance = {}
+        for field_name, field_value in instance.items():
+            if (
+                field_name in self.corresponding_fields_to_intersect
+                or field_name == self.field
+            ):
+                if not isinstance(field_value, list):
+                    raise ValueError(
+                        f"Value of field '{field_name}' is not a list, IntersectCorrespondingFields can not intersect with allowed values."
+                    )
+                if len(field_value) != num_values_in_field:
+                    raise ValueError(
+                        f"Number of elements in field '{field_name}' is not the same as the number of elements in field '{self.field}' so the IntersectCorrespondingFields can not remove corresponding values.\n"
+                        + to_pretty_string(instance, keys=[self.field, field_name])
+                    )
+                result_instance[field_name] = [
+                    value
+                    for index, value in enumerate(field_value)
+                    if index in indices_to_keep
+                ]
+            else:
+                result_instance[field_name] = field_value
+        return result_instance
+
+
 class RemoveValues(FieldOperator):
     """Removes elements in a field, which must be a list, using a given list of unallowed.
 
@@ -2241,6 +2349,102 @@ class CollateInstances(StreamOperator):
                 f"batch_size must be an integer equal to or greater than 1. "
                 f"Got: {self.batch_size}."
             )
+
+
+class CollateInstancesByField(StreamOperator):
+    """Groups a list of instances by a specified field, aggregates specified fields into lists, and ensures consistency for all other non-aggregated fields.
+
+    Args:
+        by_field str: the name of the field to group data by.
+        aggregate_fields list(str): the field names to aggregate into lists.
+
+    Returns:
+        A stream of instances grouped and aggregated by the specified field.
+
+    Raises:
+        UnitxtError: If non-aggregate fields have inconsistent values.
+
+    Example:
+        Collate the instances based on field "category" and aggregate fields "value" and "id".
+
+        CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
+
+        given input:
+        [
+            {"id": 1, "category": "A", "value": 10", "flag" : True},
+            {"id": 2, "category": "B", "value": 20", "flag" : False},
+            {"id": 3, "category": "A", "value": 30", "flag" : True},
+            {"id": 4, "category": "B", "value": 40", "flag" : False}
+        ]
+
+        the output is:
+        [
+            {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
+            {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
+        ]
+
+        Note that the "flag" field is not aggregated, and must be the same
+        in all instances in the same category, or an error is raised.
+    """
+
+    by_field: str = NonPositionalField(required=True)
+    aggregate_fields: List[str] = NonPositionalField(required=True)
+
+    def prepare(self):
+        super().prepare()
+
+    def verify(self):
+        super().verify()
+        if not isinstance(self.by_field, str):
+            raise UnitxtError(
+                f"The 'by_field' value is not a string but '{type(self.by_field)}'"
+            )
+
+        if not isinstance(self.aggregate_fields, list):
+            raise UnitxtError(
+                f"The 'allowed_field_values' is not a list but '{type(self.aggregate_fields)}'"
+            )
+
+    def process(self, stream: Stream, stream_name: Optional[str] = None):
+        grouped_data = {}
+
+        for instance in stream:
+            if self.by_field not in instance:
+                raise UnitxtError(
+                    f"The field '{self.by_field}' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+                )
+            for k in self.aggregate_fields:
+                if k not in instance:
+                    raise UnitxtError(
+                        f"The field '{k}' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+                    )
+            key = instance[self.by_field]
+
+            if key not in grouped_data:
+                grouped_data[key] = {
+                    k: v for k, v in instance.items() if k not in self.aggregate_fields
+                }
+                # Add empty lists for fields to aggregate
+                for agg_field in self.aggregate_fields:
+                    if agg_field in instance:
+                        grouped_data[key][agg_field] = []
+
+            for k, v in instance.items():
+                # Merge classification policy list across instance with same key
+                if k == "data_classification_policy" and instance[k]:
+                    grouped_data[key][k] = sorted(set(grouped_data[key][k] + v))
+                # Check consistency for all non-aggregate fields
+                elif k != self.by_field and k not in self.aggregate_fields:
+                    if k in grouped_data[key] and grouped_data[key][k] != v:
+                        raise ValueError(
+                            f"Inconsistent value for field '{k}' in group '{key}': "
+                            f"'{grouped_data[key][k]}' vs '{v}'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances."
+                        )
+                # Aggregate fields
+                elif k in self.aggregate_fields:
+                    grouped_data[key][k].append(instance[k])
+
+        yield from grouped_data.values()
 
 
 class WikipediaFetcher(FieldOperator):

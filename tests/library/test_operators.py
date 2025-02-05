@@ -12,6 +12,7 @@ from unitxt.operators import (
     ApplyStreamOperatorsField,
     CastFields,
     CollateInstances,
+    CollateInstancesByField,
     Copy,
     Deduplicate,
     DeterministicBalancer,
@@ -30,6 +31,7 @@ from unitxt.operators import (
     FromIterables,
     IndexOf,
     Intersect,
+    IntersectCorrespondingFields,
     IterableSource,
     JoinStr,
     LengthBalancer,
@@ -652,6 +654,134 @@ class TestOperators(UnitxtTestCase):
         ]
         check_operator_exception(
             operator=Intersect(field="label", allowed_values=["c"]),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+    def test_intersect_corresponding_fields(self):
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+
+        targets = [
+            {"label": ["b"], "position": [1], "other": "not"},
+            {"label": [], "position": [], "other": "relevant"},
+            {"label": ["b", "f"], "position": [1, 2], "other": "field"},
+        ]
+
+        check_operator(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="acme_field",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Field 'acme_field' is not in provided instance.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+other (str):
+    not
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["acme_field"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            "Value of field 'other' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\nother (str):\n    not\n",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="other",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["other"],
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1, 2], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
+        exception_texts = [
+            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            """Number of elements in field 'position' is not the same as the number of elements in field 'label' so the IntersectCorrespondingFields can not remove corresponding values.
+label (list):
+    [0] (str):
+        a
+    [1] (str):
+        b
+position (list):
+    [0] (int):
+        0
+    [1] (int):
+        1
+    [2] (int):
+        2
+""",
+        ]
+        check_operator_exception(
+            operator=IntersectCorrespondingFields(
+                field="label",
+                allowed_values=["b", "f"],
+                corresponding_fields_to_intersect=["position"],
+            ),
             inputs=inputs,
             exception_texts=exception_texts,
             tester=self,
@@ -2650,6 +2780,115 @@ references (str):
             operator=CollateInstances(batch_size=2),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+    def test_collate_instances_by_field(self):
+        inputs = [
+            {"id": 1, "category": "A", "value": 10},
+            {"id": 1, "category": "A", "value": 20},
+            {"id": 2, "category": "B", "value": 30},
+            {"id": 2, "category": "B", "value": 40},
+        ]
+
+        targets = [
+            {"category": "A", "id": 1, "value": [10, 20]},
+            {"category": "B", "id": 2, "value": [30, 40]},
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        inputs = [
+            {
+                "id": 1,
+                "category": "A",
+                "value": 10,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 2,
+                "category": "A",
+                "value": 20,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 3,
+                "category": "B",
+                "value": 30,
+                "data_classification_policy": ["public"],
+            },
+            {
+                "id": 4,
+                "category": "B",
+                "value": 40,
+                "data_classification_policy": ["private"],
+            },
+        ]
+
+        targets = [
+            {
+                "category": "A",
+                "id": [1, 2],
+                "value": [10, 20],
+                "data_classification_policy": ["public"],
+            },
+            {
+                "category": "B",
+                "id": [3, 4],
+                "value": [30, 40],
+                "data_classification_policy": ["private", "public"],
+            },
+        ]
+
+        check_operator(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value", "id"]
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        exception_texts = [
+            "Inconsistent value for field 'id' in group 'A': '1' vs '2'. Ensure that all non-aggregated fields in CollateInstancesByField are consistent across all instances.",
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified by CollateInstancesByField's 'by_field' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="not_exist", aggregate_fields=["value"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
+            tester=self,
+        )
+
+        exception_texts = [
+            "The field 'not_exist' specified in CollateInstancesByField's 'aggregate_fields' argument is not found in instance."
+        ]
+        check_operator_exception(
+            operator=CollateInstancesByField(
+                by_field="category", aggregate_fields=["id", "value", "not_exist"]
+            ),
+            inputs=inputs,
+            exception_texts=exception_texts,
             tester=self,
         )
 

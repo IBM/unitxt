@@ -1,10 +1,13 @@
+import hashlib
 import inspect
 import json
+import tempfile
 from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+from datasets.exceptions import DatasetGenerationError
 
 from .artifact import fetch_artifact
 from .card import TaskCard
@@ -19,7 +22,7 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import UNITXT_DATASET_SCHEMA, loads_instance
+from .schema import loads_instance
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
@@ -29,13 +32,9 @@ constants = get_constants()
 settings = get_settings()
 
 
-def load(source: Union[SourceOperator, str]):
-    assert isinstance(
-        source, (SourceOperator, str)
-    ), "source must be a SourceOperator or a string"
-    if isinstance(source, str):
-        source, _ = fetch_artifact(source)
-    return source().to_dataset()
+def short_hex_hash(value, length=8):
+    h = hashlib.sha256(value.encode()).hexdigest()  # Full 64-character hex
+    return h[:length]
 
 
 def _get_recipe_from_query(dataset_query: str) -> DatasetRecipe:
@@ -135,11 +134,44 @@ def create_dataset(
     return load_dataset(card=card, split=split, **kwargs)
 
 
+def _source_to_dataset(
+    source: SourceOperator, split=None, use_cache=False, streaming=False
+):
+    from .dataset import Dataset as UnitxtDataset
+
+    stream = source()
+
+    with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+        cache_dir = dir_to_be_deleted if not use_cache else None
+        ds_builder = UnitxtDataset(
+            dataset_name="unitxt",
+            config_name="recipe-" + short_hex_hash(repr(source)),
+            hash=hash(repr(source)),
+            version=constants.version,
+            cache_dir=cache_dir,
+        )
+        if split is not None:
+            stream = {split: stream[split]}
+        ds_builder._generators = stream
+
+        try:
+            ds_builder.download_and_prepare()
+
+            if streaming:
+                return ds_builder.as_streaming_dataset(split=split)
+
+            return ds_builder.as_dataset(
+                split=split, run_post_process=False, verification_mode="no_checks"
+            )
+        except DatasetGenerationError as e:
+            raise e.__cause__
+
+
 def load_dataset(
     dataset_query: Optional[str] = None,
     split: Optional[str] = None,
     streaming: bool = False,
-    disable_cache: Optional[bool] = None,
+    use_cache: Optional[bool] = False,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Loads dataset.
@@ -156,11 +188,16 @@ def load_dataset(
             local catalog or name of specific recipe or benchmark in the catalog. For
             example, ``"card=cards.wnli,template=templates.classification.multi_class.relation.default"``.
         streaming (bool, False):
-            When True yields the data as Unitxt streams dictionary
+            When True yields the data as a stream.
+            This is useful when loading very large datasets.
+            Loading datasets as streams avoid loading all the data to memory, but requires the dataset's loader to support streaming.
         split (str, optional):
             The split of the data to load
-        disable_cache (str, optional):
-            Disable caching process of the data
+        use_cache (bool, optional):
+            If set to True, the returned Huggingface dataset is cached on local disk such that if the same dataset is loaded again, it will be loaded from local disk, resulting in faster runs.
+            If set to False (default), the returned dataset is not cached.
+            Note that if caching is enabled and the dataset card definition is changed, the old version in the cache may be returned.
+            Enable caching only if you are sure you are working with fixed Unitxt datasets and definitions (e.g. running using predefined datasets from the Unitxt catalog).
         **kwargs:
             Arguments used to load dataset from provided card, which is not present in local catalog.
 
@@ -184,21 +221,9 @@ def load_dataset(
     """
     recipe = load_recipe(dataset_query, **kwargs)
 
-    stream = recipe()
-    if split is not None:
-        stream = stream[split]
-
-    if disable_cache is None:
-        disable_cache = settings.disable_hf_datasets_cache
-
-    if streaming:
-        dataset = stream.to_iterable_dataset(
-            features=UNITXT_DATASET_SCHEMA,
-        ).map(loads_instance, batched=True)
-    else:
-        dataset = stream.to_dataset(
-            features=UNITXT_DATASET_SCHEMA, disable_cache=disable_cache
-        ).with_transform(loads_instance)
+    dataset = _source_to_dataset(
+        source=recipe, split=split, use_cache=use_cache, streaming=streaming
+    )
 
     frame = inspect.currentframe()
     args, _, _, values = inspect.getargvalues(frame)

@@ -5,7 +5,8 @@
         "path": "allenai/social_i_qa",
         "data_classification_policy": [
             "public"
-        ]
+        ],
+        "revision": "refs/pr/3"
     },
     "preprocess_steps": [
         {

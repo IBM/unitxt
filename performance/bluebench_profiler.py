@@ -7,7 +7,7 @@ import tempfile
 from io import StringIO
 from typing import Any, Dict, List, Union
 
-from unitxt.api import evaluate, load_recipe
+from unitxt.api import _source_to_dataset, evaluate, load_recipe
 from unitxt.benchmark import Benchmark
 from unitxt.inference import (
     CrossProviderInferenceEngine,
@@ -15,12 +15,14 @@ from unitxt.inference import (
     TextGenerationInferenceOutput,
 )
 from unitxt.logging_utils import get_logger
-from unitxt.schema import UNITXT_DATASET_SCHEMA, loads_instance
 from unitxt.settings_utils import get_settings
 
 logger = get_logger()
 settings = get_settings()
+
 settings.allow_unverified_code = True
+settings.disable_hf_datasets_cache = False
+settings.mock_inference_mode = True
 
 
 class BlueBenchProfiler:
@@ -65,19 +67,8 @@ class BlueBenchProfiler:
     def profiler_generate_benchmark_dataset(
         self, benchmark_recipe: Benchmark, split: str, **kwargs
     ) -> List[Dict[str, Any]]:
-        with settings.context(
-            disable_hf_datasets_cache=False,
-            allow_unverified_code=True,
-            mock_inference_mode=True,
-        ):
-            stream = benchmark_recipe()[split]
-
-            dataset = stream.to_dataset(
-                features=UNITXT_DATASET_SCHEMA, disable_cache=False
-            ).with_transform(loads_instance)
-
-            # to charge here for the time of generating all instances
-            return list(dataset)
+        dataset = _source_to_dataset(benchmark_recipe, split=split)
+        return list(dataset)
 
     def profiler_instantiate_model(self) -> InferenceEngine:
         return CrossProviderInferenceEngine(

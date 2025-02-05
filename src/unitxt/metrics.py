@@ -1886,7 +1886,6 @@ class RelaxedCorrectness(GlobalMetric):
             "relaxed_augmented_split": [],
         }
         for pred, ref, task_data_i in zip(predictions, references, task_data):
-            print(task_data_i)
             type = task_data_i["type"]
             score = self.relaxed_correctness(pred, ref[0])
             score = 1.0 if score else 0.0
@@ -3356,10 +3355,24 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
+    """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
+
     prediction_type = List[Tuple[str, str]]
 
     def get_element_group(self, element, additional_input):
         return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+
+
+class KeyValueExtraction(CustomF1):
+    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
+
+    prediction_type = List[Tuple[str, str]]
+
+    def get_element_group(self, element, additional_input):
+        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
