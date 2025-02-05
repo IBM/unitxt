@@ -108,3 +108,11 @@ Will print:
     | templates.classification.multi_class.relation.default |           3 | 0.285714 | f1_micro     | 0.0                 | 0.779447856172277  |                  6 |
     | templates.classification.multi_class.relation.default |           0 | 0.181818 | f1_micro     | 0.0                 | 0.4105379478071894 |                 19 |
     | templates.key_val                                     |           0 | 0        | f1_micro     |                     |                    |                  7 |
+
+
+Metadata
+--------
+The result object that returned by `evaluate` function contains `metadata` feature.
+This feature contains the dataset and the inference engine metadata (if exists).:
+
+This metadata can be accessed and used for further analysis or debugging.

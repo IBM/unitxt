@@ -23,6 +23,7 @@ For key-value pairs, expected input format is:
     {"key1": "value1", "key2": value2, "key3": "value3"}
 """
 
+import ast
 import json
 import random
 from abc import ABC, abstractmethod
@@ -31,12 +32,14 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
 )
 
 import pandas as pd
 
 from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
+from .error_utils import UnitxtWarning
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
@@ -145,8 +148,7 @@ class SerializeTableAsIndexedRowMajor(SerializeTable):
         row_cell_values = [
             str(value) if isinstance(value, (int, float)) else value for value in row
         ]
-
-        serialized_row_str += " | ".join(row_cell_values)
+        serialized_row_str += " | ".join([str(value) for value in row_cell_values])
 
         return f"row {row_index} : {serialized_row_str}"
 
@@ -237,7 +239,7 @@ class SerializeTableAsDFLoader(SerializeTable):
 
         return (
             "pd.DataFrame({\n"
-            + json.dumps(data_dict)
+            + json.dumps(data_dict)[1:-1]
             + "},\nindex="
             + str(list(range(len(rows))))
             + ")"
@@ -516,6 +518,15 @@ class TruncateTableRows(FieldOperator):
         table_content["rows"] = remaining_rows
 
         return table_content
+
+
+class GetNumOfTableCells(FieldOperator):
+    """Get the number of cells in the given table."""
+
+    def process_value(self, table: Any) -> Any:
+        num_of_rows = len(table.get("rows"))
+        num_of_cols = len(table.get("header"))
+        return num_of_rows * num_of_cols
 
 
 class SerializeTableRowAsText(InstanceOperator):
@@ -1011,3 +1022,21 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         random.shuffle(shuffled_header)
 
         return {"header": shuffled_header, "rows": table["rows"]}
+
+
+class JsonStrToListOfKeyValuePairs(FieldOperator):
+    def process_value(self, text: str) -> List[Tuple[str, str]]:
+        text = text.replace("null", "None")
+
+        try:
+            dict_value = ast.literal_eval(text)
+        except Exception as e:
+            UnitxtWarning(
+                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+            )
+            dict_value = {}
+        return [
+            (str(key), str(value))
+            for key, value in dict_value.items()
+            if value is not None
+        ]

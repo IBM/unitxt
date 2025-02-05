@@ -25,6 +25,7 @@ By default, classical Squad metric is used , but list of additional applicable m
         prediction_type=str,
         metrics=["metrics.squad"],
         default_template="templates.qa.extractive",
+        augmentable_inputs=["context", "question"],
     ),
     "tasks.qa.extractive",
     overwrite=True,

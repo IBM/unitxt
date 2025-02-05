@@ -9,6 +9,8 @@ from unitxt.processors import (
     ExtractArenaHardNumericalJudgment,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
+    ExtractVerbalJudgementBadGood,
+    ExtractVerbalJudgment,
     ExtractWithRegex,
     FirstCharacter,
     FixWhiteSpace,
@@ -22,6 +24,7 @@ from unitxt.processors import (
     RegexParser,
     RemoveArticles,
     RemovePunctuations,
+    ScaleNumberToZeroOneReturnZeroIfFails,
     StanceToProCon,
     StringEquals,
     StrToFloatFormat,
@@ -270,4 +273,25 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="fix_whitespace", operator=FixWhiteSpace(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="scale_0_10_to_0_1",
+    operator=ScaleNumberToZeroOneReturnZeroIfFails(),
+    overwrite=True,
+    process_references=False,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_verbal_judgement",
+    operator=ExtractVerbalJudgment(),
+    overwrite=True,
+    process_references=False,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_verbal_judgement_bad_good",
+    operator=ExtractVerbalJudgementBadGood(),
+    overwrite=True,
+    process_references=False,
 )

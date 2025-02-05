@@ -116,7 +116,7 @@ for subset in subsets["cards.mt.flores_101"]:
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
-        f'recipes.bluebench.translation.mt_flores_101_{subset.replace(".", "_").lower()}',
+        f"recipes.bluebench.translation.mt_flores_101_{subset.replace('.', '_').lower()}",
         overwrite=True,
     )
 
@@ -165,7 +165,7 @@ for subset in subsets["cards.safety.bbq"]:
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
-        f'recipes.bluebench.bias.safety_bbq_{subset.replace(".", "_").lower()}',
+        f"recipes.bluebench.bias.safety_bbq_{subset.replace('.', '_').lower()}",
         overwrite=True,
     )
 
@@ -182,7 +182,7 @@ for subset in subsets["cards.legalbench"]:
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
-        f'recipes.bluebench.legal.legalbench_{subset.replace(".", "_").lower()}',
+        f"recipes.bluebench.legal.legalbench_{subset.replace('.', '_').lower()}",
         overwrite=True,
     )
 
@@ -223,7 +223,7 @@ for subset in subsets["cards.mmlu_pro"]:
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
-        f'recipes.bluebench.knowledge.mmlu_pro_{subset.replace(".", "_").lower()}',
+        f"recipes.bluebench.knowledge.mmlu_pro_{subset.replace('.', '_').lower()}",
         overwrite=True,
     )
 
@@ -243,7 +243,7 @@ for subset in subsets["cards.universal_ner"]:
     recipe = prepare_recipe(default_args, ingridients)
     add_to_catalog(
         recipe,
-        f'recipes.bluebench.entity_extraction.universal_ner_{subset.replace(".", "_").lower()}',
+        f"recipes.bluebench.entity_extraction.universal_ner_{subset.replace('.', '_').lower()}",
         overwrite=True,
     )
 

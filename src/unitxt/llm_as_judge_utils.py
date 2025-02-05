@@ -19,7 +19,7 @@ def get_parsed_context(context: Dict[str, str]):
 
 
 def get_evaluator_metadata(
-    name: EvaluatorNameEnum
+    name: EvaluatorNameEnum,
 ) -> EvaluatorMetadata:  # , evaluator_type: EvaluatorTypeEnum) -> EvaluatorMetadata:
     evaluator_search = [
         e for e in EVALUATORS_METADATA if e.name == name

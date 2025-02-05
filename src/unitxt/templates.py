@@ -17,6 +17,7 @@ from .serializers import (
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     Serializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
     VideoSerializer,
 )
@@ -64,6 +65,7 @@ class Template(InstanceOperator):
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
             ]
         )
     )
@@ -270,7 +272,34 @@ class OutputFormatTemplate(Template):
         return target, references
 
 
+class JsonOutputFormatTemplate(Template):
+    output_fields: Dict[str, str]
+    wrap_with_list_fields: List[str]
+
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
+        data = {}
+        for field, target_field in self.output_fields.items():
+            value = reference_fields[field]
+            if field in self.wrap_with_list_fields:
+                value = [value]
+            data[target_field] = value
+        target = json.dumps(data, ensure_ascii=False)
+        references = [target]
+        return target, references
+
+
 class InputOutputTemplate(InputFormatTemplate, OutputFormatTemplate):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
+    pass
+
+
+class JsonOutputTemplate(InputFormatTemplate, JsonOutputFormatTemplate):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
     Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
@@ -504,7 +533,8 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             input and reference dictionaries.
         target_field (str): The key under which the correct choice is stored in the
             reference dictionary (can be integer index or textual label).
-        choices_separator (str): A string used to join formatted choices (e.g. ", ").
+        choices_separator (str): A string used to join formatted
+            choices (e.g. ", ").
         source_choice_format (str): A Python format string used for displaying each choice
             in the input fields (e.g. "{choice_numeral}. {choice_text}").
         target_choice_format (str): A Python format string used for displaying each choice
@@ -515,8 +545,10 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             set with `shuffle_choices_seed`.
         shuffle_choices_seed (int, optional): If provided, the choices are shuffled with
             this fixed integer seed for reproducibility.
-        sort_choices_by_length (bool): If True, sorts choices by their length (ascending).
-        sort_choices_alphabetically (bool): If True, sorts choices in alphabetical order.
+        sort_choices_by_length (bool): If True, sorts choices
+            by their length (ascending).
+        sort_choices_alphabetically (bool): If True, sorts choices
+            in alphabetical order.
         reverse_choices (bool): If True, reverses the order of the choices after any
             sorting has been applied. Defaults to False to preserve backward compatibility.
     """
@@ -694,6 +726,15 @@ class MultipleChoiceTemplate(InputFormatTemplate):
             )
             random_generator.shuffle(choices)
         if self.place_correct_choice_position is not None:
+            fix_pos = self.place_correct_choice_position
+
+            # Supporting negative indexes similar to Python lists
+            # If fix_pos is negative, convert it to a valid positive index by adding len(choices).
+            # For example, -1 becomes the last index, -2 becomes the one before last, etc.
+            if fix_pos < 0:
+                fix_pos += len(choices)
+            self.place_correct_choice_position = fix_pos
+            # Remove the original label choice from the list
             if not 0 <= self.place_correct_choice_position < len(choices):
                 raise ValueError(
                     f"fix_correct_choice_position={self.place_correct_choice_position} out of range (0..{len(choices) - 1})."

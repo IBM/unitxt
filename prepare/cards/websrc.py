@@ -18,7 +18,7 @@ template = MultiReferenceTemplate(
 )
 
 card = TaskCard(
-    loader=LoadHF(path="rootsautomation/websrc"),
+    loader=LoadHF(path="rootsautomation/websrc", streaming=True),
     preprocess_steps=[
         RenameSplits(mapper={"train": "train", "dev": "test"}),
         "splitters.small_no_dev",

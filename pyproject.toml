@@ -38,7 +38,7 @@ packages = {find = {where = ["src"]}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-unitxt = ["catalog/**/*.json", "ui/banner.png"]
+unitxt = ["catalog/**/*.json", "ui/banner.png", "assistant/embeddings.npz", "assistant/metadata.parquet"]
 
 [tool.setuptools.dynamic]
 version = {attr = "unitxt.version.version"}
@@ -105,7 +105,9 @@ tests = [
     "tenacity==8.3.0",
     "accelerate",
     "spacy",
-    "Wikipedia-API"
+    "func_timeout==4.3.5",
+    "Wikipedia-API",
+    "sqlglot",
 ]
 ui = [
     "gradio",
@@ -120,6 +122,11 @@ inference-tests = [
   "diskcache",
   "numpy==1.26.4"
 ]
+assistant = [
+    "streamlit",
+    "watchdog",
+    "litellm"
+]
 
 # Combine all extras by referencing other groups
 all = [
@@ -130,11 +137,13 @@ all = [
     "unitxt[service]",
     "unitxt[tests]",
     "unitxt[ui]",
-    "unitxt[watsonx]"
+    "unitxt[watsonx]",
+    "unitxt[assistant]"
 ]
 
 [project.scripts]
 unitxt-explore = "unitxt.ui:launch"
+unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
 
 [tool.ruff]
@@ -175,6 +184,7 @@ keep-runtime-typing = true
 ".vscode/*" = ["TID251"]
 "tests/*" = ["TID251"]
 "utils/*" = ["TID251"]
+"src/unitxt/api.py" = ["B904"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
@@ -237,7 +247,7 @@ extend-immutable-calls = ["fastapi.Depends", "fastapi.params.Depends", "fastapi.
 "src".msg = "Use unitxt outside src/ and relative imports inside src/ and install unitxt from source with `pip install -e '.[dev]'`."
 
 [tool.codespell]
-ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment,criterias,atleast'
+ignore-words-list = 'rouge,ot,ans,nd,cann,som,tha,vie,ment,criterias,atleast,te'
 check-filenames = true
 check-hidden = false
 regex = "(?<![a-z])[a-z'`]+|[A-Z][a-z'`]*|[a-z]+'[a-z]*|[a-z]+(?=[_-])|[a-z]+(?=[A-Z])|\\d+"
@@ -252,6 +262,7 @@ omit = [
     "src/unitxt/inference.py",
     "src/unitxt/ui/*",
     "src/unitxt/service/*",
+    "src/unitxt/assistant/*",
     "src/unitxt/test_utils/*",
     "src/unitxt/dataset.py",
     "src/unitxt/metric.py",

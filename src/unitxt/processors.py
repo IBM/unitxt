@@ -410,3 +410,69 @@ class RemovePunctuations(FieldOperator):
 class FixWhiteSpace(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return " ".join(text.split())
+
+
+class AddPrefix(FieldOperator):
+    prefix: str
+
+    def process_value(self, text: str) -> str:
+        text = text.strip()
+        if text.startswith(self.prefix):
+            return text
+        return self.prefix + text.strip()
+
+
+class GetSQL(FieldOperator):
+    def process_value(self, text: str) -> str:
+        """Extracts the first SQL query from a given text.
+
+        Args:
+        text: The input string containing the SQL query.
+
+        Returns:
+        The first SQL query found in the text, or None if no query is found.
+        """
+        match = re.search(
+            r"(?:```)?.*?(SELECT.*?(?:FROM|WITH|;|$).*?)(?:```|;|$)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        if match:
+            out = (
+                text[match.start() : match.end()]
+                .replace("```", "")
+                .replace(";", "")
+                .strip()
+            )
+        else:
+            out = "No query found in generation"
+
+        return out
+
+
+class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
+    max_val = 10
+    min_val = 0
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            text = float(text)
+            return (text - self.min_val) / self.max_val
+        except Exception:
+            return 0
+
+
+class ExtractVerbalJudgment(FieldOperator):
+    classes = ["not", "somewhat", "mostly", "completely"]
+
+    def process_value(self, text: Any) -> Any:
+        max_val = len(self.classes) - 1
+        for i, c in enumerate(self.classes):
+            if text.strip().lower().startswith(c):
+                return i / (max_val)
+        return 0
+
+
+class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
+    classes = ["very bad", "bad", "mediocre", "good", "very good"]

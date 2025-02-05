@@ -2,7 +2,7 @@ from typing import Any, List
 
 from unitxt import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.llm_as_judge_operators import LoadCriteria
+from unitxt.llm_as_judge import LoadCriteria
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import NullTemplate
 
@@ -10,11 +10,11 @@ data = {
     "test": [
         {
             "question": "How is the weather?",
-            "criteria": "metrics.llm_as_judge.pairwise.criterias.temperature_in_celsius_and_fahrenheit",
+            "criteria": "metrics.llm_as_judge.pairwise.criteria.temperature_in_celsius_and_fahrenheit",
         },
         {
             "question": "Tell me a joke about cats",
-            "criteria": "metrics.llm_as_judge.pairwise.criterias.funny_joke",
+            "criteria": "metrics.llm_as_judge.pairwise.criteria.funny_joke",
         },
     ]
 }

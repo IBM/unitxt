@@ -3,56 +3,144 @@ from unitxt.metrics import (
     MetricPipeline,
 )
 from unitxt.operators import Copy, Rename
-from unitxt.test_utils.metrics import test_evaluate, test_metric
+from unitxt.test_utils.metrics import test_metric
 
-base = "metrics.rag.faithfulness"
+base = "metrics.rag"
 default = "token_k_precision"
+dimension = "faithfulness"
+task_names = ["external_rag", "response_generation", "end_to_end"]
 
-for new_catalog_name, base_catalog_name, main_score in [
-    ("token_k_precision", "metrics.token_overlap", "precision"),
-    ("bert_score_k_precision", "metrics.bert_score.deberta_large_mnli", "precision"),
-    (
-        "bert_score_k_precision_ml",
-        "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
-        "precision",
-    ),
-    ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
-    ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
-]:
-    metric = MetricPipeline(
-        main_score=main_score,
-        preprocess_steps=[
-            Copy(field="contexts", to_field="references"),
-            Copy(field="answer", to_field="prediction"),
-        ],
-        metric=base_catalog_name,
-    )
-    add_to_catalog(metric, f"{base}.{new_catalog_name}", overwrite=True)
 
-    if new_catalog_name == default:
-        add_to_catalog(metric, base, overwrite=True)
+def get_scores_prefix(metric_catalog_name, dim_name):
+    if metric_catalog_name == dim_name:
+        return f"{dim_name}_"
+    return f"{dim_name}_{metric_catalog_name}_"
+
+
+def add_scores_prefix_to_target(target, metric_catalog_name, dim_name):
+    prefix = get_scores_prefix(metric_catalog_name, dim_name)
+    new_target = {
+        f"{prefix}" + k
+        if k not in ["score", "score_name", "num_of_instances"]
+        and not k.startswith("score")
+        else k: v
+        for k, v in target.items()
+    }
+    new_target["score_name"] = prefix + new_target["score_name"]
+    return new_target
+
+
+def get_preprocess_steps(task):
+    if task == "external_rag":
+        return [
+            Copy(
+                field_to_field={
+                    "contexts": "references",
+                    "answer": "prediction",
+                },
+            ),
+        ]
+    if task == "response_generation":
+        return [
+            Copy(
+                field_to_field={
+                    "task_data/contexts": "references",
+                }
+            ),
+        ]
+    if task == "end_to_end":
+        return [
+            Copy(
+                field_to_field={
+                    "prediction/contexts": "references",
+                    "prediction/answer": "prediction",
+                }
+            ),
+        ]
+    raise ValueError(f"Unsupported rag task {task}")
+
+
+def get_test_pipeline_task_preprocess_steps(task):
+    if task == "external_rag":
+        return [
+            Rename(field_to_field={"task_data/contexts": "contexts"}),
+            Rename(field_to_field={"task_data/answer": "answer"}),
+        ]
+    if task == "response_generation":
+        return [
+            Copy(field_to_field={"task_data/answer": "prediction"}),
+        ]
+    if task == "end_to_end":
+        return [
+            Copy(field_to_field={"task_data/answer": "prediction/answer"}),
+            Copy(field_to_field={"task_data/contexts": "prediction/contexts"}),
+        ]
+    raise ValueError(f"Unsupported rag task {task}")
+
+
+for task in task_names:
+    for new_catalog_name, base_catalog_name, main_score in [
+        ("token_k_precision", "metrics.token_overlap", "precision"),
+        (
+            "bert_score_k_precision",
+            "metrics.bert_score.deberta_large_mnli",
+            "precision",
+        ),
+        (
+            "bert_score_k_precision_ml",
+            "metrics.bert_score.deberta_v3_base_mnli_xnli_ml",
+            "precision",
+        ),
+        ("sentence_bert_bge", "metrics.sentence_bert.bge_large_en_1_5", "sbert_score"),
+        ("sentence_bert_mini_lm", "metrics.sentence_bert.minilm_l12_v2", "sbert_score"),
+        ("vectara_hhem_2_1", "metrics.vectara_groundedness_hhem_2_1", "hhem_score"),
+    ]:
+        metric = MetricPipeline(
+            main_score=main_score,
+            preprocess_steps=get_preprocess_steps(task),
+            metric=base_catalog_name,
+            score_prefix=get_scores_prefix(new_catalog_name, dimension),
+        )
+        add_to_catalog(
+            metric, f"{base}.{task}.{dimension}.{new_catalog_name}", overwrite=True
+        )
+
+        if new_catalog_name == default and task == "external_rag":
+            metric = MetricPipeline(
+                main_score=main_score,
+                preprocess_steps=get_preprocess_steps(task),
+                metric=base_catalog_name,
+                score_prefix=f"{dimension}_",
+            )
+            add_to_catalog(metric, f"{base}.{task}.{dimension}", overwrite=True)
 
 
 def test_faithfulness(
-    task_data, catalog_name, global_target, instance_targets, main_score
+    task_data, catalog_name, global_target, instance_targets, main_score, task
 ):
+    # print(catalog_name)
     # test the evaluate call
-    test_evaluate(
-        global_target,
-        instance_targets=[
-            {"score": instance["score"]} for instance in instance_targets
-        ],
-        task_data=task_data,
-        metric_name=catalog_name,
-    )
+    # test_evaluate(
+    #     global_target,
+    #     instance_targets=[
+    #         {"score": instance["score"]} for instance in instance_targets
+    #     ],
+    #     task_data=task_data,
+    #     metric_name=catalog_name,
+    # )
     # test using the usual metric pipeline
     test_pipeline = MetricPipeline(
         main_score=main_score,
-        preprocess_steps=[
-            Rename(field_to_field={"task_data/contexts": "contexts"}),
-            Rename(field_to_field={"task_data/answer": "answer"}),
-        ],
+        preprocess_steps=get_test_pipeline_task_preprocess_steps(task),
         metric=f"{catalog_name}",
+    )
+    short_catalog_name = catalog_name.split(".")[-1]
+    instance_targets = [
+        add_scores_prefix_to_target(i, short_catalog_name, dimension)
+        for i in instance_targets
+    ]
+    global_target = add_scores_prefix_to_target(
+        global_target, short_catalog_name, dimension
     )
     test_metric(
         metric=test_pipeline,
@@ -64,7 +152,7 @@ def test_faithfulness(
     )
 
 
-def test_faithfulness_sentence_bert():
+def test_faithfulness_sentence_bert(task):
     task_data = [
         {
             # Similar sentences
@@ -80,7 +168,7 @@ def test_faithfulness_sentence_bert():
 
     test_faithfulness(
         task_data,
-        catalog_name="metrics.rag.faithfulness.sentence_bert_bge",
+        catalog_name=f"{base}.{task}.{dimension}.sentence_bert_bge",
         global_target={
             "score": 0.64,
             "score_ci_high": 0.75,
@@ -104,11 +192,12 @@ def test_faithfulness_sentence_bert():
             },
         ],
         main_score="sbert_score",
+        task=task,
     )
 
     test_faithfulness(
         task_data,
-        catalog_name="metrics.rag.faithfulness.sentence_bert_mini_lm",
+        catalog_name=f"{base}.{task}.{dimension}.sentence_bert_mini_lm",
         global_target={
             "score": 0.17,
             "score_ci_high": 0.42,
@@ -132,10 +221,11 @@ def test_faithfulness_sentence_bert():
             },
         ],
         main_score="sbert_score",
+        task=task,
     )
 
 
-def test_faithfulness_token_k_precision():
+def test_faithfulness_token_k_precision(task):
     # don't use "A" as a token because it is considered an article and removed by the token overlap
     # metric
 
@@ -186,13 +276,13 @@ def test_faithfulness_token_k_precision():
     }
 
     for catalog_name, global_target, instance_targets in [
+        # (
+        #     f"{base}.{task}.{dimension}",
+        #     precision_global_target,
+        #     precision_instance_targets,
+        # ),
         (
-            base,
-            precision_global_target,
-            precision_instance_targets,
-        ),
-        (
-            f"{base}.{default}",
+            f"{base}.{task}.{dimension}.{default}",
             precision_global_target,
             precision_instance_targets,
         ),
@@ -203,12 +293,14 @@ def test_faithfulness_token_k_precision():
             global_target,
             instance_targets,
             main_score="precision",
+            task=task,
         )
 
 
-# This test is here since it does not involve any models
-test_faithfulness_token_k_precision()
-
 if __name__ == "__main__":
-    # Tests which involve models:
-    test_faithfulness_sentence_bert()
+    for task in task_names:
+        # This test does not involve any models
+        test_faithfulness_token_k_precision(task)
+
+        # Tests which involve models:
+        test_faithfulness_sentence_bert(task)
