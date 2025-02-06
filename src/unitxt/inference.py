@@ -1,6 +1,8 @@
 import abc
 import asyncio
+import base64
 import dataclasses
+import io
 import json
 import logging
 import os
@@ -26,7 +28,7 @@ from typing import (
     Union,
 )
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -2346,7 +2348,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             results = wml_inference.infer(dataset["test"])
     """
 
-    image_encoder: Optional[EncodeImageToString] = None
+    image_encoder: Optional[EncodeImageToString] = NonPositionalField(
+        default_factory=EncodeImageToString
+    )
 
     @staticmethod
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
@@ -2386,21 +2390,26 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if image is not None:
                 encoded_image = image
                 if not isinstance(encoded_image, str):
+                    image = Image().decode_example(image)
                     if self.image_encoder is None:
                         raise ValueError(
                             "If sending image queries as well, and they are not "
                             "already encoded to base64 strings, you must specify "
                             "the 'image_encoder' to be used."
                         )
-                    encoded_image = self.image_encoder.encode_image_to_base64(image)
+
+                    buffer = io.BytesIO()
+                    image.save(buffer, format=image.format)
+                    image_data_url = ImageDataString(
+                        f"data:image/{image.format.lower()};base64,"
+                        + base64.b64encode(buffer.getvalue()).decode("utf-8")
+                    )
 
                 message["content"].append(
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": ImageDataString(
-                                "data:image/jpeg;base64," + encoded_image
-                            ),
+                            "url": image_data_url,
                         },
                     }
                 )
