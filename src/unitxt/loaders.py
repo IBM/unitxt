@@ -64,8 +64,7 @@ from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from .dataclass import OptionalField
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
