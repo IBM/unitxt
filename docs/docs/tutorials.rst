@@ -31,4 +31,5 @@ Tutorials ✨
    tags_and_descriptions
    types_and_serializers
    contributors_guide
+   settings
 
