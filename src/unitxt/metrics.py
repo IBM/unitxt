@@ -6008,10 +6008,10 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.model_name,
-                decoding_method= "greedy",
-                max_new_tokens= 20,
-                temperature= 0,
-                return_options= {
+                decoding_method="greedy",
+                max_new_tokens=20,
+                temperature=0,
+                return_options={
                     "token_logprobs": True,
                     "generated_tokens": True,
                     "input_text": True,
@@ -6042,7 +6042,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         logger.debug(f"Results are ready:\n{result}")
         return result
 
-    def create_message(self, role: str, content: str) -> list[dict[str, str]]:
+    def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
         return [{"role": role, "content": content}]
 
     def process_input_fields(self, task_data):
