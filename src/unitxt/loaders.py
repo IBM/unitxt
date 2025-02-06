@@ -163,14 +163,10 @@ class Loader(SourceOperator):
         pass
 
     def load_data(self) -> MultiStream:
-        iterables = self.__class__._loader_cache.get(str(self), None)
-        if iterables is None:
-            try:
-                iterables = self.load_iterables()
-            except Exception as e:
-                raise UnitxtError(f"Error in loader:\n{self}") from e
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self)] = iterables
+        try:
+            iterables = self.load_iterables()
+        except Exception as e:
+            raise UnitxtError(f"Error in loader:\n{self}") from e
         if isoftype(iterables, Dict[str, ReusableGenerator]):
             return MultiStream.from_generators(iterables, copying=True)
         return MultiStream.from_iterables(iterables, copying=True)
