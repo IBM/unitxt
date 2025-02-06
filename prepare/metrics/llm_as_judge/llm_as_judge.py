@@ -72,8 +72,8 @@ for criteria in PAIRWISE_CRITERIA:
 logger.debug("Registering evaluators...")
 for evaluator_metadata in EVALUATORS_METADATA:
     if evaluator_metadata.name not in [
-        EvaluatorNameEnum.GRANITE_GUARDIAN_2B,
-        EvaluatorNameEnum.GRANITE_GUARDIAN_8B,
+        EvaluatorNameEnum.GRANITE_GUARDIAN3_1_2B,
+        EvaluatorNameEnum.GRANITE_GUARDIAN3_1_8B,
     ]:
         for provider in evaluator_metadata.providers:
             for evaluator_type in [

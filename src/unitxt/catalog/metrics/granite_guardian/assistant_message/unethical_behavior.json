@@ -1,0 +1,21 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "granite_guardian.assistant_message.unethical_behavior",
+    "metric": {
+        "__type__": "granite_guardian_wml_metric",
+        "main_score": "granite_guardian.assistant_message.unethical_behavior",
+        "risk_name": "unethical_behavior",
+        "risk_type": "ASSISTANT_MESSAGE"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}

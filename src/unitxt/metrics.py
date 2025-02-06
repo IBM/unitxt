@@ -1,4 +1,5 @@
 import ast
+from enum import Enum
 import json
 import math
 import os
@@ -41,7 +42,7 @@ from .dataclass import (
 )
 from .db_utils import get_db_connector
 from .deprecation_utils import deprecation
-from .error_utils import Documentation, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
@@ -5849,6 +5850,16 @@ class PredictionLength(InstanceMetric):
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
 
 
+class RiskType(str, Enum):
+    """Risk type for the Granite Guardian models"""
+
+    RAG = "rag"
+    USER_MESSAGE = "user_message"
+    ASSISTANT_MESSAGE = "assistant_message"
+    AGENTIC = "agentic_workflows"
+    CUSTOM_RISK = "custom_risk"
+
+
 class GraniteGuardianWMLMetric(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
@@ -5857,22 +5868,123 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     prediction_type = float
 
     model_name: str = "ibm/granite-guardian-3-8b"
-    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
+
     safe_token = "No"
     unsafe_token = "Yes"
 
     inference_engine: WMLInferenceEngineGeneration = None
     generation_params: Dict = None
     risk_name: str = None
+    risk_type: RiskType = None
+    risk_definition: Optional[str] = None
+
+    user_message_field: str = "question"
+    assistant_message_field: str = "answer"
+    contexts_field: str = "contexts"
+    tools_field: str = "tools"
+
+    available_risks: Dict[RiskType, List[str]] = {
+        RiskType.USER_MESSAGE: [
+            "harm",
+            "social_bias",
+            "jailbreak",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.ASSISTANT_MESSAGE: [
+            "harm",
+            "social_bias",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.RAG: ["context_relevance", "groundedness", "answer_relevance"],
+        RiskType.AGENTIC: ["function_calling_hallucination"],
+    }
 
     _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
 
+    def verify_guardian_config(self, task_data):
+        if (
+            self.risk_name == RiskType.RAG
+            or self.risk_name in self.available_risks[RiskType.RAG]
+        ):
+            self.risk_type = RiskType.RAG
+            if self.risk_name == "context_relevance":
+                assert (
+                    self.contexts_field in task_data
+                    and self.user_message_field in task_data
+                ), UnitxtError(
+                    f'Task data must contain "{self.contexts_field}" and "{self.user_message_field}" fields'
+                )
+            elif self.risk_name == "groundedness":
+                assert (
+                    self.contexts_field in task_data
+                    and self.assistant_message_field in task_data
+                ), UnitxtError(
+                    f'Task data must contain "{self.contexts_field}" and "{self.assistant_message_field}" fields'
+                )
+            elif self.risk_name == "answer_relevance":
+                assert (
+                    self.user_message_field in task_data
+                    and self.assistant_message_field in task_data
+                ), UnitxtError(
+                    f'Task data must contain "{self.user_message_field}" and "{self.assistant_message_field}" fields'
+                )
+        elif self.risk_name == RiskType.USER_MESSAGE or (
+            self.risk_name in self.available_risks[RiskType.USER_MESSAGE]
+            and not self.assistant_message_field in task_data
+        ):
+            # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
+            self.risk_type = RiskType.USER_MESSAGE
+            assert self.user_message_field in task_data, UnitxtError(
+                f'Task data must contain "{self.user_message_field}" field'
+            )
+        elif (
+            self.risk_name == RiskType.ASSISTANT_MESSAGE
+            or self.risk_name in self.available_risks[RiskType.ASSISTANT_MESSAGE]
+        ):
+            self.risk_type = RiskType.ASSISTANT_MESSAGE
+            assert (
+                self.assistant_message_field in task_data
+                and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+        elif (
+            self.risk_name == RiskType.AGENTIC
+            or self.risk_name in self.available_risks[RiskType.AGENTIC]
+        ):
+            self.risk_type = RiskType.AGENTIC
+            assert (
+                self.tools_field in task_data
+                and self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+        else:
+            logger.debug("Using custom risk")
+            self.risk_type = RiskType.CUSTOM_RISK
+
     def prepare(self):
         self.reduction_map = {"mean": [self.main_score]}
+        if isinstance(self.risk_type, str):
+            self.risk_type = RiskType[self.risk_type]
+
+    def verify(self):
+        super().verify()
+        # verify that major version from watsonx and HF are the same
+        assert (
+            self.model_name.split("-")[-2][0] == self.hf_model_name.split("-")[-2][0]
+        ), UnitxtError("Major version from WatsonX and HF model names must be the same")
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
 
+        self.verify_guardian_config(task_data)
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
@@ -5883,7 +5995,11 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self.generation_params = self.inference_engine._set_logprobs_params({})
 
         messages = self.process_input_fields(task_data)
+
         guardian_config = {"risk_name": self.risk_name}
+        if self.risk_type == RiskType.CUSTOM_RISK:
+            guardian_config["risk_definition"] = self.risk_definition
+
         processed_input = self._tokenizer.apply_chat_template(
             messages,
             guardian_config=guardian_config,
@@ -5900,24 +6016,50 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         score = 1 - prob_of_risk if label is not None else np.nan
         return {self.main_score: score}
 
+    def create_message(self, role: str, content: str) -> list[dict[str, str]]:
+        return [{"role": role, "content": content}]
+
     def process_input_fields(self, task_data):
-        if self.risk_name == "groundedness":
-            messages = [
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "answer_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "context_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-            ]
+        messages = []
+        if self.risk_type == RiskType.RAG:
+            if self.risk_name == "context_relevance":
+                messages += self.create_message(
+                    "user", task_data[self.user_message_field]
+                )
+                messages += self.create_message(
+                    "context", "\n".join(task_data[self.contexts_field])
+                )
+            elif self.risk_name == "groundedness":
+                messages += self.create_message(
+                    "context", "\n".join(task_data[self.contexts_field])
+                )
+                messages += self.create_message(
+                    "assistant", task_data[self.assistant_message_field]
+                )
+            elif self.risk_name == "answer_relevance":
+                messages += self.create_message(
+                    "user", task_data[self.user_message_field]
+                )
+                messages += self.create_message(
+                    "assistant", task_data[self.assistant_message_field]
+                )
+        elif self.risk_type == RiskType.AGENTIC:
+            messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+            messages += self.create_message("user", task_data[self.user_message_field])
+            messages += self.create_message(
+                "assistant", json.loads(task_data[self.assistant_message_field])
+            )
+        elif self.risk_type == RiskType.ASSISTANT_MESSAGE:
+            messages += self.create_message("user", task_data[self.user_message_field])
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        elif self.risk_type == RiskType.USER_MESSAGE:
+            messages += self.create_message("user", task_data[self.user_message_field])
         else:
-            raise NotImplementedError()
+            raise NotImplementedError("Bring your own risk is not fully supported yet.")
 
         return messages
 
