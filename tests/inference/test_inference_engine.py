@@ -337,7 +337,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         preds = set(predictions).intersection(
             {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
         )
-        self.assertEqual(len(preds), 2)
+        self.assertSetEqual(preds, set(predictions))
 
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)

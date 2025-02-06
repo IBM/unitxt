@@ -381,6 +381,7 @@ class LoadCSV(Loader):
         args = {}
         if self.file_type == "csv":
             args["sep"] = self.sep
+            args["low_memory"] = self.streaming
         if self.compression is not None:
             args["compression"] = self.compression
         if self.lines is not None:
