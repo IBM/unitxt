@@ -279,6 +279,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         """
         pass
 
+    def _mock_infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [mock_logprobs_default_value_factory() for instance in dataset]
+
     def infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -298,7 +304,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
             )
 
         [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset, return_meta_data)
+
+        if settings.mock_inference_mode:
+            result = self._mock_infer_log_probs(dataset)
+        else:
+            result = self._infer_log_probs(dataset, return_meta_data)
+        return result
 
 
 class LazyLoadMixin(Artifact):
