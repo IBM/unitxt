@@ -43,6 +43,7 @@ for card in cards_parsed:
                 "num_demos": num_demos,
                 "demos_pool_size": DEMOS_POOL_SIZE,
                 "loader_limit": LOADER_LIMIT,
+                "template_card_index": 0,
                 "augmentor": [f"augmentors.table.{a!s}" for a in augment]
                 if augment
                 else None,
