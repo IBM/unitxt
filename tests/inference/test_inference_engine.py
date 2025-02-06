@@ -291,7 +291,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         set_verbosity("debug")
         inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-8b-instruct",
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
         )
         recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,format=formats.chat_api"
@@ -311,7 +311,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         predictions = inference_model.infer(dataset)
 
-        targets = ["7", "2"]
+        targets = ["7", "3"]
         targets = (targets * (total_tests // len(targets)))[:total_tests]
         self.assertListEqual(predictions, targets)
 
