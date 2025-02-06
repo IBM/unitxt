@@ -6008,10 +6008,16 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.model_name,
+                decoding_method= "greedy",
+                max_new_tokens= 20,
+                temperature= 0,
+                return_options= {
+                    "token_logprobs": True,
+                    "generated_tokens": True,
+                    "input_text": True,
+                    "top_n_tokens": 5,
+                },
             )
-            self.inference_engine._load_model()
-            self.model = self.inference_engine._model
-            self.generation_params = self.inference_engine._set_logprobs_params({})
         logger.debug(
             f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
@@ -6028,21 +6034,8 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             add_generation_prompt=True,
         )
 
-        result = self.model.generate(
-            prompt=[processed_input],
-            params={
-                "decoding_method": "greedy",
-                "max_new_tokens": 20,
-                "temperature": 0,
-                "return_options": {
-                    "token_logprobs": True,
-                    "generated_tokens": True,
-                    "input_text": True,
-                    "top_n_tokens": 5,
-                },
-            },
-        )
-        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        result = self.inference_engine.infer_log_probs([{"source": processed_input}])
+        generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         score = prob_of_risk if label is not None else np.nan
         result = {self.main_score: score, f"{self.main_score}_label": label}
