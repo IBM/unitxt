@@ -59,6 +59,7 @@ from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import OptionalField
+from .error_utils import UnitxtError
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
@@ -158,7 +159,10 @@ class Loader(SourceOperator):
     def load_data(self) -> MultiStream:
         iterables = self.__class__._loader_cache.get(str(self), None)
         if iterables is None:
-            iterables = self.load_iterables()
+            try:
+                iterables = self.load_iterables()
+            except Exception as e:
+                raise UnitxtError(f"Error in loader:\n{self}") from e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
@@ -381,6 +385,7 @@ class LoadCSV(Loader):
         args = {}
         if self.file_type == "csv":
             args["sep"] = self.sep
+            args["low_memory"] = self.streaming
         if self.compression is not None:
             args["compression"] = self.compression
         if self.lines is not None:
