@@ -8,14 +8,15 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.vision[format=formats.chat_api,loader_limit=30,max_samples_per_subset=30]",
+        # "benchmarks.llama_vision[format=formats.chat_api,loader_limit=30,max_samples_per_subset=30]",
+        "benchmarks.llama_vision[format=formats.chat_api]",
         split="test",
     )
 
 # Infer
 model = CrossProviderInferenceEngine(
     model="llama-3-2-11b-vision-instruct",
-    max_tokens=30,
+    max_tokens=32,
     provider="watsonx",
     temperature=0.0,
 )
@@ -37,9 +38,8 @@ print(results.subsets_scores.summary)
 
 # | subset   |    score | score_name      |   num_of_instances |
 # |:---------|---------:|:----------------|-------------------:|
-# | ALL      | 0.429583 | subsets_mean    |                150 |
-# | doc_vqa  | 0.79103  | anls            |                 30 |
-# | info_vqa | 0.464885 | anls            |                 30 |
-# | chart_qa | 0.3      | relaxed_overall |                 30 |
-# | ai2d     | 0.2      | exact_match_mm  |                 30 |
-# | websrc   | 0.392    | websrc_squad_f1 |                 30 |
+# | ALL      | 0.642003 | subsets_mean    |                120 |
+# | doc_vqa  | 0.771157 | anls            |                 30 |
+# | info_vqa | 0.596854 | anls            |                 30 |
+# | chart_qa | 0.333333 | relaxed_overall |                 30 |
+# | ai2d     | 0.866667 | exact_match_mm  |                 30 |
