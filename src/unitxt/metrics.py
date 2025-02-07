@@ -6003,11 +6003,7 @@ class GraniteGuardianMetric(InstanceMetric):
         ), UnitxtError("Major version from WatsonX and HF model names must be the same")
 
     def set_main_score(self):
-        self.main_score = (
-            f"granite_guardian_{self.risk_type.value}_{self.risk_name}"
-            if self.main_score is None
-            else self.main_score
-        )
+        self.main_score = self.risk_name
         self.reduction_map = {"mean": [self.main_score]}
 
     def get_prompt(self, messages):
@@ -6044,8 +6040,13 @@ class GraniteGuardianMetric(InstanceMetric):
         result = self.inference_engine.infer_log_probs([{"source": prompt}])
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
-        score = prob_of_risk if label is not None else np.nan
-        result = {self.main_score: score, f"{self.main_score}_label": label}
+        confidence_score = (prob_of_risk if prob_of_risk > 0.5 else 1 - prob_of_risk) if label is not None else np.nan
+        result = {
+            self.main_score: prob_of_risk, 
+            f"{self.main_score}_prob_of_risk": prob_of_risk,
+            f"{self.main_score}_certainty": confidence_score,
+            f"{self.main_score}_label": label,
+        }
         logger.debug(f"Results are ready:\n{result}")
         return result
 
