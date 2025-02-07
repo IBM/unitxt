@@ -5861,14 +5861,24 @@ class RiskType(str, Enum):
     CUSTOM_RISK = "custom_risk"
 
 
-class GraniteGuardianWMLMetric(InstanceMetric):
+class GraniteGuardianMetric(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     reduction_map: Dict[str, List[str]] = None
     prediction_type = float
     main_score = None
     reduction_map = {}
-    model_name: str = "ibm/granite-guardian-3-8b"
+    wml_model_name: str = "ibm/granite-guardian-3-8b"
+
+    wml_params = {
+        "decoding_method": "greedy",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "return_options": {
+            "top_n_tokens": 5,
+        },
+    }
+
     hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
     safe_token = "No"
@@ -5905,7 +5915,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         RiskType.AGENTIC: ["function_call"],
     }
 
-    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
+    _requirements_list: List[str] = ["torch", "transformers"]
 
     def verify_guardian_config(self, task_data):
         if (
@@ -5989,7 +5999,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         super().verify()
         # verify that major version from watsonx and HF are the same
         assert (
-            self.model_name.split("-")[-2][0] == self.hf_model_name.split("-")[-2][0]
+            isinstance(WMLInferenceEngineGeneration) and self.wml_model_name.split("-")[-2][0] == self.hf_model_name.split("-")[-2][0]
         ), UnitxtError("Major version from WatsonX and HF model names must be the same")
 
     def set_main_score(self):
@@ -6022,18 +6032,10 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
         if self.inference_engine is None:
-            self.inference_engine = WMLInferenceEngineGeneration(
-                model_name=self.model_name,
-                decoding_method="greedy",
-                max_new_tokens=20,
-                temperature=0,
-                return_options={
-                    "token_logprobs": True,
-                    "generated_tokens": True,
-                    "input_text": True,
-                    "top_n_tokens": 5,
-                },
-            )
+            self.inference_engine = WMLInferenceEngineGeneration({
+                "model_name": self.wml_model_name,
+                **self.wml_params,
+            })
         logger.debug(
             f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
