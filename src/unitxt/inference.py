@@ -1911,7 +1911,7 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
+    Literal["url", "username", "password", "api_key", "project_id", "space_id"], str
 ]
 
 
@@ -1986,8 +1986,7 @@ class WMLInferenceEngineBase(
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
-
-        client = APIClient(credentials=self.credentials)
+        client = APIClient(credentials={'api_key': self.credentials['api_key'], 'url': self.credentials['url']})
         if "space_id" in self.credentials:
             client.set.default_space(self.credentials["space_id"])
         else:
@@ -2039,7 +2038,7 @@ class WMLInferenceEngineBase(
             )
 
         if apikey:
-            credentials["apikey"] = apikey
+            credentials["api_key"] = apikey
         elif username and password:
             credentials["username"] = username
             credentials["password"] = password
@@ -2057,7 +2056,7 @@ class WMLInferenceEngineBase(
         assert isoftype(credentials, CredentialsWML), (
             "WML credentials object must be a dictionary which may "
             "contain only the following keys: "
-            "['url', 'apikey', 'username', 'password']."
+            "['url', 'api_key', 'username', 'password']."
         )
 
         assert credentials.get(
@@ -2067,10 +2066,10 @@ class WMLInferenceEngineBase(
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
         )
-        assert "apikey" in credentials or (
+        assert "api_key" in credentials or (
             "username" in credentials and "password" in credentials
         ), (
-            "Either 'apikey' or both 'username' and 'password' must be provided "
+            "Either 'api_key' or both 'username' and 'password' must be provided "
             "as keys for WML credentials dict."
         )
 
