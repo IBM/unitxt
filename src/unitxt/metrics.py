@@ -6000,6 +6000,20 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         )
         self.reduction_map = {"mean": [self.main_score]}
 
+    def get_prompt(self, messages):
+        guardian_config = {"risk_name": self.risk_name}
+        if self.risk_type == RiskType.CUSTOM_RISK:
+            guardian_config["risk_definition"] = self.risk_definition
+
+        processed_input = self._tokenizer.apply_chat_template(
+            messages,
+            guardian_config=guardian_config,
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+        return processed_input
+
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
 
@@ -6024,19 +6038,8 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
         messages = self.process_input_fields(task_data)
-
-        guardian_config = {"risk_name": self.risk_name}
-        if self.risk_type == RiskType.CUSTOM_RISK:
-            guardian_config["risk_definition"] = self.risk_definition
-
-        processed_input = self._tokenizer.apply_chat_template(
-            messages,
-            guardian_config=guardian_config,
-            tokenize=False,
-            add_generation_prompt=True,
-        )
-
-        result = self.inference_engine.infer_log_probs([{"source": processed_input}])
+        prompt = self.get_prompt(messages)
+        result = self.inference_engine.infer_log_probs([{"source": prompt}])
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         score = prob_of_risk if label is not None else np.nan
