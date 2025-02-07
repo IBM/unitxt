@@ -48,7 +48,7 @@ from .inference import (
     InferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
-    LogProbInferenceEngine
+    LogProbInferenceEngine,
 )
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -5995,13 +5995,6 @@ class GraniteGuardianMetric(InstanceMetric):
         if isinstance(self.risk_type, str):
             self.risk_type = RiskType[self.risk_type]
 
-    def verify(self):
-        super().verify()
-        # verify that major version from watsonx and HF are the same
-        assert (
-            isinstance(WMLInferenceEngineGeneration) and self.wml_model_name.split("-")[-2][0] == self.hf_model_name.split("-")[-2][0]
-        ), UnitxtError("Major version from WatsonX and HF model names must be the same")
-
     def set_main_score(self):
         self.main_score = self.risk_name
         self.reduction_map = {"mean": [self.main_score]}
@@ -6028,10 +6021,10 @@ class GraniteGuardianMetric(InstanceMetric):
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
         if self.inference_engine is None:
-            self.inference_engine = WMLInferenceEngineGeneration({
-                "model_name": self.wml_model_name,
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.wml_model_name,
                 **self.wml_params,
-            })
+            )
         logger.debug(
             f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
@@ -6040,9 +6033,13 @@ class GraniteGuardianMetric(InstanceMetric):
         result = self.inference_engine.infer_log_probs([{"source": prompt}])
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
-        confidence_score = (prob_of_risk if prob_of_risk > 0.5 else 1 - prob_of_risk) if label is not None else np.nan
+        confidence_score = (
+            (prob_of_risk if prob_of_risk > 0.5 else 1 - prob_of_risk)
+            if label is not None
+            else np.nan
+        )
         result = {
-            self.main_score: prob_of_risk, 
+            self.main_score: prob_of_risk,
             f"{self.main_score}_prob_of_risk": prob_of_risk,
             f"{self.main_score}_certainty": confidence_score,
             f"{self.main_score}_label": label,
