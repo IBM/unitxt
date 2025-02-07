@@ -48,6 +48,7 @@ from .inference import (
     InferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
+    LogProbInferenceEngine
 )
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -5873,7 +5874,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
     safe_token = "No"
     unsafe_token = "Yes"
 
-    inference_engine: WMLInferenceEngineGeneration = None
+    inference_engine: LogProbInferenceEngine = None
     generation_params: Dict = None
     risk_name: str = None
     risk_type: RiskType = None
@@ -6006,6 +6007,7 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         self.set_main_score()
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+        if self.inference_engine is None:
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.model_name,
                 decoding_method="greedy",
