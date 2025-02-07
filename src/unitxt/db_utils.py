@@ -47,10 +47,10 @@ def execute_query_local(db_path: str, query: str) -> Any:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cursor.execute(query)
-        return cursor.fetchall()
+        return cursor.fetchall(), None
     except sqlite3.Error as e:
         logger.info(f"Error executing SQL: {e}")
-        return None
+        return None, f"Error executing SQL: {e}"
     finally:
         if conn:
             conn.close()
@@ -178,10 +178,10 @@ class InMemoryDatabaseConnector(DatabaseConnector):
 
         try:
             cursor.execute(query)
-            return cursor.fetchall()
+            return cursor.fetchall(), None
         except sqlite3.Error as e:
             logger.info(f"Error executing SQL: {e}")
-            return None
+            return None, f"Error executing SQL: {e}"
         finally:
             conn.close()
 
@@ -196,7 +196,7 @@ def execute_query_remote(
     max_retries: int = 3,
     retry_delay: int = 5,  # seconds
     timeout: int = 30,  # seconds
-) -> Optional[dict]:
+) -> (Optional[dict], str):
     """Executes a query against the remote database, with retries for certain exceptions."""
     headers = {
         "Content-Type": "application/json",
@@ -214,7 +214,7 @@ def execute_query_remote(
                 timeout=timeout,
             )
             response.raise_for_status()
-            return response.json()
+            return response.json(), None
 
         except retryable_exceptions as e:
             retries += 1
@@ -225,7 +225,10 @@ def execute_query_remote(
                 time.sleep(retry_delay)
             else:
                 logger.error(f"Max retries ({max_retries}) exceeded for query: {query}")
-                return None
+                return (
+                    None,
+                    f"Max retries ({max_retries}) exceeded for query: {query} - Error: {e!s}",
+                )
 
         except requests.exceptions.HTTPError as e:
             if e.response.status_code >= 500:
@@ -239,16 +242,22 @@ def execute_query_remote(
                     logger.error(
                         f"Max retries ({max_retries}) exceeded for query: {query}"
                     )
-                    return None
+                    return (
+                        None,
+                        f"Max retries ({max_retries}) exceeded for query: {query} - Error: {e!s}",
+                    )
             else:
                 logger.error(f"HTTP Error on attempt {retries}: {e}")
-                return None
+                return (
+                    None,
+                    f"HTTP Error on attempt {retries}: {e}",
+                )
 
         except Exception as e:
             logger.error(f"Unexpected error on attempt {retries}: {e}")
-            return None
+            return (None, f"Unexpected error on attempt {retries}: {e}")
 
-    return None
+    return None, "Unknown Error in SQL execution"
 
 
 class RemoteDatabaseConnector(DatabaseConnector):

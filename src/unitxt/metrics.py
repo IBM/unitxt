@@ -6121,10 +6121,28 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         ).numpy()
 
 
-class ExecutionAccuracy(InstanceMetric):
-    reduction_map = {"mean": ["execution_accuracy"]}
-    main_score = "execution_accuracy"
-    ci_scores = ["execution_accuracy"]
+class SQLExecutionAccuracy(InstanceMetric):
+    reduction_map = {
+        "mean": [
+            "execution_accuracy",
+            "non_empty_execution_accuracy",
+            "subset_non_empty_execution_result",
+            "non_empty_gold_df",
+            "gold_sql_runtime",
+            "predicted_sql_runtime",
+            "pred_to_gold_runtime_ratio",
+            "gold_error",
+            "predicted_error",
+        ]
+    }
+    main_score = "non_empty_execution_accuracy"
+    ci_scores = [
+        "execution_accuracy",
+        "non_empty_execution_accuracy",
+        "subset_non_empty_execution_result",
+        "gold_sql_runtime",
+        "predicted_sql_runtime",
+    ]
 
     prediction_type = "Any"  # string representation is compared
     sql_timeout = 100.0
@@ -6132,7 +6150,57 @@ class ExecutionAccuracy(InstanceMetric):
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
+    def compare_dfs_ignore_colnames(df1, df2):
+        """
+        Compares two DataFrames based on row content, ignoring column names.
+
+        Args:
+            df1, df2: Pandas DataFrames to compare.
+
+        Returns:
+            True if the DataFrames have the same content (ignoring column names),
+            False otherwise.
+        """
+
+        df1.fillna(0, inplace=True)
+        df2.fillna(0, inplace=True)
+
+        if df1.shape != df2.shape:
+            return False
+
+        # run over all columns of d11,
+        # and see if there is a columns in df2 that matches it,
+        # if not return False, if all the columns worked return tue
+        for df1_col in df1.columns:
+            col_matched = False
+            for df2_col in df2.columns:
+                if all(df1[df1_col].values == df2[df2_col].values):
+                    col_matched = True
+            if not col_matched:
+                return False
+
+        return True
+
+    @staticmethod
+    def is_subset_ignore_colnames(df1, df2):
+        """
+        Checks if df1 is a subset of df2 based on row content, ignoring column names.
+
+        Args:
+            df1, df2: Pandas DataFrames to compare.
+
+        Returns:
+            True if df1 is a subset of df2 based on row values,
+            False otherwise.
+        """
+        df1_rows = {tuple(sorted(map(str, row))) for row in df1.to_numpy()}
+        df2_rows = {tuple(sorted(map(str, row))) for row in df2.to_numpy()}
+
+        return df1_rows.issubset(df2_rows)
+
+    @staticmethod
     def equivalent_sqls(expected: str, generated: str) -> int:
+        """Checks if SQL queries are equivalent using SQLGlot parsing, so we don't run them"""
         from sqlglot import diff, parse_one
         from sqlglot.optimizer import optimize
 
@@ -6144,61 +6212,159 @@ class ExecutionAccuracy(InstanceMetric):
 
         return 1 if sql_diff == 0 else 0
 
-    def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
-        """Runs SQL queries using the provided connector and checks if the results match."""
-        if predicted_sql.lower().strip() == gold_sql.lower().strip():
-            return 1  # if the SQLs are exactly the same, return 1
+    def get_sql_execution_results(
+        self, predicted_sql: str, gold_sql: str, connector
+    ) -> (int, int, int, int, int, int, int, int, int, str, str, str):
+        """Runs SQL queries using the provided connector and gets scores and results.
 
+        Args:
+        predicted_sql, gold_sql, connector: SQL queries and a database connector
+
+        Returns:
+        a 12-tuple of
+        1. execution_result: if df responses match
+        2. non_empty_execution_result: if dfs are non-empty and match
+        3. subset_non_empty_execution_result: if non-empty dfs and gt df subset of predicted df
+        4. non_empty_gold_df: if gt df is non-empty
+        5. gold_sql_runtime: ground truth query runtime
+        6. predicted_sql_runtime: predicted query runtime
+        7. pred_to_gold_runtime_ratio: ratio of predicted query runtime to gt query runtime
+        8. gold_error: if gt has an error
+        9. predicted_error: if predicted query has an error
+        10. ground truth dataframe
+        11. predicted query's dataframe
+        12. error message (if any)
+        """
+        from func_timeout import func_timeout
+        import time
+
+        gold_res = None
+        gold_error = ""
+        gold_sql_runtime = 0
+        try:
+            start_time = time.perf_counter()
+            gold_res, gold_error = func_timeout(
+                self.sql_timeout,
+                connector.execute_query,
+                args=(gold_sql,),
+            )
+            end_time = time.perf_counter()
+            gold_sql_runtime = end_time - start_time
+        except Exception as e:
+            # raise OSError(
+            #     "Error executing gold SQL, if gold does not execute metric should fail"
+            # ) from e
+            gold_error = f"Error executing gold SQL: {e}"
+        if gold_error is not None:
+            return (
+                0,
+                0,
+                0,
+                0,
+                gold_sql_runtime,
+                0,
+                0,
+                0,
+                0,
+                "",
+                "",
+                "",
+            )
+
+        gold_df = pd.DataFrame(gold_res)
+        non_empty_gold_df = 0 if gold_df.empty else 1
+
+        no_execution_match_result = (
+            1,
+            non_empty_gold_df,
+            non_empty_gold_df,
+            non_empty_gold_df,
+            gold_sql_runtime,
+            0,
+            0,
+            1,
+            0,
+            gold_df.to_json(),
+            gold_df.to_json(),
+            "",
+        )
+        if predicted_sql.lower().strip() == gold_sql.lower().strip():
+            return no_execution_match_result
         try:
             if self.equivalent_sqls(gold_sql, predicted_sql):
-                return 1
+                return no_execution_match_result
         except Exception as e:  # Catch specific exceptions if possible
             logger.info(
                 f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
             )
 
+        pred_res = None
+        pred_error = ""
+        pred_sql_runtime = 0
         try:
-            gold_res = connector.execute_query(gold_sql)
+            start_time = time.perf_counter()
+            pred_res, pred_error = func_timeout(
+                self.sql_timeout,
+                connector.execute_query,
+                args=(predicted_sql,),
+            )
+            end_time = time.perf_counter()
+            pred_sql_runtime = end_time - start_time
         except Exception as e:
-            raise OSError(
-                "Error executing gold SQL, if gold does not execute metric should fail"
-            ) from e
+            pred_error = f"Error executing predicted SQL: {e}"
+            logger.info(pred_error)
 
-        try:
-            pred_res = connector.execute_query(predicted_sql)
-        except Exception as e:
-            logger.info(f"Error executing predicted SQL: {e}")
-            return 0  # if the predicted SQL fails to execute, result is 0
+        pred_to_gold_runtime_ratio = (
+            float(pred_sql_runtime) / gold_sql_runtime if gold_sql_runtime > 0 else 0
+        )
 
         if pred_res is None:
-            if gold_res is None:
-                return 1
-            return 0
+            return (
+                0,
+                0,
+                0,
+                0,
+                gold_sql_runtime,
+                pred_sql_runtime,
+                pred_to_gold_runtime_ratio,
+                0,
+                1,
+                "",
+                "",
+                pred_error,
+            )
 
-        # if pred_res is dict with results take this as the result
-        if isinstance(pred_res, dict):
-            pred_res = pred_res["results"]
-            gold_res = gold_res["results"]
+        predicted_df = pd.DataFrame(pred_res)
 
-        def normalize_tuple(tup):
-            """Normalizes a tuple by sorting its non-None elements.
+        execution_result = (
+            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
+        )
 
-            Args:
-                tup: The input tuple.
+        subset_non_empty_execution_result = 0
+        non_empty_execution_result = 0
+        non_empty_gold_df = 0
+        if non_empty_gold_df:
+            if execution_result == 1:
+                non_empty_execution_result = 1
+                if self.is_subset_ignore_colnames(gold_df, predicted_df):
+                    subset_non_empty_execution_result += 1
 
-            Returns:
-                A tuple with non-None elements sorted first, followed by None values.
-            """
-            return sorted([str(item) for item in tup])
-
-        return int(
-            sorted([normalize_tuple(t) for t in pred_res])
-            == sorted([normalize_tuple(t) for t in gold_res])
+        return (
+            execution_result,
+            non_empty_execution_result,
+            subset_non_empty_execution_result,
+            non_empty_gold_df,
+            gold_sql_runtime,
+            pred_sql_runtime,
+            pred_to_gold_runtime_ratio,
+            0,
+            0,
+            gold_df.to_json(),
+            predicted_df.to_json(),
+            pred_error,
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from func_timeout import FunctionTimedOut, func_timeout
-
         predicted_sql = prediction
         execution_result: float = 0.0
 
@@ -6210,18 +6376,43 @@ class ExecutionAccuracy(InstanceMetric):
 
             db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
 
-            try:
-                execution_result = func_timeout(
-                    self.sql_timeout,
-                    self.run_sql_and_match,
-                    args=(predicted_sql, references[0], db_connector),
-                )  # type: ignore
-            except FunctionTimedOut:
-                logger.error("QUERY TIMEOUT, returning score=0 for this instance")
-                execution_result = 0.0
+            logger.debug(
+                f"Starting to get SQL execution results over DB: {task_data['db']}"
+            )
+            (
+                execution_result,
+                non_empty_execution_result,
+                subset_non_empty_execution_result,
+                non_empty_gold_df,
+                gold_sql_runtime,
+                predicted_sql_runtime,
+                pred_to_gold_runtime_ratio,
+                gold_error,
+                predicted_error,
+                gold_df_json,
+                predicted_df_json,
+                error_message,
+            ) = self.get_sql_execution_results(
+                predicted_sql, references[0], db_connector
+            )
 
-        result = {self.main_score: float(execution_result)}
-        logger.debug(f"Result: {result}")
+        result = {
+            "execution_accuracy": float(execution_result),
+            "non_empty_execution_accuracy": float(non_empty_execution_result),
+            "subset_non_empty_execution_result": float(
+                subset_non_empty_execution_result
+            ),
+            "non_empty_gold_df": float(non_empty_gold_df),
+            "gold_sql_runtime": float(gold_sql_runtime),
+            "predicted_sql_runtime": float(predicted_sql_runtime),
+            "pred_to_gold_runtime_ratio": float(pred_to_gold_runtime_ratio),
+            "gold_error": float(gold_error),
+            "predicted_error": float(predicted_error),
+            "error_message": str(error_message),
+            "gold_df_json": str(gold_df_json),
+            "predicted_df_json": str(predicted_df_json),
+        }
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
+        logger.debug(f"Result: {result}")
         return result

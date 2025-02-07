@@ -12,7 +12,6 @@ from unitxt.metrics import (
     BinaryMaxAccuracy,
     BinaryMaxF1,
     Detector,
-    ExecutionAccuracy,
     F1Binary,
     F1BinaryPosOnly,
     F1Fast,
@@ -54,6 +53,7 @@ from unitxt.metrics import (
     RecallBinary,
     RocAuc,
     Rouge,
+    SQLExecutionAccuracy,
     TokenOverlap,
     UnsortedListExactMatch,
 )
@@ -1382,7 +1382,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
     def test_execution_accuracy_correct_query_mock_db(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT name FROM employees WHERE department = 'Sales'"]
         references = ["SELECT name FROM employees WHERE department = 'Sales';"]
         task_data = [
@@ -1408,7 +1408,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_different_db_schema(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT product_name, price FROM products WHERE category = 'Electronics'"
         ]
@@ -1444,7 +1444,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_multiple_tables(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT o.order_id, c.name FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped'"
         ]
@@ -1482,7 +1482,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_empty_result(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT name FROM employees WHERE department = 'HR'"]
         references = ["SELECT name FROM employees WHERE department = 'HR';"]
         task_data = [
@@ -1508,7 +1508,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_aggregation_query(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT AVG(salary) FROM employees"]
         references = ["SELECT AVG(salary) FROM employees;"]
         task_data = [
@@ -1534,7 +1534,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_incorrect_query(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT nme FROM employees WHERE department = 'Sales'"
         ]  # Incorrect column name 'nme'

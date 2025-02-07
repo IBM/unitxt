@@ -1,14 +1,23 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.metrics import ExecutionAccuracy
+from unitxt.metrics import SQLExecutionAccuracy
 from unitxt.test_utils.metrics import test_metric
 
-metric = ExecutionAccuracy()
+metric = SQLExecutionAccuracy()
 
 predictions = [
     "SELECT nme FROM employees WHERE department = 'Sales'",
     "SELECT name FROM employees WHERE department = 'Sales'",
+    "SELECT name FROM employees WHERE department = 'Engineering'",
+    "SELECT id, name FROM employees WHERE department = 'Sales'",
+    "SELECT name FROM employees WHERE department = 'Non-Existent'",
 ]  # Incorrect column name 'nme'
-references = [["SELECT name FROM employees WHERE department = 'Sales';"]] * 2
+references = [
+    ["SELECT name FROM employees WHERE department = 'Sales';"],
+    ["SELECT name FROM employees WHERE department = 'Sales';"],
+    ["SELECT name FROM employees WHERE department = 'Sales';"],
+    ["SELECT name FROM employees WHERE department = 'Sales';"],
+    ["SELECT name FROM employees WHERE department = 'Non-Existent';"],
+]
 task_data = [
     {
         "db": {
@@ -26,29 +35,84 @@ task_data = [
             },
         }
     }
-] * 2
+] * 5
 
 instance_targets = [
     {
+        "error_message": "Error executing SQL: no such column: nme",
         "execution_accuracy": 0.0,
+        "gold_df_json": "",
+        "gold_error": 0.0,
+        "non_empty_execution_accuracy": 0.0,
+        "non_empty_gold_df": 0.0,
+        "predicted_df_json": "",
+        "predicted_error": 1.0,
         "score": 0.0,
         "score_name": "execution_accuracy",
+        "subset_non_empty_execution_result": 0.0,
     },
     {
+        "error_message": "",
         "execution_accuracy": 1.0,
+        "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
+        "gold_error": 1.0,
+        "non_empty_execution_accuracy": 1.0,
+        "non_empty_gold_df": 1.0,
+        "predicted_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
+        "predicted_error": 0.0,
         "score": 1.0,
         "score_name": "execution_accuracy",
+        "subset_non_empty_execution_result": 1.0,
+    },
+    {
+        "error_message": "None",
+        "execution_accuracy": 0.0,
+        "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
+        "gold_error": 0.0,
+        "non_empty_execution_accuracy": 0.0,
+        "non_empty_gold_df": 0.0,
+        "predicted_df_json": '{"0":{"0":"Bob"}}',
+        "predicted_error": 0.0,
+        "score": 0.0,
+        "score_name": "execution_accuracy",
+        "subset_non_empty_execution_result": 0.0,
+    },
+    {
+        "error_message": "None",
+        "execution_accuracy": 0.0,
+        "gold_df_json": '{"0":{"0":"Alice","1":"Charlie"}}',
+        "gold_error": 0.0,
+        "non_empty_execution_accuracy": 0.0,
+        "non_empty_gold_df": 0.0,
+        "predicted_df_json": '{"0":{"0":1,"1":3},"1":{"0":"Alice","1":"Charlie"}}',
+        "predicted_error": 0.0,
+        "score": 0.0,
+        "score_name": "execution_accuracy",
+        "subset_non_empty_execution_result": 0.0,
+    },
+    {
+        "error_message": "",
+        "execution_accuracy": 1.0,
+        "gold_df_json": "{}",
+        "gold_error": 1.0,
+        "non_empty_execution_accuracy": 0.0,
+        "non_empty_gold_df": 0.0,
+        "predicted_df_json": "{}",
+        "predicted_error": 0.0,
+        "score": 1.0,
+        "score_name": "execution_accuracy",
+        "subset_non_empty_execution_result": 0.0,
     },
 ]
 
 
 global_target = {
-    "execution_accuracy": 0.5,
-    "execution_accuracy_ci_high": 1.0,
+    "execution_accuracy": 0.4,
+    "execution_accuracy_ci_high": 0.87,
     "execution_accuracy_ci_low": 0.0,
-    "num_of_instances": 2,
-    "score": 0.5,
-    "score_ci_high": 1.0,
+    "num_of_instances": 5,
+    "score": 0.4,
+    "score_ci_high": 0.87,
     "score_ci_low": 0.0,
     "score_name": "execution_accuracy",
 }
@@ -60,6 +124,11 @@ outputs = test_metric(
     instance_targets=instance_targets,
     global_target=global_target,
     task_data=task_data,
+    score_keys_to_ignore=[
+        "predicted_sql_runtime",
+        "gold_sql_runtime",
+        "pred_to_gold_runtime_ratio",
+    ],
 )
 
 add_to_catalog(metric, "metrics.text2sql.execution_accuracy", overwrite=True)
