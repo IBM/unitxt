@@ -11,17 +11,17 @@ data = [
     {
         "question": "What foundation models are available in watsonx.ai ?",
         "answer": "Watsonx.ai supports a variety of foundation models",
-        "contexts": ["Supported foundation models available with watsonx.ai"],
+        "context": "Supported foundation models available with watsonx.ai",
     }
 ]
 
 dataset = create_dataset(
     task=Task(
-        input_fields={"contexts": List[str], "answer": str, "question": str},
+        input_fields={"context": str, "answer": str, "question": str},
         reference_fields={},
         prediction_type=float,
         default_template=NullTemplate(),
-        metrics=["metrics.granite_guardian.rag_risk.answer_relevance"],
+        metrics=["metrics.granite_guardian.rag_risk.answer_relevance[user_message_field=question,assistant_message_field=answer]"],
     ),
     test_set=data,
     split="test",

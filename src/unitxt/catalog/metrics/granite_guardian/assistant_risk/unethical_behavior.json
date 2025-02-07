@@ -1,5 +1,5 @@
 {
-    "__type__": "granite_guardian_wml_metric",
+    "__type__": "granite_guardian_metric",
     "risk_name": "unethical_behavior",
     "risk_type": "ASSISTANT_MESSAGE"
 }
