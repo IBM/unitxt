@@ -43,6 +43,7 @@ from tempfile import TemporaryDirectory
 from typing import (
     Any,
     Dict,
+    Generator,
     Iterable,
     List,
     Literal,
@@ -54,7 +55,13 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import DatasetDict, DownloadConfig, IterableDatasetDict
+from datasets import (
+    Dataset,
+    DatasetDict,
+    IterableDataset,
+    IterableDatasetDict,
+    load_dataset_builder,
+)
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -62,6 +69,7 @@ from tqdm import tqdm
 from .dataclass import OptionalField
 from .error_utils import UnitxtError
 from .fusion import FixedFusion
+from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
@@ -90,11 +98,13 @@ class Loader(SourceOperator):
         loader_limit: Optional integer to specify a limit on the number of records to load.
         streaming: Bool indicating if streaming should be used.
         num_proc: Optional integer to specify the number of processes to use for parallel dataset loading. Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
+        splits: if not None specifies the names of all splits in the dataset. Some (or all) of these splits will be actually loaded, determined by the application's need.
     """
 
     loader_limit: int = None
     streaming: bool = False
     num_proc: int = None
+    splits: Optional[List[str]] = None
 
     # class level shared cache:
     _loader_cache = LRUCache(max_size=settings.loader_cache_size)
@@ -166,6 +176,8 @@ class Loader(SourceOperator):
                 raise UnitxtError(f"Error in loader:\n{self}") from e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
+        if isoftype(iterables, Dict[str, ReusableGenerator]):
+            return MultiStream.from_generators(iterables, copying=True)
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
@@ -226,83 +238,113 @@ class LoadHF(Loader):
                 self._requirements_list.append(requirement)
         super().verify()
 
-    def filter_load(self, dataset: DatasetDict):
+    def log_filter_load(self):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
             )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
-        return dataset.filter(eval(self.filtering_lambda))
 
     def is_streaming(self) -> bool:
         if self.streaming is None:
             return settings.stream_hf_datasets_by_default
         return self.streaming
 
-    def stream_dataset(self):
-        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-            if settings.disable_hf_datasets_cache and not self.is_streaming():
-                cache_dir = dir_to_be_deleted
-            else:
-                cache_dir = None
+    def limit_dataset(
+        self,
+        limit: int,
+        dataset: Union[Dataset, IterableDataset, DatasetDict, IterableDatasetDict],
+    ) -> Union[Dataset, IterableDataset, DatasetDict, IterableDatasetDict]:
+        if isinstance(dataset, (DatasetDict, IterableDatasetDict)):
+            for split_name in dataset:
+                try:
+                    split_limit = min(limit, len(dataset[split_name]))
+                except:
+                    split_limit = limit
+                dataset[split_name] = dataset[split_name].take(split_limit)
+        else:
             try:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    revision=self.revision,
-                    streaming=self.is_streaming(),
-                    cache_dir=cache_dir,
-                    split=self.split,
-                    trust_remote_code=settings.allow_unverified_code,
-                    num_proc=self.num_proc,
-                    download_config=DownloadConfig(
-                        max_retries=settings.loaders_max_retries
-                    ),
-                )
-            except ValueError as e:
-                if "trust_remote_code" in str(e):
-                    raise ValueError(
-                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                    ) from e
-                raise e
-
-        if self.split is not None:
-            dataset = {self.split: dataset}
-
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+                split_limit = min(limit, len(dataset))
+            except:
+                split_limit = limit
+            dataset = dataset.take(split_limit)
 
         return dataset
 
-    def load_dataset(self):
-        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-            if settings.disable_hf_datasets_cache:
-                cache_dir = dir_to_be_deleted
-            else:
-                cache_dir = None
-            try:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    streaming=False,
-                    keep_in_memory=True,
-                    cache_dir=cache_dir,
-                    split=self.split,
-                    trust_remote_code=settings.allow_unverified_code,
-                    num_proc=self.num_proc,
-                )
-            except ValueError as e:
-                if "trust_remote_code" in str(e):
-                    raise ValueError(
-                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                    ) from e
+    # returns Dict when split names are not known in advance, and just the the single split dataset - if known
+    # flake8: noqa: C901
+    def load_dataset(
+        self, split: str, streaming=None, disable_memory_caching=False
+    ) -> Union[IterableDatasetDict, IterableDataset, Dataset, DatasetDict]:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + str(split), None)
+        if dataset is None:
+            if streaming is None:
+                streaming = self.is_streaming()
 
-        if self.split is not None:
-            dataset = {self.split: dataset}
+            # try to optimize when not too dangerous
+            if self.get_limit() <= 100:
+                streaming = True
+
+            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+                if settings.disable_hf_datasets_cache:
+                    cache_dir = dir_to_be_deleted
+                else:
+                    cache_dir = None
+                kwargs = {
+                    "path": self.path,
+                    "name": self.name,
+                    "data_dir": self.data_dir,
+                    "data_files": self.data_files,
+                    "revision": self.revision,
+                    "streaming": streaming,
+                    "keep_in_memory": True,
+                    "cache_dir": cache_dir,
+                    "verification_mode": "no_checks",
+                    "split": split,
+                    "trust_remote_code": settings.allow_unverified_code,
+                    "num_proc": self.num_proc,
+                }
+                try:
+                    # load the dataset and verify that it is useful
+                    dataset = hf_load_dataset(**kwargs)
+                    if isinstance(dataset, (Dataset, IterableDataset)):
+                        next(iter(dataset))
+                    else:
+                        for k in dataset.keys():
+                            next(iter(dataset[k]))
+                            break
+
+                except:
+                    try:
+                        current_streaming = kwargs["streaming"]
+                        logger.info(
+                            f"needed to swap streaming from {current_streaming} to {not current_streaming} for path {self.path}"
+                        )
+                        # try the opposite way of streaming
+                        kwargs["streaming"] = not kwargs["streaming"]
+                        dataset = hf_load_dataset(**kwargs)
+                        if isinstance(dataset, (Dataset, IterableDataset)):
+                            next(iter(dataset))
+                        else:
+                            for k in dataset.keys():
+                                next(iter(dataset[k]))
+                                break
+
+                    except ValueError as e:
+                        if "trust_remote_code" in str(e):
+                            raise ValueError(
+                                f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                            ) from e
+
+            if self.filtering_lambda is not None:
+                dataset = dataset.filter(eval(self.filtering_lambda))
+
+            if self.get_limit():
+                dataset = self.limit_dataset(self.get_limit(), dataset)
+
+            if not disable_memory_caching:
+                self.__class__._loader_cache.max_size = settings.loader_cache_size
+                self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset
 
         return dataset
 
@@ -317,31 +359,54 @@ class LoadHF(Loader):
                 None,  # No warning when loading from public hub
             )
 
-    def load_iterables(self) -> IterableDatasetDict:
+    def get_splits(self) -> List[str]:
+        if self.splits is not None:
+            return self.splits
+        # do a minimal effort to get the split names. Less than downloading the whole dataset, which will
+        # be done anyhow, when splits are not known.
         try:
-            dataset = self.stream_dataset()
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset()
+            ds_builder = load_dataset_builder(
+                self.path, self.name, trust_remote_code=settings.allow_unverified_code
+            )
+            dataset_info = ds_builder.info
+            if dataset_info.splits is not None:
+                # split names are known before the split themselves are pulled from HF,
+                # and we can postpone that pulling of the splits until actually demanded
+                return list(dataset_info.splits.keys())
+            return None
+        except:
+            return None
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
-
-        limit = self.get_limit()
-        if limit is not None:
+    def load_iterables(
+        self
+    ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict, DatasetDict]:
+        # log once for all splits, as they are limited the same
+        if self.get_limit() is not None:
             self.log_limited_loading()
-            result = {}
-            for split_name in dataset:
-                try:
-                    split_limit = min(limit, len(dataset[split_name]))
-                except:
-                    split_limit = limit
-                result[split_name] = dataset[split_name].take(split_limit)
+        if self.filtering_lambda is not None:
+            self.log_filter_load()
 
-            return result
+        if self.split is not None:
+            splits = [self.split]
+        elif self.splits is not None:
+            splits = self.splits
+        else:
+            splits = self.get_splits()
 
-        return dataset
+        if splits is not None:
+            return {
+                split: ReusableGenerator(
+                    self.split_generator, gen_kwargs={"split": split}
+                )
+                for split in splits
+            }
+
+        # split names are unknown, have to download all the splits of the dataset
+        return self.load_dataset(split=None)
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.load_dataset(split=split)
+        yield from dataset
 
 
 class LoadCSV(Loader):
@@ -366,7 +431,6 @@ class LoadCSV(Loader):
 
     files: Dict[str, str]
     chunksize: int = 1000
-    loader_limit: Optional[int] = None
     streaming: bool = True
     sep: str = ","
     compression: Optional[str] = None
@@ -399,33 +463,25 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
-        for attempt in range(settings.loaders_max_retries):
-            try:
-                iterables = {}
-                import fsspec
+        # log once for the whole data
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+        iterables = {}
+        for split_name in self.files.keys():
+            iterables[split_name] = ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
+            )
+        return iterables
 
-                for split_name, file_path in self.files.items():
-                    reader = self.get_reader()
-                    if self.get_limit() is not None:
-                        self.log_limited_loading()
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            reader = self.get_reader()
+            dataset = reader(self.files[split], **self.get_args()).to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
 
-                    try:
-                        iterables[split_name] = reader(
-                            file_path, **self.get_args()
-                        ).to_dict("records")
-                    except ValueError:
-                        with fsspec.open(file_path, mode="rt") as f:
-                            iterables[split_name] = reader(
-                                f, **self.get_args()
-                            ).to_dict("records")
-                return iterables
-            except Exception as e:
-                logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
-                if attempt < settings.loaders_max_retries - 1:
-                    time.sleep(2)
-                else:
-                    raise e
-        raise RuntimeError()
+        yield from dataset
 
 
 class LoadFromSklearn(Loader):
@@ -435,7 +491,6 @@ class LoadFromSklearn(Loader):
 
     Args:
         dataset_name: The name of the sklearn dataset to fetch.
-        splits: A list of data splits to load, e.g., ['train', 'test'].
 
     Example:
         Loading form sklearn
@@ -446,11 +501,16 @@ class LoadFromSklearn(Loader):
     """
 
     dataset_name: str
-    splits: List[str] = ["train", "test"]
 
     _requirements_list: List[str] = ["scikit-learn", "pandas"]
 
     data_classification_policy = ["public"]
+
+    splits = [
+        "test",
+        "train",
+        "all",
+    ]  # from reading the code .../sklearn/datasets/_twenty_newsgroups.py
 
     def verify(self):
         super().verify()
@@ -465,14 +525,24 @@ class LoadFromSklearn(Loader):
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
     def load_iterables(self):
-        with TemporaryDirectory() as temp_directory:
-            for split in self.splits:
-                split_data = self.downloader(subset=split)
-                targets = [split_data["target_names"][t] for t in split_data["target"]]
-                df = pd.DataFrame([split_data["data"], targets]).T
-                df.columns = ["data", "target"]
-                df.to_csv(os.path.join(temp_directory, f"{split}.csv"), index=None)
-            return hf_load_dataset(temp_directory, streaming=False)
+        return {
+            split_name: ReusableGenerator(
+                self.split_generator, gen_kwargs={"split": split_name}
+            )
+            for split_name in self.splits
+        }
+
+    def split_generator(self, split: str) -> Generator:
+        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        if dataset is None:
+            split_data = self.downloader(subset=split)
+            targets = [split_data["target_names"][t] for t in split_data["target"]]
+            df = pd.DataFrame([split_data["data"], targets]).T
+            df.columns = ["data", "target"]
+            dataset = df.to_dict("records")
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+        yield from dataset
 
 
 class MissingKaggleCredentialsError(ValueError):
@@ -853,7 +923,7 @@ class LoadFromHFSpace(LoadHF):
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
 
-    streaming: bool = True
+    streaming = True
 
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
@@ -900,6 +970,8 @@ class LoadFromHFSpace(LoadHF):
         if isinstance(self.data_files, str):
             data_files = [self.data_files]
         elif isinstance(self.data_files, Mapping):
+            if self.splits is None:
+                self.splits = sorted(self.data_files.keys())
             data_files = list(self.data_files.values())
         else:
             data_files = self.data_files
@@ -983,6 +1055,9 @@ class LoadFromHFSpace(LoadHF):
     def load_data(self):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
+        if self.splits is None and isinstance(self.data_files, dict):
+            self.splits = sorted(self.data_files.keys())
+
         return super().load_data()
 
 
@@ -1016,7 +1091,6 @@ class LoadFromAPI(Loader):
 
     urls: Dict[str, str]
     chunksize: int = 100000
-    loader_limit: Optional[int] = None
     streaming: bool = False
     api_key_env_var: str = "SQL_API_KEY"
     headers: Optional[Dict[str, Any]] = None
