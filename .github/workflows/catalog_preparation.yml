@@ -35,10 +35,12 @@ jobs:
         python-version: '3.9'
 
     - name: Cache Hugging Face Cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/huggingface
-        key: huggingface-cache
+        key: huggingface-cache-${{ github.run_id }}
+        restore-keys: |
+          huggingface-cache
 
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - run: uv pip install --system ".[tests]"
