@@ -2487,6 +2487,9 @@ Answer: """,
         )
 
     def test_meteor(self):
+        import nltk
+
+        nltk.download("punkt_tab", quiet=True)
         metric = MeteorFast(
             __description__="""METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
 
