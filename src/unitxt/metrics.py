@@ -2640,6 +2640,8 @@ class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
         nltk.download("wordnet", quiet=True)
         nltk.download("omw-1.4", quiet=True)
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         from nltk import word_tokenize
         from nltk.translate import meteor_score
 
