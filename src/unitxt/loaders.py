@@ -402,10 +402,16 @@ class LoadCSV(Loader):
             reader = self.get_reader()
             if self.get_limit() is not None:
                 self.log_limited_loading()
-            iterables[split_name] = []
-            with fsspec.open(file_path, mode="rt") as f:
-                for chunk in reader(f, **self.get_args(), chunksize=self.chunksize):
-                    iterables[split_name].extend(chunk.to_dict("records"))
+
+            try:
+                iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
+                    "records"
+                )
+            except ValueError:
+                with fsspec.open(file_path, mode="rt") as f:
+                    iterables[split_name] = reader(f, **self.get_args()).to_dict(
+                        "records"
+                    )
         return iterables
 
 
