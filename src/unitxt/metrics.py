@@ -1,4 +1,3 @@
-FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 import ast
 import json
 import math
@@ -11,7 +10,18 @@ from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import evaluate
 import numpy
@@ -54,6 +64,8 @@ from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+
+FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 
 logger = get_logger()
 settings = get_settings()
@@ -378,7 +390,6 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -1779,7 +1790,7 @@ class ExactMatchMM(InstanceMetric):
     @staticmethod
     @lru_cache(maxsize=10000)
     def exact_match(pred, gt):
-        """Brought from MMStar"""
+        """Brought from MMStar."""
         answer = gt.lower().strip().replace("\n", " ")
         predict = pred.lower().strip().replace("\n", " ")
         try:
@@ -1894,12 +1905,11 @@ class RelaxedCorrectness(GlobalMetric):
                 return_dict["relaxed_human_split"].append(score)
             else:
                 return_dict["relaxed_augmented_split"].append(score)
-        return_dict = {
+        return {
             key: sum(value) / len(value)
             for key, value in return_dict.items()
             if len(value) > 0
         }
-        return return_dict
 
     @staticmethod
     def _to_float(text: str):
@@ -2010,15 +2020,12 @@ class WebsrcSquadF1(GlobalMetric):
             string = string.lower()
 
             # strip leading and trailing whitespaces
-            string = string.strip()
-
-            return string
+            return string.strip()
 
         def _tokenize(text):
             # Regex pattern to match words and isolate punctuation
             pattern = r"\w+|[^\w\s]"
-            tokens = re.findall(pattern, text)
-            return tokens
+            return re.findall(pattern, text)
 
         def _compute_f1(sa, sb):
             sa = _normalize_str(sa)
@@ -2036,8 +2043,7 @@ class WebsrcSquadF1(GlobalMetric):
             comm = sa.intersection(sb)
             prec = len(comm) / len(sb)
             rec = len(comm) / len(sa)
-            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
-            return f1
+            return 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
 
         judge_list = []
         for sample in samples:
@@ -2463,6 +2469,8 @@ class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
         nltk.download("wordnet", quiet=True)
         nltk.download("omw-1.4", quiet=True)
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         from nltk import word_tokenize
         from nltk.translate import meteor_score
 
@@ -3355,10 +3363,24 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
+    """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
+
     prediction_type = List[Tuple[str, str]]
 
     def get_element_group(self, element, additional_input):
         return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+
+
+class KeyValueExtraction(CustomF1):
+    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
+
+    prediction_type = List[Tuple[str, str]]
+
+    def get_element_group(self, element, additional_input):
+        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -3429,13 +3451,16 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from evaluate import load
-
-        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+        self.bertscore = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from evaluate import load
+
+        if self.bertscore is None:
+            self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
         predictions = []
         references = []
         for prediction, reference, _ in evaluation_inputs_stream:
@@ -3481,17 +3506,17 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from sentence_transformers import SentenceTransformer
-
-        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
     ):
-        # if settings.mock_inference_mode:
-        #     return [0.5 for _ in evaluation_inputs_stream]
+        from sentence_transformers import SentenceTransformer, util
 
-        from sentence_transformers import util
+        if self.model is None:
+            self.model = SentenceTransformer(
+                self.model_name, device=self.get_device_id()
+            )
 
         scores = []
 
@@ -3539,15 +3564,18 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from transformers import pipeline
-
-        self.model = pipeline(
-            "text-classification", model=self.model_name, device=self.get_device()
-        )
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from transformers import pipeline
+
+        if self.model is None:
+            self.model = pipeline(
+                "text-classification", model=self.model_name, device=self.get_device()
+            )
+
         inputs = []
         for prediction, references, _ in evaluation_inputs_stream:
             inputs.append({"text": references[0], "text_pair": prediction})

@@ -1,7 +1,6 @@
 import hashlib
 import inspect
 import json
-import tempfile
 from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
@@ -135,36 +134,39 @@ def create_dataset(
 
 
 def _source_to_dataset(
-    source: SourceOperator, split=None, use_cache=False, streaming=False
+    source: SourceOperator,
+    split=None,
+    use_cache=False,
+    streaming=False,
 ):
     from .dataset import Dataset as UnitxtDataset
 
     stream = source()
 
-    with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-        cache_dir = dir_to_be_deleted if not use_cache else None
+    try:
         ds_builder = UnitxtDataset(
             dataset_name="unitxt",
-            config_name="recipe-" + short_hex_hash(source.to_json()),
-            hash=hash(source.to_json()),
+            config_name="recipe-" + short_hex_hash(repr(source)),
             version=constants.version,
-            cache_dir=cache_dir,
         )
         if split is not None:
             stream = {split: stream[split]}
         ds_builder._generators = stream
 
-        try:
-            ds_builder.download_and_prepare()
+        ds_builder.download_and_prepare(
+            verification_mode="no_checks",
+            download_mode=None if use_cache else "force_redownload",
+        )
 
-            if streaming:
-                return ds_builder.as_streaming_dataset(split=split)
+        if streaming:
+            return ds_builder.as_streaming_dataset(split=split)
 
-            return ds_builder.as_dataset(
-                split=split, run_post_process=False, verification_mode="no_checks"
-            )
-        except DatasetGenerationError as e:
-            raise e.__cause__
+        return ds_builder.as_dataset(
+            split=split, run_post_process=False, verification_mode="no_checks"
+        )
+
+    except DatasetGenerationError as e:
+        raise e.__cause__
 
 
 def load_dataset(

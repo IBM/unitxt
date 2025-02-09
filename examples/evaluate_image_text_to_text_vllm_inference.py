@@ -1,3 +1,4 @@
+# os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
@@ -7,16 +8,18 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
+    max_tokens = 32
     dataset = load_dataset(
-        card="cards.seed_bench",
+        card="cards.chart_qa_lmms_eval",
         format="formats.chat_api",
-        loader_limit=30,
+        # loader_limit=20,
         split="test",
     )
 
     inference_model = VLLMInferenceEngine(
-        model="microsoft/Phi-3-vision-128k-instruct",
-        max_tokens=2,
+        model="meta-llama/Llama-3.2-11B-Vision-Instruct",
+        max_tokens=max_tokens,
+        temperature=0.0,
     )
 
     predictions = inference_model(dataset)

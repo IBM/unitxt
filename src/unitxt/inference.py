@@ -1,6 +1,8 @@
 import abc
 import asyncio
+import base64
 import dataclasses
+import io
 import json
 import logging
 import os
@@ -26,7 +28,7 @@ from typing import (
     Union,
 )
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -1887,7 +1889,7 @@ class WMLGenerationParamsMixin(Artifact):
 
 class WMLChatParamsMixin(Artifact):
     frequency_penalty: Optional[float] = None
-    top_logprobs: Optional[int] = 5
+    top_logprobs: Optional[int] = None
     presence_penalty: Optional[float] = None
     response_format: Optional[Dict[str, Any]] = None
     temperature: Optional[float] = None
@@ -1970,7 +1972,7 @@ class WMLInferenceEngineBase(
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
 
-        if self.credentials is None:
+        if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
 
@@ -2001,6 +2003,8 @@ class WMLInferenceEngineBase(
                 "will use space by default. If it is not desired, then have "
                 "only one of those defined in the env."
             )
+            credentials["space_id"] = space_id
+        elif space_id:
             credentials["space_id"] = space_id
         elif project_id:
             credentials["project_id"] = project_id
@@ -2346,7 +2350,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             results = wml_inference.infer(dataset["test"])
     """
 
-    image_encoder: Optional[EncodeImageToString] = None
+    image_encoder: Optional[EncodeImageToString] = NonPositionalField(
+        default_factory=EncodeImageToString
+    )
 
     @staticmethod
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
@@ -2386,21 +2392,26 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if image is not None:
                 encoded_image = image
                 if not isinstance(encoded_image, str):
+                    image = Image().decode_example(image)
                     if self.image_encoder is None:
                         raise ValueError(
                             "If sending image queries as well, and they are not "
                             "already encoded to base64 strings, you must specify "
                             "the 'image_encoder' to be used."
                         )
-                    encoded_image = self.image_encoder.encode_image_to_base64(image)
+
+                    buffer = io.BytesIO()
+                    image.save(buffer, format=image.format)
+                    image_data_url = ImageDataString(
+                        f"data:image/{image.format.lower()};base64,"
+                        + base64.b64encode(buffer.getvalue()).decode("utf-8")
+                    )
 
                 message["content"].append(
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": ImageDataString(
-                                "data:image/jpeg;base64," + encoded_image
-                            ),
+                            "url": image_data_url,
                         },
                     }
                 )
@@ -2550,7 +2561,7 @@ class LMMSEvalBaseInferenceEngine(
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
-    image_token = "<image>"
+    image_token: str = "<image>"
 
     _requirements_list = {
         "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
@@ -2576,6 +2587,7 @@ class LMMSEvalBaseInferenceEngine(
             {
                 "batch_size": self.batch_size,
                 "device": self.device,
+                "device_map": self.device,
             },
         )
 
@@ -2714,7 +2726,7 @@ class VLLMParamsMixin(Artifact):
     presence_penalty: float = 0.0
     frequency_penalty: float = 0.0
     repetition_penalty: float = 1.0
-    temperature: float = 1.0
+    temperature: float = 0.0
     top_p: float = 1.0
     top_k: int = -1
     min_p: float = 0.0
@@ -2731,13 +2743,21 @@ class VLLMParamsMixin(Artifact):
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
-        from vllm import LLM, SamplingParams
-
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
+        from vllm import LLM, SamplingParams
 
         self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model, trust_remote_code=True)
+        self.llm = LLM(
+            model=self.model,
+            device="auto",
+            trust_remote_code=True,
+            max_num_batched_tokens=4096,
+            gpu_memory_utilization=0.7,
+            max_model_len=4096,
+            max_num_seqs=64,
+            enforce_eager=True,
+        )
 
     def _infer(
         self,
@@ -2749,6 +2769,7 @@ class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsM
             inputs.append(instance["source"])
 
         if isinstance(inputs[0], list):
+            # outputs = self.llm.chat(inputs, self.sampling_params, chat_template="{{- bos_token }}\n{%- if custom_tools is defined %}\n    {%- set tools = custom_tools %}\n{%- endif %}\n{%- if not tools_in_user_message is defined %}\n    {%- set tools_in_user_message = true %}\n{%- endif %}\n{%- if not date_string is defined %}\n    {%- if strftime_now is defined %}\n        {%- set date_string = strftime_now(\"%d %b %Y\") %}\n    {%- else %}\n        {%- set date_string = \"26 Jul 2024\" %}\n    {%- endif %}\n{%- endif %}\n{%- if not tools is defined %}\n    {%- set tools = none %}\n{%- endif %}\n\n{#- This block extracts the system message, so we can slot it into the right place. #}\n{%- if messages[0]['role'] == 'system' %}\n    {%- set system_message = messages[0]['content']|trim %}\n    {%- set messages = messages[1:] %}\n    {%- set user_supplied_system_message = true %}\n{%- else %}\n    {%- set system_message = \"\" %}\n    {%- set user_supplied_system_message = false %}\n{%- endif %}\n\n{#- Find out if there are any images #}\n{% set image_ns = namespace(has_images=false) %}      \n{%- for message in messages %}\n    {%- for content in message['content'] %}\n        {%- if content['type'] == 'image' %}\n            {%- set image_ns.has_images = true %}\n        {%- endif %}\n    {%- endfor %}\n{%- endfor %}\n\n{#- System message if there are no images, or if the user supplied one #}\n{%- if user_supplied_system_message or not image_ns.has_images %}\n    {{- \"<|start_header_id|>system<|end_header_id|>\\n\" }}\n    {%- if tools is not none %}\n        {{- \"Environment: ipython\\n\" }}\n    {%- endif %}\n    {{- \"Cutting Knowledge Date: December 2023\\n\" }}\n    {{- \"Today Date: \" + date_string + \"\\n\" }}\n    {%- if tools is not none and not tools_in_user_message %}\n        {{- \"You have access to the following functions. To call a function, please respond with JSON for a function call.\" }}\n        {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n        {{- \"Do not use variables.\\n\" }}\n        {%- for t in tools %}\n            {{- t | tojson(indent=4) }}\n            {{- \"\\n\" }}\n        {%- endfor %}\n    {%- endif %}\n    {{- system_message }}\n    {{- \"<|eot_id|>\" }}\n{%- endif %}\n\n{#- Custom tools are passed in a user message with some extra guidance #}\n{%- if tools_in_user_message and not tools is none %}\n    {#- Extract the first user message so we can plug it in here #}\n    {%- if messages | length != 0 %}\n        {%- set first_user_message = messages[0]['content']|trim %}\n        {%- set messages = messages[1:] %}\n    {%- else %}\n        {{- raise_exception(\"Cannot put tools in the first user message when there's no first user message!\") }}\n{%- endif %}\n    {{- '<|start_header_id|>user<|end_header_id|>\\n' -}}\n    {{- \"Given the following functions, please respond with a JSON for a function call \" }}\n    {{- \"with its proper arguments that best answers the given prompt.\\n\" }}\n    {{- 'Respond in the format {\"name\": function name, \"parameters\": dictionary of argument name and its value}.' }}\n    {{- \"Do not use variables.\\n\" }}\n    {%- for t in tools %}\n        {{- t | tojson(indent=4) }}\n        {{- \"\\n\" }}\n    {%- endfor %}\n    {{- first_user_message + \"<|eot_id|>\"}}\n{%- endif %}\n\n{%- for message in messages %}\n    {%- if not (message.role == 'ipython' or message.role == 'tool' or 'tool_calls' in message) %}\n    {{- '<|start_header_id|>' + message['role'] + '<|end_header_id|>\\n' }}\n        {%- if message['content'] is string %}\n            {{- message['content'] }}\n        {%- else %}\n            {%- for content in message['content'] %}\n                {%- if content['type'] == 'image' %}\n                    {{- '<|image|>' }}\n                {%- elif content['type'] == 'text' %}\n                    {{- content['text'] }}\n                {%- endif %}\n            {%- endfor %}\n        {%- endif %}\n        {{- '<|eot_id|>' }}\n    {%- elif 'tool_calls' in message %}\n        {%- if not message.tool_calls|length == 1 %}\n            {{- raise_exception(\"This model only supports single tool-calls at once!\") }}\n        {%- endif %}\n        {%- set tool_call = message.tool_calls[0].function %}\n        {{- '<|start_header_id|>assistant<|end_header_id|>\\n' -}}\n        {{- '{\"name\": \"' + tool_call.name + '\", ' }}\n        {{- '\"parameters\": ' }}\n        {{- tool_call.arguments | tojson }}\n        {{- \"}\" }}\n        {{- \"<|eot_id|>\" }}\n    {%- elif message.role == \"tool\" or message.role == \"ipython\" %}\n        {{- \"<|start_header_id|>ipython<|end_header_id|>\\n\" }}\n        {%- if message.content is mapping or message.content is iterable %}\n            {{- message.content | tojson }}\n        {%- else %}\n            {{- message.content }}\n        {%- endif %}\n        {{- \"<|eot_id|>\" }}\n    {%- endif %}\n{%- endfor %}\n{%- if add_generation_prompt %}\n    {{- '<|start_header_id|>assistant<|end_header_id|>\\n' }}\n{%- endif %}")
             outputs = self.llm.chat(inputs, self.sampling_params)
         else:
             outputs = self.llm.generate(inputs, self.sampling_params)
@@ -2941,6 +2962,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
         },
         "watsonx-sdk": {
+            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
             "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
             "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",

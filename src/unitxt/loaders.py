@@ -36,6 +36,7 @@ import itertools
 import json
 import os
 import tempfile
+import time
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -53,12 +54,13 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import DatasetDict, IterableDatasetDict
+from datasets import DatasetDict, DownloadConfig, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import OptionalField
+from .error_utils import UnitxtError
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
@@ -158,7 +160,10 @@ class Loader(SourceOperator):
     def load_data(self) -> MultiStream:
         iterables = self.__class__._loader_cache.get(str(self), None)
         if iterables is None:
-            iterables = self.load_iterables()
+            try:
+                iterables = self.load_iterables()
+            except Exception as e:
+                raise UnitxtError(f"Error in loader:\n{self}") from e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
@@ -252,6 +257,9 @@ class LoadHF(Loader):
                     split=self.split,
                     trust_remote_code=settings.allow_unverified_code,
                     num_proc=self.num_proc,
+                    download_config=DownloadConfig(
+                        max_retries=settings.loaders_max_retries
+                    ),
                 )
             except ValueError as e:
                 if "trust_remote_code" in str(e):
@@ -381,6 +389,7 @@ class LoadCSV(Loader):
         args = {}
         if self.file_type == "csv":
             args["sep"] = self.sep
+            args["low_memory"] = self.streaming
         if self.compression is not None:
             args["compression"] = self.compression
         if self.lines is not None:
@@ -390,15 +399,33 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
-        iterables = {}
-        for split_name, file_path in self.files.items():
-            reader = self.get_reader()
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-            iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
-                "records"
-            )
-        return iterables
+        for attempt in range(settings.loaders_max_retries):
+            try:
+                iterables = {}
+                import fsspec
+
+                for split_name, file_path in self.files.items():
+                    reader = self.get_reader()
+                    if self.get_limit() is not None:
+                        self.log_limited_loading()
+
+                    try:
+                        iterables[split_name] = reader(
+                            file_path, **self.get_args()
+                        ).to_dict("records")
+                    except ValueError:
+                        with fsspec.open(file_path, mode="rt") as f:
+                            iterables[split_name] = reader(
+                                f, **self.get_args()
+                            ).to_dict("records")
+                return iterables
+            except Exception as e:
+                logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                if attempt < settings.loaders_max_retries - 1:
+                    time.sleep(2)
+                else:
+                    raise e
+        raise RuntimeError()
 
 
 class LoadFromSklearn(Loader):
