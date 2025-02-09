@@ -67,7 +67,7 @@ from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import OptionalField
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
@@ -227,7 +227,7 @@ class LoadHF(Loader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = None
+    streaming = None
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
     requirements_list: List[str] = OptionalField(default_factory=list)
@@ -314,27 +314,25 @@ class LoadHF(Loader):
                             next(iter(dataset[k]))
                             break
 
-                except:
-                    try:
-                        current_streaming = kwargs["streaming"]
-                        logger.info(
-                            f"needed to swap streaming from {current_streaming} to {not current_streaming} for path {self.path}"
-                        )
-                        # try the opposite way of streaming
-                        kwargs["streaming"] = not kwargs["streaming"]
-                        dataset = hf_load_dataset(**kwargs)
-                        if isinstance(dataset, (Dataset, IterableDataset)):
-                            next(iter(dataset))
-                        else:
-                            for k in dataset.keys():
-                                next(iter(dataset[k]))
-                                break
+                except Exception as e:
+                    if e is ValueError and "trust_remote_code" in str(e):
+                        raise ValueError(
+                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                        ) from e
 
-                    except ValueError as e:
-                        if "trust_remote_code" in str(e):
-                            raise ValueError(
-                                f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                            ) from e
+                    current_streaming = kwargs["streaming"]
+                    logger.info(
+                        f"needed to swap streaming from {current_streaming} to {not current_streaming} for path {self.path}"
+                    )
+                    # try the opposite way of streaming
+                    kwargs["streaming"] = not kwargs["streaming"]
+                    dataset = hf_load_dataset(**kwargs)
+                    if isinstance(dataset, (Dataset, IterableDataset)):
+                        next(iter(dataset))
+                    else:
+                        for k in dataset.keys():
+                            next(iter(dataset[k]))
+                            break
 
             if self.filtering_lambda is not None:
                 dataset = dataset.filter(eval(self.filtering_lambda))
@@ -373,6 +371,9 @@ class LoadHF(Loader):
                 # split names are known before the split themselves are pulled from HF,
                 # and we can postpone that pulling of the splits until actually demanded
                 return list(dataset_info.splits.keys())
+            UnitxtWarning(
+                f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
+            )
             return None
         except:
             return None
@@ -431,7 +432,7 @@ class LoadCSV(Loader):
 
     files: Dict[str, str]
     chunksize: int = 1000
-    streaming: bool = True
+    streaming = True
     sep: str = ","
     compression: Optional[str] = None
     lines: Optional[bool] = None
@@ -463,7 +464,7 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
-        # log once for the whole data
+        # log once for all splits of the data and all attempts to read each of them
         if self.get_limit() is not None:
             self.log_limited_loading()
         iterables = {}
@@ -476,11 +477,29 @@ class LoadCSV(Loader):
     def split_generator(self, split: str) -> Generator:
         dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
         if dataset is None:
-            reader = self.get_reader()
-            dataset = reader(self.files[split], **self.get_args()).to_dict("records")
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+            import fsspec
 
+            reader = self.get_reader()
+            for attempt in range(settings.loaders_max_retries):
+                try:
+                    dataset = reader(self.files[split], **self.get_args()).to_dict(
+                        "records"
+                    )
+                    next(iter(dataset))
+                    break
+                except ValueError:
+                    with fsspec.open(self.files[split], mode="rt") as f:
+                        dataset = reader(f, **self.get_args()).to_dict("records")
+                        next(iter(dataset))
+                        break
+                except Exception as e:
+                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                    if attempt < settings.loaders_max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        raise e
+        self.__class__._loader_cache.max_size = settings.loader_cache_size
+        self.__class__._loader_cache[str(self) + "_" + split] = dataset
         yield from dataset
 
 
@@ -915,9 +934,9 @@ class LoadFromHFSpace(LoadHF):
             )
     """
 
+    path = None
     space_name: str
     data_files: Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
-    path: Optional[str] = None
     revision: Optional[str] = None
     use_token: Optional[bool] = None
     token_env: Optional[str] = None
@@ -1055,8 +1074,6 @@ class LoadFromHFSpace(LoadHF):
     def load_data(self):
         self._map_wildcard_path_to_full_paths()
         self.path = self._download_data()
-        if self.splits is None and isinstance(self.data_files, dict):
-            self.splits = sorted(self.data_files.keys())
 
         return super().load_data()
 
@@ -1091,7 +1108,7 @@ class LoadFromAPI(Loader):
 
     urls: Dict[str, str]
     chunksize: int = 100000
-    streaming: bool = False
+    streaming = False
     api_key_env_var: str = "SQL_API_KEY"
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
