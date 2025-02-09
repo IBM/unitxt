@@ -19,7 +19,7 @@ test_set = [
         "reference_query": "curl -X GET 'https://petstore.swagger.io/v2/pets?tags=dogs&limit=5'",
     },
     {
-        "user_request": "Create a pet entry with name Rexy and rag dog. ",
+        "user_request": "Create a pet entry with name Rexy and tag dog. ",
         "reference_query": 'curl -X POST -H "Content-Type: application/json" -d \'{"name": "Rexy", "tag": "dog"}\' https://petstore.swagger.io/v2/pets',
     },
     {
@@ -206,15 +206,21 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
     """
 
     def process_value(self, text: str) -> List[Tuple[str, str]]:
+        import re
+
         text = text.replace("%20", " ")
         text = text.replace("'", "")
-        # text=re.sub(r"&pageSize=\d+", "", text)
+
         splits = text.split("?")
+        split_command = re.split(r"((?=GET|POST|DELETE)GET|POST|DELETE)", splits[0])
+        result = [
+            ("command", split_command[0]),
+            ("operation", split_command[1]),
+            ("url", split_command[2]),
+        ]
         if len(splits) == 1:
-            return [("url", text)]
-        result = []
-        (url, params) = splits
-        result.append(("url", url))
+            return result
+        params = splits[1]
         params_splits = params.split("&")
         for param in params_splits:
             key_value_splits = param.split("=")
@@ -224,7 +230,7 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
             (key, value) = key_value_splits
             value_splits = value.split(",")
             if len(value_splits) == 1:
-                result.append((f"{key}", f"{value}"))
+                result.append((f"query_param_{key}", f"{value}"))
 
         return result
 
@@ -265,7 +271,7 @@ results = evaluate(predictions=predictions, data=dataset)
 
 print("Example prompt:")
 
-print(json.dumps(results.instance_scores[0]["source"], indent=4))
+print(json.dumps(results.instance_scores[0]["source"], indent=4).replace("\\n", "\n"))
 
 print("Instance Results:")
 df = results.instance_scores.to_df(
@@ -278,6 +284,7 @@ df = results.instance_scores.to_df(
         "score",
     ]
 )
+
 for index, row in df.iterrows():
     print(f"Row {index}:")
     for col_name, value in row.items():
