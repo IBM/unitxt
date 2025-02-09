@@ -154,16 +154,19 @@ def main():
         pst.strip_dirs()
         pst.sort_stats("name")  # sort by function name
         pst.print_stats(
-            "profile_benchmark_blue_bench|profiler_instantiate_benchmark_recipe|profiler_generate_benchmark_dataset|profiler_instantiate_model|profiler_infer_predictions|profiler_evaluate_predictions|load_data|load_iterables"
+            "profile_benchmark_blue_bench|profiler_instantiate_benchmark_recipe|profiler_generate_benchmark_dataset|profiler_instantiate_model|profiler_infer_predictions|profiler_evaluate_predictions|load_data|load_iterables|split_generator"
         )
         s = f.getvalue()
         assert s.split("\n")[7].split()[3] == "cumtime"
         overall_tot_time = find_cummtime_of(
             "profile_benchmark_blue_bench", "bluebench_profiler.py", s
         )
-        load_time = find_cummtime_of("load_data", "loaders.py", s)
-        just_load_no_initial_ms_time = find_cummtime_of(
+        # load_time = find_cummtime_of("load_data", "loaders.py", s)
+        load_time = find_cummtime_of(
             "load_iterables", "loaders.py", s
+        )
+        load_time += find_cummtime_of(
+            "split_generator", "loaders.py", s
         )
         instantiate_benchmark_time = find_cummtime_of(
             "profiler_instantiate_benchmark_recipe", "bluebench_profiler.py", s
@@ -186,7 +189,6 @@ def main():
             "dataset_query": dataset_query,
             "total_time": overall_tot_time,
             "load_time": load_time,
-            "load_time_no_initial_ms": just_load_no_initial_ms_time,
             "instantiate_benchmark_time": instantiate_benchmark_time,
             "generate_benchmark_dataset_time": generate_benchmark_dataset_time,
             "instantiate_model_time": instantiate_model_time,
