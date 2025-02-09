@@ -53,7 +53,7 @@ from typing import (
 
 import pandas as pd
 import requests
-from datasets import DatasetDict, IterableDatasetDict
+from datasets import DatasetDict, DownloadConfig, IterableDatasetDict
 from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
@@ -256,6 +256,7 @@ class LoadHF(Loader):
                     split=self.split,
                     trust_remote_code=settings.allow_unverified_code,
                     num_proc=self.num_proc,
+                    download_config=DownloadConfig(max_retries=10),
                 )
             except ValueError as e:
                 if "trust_remote_code" in str(e):

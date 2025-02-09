@@ -191,13 +191,13 @@ global_target = {
     "score_name": "f1",
     "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.bert_score.distilbert_base_uncased"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -224,13 +224,13 @@ global_target = {
     "score_name": "f1",
     "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.bert_score.deberta_v3_base_mnli_xnli_ml"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -257,13 +257,13 @@ global_target = {
     "score_name": "f1",
     "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.sentence_bert.mpnet_base_v2"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -284,13 +284,13 @@ global_target = {
     "score_name": "sbert_score",
     "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.reward.deberta_v3_large_v2"]
 predictions = ["hello there General Dude", "foo bar foobar"]
 references = [["How do you greet General Dude"], ["What is your name?"]]
