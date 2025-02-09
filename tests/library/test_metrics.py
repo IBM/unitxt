@@ -2702,7 +2702,10 @@ Answer: """,
             global_target=dist_global_target,
         )
 
-    def test_rouge(self):
+    def test_rouge_new(self):
+        import nltk
+
+        nltk.download("punkt_tab", quiet=True)
         metric = Rouge(
             __description__="""This is the classical NLP Rouge metric based on the RougeScorer library (https://github.com/google-research/google-research/tree/master/rouge).
         It computes metrics several metrics (rouge1, rouge2, roughL, and rougeLsum) based lexical (word) overlap between the prediction and the ground truth references."
