@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -63,17 +61,15 @@ for split in splits.keys():
         },
     )
 
-    # testing the card is too slow with the bert-score metric, so dropping it
-    card_for_test = deepcopy(card)
-    card_for_test.task.metrics = [
-        "metrics.rag.response_generation.correctness.token_overlap",
-        "metrics.rag.response_generation.faithfullness.token_overlap",
-    ]
-
     test_card(
-        card_for_test,
+        card,
         strict=True,
         demos_taken_from="test",
+        metrics=[
+            "metrics.rag.response_generation.answer_correctness.token_recall",
+            "metrics.rag.response_generation.faithfulness.token_k_precision",
+            "metrics.rag.response_generation.answer_relevance.token_recall",
+        ],
     )
     add_to_catalog(
         card,
