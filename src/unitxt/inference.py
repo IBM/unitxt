@@ -2004,6 +2004,8 @@ class WMLInferenceEngineBase(
                 "only one of those defined in the env."
             )
             credentials["space_id"] = space_id
+        elif space_id:
+            credentials["space_id"] = space_id
         elif project_id:
             credentials["project_id"] = project_id
         else:
