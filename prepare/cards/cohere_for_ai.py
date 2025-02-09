@@ -161,7 +161,7 @@ for subset in subsets:
 
         test_card(
             card,
-            metrics="metrics.rag.correctness.llama_index_by_mock",
+            metrics=["metrics.rag.correctness.llama_index_by_mock"],
             debug=False,
             strict=False,
         )
