@@ -3620,13 +3620,16 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from evaluate import load
-
-        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+        self.bertscore = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from evaluate import load
+
+        if self.bertscore is None:
+            self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
         predictions = []
         references = []
         for prediction, reference, _ in evaluation_inputs_stream:
@@ -3672,17 +3675,18 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from sentence_transformers import SentenceTransformer
-
-        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
     ):
-        # if settings.mock_inference_mode:
-        #     return [0.5 for _ in evaluation_inputs_stream]
-
+        from sentence_transformers import SentenceTransformer
         from sentence_transformers import util
+
+        if self.model is None:
+            self.model = SentenceTransformer(
+                self.model_name, device=self.get_device_id()
+            )
 
         scores = []
 
@@ -3730,15 +3734,18 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from transformers import pipeline
-
-        self.model = pipeline(
-            "text-classification", model=self.model_name, device=self.get_device()
-        )
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from transformers import pipeline
+
+        if self.model is None:
+            self.model = pipeline(
+                "text-classification", model=self.model_name, device=self.get_device()
+            )
+
         inputs = []
         for prediction, references, _ in evaluation_inputs_stream:
             inputs.append({"text": references[0], "text_pair": prediction})
