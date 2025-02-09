@@ -36,6 +36,7 @@ import itertools
 import json
 import os
 import tempfile
+import time
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -256,7 +257,9 @@ class LoadHF(Loader):
                     split=self.split,
                     trust_remote_code=settings.allow_unverified_code,
                     num_proc=self.num_proc,
-                    download_config=DownloadConfig(max_retries=10),
+                    download_config=DownloadConfig(
+                        max_retries=settings.loaders_max_retries
+                    ),
                 )
             except ValueError as e:
                 if "trust_remote_code" in str(e):
@@ -396,24 +399,33 @@ class LoadCSV(Loader):
         return args
 
     def load_iterables(self):
-        iterables = {}
-        import fsspec
-
-        for split_name, file_path in self.files.items():
-            reader = self.get_reader()
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-
+        for attempt in range(settings.loaders_max_retries):
             try:
-                iterables[split_name] = reader(file_path, **self.get_args()).to_dict(
-                    "records"
-                )
-            except ValueError:
-                with fsspec.open(file_path, mode="rt") as f:
-                    iterables[split_name] = reader(f, **self.get_args()).to_dict(
-                        "records"
-                    )
-        return iterables
+                iterables = {}
+                import fsspec
+
+                for split_name, file_path in self.files.items():
+                    reader = self.get_reader()
+                    if self.get_limit() is not None:
+                        self.log_limited_loading()
+
+                    try:
+                        iterables[split_name] = reader(
+                            file_path, **self.get_args()
+                        ).to_dict("records")
+                    except ValueError:
+                        with fsspec.open(file_path, mode="rt") as f:
+                            iterables[split_name] = reader(
+                                f, **self.get_args()
+                            ).to_dict("records")
+                return iterables
+            except Exception as e:
+                logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                if attempt < settings.loaders_max_retries - 1:
+                    time.sleep(2)
+                else:
+                    raise e
+        raise RuntimeError()
 
 
 class LoadFromSklearn(Loader):
