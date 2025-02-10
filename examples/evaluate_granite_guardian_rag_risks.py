@@ -1,4 +1,3 @@
-from typing import List
 
 from unitxt import evaluate
 from unitxt.api import create_dataset

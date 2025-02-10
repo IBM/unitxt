@@ -1,5 +1,4 @@
 import ast
-from enum import Enum
 import json
 import math
 import os
@@ -10,6 +9,7 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
+from enum import Enum
 from functools import lru_cache
 from typing import (
     Any,
@@ -46,9 +46,9 @@ from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
+    LogProbInferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
-    LogProbInferenceEngine,
 )
 from .logging_utils import get_logger
 from .metric_utils import InstanceInput, MetricRequest, MetricResponse
@@ -5852,7 +5852,7 @@ class PredictionLength(InstanceMetric):
 
 
 class RiskType(str, Enum):
-    """Risk type for the Granite Guardian models"""
+    """Risk type for the Granite Guardian models."""
 
     RAG = "rag_risk"
     USER_MESSAGE = "user_risk"
@@ -5948,7 +5948,7 @@ class GraniteGuardianMetric(InstanceMetric):
                 )
         elif self.risk_name == RiskType.USER_MESSAGE or (
             self.risk_name in self.available_risks[RiskType.USER_MESSAGE]
-            and not self.assistant_message_field in task_data
+            and self.assistant_message_field not in task_data
         ):
             # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
             self.risk_type = RiskType.USER_MESSAGE
@@ -6006,14 +6006,12 @@ class GraniteGuardianMetric(InstanceMetric):
         if self.risk_type == RiskType.CUSTOM_RISK:
             guardian_config["risk_definition"] = self.risk_definition
 
-        processed_input = self._tokenizer.apply_chat_template(
+        return self._tokenizer.apply_chat_template(
             messages,
             guardian_config=guardian_config,
             tokenize=False,
             add_generation_prompt=True,
         )
-
-        return processed_input
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
@@ -6054,7 +6052,7 @@ class GraniteGuardianMetric(InstanceMetric):
 
     def process_input_fields(self, task_data):
         messages = []
-        logger.debug(f"Preparing messages for Granite Guardian.")
+        logger.debug("Preparing messages for Granite Guardian.")
         if self.risk_type == RiskType.RAG:
             if self.risk_name == "context_relevance":
                 messages += self.create_message(
