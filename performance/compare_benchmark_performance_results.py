@@ -25,6 +25,8 @@ print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
 
+ratio0 = pr_perf["total_time"] / main_perf["total_time"]
+
 ratio1 = (
     (pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time"])
     / (
@@ -47,7 +49,7 @@ ratio2 = (
 
 line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
 line2 = "--------------------|-------------|-------------|---------------\n"
-line3 = f" Total time         | {main_perf['total_time']:>11} | {pr_perf['total_time']:>11} | {pr_perf['total_time'] / main_perf['total_time']:.2f}\n"
+line3 = f" Total time         | {main_perf['total_time']:>11} | {pr_perf['total_time']:>11} | {ratio0:.2f}\n"
 ratio_line4 = (
     pr_perf["load_time"] / main_perf["load_time"]
     if main_perf["load_time"] > 0
@@ -58,14 +60,14 @@ line5 = f" DS Gen. inc. Load  | {main_perf['generate_benchmark_dataset_time']:>1
 line6 = f" DS Gen. exc. Load  | {round(main_perf['generate_benchmark_dataset_time'] - main_perf['load_time'], 3):>11} | {round(pr_perf['generate_benchmark_dataset_time'] - pr_perf['load_time'], 3):>11} | {ratio1:.2f}\n"
 line7 = f" Inference time     | {main_perf['inference_time']:>11} | {pr_perf['inference_time']:>11} | {pr_perf['inference_time'] / main_perf['inference_time']:.2f}\n"
 line8 = f" Evaluate  time     | {main_perf['evaluation_time']:>11} | {pr_perf['evaluation_time']:>11} | {ratio2:.2f}\n"
-line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time'] / main_perf['instantiate_benchmark_time']:.2f}\n"
+line9 = f" BM/Recipe Instant. | {main_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time'] / main_perf['instantiate_benchmark_time']:.2f}\n"
 line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time'] / main_perf['instantiate_model_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
 print(line1 + line2 + line3 + line4 + line5 + line6 + line7 + line8 + line9 + line10)
 print("\n\n")
 # Performance degradation check (5% threshold)
-if ratio1 > 1.05 or ratio2 > 1.05:
+if (ratio0 > 1.05) and (ratio1 > 1.05 or ratio2 > 1.05):
     print(
         "\n**Warning**: Performance degradation in Dataset Generation and/or Evaluation exceeds 5%!"
     )

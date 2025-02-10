@@ -8,7 +8,9 @@ from io import StringIO
 from typing import Any, Dict, List, Union
 
 from unitxt.api import _source_to_dataset, evaluate, load_recipe
+from unitxt.artifact import fetch_artifact
 from unitxt.benchmark import Benchmark
+from unitxt.card import TaskCard
 from unitxt.inference import (
     CrossProviderInferenceEngine,
     InferenceEngine,
@@ -16,6 +18,8 @@ from unitxt.inference import (
 )
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
+from unitxt.standard import DatasetRecipe
+from unitxt.templates import TemplatesDict, TemplatesList
 
 logger = get_logger()
 settings = get_settings()
@@ -61,8 +65,29 @@ class BlueBenchProfiler:
 
     def profiler_instantiate_benchmark_recipe(
         self, dataset_query: str, **kwargs
-    ) -> Benchmark:
-        return load_recipe(dataset_query, **kwargs)
+    ) -> Union[Benchmark, DatasetRecipe]:
+        benchmark_or_card , _ = fetch_artifact(dataset_query)
+        if isinstance(benchmark_or_card, (Benchmark, DatasetRecipe)):
+            return load_recipe(dataset_query, **kwargs)
+        assert isinstance(benchmark_or_card, TaskCard)
+        # benchmark_or_card is a taskcard. determine a template for it:
+        if isinstance(benchmark_or_card.templates, list):
+            template = benchmark_or_card.templates[0]
+        elif isinstance(benchmark_or_card.templates, TemplatesList):
+            template = benchmark_or_card.templates.items[0]
+        elif isinstance(benchmark_or_card.templates, dict):
+            for templ in benchmark_or_card.templates.values():
+                template = templ
+                break
+        elif isinstance(benchmark_or_card.templates, TemplatesDict):
+            for templ in benchmark_or_card.templates.items.values():
+                template = templ
+                break
+        else:
+            raise ValueError(
+                f"Unidentified type of templates {benchmark_or_card.templates} in card {dataset_query}"
+            )
+        return DatasetRecipe(card=benchmark_or_card, template=template)
 
     def profiler_generate_benchmark_dataset(
         self, benchmark_recipe: Benchmark, split: str, **kwargs
@@ -104,6 +129,8 @@ class BlueBenchProfiler:
 
 
 dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"
+# dataset_query = "cards.cola"
+# dataset_query = "recipes.bluebench.knowledge.mmlu_pro_math"
 
 
 def profile_benchmark_blue_bench():

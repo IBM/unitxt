@@ -282,7 +282,7 @@ class LoadHF(Loader):
                 streaming = self.is_streaming()
 
             # try to optimize when not too dangerous
-            if self.get_limit() <= 100:
+            if self.get_limit() is not None and self.get_limit() <= 100:
                 streaming = True
 
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
