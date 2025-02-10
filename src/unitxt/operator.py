@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from pkg_resources import DistributionNotFound, VersionConflict, require
 
 from .artifact import Artifact
-from .dataclass import InternalField, NonPositionalField
+from .dataclass import FinalField, InternalField, NonPositionalField
 from .settings_utils import get_constants
 from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
 
@@ -20,6 +20,7 @@ class PackageRequirementsMixin(Artifact):
     """Base class used to automatically check for the existence of required Python dependencies for an artifact (e.g., Operator or Metric).
 
     The _requirements_list is either a list of required packages or a dictionary mapping required packages to installation instructions.
+    The _requirements_list should be used at class level definition, and the requirements at instance creation.
 
     - **List format**: Just specify the package names, optionally with version annotations (e.g., ["torch>=1.2.4", "numpy<1.19"]).
     - **Dict format**: Specify package names as keys and installation instructions as values
@@ -32,9 +33,13 @@ class PackageRequirementsMixin(Artifact):
     _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
         default_factory=list
     )
+    requirements: Union[List[str], Dict[str, str]] = FinalField(
+        also_positional=False, default_factory=list
+    )
 
     def prepare(self):
-        self.check_missing_requirements()
+        self.check_missing_requirements(self._requirements_list)
+        self.check_missing_requirements(self.requirements)
         super().prepare()
 
     def check_missing_requirements(self, requirements=None):
