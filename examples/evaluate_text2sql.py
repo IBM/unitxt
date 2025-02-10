@@ -37,7 +37,7 @@ assert (
     evaluated_dataset[0]["score"]["global"]["score"] >= 0.44
 ), "results have been degraded, something is wrong with the metric"
 
-# with llama-3-70b-instruct
+# with llama-3-3-70b-instruct
 # num_of_instances (int):
 #     100
 # execution_accuracy (float):
