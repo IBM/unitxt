@@ -154,51 +154,43 @@ class TestLoaders(UnitxtTestCase):
 
     def test_load_from_HF_compressed(self):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            ms.to_dataset()["train"][0]["url"],
+            instance["url"],
             "https://www.bbc.com/igbo/afirika-43986554",
         )
-        assert set(dataset.keys()) == {
+        assert set(ms.keys()) == {
             "train",
             "validation",
             "test",
-        }, f"Unexpected fold {dataset.keys()}"
+        }, f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_compressed_split(self):
-        loader = LoadHF(
-            path="GEM/xlsum", name="igbo", split="train"
-        )  # the smallest file
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        loader = LoadHF(path="GEM/xlsum", name="igbo", split="train")  # the smallest file
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            dataset["train"][0]["url"],
+            instance["url"],
             "https://www.bbc.com/igbo/afirika-43986554",
         )
-        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+        assert list(ms.keys()) == ["train"], f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF(self):
-        loader = LoadHF(path="sst2", loader_limit=10)
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        loader = LoadHF(path="sst2", loader_limit=10, split="train")
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            dataset["train"][0]["sentence"],
+            instance["sentence"],
             "hide new secretions from the parental units ",
         )
         self.assertEqual(
-            dataset["train"][0]["data_classification_policy"],
+            instance["data_classification_policy"],
             ["public"],
         )
-        self.assertEqual(
-            dataset["test"][0]["data_classification_policy"],
-            ["public"],
-        )
-        assert set(dataset.keys()) == {
+        assert set(ms.keys()) == {
             "train",
-            "validation",
-            "test",
-        }, f"Unexpected fold {dataset.keys()}"
+        }, f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_multiple_innvocation(self):
         loader = LoadHF(
@@ -206,19 +198,19 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             # filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "arb")
+        self.assertEqual(instance["language"], "arb")
 
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "arb")
+        self.assertEqual(instance["language"], "arb")
 
     def test_load_from_HF_multiple_innvocation_with_filter(self):
         loader = LoadHF(
@@ -226,29 +218,29 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            dataset["train"][0]["sentence"],
+            instance["sentence"],
             "hide new secretions from the parental units ",
         )
-        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+        assert list(ms.keys()) == ["train"], f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_filter(self):
         loader = LoadHF(
@@ -256,12 +248,12 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = list(ms["test"])[0]
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
     def test_multiple_source_loader(self):
         # Using a context for the temporary directory

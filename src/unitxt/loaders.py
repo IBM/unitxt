@@ -284,14 +284,14 @@ class LoadHF(LazyLoader):
                         data_files=self.data_files,
                         revision=self.revision,
                         streaming=streaming,
-                        keep_in_memory=True,
                         cache_dir=cache_dir,
                         verification_mode="no_checks",
                         split=split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
                         download_config=DownloadConfig(
-                            max_retries=settings.loaders_max_retries
+                            max_retries=settings.loaders_max_retries,
+                            # extract_on_the_fly=True,
                         ),
                     )
                 except ValueError as e:
@@ -323,6 +323,10 @@ class LoadHF(LazyLoader):
                 path=self.path,
                 config_name=self.name,
                 trust_remote_code=settings.allow_unverified_code,
+                download_config=DownloadConfig(
+                    max_retries=settings.loaders_max_retries,
+                    extract_on_the_fly=True,
+                ),
             )
         except:
             UnitxtWarning(
