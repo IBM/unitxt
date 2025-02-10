@@ -1,7 +1,7 @@
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
-from unitxt.metrics import GraniteGuardianCustomRisk, RiskType
+from unitxt.metrics import GraniteGuardianCustomRisk
 from unitxt.templates import NullTemplate
 
 print("Bring your own risk")

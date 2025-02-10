@@ -5868,6 +5868,7 @@ class GraniteGuardianBase(InstanceMetric):
     main_score = None
     reduction_map = {}
     wml_model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
     wml_params = {
         "decoding_method": "greedy",
@@ -5879,8 +5880,6 @@ class GraniteGuardianBase(InstanceMetric):
             "input_tokens": False,
         },
     }
-
-    hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
     safe_token = "No"
     unsafe_token = "Yes"
@@ -5936,8 +5935,6 @@ class GraniteGuardianBase(InstanceMetric):
 
     @classmethod
     def get_available_risk_names(cls):
-        print(cls.risk_type)
-        print(cls.available_risks)
         return cls.available_risks[cls.risk_type]
 
     def set_main_score(self):
@@ -5974,7 +5971,6 @@ class GraniteGuardianBase(InstanceMetric):
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
         result = self.inference_engine.infer_log_probs([{"source": prompt}])
-        print(' '.join([r['text'] for r in result[0]]))
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
@@ -6138,8 +6134,8 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
 
     def verify(self):
         super().verify()
-        assert self.risk_type != None, UnitxtError("In a custom risk, risk_type must be defined")
-    
+        assert self.risk_type is not None, UnitxtError("In a custom risk, risk_type must be defined")
+
     def verify_granite_guardian_config(self, task_data):
         # even though this is a custom risks, we will limit the
         # message roles to be a subset of the roles Granite Guardian
@@ -6176,7 +6172,7 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
 
 RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
-    RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk, 
+    RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,
     RiskType.AGENTIC: GraniteGuardianAgenticRisk,
 }

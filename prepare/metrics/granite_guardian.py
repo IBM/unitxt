@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import GraniteGuardianBase, RISK_TYPE_TO_CLASS
+from unitxt.metrics import RISK_TYPE_TO_CLASS, GraniteGuardianBase
 
 for risk_type, risk_names in GraniteGuardianBase.available_risks.items():
     for risk_name in risk_names:

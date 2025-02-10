@@ -3,7 +3,7 @@ import json
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
-from unitxt.metrics import GraniteGuardianUserRisk, RiskType
+from unitxt.metrics import GraniteGuardianUserRisk
 from unitxt.templates import NullTemplate
 
 print("User prompt risks")
