@@ -36,6 +36,7 @@ import itertools
 import json
 import os
 import tempfile
+import time
 from abc import abstractmethod
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -56,6 +57,7 @@ import pandas as pd
 import requests
 from datasets import (
     DatasetDict,
+    DownloadConfig,
     IterableDataset,
     IterableDatasetDict,
     get_dataset_split_names,
@@ -264,6 +266,9 @@ class LoadHF(Loader):
                         split=split,
                         trust_remote_code=settings.allow_unverified_code,
                         num_proc=self.num_proc,
+                        download_config=DownloadConfig(
+                            max_retries=settings.loaders_max_retries
+                        ),
                     )
                 except ValueError as e:
                     if "trust_remote_code" in str(e):
@@ -409,8 +414,29 @@ class LoadCSV(Loader):
     def split_generator(self, split: str) -> Generator:
         dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
         if dataset is None:
-            reader = self.get_reader()
-            dataset = reader(self.files[split], **self.get_args()).to_dict("records")
+            for attempt in range(settings.loaders_max_retries):
+                try:
+                    reader = self.get_reader()
+                    if self.get_limit() is not None:
+                        self.log_limited_loading()
+
+                    try:
+                        dataset = reader(
+                            self.files[split], **self.get_args()
+                        ).to_dict("records")
+                    except ValueError:
+                        import fsspec
+
+                        with fsspec.open(self.files[split], mode="rt") as f:
+                            dataset = reader(
+                                f, **self.get_args()
+                            ).to_dict("records")
+                except Exception as e:
+                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                    if attempt < settings.loaders_max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        raise e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self) + "_" + split] = dataset
 
