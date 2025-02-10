@@ -49,8 +49,8 @@ print("\n\n")
 if ratio1 > 1.05:
     print("\n**Warning**: Performance degradation in Dataset Generation exceeds 5%!")
     print(
-        "Explore branch performance via 'python performance/bluebench_profiler.py --output_file=``path to json file``',"
-        "followed by 'snakeviz ``the performance.prof file specified in the output json file``'."
+        "Explore branch performance via 'python performance/bluebench_profiler.py --output_file=<path to json file>',"
+        "followed by 'snakeviz <the performance.prof file specified in the output json file>'."
     )
     sys.exit(1)
 
