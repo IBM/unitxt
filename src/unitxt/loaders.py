@@ -355,10 +355,13 @@ class LoadHF(LazyLoader):
             dataset = self.filter_load(dataset)
 
         limit = self.get_limit()
-        for i, instance in enumerate(dataset):
-            yield instance
-            if i + 1 >= limit:
-                break
+        if limit is None:
+            yield from dataset
+        else:
+            for i, instance in enumerate(dataset):
+                yield instance
+                if i + 1 >= limit:
+                    break
 
 
 class LoadCSV(LazyLoader):
