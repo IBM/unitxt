@@ -3,7 +3,7 @@ import json
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
-from unitxt.metrics import GraniteGuardianMetric, RiskType
+from unitxt.metrics import GraniteGuardianUserRisk, RiskType
 from unitxt.templates import NullTemplate
 
 print("User prompt risks")
@@ -23,7 +23,7 @@ data = [
 
 risks = [
     f"metrics.granite_guardian.user_risk.{user_risk}"
-    for user_risk in GraniteGuardianMetric.available_risks[RiskType.USER_MESSAGE]
+    for user_risk in GraniteGuardianUserRisk.get_available_risk_names()
 ]
 
 print(

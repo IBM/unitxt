@@ -1,5 +1,4 @@
 {
-    "__type__": "granite_guardian_metric",
-    "risk_name": "answer_relevance",
-    "risk_type": "RAG"
+    "__type__": "granite_guardian_rag_risk",
+    "risk_name": "answer_relevance"
 }

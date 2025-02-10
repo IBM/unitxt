@@ -5860,8 +5860,7 @@ class RiskType(str, Enum):
     AGENTIC = "agentic_risk"
     CUSTOM_RISK = "custom_risk"
 
-
-class GraniteGuardianMetric(InstanceMetric):
+class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
     reduction_map: Dict[str, List[str]] = None
@@ -5919,83 +5918,27 @@ class GraniteGuardianMetric(InstanceMetric):
 
     _requirements_list: List[str] = ["torch", "transformers"]
 
-    def verify_guardian_config(self, task_data):
-        if (
-            self.risk_name == RiskType.RAG
-            or self.risk_name in self.available_risks[RiskType.RAG]
-        ):
-            self.risk_type = RiskType.RAG
-            if self.risk_name == "context_relevance":
-                assert (
-                    self.context_field in task_data
-                    and self.user_message_field in task_data
-                ), UnitxtError(
-                    f'Task data must contain "{self.context_field}" and "{self.user_message_field}" fields'
-                )
-            elif self.risk_name == "groundedness":
-                assert (
-                    self.context_field in task_data
-                    and self.assistant_message_field in task_data
-                ), UnitxtError(
-                    f'Task data must contain "{self.context_field}" and "{self.assistant_message_field}" fields'
-                )
-            elif self.risk_name == "answer_relevance":
-                assert (
-                    self.user_message_field in task_data
-                    and self.assistant_message_field in task_data
-                ), UnitxtError(
-                    f'Task data must contain "{self.user_message_field}" and "{self.assistant_message_field}" fields'
-                )
-        elif self.risk_name == RiskType.USER_MESSAGE or (
-            self.risk_name in self.available_risks[RiskType.USER_MESSAGE]
-            and self.assistant_message_field not in task_data
-        ):
-            # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
-            self.risk_type = RiskType.USER_MESSAGE
-            assert self.user_message_field in task_data, UnitxtError(
-                f'Task data must contain "{self.user_message_field}" field'
-            )
-        elif (
-            self.risk_name == RiskType.ASSISTANT_MESSAGE
-            or self.risk_name in self.available_risks[RiskType.ASSISTANT_MESSAGE]
-        ):
-            self.risk_type = RiskType.ASSISTANT_MESSAGE
-            assert (
-                self.assistant_message_field in task_data
-                and self.user_message_field in task_data
-            ), UnitxtError(
-                f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
-            )
-        elif (
-            self.risk_name == RiskType.AGENTIC
-            or self.risk_name in self.available_risks[RiskType.AGENTIC]
-        ):
-            self.risk_type = RiskType.AGENTIC
-            assert (
-                self.tools_field in task_data
-                and self.user_message_field in task_data
-                and self.assistant_message_field in task_data
-            ), UnitxtError(
-                f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
-            )
-        else:
-            # even though this is a custom risks, we will limit the
-            # message roles to be a subset of the roles Granite Guardian
-            # was trained with: user, assistant, context & tools.
-            # we just checked whether at least one of them is provided
-            self.risk_type = RiskType.CUSTOM_RISK
-            assert (
-                self.tools_field in task_data
-                or self.user_message_field in task_data
-                or self.assistant_message_field in task_data
-                or self.context_field in task_data
-            ), UnitxtError(
-                f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
-            )
-
     def prepare(self):
-        if isinstance(self.risk_type, str):
+        if not isinstance(self.risk_type, RiskType):
             self.risk_type = RiskType[self.risk_type]
+
+    def verify(self):
+        super().verify()
+        assert self.risk_type == RiskType.CUSTOM_RISK or self.risk_name in self.available_risks[self.risk_type], UnitxtError(f"The risk \'{self.risk_name}\' is not a valid \'{' '.join([word[0].upper() + word[1:] for word in self.risk_type.split('_')])}\'")
+
+    @abstractmethod
+    def verify_granite_guardian_config(self, task_data):
+        pass
+
+    @abstractmethod
+    def process_input_fields(self, task_data):
+        pass
+
+    @classmethod
+    def get_available_risk_names(cls):
+        print(cls.risk_type)
+        print(cls.available_risks)
+        return cls.available_risks[cls.risk_type]
 
     def set_main_score(self):
         self.main_score = self.risk_name
@@ -6016,7 +5959,7 @@ class GraniteGuardianMetric(InstanceMetric):
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
 
-        self.verify_guardian_config(task_data)
+        self.verify_granite_guardian_config(task_data)
         self.set_main_score()
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
@@ -6031,6 +5974,7 @@ class GraniteGuardianMetric(InstanceMetric):
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
         result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        print(' '.join([r['text'] for r in result[0]]))
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
@@ -6049,68 +5993,6 @@ class GraniteGuardianMetric(InstanceMetric):
 
     def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
         return [{"role": role, "content": content}]
-
-    def process_input_fields(self, task_data):
-        messages = []
-        logger.debug("Preparing messages for Granite Guardian.")
-        if self.risk_type == RiskType.RAG:
-            if self.risk_name == "context_relevance":
-                messages += self.create_message(
-                    "user", task_data[self.user_message_field]
-                )
-                messages += self.create_message(
-                    "context", task_data[self.context_field]
-                )
-            elif self.risk_name == "groundedness":
-                messages += self.create_message(
-                    "context", task_data[self.context_field]
-                )
-                messages += self.create_message(
-                    "assistant", task_data[self.assistant_message_field]
-                )
-            elif self.risk_name == "answer_relevance":
-                messages += self.create_message(
-                    "user", task_data[self.user_message_field]
-                )
-                messages += self.create_message(
-                    "assistant", task_data[self.assistant_message_field]
-                )
-        elif self.risk_type == RiskType.AGENTIC:
-            messages += self.create_message(
-                "tools", json.loads(task_data[self.tools_field])
-            )
-            messages += self.create_message("user", task_data[self.user_message_field])
-            messages += self.create_message(
-                "assistant", task_data[self.assistant_message_field]
-            )
-        elif self.risk_type == RiskType.ASSISTANT_MESSAGE:
-            messages += self.create_message("user", task_data[self.user_message_field])
-            messages += self.create_message(
-                "assistant", task_data[self.assistant_message_field]
-            )
-        elif self.risk_type == RiskType.USER_MESSAGE:
-            messages += self.create_message("user", task_data[self.user_message_field])
-        elif self.risk_type == RiskType.CUSTOM_RISK:
-            if self.context_field in task_data:
-                messages += self.create_message(
-                    "context", task_data[self.context_field]
-                )
-            if self.tools_field in task_data:
-                messages += self.create_message(
-                    "tools", json.loads(task_data[self.tools_field])
-                )
-            if self.user_message_field in task_data:
-                messages += self.create_message(
-                    "user", task_data[self.user_message_field]
-                )
-            if self.assistant_message_field in task_data:
-                messages += self.create_message(
-                    "assistant", task_data[self.assistant_message_field]
-                )
-        else:
-            raise NotImplementedError("Something went wrong generating the messages")
-        logger.debug(f"Input messages are:\n{messages}")
-        return messages
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -6148,6 +6030,156 @@ class GraniteGuardianMetric(InstanceMetric):
             dim=0,
         ).numpy()
 
+class GraniteGuardianUserRisk(GraniteGuardianBase):
+    risk_type = RiskType.USER_MESSAGE
+    def verify_granite_guardian_config(self, task_data):
+        # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
+        assert self.user_message_field in task_data, UnitxtError(
+            f'Task data must contain "{self.user_message_field}" field'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        return messages
+
+class GraniteGuardianAssistantRisk(GraniteGuardianBase):
+    risk_type = RiskType.ASSISTANT_MESSAGE
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+                self.assistant_message_field in task_data
+                and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+class GraniteGuardianRagRisk(GraniteGuardianBase):
+    risk_type = RiskType.RAG
+
+    def verify_granite_guardian_config(self, task_data):
+        if self.risk_name == "context_relevance":
+            assert (
+                self.context_field in task_data
+                and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.user_message_field}" fields'
+            )
+        elif self.risk_name == "groundedness":
+            assert (
+                self.context_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.assistant_message_field}" fields'
+            )
+        elif self.risk_name == "answer_relevance":
+            assert (
+                self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.user_message_field}" and "{self.assistant_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.risk_name == "context_relevance":
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+            messages += self.create_message(
+                "context", task_data[self.context_field]
+            )
+        elif self.risk_name == "groundedness":
+            messages += self.create_message(
+                "context", task_data[self.context_field]
+            )
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        elif self.risk_name == "answer_relevance":
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+class GraniteGuardianAgenticRisk(GraniteGuardianBase):
+    risk_type = RiskType.AGENTIC
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+                self.tools_field in task_data
+                and self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+            "assistant", task_data[self.assistant_message_field]
+        )
+        return messages
+
+class GraniteGuardianCustomRisk(GraniteGuardianBase):
+    risk_type = RiskType.CUSTOM_RISK
+
+    def verify(self):
+        super().verify()
+        assert self.risk_type != None, UnitxtError("In a custom risk, risk_type must be defined")
+    
+    def verify_granite_guardian_config(self, task_data):
+        # even though this is a custom risks, we will limit the
+        # message roles to be a subset of the roles Granite Guardian
+        # was trained with: user, assistant, context & tools.
+        # we just checked whether at least one of them is provided
+        assert (
+                self.tools_field in task_data
+                or self.user_message_field in task_data
+                or self.assistant_message_field in task_data
+                or self.context_field in task_data
+            ), UnitxtError(
+                f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.context_field in task_data:
+            messages += self.create_message(
+                    "context", task_data[self.context_field]
+                )
+        if self.tools_field in task_data:
+            messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+        if self.user_message_field in task_data:
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+        if self.assistant_message_field in task_data:
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+    RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
+    RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk, 
+    RiskType.RAG: GraniteGuardianRagRisk,
+    RiskType.AGENTIC: GraniteGuardianAgenticRisk,
+}
 
 class ExecutionAccuracy(InstanceMetric):
     reduction_map = {"mean": ["execution_accuracy"]}

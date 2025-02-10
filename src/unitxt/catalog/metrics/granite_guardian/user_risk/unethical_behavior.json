@@ -1,5 +1,4 @@
 {
-    "__type__": "granite_guardian_metric",
-    "risk_name": "unethical_behavior",
-    "risk_type": "USER_MESSAGE"
+    "__type__": "granite_guardian_user_risk",
+    "risk_name": "unethical_behavior"
 }

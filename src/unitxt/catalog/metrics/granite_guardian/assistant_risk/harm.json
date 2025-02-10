@@ -1,5 +1,4 @@
 {
-    "__type__": "granite_guardian_metric",
-    "risk_name": "harm",
-    "risk_type": "ASSISTANT_MESSAGE"
+    "__type__": "granite_guardian_assistant_risk",
+    "risk_name": "harm"
 }

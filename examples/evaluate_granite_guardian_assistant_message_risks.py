@@ -3,7 +3,7 @@ import json
 from unitxt import evaluate
 from unitxt.api import create_dataset
 from unitxt.blocks import Task
-from unitxt.metrics import GraniteGuardianWMLMetric, RiskType
+from unitxt.metrics import GraniteGuardianAssistantRisk, RiskType
 from unitxt.templates import NullTemplate
 
 print("Assistant response risks")
@@ -40,9 +40,7 @@ Please note that it's not a good idea to play pranks that could damage someone's
 
 risks = [
     f"metrics.granite_guardian.assistant_risk.{assistant_risk}"
-    for assistant_risk in GraniteGuardianWMLMetric.available_risks[
-        RiskType.ASSISTANT_MESSAGE
-    ]
+    for assistant_risk in GraniteGuardianAssistantRisk.get_available_risk_names()
 ]
 
 print(

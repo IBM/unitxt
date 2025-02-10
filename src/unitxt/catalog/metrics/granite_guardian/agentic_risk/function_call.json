@@ -1,5 +1,4 @@
 {
-    "__type__": "granite_guardian_metric",
-    "risk_name": "function_call",
-    "risk_type": "AGENTIC"
+    "__type__": "granite_guardian_agentic_risk",
+    "risk_name": "function_call"
 }

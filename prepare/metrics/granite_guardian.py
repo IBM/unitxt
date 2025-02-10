@@ -1,8 +1,8 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import GraniteGuardianMetric
+from unitxt.metrics import GraniteGuardianBase, RISK_TYPE_TO_CLASS
 
-for risk_type, risk_names in GraniteGuardianMetric.available_risks.items():
+for risk_type, risk_names in GraniteGuardianBase.available_risks.items():
     for risk_name in risk_names:
         metric_name = f"""granite_guardian.{risk_type.value}.{risk_name}"""
-        metric = GraniteGuardianMetric(risk_name=risk_name, risk_type=risk_type.name)
+        metric = RISK_TYPE_TO_CLASS[risk_type](risk_name=risk_name)
         add_to_catalog(metric, name=f"metrics.{metric_name}", overwrite=True)

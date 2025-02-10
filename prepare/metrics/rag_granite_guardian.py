@@ -1,5 +1,5 @@
 from unitxt import add_to_catalog
-from unitxt.metrics import GraniteGuardianMetric, MetricPipeline
+from unitxt.metrics import GraniteGuardianRagRisk, MetricPipeline
 from unitxt.operators import Copy, Set
 from unitxt.string_operators import Join
 
@@ -22,7 +22,7 @@ risk_names_to_pred_field = {
 
 for granite_risk_name, pred_field in risk_names_to_pred_field.items():
     metric_name = f"""granite_guardian_{granite_risk_name}"""
-    metric = GraniteGuardianMetric(
+    metric = GraniteGuardianRagRisk(
         main_score=metric_name,
         risk_name=granite_risk_name,
         user_message_field="question",
