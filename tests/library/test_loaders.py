@@ -4,6 +4,7 @@ import tempfile
 from unittest.mock import patch
 
 import pandas as pd
+from unitxt.error_utils import UnitxtError
 from unitxt.loaders import (
     LoadCSV,
     LoadFromDictionary,
@@ -13,10 +14,12 @@ from unitxt.loaders import (
     MultipleSourceLoader,
 )
 from unitxt.logging_utils import get_logger
+from unitxt.settings_utils import get_settings
 
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
+settings = get_settings()
 
 
 CONTENT = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
@@ -78,8 +81,13 @@ class TestLoaders(UnitxtTestCase):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
     def test_failed_load_csv(self):
-        with self.assertRaises(FileNotFoundError):
-            list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+        if settings.use_eager_execution:
+            with self.assertRaises(UnitxtError):
+                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+        else:
+            with self.assertRaises(FileNotFoundError):
+                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+
 
     def test_load_csv_with_pandas_args(self):
         # Using a context for the temporary directory
