@@ -558,37 +558,6 @@ class AggregationReduction(Artifact, Generic[IntermediateType]):
         pass
 
 
-class MultiTurnMetric(
-    MapReduceMetric[PredictionType, IntermediateType],
-    Generic[PredictionType, IntermediateType],
-):
-    metric: MapReduceMetric[PredictionType, IntermediateType]
-
-    def map(
-        self,
-        prediction: PredictionType,
-        references: List[PredictionType],
-        task_data: Dict[str, Any],
-    ) -> IntermediateType:
-        intermidate = self.metric.map_stream([(prediction, references, task_data)])[0]
-
-        dialog_id = task_data["conversation"]["id"]
-        turn_id = len(task_data["conversation"]["dialog"])
-
-        return (intermidate, dialog_id, turn_id)
-
-    def reduce(self, intermediates: List[IntermediateType]) -> Dict[str, Any]:
-        data = {}
-        for intermidate, dialog_id, turn_id in intermediates:
-            if dialog_id not in data:
-                data[dialog_id] = {}
-            if turn_id not in data[dialog_id]:
-                data[dialog_id][turn_id] = intermidate
-
-            for dialog_id, dialog_data in data.items():
-                pass
-
-
 class DictReduction(AggregationReduction[Dict[str, float]]):
     def reduce_list(self, lst: List[float]):
         pass
@@ -615,6 +584,64 @@ class MeanReduction(DictReduction):
 class MaxReduction(DictReduction):
     def reduce_list(self, lst: List[float]):
         return float(nan_max(lst))
+
+
+class MultiTurnMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    main_score: str = None
+    metric: MapReduceMetric[PredictionType, IntermediateType]
+    conversation_field: str = "conversation"
+    reduction: DictReduction = MeanReduction()
+
+    def prepare(self):
+        super().prepare()
+        self.main_score = self.metric.main_score
+
+    def map_stream(
+        self,
+        evaluation_inputs_stream: Generator[
+            EvaluationInput[PredictionType], None, None
+        ],
+    ) -> List[Tuple[IntermediateType, str, int]]:
+        dialog_ids: List[str] = []
+        turn_ids: List[int] = []
+
+        def multi_turn_stream(
+            evaluation_inputs_stream: Generator[
+                EvaluationInput[PredictionType], None, None
+            ],
+        ) -> Generator[
+            Tuple[PredictionType, List[PredictionType], Dict[str, Any]], None, None
+        ]:
+            for prediction, references, task_data in evaluation_inputs_stream:
+                conversation = task_data[self.conversation_field]
+                dialog_ids.append(conversation["id"])
+                turn_ids.append(len(conversation["dialog"]))
+                yield prediction, references, task_data
+
+        intermediates: List[IntermediateType] = list(
+            self.metric.map_stream(multi_turn_stream(evaluation_inputs_stream))
+        )
+
+        return list(zip(intermediates, dialog_ids, turn_ids))
+
+    def reduce(
+        self, intermediates: List[Tuple[IntermediateType, str, int]]
+    ) -> Dict[str, Any]:
+        data: Dict[str, Dict[int, IntermediateType]] = {}
+        for intermediate, dialog_id, turn_id in intermediates:
+            if dialog_id not in data:
+                data[dialog_id] = {}
+            data[dialog_id][turn_id] = intermediate
+
+        dialog_scores: Dict[str, Dict[str, Any]] = {
+            dialog_id: self.metric.reduce(list(dialog_data.values()))
+            for dialog_id, dialog_data in data.items()
+        }
+
+        return self.reduction.reduce(list(dialog_scores.values()))
 
 
 class ReductionInstanceMetric(

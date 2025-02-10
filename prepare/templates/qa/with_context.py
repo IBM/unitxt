@@ -1,4 +1,14 @@
 from unitxt.catalog import add_to_catalog
+from unitxt.serializers import (
+    ConversationSerializer,
+    DialogSerializer,
+    ImageSerializer,
+    ListSerializer,
+    MultiTypeSerializer,
+    SQLDatabaseAsSchemaSerializer,
+    TableSerializer,
+    VideoSerializer,
+)
 from unitxt.templates import MultiReferenceTemplate, TemplatesList
 
 add_to_catalog(
@@ -135,8 +145,20 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="Context: {context}\n{conversation}",
+        instruction="Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.",
+        input_format="Context: {context}\n\nConversation:\n{conversation}",
         references_field="answers",
+        serializer=MultiTypeSerializer(
+            serializers=[
+                ImageSerializer(),
+                VideoSerializer(),
+                TableSerializer(),
+                DialogSerializer(),
+                ConversationSerializer(),
+                ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
+            ]
+        ),
     ),
     "templates.qa.multi_turn.with_context.simple",
     overwrite=True,

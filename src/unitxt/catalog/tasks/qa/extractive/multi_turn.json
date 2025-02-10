@@ -10,9 +10,9 @@
     },
     "prediction_type": "str",
     "metrics": [
-        "metrics.squad"
+        "metrics.multi_turn.accuracy"
     ],
-    "default_template": "templates.qa.extractive",
+    "default_template": "templates.qa.multi_turn.with_context.simple",
     "augmentable_inputs": [
         "context"
     ]
