@@ -1971,27 +1971,28 @@ class WMLInferenceEngineBase(
             and not (self.model_name and self.deployment_id)
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
 
-    def process_data_before_dump(self, data):
-        if "credentials" in data:
-            for key, value in data["credentials"].items():
-                if key != "url":
-                    data["credentials"][key] = "<hidden>"
-                else:
-                    data["credentials"][key] = value
-        return data
+    # def process_data_before_dump(self, data):
+    #     if "credentials" in data:
+    #         for key, value in data["credentials"].items():
+    #             if key != "url":
+    #                 data["credentials"][key] = "<hidden>"
+    #             else:
+    #                 data["credentials"][key] = value
+    #     return data
 
     def _initialize_wml_client(self):
-        from ibm_watsonx_ai.client import APIClient
+        from ibm_watsonx_ai.client import APIClient, Credentials
 
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
-        client = APIClient(credentials={'api_key': self.credentials['api_key'], 'url': self.credentials['url']})
-        if "space_id" in self.credentials:
-            client.set.default_space(self.credentials["space_id"])
-        else:
-            client.set.default_project(self.credentials["project_id"])
-        return client
+        return APIClient(
+            credentials=Credentials(
+                api_key=self.credentials["api_key"],
+                url=self.credentials["url"]
+            ),
+            project_id=self.credentials.get("project_id", None),
+            space_id=self.credentials.get("space_id", None))
 
     @staticmethod
     def _read_wml_credentials_from_env() -> CredentialsWML:
@@ -2243,19 +2244,20 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         # currently this is the only configuration that returns generated
         # logprobs and behaves as expected
         logprobs_return_options = {
-            "input_tokens": True,
+            "input_tokens": False,
             "generated_tokens": True,
             "token_logprobs": True,
+            "input_text": True,
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
         }
 
-        for key, value in logprobs_return_options.items():
-            if key in user_return_options and user_return_options[key] != value:
-                raise ValueError(
-                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
-                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
-                    f"please use '{key}={value}'."
-                )
+        # for key, value in logprobs_return_options.items():
+        #     if key in user_return_options and user_return_options[key] != value:
+        #         raise ValueError(
+        #             f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+        #             f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+        #             f"please use '{key}={value}'."
+        #         )
 
         return {
             **params,
