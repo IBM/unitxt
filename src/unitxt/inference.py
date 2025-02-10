@@ -2244,10 +2244,10 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         # currently this is the only configuration that returns generated
         # logprobs and behaves as expected
         logprobs_return_options = {
-            "input_tokens": False,
+            "input_tokens": user_return_options.get("input_tokens", True),
+            "input_text": user_return_options.get("input_text", False),
             "generated_tokens": True,
             "token_logprobs": True,
-            "input_text": True,
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
         }
 

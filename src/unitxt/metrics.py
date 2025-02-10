@@ -5876,6 +5876,8 @@ class GraniteGuardianMetric(InstanceMetric):
         "temperature": 0,
         "return_options": {
             "top_n_tokens": 5,
+            "input_text": True,
+            "input_tokens": False,
         },
     }
 
