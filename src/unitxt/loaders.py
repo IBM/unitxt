@@ -66,14 +66,14 @@ from datasets import load_dataset as hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
+from .dataclass import NonPositionalField
 from .error_utils import UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
-from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
 from .settings_utils import get_settings
-from .stream import MultiStream
+from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
 from .utils import LRUCache
 
@@ -169,16 +169,40 @@ class Loader(SourceOperator):
             iterables = self.load_iterables()
         except Exception as e:
             raise UnitxtError(f"Error in loader:\n{self}") from e
-        if isoftype(iterables, Dict[str, ReusableGenerator]):
-            return MultiStream.from_generators(iterables, copying=True)
+        if isoftype(iterables, MultiStream):
+            return iterables
         return MultiStream.from_iterables(iterables, copying=True)
 
     def process(self) -> MultiStream:
         self._maybe_set_classification_policy()
         return self.add_data_classification(self.load_data())
 
+class LazyLoader(Loader):
+    split: Optional[str] = NonPositionalField(default=None)
 
-class LoadHF(Loader):
+    @abstractmethod
+    def get_splits(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def split_generator(self, split: str) -> Generator:
+        pass
+
+    def load_iterables(
+        self
+    ) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
+        if self.split is not None:
+            splits = [self.split]
+        else:
+            splits = self.get_splits()
+
+        return {
+            split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
+            for split in splits
+        }
+
+
+class LoadHF(LazyLoader):
     """Loads datasets from the HuggingFace Hub.
 
     It supports loading with or without streaming,
@@ -312,18 +336,6 @@ class LoadHF(Loader):
                 dataset = self.load_dataset(split=None, streaming=False)
             return list(dataset.keys())
 
-    def load_iterables(
-        self
-    ) -> Union[Dict[str, ReusableGenerator], IterableDatasetDict]:
-        if self.split is not None:
-            splits = [self.split]
-        else:
-            splits = self.get_splits()
-
-        return {
-            split: ReusableGenerator(self.split_generator, gen_kwargs={"split": split})
-            for split in splits
-        }
 
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
@@ -345,7 +357,7 @@ class LoadHF(Loader):
                 break
 
 
-class LoadCSV(Loader):
+class LoadCSV(LazyLoader):
     """Loads data from CSV files.
 
     Supports streaming and can handle large files by loading them in chunks.
@@ -399,21 +411,14 @@ class LoadCSV(Loader):
             args["nrows"] = self.get_limit()
         return args
 
-    def load_iterables(self):
-        # log once for the whole data
-        if self.get_limit() is not None:
-            self.log_limited_loading()
-        iterables = {}
-        for split_name in self.files.keys():
-            iterables[split_name] = ReusableGenerator(
-                self.split_generator, gen_kwargs={"split": split_name}
-            )
-
-        return iterables
+    def get_splits(self) -> List[str]:
+        return list(self.files.keys())
 
     def split_generator(self, split: str) -> Generator:
         dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
         if dataset is None:
+            if self.get_limit() is not None:
+                self.log_limited_loading()
             for attempt in range(settings.loaders_max_retries):
                 try:
                     reader = self.get_reader()
@@ -443,7 +448,7 @@ class LoadCSV(Loader):
         yield from dataset
 
 
-class LoadFromSklearn(Loader):
+class LoadFromSklearn(LazyLoader):
     """Loads datasets from the sklearn library.
 
     This loader does not support streaming and is intended for use with sklearn's dataset fetch functions.
@@ -479,13 +484,8 @@ class LoadFromSklearn(Loader):
 
         self.downloader = getattr(sklearn_datatasets, f"fetch_{self.dataset_name}")
 
-    def load_iterables(self):
-        return {
-            split_name: ReusableGenerator(
-                self.split_generator, gen_kwargs={"split": split_name}
-            )
-            for split_name in self.splits
-        }
+    def get_splits(self):
+        return self.splits
 
     def split_generator(self, split: str) -> Generator:
         dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
