@@ -13,25 +13,6 @@ from unitxt.templates import InputOutputTemplate
 
 logger = get_logger()
 
-test_set = [
-    {
-        "user_request": "List 5 pets from the store with tag dogs",
-        "reference_query": "curl -X GET 'https://petstore.swagger.io/v2/pets?tags=dogs&limit=5'",
-    },
-    {
-        "user_request": "Create a pet entry with name Rexy and tag dog. ",
-        "reference_query": 'curl -X POST -H "Content-Type: application/json" -d \'{"name": "Rexy", "tag": "dog"}\' https://petstore.swagger.io/v2/pets',
-    },
-    {
-        "user_request": "Delete pet with id 4 ",
-        "reference_query": "curl -X DELETE 'https://petstore.swagger.io/v2/pets/4'",
-    },
-    {
-        "user_request": "Get pet with id 3 ",
-        "reference_query": "curl -X GET 'https://petstore.swagger.io/v2/pets/3'",
-    },
-]
-
 
 # from https://learn.openapis.org/examples/v3.0/petstore-expanded.html
 api_spec = """
@@ -190,6 +171,29 @@ components:
           type: string
 """
 
+test_set = [
+    {
+        "user_request": "List 5 pets from the store with tag dogs",
+        "reference_query": "curl -X GET 'https://petstore.swagger.io/v2/pets?tags=dogs&limit=5'",
+        "api_spec": api_spec,
+    },
+    {
+        "user_request": "Create a pet entry with name Rexy and tag dog. ",
+        "reference_query": 'curl -X POST -H "Content-Type: application/json" -d \'{"name": "Rexy", "tag": "dog"}\' https://petstore.swagger.io/v2/pets',
+        "api_spec": api_spec,
+    },
+    {
+        "user_request": "Delete pet with id 4 ",
+        "reference_query": "curl -X DELETE 'https://petstore.swagger.io/v2/pets/4'",
+        "api_spec": api_spec,
+    },
+    {
+        "user_request": "Get pet with id 3 ",
+        "reference_query": "curl -X GET 'https://petstore.swagger.io/v2/pets/3'",
+        "api_spec": api_spec,
+    },
+]
+
 
 class CurlStrToListOfKeyValuePairs(FieldOperator):
     """This class takes a string query api and splits it into a list of key value components.
@@ -236,14 +240,14 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
 
 
 template = InputOutputTemplate(
-    instruction=f"Generate the API query corresponding to the user request based on the following api specification. Answer only as a CURL command, without any explanations. \n{api_spec}.",
+    instruction="Generate the API query corresponding to the user request based on the following api specification. Answer only as a CURL command, without any explanations. \n{api_spec}.",
     input_format="{user_request}",
     output_format="{reference_query}",
     postprocessors=[PostProcess(CurlStrToListOfKeyValuePairs())],
 )
 
 task = Task(
-    input_fields={"user_request": str},
+    input_fields={"user_request": str, "api_spec": str},
     reference_fields={"reference_query": str},
     prediction_type=List[Tuple[str, str]],
     metrics=[
