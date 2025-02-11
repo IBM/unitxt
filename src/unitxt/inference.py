@@ -2251,13 +2251,13 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
         }
 
-        # for key, value in logprobs_return_options.items():
-        #     if key in user_return_options and user_return_options[key] != value:
-        #         raise ValueError(
-        #             f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
-        #             f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
-        #             f"please use '{key}={value}'."
-        #         )
+        for key, value in logprobs_return_options.items():
+            if key in user_return_options and user_return_options[key] != value:
+                raise ValueError(
+                    f"'{key}={user_return_options[key]}' is not supported for the 'infer_log_probs' "
+                    f"method of {self.__class__.__name__}. For obtaining the logprobs of generated tokens "
+                    f"please use '{key}={value}'."
+                )
 
         return {
             **params,
