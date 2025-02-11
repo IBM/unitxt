@@ -4,7 +4,7 @@
         "__type__": "load_hf",
         "path": "universalner/universal_ner",
         "name": "tl_ugnayan",
-        "requirements_list": [
+        "requirements": [
             "conllu"
         ]
     },

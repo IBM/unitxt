@@ -39,7 +39,11 @@ for subset in [
         test_card(
             card,
             strict=True,
-            metrics=["metrics.rouge"],
+            metrics=[
+                "metrics.rag.response_generation.answer_correctness.token_recall",
+                "metrics.rag.response_generation.faithfulness.token_k_precision",
+                "metrics.rag.response_generation.answer_relevance.token_recall",
+            ],
             demos_taken_from="test",
         )
 
