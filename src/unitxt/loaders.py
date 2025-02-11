@@ -442,7 +442,7 @@ class LoadCSV(LazyLoader):
                     except ValueError:
                         import fsspec
 
-                        with fsspec.open(self.files[split], mode="rt") as f:
+                        with fsspec.open(self.files[split], mode="rt", expand=True) as f:
                             dataset = reader(
                                 f, **self.get_args()
                             ).to_dict("records")

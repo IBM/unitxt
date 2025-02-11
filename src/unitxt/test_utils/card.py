@@ -8,7 +8,7 @@ from datasets import get_dataset_split_names, load_dataset, load_dataset_builder
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
 from ..collections import Collection
-from ..loaders import LoadHF
+from ..loaders import LoadFromHFSpace, LoadHF
 from ..logging_utils import get_logger
 from ..metric import _compute
 from ..settings_utils import get_settings
@@ -246,11 +246,11 @@ def test_card(
     full_mismatch_prediction_values=None,
     **kwargs,
 ):
-    if isinstance(card.loader, LoadHF):
+    if isinstance(card.loader, LoadHF) and not isinstance(card.loader, LoadFromHFSpace):
         path = card.loader.path
         name = card.loader.name
         splits = None
-        logger.critical(f"Starting the search for splits for LoadHF of path {path} and name {name}")
+        logger.critical(f"Starting the search for splits for LoadHF of actual class {card.loader.__class__.__name__}, path {path} and name {name}")
         try:
             ds_builder = load_dataset_builder(
                 path, name, trust_remote_code=True
