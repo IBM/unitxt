@@ -6248,13 +6248,23 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2: Pandas DataFrame 2 to compare.
 
         Returns:
-            True if df1 is a subset of df2 based on row values,
+            True if df1 is a subset of df2 based on columns,
             False otherwise.
         """
-        df1_rows = {tuple(sorted(map(str, row))) for row in df1.to_numpy()}
-        df2_rows = {tuple(sorted(map(str, row))) for row in df2.to_numpy()}
+        if df1.shape[1] > df2.shape[1]:
+            return False
 
-        return df1_rows.issubset(df2_rows)
+        # Convert each column to a tuple of values (you could also use a Series.tolist(), etc.)
+        df1_cols = [tuple(df1.iloc[:, i]) for i in range(df1.shape[1])]
+        df2_cols = [tuple(df2.iloc[:, j]) for j in range(df2.shape[1])]
+        df2_cols_count = Counter(df2_cols)
+        for col in df1_cols:
+            if df2_cols_count[col] > 0:
+                df2_cols_count[col] -= 1
+            else:
+                return False
+
+        return True
 
     @staticmethod
     def equivalent_sqls(expected: str, generated: str) -> int:
@@ -6406,8 +6416,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         if non_empty_gold_df:
             if execution_result == 1:
                 non_empty_execution_result = 1
-                if self.is_subset_ignore_colnames(gold_df, predicted_df):
-                    subset_non_empty_execution_result += 1
+            if self.is_subset_ignore_colnames(gold_df, predicted_df):
+                subset_non_empty_execution_result = 1
 
         return (
             execution_result,
