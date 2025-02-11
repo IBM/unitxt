@@ -4257,7 +4257,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
-    single_reference_per_prediction = True
+   # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
 
@@ -4358,7 +4358,7 @@ class NDCG(GlobalMetric):
         from collections import defaultdict
 
         query_to_predictions_and_references = defaultdict(lambda: [[], []])
-        references = [reference[0] for reference in references]
+        references = ["\n".join(reference) for reference in references]
         for reference, pred, inputs_dict in zip(references, predictions, task_data):
             query = inputs_dict.get("query")
             query_to_predictions_and_references[query][0].append(pred)
