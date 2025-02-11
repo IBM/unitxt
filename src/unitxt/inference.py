@@ -2960,6 +2960,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
             "llama-3-2-11b-vision-instruct": "watsonx/meta-llama/llama-3-2-11b-vision-instruct",
             "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
+            "mistral-large-instruct": "watsonx/mistralai/mistral-large",
         },
         "watsonx-sdk": {
             "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
