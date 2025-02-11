@@ -3,7 +3,12 @@ import math
 import os.path
 import tempfile
 
-from datasets import get_dataset_split_names, load_dataset, load_dataset_builder
+from datasets import (
+    get_dataset_config_info,
+    get_dataset_split_names,
+    load_dataset,
+    load_dataset_builder,
+)
 
 from .. import add_to_catalog, register_local_catalog
 from ..artifact import fetch_artifact
@@ -252,6 +257,12 @@ def test_card(
         splits = None
         logger.critical(f"Starting the search for splits for LoadHF of actual class {card.loader.__class__.__name__}, path {path} and name {name}")
         try:
+            config_info = get_dataset_config_info(path=path, config_name=name, trust_remote_code=True)
+            if config_info.splits is not None:
+                logger.critical(f"for path {path} and name {name}, splits found by get_dataset_config_info: {config_info.splits}")
+        except Exception as e:
+            logger.critical(f"Exception {e} thrown by get_dataset_config_info for path {path} and name {name}")
+        try:
             ds_builder = load_dataset_builder(
                 path, name, trust_remote_code=True
             )
@@ -260,7 +271,7 @@ def test_card(
                 splits = dataset_info.splits
                 # split names are known before the split themselves are pulled from HF,
                 # and we can postpone that pulling of the splits until actually demanded
-                logger.critical(f"for path {path} and name {name}, splits found by ds_builder_info: {splits}")
+                logger.critical(f"for path {path} and name {name}, splits found by load_dataset_builder: {splits}")
         except Exception as e:
             logger.critical(f"Exception {e} thrown by load_dataset_builder for path {path} and name {name}")
             splits = None
