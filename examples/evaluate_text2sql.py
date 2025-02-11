@@ -23,11 +23,7 @@ evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 print_dict(
     evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "subset",
-    ],
+    keys_to_print=["source", "prediction", "subset"],
 )
 print_dict(
     evaluated_dataset[0]["score"]["global"],

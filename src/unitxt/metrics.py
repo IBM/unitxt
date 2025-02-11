@@ -392,7 +392,6 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
 
@@ -2296,13 +2295,11 @@ class HuggingfaceMetric(GlobalMetric):
                 Documentation.HUGGINGFACE_METRICS,
             )
 
-        assert (
-            self.hf_additional_input_fields is None
-            or isoftype(self.hf_additional_input_fields, List[str])
+        assert self.hf_additional_input_fields is None or isoftype(
+            self.hf_additional_input_fields, List[str]
         ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
-        assert (
-            self.hf_additional_input_fields_pass_one_value is None
-            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        assert self.hf_additional_input_fields_pass_one_value is None or isoftype(
+            self.hf_additional_input_fields_pass_one_value, List[str]
         ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
 
         return super().verify()
@@ -2876,8 +2873,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            assert (
-                len(result[self.metric]) == len(labels)
+            assert len(result[self.metric]) == len(
+                labels
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
             final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
@@ -3840,9 +3837,9 @@ class LlamaIndexLLMMetric(InstanceMetric):
     prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
-    anthropic_models: List[
-        str
-    ] = []  # this is here for the sake of documentation for future models
+    anthropic_models: List[str] = (
+        []
+    )  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
@@ -5636,9 +5633,9 @@ class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
 
     def create_ensemble_scores(self, instance):
         score = self.ensemble(instance)
-        instance[
-            "prediction"
-        ] = score  # We use here the prediction field to pass the score to the compute method.
+        instance["prediction"] = (
+            score  # We use here the prediction field to pass the score to the compute method.
+        )
         return instance
 
     def ensemble(self, instance):
@@ -5860,6 +5857,7 @@ class RiskType(str, Enum):
     AGENTIC = "agentic_risk"
     CUSTOM_RISK = "custom_risk"
 
+
 class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
@@ -5923,7 +5921,12 @@ class GraniteGuardianBase(InstanceMetric):
 
     def verify(self):
         super().verify()
-        assert self.risk_type == RiskType.CUSTOM_RISK or self.risk_name in self.available_risks[self.risk_type], UnitxtError(f"The risk \'{self.risk_name}\' is not a valid \'{' '.join([word[0].upper() + word[1:] for word in self.risk_type.split('_')])}\'")
+        assert (
+            self.risk_type == RiskType.CUSTOM_RISK
+            or self.risk_name in self.available_risks[self.risk_type]
+        ), UnitxtError(
+            f"The risk '{self.risk_name}' is not a valid '{' '.join([word[0].upper() + word[1:] for word in self.risk_type.split('_')])}'"
+        )
 
     @abstractmethod
     def verify_granite_guardian_config(self, task_data):
@@ -6026,8 +6029,10 @@ class GraniteGuardianBase(InstanceMetric):
             dim=0,
         ).numpy()
 
+
 class GraniteGuardianUserRisk(GraniteGuardianBase):
     risk_type = RiskType.USER_MESSAGE
+
     def verify_granite_guardian_config(self, task_data):
         # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
         assert self.user_message_field in task_data, UnitxtError(
@@ -6039,23 +6044,26 @@ class GraniteGuardianUserRisk(GraniteGuardianBase):
         messages += self.create_message("user", task_data[self.user_message_field])
         return messages
 
+
 class GraniteGuardianAssistantRisk(GraniteGuardianBase):
     risk_type = RiskType.ASSISTANT_MESSAGE
+
     def verify_granite_guardian_config(self, task_data):
         assert (
-                self.assistant_message_field in task_data
-                and self.user_message_field in task_data
-            ), UnitxtError(
-                f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
-            )
+            self.assistant_message_field in task_data
+            and self.user_message_field in task_data
+        ), UnitxtError(
+            f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+        )
 
     def process_input_fields(self, task_data):
         messages = []
         messages += self.create_message("user", task_data[self.user_message_field])
         messages += self.create_message(
-                "assistant", task_data[self.assistant_message_field]
-            )
+            "assistant", task_data[self.assistant_message_field]
+        )
         return messages
+
 
 class GraniteGuardianRagRisk(GraniteGuardianBase):
     risk_type = RiskType.RAG
@@ -6063,8 +6071,7 @@ class GraniteGuardianRagRisk(GraniteGuardianBase):
     def verify_granite_guardian_config(self, task_data):
         if self.risk_name == "context_relevance":
             assert (
-                self.context_field in task_data
-                and self.user_message_field in task_data
+                self.context_field in task_data and self.user_message_field in task_data
             ), UnitxtError(
                 f'Task data must contain "{self.context_field}" and "{self.user_message_field}" fields'
             )
@@ -6086,55 +6093,53 @@ class GraniteGuardianRagRisk(GraniteGuardianBase):
     def process_input_fields(self, task_data):
         messages = []
         if self.risk_name == "context_relevance":
-            messages += self.create_message(
-                "user", task_data[self.user_message_field]
-            )
-            messages += self.create_message(
-                "context", task_data[self.context_field]
-            )
+            messages += self.create_message("user", task_data[self.user_message_field])
+            messages += self.create_message("context", task_data[self.context_field])
         elif self.risk_name == "groundedness":
-            messages += self.create_message(
-                "context", task_data[self.context_field]
-            )
+            messages += self.create_message("context", task_data[self.context_field])
             messages += self.create_message(
                 "assistant", task_data[self.assistant_message_field]
             )
         elif self.risk_name == "answer_relevance":
-            messages += self.create_message(
-                "user", task_data[self.user_message_field]
-            )
+            messages += self.create_message("user", task_data[self.user_message_field])
             messages += self.create_message(
                 "assistant", task_data[self.assistant_message_field]
             )
         return messages
+
+
 class GraniteGuardianAgenticRisk(GraniteGuardianBase):
     risk_type = RiskType.AGENTIC
+
     def verify_granite_guardian_config(self, task_data):
         assert (
-                self.tools_field in task_data
-                and self.user_message_field in task_data
-                and self.assistant_message_field in task_data
-            ), UnitxtError(
-                f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
-            )
+            self.tools_field in task_data
+            and self.user_message_field in task_data
+            and self.assistant_message_field in task_data
+        ), UnitxtError(
+            f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+        )
 
     def process_input_fields(self, task_data):
         messages = []
         messages += self.create_message(
-                "tools", json.loads(task_data[self.tools_field])
-            )
+            "tools", json.loads(task_data[self.tools_field])
+        )
         messages += self.create_message("user", task_data[self.user_message_field])
         messages += self.create_message(
             "assistant", task_data[self.assistant_message_field]
         )
         return messages
 
+
 class GraniteGuardianCustomRisk(GraniteGuardianBase):
     risk_type = RiskType.CUSTOM_RISK
 
     def verify(self):
         super().verify()
-        assert self.risk_type is not None, UnitxtError("In a custom risk, risk_type must be defined")
+        assert self.risk_type is not None, UnitxtError(
+            "In a custom risk, risk_type must be defined"
+        )
 
     def verify_granite_guardian_config(self, task_data):
         # even though this is a custom risks, we will limit the
@@ -6142,33 +6147,30 @@ class GraniteGuardianCustomRisk(GraniteGuardianBase):
         # was trained with: user, assistant, context & tools.
         # we just checked whether at least one of them is provided
         assert (
-                self.tools_field in task_data
-                or self.user_message_field in task_data
-                or self.assistant_message_field in task_data
-                or self.context_field in task_data
-            ), UnitxtError(
-                f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
-            )
+            self.tools_field in task_data
+            or self.user_message_field in task_data
+            or self.assistant_message_field in task_data
+            or self.context_field in task_data
+        ), UnitxtError(
+            f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
+        )
 
     def process_input_fields(self, task_data):
         messages = []
         if self.context_field in task_data:
-            messages += self.create_message(
-                    "context", task_data[self.context_field]
-                )
+            messages += self.create_message("context", task_data[self.context_field])
         if self.tools_field in task_data:
             messages += self.create_message(
                 "tools", json.loads(task_data[self.tools_field])
             )
         if self.user_message_field in task_data:
-            messages += self.create_message(
-                "user", task_data[self.user_message_field]
-            )
+            messages += self.create_message("user", task_data[self.user_message_field])
         if self.assistant_message_field in task_data:
             messages += self.create_message(
                 "assistant", task_data[self.assistant_message_field]
             )
         return messages
+
 
 RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
     RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
@@ -6176,6 +6178,7 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
     RiskType.RAG: GraniteGuardianRagRisk,
     RiskType.AGENTIC: GraniteGuardianAgenticRisk,
 }
+
 
 class SQLExecutionAccuracy(InstanceMetric):
     reduction_map = {
@@ -6207,17 +6210,16 @@ class SQLExecutionAccuracy(InstanceMetric):
 
     @staticmethod
     def compare_dfs_ignore_colnames(df1, df2):
-        """
-        Compares two DataFrames based on row content, ignoring column names.
+        """Compares two DataFrames based on row content, ignoring column names.
 
         Args:
-            df1, df2: Pandas DataFrames to compare.
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
             True if the DataFrames have the same content (ignoring column names),
             False otherwise.
         """
-
         df1.fillna(0, inplace=True)
         df2.fillna(0, inplace=True)
 
@@ -6239,11 +6241,11 @@ class SQLExecutionAccuracy(InstanceMetric):
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
-        """
-        Checks if df1 is a subset of df2 based on row content, ignoring column names.
+        """Checks if df1 is a subset of df2 based on row content, ignoring column names.
 
         Args:
-            df1, df2: Pandas DataFrames to compare.
+            df1: Pandas DataFrame 1 to compare.
+            df2: Pandas DataFrame 2 to compare.
 
         Returns:
             True if df1 is a subset of df2 based on row values,
@@ -6256,7 +6258,7 @@ class SQLExecutionAccuracy(InstanceMetric):
 
     @staticmethod
     def equivalent_sqls(expected: str, generated: str) -> int:
-        """Checks if SQL queries are equivalent using SQLGlot parsing, so we don't run them"""
+        """Checks if SQL queries are equivalent using SQLGlot parsing, so we don't run them."""
         from sqlglot import diff, parse_one
         from sqlglot.optimizer import optimize
 
@@ -6274,7 +6276,9 @@ class SQLExecutionAccuracy(InstanceMetric):
         """Runs SQL queries using the provided connector and gets scores and results.
 
         Args:
-        predicted_sql, gold_sql, connector: SQL queries and a database connector
+            predicted_sql (str): predicted SQL query
+            gold_sql (str): gold reference SQL query
+            connector: database connector
 
         Returns:
         a 12-tuple of
@@ -6291,8 +6295,9 @@ class SQLExecutionAccuracy(InstanceMetric):
         11. predicted query's dataframe
         12. error message (if any)
         """
-        from func_timeout import func_timeout
         import time
+
+        from func_timeout import func_timeout
 
         gold_res = None
         gold_error = ""
@@ -6398,7 +6403,6 @@ class SQLExecutionAccuracy(InstanceMetric):
 
         subset_non_empty_execution_result = 0
         non_empty_execution_result = 0
-        non_empty_gold_df = 0
         if non_empty_gold_df:
             if execution_result == 1:
                 non_empty_execution_result = 1
