@@ -4,6 +4,7 @@ import tempfile
 from unittest.mock import patch
 
 import pandas as pd
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from unitxt.error_utils import UnitxtError
 from unitxt.loaders import (
     LoadCSV,
@@ -231,6 +232,23 @@ class TestLoaders(UnitxtTestCase):
             list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
         self.assertEqual(instance["language"], "eng")
+
+    def test_load_HF_lazily(self):
+        lazy_loader = LoadHF(path="ibm/finqa", streaming=True)
+        dataset = lazy_loader.load_dataset(split="test")
+        self.assertIsInstance(dataset, (Dataset, IterableDataset))
+        # we just assured that load_dataset completed OK, having changed the streaming from True to False
+        # now we try to touch the arriving dataset, which in current main is only done by the split generator when yielding
+        first_example = next(iter(dataset))
+        self.assertIsNotNone (first_example)
+        # the same goes when split=None:
+        dataset = lazy_loader.load_dataset(split=None)
+        self.assertIsInstance(dataset, (DatasetDict, IterableDatasetDict))
+        # we just assured that load_dataset completed OK, having changed to streaming=False
+        # now we try to touch the samples in the arriving dataset, which in current main is only done by the split generator when yielding
+        for k in dataset.keys():
+            first_example = next(iter(dataset[k]))
+            self.assertIsNotNone (first_example)
 
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
