@@ -6248,7 +6248,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2: Pandas DataFrame 2 to compare.
 
         Returns:
-            True if df1 is a subset of df2 based on columns,
+            True if df1 is a subset of df2 based on column values,
             False otherwise.
         """
         if df1.shape[1] > df2.shape[1]:

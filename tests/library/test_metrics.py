@@ -1516,7 +1516,7 @@ class TestMetrics(UnitxtTestCase):
         ]
 
         outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(1.0, outputs["score"])
+        self.assertEqual(0.0, outputs["score"])
 
     def test_execution_accuracy_aggregation_query(self):
         metric = SQLExecutionAccuracy()
