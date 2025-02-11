@@ -667,8 +667,6 @@ class DatasetRecipe(SourceSequentialOperator):
             # First try to use the defined defaults
             if self.card.default_template is not None:
                 self.template = self.card.default_template
-            else:
-                self.template = self.card.task.default_template
 
             # Than try to infer the default
             if self.template is None:
