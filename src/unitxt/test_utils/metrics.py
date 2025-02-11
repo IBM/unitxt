@@ -126,13 +126,14 @@ def check_scores(
     score_keys_to_ignore: Optional[List[str]] = None,
 ):
     errors = []
-    for key in score_keys_to_ignore:
-        global_target.pop(key, None)
-        global_outputs.pop(key, None)
-        for instance_output in instance_outputs:
-            instance_output.pop(key, None)
-        for instance_target in instance_targets:
-            instance_target.pop(key, None)
+    if score_keys_to_ignore:
+        for key in score_keys_to_ignore:
+            global_target.pop(key, None)
+            global_outputs.pop(key, None)
+            for instance_output in instance_outputs:
+                instance_output.pop(key, None)
+            for instance_target in instance_targets:
+                instance_target.pop(key, None)
     global_score = round_floats(global_outputs)
     if not dict_equal(global_score, global_target):
         errors.append(
