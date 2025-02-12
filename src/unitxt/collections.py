@@ -55,6 +55,9 @@ class DictCollection(Collection):
     def len(self):
         return len(self.items)
 
+    def __len__(self):
+        return len(self.items)
+
 class ItemPicker(Artifact):
     item: object = None
 
