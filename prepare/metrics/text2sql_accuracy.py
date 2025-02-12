@@ -1,6 +1,5 @@
 from unitxt.catalog import add_to_catalog
-from unitxt.metrics import SQLExecutionAccuracy
-from unitxt.metrics import SQLNonExecutionAccuracy
+from unitxt.metrics import SQLExecutionAccuracy, SQLNonExecutionAccuracy
 from unitxt.test_utils.metrics import test_metric
 
 sql_execution_accuracy_metric = SQLExecutionAccuracy()
