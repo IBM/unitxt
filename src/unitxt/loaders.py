@@ -62,7 +62,7 @@ from datasets import (
     IterableDatasetDict,
     get_dataset_split_names,
 )
-from datasets import load_dataset as hf_load_dataset
+from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
@@ -80,6 +80,18 @@ from .utils import LRUCache
 logger = get_logger()
 settings = get_settings()
 
+def hf_load_dataset(*args, **kwargs):
+    return _hf_load_dataset(
+        *args, **kwargs,
+            download_config=DownloadConfig(
+                cache_dir=settings.local_cache,
+                max_retries=settings.loaders_max_retries,
+            ),
+            verification_mode="no_checks",
+            cache_dir=settings.local_cache,
+            trust_remote_code=settings.allow_unverified_code,
+            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+        )
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -273,35 +285,22 @@ class LoadHF(LazyLoader):
         if dataset is None:
             if streaming is None:
                 streaming = self.is_streaming()
-
-            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                if settings.disable_hf_datasets_cache:
-                    cache_dir = dir_to_be_deleted
-                else:
-                    cache_dir = None
-                try:
-                    dataset = hf_load_dataset(
-                        self.path,
-                        name=self.name,
-                        data_dir=self.data_dir,
-                        data_files=self.data_files,
-                        revision=self.revision,
-                        streaming=streaming,
-                        cache_dir=cache_dir,
-                        verification_mode="no_checks",
-                        split=split,
-                        trust_remote_code=settings.allow_unverified_code,
-                        num_proc=self.num_proc,
-                        download_config=DownloadConfig(
-                            max_retries=settings.loaders_max_retries,
-                            # extract_on_the_fly=True,
-                        ),
-                    )
-                except ValueError as e:
-                    if "trust_remote_code" in str(e):
-                        raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                        ) from e
+            try:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    revision=self.revision,
+                    streaming=streaming,
+                    split=split,
+                    num_proc=self.num_proc,
+                )
+            except ValueError as e:
+                if "trust_remote_code" in str(e):
+                    raise ValueError(
+                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                    ) from e
         self.__class__._loader_cache.max_size = settings.loader_cache_size
         if not disable_memory_caching:
             self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset

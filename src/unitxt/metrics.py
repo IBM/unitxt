@@ -29,6 +29,7 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
+from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -74,6 +75,20 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
+def hf_evaluate_load(*args, **kwargs):
+    return evaluate.load(
+        *args,
+        **kwargs,
+        experiment_id=str(uuid.uuid4()),
+        cache_dir=settings.local_cache,
+         download_config=DownloadConfig(
+                cache_dir=settings.local_cache,
+                max_retries=settings.loaders_max_retries,
+            ),
+            verification_mode="no_checks",
+            trust_remote_code=settings.allow_unverified_code,
+            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+        )
 
 class MetricsList(ListCollection):
     def verify(self):
@@ -2310,9 +2325,7 @@ class HuggingfaceMetric(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(
         self,
@@ -2387,9 +2400,7 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(
         self,
@@ -2434,9 +2445,7 @@ class HuggingfaceInstanceMetric(InstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # invokes  module.compute, which invokes, e.g., meteor's _compute
@@ -2540,7 +2549,7 @@ class F1(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
+        self._metric = hf_evaluate_load(self.metric)
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
@@ -2817,8 +2826,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     def prepare(self):
         super().prepare()
 
-        self._metric = evaluate.load(
-            self.metric, "multilabel", experiment_id=str(uuid.uuid4())
+        self._metric = hf_evaluate_load(
+            self.metric, "multilabel"
         )
 
     def add_str_to_id(self, str):
