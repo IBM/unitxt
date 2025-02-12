@@ -97,7 +97,7 @@ class SeparateSplit(Splitter):
             if size:
                 so_far += size
         generators = slice_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators)
+        return MultiStream.from_iterables(generators)
 
 
 class SliceSplit(Splitter):
@@ -106,7 +106,7 @@ class SliceSplit(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_slices_string(v) for k, v in self.slices.items()}
         generators = slice_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators)
+        return MultiStream.from_iterables(generators)
 
 
 def get_random_generator_based_on_instance(instance):

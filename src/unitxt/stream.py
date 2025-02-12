@@ -7,7 +7,6 @@ from typing import Any, Callable, Dict, Generator, Iterable, List
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 
 from .dataclass import Dataclass, OptionalField
-from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
 from .settings_utils import get_constants, get_settings
 from .utils import recursive_copy
@@ -28,10 +27,6 @@ class Stream(Dataclass):
 
     @abstractmethod
     def take(self, n):
-        pass
-
-    @abstractmethod
-    def set_copying(self, copying: bool):
         pass
 
     def to_dataset(self, disable_cache=False, cache_dir=None, features=None):
@@ -69,10 +64,6 @@ class ListStream(Stream):
                 break
             yield instance
 
-    def set_copying(self, copying: bool):
-        self.copying = copying
-
-
 class GeneratorStream(Stream):
     """A class for handling streaming data in a customizable way.
 
@@ -89,46 +80,33 @@ class GeneratorStream(Stream):
 
     generator: Callable
     gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
-    caching: bool = False
     copying: bool = False
 
-    def _get_initiator(self):
-        """Private method to get the correct initiator based on the streaming and caching attributes.
+    # def _get_stream(self):
+    #     """Private method to get the stream based on the initiator function.
 
-        Returns:
-            function: The correct initiator function.
-        """
-        if self.caching:
-            return Dataset.from_generator
-
-        if self.copying:
-            return CopyingReusableGenerator
-
-        return ReusableGenerator
-
-    def _get_stream(self):
-        """Private method to get the stream based on the initiator function.
-
-        Returns:
-            object: The stream object.
-        """
-        return self._get_initiator()(self.generator, gen_kwargs=self.gen_kwargs)
+    #     Returns:
+    #         object: The stream object.
+    #     """
+    #     return self._get_initiator()(self.generator, gen_kwargs=self.gen_kwargs)
 
     def __iter__(self):
-        return iter(self._get_stream())
+        return self
+
+    def __next__(self):
+        for instance in self.generator(self.gen_kwargs):
+            if self.copying:
+                instance = recursive_copy(instance)
+            yield instance
 
     def peek(self):
-        return next(iter(self))
+        return next(self.generator(self.gen_kwargs))
 
     def take(self, n):
         for i, instance in enumerate(self):
             if i >= n:
                 break
             yield instance
-
-    def set_copying(self, copying: bool):
-        self.copying = copying
-
 
 class FaultyStreamError(Exception):
     """Base class for all stream-related exceptions."""
@@ -158,7 +136,6 @@ def eager_failed():
 class DynamicStream(Stream):
     generator: Callable
     gen_kwargs: Dict[str, Any] = OptionalField(default_factory=dict)
-    caching: bool = False
     copying: bool = False
 
     def __post_init__(self):
@@ -183,7 +160,6 @@ class DynamicStream(Stream):
             self.stream = GeneratorStream(
                 generator=self.generator,
                 gen_kwargs=self.gen_kwargs,
-                caching=self.caching,
                 copying=self.copying,
             )
 
@@ -195,10 +171,6 @@ class DynamicStream(Stream):
 
     def take(self, n):
         return self.stream.take(n)
-
-    def set_copying(self, copying: bool):
-        self.stream.set_copying(copying)
-
 
 class MultiStream(dict):
     """A class for handling multiple streams of data in a dictionary-like format.
@@ -233,10 +205,6 @@ class MultiStream(dict):
             object: The next value in the stream.
         """
         yield from self[key]
-
-    def set_caching(self, caching: bool):
-        for stream in self.values():
-            stream.caching = caching
 
     def set_copying(self, copying: bool):
         for stream in self.values():
@@ -274,37 +242,9 @@ class MultiStream(dict):
         super().__setitem__(key, value)
 
     @classmethod
-    def from_generators(
-        cls, generators: Dict[str, ReusableGenerator], caching=False, copying=False
-    ):
-        """Creates a MultiStream from a dictionary of ReusableGenerators.
-
-        Args:
-            generators (Dict[str, ReusableGenerator]): A dictionary of ReusableGenerators.
-            caching (bool, optional): Whether the data should be cached or not. Defaults to False.
-            copying (bool, optional): Whether the data should be copied or not. Defaults to False.
-
-        Returns:
-            MultiStream: A MultiStream object.
-        """
-        assert all(isinstance(v, ReusableGenerator) for v in generators.values())
-        return cls(
-            {
-                key: DynamicStream(
-                    generator.generator,
-                    gen_kwargs=generator.gen_kwargs,
-                    caching=caching,
-                    copying=copying,
-                )
-                for key, generator in generators.items()
-            }
-        )
-
-    @classmethod
     def from_iterables(
         cls,
         iterables: Dict[str, Iterable[Dict[str, Any]]],
-        caching=False,
         copying=False,
     ):
         """Creates a MultiStream from a dictionary of iterables.
@@ -321,7 +261,6 @@ class MultiStream(dict):
             {
                 key: DynamicStream(
                     iterable.__iter__,
-                    caching=caching,
                     copying=copying,
                 )
                 for key, iterable in iterables.items()
