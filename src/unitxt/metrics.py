@@ -6175,6 +6175,7 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,
     RiskType.AGENTIC: GraniteGuardianAgenticRisk,
+    RiskType.CUSTOM_RISK: GraniteGuardianCustomRisk,
 }
 
 class ExecutionAccuracy(InstanceMetric):
