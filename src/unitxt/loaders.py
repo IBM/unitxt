@@ -177,6 +177,9 @@ class Loader(SourceOperator):
         self._maybe_set_classification_policy()
         return self.add_data_classification(self.load_data())
 
+    def get_splits(self):
+        return list(self().keys())
+
 class LazyLoader(Loader):
     split: Optional[str] = NonPositionalField(default=None)
 
@@ -742,7 +745,7 @@ class LoadFromIBMCloud(Loader):
         return dataset
 
 
-class MultipleSourceLoader(Loader):
+class MultipleSourceLoader(LazyLoader):
     """Allows loading data from multiple sources, potentially mixing different types of loaders.
 
     Args:
@@ -766,20 +769,26 @@ class MultipleSourceLoader(Loader):
 
     sources: List[Loader]
 
-    # MultipleSourceLoaders uses the the data classification from source loaders,
-    # so only need to add it, if explicitly requested to override.
+    def prepare(self):
+        super().prepare()
+        self._fusion = FixedFusion(
+            subsets=self.sources, max_instances_per_subset=self.get_limit(),
+            include_splits=self.get_splits(),
+        )
+
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         if self.data_classification_policy is None:
             return multi_stream
         return super().add_data_classification(multi_stream)
 
-    def load_iterables(self):
-        pass
+    def get_splits(self):
+        splits = []
+        for loader in self.sources:
+            splits.extend(loader.get_splits())
+        return list(set(splits))
 
-    def load_data(self):
-        return FixedFusion(
-            subsets=self.sources, max_instances_per_subset=self.get_limit()
-        ).process()
+    def split_generator(self, split: str) -> Generator[Any, None, None]:
+        yield from self._fusion()[split]
 
 
 class LoadFromDictionary(Loader):
