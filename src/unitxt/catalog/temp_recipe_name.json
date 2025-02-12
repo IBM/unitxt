@@ -1,0 +1,39 @@
+{
+    "__type__": "standard_recipe",
+    "card": {
+        "__type__": "task_card",
+        "loader": {
+            "__type__": "load_hf",
+            "path": "resources/some_path",
+            "split": "test"
+        },
+        "task": {
+            "__type__": "form_task",
+            "inputs": {
+                "question": "str",
+                "metadata": "List[Dict[str, Any]]"
+            },
+            "outputs": {
+                "answer": "str"
+            },
+            "metrics": [
+                "metrics.jaccard_index"
+            ]
+        },
+        "templates": [
+            {
+                "__type__": "input_output_template",
+                "input_format": "{question}",
+                "output_format": "{answer}"
+            }
+        ],
+        "preprocess_steps": [
+            "operators.literal_eval[field=metadata]"
+        ]
+    },
+    "template_card_index": 0,
+    "postprocessors": [
+        "operators.regex_parser[field=prediction, regex=\\d+]",
+        "processors.to_list_by_comma_from_references"
+    ]
+}
