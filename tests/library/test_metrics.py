@@ -16,7 +16,6 @@ from unitxt.metrics import (
     CharEditDistance,
     CharEditDistanceAccuracy,
     Detector,
-    ExecutionAccuracy,
     F1Binary,
     F1BinaryPosOnly,
     F1Fast,
@@ -60,6 +59,7 @@ from unitxt.metrics import (
     RelaxedCorrectness,
     RocAuc,
     Rouge,
+    SQLExecutionAccuracy,
     StringContainment,
     StringContainmentRatio,
     TokenOverlap,
@@ -1202,7 +1202,9 @@ class TestMetrics(UnitxtTestCase):
                         score_prefix,
                         metric.main_score,
                     ]
-                ).replace("__", "_")  # for the case of empty score_prefix
+                ).replace(
+                    "__", "_"
+                )  # for the case of empty score_prefix
 
                 self.assertTrue(
                     any(
@@ -1391,7 +1393,7 @@ class TestMetrics(UnitxtTestCase):
         )
 
     def test_execution_accuracy_correct_query_mock_db(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT name FROM employees WHERE department = 'Sales'"]
         references = ["SELECT name FROM employees WHERE department = 'Sales';"]
         task_data = [
@@ -1417,7 +1419,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_different_db_schema(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT product_name, price FROM products WHERE category = 'Electronics'"
         ]
@@ -1453,7 +1455,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_multiple_tables(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT o.order_id, c.name FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped'"
         ]
@@ -1491,7 +1493,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_empty_result(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT name FROM employees WHERE department = 'HR'"]
         references = ["SELECT name FROM employees WHERE department = 'HR';"]
         task_data = [
@@ -1514,10 +1516,10 @@ class TestMetrics(UnitxtTestCase):
         ]
 
         outputs = metric.compute(references, predictions[0], task_data[0])
-        self.assertEqual(1.0, outputs["score"])
+        self.assertEqual(0.0, outputs["score"])
 
     def test_execution_accuracy_aggregation_query(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = ["SELECT AVG(salary) FROM employees"]
         references = ["SELECT AVG(salary) FROM employees;"]
         task_data = [
@@ -1543,7 +1545,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual(1.0, outputs["score"])
 
     def test_execution_accuracy_incorrect_query(self):
-        metric = ExecutionAccuracy()
+        metric = SQLExecutionAccuracy()
         predictions = [
             "SELECT nme FROM employees WHERE department = 'Sales'"
         ]  # Incorrect column name 'nme'
@@ -1852,7 +1854,9 @@ class TestConfidenceIntervals(UnitxtTestCase):
                     score_prefix,
                     metric.main_score,
                 ]
-            ).replace("__", "_")  # for the case of empty score_prefix
+            ).replace(
+                "__", "_"
+            )  # for the case of empty score_prefix
 
             if input_expected_global_result_is_none:
                 expected_global_result = {
@@ -1924,13 +1928,15 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
         actual_scores = [output["score"] for output in outputs]
         main_score = f"{model_label}_{metric_label}"
-        instance_targets = [
-            {
-                main_score: 0.0,
-                "score": 0.0,
-                "score_name": main_score,
-                main_score + "_judge_raw_output": "no",
-                main_score + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        instance_targets = (
+            [
+                {
+                    main_score: 0.0,
+                    "score": 0.0,
+                    "score_name": main_score,
+                    main_score + "_judge_raw_output": "no",
+                    main_score
+                    + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
 You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
 There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
@@ -1946,8 +1952,10 @@ Prediction: Watsonx.ai supports no foundation models
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 Answer: """,
-            }
-        ] * 2
+                }
+            ]
+            * 2
+        )
         global_target = {
             main_score: 0.0,
             "score": 0.0,

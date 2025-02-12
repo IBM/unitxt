@@ -180,6 +180,7 @@ class Loader(SourceOperator):
     def get_splits(self):
         return list(self().keys())
 
+
 class LazyLoader(Loader):
     split: Optional[str] = NonPositionalField(default=None)
 
@@ -191,9 +192,7 @@ class LazyLoader(Loader):
     def split_generator(self, split: str) -> Generator:
         pass
 
-    def load_iterables(
-        self
-    ) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
+    def load_iterables(self) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
         if self.split is not None:
             splits = [self.split]
         else:
@@ -339,10 +338,11 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True
                 )
-            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+            except (
+                NotImplementedError
+            ):  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
             return list(dataset.keys())
-
 
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
@@ -436,16 +436,14 @@ class LoadCSV(LazyLoader):
                         self.log_limited_loading()
 
                     try:
-                        dataset = reader(
-                            self.files[split], **self.get_args()
-                        ).to_dict("records")
+                        dataset = reader(self.files[split], **self.get_args()).to_dict(
+                            "records"
+                        )
                     except ValueError:
                         import fsspec
 
                         with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(
-                                f, **self.get_args()
-                            ).to_dict("records")
+                            dataset = reader(f, **self.get_args()).to_dict("records")
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
