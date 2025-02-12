@@ -279,6 +279,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         """
         pass
 
+    def _mock_infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [mock_logprobs_default_value_factory() for instance in dataset]
+
     def infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -298,7 +304,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
             )
 
         [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset, return_meta_data)
+
+        if settings.mock_inference_mode:
+            result = self._mock_infer_log_probs(dataset)
+        else:
+            result = self._infer_log_probs(dataset, return_meta_data)
+        return result
 
 
 class LazyLoadMixin(Artifact):
@@ -1900,7 +1911,7 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
+    Literal["url", "username", "password", "api_key", "project_id", "space_id"], str
 ]
 
 
@@ -1960,28 +1971,28 @@ class WMLInferenceEngineBase(
             and not (self.model_name and self.deployment_id)
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
 
-    def process_data_before_dump(self, data):
-        if "credentials" in data:
-            for key, value in data["credentials"].items():
-                if key != "url":
-                    data["credentials"][key] = "<hidden>"
-                else:
-                    data["credentials"][key] = value
-        return data
+    # def process_data_before_dump(self, data):
+    #     if "credentials" in data:
+    #         for key, value in data["credentials"].items():
+    #             if key != "url":
+    #                 data["credentials"][key] = "<hidden>"
+    #             else:
+    #                 data["credentials"][key] = value
+    #     return data
 
     def _initialize_wml_client(self):
-        from ibm_watsonx_ai.client import APIClient
+        from ibm_watsonx_ai.client import APIClient, Credentials
 
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
-
-        client = APIClient(credentials=self.credentials)
-        if "space_id" in self.credentials:
-            client.set.default_space(self.credentials["space_id"])
-        else:
-            client.set.default_project(self.credentials["project_id"])
-        return client
+        return APIClient(
+            credentials=Credentials(
+                api_key=self.credentials["api_key"],
+                url=self.credentials["url"]
+            ),
+            project_id=self.credentials.get("project_id", None),
+            space_id=self.credentials.get("space_id", None))
 
     @staticmethod
     def _read_wml_credentials_from_env() -> CredentialsWML:
@@ -2028,7 +2039,7 @@ class WMLInferenceEngineBase(
             )
 
         if apikey:
-            credentials["apikey"] = apikey
+            credentials["api_key"] = apikey
         elif username and password:
             credentials["username"] = username
             credentials["password"] = password
@@ -2046,7 +2057,7 @@ class WMLInferenceEngineBase(
         assert isoftype(credentials, CredentialsWML), (
             "WML credentials object must be a dictionary which may "
             "contain only the following keys: "
-            "['url', 'apikey', 'username', 'password']."
+            "['url', 'api_key', 'username', 'password']."
         )
 
         assert credentials.get(
@@ -2056,10 +2067,10 @@ class WMLInferenceEngineBase(
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
         )
-        assert "apikey" in credentials or (
+        assert "api_key" in credentials or (
             "username" in credentials and "password" in credentials
         ), (
-            "Either 'apikey' or both 'username' and 'password' must be provided "
+            "Either 'api_key' or both 'username' and 'password' must be provided "
             "as keys for WML credentials dict."
         )
 
@@ -2233,7 +2244,8 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         # currently this is the only configuration that returns generated
         # logprobs and behaves as expected
         logprobs_return_options = {
-            "input_tokens": True,
+            "input_tokens": user_return_options.get("input_tokens", True),
+            "input_text": user_return_options.get("input_text", False),
             "generated_tokens": True,
             "token_logprobs": True,
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
