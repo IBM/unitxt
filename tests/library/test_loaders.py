@@ -303,9 +303,11 @@ class TestLoaders(UnitxtTestCase):
                 sources=[
                     LoadCSV(files={"test": files["train"]}),
                     LoadCSV(files={"test": files["test"]}),
+                    LoadCSV(files={"demos_pool": files["train"]}),
                 ]
             )
             ms = loader()
+            self.assertSetEqual(set(ms.keys()), {"demos_pool", "test"})
             assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
 
     def test_load_from_dictionary(self):
