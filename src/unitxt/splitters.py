@@ -60,7 +60,7 @@ class SplitRandomMix(Splitter):
     def process(self, multi_stream: MultiStream) -> MultiStream:
         mapping = {k: parse_random_mix_string(v) for k, v in self.mix.items()}
         generators = random_mix_streams(multi_stream, mapping)
-        return MultiStream.from_generators(generators)
+        return MultiStream.from_iterables(generators,copying=True)
 
 
 class SeparateSplit(Splitter):

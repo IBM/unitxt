@@ -68,7 +68,6 @@ from .dataclass import NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .dict_utils import dict_delete, dict_get, dict_set, is_subpath
 from .error_utils import UnitxtError
-from .generator_utils import ReusableGenerator
 from .operator import (
     InstanceOperator,
     MultiStream,
@@ -1801,11 +1800,11 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
             if i == 0:  # first metric
                 multi_stream = MultiStream({"tmp": stream})
             else:  # metrics with previous scores
-                reusable_generator = ReusableGenerator(
+                reusable_generator = DynamicStream(
                     generator=update_scores_of_stream_instances,
                     gen_kwargs={"stream": stream, "scores": accumulated_scores},
                 )
-                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+                multi_stream = MultiStream.from_iterables({"tmp": reusable_generator})
 
             multi_stream = metric(multi_stream)
 

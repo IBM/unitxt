@@ -2,10 +2,9 @@ import itertools
 import re
 from typing import Dict
 
-from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .random_utils import new_random_generator
-from .stream import MissingStreamError, Stream
+from .stream import DynamicStream, MissingStreamError, Stream
 
 logger = get_logger()
 
@@ -147,8 +146,8 @@ def slice_streams(input_streams, mapping):
                 for start, end in slices:
                     yield from slice_stream(old_stream_content, start, end)
 
-        new_streams[new_stream] = ReusableGenerator(
-            generator, gen_kwargs={"new_stream": new_stream, "sources": sources}
+        new_streams[new_stream] = DynamicStream(
+            generator=generator, gen_kwargs={"new_stream": new_stream, "sources": sources}
         )
 
     return new_streams
@@ -298,8 +297,8 @@ def random_mix_streams(input_streams, mapping):
 
     # Create new stream generators
     for new_stream_name, new_stream_sources in mapping.items():
-        new_streams[new_stream_name] = ReusableGenerator(
-            random_mix_generator,
+        new_streams[new_stream_name] = DynamicStream(
+            generator=random_mix_generator,
             gen_kwargs={
                 "new_stream_name": new_stream_name,
                 "new_stream_sources": new_stream_sources,

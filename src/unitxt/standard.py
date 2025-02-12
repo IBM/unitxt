@@ -11,7 +11,6 @@ from .dataclass import Field, InternalField, NonPositionalField, OptionalField
 from .deprecation_utils import deprecation
 from .error_utils import UnitxtError
 from .formats import Format, SystemFormat
-from .generator_utils import ReusableGenerator
 from .logging_utils import get_logger
 from .operator import (
     MultiStreamOperator,
@@ -24,7 +23,7 @@ from .schema import FinalizeDataset
 from .serializers import SingleTypeSerializer
 from .settings_utils import get_constants, get_settings
 from .splitters import ConstantSizeSample, RandomSizeSample, Sampler
-from .stream import MultiStream
+from .stream import DynamicStream, MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
 from .templates import (
@@ -135,7 +134,7 @@ class CreateDemosPool(MultiStreamOperator):
         new_streams = {}
         for stream_name in multi_stream:
             if stream_name == self.from_stream:
-                new_streams[stream_name] = ReusableGenerator(
+                new_streams[stream_name] = DynamicStream(
                     generator=from_stream_generator,
                     gen_kwargs={
                         "first_layer": not_selected_from_from_stream,
@@ -145,7 +144,7 @@ class CreateDemosPool(MultiStreamOperator):
                     },
                 )
             else:
-                new_streams[stream_name] = ReusableGenerator(
+                new_streams[stream_name] = DynamicStream(
                     generator=from_stream_generator,
                     gen_kwargs={
                         "first_layer": [],
@@ -155,7 +154,7 @@ class CreateDemosPool(MultiStreamOperator):
                     },
                 )
 
-        ms = MultiStream.from_generators(new_streams)
+        ms = MultiStream.from_iterables(new_streams)
         return set_demos_pool(ms)
 
 
