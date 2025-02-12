@@ -769,13 +769,6 @@ class MultipleSourceLoader(LazyLoader):
 
     sources: List[Loader]
 
-    def prepare(self):
-        super().prepare()
-        self._fusion = FixedFusion(
-            subsets=self.sources, max_instances_per_subset=self.get_limit(),
-            include_splits=self.get_splits(),
-        )
-
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         if self.data_classification_policy is None:
             return multi_stream
@@ -788,7 +781,11 @@ class MultipleSourceLoader(LazyLoader):
         return list(set(splits))
 
     def split_generator(self, split: str) -> Generator[Any, None, None]:
-        yield from self._fusion()[split]
+        yield from FixedFusion(
+            subsets=self.sources,
+            max_instances_per_subset=self.get_limit(),
+            include_splits=[split],
+        )()[split]
 
 
 class LoadFromDictionary(Loader):
