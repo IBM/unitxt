@@ -29,7 +29,7 @@ dataset = load_dataset(
 
 # Infer using SmolLM2 using HF API
 model = HFPipelineBasedInferenceEngine(
-    model_name="HuggingFaceTB/SmolLM2-135M-Instruct", max_new_tokens=32
+    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
 )
 # Change to this to infer with external APIs:
 # CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
