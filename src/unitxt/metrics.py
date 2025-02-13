@@ -4291,7 +4291,8 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
         # treat the references as the contexts and the predictions as answers
         # concat references
-        contexts = ["\n".join(refs) for refs in references]
+
+        contexts = ["\n".join([str(r) for r in refs]) for refs in references]
         contexts = [" ".join(c.split(" ")[: self.max_context_words]) for c in contexts]
         answers = predictions
 
