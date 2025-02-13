@@ -285,7 +285,7 @@ class LoadHF(LazyLoader):
                 streaming = self.is_streaming()
 
             # try to optimize when not too dangerous
-            if self.get_limit() is not None and self.get_limit() <= 100:
+            if self.streaming is None and self.get_limit() is not None and self.get_limit() <= 100:
                 streaming = True
 
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
@@ -317,16 +317,16 @@ class LoadHF(LazyLoader):
                             next(iter(dataset[k]))
 
                 except Exception as e:
-                    if e is ValueError and "trust_remote_code" in str(e):
+                    if "trust_remote_code" in str(e):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
 
+                    # try the opposite way of streaming
                     current_streaming = kwargs["streaming"]
                     logger.info(
                         f"needed to swap streaming from {current_streaming} to {not current_streaming} for path {self.path}"
                     )
-                    # try the opposite way of streaming
                     kwargs["streaming"] = not kwargs["streaming"]
                     dataset = hf_load_dataset(**kwargs)
                     if split is not None:
