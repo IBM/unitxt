@@ -76,6 +76,7 @@ test_card(
     full_mismatch_prediction_values=[json.dumps(wrong_answer)],
     debug=False,
     demos_taken_from="test",
+    metrics=["metrics.accuracy"],
     demos_pool_size=5,
 )
 
@@ -126,6 +127,7 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         card,
         strict=False,
         demos_taken_from="test",
+        metrics=["metrics.accuracy"],
     )
 
     add_to_catalog(card, f"cards.rag.mtrag.documents.{subset}", overwrite=True)

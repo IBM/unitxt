@@ -159,14 +159,12 @@ for subset in subsets:
             ),
         )
 
-        from copy import deepcopy
-
-        card_for_test = deepcopy(card)
-        card_for_test.task.metrics = [
-            "metrics.rag.correctness.llama_index_by_mock",
-        ]
-
-        test_card(card_for_test, debug=False, strict=False)
+        test_card(
+            card,
+            metrics=["metrics.rag.correctness.llama_index_by_mock"],
+            debug=False,
+            strict=False,
+        )
         add_to_catalog(
             card,
             f"cards.cohere_for_ai.{subset}.{lang}",
