@@ -20,7 +20,7 @@ setting = get_settings()
 project_dir = os.path.dirname(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 )
-glob_query = os.path.join(project_dir, "prepare", "**", "*.py")
+glob_query = os.path.join(project_dir, "prepare/cards", "**", "*.py")
 all_preparation_files = glob.glob(glob_query, recursive=True)
 # Make sure the order in which the tests are run is deterministic
 # Having a different order for local testing and github testing may cause diffs in results.

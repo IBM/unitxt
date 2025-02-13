@@ -293,6 +293,8 @@ def test_card(
         if splits is None:
             logger.critical(f"No splits found for path {path} and name {name}")
 
+    else:
+        logger.critical(f"Starting the search but not a LoadHF loader or a LoadFromHFSpace: actual type is {card.loader.__class__.__name__}")
     """Tests a given card.
 
     By default, the test goes over all templates defined in the card,
