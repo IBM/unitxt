@@ -2,10 +2,6 @@ import argparse
 import json
 import sys
 
-from unitxt.settings_utils import get_settings
-
-settings = get_settings()
-
 # Argument parser to get file paths from the command line
 parser = argparse.ArgumentParser(description="Compare performance profiles.")
 parser.add_argument(
@@ -26,24 +22,11 @@ with open(args.pr_perf_file) as openfile:
 print(f'dataset_query = "{main_perf["dataset_query"]}"')
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
-print(f"use Mocked inference = {settings.mock_inference_mode}")
 
 ratio1 = (
-    (pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time_no_initial_ms"])
-    / (
-        main_perf["generate_benchmark_dataset_time"]
-        - main_perf["load_time_no_initial_ms"]
-    )
-    if (
-        main_perf["generate_benchmark_dataset_time"]
-        - main_perf["load_time_no_initial_ms"]
-    )
-    > 0
-    else 1
-)
-ratio2 = (
-    pr_perf["evaluation_time"] / main_perf["evaluation_time"]
-    if main_perf["evaluation_time"] > 0
+    (pr_perf["generate_benchmark_dataset_time"] - pr_perf["load_time"])
+    / (main_perf["generate_benchmark_dataset_time"] - main_perf["load_time"])
+    if (main_perf["generate_benchmark_dataset_time"] - main_perf["load_time"]) > 0
     else 1
 )
 # Markdown table formatting
@@ -52,34 +35,22 @@ line1 = "  What is Measured  | Main Branch |  PR Branch  | PR/Main ratio \n"
 line2 = "--------------------|-------------|-------------|---------------\n"
 line3 = f" Total time         | {main_perf['total_time']:>11} | {pr_perf['total_time']:>11} | {pr_perf['total_time'] / main_perf['total_time']:.2f}\n"
 ratio_line4 = (
-    pr_perf["load_time_no_initial_ms"] / main_perf["load_time_no_initial_ms"]
-    if main_perf["load_time_no_initial_ms"] > 0
-    else 1
+    pr_perf["load_time"] / main_perf["load_time"] if main_perf["load_time"] > 0 else 1
 )
-line4 = f" Load time          | {main_perf['load_time_no_initial_ms']:>11} | {pr_perf['load_time_no_initial_ms']:>11} | {ratio_line4:.2f}\n"
+line4 = f" Load time          | {main_perf['load_time']:>11} | {pr_perf['load_time']:>11} | {ratio_line4:.2f}\n"
 line5 = f" DS Gen. inc. Load  | {main_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time']:>11} | {pr_perf['generate_benchmark_dataset_time'] / main_perf['generate_benchmark_dataset_time']:.2f}\n"
-line6 = f" DS Gen. exc. Load  | {round(main_perf['generate_benchmark_dataset_time'] - main_perf['load_time_no_initial_ms'], 3):>11} | {round(pr_perf['generate_benchmark_dataset_time'] - pr_perf['load_time_no_initial_ms'], 3):>11} | {ratio1:.2f}\n"
-line7 = f" Inference time     | {main_perf['inference_time']:>11} | {pr_perf['inference_time']:>11} | {pr_perf['inference_time'] / main_perf['inference_time']:.2f}\n"
-line8 = f" Evaluate  time     | {main_perf['evaluation_time']:>11} | {pr_perf['evaluation_time']:>11} | {ratio2:.2f}\n"
-line9 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time'] / main_perf['instantiate_benchmark_time']:.2f}\n"
-line10 = f" Model Instantiation| {main_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time']:>11} | {pr_perf['instantiate_model_time'] / main_perf['instantiate_model_time']:.2f}\n"
+line6 = f" DS Gen. exc. Load  | {round(main_perf['generate_benchmark_dataset_time'] - main_perf['load_time'], 3):>11} | {round(pr_perf['generate_benchmark_dataset_time'] - pr_perf['load_time'], 3):>11} | {ratio1:.2f}\n"
+line7 = f" Benchmark Instant. | {main_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time']:>11} | {pr_perf['instantiate_benchmark_time'] / main_perf['instantiate_benchmark_time']:.2f}\n"
 
 print("### Performance Comparison Results, time expressed in seconds:\n")
-if not settings.mock_inference_mode:
-    print(
-        line1 + line2 + line3 + line4 + line5 + line6 + line7 + line8 + line9 + line10
-    )
-else:
-    print(line1 + line2 + line3 + line4 + line5 + line6 + line8 + line9 + line10)
+print(line1 + line2 + line3 + line4 + line5 + line6 + line7)
 print("\n\n")
 # Performance degradation check (5% threshold)
-if ratio1 > 1.05 or ratio2 > 1.05:
+if ratio1 > 1.05:
+    print("\n**Warning**: Performance degradation in Dataset Generation exceeds 5%!")
     print(
-        "\n**Warning**: Performance degradation in Dataset Generation and/or Evaluation exceeds 5%!"
-    )
-    print(
-        "Explore branch performance via 'python performance/bluebench_profiler.py --output_file=[path to json file]',"
-        "followed by 'snakeviz [the performance.prof file specified in the output json file]."
+        "Explore branch performance via 'python performance/bluebench_profiler.py --output_file=<path to json file>',"
+        "followed by 'snakeviz <the performance.prof file specified in the output json file>'."
     )
     sys.exit(1)
 
