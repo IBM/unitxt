@@ -108,6 +108,7 @@ tests = [
     "func_timeout==4.3.5",
     "Wikipedia-API",
     "sqlglot",
+    "sqlparse",
 ]
 ui = [
     "gradio",
