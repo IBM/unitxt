@@ -4360,8 +4360,7 @@ class NDCG(GlobalMetric):
         from collections import defaultdict
 
         query_to_predictions_and_references = defaultdict(lambda: [[], []])
-        references = [str(r) for r in references]
-        references = ["\n".join(references)]
+        references = ["\n".join(reference) for reference in references]
         for reference, pred, inputs_dict in zip(references, predictions, task_data):
             query = inputs_dict.get("query")
             query_to_predictions_and_references[query][0].append(pred)
