@@ -831,6 +831,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             device_map=self.device_map,
             low_cpu_mem_usage=self.low_cpu_mem_usage,
             torch_dtype=self._get_torch_dtype(),
+            cache_dir=settings.local_cache,
         )
         if self.device_map is None:
             self.model.to(self.device)
@@ -874,7 +875,9 @@ class HFPipelineBasedInferenceEngine(
         self.task = (
             "text2text-generation"
             if AutoConfig.from_pretrained(
-                self.model_name, trust_remote_code=True
+                self.model_name,
+                trust_remote_code=True,
+                cache_dir=settings.local_cache,
             ).is_encoder_decoder
             else "text-generation"
         )
@@ -916,7 +919,8 @@ class HFPipelineBasedInferenceEngine(
             model=self.model_name,
             task=self.task,
             use_fast=self.use_fast_tokenizer,
-            trust_remote_code=True,
+            trust_remote_code=settings.allow_unverified_code,
+            model_kwargs= {"cache_dir": settings.local_cache},
             **model_args,
             **self.to_dict(
                 [HFGenerationParamsMixin],
@@ -3169,8 +3173,16 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         self.device = self.get_device()
 
         # Load model and tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            self.model_name,
+            cache_dir=settings.local_cache,
+
+        )
+        self.model = AutoModelForCausalLM.from_pretrained(
+                self.model_name,
+                cache_dir=settings.local_cache,
+
+            ).to(
             self.device
         )
         # Set pad_token if it doesn't exist

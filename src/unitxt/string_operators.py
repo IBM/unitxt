@@ -7,7 +7,9 @@ from typing import (
 )
 
 from .operators import FieldOperator, InstanceOperator
+from .settings_utils import get_settings
 
+settings = get_settings()
 
 class Split(FieldOperator):
     by: str
@@ -31,7 +33,7 @@ class TokensSplit(FieldOperator):
         super().prepare()
         from transformers import AutoTokenizer
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model, cache_dir=settings.local_cache)
 
     def process_value(self, value: str) -> List[str]:
         return self.tokenizer.tokenize(value)
@@ -49,7 +51,7 @@ class TokensSlice(FieldOperator):
         super().prepare()
         from transformers import AutoTokenizer
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model, cache_dir=settings.local_cache)
 
     def process_value(self, value: str) -> str:
         encoded = self.tokenizer.encode(value)
