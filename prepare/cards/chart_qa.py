@@ -26,7 +26,6 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",
@@ -53,7 +52,6 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",
