@@ -6326,7 +6326,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             #     "Error executing gold SQL, if gold does not execute metric should fail"
             # ) from e
             gold_error = f"Error executing gold SQL: {e}"
-        if gold_res is None or gold_error is not None:
+        if gold_error is not None:
             return (
                 0,
                 0,
@@ -6339,7 +6339,7 @@ class SQLExecutionAccuracy(InstanceMetric):
                 0,
                 "",
                 "",
-                "",
+                gold_error,
             )
 
         gold_df = pd.DataFrame(gold_res)
