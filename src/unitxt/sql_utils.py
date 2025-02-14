@@ -1,12 +1,12 @@
 import glob
 import os
+import re
 import sqlite3
 import time
 from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Any, List, Optional
 
-import re
 import requests
 from huggingface_hub import snapshot_download
 from requests.exceptions import ConnectionError, ReadTimeout
@@ -391,11 +391,81 @@ def sqlglot_optimized_equivalence(expected: str, generated: str) -> int:
         return False
 
 
+def extract_select_columns(statement):
+    """Parse SQL using sqlparse and extract columns."""
+    from sqlparse.sql import Identifier, IdentifierList
+    from sqlparse.tokens import DML, Keyword
+
+    columns = []
+    select_seen = False
+    for token in statement.tokens:
+        if token.ttype is DML and token.value.upper() == "SELECT":
+            select_seen = True
+            continue
+        if select_seen:
+            if token.ttype is Keyword and token.value.upper() in (
+                "FROM",
+                "WHERE",
+                "GROUP",
+                "HAVING",
+                "ORDER",
+                "LIMIT",
+            ):
+                break
+            if isinstance(token, IdentifierList):
+                for identifier in token.get_identifiers():
+                    columns.append(strip_alias(identifier.value))
+            elif isinstance(token, Identifier):
+                columns.append(strip_alias(token.value))
+            else:
+                val = token.value.strip()
+                if val:
+                    columns.append(strip_alias(val))
+    return frozenset(columns)
+
+
+def strip_alias(col: str) -> str:
+    """Remove any AS alias from a column."""
+    col = col.strip()
+    upper = col.upper()
+    if " AS " in upper:
+        return col[: upper.index(" AS ")].strip()
+    parts_alias = col.split()
+    if len(parts_alias) > 1:
+        return " ".join(parts_alias[:-1])
+    return col
+
+
+def collect_clause(statement, clause_keyword):
+    """Parse SQL statement and collect clauses."""
+    from sqlparse.tokens import Keyword
+
+    found = False
+    collected = []
+    for token in statement.tokens:
+        tvalue = token.value.upper()
+        if token.ttype is Keyword:
+            if tvalue.startswith(clause_keyword):
+                found = True
+                continue
+            if found and tvalue in (
+                "FROM",
+                "WHERE",
+                "GROUP",
+                "HAVING",
+                "ORDER",
+                "LIMIT",
+            ):
+                break
+        if found:
+            collected.append(token.value)
+    return " ".join(collected).strip()
+
+
 def extract_select_info(sql: str):
     """Parse SQL using sqlparse and return a dict of extracted columns and clauses."""
     from sqlparse import parse
-    from sqlparse.sql import Identifier, IdentifierList
-    from sqlparse.tokens import DML, Keyword
+    from sqlparse.tokens import DML
 
     statements = parse(sql)
     if len(statements) != 1:
@@ -411,73 +481,10 @@ def extract_select_info(sql: str):
         "having": "",
         "order": "",
     }
-
-    def extract_select_columns(statement):
-        columns = []
-        select_seen = False
-        for token in statement.tokens:
-            if token.ttype is DML and token.value.upper() == "SELECT":
-                select_seen = True
-                continue
-            if select_seen:
-                if token.ttype is Keyword and token.value.upper() in (
-                    "FROM",
-                    "WHERE",
-                    "GROUP",
-                    "HAVING",
-                    "ORDER",
-                    "LIMIT",
-                ):
-                    break
-                if isinstance(token, IdentifierList):
-                    for identifier in token.get_identifiers():
-                        columns.append(strip_alias(identifier.value))
-                elif isinstance(token, Identifier):
-                    columns.append(strip_alias(token.value))
-                else:
-                    val = token.value.strip()
-                    if val:
-                        columns.append(strip_alias(val))
-        return frozenset(columns)
-
-    def strip_alias(col: str) -> str:
-        """Remove any AS alias from a column."""
-        col = col.strip()
-        upper = col.upper()
-        if " AS " in upper:
-            return col[: upper.index(" AS ")].strip()
-        parts_alias = col.split()
-        if len(parts_alias) > 1:
-            return " ".join(parts_alias[:-1])
-        return col
-
     columns = extract_select_columns(stmt)
     if not columns:
         columns = frozenset()
     parts["columns"] = columns
-
-    def collect_clause(statement, clause_keyword):
-        found = False
-        collected = []
-        for token in statement.tokens:
-            tvalue = token.value.upper()
-            if token.ttype is Keyword:
-                if tvalue.startswith(clause_keyword):
-                    found = True
-                    continue
-                if found and tvalue in (
-                    "FROM",
-                    "WHERE",
-                    "GROUP",
-                    "HAVING",
-                    "ORDER",
-                    "LIMIT",
-                ):
-                    break
-            if found:
-                collected.append(token.value)
-        return " ".join(collected).strip()
-
     parts["from"] = collect_clause(stmt, "FROM")
     parts["where"] = collect_clause(stmt, "WHERE")
     parts["group"] = collect_clause(stmt, "GROUP")
@@ -489,8 +496,8 @@ def extract_select_info(sql: str):
 def sqlparse_queries_equivalent(sql1: str, sql2: str) -> bool:
     """Return True if both SQL queries are naively considered equivalent."""
     try:
-        info1 = SQLNonExecutionAccuracy.extract_select_info(sql1)
-        info2 = SQLNonExecutionAccuracy.extract_select_info(sql2)
+        info1 = extract_select_info(sql1)
+        info2 = extract_select_info(sql2)
         if not info1 or not info2:
             return False
         if info1["columns"] != info2["columns"]:

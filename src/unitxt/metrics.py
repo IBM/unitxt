@@ -40,7 +40,6 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
-from .sql_utils import get_db_connector
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
@@ -63,6 +62,7 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
+from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
@@ -6291,9 +6291,11 @@ class SQLExecutionAccuracy(InstanceMetric):
         11. predicted query's dataframe
         12. error message (if any)
         """
-        from .sql_utils import sqlglot_optimized_equivalence
         import time
+
         from func_timeout import func_timeout
+
+        from .sql_utils import sqlglot_optimized_equivalence
 
         gold_res = None
         gold_error = ""
@@ -6503,10 +6505,10 @@ class SQLNonExecutionAccuracy(InstanceMetric):
         from .sql_utils import (
             is_sqlglot_parsable,
             is_sqlparse_parsable,
-            sqlglot_parsed_queries_equivalent,
-            sqlglot_optimized_equivalence,
-            sqlparse_queries_equivalent,
             sql_exact_match,
+            sqlglot_optimized_equivalence,
+            sqlglot_parsed_queries_equivalent,
+            sqlparse_queries_equivalent,
         )
 
         predicted_sql = prediction

@@ -13,7 +13,6 @@ from .collections import __file__ as _
 from .collections_operators import __file__ as _
 from .dataclass import __file__ as _
 from .dataset_utils import __file__ as _
-from .sql_utils import __file__ as _
 from .deprecation_utils import __file__ as _
 from .dialog_operators import __file__ as _
 from .dict_utils import __file__ as _
@@ -51,6 +50,7 @@ from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
+from .sql_utils import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
 from .stream_operators import __file__ as _

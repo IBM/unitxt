@@ -5,9 +5,9 @@ from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
-from .sql_utils import get_db_connector
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
+from .sql_utils import get_db_connector
 from .type_utils import isoftype, to_type_string
 from .types import (
     Dialog,
