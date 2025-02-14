@@ -180,6 +180,7 @@ class Loader(SourceOperator):
     def get_splits(self):
         return list(self().keys())
 
+
 class LazyLoader(Loader):
     split: Optional[str] = NonPositionalField(default=None)
 
@@ -191,9 +192,7 @@ class LazyLoader(Loader):
     def split_generator(self, split: str) -> Generator:
         pass
 
-    def load_iterables(
-        self
-    ) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
+    def load_iterables(self) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
         if self.split is not None:
             splits = [self.split]
         else:
@@ -343,7 +342,6 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(split=None, streaming=False)
             return list(dataset.keys())
 
-
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
             self.log_limited_loading()
@@ -436,16 +434,14 @@ class LoadCSV(LazyLoader):
                         self.log_limited_loading()
 
                     try:
-                        dataset = reader(
-                            self.files[split], **self.get_args()
-                        ).to_dict("records")
+                        dataset = reader(self.files[split], **self.get_args()).to_dict(
+                            "records"
+                        )
                     except ValueError:
                         import fsspec
 
                         with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(
-                                f, **self.get_args()
-                            ).to_dict("records")
+                            dataset = reader(f, **self.get_args()).to_dict("records")
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
@@ -1050,6 +1046,9 @@ class LoadFromAPI(Loader):
             Defaults to "data".
         method (str, optional):
             The HTTP method to use for API requests. Defaults to "GET".
+        verify (bool):
+            Apply verification of the SSL certificate
+            Defaults as True
     """
 
     urls: Dict[str, str]
@@ -1060,6 +1059,7 @@ class LoadFromAPI(Loader):
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
+    verify: bool = True
 
     # class level shared cache:
     _loader_cache = LRUCache(max_size=settings.loader_cache_size)
@@ -1091,13 +1091,13 @@ class LoadFromAPI(Loader):
                 response = requests.get(
                     url,
                     headers=base_headers,
-                    verify=True,
+                    verify=self.verify,
                 )
             elif self.method == "POST":
                 response = requests.post(
                     url,
                     headers=base_headers,
-                    verify=True,
+                    verify=self.verify,
                     json={},
                 )
             else:
