@@ -6251,7 +6251,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             True if df1 is a subset of df2 based on column values,
             False otherwise.
         """
-        if df1.shape[1] > df2.shape[1]:
+        if df1.empty or df2.empty or df1.shape[1] > df2.shape[1]:
             return False
 
         # Convert each column to a tuple of values (you could also use a Series.tolist(), etc.)
