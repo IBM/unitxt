@@ -211,7 +211,7 @@ def execute_query_remote(
                 f"{api_url}/sql",
                 headers=headers,
                 json={"sql": query, "dataSourceId": database_id},
-                verify=True,
+                verify=False,
                 timeout=timeout,
             )
             response.raise_for_status()
@@ -298,11 +298,11 @@ class RemoteDatabaseConnector(DatabaseConnector):
         self,
     ) -> str:
         """Retrieves the schema of a database."""
-        cur_api_url = f"{self.api_url}/datasource/{self.database_id}"
+        cur_api_url = f"{self.api_url}/datasources/{self.database_id}"
         response = requests.get(
             cur_api_url,
             headers=self.headers,
-            verify=True,
+            verify=False,
             timeout=self.timeout,
         )
         if response.status_code == 200:

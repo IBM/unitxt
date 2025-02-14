@@ -1058,6 +1058,7 @@ class LoadFromAPI(Loader):
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
+    verify_cert: bool = True
 
     # class level shared cache:
     _loader_cache = LRUCache(max_size=settings.loader_cache_size)
@@ -1089,13 +1090,13 @@ class LoadFromAPI(Loader):
                 response = requests.get(
                     url,
                     headers=base_headers,
-                    verify=True,
+                    verify=False,
                 )
             elif self.method == "POST":
                 response = requests.post(
                     url,
                     headers=base_headers,
-                    verify=True,
+                    verify=False,
                     json={},
                 )
             else:
