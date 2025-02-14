@@ -288,11 +288,11 @@ class RemoteDatabaseConnector(DatabaseConnector):
         self,
     ) -> str:
         """Retrieves the schema of a database."""
-        cur_api_url = f"{self.api_url}/datasource/{self.database_id}"
+        cur_api_url = f"{self.api_url}/datasources/{self.database_id}"
         response = requests.get(
             cur_api_url,
             headers=self.headers,
-            verify=True,
+            verify=False,
             timeout=self.timeout,
         )
         if response.status_code == 200:
