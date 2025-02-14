@@ -1046,7 +1046,7 @@ class LoadFromAPI(Loader):
             Defaults to "data".
         method (str, optional):
             The HTTP method to use for API requests. Defaults to "GET".
-        verify (bool):
+        verify_cert (bool):
             Apply verification of the SSL certificate
             Defaults as True
     """
@@ -1059,7 +1059,7 @@ class LoadFromAPI(Loader):
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
-    verify: bool = True
+    verify_cert: bool = True
 
     # class level shared cache:
     _loader_cache = LRUCache(max_size=settings.loader_cache_size)
@@ -1091,13 +1091,13 @@ class LoadFromAPI(Loader):
                 response = requests.get(
                     url,
                     headers=base_headers,
-                    verify=self.verify,
+                    verify=self.verify_cert,
                 )
             elif self.method == "POST":
                 response = requests.post(
                     url,
                     headers=base_headers,
-                    verify=self.verify,
+                    verify=self.verify_cert,
                     json={},
                 )
             else:
