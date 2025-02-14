@@ -346,6 +346,8 @@ def is_sqlglot_parsable(sql: str, db_type="sqlite") -> bool:
     """Returns True if sqlglot does not encounter any error, False otherwise."""
     from sqlglot import parse
 
+    if not sql.strip():
+        return False
     if db_type == "db2":
         db_type = "postgres"  ## TODO: temporary until sqlglot adds support for db2
     try:
@@ -361,6 +363,8 @@ def is_sqlparse_parsable(sql: str) -> bool:
     from sqlparse import parse
     from sqlparse.tokens import Error
 
+    if not sql.strip():
+        return False
     try:
         statements = parse(sql)
         for statement in statements:
