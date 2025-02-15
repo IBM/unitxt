@@ -284,10 +284,6 @@ class LoadHF(LazyLoader):
             if streaming is None:
                 streaming = self.is_streaming()
 
-            # try to optimize when not too dangerous
-            if self.streaming is None and self.get_limit() is not None and self.get_limit() <= 100:
-                streaming = True
-
             with tempfile.TemporaryDirectory() as dir_to_be_deleted:
                 if settings.disable_hf_datasets_cache:
                     cache_dir = dir_to_be_deleted
@@ -300,12 +296,15 @@ class LoadHF(LazyLoader):
                     "data_files": self.data_files,
                     "revision": self.revision,
                     "streaming": streaming,
-                    "keep_in_memory": True,
                     "cache_dir": cache_dir,
                     "verification_mode": "no_checks",
                     "split": split,
                     "trust_remote_code": settings.allow_unverified_code,
                     "num_proc": self.num_proc,
+                    "download_config" : DownloadConfig(
+                            max_retries=settings.loaders_max_retries,
+                            # extract_on_the_fly=True,
+                        ),
                 }
                 try:
                     # load the dataset and verify that it is loaded safe and sound
@@ -394,8 +393,6 @@ class LoadHF(LazyLoader):
 
         # load_iterable logged filtering lambda and limiting number
         # once for all streams. All streams are limited and filtered the same.
-        if self.filtering_lambda is not None:
-            dataset = dataset.filter(eval(self.filtering_lambda))
 
         limit = self.get_limit()
         if limit is None:
@@ -468,28 +465,28 @@ class LoadCSV(LazyLoader):
         fsspec.core.DEFAULT_EXPAND = True
         dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
         if dataset is None:
+            reader = self.get_reader()
             for attempt in range(settings.loaders_max_retries):
                 try:
-                    reader = self.get_reader()
-
+                    dataset = reader(
+                        self.files[split], **self.get_args()
+                    ).to_dict("records")
+                    next(iter(dataset))
+                    break
+                except:
                     try:
-                        dataset = reader(
-                            self.files[split], **self.get_args()
-                        ).to_dict("records")
-                        next(iter(dataset))
-                    except ValueError:
-
                         with fsspec.open(self.files[split], mode="rt", expand=True) as f:
                             dataset = reader(
                                 f, **self.get_args()
                             ).to_dict("records")
                         next(iter(dataset))
-                except Exception as e:
-                    logger.info(f"Attempt csv load {attempt + 1} failed: {e}")
-                    if attempt < settings.loaders_max_retries - 1:
-                        time.sleep(2)
-                    else:
-                        raise e
+                        break
+                    except Exception as e:
+                        logger.info(f"Attempt csv load {attempt + 1} failed: {e}")
+                        if attempt < settings.loaders_max_retries - 1:
+                            time.sleep(2)
+                        else:
+                            raise e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[str(self) + "_" + split] = dataset
 
@@ -635,7 +632,7 @@ class LoadFromIBMCloud(Loader):
             load_ibm_cloud = LoadFromIBMCloud(
                 endpoint_url_env='IBM_CLOUD_ENDPOINT',
                 aws_access_key_id_env='IBM_AWS_ACCESS_KEY_ID',
-                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',
+                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',    # pragma: allowlist-secret
                 bucket_name='my-bucket'
             )
             multi_stream = load_ibm_cloud.process()
