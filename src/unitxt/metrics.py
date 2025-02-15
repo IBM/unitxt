@@ -599,6 +599,64 @@ class MaxReduction(DictReduction):
         return float(nan_max(lst))
 
 
+class MultiTurnMetric(
+    MapReduceMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    main_score: str = None
+    metric: MapReduceMetric[PredictionType, IntermediateType]
+    conversation_field: str = "conversation"
+    reduction: DictReduction = MeanReduction()
+
+    def prepare(self):
+        super().prepare()
+        self.main_score = self.metric.main_score
+
+    def map_stream(
+        self,
+        evaluation_inputs_stream: Generator[
+            EvaluationInput[PredictionType], None, None
+        ],
+    ) -> List[Tuple[IntermediateType, str, int]]:
+        dialog_ids: List[str] = []
+        turn_ids: List[int] = []
+
+        def multi_turn_stream(
+            evaluation_inputs_stream: Generator[
+                EvaluationInput[PredictionType], None, None
+            ],
+        ) -> Generator[
+            Tuple[PredictionType, List[PredictionType], Dict[str, Any]], None, None
+        ]:
+            for prediction, references, task_data in evaluation_inputs_stream:
+                conversation = task_data[self.conversation_field]
+                dialog_ids.append(conversation["id"])
+                turn_ids.append(len(conversation["dialog"]))
+                yield prediction, references, task_data
+
+        intermediates: List[IntermediateType] = list(
+            self.metric.map_stream(multi_turn_stream(evaluation_inputs_stream))
+        )
+
+        return list(zip(intermediates, dialog_ids, turn_ids))
+
+    def reduce(
+        self, intermediates: List[Tuple[IntermediateType, str, int]]
+    ) -> Dict[str, Any]:
+        data: Dict[str, Dict[int, IntermediateType]] = {}
+        for intermediate, dialog_id, turn_id in intermediates:
+            if dialog_id not in data:
+                data[dialog_id] = {}
+            data[dialog_id][turn_id] = intermediate
+
+        dialog_scores: Dict[str, Dict[str, Any]] = {
+            dialog_id: self.metric.reduce(list(dialog_data.values()))
+            for dialog_id, dialog_data in data.items()
+        }
+
+        return self.reduction.reduce(list(dialog_scores.values()))
+
+
 class ReductionInstanceMetric(
     MapReduceMetric[PredictionType, IntermediateType],
     Generic[PredictionType, IntermediateType],

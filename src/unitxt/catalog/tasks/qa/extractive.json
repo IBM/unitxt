@@ -4,7 +4,7 @@
     "input_fields": {
         "context": "Union[Text, Table, Dialog]",
         "context_type": "str",
-        "question": "str"
+        "question": "Union[Text, Dialog]"
     },
     "reference_fields": {
         "answers": "List[str]"
