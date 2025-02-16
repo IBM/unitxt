@@ -27,7 +27,12 @@ from .splitters import ConstantSizeSample, RandomSizeSample, Sampler
 from .stream import MultiStream
 from .system_prompts import EmptySystemPrompt, SystemPrompt
 from .task import Task
-from .templates import ApplyRandomTemplate, ApplySingleTemplate, Template, TemplatesList
+from .templates import (
+    ApplyRandomTemplate,
+    ApplySingleTemplate,
+    Template,
+    TemplatesList,
+)
 from .type_utils import isoftype
 from .utils import LRUCache, recursive_copy
 
@@ -658,35 +663,31 @@ class DatasetRecipe(SourceSequentialOperator):
 
         self.finalize.steps.append(FinalizeDataset(group_by=self.group_by))
 
+    @property
+    def has_card_templates(self):
+        return self.card is not None and self.card.templates is not None and len(self.card.templates) > 0
+
+    @property
+    def has_no_templates(self):
+        return self.template_card_index is None and self.template is None
+
     def prepare(self):
         assert (
             self.template_card_index is None or self.template is None
         ), f"Specify either template ({self.template}) or template_card_index ({self.template_card_index}) but not both"
 
-        if self.template_card_index is None and self.template is None:
-            # First try to use the defined defaults
-            if self.card.default_template is not None:
-                self.template = self.card.default_template
+        if self.has_no_templates:
+            if self.has_card_templates:
+                if isinstance(self.card.templates, list):
+                    self.template_card_index = 0
+                else:
+                    self.template_card_index = next(iter(self.card.templates.keys()))
+                logger.warning(
+                    "Template was not specified in recipe, using the first template from the card by default."
+                )
             else:
                 self.template = self.card.task.default_template
 
-            # Than try to infer the default
-            if self.template is None:
-                if (
-                    self.card is not None
-                    and self.card.templates is not None
-                    and len(self.card.templates) > 0
-                ):
-                    self.template_card_index = (
-                        0
-                        if isinstance(self.card.templates, list)
-                        else next(iter(self.card.templates.keys()))
-                    )
-                    logger.warning(
-                        "Template was not specified in recipe, using the first template from the card by default."
-                    )
-                else:
-                    self.template = self.card.task.default_template
 
         if self.template is None and self.template_card_index is not None:
             try:
@@ -704,6 +705,7 @@ class DatasetRecipe(SourceSequentialOperator):
             raise ValueError(
                 "No template was specified in the the 'template' or 'template_card_index' recipe arguments, and no default templates are defined the card or task"
             )
+
         if self.use_demos:
             assert (
                 self.demos_pool is not None
@@ -726,6 +728,7 @@ class DatasetRecipe(SourceSequentialOperator):
 
         if isinstance(self.template, TemplatesList):
             self.template = self.template.items
+
         self.reset_pipeline()
 
 
