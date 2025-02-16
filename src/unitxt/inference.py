@@ -1635,7 +1635,7 @@ class OpenAiInferenceEngine(
             return self.get_return_object(prediction, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
-            logging.error(f"Error predicting instance {messages}:{e}. Retuning empty predictions")
+            logging.error(f"Error predicting instance {messages}:{e}. Returning empty prediction")
             return TextGenerationInferenceOutput(prediction = "-", input_tokens=0, output_tokens=0)
 
 
@@ -1662,7 +1662,7 @@ class OpenAiInferenceEngine(
             return self.get_return_object(pred_output, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
-            logging.error(f"Error predicting instance {messages}:{e}. Retuning empty predictions")
+            logging.error(f"Error predicting instance {messages}:{e}. Returning empty prediction")
             prediction = [{"top_tokens": [
                         {"text": "-", "logprob": 0}
                     ]
