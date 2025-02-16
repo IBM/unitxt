@@ -29,7 +29,6 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -75,20 +74,6 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-def hf_evaluate_load(*args, **kwargs):
-    return evaluate.load(
-        *args,
-        **kwargs,
-        experiment_id=str(uuid.uuid4()),
-        cache_dir=settings.local_cache,
-         download_config=DownloadConfig(
-                cache_dir=settings.local_cache,
-                max_retries=settings.loaders_max_retries,
-            ),
-            verification_mode="no_checks",
-            trust_remote_code=settings.allow_unverified_code,
-            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-        )
 
 class MetricsList(ListCollection):
     def verify(self):
@@ -2325,7 +2310,9 @@ class HuggingfaceMetric(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = hf_evaluate_load(self.hf_metric_name)
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
 
     def compute(
         self,
@@ -2400,7 +2387,9 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = hf_evaluate_load(self.hf_metric_name)
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
 
     def compute(
         self,
@@ -2445,7 +2434,9 @@ class HuggingfaceInstanceMetric(InstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = hf_evaluate_load(self.hf_metric_name)
+        self.metric = evaluate.load(
+            self.hf_metric_name, experiment_id=str(uuid.uuid4())
+        )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # invokes  module.compute, which invokes, e.g., meteor's _compute
@@ -2549,7 +2540,7 @@ class F1(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self._metric = hf_evaluate_load(self.metric)
+        self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
@@ -2826,8 +2817,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     def prepare(self):
         super().prepare()
 
-        self._metric = hf_evaluate_load(
-            self.metric, "multilabel"
+        self._metric = evaluate.load(
+            self.metric, "multilabel", experiment_id=str(uuid.uuid4())
         )
 
     def add_str_to_id(self, str):
@@ -3584,10 +3575,7 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
         if self.model is None:
             self.model = pipeline(
-                "text-classification",
-                model=self.model_name,
-                device=self.get_device(),
-                model_kwargs= {"cache_dir": settings.local_cache},
+                "text-classification", model=self.model_name, device=self.get_device()
             )
 
         inputs = []
@@ -3620,9 +3608,7 @@ class Detector(BulkInstanceMetric):
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.pipe = pipeline(
-            "text-classification", model=self.model_name, device=device,
-            model_kwargs= {"cache_dir": settings.local_cache},
-
+            "text-classification", model=self.model_name, device=device
         )
 
     def compute(
@@ -3655,10 +3641,9 @@ class RegardMetric(GlobalMetric):
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
         self.regard_model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name,                 cache_dir=settings.local_cache,
-
+            self.model_name
         )
-        self.regard_tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=settings.local_cache)
+        self.regard_tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
     def _evaluate(self, predictions, inputs):
         import torch
@@ -3846,7 +3831,6 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
                 "text-classification",
                 model=self.reward_name,
                 device=self.get_device(),
-                model_kwargs= {"cache_dir": settings.local_cache},
             )
 
 
@@ -4029,7 +4013,7 @@ class Perplexity(BulkInstanceMetric):
         if self.lm is None:
             from transformers import AutoConfig
 
-            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True, cache_dir=settings.local_cache)
+            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
             self.lm = (
                 self.EncoderDecoderLM(
                     model_name=self.model_name, single_token_mode=self.single_token_mode
@@ -4108,9 +4092,9 @@ class Perplexity(BulkInstanceMetric):
             self.model_name = model_name
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
             self.model = (
-                self.model_class().from_pretrained(self.model_name, cache_dir=settings.local_cache).to(self.device)
+                self.model_class().from_pretrained(self.model_name).to(self.device)
             )
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=settings.local_cache)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             self.single_token_mode = single_token_mode
@@ -4294,7 +4278,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         from transformers import AutoModelForSequenceClassification
 
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, trust_remote_code=True, cache_dir=settings.local_cache
+            self.model_name, trust_remote_code=True
         ).to(device)
 
     def compute(
@@ -5975,7 +5959,7 @@ class GraniteGuardianBase(InstanceMetric):
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name, cache_dir=settings.local_cache)
+            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
         if self.inference_engine is None:
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.wml_model_name,
