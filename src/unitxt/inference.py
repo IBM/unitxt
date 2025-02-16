@@ -1623,34 +1623,50 @@ class OpenAiInferenceEngine(
 
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
+        import openai
         messages = self.to_messages(instance)
-        response = self.client.chat.completions.create(
-            messages=messages,
-            model=self.model_name,
-            **self._get_completion_kwargs(),
-        )
-        prediction = response.choices[0].message.content
-        return self.get_return_object(prediction, response, return_meta_data)
+        try:
+            response = self.client.chat.completions.create(
+                messages=messages,
+                model=self.model_name,
+                **self._get_completion_kwargs(),
+            )
+            prediction = response.choices[0].message.content
+            return self.get_return_object(prediction, response, return_meta_data)
+        except openai.BadRequestError as e:
+            logging.error(f"Error predicting instance {messages}:{e}. Retuning empty predictions")
+            return TextGenerationInferenceOutput(prediction = "-", input_tokens=0, output_tokens=0)
+
 
     @run_with_imap
     def _get_logprobs(self, instance, return_meta_data):
+        import openai
         messages = self.to_messages(instance)
-        response = self.client.chat.completions.create(
-            messages=messages,
-            model=self.model_name,
-            **self._get_completion_kwargs(),
-        )
-        top_logprobs_response = response.choices[0].logprobs.content
-        pred_output = [
-            {
-                "top_tokens": [
-                    {"text": obj.token, "logprob": obj.logprob}
-                    for obj in generated_token.top_logprobs
-                ]
-            }
-            for generated_token in top_logprobs_response
-        ]
-        return self.get_return_object(pred_output, response, return_meta_data)
+        try:
+            response = self.client.chat.completions.create(
+                messages=messages,
+                model=self.model_name,
+                **self._get_completion_kwargs(),
+            )
+            top_logprobs_response = response.choices[0].logprobs.content
+            pred_output = [
+                {
+                    "top_tokens": [
+                        {"text": obj.token, "logprob": obj.logprob}
+                        for obj in generated_token.top_logprobs
+                    ]
+                }
+                for generated_token in top_logprobs_response
+            ]
+            return self.get_return_object(pred_output, response, return_meta_data)
+        except openai.BadRequestError as e:
+            logging.error(f"Error predicting instance {messages}:{e}. Retuning empty predictions")
+            prediction = [{"top_tokens": [
+                        {"text": "-", "logprob": 0}
+                    ]
+            }]
+            return TextGenerationInferenceOutput(prediction=prediction, input_tokens=0, output_tokens=0)
+
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
