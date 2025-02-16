@@ -189,6 +189,8 @@ if Constants.is_uninitilized():
     constants.instance_stream = "__INSTANCE_STREAM__"
     constants.image_tag = "unitxt-img"
     constants.demos_pool_field = "_demos_pool_"
+    constants.demos_field = "demos"
+    constants.instruction_field = "instruction"
 
 
 def get_settings() -> Settings:

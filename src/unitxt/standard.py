@@ -276,7 +276,7 @@ class DatasetRecipe(SourceSequentialOperator):
     demos_pool_field_name: str = constants.demos_pool_field
 
     demos_taken_from: str = "train"
-    demos_field: str = "demos"
+    demos_field: str = constants.demos_field
     sampler: Sampler = None
 
     # do not push demos to instances whose "demos" field is already populated
@@ -608,7 +608,7 @@ class DatasetRecipe(SourceSequentialOperator):
                     )
                 )
                 self.verbalization.steps.append(
-                    GetLength(field="demos", to_field="recipe_metadata/num_demos")
+                    GetLength(field=constants.demos_field, to_field="recipe_metadata/num_demos")
                 )
                 self.verbalization.steps.append(
                     Set(
