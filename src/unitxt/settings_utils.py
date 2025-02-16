@@ -191,6 +191,7 @@ if Constants.is_uninitilized():
     constants.demos_pool_field = "_demos_pool_"
     constants.demos_field = "demos"
     constants.instruction_field = "instruction"
+    constants.system_prompt_field = "system_prompt"
 
 
 def get_settings() -> Settings:

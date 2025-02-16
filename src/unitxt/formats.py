@@ -133,7 +133,7 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
-        for field in "source", constants.instruction_field, "system_prompt", "target_prefix":
+        for field in "source", constants.instruction_field, constants.system_prompt_field, "target_prefix":
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
