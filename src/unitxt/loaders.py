@@ -123,9 +123,11 @@ class Loader(SourceOperator):
         return f"{self.__class__.__name__}.loader_limit"
 
     def log_limited_loading(self):
-        logger.info(
-            f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
-        )
+        if not hasattr(self, "_already_logged_limited_loading") or not self._already_logged_limited_loading:
+            self._already_logged_limited_loading = True
+            logger.info(
+                f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
+            )
 
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         if self.data_classification_policy is None:
@@ -921,8 +923,11 @@ class LoadFromHFSpace(LazyLoader):
 
         if isinstance(files, str):
             files = [files]
+        limit = self.get_limit()
 
-        total = 0
+        if limit is not None:
+            total = 0
+            self.log_limited_loading()
 
         for file in files:
             for sub_file in self._get_sub_files(file):
@@ -950,9 +955,9 @@ class LoadFromHFSpace(LazyLoader):
                 with open(file_path, encoding="utf-8") as f:
                     for line in f:
                         yield json.loads(line.strip())
-                        if self.loader_limit is not None:
+                        if limit is not None:
                             total += 1
-                            if total >= self.loader_limit:
+                            if total >= limit:
                                 return
 
 

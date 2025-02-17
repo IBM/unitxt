@@ -2467,6 +2467,9 @@ class Fillna(FieldOperator):
     value: Any
     def process_value(self, value: Any) -> Any:
         import numpy as np
-        if np.isnan(value):
-            return self.value
+        try:
+            if np.isnan(value):
+                return self.value
+        except TypeError:
+            return value
         return value

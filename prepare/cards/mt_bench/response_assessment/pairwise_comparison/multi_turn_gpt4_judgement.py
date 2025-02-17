@@ -58,7 +58,7 @@ card = TaskCard(
     ],
 )
 
-test_card(card, demos_taken_from="test", strict=False, loader_limit=1000)
+test_card(card, demos_taken_from="test", strict=False, loader_limit=15000)
 add_to_catalog(
     card,
     "cards.mt_bench.response_assessment.pairwise_comparison.multi_turn_gpt4_judgement",
