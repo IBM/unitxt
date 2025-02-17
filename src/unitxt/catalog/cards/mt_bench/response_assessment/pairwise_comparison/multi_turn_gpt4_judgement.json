@@ -20,6 +20,11 @@
             "condition": "eq"
         },
         {
+            "__type__": "fillna",
+            "field": "reference",
+            "value": null
+        },
+        {
             "__type__": "filter_by_condition",
             "values": {
                 "reference": null
