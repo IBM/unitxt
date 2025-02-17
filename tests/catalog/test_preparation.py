@@ -60,6 +60,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     1024**3
                 )  # Convert bytes to GB
                 disk_start = psutil.disk_io_counters()
+                net_start = psutil.net_io_counters()
                 start_time = time.time()
                 tracemalloc.start()
 
@@ -82,8 +83,11 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
 
                 elapsed_time = time.time() - start_time
                 disk_end = psutil.disk_io_counters()
+                net_end = psutil.net_io_counters()
                 read_gb = (disk_end.read_bytes - disk_start.read_bytes) / (1024**3)
                 write_gb = (disk_end.write_bytes - disk_start.write_bytes) / (1024**3)
+                download_gb = (net_end.bytes_recv - net_start.bytes_recv) / (1024**3)
+
 
                 tracemalloc.stop()
                 _, peak = tracemalloc.get_traced_memory()
@@ -103,12 +107,13 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     f"  Peak Python Memory Usage: {peak_memory_python:.4f} GB\n"
                     f"  Peak System RAM Usage: {peak_memory_system:.4f} GB\n"
                     f"  Disk Write: {write_gb:.4f} GB, Disk Read: {read_gb:.4f} GB"
+                    f"  Data Downloaded: {download_gb:.4f} GB\n"
                     "\n_____________________________________________\n"
                 )
 
                 stats[
                     file.split("prepare")[-1][1:]
-                ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB"
+                ] = f"Time: {formatted_time}, RAM: {peak_memory_system:.2f} GB, Disk: {write_gb:.2f} GB, Download:  {download_gb:.2f}"
             except Exception as e:
                 logger.critical(f"Testing preparation file '{file}' failed:")
                 raise e
