@@ -2462,3 +2462,14 @@ class WikipediaFetcher(FieldOperator):
         page = self.wikipedia.page(title)
 
         return {"title": page.title, "body": getattr(page, self.mode)}
+
+class Fillna(FieldOperator):
+    value: Any
+    def process_value(self, value: Any) -> Any:
+        import numpy as np
+        try:
+            if np.isnan(value):
+                return self.value
+        except TypeError:
+            return value
+        return value
