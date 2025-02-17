@@ -950,9 +950,10 @@ class LoadFromHFSpace(LazyLoader):
                 with open(file_path, encoding="utf-8") as f:
                     for line in f:
                         yield json.loads(line.strip())
-                        total += 1
-                        if total >= self.loader_limit:
-                            return
+                        if self.loader_limit is not None:
+                            total += 1
+                            if total >= self.loader_limit:
+                                return
 
 
 
