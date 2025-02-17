@@ -24,7 +24,6 @@ card = TaskCard(
     ],
     task="tasks.qa.multiple_choice.with_context[metrics=[metrics.exact_match_mm]]",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={},
     __description__=(
         "AI2 Diagrams (AI2D) is a dataset of over 5000 grade school science diagrams with over 150000 rich annotations, their ground truth syntactic parses, and more than 15000 corresponding multiple choice questions."

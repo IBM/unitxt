@@ -64,6 +64,20 @@ Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
 Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
 
+Evaluate API Call 
++++++++++++++++++++++++++++++++++++++++++
+
+This example demonstrates how to evaluate a text to API call task.  It receives as input an OpenAPI specification,
+a set of user texttual requests and corresponding reference answers formatted as CURL API calls.
+The model is expected to generate CURL API calls, and these are compared to the references.
+The model output is post processed and split into components (e.g. url, parameters) which are each compared to the references via F1 metrics
+using  the standard key_value_extraction metric.  
+
+`Example code <https://github.com/IBM/unitxt/blob/main/examples/api_call_evaluation.py>`__
+
+Related documentation: :ref:`Key Value Extraction metric in catalog <catalog.metrics.key_value_extraction>`,:ref:`Templates tutorial <adding_template>`,
+
+
 Evaluation usecases
 -----------------------
 

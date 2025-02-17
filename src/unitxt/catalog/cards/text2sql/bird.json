@@ -3,7 +3,8 @@
     "loader": {
         "__type__": "load_hf",
         "path": "premai-io/birdbench",
-        "split": "validation"
+        "split": "validation",
+        "streaming": true
     },
     "preprocess_steps": [
         {
