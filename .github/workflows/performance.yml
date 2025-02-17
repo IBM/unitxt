@@ -1,8 +1,6 @@
 name: Test Performance
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
     branches: [ main ]
 
@@ -35,8 +33,11 @@ jobs:
         uv pip install --system ".[tests,watsonx,inference-tests]"
         uv pip install --system litellm
         uv pip install --system diskcache
-        huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-
+    - name:  Hugging Face Login
+      run: |
+        for i in {1..5}; do
+          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+        done
     - name: Prepare the dirs for performance evaluation in main
       run: |
         mkdir -p performance_action

@@ -3580,6 +3580,9 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        if settings.mock_inference_mode:
+            return [0.5 for _ in evaluation_inputs_stream]
+
         from transformers import pipeline
 
         if self.model is None:
