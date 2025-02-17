@@ -2295,11 +2295,13 @@ class HuggingfaceMetric(GlobalMetric):
                 Documentation.HUGGINGFACE_METRICS,
             )
 
-        assert self.hf_additional_input_fields is None or isoftype(
-            self.hf_additional_input_fields, List[str]
+        assert (
+            self.hf_additional_input_fields is None
+            or isoftype(self.hf_additional_input_fields, List[str])
         ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
-        assert self.hf_additional_input_fields_pass_one_value is None or isoftype(
-            self.hf_additional_input_fields_pass_one_value, List[str]
+        assert (
+            self.hf_additional_input_fields_pass_one_value is None
+            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
         ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
 
         return super().verify()
@@ -2873,8 +2875,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            assert len(result[self.metric]) == len(
-                labels
+            assert (
+                len(result[self.metric]) == len(labels)
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
             final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
@@ -3837,9 +3839,9 @@ class LlamaIndexLLMMetric(InstanceMetric):
     prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
-    anthropic_models: List[str] = (
-        []
-    )  # this is here for the sake of documentation for future models
+    anthropic_models: List[
+        str
+    ] = []  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
@@ -6322,9 +6324,6 @@ class SQLExecutionAccuracy(InstanceMetric):
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
         except Exception as e:
-            # raise OSError(
-            #     "Error executing gold SQL, if gold does not execute metric should fail"
-            # ) from e
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
             return (
@@ -6366,7 +6365,7 @@ class SQLExecutionAccuracy(InstanceMetric):
                 return no_execution_match_result
         except Exception as e:  # Catch specific exceptions if possible
             logger.info(
-                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+                f"Couldn't test equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
             )
 
         pred_res = None
