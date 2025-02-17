@@ -158,6 +158,6 @@ src/unitxt/catalog/temp_recipe_name.json
 prod_env/*
 benchmark_output/*
 .litellm_cache
-
+src.lock
 docs/_static/data.js
 cache
