@@ -41,7 +41,10 @@ jobs:
 
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
      - run: uv pip install --system ".[tests,watsonx,inference-tests]"
-     - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-
+     - name:  Hugging Face Login
+        run: |
+          for i in {1..5}; do
+            huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+          done
      - name: Run Tests
        run: python -m unittest discover -s tests/inference -p "test_*.py"

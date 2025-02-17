@@ -357,32 +357,41 @@ class TestLoaders(UnitxtTestCase):
         )
 
     def test_load_from_hf_space(self):
-        params = {
-            "space_name": "lmsys/mt-bench",
-            "data_files": {
+
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
                 "train": [
                     "data/mt_bench/model_answer/koala-13b.jsonl",
                     "data/mt_bench/model_answer/llama-13b.jsonl",
                 ],
                 "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
             },
-            "data_classification_policy": ["pii"],
-        }
+            data_classification_policy=["pii"],
+        )
+        instance = next(iter(loader()["test"]))
+        instance.pop("choices")
 
-        expected_sample = {
+        target = {
             "question_id": 81,
             "model_id": "wizardlm-13b",
             "answer_id": "DKHvKJgtzsvHN2ZJ8a3o5C",
             "tstamp": 1686788249.913451,
             "data_classification_policy": ["pii"],
         }
-        loader = LoadFromHFSpace(**params)
-        ms = loader.process().to_dataset()
-        actual_sample = ms["test"][0]
-        actual_sample.pop("choices")
-        self.assertEqual(expected_sample, actual_sample)
+        self.assertEqual(target, instance)
 
-        params["loader_limit"] = 10
-        loader = LoadFromHFSpace(**params)
+    def test_load_from_hf_space_with_loader_limit(self):
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
+                "train": [
+                    "data/mt_bench/model_answer/koala-13b.jsonl",
+                ],
+                "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
+            },
+            data_classification_policy=["pii"],
+            loader_limit=10,
+        )
         ms = loader.process().to_dataset()
         assert ms.shape["train"] == (10, 6) and ms.shape["test"] == (10, 6)
