@@ -9,7 +9,7 @@ on:
 concurrency:
     group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
     cancel-in-progress: true
-    
+
 jobs:
   preparation:
 
@@ -20,6 +20,8 @@ jobs:
       DATASETS_VERBOSITY: error
       HF_HUB_VERBOSITY: error
       HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+      HF_HUB_DOWNLOAD_TIMEOUT: 60
+      HF_HUB_ETAG_TIMEOUT: 60
       TQDM_DISABLE: "True"
 
     strategy:
@@ -35,8 +37,11 @@ jobs:
 
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - run: uv pip install --system ".[tests]"
-    - run: huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }}
-
+    - name:  Hugging Face Login
+      run: |
+        for i in {1..5}; do
+          huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+        done
     - name: Run Tests
       run: |
         modulo="${{ matrix.modulo }}"

@@ -1156,15 +1156,14 @@ class OllamaInferenceEngine(
         import ollama
 
         args = self.to_dict([StandardAPIParamsMixin])
-
         results = []
-
+        model = args.pop("model")
         for instance in dataset:
             messages = self.to_messages(instance)
             response = ollama.chat(
-                model=self.model,
                 messages=messages,
-                **args,
+                model=model,
+                options=args,
             )
             results.append(response)
 

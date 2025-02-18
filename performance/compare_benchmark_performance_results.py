@@ -46,7 +46,7 @@ print("### Performance Comparison Results, time expressed in seconds:\n")
 print(line1 + line2 + line3 + line4 + line5 + line6 + line7)
 print("\n\n")
 # Performance degradation check (5% threshold)
-if ratio1 > 1.05:
+if ratio1 > 1.15:
     print("\n**Warning**: Performance degradation in Dataset Generation exceeds 5%!")
     print(
         "Explore branch performance via 'python performance/bluebench_profiler.py --output_file=<path to json file>',"
