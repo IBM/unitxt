@@ -1,6 +1,8 @@
 import abc
 import asyncio
+import base64
 import dataclasses
+import io
 import json
 import logging
 import os
@@ -26,7 +28,7 @@ from typing import (
     Union,
 )
 
-from datasets import Dataset, DatasetDict
+from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -277,6 +279,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
         """
         pass
 
+    def _mock_infer_log_probs(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+    ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
+        return [mock_logprobs_default_value_factory() for instance in dataset]
+
     def infer_log_probs(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -296,7 +304,12 @@ class LogProbInferenceEngine(abc.ABC, Artifact):
             )
 
         [self.verify_instance(instance) for instance in dataset]
-        return self._infer_log_probs(dataset, return_meta_data)
+
+        if settings.mock_inference_mode:
+            result = self._mock_infer_log_probs(dataset)
+        else:
+            result = self._infer_log_probs(dataset, return_meta_data)
+        return result
 
 
 class LazyLoadMixin(Artifact):
@@ -1143,15 +1156,14 @@ class OllamaInferenceEngine(
         import ollama
 
         args = self.to_dict([StandardAPIParamsMixin])
-
         results = []
-
+        model = args.pop("model")
         for instance in dataset:
             messages = self.to_messages(instance)
             response = ollama.chat(
-                model=self.model,
                 messages=messages,
-                **args,
+                model=model,
+                options=args,
             )
             results.append(response)
 
@@ -1898,7 +1910,7 @@ class WMLChatParamsMixin(Artifact):
 
 
 CredentialsWML = Dict[
-    Literal["url", "username", "password", "apikey", "project_id", "space_id"], str
+    Literal["url", "username", "password", "api_key", "project_id", "space_id"], str
 ]
 
 
@@ -1958,28 +1970,28 @@ class WMLInferenceEngineBase(
             and not (self.model_name and self.deployment_id)
         ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
 
-    def process_data_before_dump(self, data):
-        if "credentials" in data:
-            for key, value in data["credentials"].items():
-                if key != "url":
-                    data["credentials"][key] = "<hidden>"
-                else:
-                    data["credentials"][key] = value
-        return data
+    # def process_data_before_dump(self, data):
+    #     if "credentials" in data:
+    #         for key, value in data["credentials"].items():
+    #             if key != "url":
+    #                 data["credentials"][key] = "<hidden>"
+    #             else:
+    #                 data["credentials"][key] = value
+    #     return data
 
     def _initialize_wml_client(self):
-        from ibm_watsonx_ai.client import APIClient
+        from ibm_watsonx_ai.client import APIClient, Credentials
 
-        if self.credentials is None or len(self.credentials) == 0: # TODO: change
+        if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
-
-        client = APIClient(credentials=self.credentials)
-        if "space_id" in self.credentials:
-            client.set.default_space(self.credentials["space_id"])
-        else:
-            client.set.default_project(self.credentials["project_id"])
-        return client
+        return APIClient(
+            credentials=Credentials(
+                api_key=self.credentials["api_key"],
+                url=self.credentials["url"]
+            ),
+            project_id=self.credentials.get("project_id", None),
+            space_id=self.credentials.get("space_id", None))
 
     @staticmethod
     def _read_wml_credentials_from_env() -> CredentialsWML:
@@ -2001,6 +2013,8 @@ class WMLInferenceEngineBase(
                 "will use space by default. If it is not desired, then have "
                 "only one of those defined in the env."
             )
+            credentials["space_id"] = space_id
+        elif space_id:
             credentials["space_id"] = space_id
         elif project_id:
             credentials["project_id"] = project_id
@@ -2024,7 +2038,7 @@ class WMLInferenceEngineBase(
             )
 
         if apikey:
-            credentials["apikey"] = apikey
+            credentials["api_key"] = apikey
         elif username and password:
             credentials["username"] = username
             credentials["password"] = password
@@ -2042,7 +2056,7 @@ class WMLInferenceEngineBase(
         assert isoftype(credentials, CredentialsWML), (
             "WML credentials object must be a dictionary which may "
             "contain only the following keys: "
-            "['url', 'apikey', 'username', 'password']."
+            "['url', 'api_key', 'username', 'password']."
         )
 
         assert credentials.get(
@@ -2052,10 +2066,10 @@ class WMLInferenceEngineBase(
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
         )
-        assert "apikey" in credentials or (
+        assert "api_key" in credentials or (
             "username" in credentials and "password" in credentials
         ), (
-            "Either 'apikey' or both 'username' and 'password' must be provided "
+            "Either 'api_key' or both 'username' and 'password' must be provided "
             "as keys for WML credentials dict."
         )
 
@@ -2229,7 +2243,8 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
         # currently this is the only configuration that returns generated
         # logprobs and behaves as expected
         logprobs_return_options = {
-            "input_tokens": True,
+            "input_tokens": user_return_options.get("input_tokens", True),
+            "input_text": user_return_options.get("input_text", False),
             "generated_tokens": True,
             "token_logprobs": True,
             "top_n_tokens": user_return_options.get("top_n_tokens", 5),
@@ -2346,7 +2361,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             results = wml_inference.infer(dataset["test"])
     """
 
-    image_encoder: Optional[EncodeImageToString] = None
+    image_encoder: Optional[EncodeImageToString] = NonPositionalField(
+        default_factory=EncodeImageToString
+    )
 
     @staticmethod
     def _extract_queries(instance: Dict[str, Any]) -> Tuple[Optional[str], List]:
@@ -2386,21 +2403,26 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             if image is not None:
                 encoded_image = image
                 if not isinstance(encoded_image, str):
+                    image = Image().decode_example(image)
                     if self.image_encoder is None:
                         raise ValueError(
                             "If sending image queries as well, and they are not "
                             "already encoded to base64 strings, you must specify "
                             "the 'image_encoder' to be used."
                         )
-                    encoded_image = self.image_encoder.encode_image_to_base64(image)
+
+                    buffer = io.BytesIO()
+                    image.save(buffer, format=image.format)
+                    image_data_url = ImageDataString(
+                        f"data:image/{image.format.lower()};base64,"
+                        + base64.b64encode(buffer.getvalue()).decode("utf-8")
+                    )
 
                 message["content"].append(
                     {
                         "type": "image_url",
                         "image_url": {
-                            "url": ImageDataString(
-                                "data:image/jpeg;base64," + encoded_image
-                            ),
+                            "url": image_data_url,
                         },
                     }
                 )
@@ -2732,14 +2754,21 @@ class VLLMParamsMixin(Artifact):
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
     def prepare_engine(self):
-
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
         from vllm import LLM, SamplingParams
-        self.sampling_params = SamplingParams(**args)
-        self.llm = LLM(model=self.model, device="auto", trust_remote_code=True, max_num_batched_tokens=4096,
-                       gpu_memory_utilization=0.7, max_model_len=4096, max_num_seqs=64, enforce_eager=True)
 
+        self.sampling_params = SamplingParams(**args)
+        self.llm = LLM(
+            model=self.model,
+            device="auto",
+            trust_remote_code=True,
+            max_num_batched_tokens=4096,
+            gpu_memory_utilization=0.7,
+            max_model_len=4096,
+            max_num_seqs=64,
+            enforce_eager=True,
+        )
 
     def _infer(
         self,

@@ -29,7 +29,6 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",

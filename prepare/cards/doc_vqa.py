@@ -30,7 +30,6 @@ for language in ["en", "fr"]:
         ],
         task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
         templates=[template, *templates.items],
-        default_template=template,
         __tags__={
             "license": "apache-2.0",
             "multilinguality": "monolingual",
@@ -59,7 +58,6 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",

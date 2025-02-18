@@ -48,7 +48,8 @@ with settings.context(
 
     inference_model = VLLMInferenceEngine(
         model="meta-llama/Llama-3.2-11B-Vision-Instruct",
-        max_tokens=max_tokens, temperature=0.0
+        max_tokens=max_tokens,
+        temperature=0.0,
     )
 
     predictions = inference_model(dataset)

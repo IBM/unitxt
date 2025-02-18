@@ -154,9 +154,10 @@ kaggle.json
 src/unitxt/catalog_back/*
 src/unitxt/catalog/metrics/example/accuracy.json
 src/unitxt/catalog/processors/example/to_string.json
+src/unitxt/catalog/temp_recipe_name.json
 prod_env/*
 benchmark_output/*
 .litellm_cache
-
+src.lock
 docs/_static/data.js
 cache

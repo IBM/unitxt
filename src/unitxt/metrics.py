@@ -1,4 +1,3 @@
-FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 import ast
 import json
 import math
@@ -10,8 +9,20 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
+from enum import Enum
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import evaluate
 import numpy
@@ -31,10 +42,11 @@ from .dataclass import (
 )
 from .db_utils import get_db_connector
 from .deprecation_utils import deprecation
-from .error_utils import Documentation, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
+    LogProbInferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
 )
@@ -54,6 +66,8 @@ from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+
+FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 
 logger = get_logger()
 settings = get_settings()
@@ -378,7 +392,6 @@ class ConfidenceIntervalMixin(Artifact):
         return result
 
 
-from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -1779,7 +1792,7 @@ class ExactMatchMM(InstanceMetric):
     @staticmethod
     @lru_cache(maxsize=10000)
     def exact_match(pred, gt):
-        """Brought from MMStar"""
+        """Brought from MMStar."""
         answer = gt.lower().strip().replace("\n", " ")
         predict = pred.lower().strip().replace("\n", " ")
         try:
@@ -2034,12 +2047,11 @@ class RelaxedCorrectness(GlobalMetric):
                 return_dict["relaxed_human_split"].append(score)
             else:
                 return_dict["relaxed_augmented_split"].append(score)
-        return_dict = {
+        return {
             key: sum(value) / len(value)
             for key, value in return_dict.items()
             if len(value) > 0
         }
-        return return_dict
 
     @staticmethod
     def _to_float(text: str):
@@ -2150,15 +2162,12 @@ class WebsrcSquadF1(GlobalMetric):
             string = string.lower()
 
             # strip leading and trailing whitespaces
-            string = string.strip()
-
-            return string
+            return string.strip()
 
         def _tokenize(text):
             # Regex pattern to match words and isolate punctuation
             pattern = r"\w+|[^\w\s]"
-            tokens = re.findall(pattern, text)
-            return tokens
+            return re.findall(pattern, text)
 
         def _compute_f1(sa, sb):
             sa = _normalize_str(sa)
@@ -2176,8 +2185,7 @@ class WebsrcSquadF1(GlobalMetric):
             comm = sa.intersection(sb)
             prec = len(comm) / len(sb)
             rec = len(comm) / len(sa)
-            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
-            return f1
+            return 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
 
         judge_list = []
         for sample in samples:
@@ -2603,6 +2611,8 @@ class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
         nltk.download("wordnet", quiet=True)
         nltk.download("omw-1.4", quiet=True)
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         from nltk import word_tokenize
         from nltk.translate import meteor_score
 
@@ -3583,13 +3593,16 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from evaluate import load
-
-        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+        self.bertscore = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from evaluate import load
+
+        if self.bertscore is None:
+            self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
         predictions = []
         references = []
         for prediction, reference, _ in evaluation_inputs_stream:
@@ -3635,17 +3648,17 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from sentence_transformers import SentenceTransformer
-
-        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
     ):
-        # if settings.mock_inference_mode:
-        #     return [0.5 for _ in evaluation_inputs_stream]
+        from sentence_transformers import SentenceTransformer, util
 
-        from sentence_transformers import util
+        if self.model is None:
+            self.model = SentenceTransformer(
+                self.model_name, device=self.get_device_id()
+            )
 
         scores = []
 
@@ -3693,15 +3706,21 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from transformers import pipeline
-
-        self.model = pipeline(
-            "text-classification", model=self.model_name, device=self.get_device()
-        )
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        if settings.mock_inference_mode:
+            return [0.5 for _ in evaluation_inputs_stream]
+
+        from transformers import pipeline
+
+        if self.model is None:
+            self.model = pipeline(
+                "text-classification", model=self.model_name, device=self.get_device()
+            )
+
         inputs = []
         for prediction, references, _ in evaluation_inputs_stream:
             inputs.append({"text": references[0], "text_pair": prediction})
@@ -5975,77 +5994,144 @@ class PredictionLength(InstanceMetric):
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
 
 
-class GraniteGuardianWMLMetric(InstanceMetric):
+class RiskType(str, Enum):
+    """Risk type for the Granite Guardian models."""
+
+    RAG = "rag_risk"
+    USER_MESSAGE = "user_risk"
+    ASSISTANT_MESSAGE = "assistant_risk"
+    AGENTIC = "agentic_risk"
+    CUSTOM_RISK = "custom_risk"
+
+class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
-    main_score = "granite_guardian"
     reduction_map: Dict[str, List[str]] = None
     prediction_type = float
+    main_score = None
+    reduction_map = {}
+    wml_model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
-    model_name: str = "ibm/granite-guardian-3-8b"
-    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    wml_params = {
+        "decoding_method": "greedy",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "return_options": {
+            "top_n_tokens": 5,
+            "input_text": True,
+            "input_tokens": False,
+        },
+    }
+
     safe_token = "No"
     unsafe_token = "Yes"
 
-    inference_engine: WMLInferenceEngineGeneration = None
+    inference_engine: LogProbInferenceEngine = None
     generation_params: Dict = None
     risk_name: str = None
+    risk_type: RiskType = None
+    risk_definition: Optional[str] = None
 
-    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
+    user_message_field: str = "user"
+    assistant_message_field: str = "assistant"
+    context_field: str = "context"
+    tools_field: str = "tools"
+
+    available_risks: Dict[RiskType, List[str]] = {
+        RiskType.USER_MESSAGE: [
+            "harm",
+            "social_bias",
+            "jailbreak",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.ASSISTANT_MESSAGE: [
+            "harm",
+            "social_bias",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.RAG: ["context_relevance", "groundedness", "answer_relevance"],
+        RiskType.AGENTIC: ["function_call"],
+    }
+
+    _requirements_list: List[str] = ["torch", "transformers"]
 
     def prepare(self):
-        self.reduction_map = {"mean": [self.main_score]}
-
-    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
-
+        if not isinstance(self.risk_type, RiskType):
+            self.risk_type = RiskType[self.risk_type]
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
-            self.inference_engine = WMLInferenceEngineGeneration(
-                model_name=self.model_name,
-            )
-            self.inference_engine._load_model()
-            self.model = self.inference_engine._model
-            self.generation_params = self.inference_engine._set_logprobs_params({})
 
-        messages = self.process_input_fields(task_data)
+    def verify(self):
+        super().verify()
+        assert self.risk_type == RiskType.CUSTOM_RISK or self.risk_name in self.available_risks[self.risk_type], UnitxtError(f"The risk \'{self.risk_name}\' is not a valid \'{' '.join([word[0].upper() + word[1:] for word in self.risk_type.split('_')])}\'")
+
+    @abstractmethod
+    def verify_granite_guardian_config(self, task_data):
+        pass
+
+    @abstractmethod
+    def process_input_fields(self, task_data):
+        pass
+
+    @classmethod
+    def get_available_risk_names(cls):
+        return cls.available_risks[cls.risk_type]
+
+    def set_main_score(self):
+        self.main_score = self.risk_name
+        self.reduction_map = {"mean": [self.main_score]}
+
+    def get_prompt(self, messages):
         guardian_config = {"risk_name": self.risk_name}
-        processed_input = self._tokenizer.apply_chat_template(
+        if self.risk_type == RiskType.CUSTOM_RISK:
+            guardian_config["risk_definition"] = self.risk_definition
+
+        return self._tokenizer.apply_chat_template(
             messages,
             guardian_config=guardian_config,
             tokenize=False,
             add_generation_prompt=True,
         )
 
-        result = self.model.generate(
-            prompt=[processed_input],
-            params=self.generation_params,
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        self.verify_granite_guardian_config(task_data)
+        self.set_main_score()
+
+        if self.inference_engine is None:
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.wml_model_name,
+                **self.wml_params,
+            )
+        logger.debug(
+            f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
-        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        messages = self.process_input_fields(task_data)
+        prompt = self.get_prompt(messages)
+        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
-        score = 1 - prob_of_risk if label is not None else np.nan
-        return {self.main_score: score}
+        confidence_score = (
+            (prob_of_risk if prob_of_risk > 0.5 else 1 - prob_of_risk)
+            if label is not None
+            else np.nan
+        )
+        result = {
+            self.main_score: prob_of_risk,
+            f"{self.main_score}_prob_of_risk": prob_of_risk,
+            f"{self.main_score}_certainty": confidence_score,
+            f"{self.main_score}_label": label,
+        }
+        logger.debug(f"Results are ready:\n{result}")
+        return result
 
-    def process_input_fields(self, task_data):
-        if self.risk_name == "groundedness":
-            messages = [
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "answer_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "context_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-            ]
-        else:
-            raise NotImplementedError()
-
-        return messages
+    def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
+        return [{"role": role, "content": content}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -6083,6 +6169,157 @@ class GraniteGuardianWMLMetric(InstanceMetric):
             dim=0,
         ).numpy()
 
+class GraniteGuardianUserRisk(GraniteGuardianBase):
+    risk_type = RiskType.USER_MESSAGE
+    def verify_granite_guardian_config(self, task_data):
+        # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
+        assert self.user_message_field in task_data, UnitxtError(
+            f'Task data must contain "{self.user_message_field}" field'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        return messages
+
+class GraniteGuardianAssistantRisk(GraniteGuardianBase):
+    risk_type = RiskType.ASSISTANT_MESSAGE
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+                self.assistant_message_field in task_data
+                and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+class GraniteGuardianRagRisk(GraniteGuardianBase):
+    risk_type = RiskType.RAG
+
+    def verify_granite_guardian_config(self, task_data):
+        if self.risk_name == "context_relevance":
+            assert (
+                self.context_field in task_data
+                and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.user_message_field}" fields'
+            )
+        elif self.risk_name == "groundedness":
+            assert (
+                self.context_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.assistant_message_field}" fields'
+            )
+        elif self.risk_name == "answer_relevance":
+            assert (
+                self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.user_message_field}" and "{self.assistant_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.risk_name == "context_relevance":
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+            messages += self.create_message(
+                "context", task_data[self.context_field]
+            )
+        elif self.risk_name == "groundedness":
+            messages += self.create_message(
+                "context", task_data[self.context_field]
+            )
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        elif self.risk_name == "answer_relevance":
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+class GraniteGuardianAgenticRisk(GraniteGuardianBase):
+    risk_type = RiskType.AGENTIC
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+                self.tools_field in task_data
+                and self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+            "assistant", task_data[self.assistant_message_field]
+        )
+        return messages
+
+class GraniteGuardianCustomRisk(GraniteGuardianBase):
+    risk_type = RiskType.CUSTOM_RISK
+
+    def verify(self):
+        super().verify()
+        assert self.risk_type is not None, UnitxtError("In a custom risk, risk_type must be defined")
+
+    def verify_granite_guardian_config(self, task_data):
+        # even though this is a custom risks, we will limit the
+        # message roles to be a subset of the roles Granite Guardian
+        # was trained with: user, assistant, context & tools.
+        # we just checked whether at least one of them is provided
+        assert (
+                self.tools_field in task_data
+                or self.user_message_field in task_data
+                or self.assistant_message_field in task_data
+                or self.context_field in task_data
+            ), UnitxtError(
+                f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.context_field in task_data:
+            messages += self.create_message(
+                    "context", task_data[self.context_field]
+                )
+        if self.tools_field in task_data:
+            messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+        if self.user_message_field in task_data:
+            messages += self.create_message(
+                "user", task_data[self.user_message_field]
+            )
+        if self.assistant_message_field in task_data:
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+    RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
+    RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
+    RiskType.RAG: GraniteGuardianRagRisk,
+    RiskType.AGENTIC: GraniteGuardianAgenticRisk,
+    RiskType.CUSTOM_RISK: GraniteGuardianCustomRisk,
+}
 
 class ExecutionAccuracy(InstanceMetric):
     reduction_map = {"mean": ["execution_accuracy"]}

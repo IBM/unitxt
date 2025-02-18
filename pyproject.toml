@@ -120,7 +120,8 @@ inference-tests = [
   "litellm==v1.52.9",
   "tenacity",
   "diskcache",
-  "numpy==1.26.4"
+  "numpy==1.26.4",
+  "ollama"
 ]
 assistant = [
     "streamlit",
@@ -185,11 +186,12 @@ keep-runtime-typing = true
 "tests/*" = ["TID251"]
 "utils/*" = ["TID251"]
 "src/unitxt/api.py" = ["B904"]
+"src/unitxt/metrics.py" = ["C901"]
 "src/unitxt/__init__.py" = ["F811", "F401"]
 "src/unitxt/metric.py" = ["F811", "F401"]
 "src/unitxt/dataset.py" = ["F811", "F401"]
 "src/unitxt/blocks.py" = ["F811", "F401"]
-"tests/library/test_loaders.py" = ["N802", "N803"]
+"tests/library/test_loaders.py" = ["N802", "N803", "RUF015"]
 "tests/library/test_dataclass.py" = ["F811", "E731"]
 "src/unitxt/validate.py" = ["B024"]
 "src/unitxt/standard.py" = ["C901"]

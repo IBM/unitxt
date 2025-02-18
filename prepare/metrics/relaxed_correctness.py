@@ -1,6 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.metrics import RelaxedCorrectness
 from unitxt.test_utils.metrics import test_metric
+
 metric = RelaxedCorrectness(n_resamples=None)
 
 predictions = ["10", "30"]

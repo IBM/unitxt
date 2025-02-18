@@ -32,7 +32,6 @@ card = TaskCard(
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
     templates=[template, *templates.items],
-    default_template=template,
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
@@ -62,12 +61,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates="templates.qa.with_context.all",
-    default_template=MultiReferenceTemplate(
-        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
-        references_field="answers",
-        __description__="lmms-evals default template for infovqa.",
-    ),
+    templates=[template, *templates.items],
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",

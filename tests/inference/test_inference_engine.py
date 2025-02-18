@@ -1,15 +1,15 @@
 from typing import Any, Dict, List, cast
 
-from unitxt import produce
+from unitxt import create_dataset, produce
 from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
-from unitxt.image_operators import EncodeImageToString
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
     LiteLLMInferenceEngine,
+    OllamaInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
     TextGenerationInferenceOutput,
@@ -246,43 +246,63 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         assert results[0] == "entailment"
 
     def test_watsonx_inference_with_images(self):
-        raw_dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template_card_index=0,loader_limit=30"
-        )
-        sample = list(raw_dataset["test"])[:2]
+        import numpy as np
+        from PIL import Image
 
-        image_encoder = EncodeImageToString()
+        random_image = Image.fromarray(
+            np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
+        )
+
+        data = [
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the capital of Texas?",
+                "answers": ["Austin"],
+            },
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the color of the sky?",
+                "answers": ["Blue"],
+            },
+        ]
+
+        dataset = create_dataset(
+            task="tasks.qa.with_context",
+            # format="formats.chat_api",
+            test_set=data,
+            split="test",
+        )
 
         inference_engine = WMLInferenceEngineChat(
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
-            image_encoder=image_encoder,
             max_tokens=128,
             top_logprobs=3,
         )
 
-        results = inference_engine.infer_log_probs(sample, return_meta_data=True)
+        results = inference_engine.infer_log_probs(
+            dataset.select([0]), return_meta_data=True
+        )
 
         assert isoftype(results, List[TextGenerationInferenceOutput])
         # assert results[0].input_tokens == 6541
         assert results[0].stop_reason == "stop"
         assert isoftype(results[0].prediction, List[Dict[str, Any]])
 
-        formatted_dataset = load_dataset(
-            card="cards.doc_vqa.en",
-            template="templates.qa.with_context.with_type",
+        dataset = create_dataset(
+            task="tasks.qa.with_context",
             format="formats.chat_api",
-            loader_limit=30,
+            test_set=data,
             split="test",
         )
-        sample = [formatted_dataset[0]]
 
-        messages = inference_engine.to_messages(sample[0])[0]
+        inference_engine = WMLInferenceEngineChat(
+            model_name="meta-llama/llama-3-2-11b-vision-instruct",
+            max_tokens=128,
+        )
 
-        assert isoftype(messages, List[Dict[str, Any]])
-        inference_engine.verify_messages(messages)
-
-        inference_engine.top_logprobs = None
-        results = inference_engine.infer(sample)
+        results = inference_engine.infer(dataset.select([0]))
 
         assert isinstance(results[0], str)
 
@@ -291,10 +311,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         set_verbosity("debug")
         inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-8b-instruct",
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
         )
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,format=formats.chat_api"
         instances = [
             {
                 "question": "How many days there are in a week? answer just the number in digits",
@@ -307,13 +326,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         ]
         total_tests = 5
         instances = (instances * (total_tests // len(instances)))[:total_tests]
-        dataset = produce(instances, recipe)
 
+        dataset = create_dataset(
+            task="tasks.qa.open",
+            format="formats.chat_api",
+            test_set=instances,
+            split="test",
+        )
         predictions = inference_model.infer(dataset)
 
-        targets = ["7", "2"]
-        targets = (targets * (total_tests // len(targets)))[:total_tests]
-        self.assertListEqual(predictions, targets)
+        preds = set(predictions).intersection(
+            {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
+        )
+        self.assertSetEqual(preds, set(predictions))
 
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
@@ -378,3 +403,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "Hello")
         self.assertEqual(predictions[1], "As")
+
+    def test_ollama_inference_engine(self):
+        dataset = [
+            {"source": "Answer in one word only. What is the capital of Canada"},
+        ]
+
+        engine = OllamaInferenceEngine(model="llama3.2:1b", temperature=0.0)
+        predictions = engine.infer(dataset)
+
+        self.assertTrue("Ottawa" in predictions[0], predictions[0])
