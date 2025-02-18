@@ -76,7 +76,18 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                             )
                             continue
                         self.assertTrue(False)
-                        raise
+                        raise e
+                    except Exception as e:
+                        current_exception = e
+                        import requests
+                        while current_exception:
+                            if isinstance(current_exception, requests.exceptions.ReadTimeout):
+                                logger.error(f"ReadTimeout occurred in {file}")
+                                break
+                            current_exception = current_exception.__cause__ or current_exception.__context__
+                        else:
+                            raise e
+
                     logger.info(f"Testing preparation file: {file} passed")
                     self.assertTrue(True)
 
