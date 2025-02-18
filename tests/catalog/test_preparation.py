@@ -79,8 +79,6 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                             break
                         current_exception = current_exception.__cause__ or current_exception.__context__
 
-                self.assertTrue(passed)
-
                 if passed:
                     if error is None:
                         logger.info(f"Testing preparation file: {file} passed")
@@ -88,6 +86,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                         logger.critical(f"Testing preparation file: {file} failed with ignored error: {error}\n{traceback.format_exc()}")
                 else:
                     raise error
+
+                self.assertTrue(passed)
 
             elapsed_time = time.time() - start_time
             disk_end = psutil.disk_io_counters()
