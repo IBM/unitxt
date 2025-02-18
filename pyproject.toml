@@ -51,7 +51,8 @@ dev = [
     "tomli",
     "codespell",
     "fuzzywuzzy",
-    "httpretty"
+    "httpretty",
+    "psutil"
 ]
 docs = [
     "sphinx_rtd_theme",
