@@ -46,5 +46,16 @@ jobs:
           for i in {1..5}; do
             huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
           done
+     - name: Install Ollama
+     - run: |
+       curl -sSL https://ollama.com/download/linux/ollama-linux.zip -o ollama.zip
+       unzip ollama.zip -d ollama
+       sudo mv ollama/ollama /usr/local/bin/ollama
+       rm -rf ollama ollama.zip
+     - name: Pull Llama 3.2:1b model
+       run: ollama pull llama3.2:1b
+     - name: Start serving the model
+       run: nohup ollama serve --model llama3.2:1b --port 5000 &
+
      - name: Run Tests
        run: python -m unittest discover -s tests/inference -p "test_*.py"
