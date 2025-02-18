@@ -43,15 +43,16 @@ model = HFPipelineBasedInferenceEngine(
 )
 # Change to this to infer with external APIs:
 # from unitxt.inference import CrossProviderInferenceEngine
-# engine = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 # The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam". "rits"]
 
 
 predictions = model(dataset)
 results = evaluate(predictions=predictions, data=dataset)
 
+print("Instance Results:")
+print(results.instance_scores)
+
 print("Global Results:")
 print(results.global_scores.summary)
 
-print("Instance Results:")
-print(results.instance_scores.summary)
