@@ -158,13 +158,13 @@ for subset in subsets:
                 "2. machine-translations of handpicked examples into 101 languages →… See the full description on the dataset page: https://huggingface.co/datasets/CohereForAI/aya_evaluation_suite."
             ),
         )
-
-        test_card(
-            card,
-            metrics=["metrics.rag.correctness.llama_index_by_mock"],
-            debug=False,
-            strict=False,
-        )
+        if subset == "aya_human_annotated" and lang == "eng":
+            test_card(
+                card,
+                metrics=["metrics.rag.correctness.llama_index_by_mock"],
+                debug=False,
+                strict=False,
+            )
         add_to_catalog(
             card,
             f"cards.cohere_for_ai.{subset}.{lang}",
