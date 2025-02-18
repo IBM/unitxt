@@ -71,10 +71,10 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     error = e
                     current_exception = e
                     while current_exception:
-                        if isinstance(current_exception, (MissingKaggleCredentialsError, GatedRepoError)):
+                        if isinstance(current_exception, (GatedRepoError)):
                             passed = False
                             break
-                        if isinstance(current_exception, (ReadTimeout, HfHubHTTPError)):
+                        if isinstance(current_exception, (ReadTimeout, HfHubHTTPError, MissingKaggleCredentialsError)):
                             passed = True
                             break
                         current_exception = current_exception.__cause__ or current_exception.__context__
