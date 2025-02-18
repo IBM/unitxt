@@ -10,12 +10,12 @@ constants = get_constants()
 tables_benchmark_dir = os.path.join(
     constants.catalog_dir,
     "recipes",
-    "tables_benchmark",
+    "torr",
 )
 
 
 # Recursive function to build nested benchmarks
-def build_nested_benchmark(dir_path, prefix="recipes.tables_benchmark"):
+def build_nested_benchmark(dir_path, prefix="recipes.torr"):
     nested_scenarios = OrderedDict()
 
     for entry in sorted(os.listdir(dir_path)):
@@ -44,7 +44,7 @@ tables_benchmark_scenarios = build_nested_benchmark(tables_benchmark_dir)
 benchmark = Benchmark(
     tables_benchmark_scenarios.subsets,
     __description__=(
-        "TablesBenchmark is an open-source benchmark developed by domain experts to evaluate various table-related tasks and capabilities.\n\n"
+        "Torr is an open-source benchmark developed by domain experts to evaluate various table-related tasks and capabilities.\n\n"
         ".. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/tables_benchmark.png\n"
         "   :alt: Optional alt text\n"
         "   :width: 30%\n"
@@ -53,4 +53,4 @@ benchmark = Benchmark(
         "It encompasses diverse domains and evaluates a range of capabilities, with additional tasks and domains integrated over time."
     ),
 )
-add_to_catalog(benchmark, "benchmarks.tables_benchmark", overwrite=True)
+add_to_catalog(benchmark, "benchmarks.torr", overwrite=True)
