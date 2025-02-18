@@ -1,0 +1,37 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "rungalileo/ragbench",
+        "name": "hagrid",
+        "split": "test"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "response",
+            "to_field": "answer"
+        },
+        {
+            "__type__": "copy",
+            "field": "documents",
+            "to_field": "contexts"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "int(adherence_score)",
+            "to_field": "number_val"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "['yes' if adherence_score else 'no']",
+            "to_field": "is_faithful"
+        }
+    ],
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "templates": {
+        "default": {
+            "__type__": "null_template"
+        }
+    }
+}
