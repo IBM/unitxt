@@ -120,7 +120,8 @@ inference-tests = [
   "litellm==v1.52.9",
   "tenacity",
   "diskcache",
-  "numpy==1.26.4"
+  "numpy==1.26.4",
+  "ollama"
 ]
 assistant = [
     "streamlit",
