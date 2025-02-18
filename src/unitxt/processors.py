@@ -247,9 +247,9 @@ class YesToOneElseZero(FieldOperator):
 class StrToFloatFormat(FieldOperator):
     def process_value(self, text: Any) -> Any:
         try:
-            return str(float(text))
+            return float(text)
         except Exception:
-            return str(text)
+            return float(text)
 
 
 class ToYesOrNone(FieldOperator):
