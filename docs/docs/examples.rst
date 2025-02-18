@@ -52,13 +52,23 @@ These examples demonstrate how to evaluate a datasets of different tasks when pr
 
 Related documentation: :ref:`Evaluating datasets <evaluating_datasets>`
 
+Evaluate a custom dataset with custom metric
+===================================================
+
+This example demonstrates to add a custom metric.  It adds a referenceless metric that checks if the model output 
+is a valid json, for an extraction task.
+
+`Example code  <https://github.com/IBM/unitxt/blob/main/examples/evaluate_with_custom_metric.py>`__
+
+Related documentation: :ref:`Add new metric tutorial <adding_metric>` 
+
 Evaluate a Named Entity Recognition (NER) dataset
 ===================================================
 
 This example demonstrates how to evaluate a named entity recognition task.
 The ground truth entities are provided as spans within the provided texts, 
 and the model is prompted to identify these entities.
-Classifical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
+Classical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
 `Example code  <https://github.com/IBM/unitxt/blob/main/examples/ner_evaluation.py>`__
 
