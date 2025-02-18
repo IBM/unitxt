@@ -340,7 +340,9 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True
                 )
-            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+            except (
+                NotImplementedError
+            ):  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
             return list(dataset.keys())
 

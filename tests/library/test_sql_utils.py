@@ -5,7 +5,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 import requests
-from unitxt.db_utils import (
+from unitxt.sql_utils import (
     InMemoryDatabaseConnector,
     LocalSQLiteConnector,
     RemoteDatabaseConnector,
@@ -66,7 +66,7 @@ class TestRemoteDatabaseConnector(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.RequestException("API Error")
 
         connector = RemoteDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM table1")
+        result, _ = connector.execute_query("SELECT * FROM table1")
 
         self.assertIsNone(result)
 
@@ -106,7 +106,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
         self.temp_dir.cleanup()
 
     @patch(
-        "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+        "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
         side_effect=FileNotFoundError("Database file not found."),
     )
     def test_init_database_not_found(self, mock_get_db_file_path):
@@ -114,7 +114,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
             LocalSQLiteConnector(self.db_config)
 
     @patch(
-        "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+        "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
         side_effect=FileExistsError("More than one file matched for db_id"),
     )
     def test_init_multiple_databases_found(self, mock_get_db_file_path):
@@ -123,7 +123,7 @@ class TestLocalSQLiteConnector(unittest.TestCase):
 
     def test_init_success(self):
         with patch(
-            "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)
@@ -138,22 +138,22 @@ class TestLocalSQLiteConnector(unittest.TestCase):
 
     def test_execute_query(self):
         with patch(
-            "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)
-            result = connector.execute_query("SELECT * FROM table1")
+            result, _ = connector.execute_query("SELECT * FROM table1")
             self.assertEqual(len(result), 2)
             self.assertEqual(result[0], ("value1", 1))
             self.assertEqual(result[1], ("value2", 2))
 
     def test_execute_query_error(self):
         with patch(
-            "unitxt.db_utils.LocalSQLiteConnector.get_db_file_path",
+            "unitxt.sql_utils.LocalSQLiteConnector.get_db_file_path",
             return_value=self.db_path,
         ):
             connector = LocalSQLiteConnector(self.db_config)
-            result = connector.execute_query("SELECT * FROM non_existent_table")
+            result, _ = connector.execute_query("SELECT * FROM non_existent_table")
             self.assertIsNone(result)
 
     def test_download_database_unsupported_db(self):
@@ -224,7 +224,7 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
 
     def test_execute_query_success(self):
         connector = InMemoryDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM users WHERE age > 30")
+        result, _ = connector.execute_query("SELECT * FROM users WHERE age > 30")
         expected_result = [
             (3, "Charlie", "charlie@example.com", 40, "Chicago"),
             (4, "David", "david@example.com", 35, "New York"),
@@ -234,8 +234,10 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
 
     def test_execute_query_failure(self):
         connector = InMemoryDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM non_existent_table")
-
+        result, error = connector.execute_query("SELECT * FROM non_existent_table")
+        self.assertEqual(
+            error, "Error executing SQL: no such table: non_existent_table"
+        )
         self.assertIsNone(result)
 
     def test_execute_complex_query(self):
@@ -247,7 +249,7 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
             WHERE u.city = 'Los Angeles'
             ORDER BY o.quantity DESC
         """
-        result = connector.execute_query(query)
+        result, _ = connector.execute_query(query)
         expected_result = [
             ("Bob", "Keyboard", 3),
             ("Eva", "Mouse", 2),
@@ -265,7 +267,7 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
             GROUP BY u.city
             ORDER BY u.city ASC
         """
-        result = connector.execute_query(query)
+        result, _ = connector.execute_query(query)
         expected_result = [
             ("Chicago", 40.0),
             ("Los Angeles", 26.5),
@@ -283,7 +285,7 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
             HAVING SUM(o.price) > 300
             ORDER BY u.name DESC
         """
-        result = connector.execute_query(query)
+        result, _ = connector.execute_query(query)
         expected_result = [("Eva", 1654.0), ("Charlie", 315.0), ("Alice", 1225.5)]
 
         self.assertEqual(result, expected_result)
@@ -291,5 +293,6 @@ class TestInMemoryDatabaseConnector(unittest.TestCase):
     def test_execute_query_empty_table(self):
         self.db_config["data"]["empty_table"] = {"columns": ["id"], "rows": []}
         connector = InMemoryDatabaseConnector(self.db_config)
-        result = connector.execute_query("SELECT * FROM empty_table")
+        result, error = connector.execute_query("SELECT * FROM empty_table")
         self.assertEqual(result, [])
+        self.assertIsNone(error)
