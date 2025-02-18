@@ -8,7 +8,7 @@ with settings.context(
     mock_inference_mode=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]",
+        "benchmarks.torr",
         split="test",
         use_cache=True,
     )
