@@ -4262,7 +4262,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
-    single_reference_per_prediction = True
+   # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
 
@@ -4294,7 +4294,8 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
         # treat the references as the contexts and the predictions as answers
         # concat references
-        contexts = ["\n".join(refs) for refs in references]
+
+        contexts = ["\n".join([str(r) for r in refs]) for refs in references]
         contexts = [" ".join(c.split(" ")[: self.max_context_words]) for c in contexts]
         answers = predictions
 
