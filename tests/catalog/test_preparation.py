@@ -69,6 +69,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                     import_module_from_file(file)
                 except Exception as e:
                     error = e
+                    passed = False
                     current_exception = e
                     while current_exception:
                         if isinstance(current_exception, (GatedRepoError)):
