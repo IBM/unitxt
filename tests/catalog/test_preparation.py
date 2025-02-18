@@ -4,7 +4,7 @@ import time
 import tracemalloc
 
 import psutil
-from huggingface_hub.utils import GatedRepoError
+from huggingface_hub.errors import GatedRepoError, HfHubHTTPError
 from unitxt.loaders import MissingKaggleCredentialsError
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_constants, get_settings
@@ -81,8 +81,8 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                         current_exception = e
                         import requests
                         while current_exception:
-                            if isinstance(current_exception, requests.exceptions.ReadTimeout):
-                                logger.error(f"ReadTimeout occurred in {file}")
+                            if isinstance(current_exception, (requests.exceptions.ReadTimeout, HfHubHTTPError)):
+                                logger.error(f"Connection error occurred in {file}. Error: {e}.")
                                 break
                             current_exception = current_exception.__cause__ or current_exception.__context__
                         else:
