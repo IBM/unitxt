@@ -1,6 +1,7 @@
 import glob
 import os
 import time
+import traceback
 import tracemalloc
 
 import psutil
@@ -49,6 +50,7 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
         stats = {}
         for file in all_preparation_files:
             passed = True
+            error = None
             logger.info(
                 "\n_____________________________________________\n"
                 f"  Testing preparation file:\n  {file}."
@@ -66,11 +68,11 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                 try:
                     import_module_from_file(file)
                 except Exception as e:
+                    error = e
                     current_exception = e
                     while current_exception:
                         if isinstance(current_exception, (MissingKaggleCredentialsError, GatedRepoError)):
                             passed = False
-                            error = e
                             break
                         if isinstance(current_exception, (ReadTimeout, HfHubHTTPError)):
                             passed = True
@@ -80,7 +82,10 @@ class TestCatalogPreparation(CatalogPreparationTestCase):
                 self.assertTrue(passed)
 
                 if passed:
-                    logger.info(f"Testing preparation file: {file} passed")
+                    if error is None:
+                        logger.info(f"Testing preparation file: {file} passed")
+                    else:
+                        logger.critical(f"Testing preparation file: {file} failed with ignored error: {error}\n{traceback.format_exc()}")
                 else:
                     raise error
 
