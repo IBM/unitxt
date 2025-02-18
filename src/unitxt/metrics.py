@@ -5921,8 +5921,11 @@ class GraniteGuardianBase(InstanceMetric):
     _requirements_list: List[str] = ["torch", "transformers"]
 
     def prepare(self):
+        from transformers import AutoTokenizer
         if not isinstance(self.risk_type, RiskType):
             self.risk_type = RiskType[self.risk_type]
+        if not hasattr(self, "_tokenizer") or self._tokenizer is None:
+            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
 
     def verify(self):
         super().verify()
@@ -5957,12 +5960,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
-        from transformers import AutoTokenizer
-
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
-        if not hasattr(self, "_tokenizer") or self._tokenizer is None:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
+
         if self.inference_engine is None:
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.wml_model_name,
@@ -6178,6 +6178,7 @@ RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
     RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
     RiskType.RAG: GraniteGuardianRagRisk,
     RiskType.AGENTIC: GraniteGuardianAgenticRisk,
+    RiskType.CUSTOM_RISK: GraniteGuardianCustomRisk,
 }
 
 class ExecutionAccuracy(InstanceMetric):
