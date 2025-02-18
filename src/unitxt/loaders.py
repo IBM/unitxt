@@ -123,9 +123,11 @@ class Loader(SourceOperator):
         return f"{self.__class__.__name__}.loader_limit"
 
     def log_limited_loading(self):
-        logger.info(
-            f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
-        )
+        if not hasattr(self, "_already_logged_limited_loading") or not self._already_logged_limited_loading:
+            self._already_logged_limited_loading = True
+            logger.info(
+                f"\nLoading limited to {self.get_limit()} instances by setting {self.get_limiter()};"
+            )
 
     def add_data_classification(self, multi_stream: MultiStream) -> MultiStream:
         if self.data_classification_policy is None:
@@ -838,11 +840,8 @@ class LoadFromDictionary(Loader):
         return self.data
 
 
-class LoadFromHFSpace(LoadHF):
-    """Used to load data from HuggingFace Spaces.
-
-    Loaders firstly tries to download all files specified in the 'data_files' parameter
-    from the given space and then reads them as a HuggingFace Dataset.
+class LoadFromHFSpace(LazyLoader):
+    """Used to load data from HuggingFace Spaces lazily.
 
     Args:
         space_name (str):
@@ -863,22 +862,6 @@ class LoadFromHFSpace(LoadHF):
         token_env (str, optional):
             Key of an env variable which value will be used for
             authentication when accessing the HuggingFace Space - if necessary.
-
-    Example:
-        Loading from a HuggingFace Space
-
-        .. code-block:: python
-
-            loader = LoadFromHFSpace(
-                space_name="lmsys/mt-bench",
-                data_files={
-                    "train": [
-                        "data/mt_bench/model_answer/gpt-3.5-turbo.jsonl",
-                        "data/mt_bench/model_answer/gpt-4.jsonl",
-                    ],
-                    "test": "data/mt_bench/model_answer/tulu-30b.jsonl",
-                },
-            )
     """
 
     space_name: str
@@ -903,123 +886,78 @@ class LoadFromHFSpace(LoadHF):
             return token
         return self.use_token
 
-    def _download_file_from_space(self, filename: str) -> str:
-        from huggingface_hub import hf_hub_download
-        from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
-
-        token = self._get_token()
-
-        try:
-            file_path = hf_hub_download(
-                repo_id=self.space_name,
-                filename=filename,
-                repo_type="space",
-                token=token,
-                revision=self.revision,
-                local_dir=self.path,
-            )
-        except EntryNotFoundError as e:
-            raise ValueError(
-                f"The file '{filename}' was not found in the space '{self.space_name}'. "
-                f"Please check if the filename is correct, or if it exists in that "
-                f"Huggingface space."
-            ) from e
-        except RepositoryNotFoundError as e:
-            raise ValueError(
-                f"The Huggingface space '{self.space_name}' was not found. "
-                f"Please check if the name is correct and you have access to the space."
-            ) from e
-
-        return file_path
-
-    def _download_data(self) -> str:
-        if isinstance(self.data_files, str):
-            data_files = [self.data_files]
-        elif isinstance(self.data_files, Mapping):
-            data_files = list(self.data_files.values())
-        else:
-            data_files = self.data_files
-
-        dir_paths_list = []
-        for files in data_files:
-            if isinstance(files, str):
-                files = [files]
-
-            paths = [self._download_file_from_space(file) for file in files]
-            dir_paths = [
-                path.replace(file_url, "") for path, file_url in zip(paths, files)
-            ]
-            dir_paths_list.extend(dir_paths)
-
-        # All files - within the same space - are downloaded into the same base directory:
-        assert len(set(dir_paths_list)) == 1
-
-        return f"{dir_paths_list.pop()}"
-
     @staticmethod
     def _is_wildcard(path: str) -> bool:
         wildcard_characters = ["*", "?", "[", "]"]
         return any(char in path for char in wildcard_characters)
 
-    def _get_file_list_from_wildcard_path(
-        self, pattern: str, repo_files: List
-    ) -> List[str]:
-        if self._is_wildcard(pattern):
-            return fnmatch.filter(repo_files, pattern)
-        return [pattern]
 
-    def _map_wildcard_path_to_full_paths(self):
-        api = HfApi()
-        repo_files = api.list_repo_files(
-            self.space_name, repo_type="space", revision=self.revision
-        )
-        if isinstance(self.data_files, str):
-            self.data_files = self._get_file_list_from_wildcard_path(
-                self.data_files, repo_files
+
+    def _get_repo_files(self):
+        if not hasattr(self, "_repo_files") or self._repo_files is None:
+            api = HfApi()
+            self._repo_files = api.list_repo_files(
+                self.space_name, repo_type="space", revision=self.revision
             )
-        elif isinstance(self.data_files, Mapping):
-            new_mapping = {}
-            for k, v in self.data_files.items():
-                if isinstance(v, list):
-                    assert all(isinstance(s, str) for s in v)
-                    new_mapping[k] = [
-                        file
-                        for p in v
-                        for file in self._get_file_list_from_wildcard_path(
-                            p, repo_files
-                        )
-                    ]
-                elif isinstance(v, str):
-                    new_mapping[k] = self._get_file_list_from_wildcard_path(
-                        v, repo_files
+        return self._repo_files
+
+    def _get_sub_files(self, file: str) -> List[str]:
+        if self._is_wildcard(file):
+            return fnmatch.filter(self._get_repo_files(), file)
+        return [file]
+
+
+    def get_splits(self) -> List[str]:
+        if isinstance(self.data_files, Mapping):
+            return list(self.data_files.keys())
+        return ["train"]  # Default to 'train' if not specified
+
+    def split_generator(self, split: str) -> Generator:
+        from huggingface_hub import hf_hub_download
+        from huggingface_hub.utils import EntryNotFoundError, RepositoryNotFoundError
+
+        token = self._get_token()
+        files = self.data_files.get(split, self.data_files) if isinstance(self.data_files, Mapping) else self.data_files
+
+        if isinstance(files, str):
+            files = [files]
+        limit = self.get_limit()
+
+        if limit is not None:
+            total = 0
+            self.log_limited_loading()
+
+        for file in files:
+            for sub_file in self._get_sub_files(file):
+                try:
+                    file_path = hf_hub_download(
+                        repo_id=self.space_name,
+                        filename=sub_file,
+                        repo_type="space",
+                        token=token,
+                        revision=self.revision,
+                        local_dir=self.path,
                     )
-                else:
-                    raise NotImplementedError(
-                        f"Loader does not support input 'data_files' of type Mapping[{type(v)}]"
-                    )
+                except EntryNotFoundError as e:
+                    raise ValueError(
+                        f"The file '{file}' was not found in the space '{self.space_name}'. "
+                        f"Please check if the filename is correct, or if it exists in that "
+                        f"Huggingface space."
+                    ) from e
+                except RepositoryNotFoundError as e:
+                    raise ValueError(
+                        f"The Huggingface space '{self.space_name}' was not found. "
+                        f"Please check if the name is correct and you have access to the space."
+                    ) from e
 
-            self.data_files = new_mapping
-        elif isinstance(self.data_files, list):
-            assert all(isinstance(s, str) for s in self.data_files)
-            self.data_files = [
-                file
-                for p in self.data_files
-                for file in self._get_file_list_from_wildcard_path(p, repo_files)
-            ]
-        else:
-            raise NotImplementedError(
-                f"Loader does not support input 'data_files' of type {type(self.data_files)}"
-            )
+                with open(file_path, encoding="utf-8") as f:
+                    for line in f:
+                        yield json.loads(line.strip())
+                        if limit is not None:
+                            total += 1
+                            if total >= limit:
+                                return
 
-    def _maybe_set_classification_policy(self):
-        self.set_default_data_classification(
-            ["public"], "when loading from Huggingface spaces"
-        )
-
-    def load_data(self):
-        self._map_wildcard_path_to_full_paths()
-        self.path = self._download_data()
-        return super().load_data()
 
 
 class LoadFromAPI(Loader):
@@ -1048,6 +986,9 @@ class LoadFromAPI(Loader):
             Defaults to "data".
         method (str, optional):
             The HTTP method to use for API requests. Defaults to "GET".
+        verify_cert (bool):
+            Apply verification of the SSL certificate
+            Defaults as True
     """
 
     urls: Dict[str, str]
@@ -1090,13 +1031,13 @@ class LoadFromAPI(Loader):
                 response = requests.get(
                     url,
                     headers=base_headers,
-                    verify=False,
+                    verify=self.verify_cert,
                 )
             elif self.method == "POST":
                 response = requests.post(
                     url,
                     headers=base_headers,
-                    verify=False,
+                    verify=self.verify_cert,
                     json={},
                 )
             else:
