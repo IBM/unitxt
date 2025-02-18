@@ -8,14 +8,19 @@ The context includes information relevant to the nature or generation of the res
 You will assess the quality of the response subject to an evaluation criteria.
 ###Context:
 {context_variables}
+
 ###Response:
 {response}
+
 ###Evaluation criteria:
 {criteria_description}
 {display_options_instruction}
+
 Briefly assess the quality of the response subject to the evaluation criteria.
 Focus on the evaluation criteria during assessment, do not provide a general assessment.
-Assessment: """
+Assessment:
+
+Lets think step by step """
     ),
     "summarization": InputOutputTemplate(
         input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself.
@@ -41,9 +46,11 @@ You will choose the better quality response subject to the evaluation criteria.
 
 This is the context:
 {context_variables}
+
 This is the evaluation criteria:
 {criteria_name}
 {criteria_description}
+
 Response {option_a}:
 {response_a}
 Response {option_b}:
@@ -51,7 +58,9 @@ Response {option_b}:
 
 Keeping the evaluation criteria in mind, briefly assess which response is better.
 Focus on the evaluation criteria during assessment, do not provide a general assessment.
-Assessment: """
+Assessment:
+
+Lets think step by step """
     ),
     "summarization": InputOutputTemplate(
         input_format="""Transform the following assessment into a concise summary that focuses on the key details, excluding references to the assessment itself. The summary must clearly state which response won.
