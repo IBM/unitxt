@@ -9,6 +9,7 @@ from unitxt.inference import (
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
     LiteLLMInferenceEngine,
+    OllamaInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
     TextGenerationInferenceOutput,
@@ -402,3 +403,13 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "Hello")
         self.assertEqual(predictions[1], "As")
+
+    def test_ollama_inference_engine(self):
+        dataset = [
+            {"source": "Answer in one word only. What is the capital of Canada"},
+        ]
+
+        engine = OllamaInferenceEngine(model="llama3.2:1b", temperature=0.0)
+        predictions = engine.infer(dataset)
+
+        self.assertTrue("Ottawa" in predictions[0], predictions[0])
