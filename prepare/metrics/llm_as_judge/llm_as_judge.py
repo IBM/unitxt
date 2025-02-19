@@ -30,13 +30,16 @@ def get_evaluator(
         model_name = f"watsonx/{model_name}"
     elif provider == ModelProviderEnum.OPENAI:
         model_name = f"openai/{model_name}"
+    elif provider == ModelProviderEnum.AZURE_OPENAI:
+        inference_params["credentials"] = {}
+        inference_params["credentials"]["api_base"] = (
+            f"https://eteopenai.azure-api.net/openai/deployments/{model_name}/chat/completions?api-version=2024-08-01-preview"
+        )
+        model_name = "azure/" + model_name
 
-    params = {
-        f"{'model' if provider != ModelProviderEnum.RITS else 'model_name'}": model_name,
-        **inference_params,
-    }
+    inference_params[f"{'model' if provider != ModelProviderEnum.RITS else 'model_name'}"] = model_name
 
-    inference_engine = INFERENCE_ENGINE_NAME_TO_CLASS[provider](**params)
+    inference_engine = INFERENCE_ENGINE_NAME_TO_CLASS[provider](**inference_params)
 
     params = {
         "inference_engine": inference_engine,
