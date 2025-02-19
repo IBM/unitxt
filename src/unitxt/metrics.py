@@ -1,4 +1,3 @@
-FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 import ast
 import json
 import math
@@ -10,8 +9,20 @@ import warnings
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 from dataclasses import field
+from enum import Enum
 from functools import lru_cache
-from typing import Any, Dict, Generator, List, Literal, Optional, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generator,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import evaluate
 import numpy
@@ -29,12 +40,12 @@ from .dataclass import (
     NonPositionalField,
     OptionalField,
 )
-from .db_utils import get_db_connector
 from .deprecation_utils import deprecation
-from .error_utils import Documentation, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
     InferenceEngine,
+    LogProbInferenceEngine,
     TorchDeviceMixin,
     WMLInferenceEngineGeneration,
 )
@@ -51,9 +62,12 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
+from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+
+FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 
 logger = get_logger()
 settings = get_settings()
@@ -377,8 +391,6 @@ class ConfidenceIntervalMixin(Artifact):
 
         return result
 
-
-from typing import Generic, TypeVar
 
 IntermediateType = TypeVar("IntermediateType")
 PredictionType = TypeVar("PredictionType")
@@ -1779,7 +1791,7 @@ class ExactMatchMM(InstanceMetric):
     @staticmethod
     @lru_cache(maxsize=10000)
     def exact_match(pred, gt):
-        """Brought from MMStar"""
+        """Brought from MMStar."""
         answer = gt.lower().strip().replace("\n", " ")
         predict = pred.lower().strip().replace("\n", " ")
         try:
@@ -1886,7 +1898,6 @@ class RelaxedCorrectness(GlobalMetric):
             "relaxed_augmented_split": [],
         }
         for pred, ref, task_data_i in zip(predictions, references, task_data):
-            print(task_data_i)
             type = task_data_i["type"]
             score = self.relaxed_correctness(pred, ref[0])
             score = 1.0 if score else 0.0
@@ -1895,12 +1906,11 @@ class RelaxedCorrectness(GlobalMetric):
                 return_dict["relaxed_human_split"].append(score)
             else:
                 return_dict["relaxed_augmented_split"].append(score)
-        return_dict = {
+        return {
             key: sum(value) / len(value)
             for key, value in return_dict.items()
             if len(value) > 0
         }
-        return return_dict
 
     @staticmethod
     def _to_float(text: str):
@@ -2011,15 +2021,12 @@ class WebsrcSquadF1(GlobalMetric):
             string = string.lower()
 
             # strip leading and trailing whitespaces
-            string = string.strip()
-
-            return string
+            return string.strip()
 
         def _tokenize(text):
             # Regex pattern to match words and isolate punctuation
             pattern = r"\w+|[^\w\s]"
-            tokens = re.findall(pattern, text)
-            return tokens
+            return re.findall(pattern, text)
 
         def _compute_f1(sa, sb):
             sa = _normalize_str(sa)
@@ -2037,8 +2044,7 @@ class WebsrcSquadF1(GlobalMetric):
             comm = sa.intersection(sb)
             prec = len(comm) / len(sb)
             rec = len(comm) / len(sa)
-            f1 = 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
-            return f1
+            return 2 * prec * rec / (prec + rec) if prec + rec > 0 else 0
 
         judge_list = []
         for sample in samples:
@@ -2464,6 +2470,8 @@ class MeteorFast(ReductionInstanceMetric[str, Dict[str, float]]):
 
         nltk.download("wordnet", quiet=True)
         nltk.download("omw-1.4", quiet=True)
+        nltk.download("punkt", quiet=True)
+        nltk.download("punkt_tab", quiet=True)
         from nltk import word_tokenize
         from nltk.translate import meteor_score
 
@@ -3356,10 +3364,24 @@ class CustomF1(GlobalMetric):
 
 
 class NER(CustomF1):
+    """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
+
     prediction_type = List[Tuple[str, str]]
 
     def get_element_group(self, element, additional_input):
         return element[1]
+
+    def get_element_representation(self, element, additional_input):
+        return str(element)
+
+
+class KeyValueExtraction(CustomF1):
+    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
+
+    prediction_type = List[Tuple[str, str]]
+
+    def get_element_group(self, element, additional_input):
+        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -3430,13 +3452,16 @@ class BertScore(MapReduceMetric[str, Dict[str, float]], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from evaluate import load
-
-        self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+        self.bertscore = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        from evaluate import load
+
+        if self.bertscore is None:
+            self.bertscore = load("bertscore", experiment_id=str(uuid.uuid4()))
+
         predictions = []
         references = []
         for prediction, reference, _ in evaluation_inputs_stream:
@@ -3482,17 +3507,17 @@ class SentenceBert(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from sentence_transformers import SentenceTransformer
-
-        self.model = SentenceTransformer(self.model_name, device=self.get_device_id())
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput, None, None]
     ):
-        # if settings.mock_inference_mode:
-        #     return [0.5 for _ in evaluation_inputs_stream]
+        from sentence_transformers import SentenceTransformer, util
 
-        from sentence_transformers import util
+        if self.model is None:
+            self.model = SentenceTransformer(
+                self.model_name, device=self.get_device_id()
+            )
 
         scores = []
 
@@ -3540,15 +3565,21 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
     def prepare(self):
         super().prepare()
-        from transformers import pipeline
-
-        self.model = pipeline(
-            "text-classification", model=self.model_name, device=self.get_device()
-        )
+        self.model = None
 
     def map_stream(
         self, evaluation_inputs_stream: Generator[EvaluationInput[str], None, None]
     ):
+        if settings.mock_inference_mode:
+            return [0.5 for _ in evaluation_inputs_stream]
+
+        from transformers import pipeline
+
+        if self.model is None:
+            self.model = pipeline(
+                "text-classification", model=self.model_name, device=self.get_device()
+            )
+
         inputs = []
         for prediction, references, _ in evaluation_inputs_stream:
             inputs.append({"text": references[0], "text_pair": prediction})
@@ -4230,7 +4261,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
-    single_reference_per_prediction = True
+   # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
 
@@ -4262,7 +4293,8 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
         # treat the references as the contexts and the predictions as answers
         # concat references
-        contexts = ["\n".join(refs) for refs in references]
+
+        contexts = ["\n".join([str(r) for r in refs]) for refs in references]
         contexts = [" ".join(c.split(" ")[: self.max_context_words]) for c in contexts]
         answers = predictions
 
@@ -5607,9 +5639,9 @@ class MetricsEnsemble(InstanceMetric, ArtifactFetcherMixin):
 
     def create_ensemble_scores(self, instance):
         score = self.ensemble(instance)
-        instance[
-            "prediction"
-        ] = score  # We use here the prediction field to pass the score to the compute method.
+        instance["prediction"] = (
+            score  # We use here the prediction field to pass the score to the compute method.
+        )
         return instance
 
     def ensemble(self, instance):
@@ -5822,77 +5854,150 @@ class PredictionLength(InstanceMetric):
         return {self.main_score: [len(prediction)], "score_name": self.main_score}
 
 
-class GraniteGuardianWMLMetric(InstanceMetric):
+class RiskType(str, Enum):
+    """Risk type for the Granite Guardian models."""
+
+    RAG = "rag_risk"
+    USER_MESSAGE = "user_risk"
+    ASSISTANT_MESSAGE = "assistant_risk"
+    AGENTIC = "agentic_risk"
+    CUSTOM_RISK = "custom_risk"
+
+
+class GraniteGuardianBase(InstanceMetric):
     """Return metric for different kinds of "risk" from the Granite-3.0 Guardian model."""
 
-    main_score = "granite_guardian"
     reduction_map: Dict[str, List[str]] = None
     prediction_type = float
+    main_score = None
+    reduction_map = {}
+    wml_model_name: str = "ibm/granite-guardian-3-8b"
+    hf_model_name: str = "ibm-granite/granite-guardian-3.1-8b"
 
-    model_name: str = "ibm/granite-guardian-3-8b"
-    hf_model_name: str = "ibm-granite/granite-guardian-3.0-8b"
+    wml_params = {
+        "decoding_method": "greedy",
+        "max_new_tokens": 20,
+        "temperature": 0,
+        "return_options": {
+            "top_n_tokens": 5,
+            "input_text": True,
+            "input_tokens": False,
+        },
+    }
+
     safe_token = "No"
     unsafe_token = "Yes"
 
-    inference_engine: WMLInferenceEngineGeneration = None
+    inference_engine: LogProbInferenceEngine = None
     generation_params: Dict = None
     risk_name: str = None
+    risk_type: RiskType = None
+    risk_definition: Optional[str] = None
 
-    _requirements_list: List[str] = ["ibm_watsonx_ai", "torch", "transformers"]
+    user_message_field: str = "user"
+    assistant_message_field: str = "assistant"
+    context_field: str = "context"
+    tools_field: str = "tools"
+
+    available_risks: Dict[RiskType, List[str]] = {
+        RiskType.USER_MESSAGE: [
+            "harm",
+            "social_bias",
+            "jailbreak",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.ASSISTANT_MESSAGE: [
+            "harm",
+            "social_bias",
+            "violence",
+            "profanity",
+            "unethical_behavior",
+        ],
+        RiskType.RAG: ["context_relevance", "groundedness", "answer_relevance"],
+        RiskType.AGENTIC: ["function_call"],
+    }
+
+    _requirements_list: List[str] = ["torch", "transformers"]
 
     def prepare(self):
-        self.reduction_map = {"mean": [self.main_score]}
-
-    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         from transformers import AutoTokenizer
-
+        if not isinstance(self.risk_type, RiskType):
+            self.risk_type = RiskType[self.risk_type]
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
-            self.inference_engine = WMLInferenceEngineGeneration(
-                model_name=self.model_name,
-            )
-            self.inference_engine._load_model()
-            self.model = self.inference_engine._model
-            self.generation_params = self.inference_engine._set_logprobs_params({})
 
-        messages = self.process_input_fields(task_data)
+    def verify(self):
+        super().verify()
+        assert (
+            self.risk_type == RiskType.CUSTOM_RISK
+            or self.risk_name in self.available_risks[self.risk_type]
+        ), UnitxtError(
+            f"The risk '{self.risk_name}' is not a valid '{' '.join([word[0].upper() + word[1:] for word in self.risk_type.split('_')])}'"
+        )
+
+    @abstractmethod
+    def verify_granite_guardian_config(self, task_data):
+        pass
+
+    @abstractmethod
+    def process_input_fields(self, task_data):
+        pass
+
+    @classmethod
+    def get_available_risk_names(cls):
+        return cls.available_risks[cls.risk_type]
+
+    def set_main_score(self):
+        self.main_score = self.risk_name
+        self.reduction_map = {"mean": [self.main_score]}
+
+    def get_prompt(self, messages):
         guardian_config = {"risk_name": self.risk_name}
-        processed_input = self._tokenizer.apply_chat_template(
+        if self.risk_type == RiskType.CUSTOM_RISK:
+            guardian_config["risk_definition"] = self.risk_definition
+
+        return self._tokenizer.apply_chat_template(
             messages,
             guardian_config=guardian_config,
             tokenize=False,
             add_generation_prompt=True,
         )
 
-        result = self.model.generate(
-            prompt=[processed_input],
-            params=self.generation_params,
+    def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        self.verify_granite_guardian_config(task_data)
+        self.set_main_score()
+
+        if self.inference_engine is None:
+            self.inference_engine = WMLInferenceEngineGeneration(
+                model_name=self.wml_model_name,
+                **self.wml_params,
+            )
+        logger.debug(
+            f'Risk type is "{self.risk_type}" and risk name is "{self.risk_name}"'
         )
-        generated_tokens_list = result[0]["results"][0]["generated_tokens"]
+        messages = self.process_input_fields(task_data)
+        prompt = self.get_prompt(messages)
+        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
-        score = 1 - prob_of_risk if label is not None else np.nan
-        return {self.main_score: score}
+        confidence_score = (
+            (prob_of_risk if prob_of_risk > 0.5 else 1 - prob_of_risk)
+            if label is not None
+            else np.nan
+        )
+        result = {
+            self.main_score: prob_of_risk,
+            f"{self.main_score}_prob_of_risk": prob_of_risk,
+            f"{self.main_score}_certainty": confidence_score,
+            f"{self.main_score}_label": label,
+        }
+        logger.debug(f"Results are ready:\n{result}")
+        return result
 
-    def process_input_fields(self, task_data):
-        if self.risk_name == "groundedness":
-            messages = [
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "answer_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "assistant", "content": task_data["answer"]},
-            ]
-        elif self.risk_name == "context_relevance":
-            messages = [
-                {"role": "user", "content": task_data["question"]},
-                {"role": "context", "content": "\n".join(task_data["contexts"])},
-            ]
-        else:
-            raise NotImplementedError()
-
-        return messages
+    def create_message(self, role: str, content: str) -> List[Dict[str, str]]:
+        return [{"role": role, "content": content}]
 
     def parse_output(self, generated_tokens_list):
         top_tokens_list = [
@@ -5931,10 +6036,179 @@ class GraniteGuardianWMLMetric(InstanceMetric):
         ).numpy()
 
 
-class ExecutionAccuracy(InstanceMetric):
-    reduction_map = {"mean": ["execution_accuracy"]}
-    main_score = "execution_accuracy"
-    ci_scores = ["execution_accuracy"]
+class GraniteGuardianUserRisk(GraniteGuardianBase):
+    risk_type = RiskType.USER_MESSAGE
+
+    def verify_granite_guardian_config(self, task_data):
+        # User message risks only require the user message field and are the same as the assistant message risks, except for jailbreak
+        assert self.user_message_field in task_data, UnitxtError(
+            f'Task data must contain "{self.user_message_field}" field'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        return messages
+
+
+class GraniteGuardianAssistantRisk(GraniteGuardianBase):
+    risk_type = RiskType.ASSISTANT_MESSAGE
+
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+            self.assistant_message_field in task_data
+            and self.user_message_field in task_data
+        ), UnitxtError(
+            f'Task data must contain "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+            "assistant", task_data[self.assistant_message_field]
+        )
+        return messages
+
+
+class GraniteGuardianRagRisk(GraniteGuardianBase):
+    risk_type = RiskType.RAG
+
+    def verify_granite_guardian_config(self, task_data):
+        if self.risk_name == "context_relevance":
+            assert (
+                self.context_field in task_data and self.user_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.user_message_field}" fields'
+            )
+        elif self.risk_name == "groundedness":
+            assert (
+                self.context_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.context_field}" and "{self.assistant_message_field}" fields'
+            )
+        elif self.risk_name == "answer_relevance":
+            assert (
+                self.user_message_field in task_data
+                and self.assistant_message_field in task_data
+            ), UnitxtError(
+                f'Task data must contain "{self.user_message_field}" and "{self.assistant_message_field}" fields'
+            )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.risk_name == "context_relevance":
+            messages += self.create_message("user", task_data[self.user_message_field])
+            messages += self.create_message("context", task_data[self.context_field])
+        elif self.risk_name == "groundedness":
+            messages += self.create_message("context", task_data[self.context_field])
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        elif self.risk_name == "answer_relevance":
+            messages += self.create_message("user", task_data[self.user_message_field])
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+
+class GraniteGuardianAgenticRisk(GraniteGuardianBase):
+    risk_type = RiskType.AGENTIC
+
+    def verify_granite_guardian_config(self, task_data):
+        assert (
+            self.tools_field in task_data
+            and self.user_message_field in task_data
+            and self.assistant_message_field in task_data
+        ), UnitxtError(
+            f'Task data must contain "{self.tools_field}", "{self.assistant_message_field}" and "{self.user_message_field}" fields'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        messages += self.create_message(
+            "tools", json.loads(task_data[self.tools_field])
+        )
+        messages += self.create_message("user", task_data[self.user_message_field])
+        messages += self.create_message(
+            "assistant", task_data[self.assistant_message_field]
+        )
+        return messages
+
+
+class GraniteGuardianCustomRisk(GraniteGuardianBase):
+    risk_type = RiskType.CUSTOM_RISK
+
+    def verify(self):
+        super().verify()
+        assert self.risk_type is not None, UnitxtError(
+            "In a custom risk, risk_type must be defined"
+        )
+
+    def verify_granite_guardian_config(self, task_data):
+        # even though this is a custom risks, we will limit the
+        # message roles to be a subset of the roles Granite Guardian
+        # was trained with: user, assistant, context & tools.
+        # we just checked whether at least one of them is provided
+        assert (
+            self.tools_field in task_data
+            or self.user_message_field in task_data
+            or self.assistant_message_field in task_data
+            or self.context_field in task_data
+        ), UnitxtError(
+            f'Task data must contain at least one of"{self.tools_field}", "{self.assistant_message_field}", "{self.user_message_field}" or "{self.context_field}" fields'
+        )
+
+    def process_input_fields(self, task_data):
+        messages = []
+        if self.context_field in task_data:
+            messages += self.create_message("context", task_data[self.context_field])
+        if self.tools_field in task_data:
+            messages += self.create_message(
+                "tools", json.loads(task_data[self.tools_field])
+            )
+        if self.user_message_field in task_data:
+            messages += self.create_message("user", task_data[self.user_message_field])
+        if self.assistant_message_field in task_data:
+            messages += self.create_message(
+                "assistant", task_data[self.assistant_message_field]
+            )
+        return messages
+
+
+RISK_TYPE_TO_CLASS: Dict[RiskType, GraniteGuardianBase] = {
+    RiskType.USER_MESSAGE: GraniteGuardianUserRisk,
+    RiskType.ASSISTANT_MESSAGE: GraniteGuardianAssistantRisk,
+    RiskType.RAG: GraniteGuardianRagRisk,
+    RiskType.AGENTIC: GraniteGuardianAgenticRisk,
+    RiskType.CUSTOM_RISK: GraniteGuardianCustomRisk,
+}
+
+
+class SQLExecutionAccuracy(InstanceMetric):
+    reduction_map = {
+        "mean": [
+            "execution_accuracy",
+            "non_empty_execution_accuracy",
+            "subset_non_empty_execution_result",
+            "non_empty_gold_df",
+            "gold_sql_runtime",
+            "predicted_sql_runtime",
+            "pred_to_gold_runtime_ratio",
+            "gold_error",
+            "predicted_error",
+        ]
+    }
+    main_score = "non_empty_execution_accuracy"
+    ci_scores = [
+        "execution_accuracy",
+        "non_empty_execution_accuracy",
+        "subset_non_empty_execution_result",
+        "gold_sql_runtime",
+        "predicted_sql_runtime",
+    ]
 
     prediction_type = "Any"  # string representation is compared
     sql_timeout = 100.0
@@ -5942,73 +6216,229 @@ class ExecutionAccuracy(InstanceMetric):
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
-    def equivalent_sqls(expected: str, generated: str) -> int:
-        from sqlglot import diff, parse_one
-        from sqlglot.optimizer import optimize
+    def compare_dfs_ignore_colnames(df1, df2):
+        """Compares two DataFrames based on row content, ignoring column names.
 
-        t_diff = diff(
-            optimize(parse_one(expected.lower()).sql(pretty=True)),
-            optimize(parse_one(generated.lower()).sql(pretty=True)),
-        )
-        sql_diff = sum(0 if (e.__class__.__name__ == "Keep") else 1 for e in t_diff)
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
-        return 1 if sql_diff == 0 else 0
+        Returns:
+            True if the DataFrames have the same content (ignoring column names),
+            False otherwise.
+        """
+        df1.fillna(0, inplace=True)
+        df2.fillna(0, inplace=True)
 
-    def run_sql_and_match(self, predicted_sql: str, gold_sql: str, connector) -> int:
-        """Runs SQL queries using the provided connector and checks if the results match."""
-        if predicted_sql.lower().strip() == gold_sql.lower().strip():
-            return 1  # if the SQLs are exactly the same, return 1
+        if df1.shape != df2.shape:
+            return False
 
+        # run over all columns of d11,
+        # and see if there is a columns in df2 that matches it,
+        # if not return False, if all the columns worked return tue
+        for df1_col in df1.columns:
+            col_matched = False
+            for df2_col in df2.columns:
+                if all(df1[df1_col].values == df2[df2_col].values):
+                    col_matched = True
+            if not col_matched:
+                return False
+
+        return True
+
+    @staticmethod
+    def is_subset_ignore_colnames(df1, df2):
+        """Checks if df1 is a subset of df2 based on row content, ignoring column names.
+
+        Args:
+            df1: Pandas DataFrame 1 to compare.
+            df2: Pandas DataFrame 2 to compare.
+
+        Returns:
+            True if df1 is a subset of df2 based on column values,
+            False otherwise.
+        """
+        if df1.empty or df2.empty or df1.shape[1] > df2.shape[1]:
+            return False
+
+        def make_hashable(value):
+            if isinstance(value, dict):
+                return json.dumps(value, sort_keys=True)
+            if isinstance(value, list):
+                return tuple(value)
+            return value
+
+        df1_cols = [
+            tuple(make_hashable(value) for value in df1.iloc[:, i])
+            for i in range(df1.shape[1])
+        ]
+        df2_cols = [
+            tuple(make_hashable(value) for value in df2.iloc[:, j])
+            for j in range(df2.shape[1])
+        ]
+        df2_cols_count = Counter(df2_cols)
+        for col in df1_cols:
+            if df2_cols_count[col] > 0:
+                df2_cols_count[col] -= 1
+            else:
+                return False
+
+        return True
+
+    def get_sql_execution_results(
+        self, predicted_sql: str, gold_sql: str, connector
+    ) -> (int, int, int, int, int, int, int, int, int, str, str, str):
+        """Runs SQL queries using the provided connector and gets scores and results.
+
+        Args:
+            predicted_sql (str): predicted SQL query
+            gold_sql (str): gold reference SQL query
+            connector: database connector
+
+        Returns:
+        a 12-tuple of
+        1. execution_result: if df responses match
+        2. non_empty_execution_result: if dfs are non-empty and match
+        3. subset_non_empty_execution_result: if non-empty dfs and gt df subset of predicted df
+        4. non_empty_gold_df: if gt df is non-empty
+        5. gold_sql_runtime: ground truth query runtime
+        6. predicted_sql_runtime: predicted query runtime
+        7. pred_to_gold_runtime_ratio: ratio of predicted query runtime to gt query runtime
+        8. gold_error: if gt has an error
+        9. predicted_error: if predicted query has an error
+        10. ground truth dataframe
+        11. predicted query's dataframe
+        12. error message (if any)
+        """
+        import time
+
+        from func_timeout import func_timeout
+
+        from .sql_utils import sqlglot_optimized_equivalence
+
+        gold_res = None
+        gold_error = ""
+        gold_sql_runtime = 0
         try:
-            if self.equivalent_sqls(gold_sql, predicted_sql):
-                return 1
-        except Exception as e:  # Catch specific exceptions if possible
-            logger.info(
-                f"Error in equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+            start_time = time.perf_counter()
+            gold_res, gold_error = func_timeout(
+                self.sql_timeout,
+                connector.execute_query,
+                args=(gold_sql,),
+            )
+            end_time = time.perf_counter()
+            gold_sql_runtime = end_time - start_time
+        except Exception as e:
+            gold_error = f"Error executing gold SQL: {e}"
+        if gold_error is not None:
+            return (
+                0,
+                0,
+                0,
+                0,
+                gold_sql_runtime,
+                0,
+                0,
+                0,
+                0,
+                "",
+                "",
+                gold_error,
             )
 
-        try:
-            gold_res = connector.execute_query(gold_sql)
-        except Exception as e:
-            raise OSError(
-                "Error executing gold SQL, if gold does not execute metric should fail"
-            ) from e
+        gold_df = pd.DataFrame(gold_res)
+        non_empty_gold_df = 0 if gold_df.empty else 1
 
+        no_execution_match_result = (
+            1,
+            non_empty_gold_df,
+            non_empty_gold_df,
+            non_empty_gold_df,
+            gold_sql_runtime,
+            0,
+            0,
+            1,
+            0,
+            gold_df.to_json(),
+            gold_df.to_json(),
+            "",
+        )
+        if predicted_sql.lower().strip() == gold_sql.lower().strip():
+            return no_execution_match_result
         try:
-            pred_res = connector.execute_query(predicted_sql)
+            if sqlglot_optimized_equivalence(gold_sql, predicted_sql):
+                return no_execution_match_result
+        except Exception as e:  # Catch specific exceptions if possible
+            logger.info(
+                f"Couldn't test equivalent_sqls: {e}. Treating as non-equivalent and going to test with the db."
+            )
+
+        pred_res = None
+        pred_error = ""
+        pred_sql_runtime = 0
+        try:
+            start_time = time.perf_counter()
+            pred_res, pred_error = func_timeout(
+                self.sql_timeout,
+                connector.execute_query,
+                args=(predicted_sql,),
+            )
+            end_time = time.perf_counter()
+            pred_sql_runtime = end_time - start_time
         except Exception as e:
-            logger.info(f"Error executing predicted SQL: {e}")
-            return 0  # if the predicted SQL fails to execute, result is 0
+            pred_error = f"Error executing predicted SQL: {e}"
+            logger.info(pred_error)
+
+        pred_to_gold_runtime_ratio = (
+            float(pred_sql_runtime) / gold_sql_runtime if gold_sql_runtime > 0 else 0
+        )
 
         if pred_res is None:
-            if gold_res is None:
-                return 1
-            return 0
+            return (
+                0,
+                0,
+                0,
+                0,
+                gold_sql_runtime,
+                pred_sql_runtime,
+                pred_to_gold_runtime_ratio,
+                0,
+                1,
+                "",
+                "",
+                pred_error,
+            )
 
-        # if pred_res is dict with results take this as the result
-        if isinstance(pred_res, dict):
-            pred_res = pred_res["results"]
-            gold_res = gold_res["results"]
+        predicted_df = pd.DataFrame(pred_res)
 
-        def normalize_tuple(tup):
-            """Normalizes a tuple by sorting its non-None elements.
+        execution_result = (
+            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
+        )
 
-            Args:
-                tup: The input tuple.
+        subset_non_empty_execution_result = 0
+        non_empty_execution_result = 0
+        if non_empty_gold_df:
+            if execution_result == 1:
+                non_empty_execution_result = 1
+            if self.is_subset_ignore_colnames(gold_df, predicted_df):
+                subset_non_empty_execution_result = 1
 
-            Returns:
-                A tuple with non-None elements sorted first, followed by None values.
-            """
-            return sorted([str(item) for item in tup])
-
-        return int(
-            sorted([normalize_tuple(t) for t in pred_res])
-            == sorted([normalize_tuple(t) for t in gold_res])
+        return (
+            execution_result,
+            non_empty_execution_result,
+            subset_non_empty_execution_result,
+            non_empty_gold_df,
+            gold_sql_runtime,
+            pred_sql_runtime,
+            pred_to_gold_runtime_ratio,
+            0,
+            0,
+            gold_df.to_json(),
+            predicted_df.to_json(),
+            pred_error,
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
-        from func_timeout import FunctionTimedOut, func_timeout
-
         predicted_sql = prediction
         execution_result: float = 0.0
 
@@ -6020,18 +6450,115 @@ class ExecutionAccuracy(InstanceMetric):
 
             db_connector = get_db_connector(task_data["db"]["db_type"])(task_data["db"])
 
-            try:
-                execution_result = func_timeout(
-                    self.sql_timeout,
-                    self.run_sql_and_match,
-                    args=(predicted_sql, references[0], db_connector),
-                )  # type: ignore
-            except FunctionTimedOut:
-                logger.error("QUERY TIMEOUT, returning score=0 for this instance")
-                execution_result = 0.0
+            logger.debug(
+                f"Starting to get SQL execution results over DB: {task_data['db']}"
+            )
+            (
+                execution_result,
+                non_empty_execution_result,
+                subset_non_empty_execution_result,
+                non_empty_gold_df,
+                gold_sql_runtime,
+                predicted_sql_runtime,
+                pred_to_gold_runtime_ratio,
+                gold_error,
+                predicted_error,
+                gold_df_json,
+                predicted_df_json,
+                error_message,
+            ) = self.get_sql_execution_results(
+                predicted_sql, references[0], db_connector
+            )
 
-        result = {self.main_score: float(execution_result)}
-        logger.debug(f"Result: {result}")
+        result = {
+            "execution_accuracy": float(execution_result),
+            "non_empty_execution_accuracy": float(non_empty_execution_result),
+            "subset_non_empty_execution_result": float(
+                subset_non_empty_execution_result
+            ),
+            "non_empty_gold_df": float(non_empty_gold_df),
+            "gold_sql_runtime": float(gold_sql_runtime),
+            "predicted_sql_runtime": float(predicted_sql_runtime),
+            "pred_to_gold_runtime_ratio": float(pred_to_gold_runtime_ratio),
+            "gold_error": float(gold_error),
+            "predicted_error": float(predicted_error),
+            "error_message": str(error_message),
+            "gold_df_json": str(gold_df_json),
+            "predicted_df_json": str(predicted_df_json),
+        }
+        result["score"] = result[self.main_score]
+        result["score_name"] = self.main_score
+        logger.debug(f"SQL Execution Accuracy Result: {result}")
+        return result
+
+
+class SQLNonExecutionAccuracy(InstanceMetric):
+    reduction_map = {
+        "mean": [
+            "sqlglot_validity",
+            "sqlparse_validity",
+            "sqlglot_equivalence",
+            "sqlglot_optimized_equivalence",
+            "sqlparse_equivalence",
+            "sql_exact_match",
+        ]
+    }
+    main_score = "sqlglot_equivalence"
+    ci_scores = [
+        "sqlglot_validity",
+        "sqlparse_validity",
+        "sqlglot_equivalence",
+        "sqlglot_optimized_equivalence",
+        "sqlparse_equivalence",
+        "sql_exact_match",
+    ]
+
+    prediction_type = "Any"  # string representation is compared
+
+    _requirements_list = ["sqlglot", "sqlparse"]
+
+    def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import (
+            is_sqlglot_parsable,
+            is_sqlparse_parsable,
+            sql_exact_match,
+            sqlglot_optimized_equivalence,
+            sqlglot_parsed_queries_equivalent,
+            sqlparse_queries_equivalent,
+        )
+
+        predicted_sql = prediction
+        gold_sql = references[0]
+
+        if predicted_sql and predicted_sql.strip() != "":
+            if not predicted_sql.startswith("SELECT") and "SELECT" in predicted_sql:
+                predicted_sql = predicted_sql[predicted_sql.find("SELECT") :]
+            if ";" in predicted_sql:
+                predicted_sql = predicted_sql[: predicted_sql.find(";") + 1]
+
+        is_sqlglot_parsable = is_sqlglot_parsable(predicted_sql)
+        is_sqlparse_parsable = is_sqlparse_parsable(predicted_sql)
+        result = {
+            "sqlglot_validity": float(is_sqlglot_parsable),
+            "sqlparse_validity": float(is_sqlparse_parsable),
+            "sqlglot_equivalence": float(
+                sqlglot_parsed_queries_equivalent(predicted_sql, gold_sql)
+                if is_sqlglot_parsable
+                else 0
+            ),
+            "sqlglot_optimized_equivalence": float(
+                sqlglot_optimized_equivalence(predicted_sql, gold_sql)
+                if is_sqlglot_parsable
+                else 0
+            ),
+            "sqlparse_equivalence": float(
+                sqlparse_queries_equivalent(predicted_sql, gold_sql)
+                if is_sqlparse_parsable
+                else 0
+            ),
+            "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
+        }
+        logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
         return result

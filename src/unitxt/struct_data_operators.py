@@ -31,15 +31,18 @@ from typing import (
     Dict,
     List,
     Optional,
+    Tuple,
 )
 
 import pandas as pd
 
 from .augmentors import TypeDependentAugmentor
 from .dict_utils import dict_get
+from .error_utils import UnitxtWarning
 from .operators import FieldOperator, InstanceOperator
 from .random_utils import new_random_generator
 from .serializers import ImageSerializer, TableSerializer
+from .type_utils import isoftype
 from .types import Table
 from .utils import recursive_copy
 
@@ -1019,3 +1022,26 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         random.shuffle(shuffled_header)
 
         return {"header": shuffled_header, "rows": table["rows"]}
+
+
+class JsonStrToListOfKeyValuePairs(FieldOperator):
+    """Convert a Json string of representing key value as dictionary to list of key value pairs."""
+
+    def process_value(self, text: str) -> List[Tuple[str, str]]:
+        try:
+            dict_value = json.loads(text)
+        except Exception as e:
+            UnitxtWarning(
+                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+            )
+            dict_value = {}
+        if not isoftype(dict_value, Dict[str, Any]):
+            UnitxtWarning(
+                f"Unable to convert input text to dictionary in JsonStrToListOfKeyValuePairs. Text: {text}"
+            )
+            dict_value = {}
+        return [
+            (str(key), str(value))
+            for key, value in dict_value.items()
+            if value is not None
+        ]

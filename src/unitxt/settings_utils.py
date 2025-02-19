@@ -149,8 +149,10 @@ if Settings.is_uninitilized():
     settings.skip_artifacts_prepare_and_verify = (bool, False)
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
-    settings.disable_hf_datasets_cache = (bool, True)
-    settings.loader_cache_size = (int, 1)
+    settings.disable_hf_datasets_cache = (bool, False)
+    settings.stream_hf_datasets_by_default = (bool, False)
+    settings.loader_cache_size = (int, 25)
+    settings.loaders_max_retries = (int, 10)
     settings.task_data_as_text = (bool, True)
     settings.default_provider = "watsonx"
     settings.default_format = None

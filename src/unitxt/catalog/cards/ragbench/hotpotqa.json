@@ -1,0 +1,45 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "rungalileo/ragbench",
+        "name": "hotpotqa"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "documents"
+            }
+        },
+        {
+            "__type__": "wrap",
+            "field": "documents",
+            "inside": "list",
+            "process_every_value": true
+        },
+        {
+            "__type__": "dictify",
+            "field": "documents",
+            "to_field": "context",
+            "with_keys": [
+                "body"
+            ],
+            "process_every_value": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context/*/title": "Document"
+            }
+        },
+        {
+            "__type__": "wrap",
+            "field": "response",
+            "inside": "list",
+            "to_field": "answers"
+        }
+    ],
+    "task": "tasks.qa.with_context",
+    "templates": "templates.qa.with_context.all"
+}

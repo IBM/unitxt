@@ -2,7 +2,8 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "wiki_bio"
+        "path": "wiki_bio",
+        "streaming": true
     },
     "preprocess_steps": [
         {
