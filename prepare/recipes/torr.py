@@ -51,7 +51,7 @@ for card in cards_parsed:
 
             add_to_catalog(
                 DatasetRecipe(**kwargs),
-                f"recipes.tables_benchmark.{card}.{serializer}."
+                f"recipes.torr.{card}.{serializer}."
                 + (",".join(augment).split("[")[0] if augment else "no")
                 + f"_augmentation_{num_demos}_demos",
                 overwrite=True,
