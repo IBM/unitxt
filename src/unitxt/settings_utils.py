@@ -151,12 +151,14 @@ if Settings.is_uninitilized():
     settings.mock_inference_mode = (bool, False)
     settings.disable_hf_datasets_cache = (bool, False)
     settings.stream_hf_datasets_by_default = (bool, False)
-    settings.local_cache = None
     settings.loader_cache_size = (int, 25)
     settings.loaders_max_retries = (int, 10)
     settings.task_data_as_text = (bool, True)
     settings.default_provider = "watsonx"
     settings.default_format = None
+    settings.hf_offline_datasets_path = None
+    settings.hf_offline_metrics_path = None
+    settings.hf_offline_loaders_path = None
 
 if Constants.is_uninitilized():
     constants = Constants()

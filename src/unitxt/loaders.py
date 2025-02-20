@@ -80,15 +80,16 @@ from .utils import LRUCache
 logger = get_logger()
 settings = get_settings()
 
-def hf_load_dataset(*args, **kwargs):
+def hf_load_dataset(path: str, *args, **kwargs):
+    if settings.hf_offline_datasets_path is not None:
+        path = os.path.join(settings.hf_offline_datasets_path, path)
     return _hf_load_dataset(
+        path,
         *args, **kwargs,
             download_config=DownloadConfig(
-                cache_dir=settings.local_cache,
                 max_retries=settings.loaders_max_retries,
             ),
             verification_mode="no_checks",
-            cache_dir=settings.local_cache,
             trust_remote_code=settings.allow_unverified_code,
             download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
         )

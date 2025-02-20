@@ -75,14 +75,15 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-def hf_evaluate_load(*args, **kwargs):
+def hf_evaluate_load(path: str, *args, **kwargs):
+    if settings.hf_offline_metrics_path is not None:
+        path = os.path.join(settings.hf_offline_metrics_path, path)
     return evaluate.load(
+        path,
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-        cache_dir=settings.local_cache,
          download_config=DownloadConfig(
-                cache_dir=settings.local_cache,
                 max_retries=settings.loaders_max_retries,
             ),
             verification_mode="no_checks",
@@ -3590,7 +3591,6 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
                 "text-classification",
                 model=self.model_name,
                 device=self.get_device(),
-                model_kwargs= {"cache_dir": settings.local_cache},
             )
 
         inputs = []
@@ -3622,10 +3622,11 @@ class Detector(BulkInstanceMetric):
         from transformers import pipeline
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.pipe = pipeline(
-            "text-classification", model=self.model_name, device=device,
-            model_kwargs= {"cache_dir": settings.local_cache},
-
+            "text-classification", model=model_path, device=device,
         )
 
     def compute(
@@ -3657,11 +3658,14 @@ class RegardMetric(GlobalMetric):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.regard_model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name,                 cache_dir=settings.local_cache,
+            model_path,
 
         )
-        self.regard_tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=settings.local_cache)
+        self.regard_tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     def _evaluate(self, predictions, inputs):
         import torch
@@ -3844,12 +3848,15 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
         super().prepare()
         from transformers import pipeline
 
+        model_path = self.reward_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
+
         if not settings.mock_inference_mode:
             self.model = pipeline(
                 "text-classification",
-                model=self.reward_name,
+                model=model_path,
                 device=self.get_device(),
-                model_kwargs= {"cache_dir": settings.local_cache},
             )
 
 
@@ -4032,7 +4039,11 @@ class Perplexity(BulkInstanceMetric):
         if self.lm is None:
             from transformers import AutoConfig
 
-            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True, cache_dir=settings.local_cache)
+            model_path = self.model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
+
+            config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
             self.lm = (
                 self.EncoderDecoderLM(
                     model_name=self.model_name, single_token_mode=self.single_token_mode
@@ -4110,10 +4121,13 @@ class Perplexity(BulkInstanceMetric):
 
             self.model_name = model_name
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            model_path = self.model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
             self.model = (
-                self.model_class().from_pretrained(self.model_name, cache_dir=settings.local_cache).to(self.device)
+                self.model_class().from_pretrained(model_path).to(self.device)
             )
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=settings.local_cache)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             self.single_token_mode = single_token_mode
@@ -4295,9 +4309,11 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         else:
             device = "cpu"
         from transformers import AutoModelForSequenceClassification
-
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, trust_remote_code=True, cache_dir=settings.local_cache
+            model_path, trust_remote_code=True
         ).to(device)
 
     def compute(
@@ -5978,7 +5994,10 @@ class GraniteGuardianBase(InstanceMetric):
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
-            self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name, cache_dir=settings.local_cache)
+            model_path = self.hf_model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
+            self._tokenizer = AutoTokenizer.from_pretrained(model_path)
         if self.inference_engine is None:
             self.inference_engine = WMLInferenceEngineGeneration(
                 model_name=self.wml_model_name,
