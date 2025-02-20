@@ -71,6 +71,8 @@ class LLMJudge(BulkInstanceMetric):
 
     def prepare(self):
         super().prepare()
+        if self.context_fields is None:
+            self.context_fields = {}
         if isinstance(self.context_fields, str):
             self.context_fields = [self.context_fields]
         if isinstance(self.context_fields, List):
