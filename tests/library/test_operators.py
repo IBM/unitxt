@@ -92,6 +92,10 @@ class TestOperators(UnitxtTestCase):
             tester=self,
         )
 
+        inputs = [
+            {"a": "1", "b": "2"},
+            {"a": "2", "b": "3"},
+        ]
         # process_every_value=True would not accept non-list inputs
         check_operator_exception(
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
@@ -211,6 +215,11 @@ class TestOperators(UnitxtTestCase):
         outputs[0]["a"]["words"][0] = 5000
         outputs[1]["a"][2] = []
         # and run operator again, to verify that its mapper have not changed
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
+
         check_operator(
             operator=operator,
             inputs=inputs,
@@ -809,6 +818,10 @@ position (list):
             tester=self,
         )
 
+        inputs = [
+            {"references": [["none"], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
+        ]
         check_operator(
             operator=RemoveValues(
                 field="references/1",
@@ -823,6 +836,10 @@ position (list):
             tester=self,
         )
 
+        inputs = [
+            {"references": [["none"], ["none"]]},
+            {"references": [["news", "games"], ["none"]]},
+        ]
         check_operator(
             operator=RemoveValues(
                 field="references",
@@ -2304,6 +2321,10 @@ label (str):
             tester=self,
         )
 
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
         # to field is structured:
         check_operator(
             operator=Rename(field_to_field={"b": "c/d"}),
@@ -2312,6 +2333,10 @@ label (str):
             tester=self,
         )
 
+        inputs = [
+            {"a": 1, "b": 2},
+            {"a": 2, "b": 3},
+        ]
         # to field is structured, to stand in place of from field:
         check_operator(
             operator=Rename(field_to_field={"b": "b/d"}),
@@ -2347,6 +2372,7 @@ label (str):
             ],
             tester=self,
         )
+
 
         # both from and to field are structured, different only in the middle of the path:
         check_operator(
@@ -2590,6 +2616,10 @@ references (str):
             tester=self,
         )
 
+        inputs = [
+            {"a": [1, 3], "b": 0},
+            {"a": {"a": 1}, "b": "a"},
+        ]
         # field plays the role of to_field
         check_operator(
             operator=TakeByField(field="a", index="b"),

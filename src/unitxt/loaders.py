@@ -75,7 +75,6 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import LRUCache
 
 logger = get_logger()
 settings = get_settings()
@@ -102,9 +101,6 @@ class Loader(SourceOperator):
     loader_limit: int = None
     streaming: bool = False
     num_proc: int = None
-
-    # class level shared cache:
-    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
 
     def get_limit(self) -> int:
         if settings.global_loader_limit is not None and self.loader_limit is not None:
@@ -270,7 +266,7 @@ class LoadHF(LazyLoader):
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
     ) -> Union[IterableDatasetDict, IterableDataset]:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + str(split), None)
+        dataset = None
         if dataset is None:
             if streaming is None:
                 streaming = self.is_streaming()
@@ -303,9 +299,6 @@ class LoadHF(LazyLoader):
                         raise ValueError(
                             f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                         ) from e
-        self.__class__._loader_cache.max_size = settings.loader_cache_size
-        if not disable_memory_caching:
-            self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset
         return dataset
 
     def _maybe_set_classification_policy(self):
@@ -427,7 +420,7 @@ class LoadCSV(LazyLoader):
         return list(self.files.keys())
 
     def split_generator(self, split: str) -> Generator:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        dataset = None
         if dataset is None:
             if self.get_limit() is not None:
                 self.log_limited_loading()
@@ -452,8 +445,6 @@ class LoadCSV(LazyLoader):
                         time.sleep(2)
                     else:
                         raise e
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self) + "_" + split] = dataset
 
         yield from dataset
 
@@ -498,15 +489,13 @@ class LoadFromSklearn(LazyLoader):
         return self.splits
 
     def split_generator(self, split: str) -> Generator:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        dataset = None
         if dataset is None:
             split_data = self.downloader(subset=split)
             targets = [split_data["target_names"][t] for t in split_data["target"]]
             df = pd.DataFrame([split_data["data"], targets]).T
             df.columns = ["data", "target"]
             dataset = df.to_dict("records")
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self) + "_" + split] = dataset
         yield from dataset
 
 
@@ -1001,9 +990,6 @@ class LoadFromAPI(Loader):
     method: str = "GET"
     verify_cert: bool = True
 
-    # class level shared cache:
-    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
-
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(["proprietary"], "when loading from API")
 
@@ -1063,9 +1049,7 @@ class LoadFromAPI(Loader):
 
     def process(self) -> MultiStream:
         self._maybe_set_classification_policy()
-        iterables = self.__class__._loader_cache.get(str(self), None)
+        iterables = None
         if iterables is None:
             iterables = self.load_iterables()
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self)] = iterables
         return MultiStream.from_iterables(iterables, copying=True)
