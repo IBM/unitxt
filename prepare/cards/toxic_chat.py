@@ -1,21 +1,21 @@
+import json
 from typing import Any
 
+import numpy as np
 from numpy import mean
-from unitxt.api import create_dataset, evaluate, load_dataset
+from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import (
+    MapInstanceValues,
     Rename,
     Set,
     SplitRandomMix,
     TaskCard,
-    MapInstanceValues,
 )
 from unitxt.llm_as_judge_constants import DirectCriteriaCatalogEnum
 from unitxt.llm_as_judge_operators import LoadCriteriaWithOptions
 from unitxt.loaders import LoadFromAPI, LoadFromDictionary
 from unitxt.task import Task
 from unitxt.templates import NullTemplate
-import json 
-import numpy as np
 
 evaluators = [
     "watsonx.llama3_1_70b",
@@ -25,7 +25,7 @@ evaluators = [
 ]
 
 params = "[criteria_field=criteria,include_prompts_in_result=True,context_fields=None,check_positional_bias=False,response_variable_name=text"
-total_instances = 2
+total_instances = 200
 card = TaskCard(
     loader=LoadFromAPI(
         urls={"test":"https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/toxic_chat/toxic_chat_test.json"},
@@ -62,7 +62,7 @@ card = TaskCard(
     task=Task(
         default_template=NullTemplate(),
         input_fields={},
-        reference_fields={"criteria": Any, "ground_truth_toxicity": str, 'text': str},
+        reference_fields={"criteria": Any, "ground_truth_toxicity": str, "text": str},
         prediction_type=str,
         metrics=[f"metrics.llm_as_judge.direct.{evaluator}{params},score_prefix={i}_]" for i, evaluator in enumerate(evaluators)],
     ),
@@ -70,29 +70,29 @@ card = TaskCard(
 
 dataset = load_dataset(card=card, template="templates.empty", split="test")
 
-predictions = [json.loads(instance['task_data'])["text"] for instance in dataset]
+predictions = [json.loads(instance["task_data"])["text"] for instance in dataset]
 
 results = evaluate(predictions=predictions, data=dataset)
 
-all_predictions = [{k.split("toxicity_using_")[1]:v for k,v in instance['score']['instance'].items() if 'toxicity_using_' in k} for instance in results]
+all_predictions = [{k.split("toxicity_using_")[1]:v for k,v in instance["score"]["instance"].items() if "toxicity_using_" in k} for instance in results]
 
-data = {"test": [{"ground_truth_toxicity": float(DirectCriteriaCatalogEnum.TOXICITY.value.option_map[instance['task_data']["ground_truth_toxicity"]])} for instance in results]}
+data = {"test": [{"ground_truth_toxicity": float(DirectCriteriaCatalogEnum.TOXICITY.value.option_map[instance["task_data"]["ground_truth_toxicity"]])} for instance in results]}
 
 def get_score_index_from_evaluator_name(result, evaluator_name):
-    return [c for c in result['score']['instance'].keys() if evaluator_name in c][0].split('_')[0]
+    return [c for c in result["score"]["instance"].keys() if evaluator_name in c][0].split("_")[0]
 
 
 data_to_inspect = {
     k: [{
-            'ground': ground,
-            'pred': pred,
-            'text': json.loads(instance['task_data'])["text"],
-            'assessment': result['score']['instance'][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_assessment"],
-            'prompts': result['score']['instance'][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_prompts"],
-            'completion': result['score']['instance'][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_option_selection_completion"],
+            "ground": ground,
+            "pred": pred,
+            "text": json.loads(instance["task_data"])["text"],
+            "assessment": result["score"]["instance"][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_assessment"],
+            "prompts": result["score"]["instance"][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_prompts"],
+            "completion": result["score"]["instance"][f"{get_score_index_from_evaluator_name(result, k)}_toxicity_option_selection_completion"],
         } for i, (ground, pred, result, instance) in enumerate(
         zip(
-            [d['ground_truth_toxicity'] for d in data["test"]],
+            [d["ground_truth_toxicity"] for d in data["test"]],
             [p[k] for p in all_predictions],
             results,
             dataset
@@ -119,9 +119,9 @@ for key in all_predictions[0]:
 
     predictions = [instance[key] for instance in all_predictions]
     results = evaluate(predictions=predictions, data=dataset)
-    benchmark_results[key] = {'pearson': results.global_scores['score']}
-    benchmark_results[key]['data_to_inspect'] = data_to_inspect[key]
-    benchmark_results[key]['agreement'] = mean(np.asarray([d['ground_truth_toxicity'] for d in data["test"]]) == np.asarray([p[key] for p in all_predictions]))
+    benchmark_results[key] = {"pearson": results.global_scores["score"]}
+    benchmark_results[key]["data_to_inspect"] = data_to_inspect[key]
+    benchmark_results[key]["agreement"] = mean(np.asarray([d["ground_truth_toxicity"] for d in data["test"]]) == np.asarray([p[key] for p in all_predictions]))
 
 with open(f"toxic_chat_benchmark_results_{total_instances}_instances.json", "w") as f:
     json.dump(benchmark_results, fp=f, indent=4)
