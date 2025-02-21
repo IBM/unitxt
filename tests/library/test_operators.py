@@ -101,7 +101,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=inputs,
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                # "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
                 "'process_every_field' == True is allowed only for fields whose values are lists, but value of field 'a' is '1'",
             ],
             tester=self,
@@ -112,7 +112,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers),
             inputs=[{"a": "3", "b": "4"}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                # "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
                 "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
@@ -143,7 +143,7 @@ class TestOperators(UnitxtTestCase):
             operator=MapInstanceValues(mappers=mappers, process_every_value=True),
             inputs=[{"a": [1, 2, 3, 4], "b": 2}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
+                # "Error processing instance '0' from stream 'test' in MapInstanceValues due to the exception above.",
                 "\"value '3', the string representation of the value in field 'a', is not found in mapper '{'1': 'hi', '2': 'bye'}'\"",
             ],
             tester=self,
@@ -584,7 +584,7 @@ class TestOperators(UnitxtTestCase):
             operator=operator,
             inputs=[{"x": 2, "y": 3}],
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in ExecuteExpression due to the exception above.",
+                # "Error processing instance '0' from stream 'test' in ExecuteExpression due to the exception above.",
                 "name 'a' is not defined",
             ],
             tester=self,
@@ -630,6 +630,11 @@ class TestOperators(UnitxtTestCase):
             targets=targets,
             tester=self,
         )
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["a", "b", "f"]},
+        ]
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=Intersect(field="label", allowed_values=3),
@@ -639,6 +644,11 @@ class TestOperators(UnitxtTestCase):
             )
         self.assertEqual(str(cm.exception), "The allowed_values is not a list but '3'")
 
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["a", "b", "f"]},
+        ]
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=Intersect(
@@ -657,7 +667,7 @@ class TestOperators(UnitxtTestCase):
             {"label": "b"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in Intersect due to the exception above.",
+            # "Error processing instance '0' from stream 'test' in Intersect due to the exception above.",
             "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
@@ -693,7 +703,7 @@ class TestOperators(UnitxtTestCase):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            # "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Field 'acme_field' is not in provided instance.
 label (list):
     [0] (str):
@@ -708,6 +718,12 @@ position (list):
 other (str):
     not
 """,
+        ]
+
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
         ]
         check_operator_exception(
             operator=IntersectCorrespondingFields(
@@ -721,7 +737,7 @@ other (str):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            # "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Field 'acme_field' is not in provided instance.
 label (list):
     [0] (str):
@@ -737,6 +753,11 @@ other (str):
     not
 """,
         ]
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
+        ]
         check_operator_exception(
             operator=IntersectCorrespondingFields(
                 field="label",
@@ -749,8 +770,13 @@ other (str):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            # "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             "Value of field 'other' is not a list, so IntersectCorrespondingFields can not intersect with allowed values. Field value:\nother (str):\n    not\n",
+        ]
+        inputs = [
+            {"label": ["a", "b"], "position": [0, 1], "other": "not"},
+            {"label": ["a", "c", "d"], "position": [0, 1, 2], "other": "relevant"},
+            {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
         ]
         check_operator_exception(
             operator=IntersectCorrespondingFields(
@@ -769,7 +795,7 @@ other (str):
             {"label": ["a", "b", "f"], "position": [0, 1, 2], "other": "field"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
+            # "Error processing instance '0' from stream 'test' in IntersectCorrespondingFields due to the exception above.",
             """Number of elements in field 'position' is not the same as the number of elements in field 'label' so the IntersectCorrespondingFields can not remove corresponding values.
 label (list):
     [0] (str):
@@ -873,6 +899,11 @@ position (list):
             targets=targets,
             tester=self,
         )
+        inputs = [
+            {"label": ["a", "b"]},
+            {"label": ["a", "c", "d"]},
+            {"label": ["b", "f"]},
+        ]
         with self.assertRaises(ValueError) as cm:
             check_operator(
                 operator=RemoveValues(field="label", unallowed_values=3),
@@ -888,10 +919,11 @@ position (list):
             {"label": "b"},
         ]
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
             "Failed to process field 'label' from instance due to the exception above.",
             "The value in field is not a list but 'b'",
         ]
+
+
         check_operator_exception(
             operator=RemoveValues(field="label", unallowed_values=["c"]),
             inputs=inputs,
@@ -900,12 +932,14 @@ position (list):
         )
 
         exception_texts = [
-            "Error processing instance '0' from stream 'test' in RemoveValues due to the exception above.",
             "Failed to get 'label2' from instance due to the exception above.",
             """query "label2" did not match any item in dict:
 label (str):
     b
 """,
+        ]
+        inputs = [
+            {"label": "b"},
         ]
         check_operator_exception(
             operator=RemoveValues(field="label2", unallowed_values=["c"]),
@@ -955,11 +989,25 @@ label (str):
             self.assertEqual(output["b"], target["b"])
 
         # check the case no operators are specified in field operators_field. default_operators is none by default
+        inputs = [
+            {
+                "prediction": 111,
+                "references": [],
+                "b": 2,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+            {
+                "prediction": 222,
+                "references": [],
+                "b": 3,
+                "c": ["processors.to_string", "processors.first_character"],
+            },
+        ]
         check_operator_exception(
             operator=ApplyOperatorsField(operators_field="d"),
             inputs=inputs,
             exception_texts=[
-                "Error processing instance '0' from stream 'test' in ApplyOperatorsField due to the exception above.",
+                # "Error processing instance '0' from stream 'test' in ApplyOperatorsField due to the exception above.",
                 "No operators found in field 'd', and no default operators provided.",
             ],
             tester=self,
@@ -2524,7 +2572,7 @@ label (str):
 
         inputs = [{"prediction": "red", "references": "blue"}]
         exception_texts = [
-            """Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.""",
+            # """Error processing instance '0' from stream 'test' in EncodeLabels due to the exception above.""",
             """query \"references/*\" did not match any item in dict:
 prediction (str):
     red

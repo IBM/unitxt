@@ -1745,6 +1745,11 @@ class ApplyStreamOperatorsField(StreamOperator, ArtifactFetcherMixin):
 def update_scores_of_stream_instances(stream: Stream, scores: List[dict]) -> Generator:
     for instance, score in zip(stream, scores):
         instance["score"] = recursive_copy(score)
+        yield recursive_copy(instance)
+
+def update_scores_of_stream_instances_in_situ(stream: Stream, scores: List[dict]) -> Generator:
+    for instance, score in zip(stream, scores):
+        instance["score"] = score
         yield instance
 
 
@@ -1797,24 +1802,27 @@ class ApplyMetric(StreamOperator, ArtifactFetcherMixin):
         # by the first listed metric (as desired).
         metrics_list = list(reversed(metrics_list))
 
-        for i, metric in enumerate(metrics_list):
-            if i == 0:  # first metric
-                multi_stream = MultiStream({"tmp": stream})
-            else:  # metrics with previous scores
-                reusable_generator = ReusableGenerator(
-                    generator=update_scores_of_stream_instances,
-                    gen_kwargs={"stream": stream, "scores": accumulated_scores},
-                )
-                multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
+        if len(metrics_list) == 1:
+            # just one metric, its (potential) polluting behavior (e.g. rag's), won't harm other metrics
+            multi_stream = MultiStream({"tmp": stream})
+            multi_stream = metric(multi_stream)
+            yield from multi_stream["tmp"]
+
+        # more than one metric, we need to recursive copy the instances
+        for metric in metrics_list:
+            reusable_generator = ReusableGenerator(
+                generator=update_scores_of_stream_instances,
+                gen_kwargs={"stream": stream, "scores": accumulated_scores},
+            )
+            multi_stream = MultiStream.from_generators({"tmp": reusable_generator})
 
             multi_stream = metric(multi_stream)
 
-            if i < len(metrics_list) - 1:  # last metric
-                accumulated_scores = []
-                for inst in multi_stream["tmp"]:
-                    accumulated_scores.append(recursive_copy(inst["score"]))
+            accumulated_scores = []
+            for inst in multi_stream["tmp"]:
+                accumulated_scores.append(recursive_copy(inst["score"]))
 
-        yield from multi_stream["tmp"]
+        yield from update_scores_of_stream_instances_in_situ (stream=stream, scores=accumulated_scores)
 
 
 class MergeStreams(MultiStreamOperator):
