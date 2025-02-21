@@ -55,11 +55,11 @@ Hugging Face Integration
   - Type: bool | Default: False | Env Var: ``UNITXT_DISABLE_HF_DATASETS_CACHE``
 - ``unitxt.settings.stream_hf_datasets_by_default``: Enables streaming mode for Hugging Face datasets by default.
   - Type: bool | Default: False | Env Var: ``UNITXT_STREAM_HF_DATASETS_BY_DEFAULT``
-- ``unitxt.settings.hf_offline_models_path``: Specifies the path to the directory containing offline Hugging Face models. You will need to manually download the assets to the directory.
+- ``unitxt.settings.hf_offline_models_path``: Specifies the path to the directory containing offline pre-downloaded Hugging Face models. You will need to manually download the assets to the directory.
   - Type: str | Default: None | Env Var: ``UNITXT_HF_OFFLINE_MODELS_PATH``
-- ``unitxt.settings.hf_offline_metrics_path``: Specifies the path to the directory containing offline Hugging Face metrics. You will need to manually download the assets to the directory.
+- ``unitxt.settings.hf_offline_metrics_path``: Specifies the path to the directory containing offline pre-downloaded Hugging Face metrics. You will need to manually download the assets to the directory.
   - Type: str | Default: None | Env Var: ``UNITXT_HF_OFFLINE_METRICS_PATH``
-- ``unitxt.settings.hf_offline_datasets_path``: Specifies the path to the directory containing offline Hugging Face datasets. You will need to manually download the assets to the directory.
+- ``unitxt.settings.hf_offline_datasets_path``: Specifies the path to the directory containing offline pre-downloaded Hugging Face datasets. You will need to manually download the assets to the directory.
   - Type: str | Default: None | Env Var: ``UNITXT_HF_OFFLINE_DATASETS_PATH``
 
 
