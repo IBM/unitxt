@@ -56,11 +56,12 @@ from typing import (
 import pandas as pd
 import requests
 from datasets import (
+    Dataset,
     DatasetDict,
     DownloadConfig,
     IterableDataset,
     IterableDatasetDict,
-    get_dataset_split_names,
+    get_dataset_config_info,
 )
 from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
@@ -75,7 +76,6 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import LRUCache, recursive_copy
 
 logger = get_logger()
 settings = get_settings()
@@ -83,7 +83,7 @@ settings = get_settings()
 def hf_load_dataset(path: str, *args, **kwargs):
     if settings.hf_offline_datasets_path is not None:
         path = os.path.join(settings.hf_offline_datasets_path, path)
-    return _hf_load_dataset(
+    dataset_to_return = _hf_load_dataset(
         path,
         *args, **kwargs,
             download_config=DownloadConfig(
@@ -93,6 +93,22 @@ def hf_load_dataset(path: str, *args, **kwargs):
             trust_remote_code=settings.allow_unverified_code,
             download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
         )
+    # verify that the arriving dataset is usable:its instances are accessible
+    if isinstance(dataset_to_return, dict):
+        for k in dataset_to_return:
+            try:
+                next(iter(dataset_to_return[k]))
+            except StopIteration:
+                # an empty stream is legal
+                pass
+    else:
+        try:
+            next(iter(dataset_to_return))
+        except StopIteration:
+            # an empty stream is legal
+            pass
+    return dataset_to_return
+
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -107,17 +123,27 @@ class Loader(SourceOperator):
     stream, after load is complete.
 
     Args:
-        loader_limit: Optional integer to specify a limit on the number of records to load.
-        streaming: Bool indicating if streaming should be used.
-        num_proc: Optional integer to specify the number of processes to use for parallel dataset loading. Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
+        loader_limit (int, optional):
+            Optional integer to specify a limit on the number of records to load.
+        streaming (bool, optional):
+            Indicating if streaming should be used upon loading. Defaulted to False.
+        num_proc (int, optional):
+            Specify the number of processes to use for parallel dataset loading.
+            Adjust the value according to the number of CPU cores available and the specific needs of your processing task.
+        splits (List[str], optional):
+            if not None, specifies the names of all splits in the dataset. Some (or all) of these splits will be actually
+            loaded, determined by the application's need.
+        copying (bool, optional):
+            Specifies whether to return a copy of the loaded data. Defaulted to True.
+            False for Loaders that maintain their loaded data intact, immutable.
+            E.g. LoadHF, whose returned dataset is immutable by itself.
     """
 
     loader_limit: int = None
     streaming: bool = False
     num_proc: int = None
-
-    # class level shared cache:
-    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
+    splits: Optional[List[str]] = None
+    copying: bool = True
 
     def get_limit(self) -> int:
         if settings.global_loader_limit is not None and self.loader_limit is not None:
@@ -186,7 +212,7 @@ class Loader(SourceOperator):
             raise UnitxtError(f"Error in loader:\n{self}") from e
         if isoftype(iterables, MultiStream):
             return iterables
-        return MultiStream.from_iterables(iterables, copying=True)
+        return MultiStream.from_iterables(iterables, copying=self.copying)
 
     def process(self) -> MultiStream:
         self._maybe_set_classification_policy()
@@ -207,11 +233,17 @@ class LazyLoader(Loader):
     def split_generator(self, split: str) -> Generator:
         pass
 
-    def load_iterables(self) -> Union[Dict[str, DynamicStream], IterableDatasetDict]:
-        if self.split is not None:
-            splits = [self.split]
-        else:
-            splits = self.get_splits()
+    def load_iterables(
+        self
+    ) -> Dict[str, DynamicStream]:
+        # log only once, here:
+        # log once for all splits, as they are limited the same
+        if self.get_limit() is not None:
+            self.log_limited_loading()
+        if hasattr(self, "filtering_lambda") and self.filtering_lambda is not None:
+            self.log_filter_load()
+
+        splits = self.get_splits()
 
         return MultiStream({
             split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
@@ -261,53 +293,67 @@ class LoadHF(LazyLoader):
         Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
     ] = None
     revision: Optional[str] = None
-    streaming: bool = None
+    streaming = None
     filtering_lambda: Optional[str] = None
     num_proc: Optional[int] = None
-    splits: Optional[List[str]] = None
+    splits = None
+    copying = False
 
-    def filter_load(self, dataset: DatasetDict):
+    def log_filter_load(self):
         if not settings.allow_unverified_code:
             raise ValueError(
                 f"{self.__class__.__name__} cannot run use filtering_lambda expression without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE=True."
             )
         logger.info(f"\nLoading filtered by: {self.filtering_lambda};")
-        return dataset.filter(eval(self.filtering_lambda))
 
     def is_streaming(self) -> bool:
         if self.streaming is None:
             return settings.stream_hf_datasets_by_default
         return self.streaming
 
-    # returns Dict when split names are not known in advance, and just the the single split dataset - if known
+    # returns Dict when split names are not known in advance, and just the single split dataset/iterabledataset - if known
+    # flake8: noqa: C901
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
-    ) -> Union[IterableDatasetDict, IterableDataset]:
-        dataset_id = str(self) + "_" + str(split)
-        dataset = self.__class__._loader_cache.get(dataset_id, None)
-        if dataset is None:
-            if streaming is None:
-                streaming = self.is_streaming()
+    ) -> Union[Dataset, DatasetDict, IterableDataset, IterableDatasetDict]:
+        if streaming is None:
+            streaming = self.is_streaming()
+
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            if settings.disable_hf_datasets_cache:
+                cache_dir = dir_to_be_deleted
+            else:
+                cache_dir = None
+            kwargs = {
+                "data_dir": self.data_dir,
+                "data_files": self.data_files,
+                "revision": self.revision,
+                "streaming": streaming,
+                "cache_dir": cache_dir,
+                "split": split,
+                "num_proc": self.num_proc,
+            }
             try:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    revision=self.revision,
-                    streaming=streaming,
-                    split=split,
-                    num_proc=self.num_proc,
-                )
-            except ValueError as e:
+                # load the dataset and verify that it is loaded safe and sound
+                dataset = hf_load_dataset(self.path, self.name, **kwargs)
+            except Exception as e:
                 if "trust_remote_code" in str(e):
                     raise ValueError(
                         f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
                     ) from e
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            if not disable_memory_caching:
-                self.__class__._loader_cache[dataset_id] = dataset
-        return self.__class__._loader_cache[dataset_id]
+
+                # try the opposite way of streaming
+                current_streaming = kwargs["streaming"]
+                logger.info(
+                    f"needed to swap streaming from {current_streaming} to {not current_streaming} for path {self.path}"
+                )
+                kwargs["streaming"] = not kwargs["streaming"]
+                dataset = hf_load_dataset(self.path, self.name, **kwargs)
+
+        if self.filtering_lambda is not None:
+            dataset = dataset.filter(eval(self.filtering_lambda))
+
+        return dataset
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
@@ -323,8 +369,14 @@ class LoadHF(LazyLoader):
     def get_splits(self):
         if self.splits is not None:
             return self.splits
+        if self.split is not None:
+            return [self.split]
         try:
-            return get_dataset_split_names(
+            # get_dataset_split_names simply returns the keys of the following dict which
+            # may be handy some day, perhaps for caching options, perhaps for weighted fusing, so just to remamber.
+            # example of returned info:
+            #{'test': SplitInfo(name='test', num_bytes=2560130, num_examples=1713, shard_lengths=None, dataset_name='chat_rag-bench')}
+            config_info = get_dataset_config_info(
                 path=self.path,
                 config_name=self.name,
                 trust_remote_code=settings.allow_unverified_code,
@@ -333,32 +385,25 @@ class LoadHF(LazyLoader):
                     extract_on_the_fly=True,
                 ),
             )
+            # the following is the single step that follows get_dataset_config_info
+            # in get_dataset_split_names
+            return list(config_info.splits.keys())
         except:
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
-            try:
-                dataset = self.load_dataset(
-                    split=None, disable_memory_caching=True, streaming=True
-                )
-            except (
-                NotImplementedError
-            ):  # streaming is not supported for zipped files so we load without streaming
-                dataset = self.load_dataset(split=None, streaming=False)
+            # load_dataset now worries about re-load in opposite values of streaming
+            dataset = self.load_dataset(
+                split=None, disable_memory_caching=True, streaming=True
+            )
             return list(dataset.keys())
 
     def split_generator(self, split: str) -> Generator:
-        if self.get_limit() is not None:
-            self.log_limited_loading()
-        try:
-            dataset = self.load_dataset(split=split)
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset(split=split, streaming=False)
+        # load_dataset worries about both values of streaming
+        dataset = self.load_dataset(split=split)
 
-        if self.filtering_lambda is not None:
-            dataset = self.filter_load(dataset)
+        # load_iterable logged filtering lambda and limiting number
+        # once for all streams. All streams are limited and filtered the same.
 
         limit = self.get_limit()
         if limit is None:
@@ -392,12 +437,12 @@ class LoadCSV(LazyLoader):
 
     files: Dict[str, str]
     chunksize: int = 1000
-    loader_limit: Optional[int] = None
-    streaming: bool = True
+    streaming = True
     sep: str = ","
     compression: Optional[str] = None
     lines: Optional[bool] = None
     file_type: Literal["csv", "json"] = "csv"
+    copying=False
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
@@ -428,39 +473,39 @@ class LoadCSV(LazyLoader):
         return list(self.files.keys())
 
     def split_generator(self, split: str) -> Generator:
-        dataset_id = str(self) + "_" + split
-        dataset = self.__class__._loader_cache.get(dataset_id, None)
-        if dataset is None:
-            if self.get_limit() is not None:
-                self.log_limited_loading()
-            for attempt in range(settings.loaders_max_retries):
+        import fsspec
+        fsspec.core.DEFAULT_EXPAND = True
+        reader = self.get_reader()
+        for attempt in range(settings.loaders_max_retries):
+            try:
+                dataset = reader(
+                    self.files[split], **self.get_args()
+                ).to_dict("records")
                 try:
-                    reader = self.get_reader()
-                    if self.get_limit() is not None:
-                        self.log_limited_loading()
-
+                    next(iter(dataset))
+                except StopIteration:
+                    # an empty stream is legal
+                    pass
+                break
+            except:
+                try:
+                    with fsspec.open(self.files[split], mode="rt", expand=True) as f:
+                        dataset = reader(
+                            f, **self.get_args()
+                        ).to_dict("records")
                     try:
-                        dataset = reader(self.files[split], **self.get_args()).to_dict(
-                            "records"
-                        )
-                        break
-                    except ValueError:
-                        import fsspec
-
-                        with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(f, **self.get_args()).to_dict("records")
-                        break
+                        next(iter(dataset))
+                    except StopIteration:
+                        # an empty stream is legal
+                        pass
+                    break
                 except Exception as e:
-                    logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
+                    logger.info(f"Attempt csv load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
                         time.sleep(2)
                     else:
                         raise e
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[dataset_id] = dataset
-
-        for instance in self.__class__._loader_cache[dataset_id]:
-            yield recursive_copy(instance)
+        yield from dataset
 
 
 class LoadFromSklearn(LazyLoader):
@@ -481,11 +526,18 @@ class LoadFromSklearn(LazyLoader):
     """
 
     dataset_name: str
-    splits: List[str] = ["train", "test"]
 
     _requirements_list: List[str] = ["scikit-learn", "pandas"]
 
     data_classification_policy = ["public"]
+
+    splits = [
+        "test",
+        "train",
+        "all",
+    ]  # from reading the code .../sklearn/datasets/_twenty_newsgroups.py
+
+    copying = False
 
     def verify(self):
         super().verify()
@@ -503,18 +555,12 @@ class LoadFromSklearn(LazyLoader):
         return self.splits
 
     def split_generator(self, split: str) -> Generator:
-        dataset_id = str(self) + "_" + split
-        dataset = self.__class__._loader_cache.get(dataset_id, None)
-        if dataset is None:
-            split_data = self.downloader(subset=split)
-            targets = [split_data["target_names"][t] for t in split_data["target"]]
-            df = pd.DataFrame([split_data["data"], targets]).T
-            df.columns = ["data", "target"]
-            dataset = df.to_dict("records")
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[dataset_id] = dataset
-        for instance in self.__class__._loader_cache[dataset_id]:
-            yield recursive_copy(instance)
+        split_data = self.downloader(subset=split)
+        targets = [split_data["target_names"][t] for t in split_data["target"]]
+        df = pd.DataFrame([split_data["data"], targets]).T
+        df.columns = ["data", "target"]
+        dataset = df.to_dict("records")
+        yield from dataset
 
 
 class MissingKaggleCredentialsError(ValueError):
@@ -558,7 +604,7 @@ class LoadFromKaggle(Loader):
 
         self.downloader = download
 
-    def load_iterables(self):
+    def load_iterables(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset]:
         with TemporaryDirectory() as temp_directory:
             self.downloader(self.url, temp_directory)
             return hf_load_dataset(temp_directory, streaming=False)
@@ -599,7 +645,7 @@ class LoadFromIBMCloud(Loader):
             load_ibm_cloud = LoadFromIBMCloud(
                 endpoint_url_env='IBM_CLOUD_ENDPOINT',
                 aws_access_key_id_env='IBM_AWS_ACCESS_KEY_ID',
-                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',
+                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',    # pragma: allowlist-secret
                 bucket_name='my-bucket'
             )
             multi_stream = load_ibm_cloud.process()
@@ -689,7 +735,7 @@ class LoadFromIBMCloud(Loader):
             ["proprietary"], "when loading from IBM COS"
         )
 
-    def load_iterables(self):
+    def load_iterables(self) -> Union[DatasetDict, Dataset, IterableDatasetDict, IterableDataset]:
         if not self.verified:
             self.lazy_verify()
             self.verified = True
@@ -843,7 +889,7 @@ class LoadFromDictionary(Loader):
             ["proprietary"], "when loading from python dictionary"
         )
 
-    def load_iterables(self) -> MultiStream:
+    def load_iterables(self) -> Dict[str, List[Dict[str, Any]]]:
         return self.data
 
 
@@ -871,15 +917,15 @@ class LoadFromHFSpace(LazyLoader):
             authentication when accessing the HuggingFace Space - if necessary.
     """
 
+    path = None
     space_name: str
     data_files: Union[str, Sequence[str], Mapping[str, Union[str, Sequence[str]]]]
-    path: Optional[str] = None
     revision: Optional[str] = None
     use_token: Optional[bool] = None
     token_env: Optional[str] = None
     requirements_list: List[str] = ["huggingface_hub"]
 
-    streaming: bool = True
+    streaming = True
 
     def _get_token(self) -> Optional[Union[bool, str]]:
         if self.token_env:
@@ -1000,16 +1046,14 @@ class LoadFromAPI(Loader):
 
     urls: Dict[str, str]
     chunksize: int = 100000
-    loader_limit: Optional[int] = None
-    streaming: bool = False
+    streaming = False
     api_key_env_var: str = "SQL_API_KEY"
     headers: Optional[Dict[str, Any]] = None
     data_field: str = "data"
     method: str = "GET"
     verify_cert: bool = True
 
-    # class level shared cache:
-    _loader_cache = LRUCache(max_size=settings.loader_cache_size)
+    # the cache that was here interferes with the Loader (base class) cache
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(["proprietary"], "when loading from API")
@@ -1068,11 +1112,3 @@ class LoadFromAPI(Loader):
 
         return iterables
 
-    def process(self) -> MultiStream:
-        self._maybe_set_classification_policy()
-        iterables = self.__class__._loader_cache.get(str(self), None)
-        if iterables is None:
-            iterables = self.load_iterables()
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self)] = iterables
-        return MultiStream.from_iterables(iterables, copying=True)
