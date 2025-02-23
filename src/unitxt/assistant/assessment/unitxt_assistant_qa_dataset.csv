@@ -1,0 +1,4 @@
+id,question,answers
+1,"Which operator allows users to define operations in Python?","Using LiteralEval, ExecuteExpression or FilterByExpression"
+2,"How can I specify a custom directory as the catalog root when adding a new artifact?","Use the 'catalog_path' parameter in the 'add_to_catalog' function."
+3,"Can I configure Unitxt to search for the catalog in a specific directory using an environment variable?","Yes, set the 'UNITXT_CATALOGS' environment variable."
