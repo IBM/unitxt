@@ -12,6 +12,7 @@
     "prediction_type": "str",
     "metrics": [
         "metrics.text2sql.execution_accuracy",
+        "metrics.text2sql.non_execution_accuracy",
         "metrics.anls"
     ]
 }
