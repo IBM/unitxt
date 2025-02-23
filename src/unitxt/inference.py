@@ -824,9 +824,12 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             if AutoConfig.from_pretrained(self.model_name).is_encoder_decoder
             else AutoPeftModelForCausalLM
         )
+        path = self.peft_config.base_model_name_or_path
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
 
         self.model = model_class.from_pretrained(
-            pretrained_model_name_or_path=self.peft_config.base_model_name_or_path,
+            pretrained_model_name_or_path=path,
             trust_remote_code=True,
             device_map=self.device_map,
             low_cpu_mem_usage=self.low_cpu_mem_usage,
@@ -871,10 +874,15 @@ class HFPipelineBasedInferenceEngine(
     def _define_task(self):
         from transformers import AutoConfig
 
+        path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
+
         self.task = (
             "text2text-generation"
             if AutoConfig.from_pretrained(
-                self.model_name, trust_remote_code=True
+                path,
+                trust_remote_code=True,
             ).is_encoder_decoder
             else "text-generation"
         )
@@ -912,11 +920,15 @@ class HFPipelineBasedInferenceEngine(
     def _create_pipeline(self, model_args: Dict[str, Any]):
         from transformers import pipeline
 
+        path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
+
         self.model = pipeline(
-            model=self.model_name,
+            model=path,
             task=self.task,
             use_fast=self.use_fast_tokenizer,
-            trust_remote_code=True,
+            trust_remote_code=settings.allow_unverified_code,
             **model_args,
             **self.to_dict(
                 [HFGenerationParamsMixin],
@@ -2912,12 +2924,12 @@ class LiteLLMInferenceEngine(
         self, dataset: List[Dict[str, Any]]
     ) -> List[TextGenerationInferenceOutput]:
         """Process multiple inference requests concurrently with a progress bar."""
-        tasks = [
+        tasks = (
             self._infer_instance(i, instance) for i, instance in enumerate(dataset)
-        ]
+        )
         # Use tqdm_asyncio.gather to display progress bar
         return await tqdm_asyncio.gather(
-            *tasks, desc=f"LiteLLM Inference ({self.model})", total=len(tasks)
+            *tasks, desc=f"LiteLLM Inference ({self.model})", total=len(dataset)
         )
 
     def _infer(
@@ -3195,8 +3207,16 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         self.device = self.get_device()
 
         # Load model and tokenizer
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(
+        path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
+
+        self.tokenizer = AutoTokenizer.from_pretrained(
+            path,
+        )
+        self.model = AutoModelForCausalLM.from_pretrained(
+                path,
+            ).to(
             self.device
         )
         # Set pad_token if it doesn't exist
