@@ -108,6 +108,7 @@ tests = [
     "func_timeout==4.3.5",
     "Wikipedia-API",
     "sqlglot",
+    "sqlparse",
 ]
 ui = [
     "gradio",
@@ -120,7 +121,8 @@ inference-tests = [
   "litellm==v1.52.9",
   "tenacity",
   "diskcache",
-  "numpy==1.26.4"
+  "numpy==1.26.4",
+  "ollama"
 ]
 assistant = [
     "streamlit",

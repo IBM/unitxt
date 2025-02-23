@@ -53,7 +53,7 @@ def add_rag_templates(
 
 correctness_input_format = """Question: {question}\n
 Ground-truth answer: {ground_truths}\n
-Prediction: {answer}
+Prediction: {answer}.\n
 """
 
 correctness_reference_based_with_context_input_format = """Question: {question}\n
