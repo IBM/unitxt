@@ -158,7 +158,7 @@ if Settings.is_uninitilized():
     settings.default_format = None
     settings.hf_offline_datasets_path = None
     settings.hf_offline_metrics_path = None
-    settings.hf_offline_loaders_path = None
+    settings.hf_offline_models_path = None
 
 if Constants.is_uninitilized():
     constants = Constants()
