@@ -63,6 +63,8 @@ class LLMJudge(BulkInstanceMetric):
     generate_summaries: bool = True
     format = "formats.chat_api"
     include_prompts_in_result: bool = False
+    response_variable_name_field: Optional[str] = None
+    response_variable_name: str = "response"
     criteria_field: str = None
     criteria: Criteria = None
     logger = get_logger()
@@ -102,6 +104,16 @@ class LLMJudge(BulkInstanceMetric):
             )
             for td in task_data
         ]
+
+    def get_response_variable_names(self, task_data: List[Dict[str, Any]]) -> List[str]:
+        if self.response_variable_name_field is None:
+            return [self.response_variable_name] * len(task_data)
+        try:
+            return [td[self.response_variable_name_field] for td in task_data]
+        except KeyError as e:
+            raise UnitxtError(
+                f"The response variable name field `{self.response_variable_name_field}` was not found in the task data instance."
+            ) from e
 
     def perform_evaluation_step(
         self,
@@ -184,6 +196,8 @@ class LLMJudgeDirect(LLMJudge):
                 "response": str,
                 "criteria_description": str,
                 "display_options_instruction": str,
+                "response_variable_name": str,
+                "response_variable_name_title": str,
             },
             reference_fields={},
             prediction_type=str,
@@ -202,6 +216,7 @@ class LLMJudgeDirect(LLMJudge):
                 "criteria_description": str,
                 "score_option_instruction": str,
                 "options": list,
+                "response_variable_name": str,
             },
             reference_fields={},
             prediction_type=str,
@@ -341,6 +356,7 @@ class LLMJudgeDirect(LLMJudge):
         criterias = self.get_criterias(task_data, evaluations_count)
         self.set_main_score(criterias)
         contexts = self.get_contexts(task_data)
+        response_variable_names = self.get_response_variable_names(task_data)
         if self.check_positional_bias:
             criterias += [
                 CriteriaWithOptions(
@@ -352,6 +368,7 @@ class LLMJudgeDirect(LLMJudge):
                 for criteria in criterias
             ]
             contexts += contexts
+            response_variable_names += response_variable_names
             predictions += predictions
 
         parsed_criterias = [
@@ -373,13 +390,16 @@ class LLMJudgeDirect(LLMJudge):
                 "response": prediction,
                 "display_options_instruction": display_options_instruction,
                 "criteria_description": criteria_description,
+                "response_variable_name": response_variable_name,
+                "response_variable_name_title": response_variable_name.capitalize(),
                 "data_classification_policy": ["public"],
             }
-            for context, prediction, criteria_description, display_options_instruction in zip(
+            for context, prediction, criteria_description, display_options_instruction, response_variable_name in zip(
                 contexts,
                 predictions,
                 criteria_description_list,
                 display_options_instruction_list,
+                response_variable_names
             )
         ]
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
@@ -416,12 +436,14 @@ class LLMJudgeDirect(LLMJudge):
                 "criteria_description": criteria_description,
                 "score_option_instruction": score_option_instruction,
                 "options": criteria_option_names,
+                "response_variable_name": response_variable_name,
                 "data_classification_policy": ["public"],
             }
-            for criteria_description, score_option_instruction, criteria_option_names in zip(
+            for criteria_description, score_option_instruction, criteria_option_names, response_variable_name in zip(
                 criteria_description_list,
                 score_option_instruction_list,
                 criteria_option_names_list,
+                response_variable_names
             )
         ]
 
@@ -477,6 +499,8 @@ class LLMJudgePairwise(LLMJudge):
                 "option_b": str,
                 "criteria_name": str,
                 "criteria_description": str,
+                "response_variable_name": str,
+                "response_variable_name_title": str,
             },
             reference_fields={},
             prediction_type=str,
@@ -494,6 +518,7 @@ class LLMJudgePairwise(LLMJudge):
             input_fields={
                 "score_option_instruction": str,
                 "options": list,
+                "response_variable_name": str,
             },
             reference_fields={},
             prediction_type=str,
@@ -754,9 +779,11 @@ class LLMJudgePairwise(LLMJudge):
 
         criterias = self.get_criterias(task_data, instances_count)
         contexts = self.get_contexts(task_data)
+        response_variable_names = self.get_response_variable_names(task_data)
         if self.check_positional_bias:
             criterias.extend(criterias)
             contexts.extend(contexts)
+            response_variable_names.extend(response_variable_names)
             for response_pairs, option_pairs in zip(
                 response_pairs_list, option_pairs_list
             ):
@@ -776,6 +803,8 @@ class LLMJudgePairwise(LLMJudge):
                 "option_b": option_pair[1],
                 "criteria_name": criterias[i].name,
                 "criteria_description": criterias[i].description,
+                "response_variable_name": response_variable_names[i],
+                "response_variable_name_title": response_variable_names[i].capitalize(),
                 "data_classification_policy": ["public"],
             }
             for i, (response_pairs, option_pairs) in enumerate(
@@ -838,31 +867,27 @@ class LLMJudgePairwise(LLMJudge):
             )
             self.logger.info("The summary was generated successfully.")
 
-        score_option_instruction_list = [
-            "".join(
+        score_option_instructions_list = [
+            ["".join(
                 [
                     f'Choose "{option}" if Response {option} is better quality.\n'
                     for option in option_pair
                 ]
-            )
+            ) for option_pair in option_pairs]
             for option_pairs in option_pairs_list
-            for option_pair in option_pairs
         ]
 
         option_selection_instances = [
             {
                 "options": [f"Response {option}" for option in option_pair],
                 "score_option_instruction": score_option_instruction,
+                "response_variable_name": response_variable_names[i],
                 "data_classification_policy": ["public"],
             }
-            for option_pair, score_option_instruction in zip(
-                [
-                    option_pair
-                    for option_pairs in option_pairs_list
-                    for option_pair in option_pairs
-                ],
-                score_option_instruction_list,
+            for i, (score_option_instructions, option_pairs) in enumerate(
+                zip(score_option_instructions_list, option_pairs_list)
             )
+            for score_option_instruction, option_pair in zip(score_option_instructions, option_pairs)
         ]
 
         previous_messages = [
