@@ -29,6 +29,7 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
+from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -74,6 +75,21 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
+def hf_evaluate_load(path: str, *args, **kwargs):
+    if settings.hf_offline_metrics_path is not None:
+        path = os.path.join(settings.hf_offline_metrics_path, path)
+    return evaluate.load(
+        path,
+        *args,
+        **kwargs,
+        experiment_id=str(uuid.uuid4()),
+         download_config=DownloadConfig(
+                max_retries=settings.loaders_max_retries,
+            ),
+            verification_mode="no_checks",
+            trust_remote_code=settings.allow_unverified_code,
+            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+        )
 
 class MetricsList(ListCollection):
     def verify(self):
@@ -2309,9 +2325,7 @@ class HuggingfaceMetric(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(
         self,
@@ -2386,9 +2400,7 @@ class HuggingfaceBulkMetric(BulkInstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(
         self,
@@ -2433,9 +2445,7 @@ class HuggingfaceInstanceMetric(InstanceMetric):
     def prepare(self):
         super().prepare()
 
-        self.metric = evaluate.load(
-            self.hf_metric_name, experiment_id=str(uuid.uuid4())
-        )
+        self.metric = hf_evaluate_load(self.hf_metric_name)
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
         # invokes  module.compute, which invokes, e.g., meteor's _compute
@@ -2539,7 +2549,7 @@ class F1(GlobalMetric):
     def prepare(self):
         super().prepare()
 
-        self._metric = evaluate.load(self.metric, experiment_id=str(uuid.uuid4()))
+        self._metric = hf_evaluate_load(self.metric)
 
     def get_str_id(self, str):
         if str not in self.str_to_id:
@@ -2816,8 +2826,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     def prepare(self):
         super().prepare()
 
-        self._metric = evaluate.load(
-            self.metric, "multilabel", experiment_id=str(uuid.uuid4())
+        self._metric = hf_evaluate_load(
+            self.metric, "multilabel"
         )
 
     def add_str_to_id(self, str):
@@ -3577,7 +3587,9 @@ class Reward(MapReduceMetric[str, float], TorchDeviceMixin):
 
         if self.model is None:
             self.model = pipeline(
-                "text-classification", model=self.model_name, device=self.get_device()
+                "text-classification",
+                model=self.model_name,
+                device=self.get_device(),
             )
 
         inputs = []
@@ -3609,8 +3621,11 @@ class Detector(BulkInstanceMetric):
         from transformers import pipeline
 
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.pipe = pipeline(
-            "text-classification", model=self.model_name, device=device
+            "text-classification", model=model_path, device=device,
         )
 
     def compute(
@@ -3642,10 +3657,14 @@ class RegardMetric(GlobalMetric):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.regard_model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name
+            model_path,
+
         )
-        self.regard_tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+        self.regard_tokenizer = AutoTokenizer.from_pretrained(model_path)
 
     def _evaluate(self, predictions, inputs):
         import torch
@@ -3828,10 +3847,14 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
         super().prepare()
         from transformers import pipeline
 
+        model_path = self.reward_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
+
         if not settings.mock_inference_mode:
             self.model = pipeline(
                 "text-classification",
-                model=self.reward_name,
+                model=model_path,
                 device=self.get_device(),
             )
 
@@ -4015,7 +4038,11 @@ class Perplexity(BulkInstanceMetric):
         if self.lm is None:
             from transformers import AutoConfig
 
-            config = AutoConfig.from_pretrained(self.model_name, trust_remote_code=True)
+            model_path = self.model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
+
+            config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
             self.lm = (
                 self.EncoderDecoderLM(
                     model_name=self.model_name, single_token_mode=self.single_token_mode
@@ -4093,10 +4120,13 @@ class Perplexity(BulkInstanceMetric):
 
             self.model_name = model_name
             self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+            model_path = self.model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
             self.model = (
-                self.model_class().from_pretrained(self.model_name).to(self.device)
+                self.model_class().from_pretrained(model_path).to(self.device)
             )
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
+            self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
             self.single_token_mode = single_token_mode
@@ -4278,9 +4308,11 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         else:
             device = "cpu"
         from transformers import AutoModelForSequenceClassification
-
+        model_path = self.model_name
+        if settings.hf_offline_models_path is not None:
+            model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            self.model_name, trust_remote_code=True
+            model_path, trust_remote_code=True
         ).to(device)
 
     def compute(
@@ -5926,6 +5958,9 @@ class GraniteGuardianBase(InstanceMetric):
         if not isinstance(self.risk_type, RiskType):
             self.risk_type = RiskType[self.risk_type]
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
+            model_path = self.hf_model_name
+            if settings.hf_offline_models_path is not None:
+                model_path = os.path.join(settings.hf_offline_models_path, model_path)
             self._tokenizer = AutoTokenizer.from_pretrained(self.hf_model_name)
 
     def verify(self):

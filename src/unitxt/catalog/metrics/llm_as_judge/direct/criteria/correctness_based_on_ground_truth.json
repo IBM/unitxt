@@ -1,0 +1,27 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "correctness_based_on_ground_truth",
+    "description": "Does the response correctly convey the same factual information as the ground truth?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "correct",
+            "description": "The response conveys the same factual meaning as the ground truth. Minor rewording, synonyms, or grammatical differences are acceptable. The response is relevant to the question and does not introduce unrelated or misleading information."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "partially_correct",
+            "description": "The response contains some correct information but is incomplete or lacks essential details. It may also contain minor inaccuracies or extraneous information that slightly misrepresents the ground truth."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "incorrect",
+            "description": "The response does not align with the ground truth. It either presents incorrect, unrelated, or misleading information, or omits key details that change the intended meaning."
+        }
+    ],
+    "option_map": {
+        "correct": 1.0,
+        "partially_correct": 0.5,
+        "incorrect": 0.0
+    }
+}
