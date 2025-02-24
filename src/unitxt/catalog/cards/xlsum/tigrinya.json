@@ -3,7 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "tigrinya"
+        "name": "tigrinya",
+        "splits": [
+            "test",
+            "train",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         {
