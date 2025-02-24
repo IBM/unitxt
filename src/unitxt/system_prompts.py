@@ -3,7 +3,9 @@ from typing import Any, Dict, Optional
 
 from .dataclass import NonPositionalField
 from .operator import InstanceOperator
+from .settings_utils import get_constants
 
+constants = get_constants()
 
 class SystemPrompt(InstanceOperator):
     """The role of SystemPrompt is to add task-independent opening-text to every instance."""
@@ -14,10 +16,10 @@ class SystemPrompt(InstanceOperator):
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
     ) -> Dict[str, Any]:
         if self.skip_rendered_instance:
-            if "system_prompt" in instance:
+            if constants.system_prompt_field in instance:
                 return instance
 
-        instance["system_prompt"] = self.get_system_prompt(instance)
+        instance[constants.system_prompt_field] = self.get_system_prompt(instance)
 
         return instance
 

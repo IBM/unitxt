@@ -157,6 +157,7 @@ class StreamingOperator(Operator, PackageRequirementsMixin):
         """
 
 
+
 class SideEffectOperator(StreamingOperator):
     """Base class for operators that does not affect the stream."""
 
@@ -248,6 +249,9 @@ class SourceOperator(MultiStreamOperator):
     def process(self) -> MultiStream:
         pass
 
+
+    def get_splits(self):
+        return list(self.process().keys())
 
 class StreamInitializerOperator(SourceOperator):
     """A class representing a stream initializer operator in the streaming system.
