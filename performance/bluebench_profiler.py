@@ -7,8 +7,8 @@ import tempfile
 from io import StringIO
 from typing import Any, Dict, List, Union
 
-from unitxt.api import _source_to_dataset, evaluate, load_recipe
-from unitxt.benchmark import Benchmark
+from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
+from unitxt.api import evaluate, load_dataset, load_recipe
 from unitxt.inference import (
     CrossProviderInferenceEngine,
     InferenceEngine,
@@ -16,6 +16,7 @@ from unitxt.inference import (
 )
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
+from unitxt.stream import MultiStream
 
 logger = get_logger()
 settings = get_settings()
@@ -24,6 +25,11 @@ settings.allow_unverified_code = True
 settings.disable_hf_datasets_cache = False
 settings.mock_inference_mode = True
 
+
+dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30,splits=[test]]"
+# dataset_query = ["card=cards.cola", "card=cards.wnli"]
+# dataset_query = "recipes.bluebench.knowledge.mmlu_pro_math"
+# dataset_query = "card=cards.rag.documents.clap_nq.en"     # assaf's example
 
 class BlueBenchProfiler:
     """Profiles the execution-time of loading, total-time (including loading) of recipe, inferenfe, and evaluate.
@@ -59,16 +65,27 @@ class BlueBenchProfiler:
     You will find the total time of each step, accumulated over all recipes in the benchmark.
     """
 
-    def profiler_instantiate_benchmark_recipe(
+    def profiler_instantiate_recipe_result(
         self, dataset_query: str, **kwargs
-    ) -> Benchmark:
-        return load_recipe(dataset_query, **kwargs)
+    ) -> MultiStream:
+        recipe = load_recipe(dataset_query, **kwargs)
+        return recipe()
 
-    def profiler_generate_benchmark_dataset(
-        self, benchmark_recipe: Benchmark, split: str, **kwargs
-    ) -> List[Dict[str, Any]]:
-        dataset = _source_to_dataset(benchmark_recipe, split=split)
-        return list(dataset)
+    def profiler_load_dataset(
+        self, dataset_query: str, **kwargs
+    ) -> Union[Dataset, IterableDataset, DatasetDict, IterableDatasetDict]:
+        return load_dataset(dataset_query, **kwargs)
+
+    def profiler_list_from_recipes_ms(self, ms)-> Dict[str, List[Dict[str, Any]]]:
+        if not isinstance(ms, dict):
+            to_return = list(ms)
+            logger.critical(f"Listing {len(to_return)} instances from dataset.")
+            return to_return
+
+        to_return = {k: list(ms[k]) for k in ms}
+        for k in to_return:
+            logger.critical(f"Listing {len(to_return[k])} instances from Split '{k}'.")
+        return to_return
 
     def profiler_instantiate_model(self) -> InferenceEngine:
         return CrossProviderInferenceEngine(
@@ -84,26 +101,57 @@ class BlueBenchProfiler:
     def profiler_evaluate_predictions(self, predictions, dataset) -> dict:
         return evaluate(predictions=predictions, data=dataset)
 
-    def profiler_do_the_profiling(self, dataset_query: str, split: str, **kwargs):
-        benchmark_recipe = self.profiler_instantiate_benchmark_recipe(
+    def profiler_do_the_profiling(self, dataset_query: str, **kwargs):
+        logger.info(f"profiling the run of dataset_query = '{dataset_query}'")
+
+        # first, the official way -- end-to-end
+        dataset = self.profiler_load_dataset(
             dataset_query=dataset_query, **kwargs
         )
 
-        dataset = self.profiler_generate_benchmark_dataset(
-            benchmark_recipe=benchmark_recipe, split=split, **kwargs
+        if isinstance(dataset, dict):
+            # continue with the first split can find:
+            alternative_split = next(iter(sorted(dataset.keys())))
+            dataset = dataset[alternative_split]
+
+        if len(dataset) > 500:
+            dataset = dataset[:500]
+
+        model = self.profiler_instantiate_model()
+
+        predictions = self.profiler_infer_predictions(model=model, dataset=dataset)
+
+        evaluation_result = self.profiler_evaluate_predictions(
+            predictions=predictions, dataset=dataset
+        )
+        logger.critical(f"length of evaluation_result, following Unitxt.load_dataset: {len(evaluation_result)}")
+
+        # and now the old way, just to report time of generating a dataset, listed out from a ms
+        ms = self.profiler_instantiate_recipe_result(
+            dataset_query=dataset_query, **kwargs
         )
 
-        logger.critical(f"length of bluebench generated dataset: {len(dataset)}")
+        dataset = self.profiler_list_from_recipes_ms(ms=ms)
+        if not isinstance(dataset, dict):
+            lengths = len(dataset)
+        else:
+            lengths = {k: len(dataset[k]) for k in dataset}
 
+        logger.critical(f"length of recipe-result just listed: {lengths}")
 
-dataset_query = "benchmarks.bluebench[loader_limit=30,max_samples_per_subset=30]"
 
 
 def profile_benchmark_blue_bench():
     bluebench_profiler = BlueBenchProfiler()
-    bluebench_profiler.profiler_do_the_profiling(
-        dataset_query=dataset_query, split="test"
-    )
+    if isinstance(dataset_query, list):
+        for dsq in dataset_query:
+            bluebench_profiler.profiler_do_the_profiling(
+            dataset_query=dsq
+        )
+    else:
+        bluebench_profiler.profiler_do_the_profiling(
+            dataset_query=dataset_query
+        )
 
 
 def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
@@ -147,29 +195,45 @@ def main():
         pst.strip_dirs()
         pst.sort_stats("name")  # sort by function name
         pst.print_stats(
-            "profile_benchmark_blue_bench|profiler_instantiate_benchmark_recipe|profiler_generate_benchmark_dataset|load_data|load_iterables"
+            "profile_benchmark_blue_bench|profiler_load_dataset|profiler_instantiate_recipe_result|profiler_list_from_recipes_ms|profiler_instantiate_model|profiler_infer_predictions|profiler_evaluate_predictions|load_data|load_iterables|split_generator"
         )
         s = f.getvalue()
         assert s.split("\n")[7].split()[3] == "cumtime"
-        overall_tot_time = find_cummtime_of(
-            "profile_benchmark_blue_bench", "bluebench_profiler.py", s
+        load_dataset_time = find_cummtime_of(
+            "profiler_load_dataset", "bluebench_profiler.py", s
         )
-        load_time = find_cummtime_of("load_data", "loaders.py", s)
-
+        # load_time = find_cummtime_of("load_data", "loaders.py", s)
+        # load_time = find_cummtime_of(
+        #     "load_iterables", "loaders.py", s
+        # )
+        # load_time += find_cummtime_of(
+        #     "split_generator", "loaders.py", s
+        # )
         instantiate_benchmark_time = find_cummtime_of(
-            "profiler_instantiate_benchmark_recipe", "bluebench_profiler.py", s
+            "profiler_instantiate_recipe_result", "bluebench_profiler.py", s
         )
-        generate_benchmark_dataset_time = find_cummtime_of(
-            "profiler_generate_benchmark_dataset", "bluebench_profiler.py", s
+        list_a_ms = find_cummtime_of(
+            "profiler_list_from_recipes_ms", "bluebench_profiler.py", s
+        )
+        instantiate_model_time = find_cummtime_of(
+            "profiler_instantiate_model", "bluebench_profiler.py", s
+        )
+        inference_time = find_cummtime_of(
+            "profiler_infer_predictions", "bluebench_profiler.py", s
+        )
+        evaluation_time = find_cummtime_of(
+            "profiler_evaluate_predictions", "bluebench_profiler.py", s
         )
 
         # Data to be written
         dictionary = {
             "dataset_query": dataset_query,
-            "total_time": overall_tot_time,
-            "load_time": load_time,
+            "total_time": load_dataset_time,
             "instantiate_benchmark_time": instantiate_benchmark_time,
-            "generate_benchmark_dataset_time": generate_benchmark_dataset_time,
+            "generate_benchmark_dataset_time": list_a_ms,
+            "instantiate_model_time": instantiate_model_time,
+            "inference_time": inference_time,
+            "evaluation_time": evaluation_time,
             "used_eager_mode": settings.use_eager_execution,
             "performance.prof file": temp_prof_file_path,
         }
