@@ -443,11 +443,13 @@ class LoadCSV(LazyLoader):
                         dataset = reader(self.files[split], **self.get_args()).to_dict(
                             "records"
                         )
+                        break
                     except ValueError:
                         import fsspec
 
                         with fsspec.open(self.files[split], mode="rt") as f:
                             dataset = reader(f, **self.get_args()).to_dict("records")
+                        break
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
