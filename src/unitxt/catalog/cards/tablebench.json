@@ -40,9 +40,14 @@
             "__type__": "rename",
             "field_to_field": {
                 "table": "context",
-                "answer": "answers",
-                "instruction": "dataset_instruction"
+                "answer": "answers"
             }
+        },
+        {
+            "__type__": "remove_fields",
+            "fields": [
+                "instruction"
+            ]
         }
     ],
     "task": {
