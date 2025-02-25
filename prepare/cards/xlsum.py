@@ -16,7 +16,7 @@ langs = configs
 
 for lang in langs:
     card = TaskCard(
-        loader=LoadHF(path="GEM/xlsum", name=lang),
+        loader=LoadHF(path="GEM/xlsum", name=lang, splits=["test", "train", "validation"]),
         preprocess_steps=[
             Rename(field_to_field={"text": "document"}),
             Wrap(field="target", inside="list", to_field="summaries"),
