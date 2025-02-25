@@ -512,7 +512,7 @@ class LoadFromSklearn(LazyLoader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
         for instance in self.__class__._loader_cache[dataset_id]:
-            yield from recursive_copy(instance)
+            yield recursive_copy(instance)
 
 
 class MissingKaggleCredentialsError(ValueError):
