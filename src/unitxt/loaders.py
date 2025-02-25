@@ -200,10 +200,10 @@ class LazyLoader(Loader):
         else:
             splits = self.get_splits()
 
-        return {
+        return MultiStream({
             split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
             for split in splits
-        }
+        })
 
 
 class LoadHF(LazyLoader):
