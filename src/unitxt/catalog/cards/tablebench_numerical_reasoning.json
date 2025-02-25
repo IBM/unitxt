@@ -57,7 +57,8 @@
             "__type__": "rename",
             "field_to_field": {
                 "table": "context",
-                "answer": "answers"
+                "answer": "answers",
+                "instruction": "dataset_instruction"
             }
         }
     ],

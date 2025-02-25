@@ -25,7 +25,8 @@ card = TaskCard(
             field_to_field={"table/columns": "table/header", "table/data": "table/rows"}
         ),
         Set({"context_type": "Table"}),
-        Rename(field_to_field={"table": "context", "answer": "answers"}),
+
+        Rename(field_to_field={"table": "context", "answer": "answers", "instruction": "dataset_instruction"}),
     ],
     task=Task(
         input_fields={
