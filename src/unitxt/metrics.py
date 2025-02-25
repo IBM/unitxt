@@ -54,6 +54,7 @@ from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
+from .dict_utils import dict_get
 
 logger = get_logger()
 settings = get_settings()
@@ -586,14 +587,22 @@ class MaxReduction(DictReduction):
         return float(nan_max(lst))
 
 
-class MultiTurnMetric(
+class GroupMetric(
     MapReduceMetric[PredictionType, IntermediateType],
     Generic[PredictionType, IntermediateType],
 ):
     main_score: str = None
     metric: MapReduceMetric[PredictionType, IntermediateType]
-    conversation_field: str = "conversation"
-    reduction: DictReduction = MeanReduction()
+    group_id_field: str
+    item_id_field: str
+    in_group_reduction: DictReduction = MeanReduction()
+    cross_group_reduction: DictReduction = MeanReduction()
+
+    def _get_group_id(self, task_data) -> str:
+        return str(dict_get(task_data, self.group_id_field))
+
+    def _get_item_id(self, task_data) -> str:
+        return str(dict_get(task_data, self.item_id_field))
 
     def prepare(self):
         super().prepare()
@@ -604,9 +613,9 @@ class MultiTurnMetric(
         evaluation_inputs_stream: Generator[
             EvaluationInput[PredictionType], None, None
         ],
-    ) -> List[Tuple[IntermediateType, str, int]]:
-        dialog_ids: List[str] = []
-        turn_ids: List[int] = []
+    ) -> List[Tuple[IntermediateType, str, str]]:
+        group_ids: List[str] = []
+        item_ids: List[str] = []
 
         def multi_turn_stream(
             evaluation_inputs_stream: Generator[
@@ -616,32 +625,42 @@ class MultiTurnMetric(
             Tuple[PredictionType, List[PredictionType], Dict[str, Any]], None, None
         ]:
             for prediction, references, task_data in evaluation_inputs_stream:
-                conversation = task_data[self.conversation_field]
-                dialog_ids.append(conversation["id"])
-                turn_ids.append(len(conversation["dialog"]))
+                group_ids.append(self._get_group_id(task_data))
+                item_ids.append(self._get_group_id(task_data))
                 yield prediction, references, task_data
 
         intermediates: List[IntermediateType] = list(
             self.metric.map_stream(multi_turn_stream(evaluation_inputs_stream))
         )
 
-        return list(zip(intermediates, dialog_ids, turn_ids))
+        return list(zip(intermediates, group_ids, item_ids))
 
     def reduce(
-        self, intermediates: List[Tuple[IntermediateType, str, int]]
+        self, intermediates: List[Tuple[IntermediateType, str, str]]
     ) -> Dict[str, Any]:
-        data: Dict[str, Dict[int, IntermediateType]] = {}
-        for intermediate, dialog_id, turn_id in intermediates:
-            if dialog_id not in data:
-                data[dialog_id] = {}
-            data[dialog_id][turn_id] = intermediate
+        data: Dict[str, Dict[str, Any]] = {}
+        for intermediate, group_id, item_id in intermediates:
+            if group_id not in data:
+                data[group_id] = {}
+            data[group_id][item_id] = self.metric.reduce_one(intermediate)
 
-        dialog_scores: Dict[str, Dict[str, Any]] = {
-            dialog_id: self.metric.reduce(list(dialog_data.values()))
+        group_scores: Dict[str, Dict[str, Any]] = {
+            dialog_id: self.in_group_reduction.reduce(list(dialog_data.values()))
             for dialog_id, dialog_data in data.items()
         }
 
-        return self.reduction.reduce(list(dialog_scores.values()))
+        return self.cross_group_reduction.reduce(list(group_scores.values()))
+
+
+class MultiTurnMetric(
+    GroupMetric[PredictionType, IntermediateType],
+    Generic[PredictionType, IntermediateType],
+):
+    group_id_field = "conversation/id"
+    item_id_field = "conversation/dialog"
+
+    def _get_item_id(self, task_data):
+        return str(len(dict_get(task_data, self.item_id_field)))
 
 
 class ReductionInstanceMetric(
