@@ -156,6 +156,9 @@ if Settings.is_uninitilized():
     settings.task_data_as_text = (bool, True)
     settings.default_provider = "watsonx"
     settings.default_format = None
+    settings.hf_offline_datasets_path = None
+    settings.hf_offline_metrics_path = None
+    settings.hf_offline_models_path = None
 
 if Constants.is_uninitilized():
     constants = Constants()
