@@ -42,6 +42,7 @@ from .dataclass import (
     OptionalField,
 )
 from .deprecation_utils import deprecation
+from .dict_utils import dict_get
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .inference import (
     HFPipelineBasedInferenceEngine,
@@ -67,7 +68,6 @@ from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
-from .dict_utils import dict_get
 
 FINQA_HASH = "42430b8613082bb4b85d49210284135d"
 
