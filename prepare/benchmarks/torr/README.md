@@ -18,7 +18,7 @@ With a strong focus on robustness, it examines how models respond to differing p
 It encompasses 10 datasets belonging to six diverse downstream tabular tasks from multiple domains.
 
 <div align="center">
-    <img src="https://raw.githubusercontent.com/IBM/unitxt/main/assets/torr/datasests.png" alt="The selected datasets for ToRR along with their properties. The 3 columns on the right reflect the required skills to solve each dataset." width="100%" />
+    <img src="https://raw.githubusercontent.com/IBM/unitxt/main/assets/torr/datasets.png" alt="The selected datasets for ToRR along with their properties. The 3 columns on the right reflect the required skills to solve each dataset." width="100%" />
 </div>
 
 
