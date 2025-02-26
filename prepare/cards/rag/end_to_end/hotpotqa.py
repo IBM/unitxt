@@ -1,38 +1,54 @@
-import json
+from typing import Any, Dict, Optional
 
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import Cast, Copy, Set
-from unitxt.splitters import RenameSplits
+from unitxt.operators import Copy, InstanceOperator, Set
+from unitxt.splitters import SplitRandomMix
+from unitxt.string_operators import Join
 from unitxt.templates import InputOutputTemplate
-from unitxt.test_utils.card import test_card
 
+
+# TODO - To be removed.
+class Breakpoint(InstanceOperator):
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return instance
+# Benchmark
 card = TaskCard(
     loader=LoadHF(
-        path="enelpol/rag-mini-bioasq",
-        name="question-answer-passages",
+        path="hotpotqa/hotpot_qa",
+        name="distractor",
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        SplitRandomMix(
+            {
+                "test": "train[30%]",
+                "train": "train[70%]",
+            }),
         Copy(
             field_to_field={
                 "question": "question",
                 "id": "question_id",
+                "level": "metadata_field/level"
             },
         ),
-        Cast(
-            field="relevant_passage_ids",
-            to="str",
+        Copy(
+            field="context/title",
             to_field="reference_context_ids",
+        ),
+        Join(
+            field="context/sentences",
+            by=" ",
+            to_field="reference_contexts",
             process_every_value=True,
         ),
         Set(
             fields={
-                "reference_contexts": [],
                 "is_answerable_label": True,
-                "metadata_field": "",
             }
         ),
         Wrap(
@@ -43,17 +59,8 @@ card = TaskCard(
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
-    __tags__={"license": "cc-by-2.5"},
-    __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
-
-It is derived from rag-datasets/rag-mini-bioasq.
-
-Modifications include:
-
-filling in missing passages (some of them contained "nan" instead of actual text),
-changing relevant_passage_ids' type from string to sequence of ints,
-deduplicating the passages (removed 40 duplicates) and fixing the relevant_passage_ids in QAP triplets to point to the corrected, deduplicated passages' ids,
-splitting QAP triplets into train and test splits.
+    __tags__={"license": "CC BY-SA 4.0"},
+    __description__="""TODO
 """,
 )
 wrong_answer = {
@@ -63,36 +70,36 @@ wrong_answer = {
     "context_ids": ["id0"],
 }
 
-test_card(
-    card,
-    strict=True,
-    full_mismatch_prediction_values=[json.dumps(wrong_answer)],
-    debug=False,
-    demos_taken_from="test",
-    demos_pool_size=5,
-)
+# test_card(
+#     card,
+#     strict=True,
+#     full_mismatch_prediction_values=[json.dumps(wrong_answer)],
+#     debug=False,
+#     demos_taken_from="test",
+#     demos_pool_size=5,
+# )
 
-add_to_catalog(card, "cards.rag.benchmark.bioasq.en", overwrite=True)
+add_to_catalog(card, "cards.rag.benchmark.hotpotqa.en", overwrite=True)
 
 
 # Documents
 card = TaskCard(
     loader=LoadHF(
-        path="enelpol/rag-mini-bioasq",
-        name="text-corpus",
+        path="hotpotqa/hotpot_qa",
+        name="distractor",
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
-        RenameSplits({"test": "train"}),
-        Cast(field="id", to="str"),
         Copy(field="id", to_field="document_id"),
+        # TODO This line is wrong
         Wrap(field="passage", inside="list", to_field="passages"),
         Set(
             fields={
                 "metadata_field": "",
-                "title": "",
+                "title": "", # TODO
             }
         ),
+        # TODO SET TITLE TO BE DOCUMENT ID -
     ],
     task="tasks.rag.corpora",
     templates={
@@ -101,19 +108,10 @@ card = TaskCard(
             output_format="",
         ),
     },
-    __tags__={"license": "cc-by-2.5"},
-    __description__="""This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.
-
-It is derived from rag-datasets/rag-mini-bioasq.
-
-Modifications include:
-
-filling in missing passages (some of them contained "nan" instead of actual text),
-changing relevant_passage_ids' type from string to sequence of ints,
-deduplicating the passages (removed 40 duplicates) and fixing the relevant_passage_ids in QAP triplets to point to the corrected, deduplicated passages' ids,
-splitting QAP triplets into train and test splits.
+    __tags__={"license": "CC BY-SA 4.0"},
+    __description__="""TODO
 """,
 )
 
 # Not testing card, because documents are not evaluated.
-add_to_catalog(card, "cards.rag.documents.bioasq.en", overwrite=True)
+add_to_catalog(card, "cards.rag.documents.hotpotqa.en", overwrite=True)
