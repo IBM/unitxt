@@ -1,12 +1,13 @@
 import csv
 import io
+import json
 from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
-from .db_utils import get_db_connector
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
+from .sql_utils import get_db_connector
 from .type_utils import isoftype, to_type_string
 from .types import (
     Conversation,
@@ -60,6 +61,13 @@ class ListSerializer(SingleTypeSerializer):
 
     def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
         return ", ".join(str(item) for item in value)
+
+
+class DictAsJsonSerializer(SingleTypeSerializer):
+    serialized_type = dict
+
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
 
 
 class DialogSerializer(SingleTypeSerializer):

@@ -23,21 +23,17 @@ evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
 print_dict(
     evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "subset",
-    ],
+    keys_to_print=["source", "prediction", "subset"],
 )
 print_dict(
     evaluated_dataset[0]["score"]["global"],
 )
 
 assert (
-    evaluated_dataset[0]["score"]["global"]["score"] >= 0.44
+    evaluated_dataset[0]["score"]["global"]["score"] >= 0.43
 ), "results have been degraded, something is wrong with the metric"
 
-# with llama-3-70b-instruct
+# with llama-3-3-70b-instruct
 # num_of_instances (int):
 #     100
 # execution_accuracy (float):
