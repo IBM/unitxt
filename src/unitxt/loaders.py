@@ -307,7 +307,8 @@ class LoadHF(LazyLoader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             if not disable_memory_caching:
                 self.__class__._loader_cache[dataset_id] = dataset
-        if "instruction" in dataset.features:
+        if "instruction" in dataset[0]:
+
             raise ValueError("There might be a problem")
         return self.__class__._loader_cache[dataset_id]
 
