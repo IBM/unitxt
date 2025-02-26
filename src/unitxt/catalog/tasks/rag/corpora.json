@@ -4,7 +4,7 @@
         "document_id": "str",
         "title": "str",
         "passages": "List[str]",
-        "metadata_field": "str"
+        "metadata_field": "Dict[str, str]"
     },
     "reference_fields": {},
     "prediction_type": "Any",

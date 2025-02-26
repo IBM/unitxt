@@ -28,7 +28,7 @@ card = TaskCard(
                 "reference_context_ids": [],
                 "reference_contexts": [],
                 "is_answerable_label": True,
-                "metadata_field": "",
+                "metadata_field": {},
             }
         ),
         Wrap(field="answer", inside="list", to_field="reference_answers"),
@@ -74,7 +74,7 @@ card = TaskCard(
         Wrap(field="passage", inside="list", to_field="passages"),
         Set(
             fields={
-                "metadata_field": "",
+                "metadata_field": {},
                 "title": "",
             }
         ),

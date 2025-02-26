@@ -36,7 +36,7 @@ card = TaskCard(
             fields={
                 "reference_contexts": [],
                 "is_answerable_label": True,
-                "metadata_field": "",
+                "metadata_field": {},
             }
         ),
         ListFieldValues(
@@ -89,7 +89,7 @@ card = TaskCard(
         ),
         Set(
             fields={
-                "metadata_field": "",
+                "metadata_field": {},
             }
         ),
     ],
