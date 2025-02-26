@@ -1,20 +1,10 @@
-from typing import Any, Dict
 
 from unitxt.blocks import LoadHF, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import DuplicateBySubLists, Pop, Wrap
 from unitxt.dialog_operators import ToDialog
-from unitxt.operator import InstanceOperator
 from unitxt.operators import AddID, Copy, ZipFieldValues
 from unitxt.test_utils.card import test_card
-
-
-class Pass(InstanceOperator):
-    def process(
-        self, instance: Dict[str, Any], stream_name: str | None = None
-    ) -> Dict[str, Any]:
-        return instance
-
 
 card = TaskCard(
     loader=LoadHF(path="stanfordnlp/coqa"),
