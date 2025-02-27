@@ -28,7 +28,7 @@
         {
             "__type__": "set",
             "fields": {
-                "metadata_field": ""
+                "metadata_field": {}
             }
         }
     ],

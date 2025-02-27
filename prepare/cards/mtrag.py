@@ -111,7 +111,7 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
             Wrap(field="text", inside="list", to_field="passages"),
             Set(
                 fields={
-                    "metadata_field": "",
+                    "metadata_field": {},
                 }
             ),
         ],
