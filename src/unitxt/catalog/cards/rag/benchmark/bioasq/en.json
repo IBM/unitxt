@@ -28,7 +28,7 @@
             "fields": {
                 "reference_contexts": [],
                 "is_answerable_label": true,
-                "metadata_field": ""
+                "metadata_field": {}
             }
         },
         {
