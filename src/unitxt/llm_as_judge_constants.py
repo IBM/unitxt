@@ -84,8 +84,6 @@ class EvaluatorNameEnum(str, Enum):
     GRANITE3_8B = "Granite3.0-8b"
     GRANITE3_1_2B = "Granite3.1-2b"
     GRANITE3_1_8B = "Granite3.1-8b"
-    GRANITE_GUARDIAN_2B = "Granite Guardian 3.0 2B"
-    GRANITE_GUARDIAN_8B = "Granite Guardian 3.0 8B"
 
 
 class ModelProviderEnum(str, Enum):
@@ -112,8 +110,6 @@ EVALUATOR_TO_MODEL_ID = {
     EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
     EvaluatorNameEnum.GRANITE3_1_2B: "ibm/granite-3.1-2b-instruct",
     EvaluatorNameEnum.GRANITE3_1_8B: "ibm/granite-3.1-8b-instruct",
-    EvaluatorNameEnum.GRANITE_GUARDIAN_2B: "ibm/granite-guardian-3-2b",
-    EvaluatorNameEnum.GRANITE_GUARDIAN_8B: "ibm/granite-guardian-3-8b",
 }
 
 MODEL_RENAMINGS = {
@@ -189,14 +185,6 @@ EVALUATORS_METADATA = [
         EvaluatorNameEnum.LLAMA3_1_405B,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
-    EvaluatorMetadata(
-        EvaluatorNameEnum.GRANITE_GUARDIAN_2B,
-        [ModelProviderEnum.WATSONX],
-    ),
-    EvaluatorMetadata(
-        EvaluatorNameEnum.GRANITE_GUARDIAN_8B,
-        [ModelProviderEnum.WATSONX],
-    ),
 ]
 
 ################################  Direct Assessment Criterias ################################
@@ -217,7 +205,7 @@ class DirectCriteriaCatalogEnum(Enum):
             ),
             CriteriaOption(
                 "Pass",
-                "There is no numeriselected_providercal temperature reading in the response.",
+                "There is no numerical temperature reading in the response.",
             ),
         ],
         {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
@@ -943,6 +931,30 @@ class DirectCriteriaCatalogEnum(Enum):
         {
             "Yes": 1.0,
             "No": 0.0,
+        },
+    )
+
+    CORRECTNESS_BASED_ON_GROUND_TRUTH = CriteriaWithOptions(
+        name="correctness_based_on_ground_truth",
+        description="Does the response correctly convey the same factual information as the ground truth?",
+        options=[
+            CriteriaOption(
+                name="correct",
+                description="The response conveys the same factual meaning as the ground truth. Minor rewording, synonyms, or grammatical differences are acceptable. The response is relevant to the question and does not introduce unrelated or misleading information.",
+            ),
+            CriteriaOption(
+                name="partially_correct",
+                description="The response contains some correct information but is incomplete or lacks essential details. It may also contain minor inaccuracies or extraneous information that slightly misrepresents the ground truth.",
+            ),
+            CriteriaOption(
+                name="incorrect",
+                description="The response does not align with the ground truth. It either presents incorrect, unrelated, or misleading information, or omits key details that change the intended meaning.",
+            ),
+        ],
+        option_map={
+            "correct": 1.0,
+            "partially_correct": 0.5,
+            "incorrect": 0.0,
         },
     )
 

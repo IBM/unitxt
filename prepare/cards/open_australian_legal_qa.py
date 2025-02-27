@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -35,14 +33,15 @@ card = TaskCard(
     templates={"default": "templates.rag.response_generation.please_respond_chat"},
 )
 
-# testing the card is too slow with the bert-score metric, so dropping it
-card_for_test = deepcopy(card)
-card_for_test.task.metrics = ["metrics.rouge"]
-
 test_card(
-    card_for_test,
+    card,
     strict=True,
     demos_taken_from="test",
+    metrics=[
+        "metrics.rag.response_generation.answer_correctness.token_recall",
+        "metrics.rag.response_generation.faithfulness.token_k_precision",
+        "metrics.rag.response_generation.answer_relevance.token_recall",
+    ],
 )
 add_to_catalog(
     card, "cards.rag.response_generation.train.open_australian_legal_qa", overwrite=True

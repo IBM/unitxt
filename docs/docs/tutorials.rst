@@ -1,7 +1,7 @@
 .. _tutorials:
 
 ------------
-Tutorials ✨
+Guides ✨
 ------------
 
 .. toctree::
@@ -31,4 +31,5 @@ Tutorials ✨
    tags_and_descriptions
    types_and_serializers
    contributors_guide
+   settings
 
