@@ -205,7 +205,7 @@ class DirectCriteriaCatalogEnum(Enum):
             ),
             CriteriaOption(
                 "Pass",
-                "There is no numeriselected_providercal temperature reading in the response.",
+                "There is no numerical temperature reading in the response.",
             ),
         ],
         {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
