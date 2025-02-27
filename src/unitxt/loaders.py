@@ -308,7 +308,7 @@ class LoadHF(LazyLoader):
             if not disable_memory_caching:
                 self.__class__._loader_cache[dataset_id] = dataset
         if "instruction" in dict(next(iter(dataset))):
-            raise requests.HTTPError("There might be a problem")
+            logger.critical(f"______________instruction______________path:{self.path},name:{self.name}")
         return self.__class__._loader_cache[dataset_id]
 
     def _maybe_set_classification_policy(self):
