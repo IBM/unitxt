@@ -31,9 +31,9 @@ dataset = create_dataset(
                 risk_name="harm",
                 user_message_field="user_text",
                 inference_engine=HFAutoModelInferenceEngine(
-                    model_name='ibm-granite/granite-guardian-3.1-2b',
+                    model_name="ibm-granite/granite-guardian-3.1-2b",
                     max_new_tokens=20,
-                    device='cpu'
+                    device="cpu"
                 )
             )
         ],
