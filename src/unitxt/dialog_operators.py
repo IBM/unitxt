@@ -17,7 +17,16 @@ The format of the dialog is:
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat
-from .operators import InstanceFieldOperator
+from .operators import FieldOperator, InstanceFieldOperator
+
+
+class ToDialog(FieldOperator):
+    def process_value(self, value: Any) -> Any:
+        dialog = []
+        for question, answer in value:
+            dialog.append({"role": "user", "content": question})
+            dialog.append({"role": "agent", "content": answer})
+        return dialog
 
 
 class SerializeDialog(InstanceFieldOperator):

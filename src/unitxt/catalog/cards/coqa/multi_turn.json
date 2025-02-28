@@ -1,0 +1,88 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "stanfordnlp/coqa"
+    },
+    "preprocess_steps": [
+        "splitters.small_no_test",
+        {
+            "__type__": "add_id"
+        },
+        {
+            "__type__": "copy",
+            "field": "id",
+            "to_field": "conversation/id"
+        },
+        {
+            "__type__": "zip_field_values",
+            "fields": [
+                "questions",
+                "answers/input_text"
+            ],
+            "to_field": "dialog"
+        },
+        {
+            "__type__": "duplicate_by_sub_lists",
+            "field": "dialog"
+        },
+        {
+            "__type__": "to_dialog",
+            "field": "dialog"
+        },
+        {
+            "__type__": "pop",
+            "field": "dialog",
+            "item": -1,
+            "to_field": "last_turn"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "last_turn/content": "answer",
+                "story": "context"
+            }
+        },
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "copy",
+            "field": "dialog",
+            "to_field": "conversation/dialog"
+        }
+    ],
+    "task": "tasks.qa.extractive.multi_turn",
+    "templates": [
+        "templates.qa.multi_turn.with_context.simple"
+    ],
+    "__tags__": {
+        "annotations_creators": "crowdsourced",
+        "arxiv": [
+            "1808.07042",
+            "1704.04683",
+            "1506.03340"
+        ],
+        "flags": [
+            "conversational-qa"
+        ],
+        "language": "en",
+        "language_creators": "found",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "1K<n<10K",
+        "source_datasets": [
+            "extended|race",
+            "extended|cnn_dailymail",
+            "extended|wikipedia",
+            "extended|other"
+        ],
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "CoQA is a large-scale dataset for building Conversational Question Answering systems. \nOur dataset contains 127k questions with answers, obtained from 8k conversations about text passages from seven diverse domains. The questions are conversational, and the answers are free-form text with their corresponding evidence highlighted in the passage. Supported Tasks and Leaderboards More Information Needed… See the full description on the dataset page: https://huggingface.co/datasets/stanfordnlp/coqa."
+}
