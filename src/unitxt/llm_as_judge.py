@@ -289,6 +289,9 @@ class LLMJudgeDirect(LLMJudge):
                 "summary": summarization_outputs[i]
                 if self.generate_summaries
                 else None,
+                "positional_bias_summary": summarization_outputs[i]
+                if self.generate_summaries and self.check_positional_bias
+                else None,
                 "prompts": {
                     "assessment": assessment_prompts[i],
                     "positional_bias_assessment": assessment_prompts[
