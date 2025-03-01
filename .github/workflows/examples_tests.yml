@@ -43,7 +43,7 @@ jobs:
      - run: uv pip install --system ".[tests,watsonx,inference_tests]"
 
      - name:  Hugging Face Login
-        run: |
+       run: |
           for i in {1..5}; do
             huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
           done
