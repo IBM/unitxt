@@ -1,0 +1,88 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "ai4bharat/MILU",
+        "data_dir": "Telugu",
+        "splits": [
+            "validation",
+            "test"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "filter_by_condition",
+            "values": {
+                "domain": "Engineering & Tech"
+            },
+            "condition": "eq"
+        },
+        {
+            "__type__": "deduplicate",
+            "by": [
+                "question",
+                "subject",
+                "target"
+            ]
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "train"
+            }
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "target": "answer"
+            }
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "answer": {
+                    "option1": 0,
+                    "option2": 1,
+                    "option3": 2,
+                    "option4": 3
+                }
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "option1",
+                "option2",
+                "option3",
+                "option4"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "topic": "Engineering & Tech"
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_topic",
+    "templates": [
+        "templates.qa.multiple_choice.with_topic.all"
+    ],
+    "__tags__": {
+        "annotations_creators": "no-annotation",
+        "arxiv": [
+            "2411.02538"
+        ],
+        "language": "te",
+        "language_creators": "expert-generated",
+        "license": "CC BY 4.0",
+        "multilinguality": "multilingual",
+        "region": "in",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "original",
+        "task_categories": "question-answering",
+        "task_ids": "multiple-choice-qa"
+    },
+    "__description__": "MILU (Multi-task Indic Language Understanding Benchmark) is a comprehensive evaluation dataset designed to assess the performance of Large Language Models (LLMs) across 11 Indic languages. It spans 8 domains and 41 subjects, reflecting both general and culturally specific knowledge from India. See the full description on the dataset page: https://huggingface.co/datasets/ai4bharat/MILU."
+}
