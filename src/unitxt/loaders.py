@@ -32,6 +32,7 @@ Available Loaders Overview:
 """
 
 import fnmatch
+import hashlib
 import itertools
 import json
 import os
@@ -57,6 +58,7 @@ import pandas as pd
 import requests
 from datasets import (
     DatasetDict,
+    DownloadConfig,
     IterableDataset,
     IterableDatasetDict,
     get_dataset_split_names,
@@ -85,16 +87,40 @@ class UnitxtUnverifiedCodeError(UnitxtError):
 
 @retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
-    if settings.hf_offline_datasets_path is not None:
-        path = os.path.join(settings.hf_offline_datasets_path, path)
+
+    if settings.hf_load_from_offline is None and settings.hf_save_to_offline is None:
+        # for backward compatibility
+
+        if settings.hf_offline_datasets_path is not None:
+            path = os.path.join(settings.hf_offline_datasets_path, path)
+        try:
+            return _hf_load_dataset(
+                path,
+                *args, **kwargs,
+                    verification_mode="no_checks",
+                    trust_remote_code=settings.allow_unverified_code,
+                    download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+                )
+        except ValueError as e:
+            if "trust_remote_code" in str(e):
+                raise UnitxtUnverifiedCodeError(path) from e
+            raise e # Re raise
+
+    # either settings.hf_load_from_offline is not None or settings.hf_save_to_offline is not None:
+    download_config=DownloadConfig(
+        cache_dir=settings.hf_offline_datasets_path if settings.hf_save_to_offline else None,
+    )
+    local_kwargs = {
+        "download_config": download_config,
+        "cache_dir" : settings.hf_offline_datasets_path if settings.hf_load_from_offline else None,
+        "verification_mode" : "no_checks",
+        "trust_remote_code" :settings.allow_unverified_code,
+        "download_mode" : "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+    }
     try:
         return _hf_load_dataset(
             path,
-            *args, **kwargs,
-                verification_mode="no_checks",
-                trust_remote_code=settings.allow_unverified_code,
-                download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-            )
+            *args, **{**local_kwargs, **kwargs})
     except ValueError as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
@@ -438,12 +464,22 @@ class LoadCSV(LazyLoader):
             ["proprietary"], "when loading from local files"
         )
 
-    def get_reader(self):
+    def get_reader(self)->callable:
         if self.file_type == "csv":
             return pd.read_csv
         if self.file_type == "json":
             return pd.read_json
         raise ValueError()
+
+    def get_writer(self, df:pd.DataFrame)->callable:
+        if self.file_type == "csv":
+            return df.to_csv
+        if self.file_type == "json":
+            return df.to_json
+        raise ValueError()
+
+    def get_path_to_local(self, path_to_hub:str)->str:
+        return hashlib.md5(path_to_hub.encode()).hexdigest()
 
     def get_args(self):
         args = {}
@@ -467,22 +503,19 @@ class LoadCSV(LazyLoader):
         if dataset is None:
             if self.get_limit() is not None:
                 self.log_limited_loading()
+            reader = self.get_reader()
+            file_path = self.files[split]
+            if settings.hf_load_from_offline:
+                file_path = self.get_path_to_local(file_path)
             for attempt in range(settings.loaders_max_retries):
                 try:
-                    reader = self.get_reader()
-                    if self.get_limit() is not None:
-                        self.log_limited_loading()
-
                     try:
-                        dataset = reader(self.files[split], **self.get_args()).to_dict(
-                            "records"
-                        )
+                        df = reader(file_path, **self.get_args())
                         break
                     except ValueError:
                         import fsspec
-
-                        with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(f, **self.get_args()).to_dict("records")
+                        with fsspec.open(file_path, mode="rt") as f:
+                            df = reader(f, **self.get_args())
                         break
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
@@ -490,6 +523,13 @@ class LoadCSV(LazyLoader):
                         time.sleep(2)
                     else:
                         raise e
+            if settings.hf_save_to_offline:
+                file_path = self.get_path_to_local(self.files[split])
+                writer = self.get_writer(df)
+                writer (file_path, index=False)
+
+            dataset = df.to_dict("records")
+
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
 
