@@ -64,7 +64,7 @@ If a catalogued task fits your use case, you may reference it by name:
     task='tasks.translation.directed',
 
 Loading the Dataset
----------------------
+--------------------
 
 To load data from an external source, we use a loader.
 For example, to load the `wmt16` translation dataset from the HuggingFace hub:
@@ -74,6 +74,13 @@ For example, to load the `wmt16` translation dataset from the HuggingFace hub:
     loader=LoadHF(path="wmt16", name="de-en"),
 
 More loaders for different sources are available in the  :class:`loaders <unitxt.loaders>` section.
+
+Loading from (and savig to) local file-system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Setting env variable ``UNITXT_HF_LOAD_FROM_OFFLINE=true``, will have loaders fetch the data from the local file-system directory
+specified by env variable ``UNITXT_HF_OFFLINE_DATASET_PATH``. To have loaders save the data they fetched from an 
+outside hub, in that specified local file-system directory, set ``UNITXT_HF_SAVE_TO_OFFLINE=true``
 
 The Preprocessing Pipeline
 ---------------------------

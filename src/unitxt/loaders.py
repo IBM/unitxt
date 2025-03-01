@@ -72,6 +72,7 @@ from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
 from .operators import Set
+from .random_utils import new_random_generator
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
@@ -307,8 +308,8 @@ class LoadHF(LazyLoader):
                 split=split,
                 num_proc=self.num_proc,
             )
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
             if not disable_memory_caching:
+                self.__class__._loader_cache.max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
         return dataset
 
@@ -342,25 +343,16 @@ class LoadHF(LazyLoader):
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
-            try:
-                dataset = self.load_dataset(
-                    split=None, disable_memory_caching=True, streaming=True
-                )
-            except (
-                NotImplementedError
-            ):  # streaming is not supported for zipped files so we load without streaming
-                dataset = self.load_dataset(split=None, streaming=False)
+            dataset = self.load_dataset(
+                split=None, disable_memory_caching=True, streaming=True
+            )
             return list(dataset.keys())
 
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
             self.log_limited_loading()
-        try:
-            dataset = self.load_dataset(split=split)
-        except (
-            NotImplementedError
-        ):  # streaming is not supported for zipped files so we load without streaming
-            dataset = self.load_dataset(split=split, streaming=False)
+
+        dataset = self.load_dataset(split=split)
 
         if self.filtering_lambda is not None:
             dataset = self.filter_load(dataset)
@@ -409,12 +401,24 @@ class LoadCSV(LazyLoader):
             ["proprietary"], "when loading from local files"
         )
 
-    def get_reader(self):
+    def get_reader(self)->callable:
         if self.file_type == "csv":
             return pd.read_csv
         if self.file_type == "json":
             return pd.read_json
         raise ValueError()
+
+    def get_writer(self, df:pd.DataFrame)->callable:
+        if self.file_type == "csv":
+            return df.to_csv
+        if self.file_type == "json":
+            return df.to_json
+        raise ValueError()
+
+    def get_path_to_local(self, path_to_hub:str)->str:
+        rand = new_random_generator(sub_seed=path_to_hub)
+        file_path_to_simple_string = str(rand.randint(100000, 999999))
+        return os.path.join(settings.hf_offline_datasets_path, file_path_to_simple_string+"."+self.file_type)
 
     def get_args(self):
         args = {}
@@ -438,22 +442,19 @@ class LoadCSV(LazyLoader):
         if dataset is None:
             if self.get_limit() is not None:
                 self.log_limited_loading()
+            reader = self.get_reader()
+            file_path = self.files[split]
+            if settings.hf_load_from_offline:
+                file_path = self.get_path_to_local(file_path)
             for attempt in range(settings.loaders_max_retries):
                 try:
-                    reader = self.get_reader()
-                    if self.get_limit() is not None:
-                        self.log_limited_loading()
-
                     try:
-                        dataset = reader(self.files[split], **self.get_args()).to_dict(
-                            "records"
-                        )
+                        df = reader(file_path, **self.get_args())
                         break
                     except ValueError:
                         import fsspec
-
-                        with fsspec.open(self.files[split], mode="rt") as f:
-                            dataset = reader(f, **self.get_args()).to_dict("records")
+                        with fsspec.open(file_path, mode="rt") as f:
+                            df = reader(f, **self.get_args())
                         break
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
@@ -461,6 +462,13 @@ class LoadCSV(LazyLoader):
                         time.sleep(2)
                     else:
                         raise e
+            if settings.hf_save_to_offline:
+                file_path = self.get_path_to_local(self.files[split])
+                writer = self.get_writer(df)
+                writer (file_path, index=False)
+
+            dataset = df.to_dict("records")
+
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             self.__class__._loader_cache[dataset_id] = dataset
 
