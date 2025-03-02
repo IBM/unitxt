@@ -849,6 +849,8 @@ class HFPipelineBasedInferenceEngine(
     model_name: str
     label: str = "hf_pipeline_inference_engine"
 
+    batch_size: int = 30
+
     use_fast_tokenizer: bool = True
     use_fp16: bool = True
     load_in_8bit: bool = False
@@ -857,7 +859,6 @@ class HFPipelineBasedInferenceEngine(
 
     device_map: Any = None
 
-    pipe: Any = InternalField(default=None)
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers",
@@ -965,7 +966,7 @@ class HFPipelineBasedInferenceEngine(
         if not self._is_loaded():
             self._prepare_engine()
 
-        outputs = self.model([instance["source"] for instance in dataset])
+        outputs = self.model([instance["source"] for instance in dataset], batch_size=self.batch_size)
 
         return [
             self.get_return_object(output[0], instance["source"], return_meta_data)
