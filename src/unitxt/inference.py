@@ -2894,10 +2894,8 @@ class LiteLLMInferenceEngine(
             # Introduce a slight delay to prevent burstiness
             await asyncio.sleep(0.01)
             messages = self.to_messages(instance)
-            messages[0]['content'][1]['text'] = messages[0]['content'][1]['text'] # TODO: remove
             kwargs = self.to_dict([StandardAPIParamsMixin])
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
-            print(messages)
             del kwargs["credentials"]
             try:
                 response = await self._completion(
@@ -2905,7 +2903,6 @@ class LiteLLMInferenceEngine(
                     max_retries=self.max_retries,
                     caching=True,
                     drop_params=False,
-                    # stream=True,
                     **self.credentials,
                     **kwargs,
                 )

@@ -10,7 +10,6 @@ with settings.context(
 ):
     test_dataset = load_dataset(
         "benchmarks.llama_vision[format=formats.chat_api,max_samples_per_subset=30]",
-        # "benchmarks.llama_vision[format=formats.chat_api]",
         split="test",
         use_cache=False
     )
