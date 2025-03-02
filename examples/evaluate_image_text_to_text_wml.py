@@ -25,7 +25,6 @@ with settings.context(disable_hf_datasets_cache=False):
         card="cards.ai2d",
         format="formats.chat_api",
         split="test",
-        template=template,
         max_test_instances=20
     )
 
