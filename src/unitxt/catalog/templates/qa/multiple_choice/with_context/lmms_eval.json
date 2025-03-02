@@ -4,8 +4,4 @@
     "choices_separator": "\n",
     "target_field": "answer",
     "enumerator": "capitals"
-
-
-
-
 }
