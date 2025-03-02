@@ -2,6 +2,7 @@ from unitxt.benchmark import Benchmark
 from unitxt.catalog import add_to_catalog
 from unitxt.standard import DatasetRecipe
 
+
 benchmark = Benchmark(
     subsets={
         "doc_vqa": DatasetRecipe(
@@ -22,4 +23,4 @@ benchmark = Benchmark(
     },
 )
 
-add_to_catalog(benchmark, "benchmarks.vision", overwrite=True)
+add_to_catalog(benchmark, "benchmarks.vision_default", overwrite=True)

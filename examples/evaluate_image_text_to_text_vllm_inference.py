@@ -31,19 +31,26 @@ with settings.context(
     # )
     # max_tokens = 32
     # chart_qa template
+    # template = MultiReferenceTemplate(
+    #     input_format="{context} {question}\nAnswer the question with a single word.",
+    #     references_field="answers",
+    #     __description__="lmms-evals default template for chartqa.",
+    # )
+    # max_tokens = 16
+    # chart_qa COT template
     template = MultiReferenceTemplate(
-        input_format="{context} {question}\nAnswer the question with a single word.",
+        input_format="{context} You are provided a chart image and will be asked a question. You have to think through your answer and provide a step-by-step solution. Once you have the solution, write the final answer in at most a few words at the end with the phrase 'FINAL ANSWER:'. The question is: {question} Let's think step by step.",
         references_field="answers",
-        __description__="lmms-evals default template for chartqa.",
+        __description__="llama-vision template for ChartQA",
     )
-    max_tokens = 16
+    max_tokens = 512
     dataset = load_dataset(
         card="cards.chart_qa_lmms_eval",
         format="formats.chat_api",
         template=template,
-        # loader_limit=2,
+        loader_limit=30,
         split="test",
-        disable_cache=False
+        use_cache=False
     )
 
     inference_model = VLLMInferenceEngine(

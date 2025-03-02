@@ -3,12 +3,12 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import DecodeImage, ToImage
+from unitxt.operators import Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.templates import MultiReferenceTemplate
-from cvar_pyutils.debugging_tools import set_remote_debugger
-set_remote_debugger('9.148.189.104', 55557)
+
 
 templates = get_from_catalog("templates.qa.with_context.all")
 template = MultiReferenceTemplate(
@@ -20,6 +20,7 @@ template = MultiReferenceTemplate(
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc", streaming=True),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"train": "train", "dev": "test"}),
         "splitters.small_no_dev",
         Wrap(field="answer", inside="list", to_field="answers"),

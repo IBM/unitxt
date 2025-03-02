@@ -2867,6 +2867,7 @@ class LiteLLMInferenceEngine(
             messages[0]['content'][1]['text'] = messages[0]['content'][1]['text'] # TODO: remove
             kwargs = self.to_dict([StandardAPIParamsMixin])
             kwargs = {k: v for k, v in kwargs.items() if v is not None}
+            print(messages)
             del kwargs["credentials"]
             try:
                 response = await self._completion(

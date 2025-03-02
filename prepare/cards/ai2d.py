@@ -2,7 +2,7 @@ from unitxt import get_from_catalog
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.image_operators import ToImage
-from unitxt.operators import Cast, Rename
+from unitxt.operators import Cast, Rename, Shuffle
 from unitxt.templates import MultipleChoiceTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.templates import MultipleChoiceTemplate
@@ -19,6 +19,7 @@ template = MultipleChoiceTemplate(
 card = TaskCard(
     loader=LoadHF(path="lmms-lab/ai2d"),
     preprocess_steps=[
+        Shuffle(),
         ToImage(field="image", to_field="context"),
         Rename(field="options", to_field="choices"),
         Set(fields={"context_type": "image"}),

@@ -28,21 +28,21 @@ with settings.context(disable_hf_datasets_cache=False):
 
 
     # ai2d 90b template
-    # template = MultipleChoiceTemplate(
-    #     input_format="{context} Look at the scientific diagram carefully and answer the following question: {question}\n{choices}\nRespond only with the correct option digit.",
-    #     choices_separator="\n",
-    #     target_field="answer",
-    #     enumerator="capitals",
-    # )
-    # max_tokens = 16
-    # doc_vqa 11b/90b template
-    template = MultiReferenceTemplate(
-        input_format= "{context} Read the text in the image carefully and answer the question with the text as seen exactly in the image." \
-                      " For yes/no questions, just respond Yes or No. If the answer is numeric, just respond with the number and nothing else. " \
-                      "If the answer has multiple words, just respond with the words and absolutely nothing else. Never respond in a sentence or a phrase.\n Question: {question}",
-        references_field="answers",
+    template = MultipleChoiceTemplate(
+        input_format="{context} Look at the scientific diagram carefully and answer the following question: {question}\n{choices}\nRespond only with the correct option digit.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
     )
-    max_tokens = 32
+    max_tokens = 16
+    # doc_vqa 11b/90b template
+    # template = MultiReferenceTemplate(
+    #     input_format= "{context} Read the text in the image carefully and answer the question with the text as seen exactly in the image." \
+    #                   " For yes/no questions, just respond Yes or No. If the answer is numeric, just respond with the number and nothing else. " \
+    #                   "If the answer has multiple words, just respond with the words and absolutely nothing else. Never respond in a sentence or a phrase.\n Question: {question}",
+    #     references_field="answers",
+    # )
+    # max_tokens = 32
     # chart_qa template
     # template = MultiReferenceTemplate(
     #     input_format="{context} {question}\nAnswer the question with a single word.",
@@ -51,12 +51,11 @@ with settings.context(disable_hf_datasets_cache=False):
     # )
     # max_tokens = 16
     dataset = load_dataset(
-        card="cards.doc_vqa.lmms_eval",
+        card="cards.ai2d",
         format="formats.chat_api",
         split="test",
         template=template,
-        # max_test_instances=20,
-        disable_cache=False
+        max_test_instances=20
     )
 
     inference_model = CrossProviderInferenceEngine(model="llama-3-2-11b-vision-instruct", provider="watsonx",
