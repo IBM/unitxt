@@ -1,8 +1,5 @@
 from unitxt import evaluate, load_dataset, settings
-from unitxt.inference import (
-    CrossProviderInferenceEngine, WMLInferenceEngineChat
-)
-
+from unitxt.inference import CrossProviderInferenceEngine
 
 with settings.context(
     disable_hf_datasets_cache=False,

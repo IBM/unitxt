@@ -1,8 +1,9 @@
+import os
+
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import CrossProviderInferenceEngine, WMLInferenceEngineChat
+from unitxt.inference import CrossProviderInferenceEngine
 
-import os
 os.environ["WML_URL"] = "https://us-south.ml.cloud.ibm.com"
 os.environ["WML_APIKEY"] = ""
 os.environ["WML_PROJECT_ID"] = ""

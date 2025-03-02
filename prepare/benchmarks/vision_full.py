@@ -3,7 +3,6 @@ from unitxt.catalog import add_to_catalog
 from unitxt.standard import DatasetRecipe
 from unitxt.templates import MultipleChoiceTemplate, MultiReferenceTemplate
 
-
 ai2d_llama_vision_template = MultipleChoiceTemplate(
     input_format="{context} Look at the scientific diagram carefully and answer the following question: {question}\n{choices}\nRespond only with the correct option digit.",
     choices_separator="\n",
