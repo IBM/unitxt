@@ -205,7 +205,7 @@ class DirectCriteriaCatalogEnum(Enum):
             ),
             CriteriaOption(
                 "Pass",
-                "There is no numeriselected_providercal temperature reading in the response.",
+                "There is no numerical temperature reading in the response.",
             ),
         ],
         {"Yes": 1.0, "No": 0.5, "Pass": 0.0},
@@ -931,6 +931,30 @@ class DirectCriteriaCatalogEnum(Enum):
         {
             "Yes": 1.0,
             "No": 0.0,
+        },
+    )
+
+    CORRECTNESS_BASED_ON_GROUND_TRUTH = CriteriaWithOptions(
+        name="correctness_based_on_ground_truth",
+        description="Does the response correctly convey the same factual information as the ground truth?",
+        options=[
+            CriteriaOption(
+                name="correct",
+                description="The response conveys the same factual meaning as the ground truth. Minor rewording, synonyms, or grammatical differences are acceptable. The response is relevant to the question and does not introduce unrelated or misleading information.",
+            ),
+            CriteriaOption(
+                name="partially_correct",
+                description="The response contains some correct information but is incomplete or lacks essential details. It may also contain minor inaccuracies or extraneous information that slightly misrepresents the ground truth.",
+            ),
+            CriteriaOption(
+                name="incorrect",
+                description="The response does not align with the ground truth. It either presents incorrect, unrelated, or misleading information, or omits key details that change the intended meaning.",
+            ),
+        ],
+        option_map={
+            "correct": 1.0,
+            "partially_correct": 0.5,
+            "incorrect": 0.0,
         },
     )
 

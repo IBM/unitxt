@@ -62,7 +62,7 @@ from datasets import (
     IterableDatasetDict,
     get_dataset_split_names,
 )
-from datasets import load_dataset as hf_load_dataset
+from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
@@ -75,11 +75,24 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import LRUCache
+from .utils import LRUCache, recursive_copy
 
 logger = get_logger()
 settings = get_settings()
 
+def hf_load_dataset(path: str, *args, **kwargs):
+    if settings.hf_offline_datasets_path is not None:
+        path = os.path.join(settings.hf_offline_datasets_path, path)
+    return _hf_load_dataset(
+        path,
+        *args, **kwargs,
+            download_config=DownloadConfig(
+                max_retries=settings.loaders_max_retries,
+            ),
+            verification_mode="no_checks",
+            trust_remote_code=settings.allow_unverified_code,
+            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+        )
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -200,10 +213,10 @@ class LazyLoader(Loader):
         else:
             splits = self.get_splits()
 
-        return {
+        return MultiStream({
             split: DynamicStream(self.split_generator, gen_kwargs={"split": split})
             for split in splits
-        }
+        })
 
 
 class LoadHF(LazyLoader):
@@ -270,43 +283,31 @@ class LoadHF(LazyLoader):
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
     ) -> Union[IterableDatasetDict, IterableDataset]:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + str(split), None)
+        dataset_id = str(self) + "_" + str(split)
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
         if dataset is None:
             if streaming is None:
                 streaming = self.is_streaming()
-
-            with tempfile.TemporaryDirectory() as dir_to_be_deleted:
-                if settings.disable_hf_datasets_cache:
-                    cache_dir = dir_to_be_deleted
-                else:
-                    cache_dir = None
-                try:
-                    dataset = hf_load_dataset(
-                        self.path,
-                        name=self.name,
-                        data_dir=self.data_dir,
-                        data_files=self.data_files,
-                        revision=self.revision,
-                        streaming=streaming,
-                        cache_dir=cache_dir,
-                        verification_mode="no_checks",
-                        split=split,
-                        trust_remote_code=settings.allow_unverified_code,
-                        num_proc=self.num_proc,
-                        download_config=DownloadConfig(
-                            max_retries=settings.loaders_max_retries,
-                            # extract_on_the_fly=True,
-                        ),
-                    )
-                except ValueError as e:
-                    if "trust_remote_code" in str(e):
-                        raise ValueError(
-                            f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                        ) from e
-        self.__class__._loader_cache.max_size = settings.loader_cache_size
-        if not disable_memory_caching:
-            self.__class__._loader_cache[str(self) + "_" + str(split)] = dataset
-        return dataset
+            try:
+                dataset = hf_load_dataset(
+                    self.path,
+                    name=self.name,
+                    data_dir=self.data_dir,
+                    data_files=self.data_files,
+                    revision=self.revision,
+                    streaming=streaming,
+                    split=split,
+                    num_proc=self.num_proc,
+                )
+            except ValueError as e:
+                if "trust_remote_code" in str(e):
+                    raise ValueError(
+                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
+                    ) from e
+            self.__class__._loader_cache.max_size = settings.loader_cache_size
+            if not disable_memory_caching:
+                self.__class__._loader_cache[dataset_id] = dataset
+        return self.__class__._loader_cache[dataset_id]
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
@@ -340,7 +341,9 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True
                 )
-            except NotImplementedError:  # streaming is not supported for zipped files so we load without streaming
+            except (
+                NotImplementedError
+            ):  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
             return list(dataset.keys())
 
@@ -425,7 +428,8 @@ class LoadCSV(LazyLoader):
         return list(self.files.keys())
 
     def split_generator(self, split: str) -> Generator:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
         if dataset is None:
             if self.get_limit() is not None:
                 self.log_limited_loading()
@@ -439,11 +443,13 @@ class LoadCSV(LazyLoader):
                         dataset = reader(self.files[split], **self.get_args()).to_dict(
                             "records"
                         )
+                        break
                     except ValueError:
                         import fsspec
 
                         with fsspec.open(self.files[split], mode="rt") as f:
                             dataset = reader(f, **self.get_args()).to_dict("records")
+                        break
                 except Exception as e:
                     logger.debug(f"Attempt csv load {attempt + 1} failed: {e}")
                     if attempt < settings.loaders_max_retries - 1:
@@ -451,9 +457,10 @@ class LoadCSV(LazyLoader):
                     else:
                         raise e
             self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self) + "_" + split] = dataset
+            self.__class__._loader_cache[dataset_id] = dataset
 
-        yield from dataset
+        for instance in self.__class__._loader_cache[dataset_id]:
+            yield recursive_copy(instance)
 
 
 class LoadFromSklearn(LazyLoader):
@@ -496,7 +503,8 @@ class LoadFromSklearn(LazyLoader):
         return self.splits
 
     def split_generator(self, split: str) -> Generator:
-        dataset = self.__class__._loader_cache.get(str(self) + "_" + split, None)
+        dataset_id = str(self) + "_" + split
+        dataset = self.__class__._loader_cache.get(dataset_id, None)
         if dataset is None:
             split_data = self.downloader(subset=split)
             targets = [split_data["target_names"][t] for t in split_data["target"]]
@@ -504,8 +512,9 @@ class LoadFromSklearn(LazyLoader):
             df.columns = ["data", "target"]
             dataset = df.to_dict("records")
             self.__class__._loader_cache.max_size = settings.loader_cache_size
-            self.__class__._loader_cache[str(self) + "_" + split] = dataset
-        yield from dataset
+            self.__class__._loader_cache[dataset_id] = dataset
+        for instance in self.__class__._loader_cache[dataset_id]:
+            yield recursive_copy(instance)
 
 
 class MissingKaggleCredentialsError(ValueError):

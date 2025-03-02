@@ -1484,28 +1484,32 @@ class IntersectCorrespondingFields(InstanceOperator):
 
     Assume the instances contain a field of 'labels' and a field with the labels' corresponding 'positions' in the text.
 
-    IntersectCorrespondingFields(field="label",
-                                 allowed_values=["b", "f"],
-                                 corresponding_fields_to_intersect=["position"])
+    .. code-block:: text
+
+        IntersectCorrespondingFields(field="label",
+                                    allowed_values=["b", "f"],
+                                    corresponding_fields_to_intersect=["position"])
 
     would keep only "b" and "f" values in 'labels' field and
     their respective values in the 'position' field.
     (All other fields are not effected)
 
-    Given this input:
+    .. code-block:: text
 
-    [
-        {"label": ["a", "b"],"position": [0,1],"other" : "not"},
-        {"label": ["a", "c", "d"], "position": [0,1,2], "other" : "relevant"},
-        {"label": ["a", "b", "f"], "position": [0,1,2], "other" : "field"}
-    ]
+        Given this input:
 
-    So the output would be:
-    [
-            {"label": ["b"], "position":[1],"other" : "not"},
-            {"label": [], "position": [], "other" : "relevant"},
-            {"label": ["b", "f"],"position": [1,2], "other" : "field"},
-    ]
+        [
+            {"label": ["a", "b"],"position": [0,1],"other" : "not"},
+            {"label": ["a", "c", "d"], "position": [0,1,2], "other" : "relevant"},
+            {"label": ["a", "b", "f"], "position": [0,1,2], "other" : "field"}
+        ]
+
+        So the output would be:
+        [
+                {"label": ["b"], "position":[1],"other" : "not"},
+                {"label": [], "position": [], "other" : "relevant"},
+                {"label": ["b", "f"],"position": [1,2], "other" : "field"},
+        ]
 
     Args:
         field - the field to intersected (must contain list values)
@@ -1523,7 +1527,7 @@ class IntersectCorrespondingFields(InstanceOperator):
 
         if not isinstance(self.allowed_values, list):
             raise ValueError(
-                f"The allowed_field_values is not a type list but '{type(self.allowed_field_values)}'"
+                f"The allowed_values is not a type list but '{type(self.allowed_values)}'"
             )
 
     def process(
@@ -2367,21 +2371,23 @@ class CollateInstancesByField(StreamOperator):
     Example:
         Collate the instances based on field "category" and aggregate fields "value" and "id".
 
-        CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
+        .. code-block:: text
 
-        given input:
-        [
-            {"id": 1, "category": "A", "value": 10", "flag" : True},
-            {"id": 2, "category": "B", "value": 20", "flag" : False},
-            {"id": 3, "category": "A", "value": 30", "flag" : True},
-            {"id": 4, "category": "B", "value": 40", "flag" : False}
-        ]
+            CollateInstancesByField(by_field="category", aggregate_fields=["value", "id"])
 
-        the output is:
-        [
-            {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
-            {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
-        ]
+            given input:
+            [
+                {"id": 1, "category": "A", "value": 10", "flag" : True},
+                {"id": 2, "category": "B", "value": 20", "flag" : False},
+                {"id": 3, "category": "A", "value": 30", "flag" : True},
+                {"id": 4, "category": "B", "value": 40", "flag" : False}
+            ]
+
+            the output is:
+            [
+                {"category": "A", "id": [1, 3], "value": [10, 30], "info": True},
+                {"category": "B", "id": [2, 4], "value": [20, 40], "info": False}
+            ]
 
         Note that the "flag" field is not aggregated, and must be the same
         in all instances in the same category, or an error is raised.
