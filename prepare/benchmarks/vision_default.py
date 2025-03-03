@@ -22,4 +22,4 @@ benchmark = Benchmark(
     },
 )
 
-add_to_catalog(benchmark, "benchmarks.vision", overwrite=True)
+add_to_catalog(benchmark, "benchmarks.vision_default", overwrite=True)

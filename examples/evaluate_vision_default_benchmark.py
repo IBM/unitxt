@@ -8,17 +8,19 @@ with settings.context(
     allow_unverified_code=True,
 ):
     test_dataset = load_dataset(
-        "benchmarks.vision[format=formats.chat_api,loader_limit=30,max_samples_per_subset=30]",
+        "benchmarks.vision_default[format=formats.chat_api,max_samples_per_subset=30]",
         split="test",
     )
 
 # Infer
 model = CrossProviderInferenceEngine(
     model="llama-3-2-11b-vision-instruct",
-    max_tokens=30,
+    max_tokens=32,
     provider="watsonx",
     temperature=0.0,
 )
+# model = WMLInferenceEngineChat(model_name="meta-llama/llama-3-2-11b-vision-instruct",
+#                                max_tokens=32, temperature=0.0)
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -34,12 +36,14 @@ print("Global scores:")
 print(results.global_scores.summary)
 print("Subsets scores:")
 print(results.subsets_scores.summary)
-
-# | subset   |    score | score_name      |   num_of_instances |
-# |:---------|---------:|:----------------|-------------------:|
-# | ALL      | 0.429583 | subsets_mean    |                150 |
-# | doc_vqa  | 0.79103  | anls            |                 30 |
-# | info_vqa | 0.464885 | anls            |                 30 |
-# | chart_qa | 0.3      | relaxed_overall |                 30 |
-# | ai2d     | 0.2      | exact_match_mm  |                 30 |
-# | websrc   | 0.392    | websrc_squad_f1 |                 30 |
+"""
+Using LLAMA-VISION-11B
+| subset   |    score | score_name      |   num_of_instances |
+|:---------|---------:|:----------------|-------------------:|
+| ALL      | 0.384752 | subsets_mean    |                150 |
+| doc_vqa  | 0.717027 | anls            |                 30 |
+| info_vqa | 0.485069 | anls            |                 30 |
+| chart_qa | 0.266667 | relaxed_overall |                 30 |
+| ai2d     | 0.1      | exact_match_mm  |                 30 |
+| websrc   | 0.355    | websrc_squad_f1 |                 30 |
+"""
