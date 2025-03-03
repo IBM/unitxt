@@ -6,6 +6,9 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "to_image",
             "field": "image",
             "to_field": "context"
