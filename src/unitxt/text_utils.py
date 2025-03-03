@@ -243,11 +243,6 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
         d: The element to be formatted.
         indent_delta (int, optional): The amount of spaces to add for each level of indentation. Defaults to 2.
     """
-
-    def is_simple(val) -> bool:
-        # if can show in same line as dictionary's key
-        return val is None or not isinstance(val, (dict, list)) or (len(val) == 0)
-
     indent_delta_str = " " * indent_delta
     res = []  # computed hereunder as a list of lines, that are indented only at the end
 
@@ -258,6 +253,9 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
         if "__type__" in d:
             istype = True
             res = ["__type__" + d["__type__"] + "("]
+            if len(d) == 1:
+                res[0] += ")"
+                return res
         else:
             res = ["{"]
         for key, val in d.items():
@@ -267,11 +265,9 @@ def construct_dict_as_python_lines(d, indent_delta=4) -> List[str]:
             res.append(printable_key + ("=" if istype else ": "))
             py_for_val = construct_dict_as_python_lines(val, indent_delta=indent_delta)
             assert len(py_for_val) > 0
-            if is_simple(val):
-                assert len(py_for_val) == 1
+            if len(py_for_val) == 1:
                 res[-1] += (py_for_val[0] +",")
             else:
-                assert len(py_for_val) > 1
                 res[-1] += py_for_val[0]
                 if py_for_val[0].startswith("{") or py_for_val[0].startswith("["):
                     for line in py_for_val[1:-1]:
@@ -323,7 +319,7 @@ def print_dict_as_yaml(d: dict, indent_delta=2) -> str:
 
 def print_dict_as_python(d: dict, indent_delta=4) -> str:
     py_lines = construct_dict_as_python_lines(d, indent_delta=indent_delta)
-    assert len(py_lines)> 1
+    assert len(py_lines)> 0
     return "\n".join(py_lines)
 
 def nested_tuple_to_string(nested_tuple: tuple) -> str:

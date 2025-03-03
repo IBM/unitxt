@@ -164,11 +164,11 @@ def make_content(artifact, label, all_labels):
 
     for type_name in type_elements:
         # source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
-        source = f'<span class="n">__type__{type_name}</span><span class="p">(</span>'
+        source = f'<span class="n">__type__{type_name}</span><span class="p">'
         target = artifact_type_to_link(type_name)
         html_for_dict = html_for_dict.replace(
             source,
-            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">(</span>'
+            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">'
             # '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
             # + target,
         )
