@@ -52,12 +52,6 @@
             "to_field": "passages"
         },
         {
-            "__type__": "set",
-            "fields": {
-                "metadata_field": {}
-            }
-        },
-        {
             "__type__": "deduplicate",
             "by": [
                 "document_id"

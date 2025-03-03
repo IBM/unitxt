@@ -21,7 +21,7 @@
             "field_to_field": {
                 "question": "question",
                 "id": "question_id",
-                "level": "metadata_field/level"
+                "level": "metadata_tags/level"
             }
         },
         {
@@ -47,6 +47,9 @@
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"
+        },
+        {
+            "__type__": "break_point"
         }
     ],
     "task": "tasks.rag.end_to_end",

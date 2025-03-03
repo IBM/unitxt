@@ -32,13 +32,6 @@ card = TaskCard(
                 "id": "question_id",
             },
         ),
-        Set(
-            fields={
-                "reference_contexts": [],
-                "is_answerable_label": True,
-                "metadata_field": {},
-            }
-        ),
         ListFieldValues(
             fields=["doc-id-list"],
             to_field="reference_context_ids",

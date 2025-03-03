@@ -22,15 +22,6 @@
             "to_field": "question_id"
         },
         {
-            "__type__": "set",
-            "fields": {
-                "reference_context_ids": [],
-                "reference_contexts": [],
-                "is_answerable_label": true,
-                "metadata_field": {}
-            }
-        },
-        {
             "__type__": "wrap",
             "field": "answer",
             "inside": "list",

@@ -4,7 +4,7 @@ from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import Cast, Copy, Set
+from unitxt.operators import Cast, Copy
 from unitxt.splitters import RenameSplits
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -27,13 +27,6 @@ card = TaskCard(
             to="str",
             to_field="reference_context_ids",
             process_every_value=True,
-        ),
-        Set(
-            fields={
-                "reference_contexts": [],
-                "is_answerable_label": True,
-                "metadata_field": {},
-            }
         ),
         Wrap(
             field="answer",
@@ -87,12 +80,6 @@ card = TaskCard(
         Cast(field="id", to="str"),
         Copy(field="id", to_field="document_id"),
         Wrap(field="passage", inside="list", to_field="passages"),
-        Set(
-            fields={
-                "metadata_field": "",
-                "title": "",
-            }
-        ),
     ],
     task="tasks.rag.corpora",
     templates={

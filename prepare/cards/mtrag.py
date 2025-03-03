@@ -109,11 +109,6 @@ for subset in ["clapnq", "cloud", "fiqa", "govt"]:
         preprocess_steps=[
             *subset_operators,
             Wrap(field="text", inside="list", to_field="passages"),
-            Set(
-                fields={
-                    "metadata_field": {},
-                }
-            ),
         ],
         task="tasks.rag.corpora",
         templates={

@@ -1,15 +1,23 @@
 import json
+from typing import Any, Dict, Optional
 
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Explode, Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import Copy, Deduplicate, Set, ZipFieldValues
+from unitxt.operators import Copy, Deduplicate, InstanceOperator, Set, ZipFieldValues
 from unitxt.splitters import SplitRandomMix
 from unitxt.string_operators import Join, Replace
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
+
+class BreakPoint(InstanceOperator):
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return instance
 # Benchmark
 benchmark_card = TaskCard(
     loader=LoadHF(
@@ -27,7 +35,7 @@ benchmark_card = TaskCard(
             field_to_field={
                 "question": "question",
                 "id": "question_id",
-                "level": "metadata_field/level"
+                "level": "metadata_tags/level"
             },
         ),
         Copy(
@@ -50,6 +58,7 @@ benchmark_card = TaskCard(
             inside="list",
             to_field="reference_answers",
         ),
+        BreakPoint()
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
@@ -104,12 +113,6 @@ documents_card = TaskCard(
         Copy(field="document/0", to_field="title"),
         Replace(field="document/1",old="\xa0", new = " "),
         Wrap(field="document/1", inside="list", to_field="passages"),
-
-        Set(
-            fields={
-                "metadata_field": {},
-            }
-        ),
         Deduplicate(by=["document_id"]),
     ],
     task="tasks.rag.corpora",
