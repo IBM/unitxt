@@ -3,6 +3,7 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import DecodeImage, ToImage
+from unitxt.operators import Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
@@ -17,6 +18,7 @@ template = MultiReferenceTemplate(
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc", streaming=True),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"train": "train", "dev": "test"}),
         "splitters.small_no_dev",
         Wrap(field="answer", inside="list", to_field="answers"),
@@ -41,3 +43,4 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.websrc", overwrite=True)
+
