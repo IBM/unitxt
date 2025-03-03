@@ -7,9 +7,9 @@ from pathlib import Path
 from docutils.core import publish_parts
 from pygments import highlight
 from pygments.formatters import HtmlFormatter
-from pygments.lexers import YamlLexer
+from pygments.lexers import PythonLexer
 from unitxt.artifact import Artifact
-from unitxt.text_utils import print_dict_as_yaml
+from unitxt.text_utils import print_dict_as_python
 from unitxt.utils import load_json
 
 
@@ -36,12 +36,12 @@ def convert_rst_text_to_html(rst_text):
 
 
 def dict_to_syntax_highlighted_html(nested_dict):
-    # Convert the dictionary to a YAML string with indentation
-    yaml_str = print_dict_as_yaml(nested_dict)
+    # Convert the dictionary to a python string with indentation
+    py_str = print_dict_as_python(nested_dict, indent_delta=4)
     # Initialize the HTML formatter with no additional wrapper
     formatter = HtmlFormatter(nowrap=True)
     # Apply syntax highlighting
-    return highlight(yaml_str, YamlLexer(), formatter)
+    return highlight(py_str, PythonLexer(), formatter)
 
 
 def write_title(title, label):
@@ -163,12 +163,14 @@ def make_content(artifact, label, all_labels):
         )
 
     for type_name in type_elements:
-        source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
+        # source = f'<span class="nt">__type__</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">{type_name}</span>'
+        source = f'<span class="n">__type__{type_name}</span><span class="p">(</span>'
         target = artifact_type_to_link(type_name)
         html_for_dict = html_for_dict.replace(
             source,
-            '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
-            + target,
+            f'<span class="n" STYLE="font-size:108%">{target}</span><span class="p">(</span>'
+            # '<span class="nt">&quot;type&quot;</span><span class="p">:</span><span class="w"> </span>'
+            # + target,
         )
 
     pattern = r'(<span class="nt">)&quot;(.*?)&quot;(</span>)'
