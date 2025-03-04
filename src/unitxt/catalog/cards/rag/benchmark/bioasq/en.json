@@ -24,14 +24,6 @@
             "process_every_value": true
         },
         {
-            "__type__": "set",
-            "fields": {
-                "reference_contexts": [],
-                "is_answerable_label": true,
-                "metadata_field": ""
-            }
-        },
-        {
             "__type__": "wrap",
             "field": "answer",
             "inside": "list",
