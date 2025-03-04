@@ -1822,7 +1822,7 @@ class RITSInferenceEngine(
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
         base_url_template = (
-            "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+            "http://localhost:5000/{}"
         )
         return base_url_template.format(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
