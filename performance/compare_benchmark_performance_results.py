@@ -24,11 +24,11 @@ print(f'dataset_query = "{main_perf["dataset_query"]}"')
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
-print("Raw datasets, that are loaded and processed here, are assumed to reside in local file ststem when the run starts.")
+print("Raw datasets, that are processed here, are loaded from the local file system, into which they were loaded in a previous step.")
 
 ratios = {}
 for k in pr_perf:
-    if not isinstance(pr_perf, float):
+    if not isinstance(pr_perf[k], float):
         continue
     ratios[k] = pr_perf[k] / main_perf[k] if main_perf[k] > 0 else 1
 
