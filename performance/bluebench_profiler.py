@@ -181,7 +181,7 @@ class BlueBenchProfiler:
                 dataset = dataset[split_name]
         predictions = model.infer(dataset=dataset)
         t5 = time()
-        evaluation_result = evaluate(predictions=predictions, data=dataset)
+        evaluate(predictions=predictions, data=dataset)
         t6 = time()
         # now just streaming through recipe, without generating an HF dataset:
         ms = recipe()
@@ -195,7 +195,7 @@ class BlueBenchProfiler:
         self.enumerate_from_loaders(pulling_dict)
         t9 = time()
         logger.critical(f"water marks = {water_marks}")
-        logger.critical(f"length of evaluation_result, over the returned dataset from Unitxt.load_dataset: {len(evaluation_result)}")
+        # logger.critical(f"length of evaluation_result, over the returned dataset from Unitxt.load_dataset: {len(evaluation_result)}")
         logger.critical(f"lengths of total production of recipe: {total_production_length_of_recipe}")
 
         return {
@@ -238,7 +238,6 @@ def profile_no_cprofile():
         for k in dsq_time:
             res[k] += dsq_time[k]
     return {k: round(res[k], 3) for k in res}
-
 
 def find_cummtime_of(func_name: str, file_name: str, pst_printout: str) -> float:
     relevant_lines = list(
@@ -312,6 +311,11 @@ def main():
         action="store_true",
         help="whether to employ cProfile or just time diffs.",
     )
+    parser.add_argument(
+        "--populate_fs_cache",
+        action="store_true",
+        help="whether to save the downloaded datasets to a file-system cache.",
+    )
     args = parser.parse_args()
 
     # Ensure the directory for the output file exists
@@ -319,6 +323,22 @@ def main():
     if output_dir:
         os.makedirs(output_dir, exist_ok=True)
 
+    if args.populate_fs_cache:
+        assert os.path.exists(settings.hf_offline_datasets_path)
+        assert settings.hf_save_to_offline
+        t0 = time()
+        queries = dataset_query if isinstance(dataset_query, list) else [dataset_query]
+        for dsq in queries:
+            recipe = load_recipe(dsq)
+            ms = recipe()
+            for split in ms:
+                list(ms[split])
+        t1 = time()
+        print(f"Time to load the datasets file-system cache: {round(t1-t0,3)} seconds")
+        return
+
+    if settings.hf_read_from_offline:
+        assert os.path.exists(settings.hf_offline_datasets_path)
 
     dict_to_print = profile_no_cprofile()
 
