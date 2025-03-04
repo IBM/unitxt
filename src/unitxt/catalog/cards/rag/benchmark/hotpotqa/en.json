@@ -47,9 +47,6 @@
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"
-        },
-        {
-            "__type__": "break_point"
         }
     ],
     "task": "tasks.rag.end_to_end",
