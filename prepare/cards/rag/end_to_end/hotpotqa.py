@@ -5,7 +5,6 @@ from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Explode, Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import (
-    BreakPoint,
     Copy,
     Deduplicate,
     Set,
@@ -56,7 +55,6 @@ benchmark_card = TaskCard(
             inside="list",
             to_field="reference_answers",
         ),
-        BreakPoint()
     ],
     task="tasks.rag.end_to_end",
     templates={"default": "templates.rag.end_to_end.json_predictions"},
