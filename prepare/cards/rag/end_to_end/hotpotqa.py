@@ -1,23 +1,21 @@
 import json
-from typing import Any, Dict, Optional
 
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Explode, Wrap
 from unitxt.loaders import LoadHF
-from unitxt.operators import Copy, Deduplicate, InstanceOperator, Set, ZipFieldValues
+from unitxt.operators import (
+    BreakPoint,
+    Copy,
+    Deduplicate,
+    Set,
+    ZipFieldValues,
+)
 from unitxt.splitters import SplitRandomMix
 from unitxt.string_operators import Join, Replace
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
-
-class BreakPoint(InstanceOperator):
-
-    def process(
-        self, instance: Dict[str, Any], stream_name: Optional[str] = None
-    ) -> Dict[str, Any]:
-        return instance
 # Benchmark
 benchmark_card = TaskCard(
     loader=LoadHF(

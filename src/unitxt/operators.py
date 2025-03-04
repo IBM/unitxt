@@ -2479,3 +2479,11 @@ class Fillna(FieldOperator):
         except TypeError:
             return value
         return value
+
+
+class BreakPoint(InstanceOperator):
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        return instance
