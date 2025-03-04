@@ -603,7 +603,7 @@ class LoadFromIBMCloud(Loader):
                 bucket_name='my-bucket'
             )
             multi_stream = load_ibm_cloud.process()
-    """
+    """ # pragma: allowlist secret
 
     endpoint_url_env: str
     aws_access_key_id_env: str

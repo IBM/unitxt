@@ -151,10 +151,10 @@ class FinalizeDataset(InstanceOperatorValidator):
         )
         if "criteria" in task_data and isinstance(task_data["criteria"], Artifact):
             task_data["criteria"] = self.artifact_to_jsonable(task_data["criteria"])
-        if "demos" in instance:
-            task_data["demos"] = [
+        if constants.demos_field in instance:
+            task_data[constants.demos_field] = [
                 self._get_instance_task_data(instance)
-                for instance in instance.pop("demos")
+                for instance in instance.pop(constants.demos_field)
             ]
 
         instance = self.serialize_instance_fields(instance, task_data)
