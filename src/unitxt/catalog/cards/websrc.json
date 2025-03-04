@@ -7,6 +7,9 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "rename_splits",
             "mapper": {
                 "train": "train",
