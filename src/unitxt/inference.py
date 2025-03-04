@@ -7,11 +7,14 @@ import io
 import json
 import logging
 import os
+import random
 import re
 import sys
+import threading
 import time
 import uuid
 from collections import Counter
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from itertools import islice
 from multiprocessing.pool import ThreadPool
@@ -30,6 +33,7 @@ from typing import (
     Union,
 )
 
+import requests
 from datasets import Dataset, DatasetDict, Image
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
@@ -276,7 +280,7 @@ class InferenceEngine(Artifact):
                             if prediction is None:
                                 continue
                             cache_key = self._get_cache_key(item)
-                            self._cache[cache_key] = prediction
+                            self.store_in_cache(cache_key, prediction)
                     else:
                         inferred_results = []
                     # Combine cached and inferred results in original order
@@ -286,6 +290,9 @@ class InferenceEngine(Artifact):
                     result.extend(batch_predictions)
             else:
                 result = self._infer(dataset, return_meta_data)
+
+            result = self.post_process_results(result)
+
         return ListWithMetadata(
             result,
             metadata={
@@ -294,6 +301,12 @@ class InferenceEngine(Artifact):
                 "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
             },
         )
+
+    def store_in_cache(self, cache_key, prediction):
+        self._cache[cache_key] = prediction
+
+    def post_process_results(self, result):
+        return result
 
     def _mock_infer(
         self,
@@ -1957,7 +1970,7 @@ class RITSInferenceEngine(
     @staticmethod
     def get_base_url_from_model_name(model_name: str):
         base_url_template = (
-            "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/{}"
+            "http://localhost:5000/{}"
         )
         return base_url_template.format(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
@@ -3546,10 +3559,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if return_meta_data and not hasattr(self.engine, "get_return_object"):
+        if return_meta_data:
             raise NotImplementedError(
-                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data as it "
-                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data."
             )
 
         inputs = []
@@ -3576,3 +3588,189 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             predictions.append(options_scores.most_common(1)[0][0])
 
         return predictions
+
+
+class MultiServersInferenceEngine(OpenAiInferenceEngine,
+                         HFGenerationParamsMixin):
+
+    workers_url: List[str]
+
+    def post_server(self, server_url, endpoint, data):
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url=f"{server_url}/{endpoint}", json=data, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+    def prepare_engine(self):
+        from openai import OpenAI
+        self.lock = threading.Lock()
+        self.workers_state = {}
+        credentials = self._prepare_credentials()
+        for url in self.workers_url:
+            init_result = self.post_server(endpoint="init_server",server_url=url,
+                             data={**self.to_dict([HFGenerationParamsMixin]), **{"model_name": self.model_name}})
+            if init_result == "Accepted":
+                self.add_worker(url, client=OpenAI(
+                    api_key=credentials["api_key"],
+                    base_url= f"{url}/{self.model_name}" + "/v1",
+                    default_headers=self.get_default_headers(),
+                ))
+
+    #def init_server_and_add_to_workers_list
+
+
+    def add_worker(self, url, client):
+        with self.lock:
+            self.workers_state[url] = {"status": "ready", "client": client}
+
+    def release_worker(self, url):
+        with self.lock:
+            self.workers_state[url]["status"] = "ready"
+
+    def assign_worker(self):
+        with self.lock:
+            while True:
+             #   print("trying to assign worker...")
+                for url, rec in self.workers_state.items():
+                    if rec["status"] == "ready":
+                        rec["status"] ="assigned"
+                        return url, rec["client"]
+                time.sleep(random.uniform(0, 1))
+
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        return {"api" + "_" + "key": "no-api-key",}
+
+    def _infer(
+            self,
+            dataset: Union[List[Dict[str, Any]], Dataset],
+            return_meta_data: bool = False,
+    ) -> List[Any]:  # Now returns a Future object
+        """Runs inference in parallel, returning futures for each batch."""
+        # Lazy-initialize executor if not already created
+        if not hasattr(self, "_executor"):
+            self._executor = ThreadPoolExecutor(max_workers=len(self.workers_state))
+
+        # Submit the batch job
+        batch_future = self._executor.submit(self._run_batch, dataset, return_meta_data)
+
+        # Create individual futures that resolve when batch_future is done
+        element_futures = [Future() for _ in dataset]
+
+        def set_results(batch_fut: Future):
+            """Callback to set individual results once batch computation is done."""
+            try:
+                results = batch_fut.result()  # Get the batch results
+                for i, res in enumerate(results):
+                    element_futures[i].set_result(res)  # Set each individual future
+            except Exception as e:
+                for f in element_futures:
+                    f.set_exception(e)  # Propagate any exception
+
+        # Attach the callback to the batch future
+        batch_future.add_done_callback(set_results)
+
+        return element_futures  # Return a list of futures
+
+    def _run_batch(self, batch, return_meta_data):
+        """Helper function to process a batch inside a thread."""
+        logger.info(f"Trying to get assigned: {self.workers_state}")
+        url, client = self.assign_worker()
+        logger.info(f"Thread {url} processing batch: {self.workers_state}")
+        messages = [self.to_messages(instance) for instance in batch]
+        logger.info(f"a {url}")
+        try:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=self.model_name,
+                **self._get_completion_kwargs(),
+            )
+            logger.info(f"response: {response}")
+            predictions = [r.message.content for r in response.choices]
+            result = [self.get_return_object(p, response, return_meta_data) for p in predictions]
+        finally:
+            logger.info(f"Thread {url} release state:")
+            self.release_worker(url)
+            logger.info(f"Thread {url} release state done: {self.workers_state}")
+        return result
+
+    def post_process_results(self, result):
+        futures = [r for r in result if isinstance(r, Future)]
+        if futures:
+            wait(futures)
+
+        return [r.result() if isinstance(r, Future) else r for r in result]
+
+    def store_in_cache(self, cache_key, prediction):
+        if isinstance(prediction, Future):
+            def store_after_pack_in_cache(future, cache_key):
+                prediction = future.result()
+                if prediction is not None:
+                    self._cache[cache_key] = prediction
+
+            prediction.add_done_callback(lambda f, key=cache_key: store_after_pack_in_cache(f, key))
+        else:
+            self._cache[cache_key] = prediction
+
+
+class CCCInferenceEngine(MultiServersInferenceEngine):
+    ccc_host: str
+    ccc_user: str
+    ccc_path: str
+    ccc_python: str
+    server_port: str = "5000"
+    num_of_workers: int = 5
+    workers_url: List[str] = []
+
+    def prepare_engine(self):
+        assert not self.workers_url, "CCCInferenceEngine doesn't support explicit setting of workers_url"
+        self.start_ccc_servers()
+        self.prepare_engine()
+
+    def start_ccc_servers(self):
+        import paramiko
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.ccc_host, username=self.ccc_user)
+        ssh.exec_command(f"mkdir -p {self.ccc_path}")
+        self.ccc_jobs = {}
+        for i in range(self.num_of_workers):
+            command = f"bash -l -c 'jbsub -queue x86_6h -cores 4+1 -require v100 -mem 24G -out ~/server{i}.log {self.ccc_python} /dccstor/fuse/unitxt/ccc_worker_server.py {self.server_port}'"
+            stdin, stdout, stderr = ssh.exec_command(command)
+            job_output = stdout.read().decode().strip()
+            job_error = stderr.read().decode().strip()
+            match = re.search(r"Job <(\d+)> is submitted", job_output)
+            if match:
+                job_id = match.group(1)
+                logger.info(f"Start job ID: {job_id}")
+                self.ccc_jobs[job_id] ={"status": "AVAIL", "log_id": i}
+            else:
+                raise RuntimeError(f"Failed to run jbsub on host {self.ccc_host}.\nstdout: {job_output}.\nstderr: {job_error}")
+
+        def run_monitor_ccc_jobs(ssh, sample_every):
+            while True:
+                command = "bash -l -c 'jbinfo'"
+                stdin, stdout, stderr = ssh.exec_command(command)
+                output = stdout.read().decode().strip()
+                #error = stderr.read().decode().strip()
+                for job_id in self.ccc_jobs.keys():
+                    match = re.search(rf"^{job_id}\s+\S+\s+(\w+)", output, re.MULTILINE)
+                    if match:
+                        status = match.group(1)
+                        if status != self.ccc_jobs[job_id]["status"]:
+                            if self.ccc_jobs[job_id]["status"] == "RUN":
+                                pass # add server to server list
+                            elif status == "RUN":
+                                pass # remove server from server list. Consider fetching the server log.
+                            self.ccc_jobs[job_id]["status"] = status
+                            logger.info(f"status has been changed: {job_id} - {status}")
+
+
+                time.sleep(sample_every)
+
+        thread = threading.Thread(target=run_monitor_ccc_jobs, args=(ssh, 10))
+        thread.daemon = True  #
+        thread.start()
+
+
+        time.sleep(200)  # This keeps the main thread alive so the background thread can continue
+
