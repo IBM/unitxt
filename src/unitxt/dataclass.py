@@ -297,6 +297,22 @@ def _asdict_inner(obj):
     return copy.deepcopy(obj)
 
 def to_dict(obj, func=copy.deepcopy, _visited=None):
+    """Recursively converts an object into a dictionary representation while avoiding infinite recursion due to circular references.
+
+    Args:
+        obj: Any Python object to be converted into a dictionary-like structure.
+        func (Callable, optional): A function applied to non-iterable objects. Defaults to `copy.deepcopy`.
+        _visited (set, optional): A set of object IDs used to track visited objects and prevent infinite recursion.
+
+    Returns:
+        dict: A dictionary representation of the input object, with supported collections and dataclasses
+        recursively processed.
+
+    Notes:
+        - Supports dataclasses, named tuples, lists, tuples, and dictionaries.
+        - Circular references are detected using object IDs and replaced by `func(obj)`.
+        - Named tuples retain their original type instead of being converted to dictionaries.
+    """
     # Initialize visited set on first call
     if _visited is None:
         _visited = set()

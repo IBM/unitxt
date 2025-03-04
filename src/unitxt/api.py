@@ -136,7 +136,30 @@ def create_dataset(
     card = TaskCard(loader=LoadFromDictionary(data=data, data_classification_policy=data_classification_policy), task=task)
     return load_dataset(card=card, split=split, **kwargs)
 
-def to_str(obj):
+def object_to_str_without_addresses(obj):
+    """Generates a string representation of a Python object while removing memory address references.
+
+    This function is useful for creating consistent and comparable string representations of objects
+    that would otherwise include memory addresses (e.g., `<object_name at 0x123abc>`), which can vary
+    between executions. By stripping the memory address, the function ensures that the representation
+    is stable and independent of the object's location in memory.
+
+    Args:
+        obj: Any Python object to be converted to a string representation.
+
+    Returns:
+        str: A string representation of the object with memory addresses removed if present.
+
+    Example:
+        ```python
+        class MyClass:
+            pass
+
+        obj = MyClass()
+        print(str(obj))  # "<__main__.MyClass object at 0x7f8b9d4d6e20>"
+        print(to_str_without_addresses(obj))  # "<__main__.MyClass object>"
+        ```
+    """
     obj_str = str(obj)
     if " at 0x" in obj_str:
         obj_str = obj_str.split(" at 0x")[0] + ">"
@@ -157,7 +180,7 @@ def _source_to_dataset(
     from .dataset import Dataset as UnitxtDataset
 
     # Generate a unique signature for the source
-    source_signature = json.dumps(to_dict(source, to_str), sort_keys=True)
+    source_signature = json.dumps(to_dict(source, object_to_str_without_addresses), sort_keys=True)
     config_name = "recipe-" + short_hex_hash(source_signature)
 
     stream = source()
