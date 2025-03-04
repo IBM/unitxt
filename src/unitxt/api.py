@@ -11,6 +11,7 @@ from datasets.exceptions import DatasetGenerationError
 from .artifact import fetch_artifact
 from .benchmark import Benchmark
 from .card import TaskCard
+from .dataclass import to_dict
 from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
 from .inference import (
@@ -135,42 +136,68 @@ def create_dataset(
     card = TaskCard(loader=LoadFromDictionary(data=data, data_classification_policy=data_classification_policy), task=task)
     return load_dataset(card=card, split=split, **kwargs)
 
+def to_str(obj):
+    obj_str = str(obj)
+    if " at 0x" in obj_str:
+        obj_str = obj_str.split(" at 0x")[0] + ">"
+    return obj_str
 
 def _source_to_dataset(
     source: SourceOperator,
     split=None,
     use_cache=False,
     streaming=False,
+    lock_timeout=60,  # Timeout in seconds for acquiring the lock
 ):
+    import json
+    import os
+
+    import filelock
+
     from .dataset import Dataset as UnitxtDataset
+
+    # Generate a unique signature for the source
+    source_signature = json.dumps(to_dict(source, to_str), sort_keys=True)
+    config_name = "recipe-" + short_hex_hash(source_signature)
 
     stream = source()
 
     try:
         ds_builder = UnitxtDataset(
             dataset_name="unitxt",
-            config_name="recipe-" + short_hex_hash(repr(source)),
+            config_name=config_name,
             version=constants.version,
         )
+
         if split is not None:
             stream = {split: stream[split]}
+
         ds_builder._generators = stream
 
-        ds_builder.download_and_prepare(
-            verification_mode="no_checks",
-            download_mode=None if use_cache else "force_redownload",
-        )
+        # Create a lock file path based on the dataset configuration
+        lock_file = os.path.join(os.path.expanduser("~"), ".cache", "unitxt", f"{config_name}.lock")
+        os.makedirs(os.path.dirname(lock_file), exist_ok=True)
+
+        # Create a file lock
+        lock = filelock.FileLock(lock_file, timeout=lock_timeout)
+
+        # Only protect the download_and_prepare operation with the lock
+        try:
+            with lock:
+                ds_builder.download_and_prepare(
+                    verification_mode="no_checks",
+                    download_mode=None if use_cache else "force_redownload",
+                )
+        except filelock.Timeout:
+            raise TimeoutError(f"Could not acquire lock for {config_name} within {lock_timeout} seconds. Another process may be preparing the same dataset.")
 
         if streaming:
             return ds_builder.as_streaming_dataset(split=split)
-
         return ds_builder.as_dataset(
             split=split, run_post_process=False, verification_mode="no_checks"
         )
-
     except DatasetGenerationError as e:
         raise e.__cause__
-
 
 def load_dataset(
     dataset_query: Optional[str] = None,

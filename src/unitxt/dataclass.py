@@ -296,6 +296,35 @@ def _asdict_inner(obj):
 
     return copy.deepcopy(obj)
 
+def to_dict(obj, func=copy.deepcopy, _visited=None):
+    # Initialize visited set on first call
+    if _visited is None:
+        _visited = set()
+
+    # Get object ID to track visited objects
+    obj_id = id(obj)
+
+    # If we've seen this object before, return a placeholder to avoid infinite recursion
+    if obj_id in _visited:
+        return func(obj)
+
+    # For mutable objects, add to visited set before recursing
+    if isinstance(obj, (dict, list)) or is_dataclass(obj) or (isinstance(obj, tuple) and hasattr(obj, "_fields")):
+        _visited.add(obj_id)
+
+    if is_dataclass(obj):
+        return {field.name: to_dict(getattr(obj, field.name), func, _visited) for field in fields(obj)}
+
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):  # named tuple
+        return type(obj)(*[to_dict(v, func, _visited) for v in obj])
+
+    if isinstance(obj, (list, tuple)):
+        return type(obj)([to_dict(v, func, _visited) for v in obj])
+
+    if isinstance(obj, dict):
+        return type(obj)({to_dict(k, func, _visited): to_dict(v, func, _visited) for k, v in obj.items()})
+
+    return func(obj)
 
 class DataclassMeta(ABCMeta):
     """Metaclass for Dataclass.
