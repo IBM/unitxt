@@ -302,9 +302,15 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             "media": instance.get("media", {}),
             "recipe_metadata": instance.get("recipe_metadata", {}),
         }
-        if "demos" in instance:
+        if constants.demos_field in instance:
             # for the case of recipe.skip_demoed_instances
-            result["demos"] = instance["demos"]
+            result[constants.demos_field] = instance[constants.demos_field]
+
+        if constants.instruction_field in instance:
+            result[constants.instruction_field] = instance[constants.instruction_field]
+
+        if constants.system_prompt_field in instance:
+            result[constants.system_prompt_field] = instance[constants.system_prompt_field]
 
         if stream_name == constants.inference_stream:
             return result
