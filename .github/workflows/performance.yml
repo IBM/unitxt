@@ -49,6 +49,7 @@ jobs:
 
     - name: Run performance on PR just to fill the file systems cache
       env: 
+        UNITXT_HF_LOAD_FROM_OFFLINE: "False"
         UNITXT_HF_SAVE_TO_OFFLINE: "True"
         UNITXT_HF_OFFLINE_DATASETS_PATH: performance_action/hf_fs_cache
       run : |
@@ -63,7 +64,7 @@ jobs:
     - name: Run performance on main branch
       env: 
         UNITXT_HF_SAVE_TO_OFFLINE: "False"        
-        UNITXT_HF_READ_FROM_OFFLINE: "True"
+        UNITXT_HF_LOAD_FROM_OFFLINE: "True"
         UNITXT_HF_OFFLINE_DATASETS_PATH: performance_action/hf_fs_cache
       run: |
         python performance_action/bluebench_profiler.py --output_file performance_action/main_results.json
@@ -77,7 +78,7 @@ jobs:
     - name: Run performance on PR branch
       env:
         UNITXT_HF_SAVE_TO_OFFLINE: "False"        
-        UNITXT_HF_READ_FROM_OFFLINE: "True"
+        UNITXT_HF_LOAD_FROM_OFFLINE: "True"
         UNITXT_HF_OFFLINE_DATASETS_PATH: performance_action/hf_fs_cache    
       run: |
         python performance_action/bluebench_profiler.py --output_file performance_action/pr_results.json

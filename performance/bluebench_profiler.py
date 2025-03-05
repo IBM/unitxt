@@ -17,6 +17,7 @@ from unitxt.inference import (
     CrossProviderInferenceEngine,
     InferenceEngine,
 )
+from unitxt.loaders import Loader
 from unitxt.logging_utils import get_logger
 from unitxt.operator import MultiStreamOperator
 from unitxt.settings_utils import get_settings
@@ -120,7 +121,11 @@ class BlueBenchProfiler:
             if recipe.steps[1].generators:
                 for stream_name in recipe.steps[1].generators:
                     if recipe.steps[1].generators[stream_name].water_mark > -1:
-                        to_ret[stream_name] = (recipe.steps[1].generators[stream_name].measured_stream.gen_kwargs["stream"].gen_kwargs["stream"], recipe.steps[1].generators[stream_name].water_mark)
+                        stream = recipe.steps[1].generators[stream_name].measured_stream
+                        while not isinstance(stream.generator.__self__, Loader):
+                            assert "stream" in stream.gen_kwargs
+                            stream = stream.gen_kwargs["stream"]
+                        to_ret[stream_name] = (stream, recipe.steps[1].generators[stream_name].water_mark)
         else:
             # recipe is a benchmark
             for subset_name in recipe.subsets:
@@ -189,12 +194,12 @@ class BlueBenchProfiler:
         t7 = time()
         # now just loading the specific instances actually loaded above, and listing right after recipe.loader(),
         # to report the loading time from the total processing time.
-        water_marks = self.collect_water_marks(recipe)
+        # water_marks = self.collect_water_marks(recipe)
         pulling_dict = self.collect_loaded_dataset_iterators(recipe)
         t8=time()
         self.enumerate_from_loaders(pulling_dict)
         t9 = time()
-        logger.critical(f"water marks = {water_marks}")
+        # logger.critical(f"water marks = {water_marks}")
         # logger.critical(f"length of evaluation_result, over the returned dataset from Unitxt.load_dataset: {len(evaluation_result)}")
         logger.critical(f"lengths of total production of recipe: {total_production_length_of_recipe}")
 
@@ -334,10 +339,10 @@ def main():
             for split in ms:
                 list(ms[split])
         t1 = time()
-        print(f"Time to load the datasets file-system cache: {round(t1-t0,3)} seconds")
+        print(f"Time to fetch the needed datasets from their hubs and save them in the local file-system: {round(t1-t0,3)} seconds")
         return
 
-    if settings.hf_read_from_offline:
+    if settings.hf_load_from_offline:
         assert os.path.exists(settings.hf_offline_datasets_path)
 
     dict_to_print = profile_no_cprofile()
