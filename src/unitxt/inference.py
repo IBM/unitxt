@@ -2985,7 +2985,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
-        provider_specific_args: (Optional[Dict[str, Dict[str,str]]]) Args specific to a provider for example provider_specific_args={"watsonx": {"max_requests_per_second": 4}}
+        provider_specific_args:
+            (Optional[Dict[str, Dict[str,str]]]) Args specific to a provider for example provider_specific_args={"watsonx": {"max_requests_per_second": 4}}
+
     """
 
     label: str = "cross_provider"

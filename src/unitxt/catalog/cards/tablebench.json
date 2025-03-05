@@ -42,6 +42,12 @@
                 "table": "context",
                 "answer": "answers"
             }
+        },
+        {
+            "__type__": "remove_fields",
+            "fields": [
+                "instruction"
+            ]
         }
     ],
     "task": {

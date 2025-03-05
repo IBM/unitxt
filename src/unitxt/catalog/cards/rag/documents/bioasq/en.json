@@ -30,13 +30,6 @@
             "field": "passage",
             "inside": "list",
             "to_field": "passages"
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "metadata_field": "",
-                "title": ""
-            }
         }
     ],
     "task": "tasks.rag.corpora",
