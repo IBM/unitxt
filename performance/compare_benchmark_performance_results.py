@@ -24,7 +24,7 @@ print(f'dataset_query = "{main_perf["dataset_query"]}"')
 print(f"used_eager_mode in main = {main_perf['used_eager_mode']}")
 print(f"used_eager_mode in PR = {pr_perf['used_eager_mode']}")
 print(f"use Mocked inference = {os.environ['UNITXT_MOCK_INFERENCE_MODE']}")
-print("Raw datasets, that are processed here, are loaded from the local file system, into which they were loaded in a previous step.")
+print("Given the raw datasets stored in the local file system, their processing through the Unitxt pipeline lasts as detailed below.")
 
 ratios = {}
 for k in pr_perf:
