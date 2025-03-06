@@ -51,13 +51,11 @@ from .metrics import BulkInstanceMetric
 from .task import Task
 from .templates import Template
 
+logger = get_logger(__name__)
 
 class LLMJudge(BulkInstanceMetric):
     inference_engine: InferenceEngine
-    # option_selection_strategy: OptionSelectionStrategyEnum = (
-    #     OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
-    # )
-    evaluator_name: Optional[Union[str,EvaluatorNameEnum]] = None
+    evaluator_name: EvaluatorNameEnum = None
     check_positional_bias: bool = True
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
     generate_summaries: bool = True
@@ -65,7 +63,6 @@ class LLMJudge(BulkInstanceMetric):
     include_prompts_in_result: bool = True
     criteria_field: str = None
     criteria: Criteria = None
-    logger = get_logger()
 
     def prepare(self):
         super().prepare()
@@ -141,13 +138,13 @@ class LLMJudge(BulkInstanceMetric):
             if not (isinstance(v, dict) and len(v) == 0)
         }
 
-    def get_criterias(self, task_data, eval_count):
+    def get_criteria(self, task_data, eval_count):
         if self.criteria is None:
             if self.criteria_field not in task_data[0]:
                 raise UnitxtError(
                     f"The criteria field `{self.criteria_field}` required for {__class__.__name__} is not found in instance.  Perhaps you meant '{get_close_matches(self.criteria_field, task_data[0].keys(), n=1, cutoff=0.0)[0]}'?"
                 )
-            self.logger.info(
+            logger.info(
                 f"Reading criteria from the task_data field '{self.criteria_field}'"
             )
             criterias = [
@@ -155,13 +152,13 @@ class LLMJudge(BulkInstanceMetric):
                 for task_data_instance in task_data
             ]
         else:
-            self.logger.info(
+            logger.info(
                 "Reading criteria from self. Criteria is a single CriteriaWithOptions, replicating it for all predictions"
             )
             criterias: List[Criteria] = [self.criteria] * eval_count
         unique_criteria_names = list({criteria.name for criteria in criterias})
 
-        self.logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
+        logger.info(f"Criteria names are '{', '.join(unique_criteria_names)}'")
         return criterias
 
 
@@ -216,7 +213,7 @@ class LLMJudgeDirect(LLMJudge):
             )
         return
 
-    def get_parsed_criteria(self, criteria: CriteriaWithOptions):
+    def __get_parsed_criteria(self, criteria: CriteriaWithOptions):
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
 
@@ -237,13 +234,13 @@ class LLMJudgeDirect(LLMJudge):
             score_option_instruction,
         )
 
-    def set_main_score(self, criterias: List[CriteriaWithOptions]):
+    def __set_main_score(self, criterias: List[CriteriaWithOptions]):
         unique_criteria_names = list({criteria.name for criteria in criterias})
         if len(unique_criteria_names) == 1 and criterias[0].name != "":
             self.main_score = "_".join(criterias[0].name.lower().split(" "))
             self.reduction_map = {"mean": [self.main_score]}
 
-    def get_results(
+    def __get_results(
         self,
         assessment_prompts,
         assessment_outputs,
@@ -334,13 +331,13 @@ class LLMJudgeDirect(LLMJudge):
         predictions: List[str],
         task_data: List[Dict[str, Any]],
     ) -> dict:
-        self.logger.info(
+        logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider "{self.inference_engine.get_pretty_print_name()}'
         )
         evaluations_count = len(predictions)
         # TODO: find out how to serialize and deserialize enums
-        criterias = self.get_criterias(task_data, evaluations_count)
-        self.set_main_score(criterias)
+        criterias = self.get_criteria(task_data, evaluations_count)
+        self.__set_main_score(criterias)
         contexts = self.get_contexts(task_data)
         if self.check_positional_bias:
             criterias += [
@@ -356,7 +353,7 @@ class LLMJudgeDirect(LLMJudge):
             predictions += predictions
 
         parsed_criterias = [
-            self.get_parsed_criteria(criteria) for criteria in criterias
+            self.__get_parsed_criteria(criteria) for criteria in criterias
         ]
 
         (
@@ -386,7 +383,7 @@ class LLMJudgeDirect(LLMJudge):
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
             assessment_instances, self.assessment_task, self.assessment_template
         )
-        self.logger.info("The assessment was generated successfully.")
+        logger.info("The assessment was generated successfully.")
 
         summarization_prompts = None
         summarization_outputs = None
@@ -410,7 +407,7 @@ class LLMJudgeDirect(LLMJudge):
                 self.summarization_task,
                 self.summarization_template,
             )
-            self.logger.info("The summary was generated successfully.")
+            logger.info("The summary was generated successfully.")
 
         option_selection_instances = [
             {
@@ -442,9 +439,9 @@ class LLMJudgeDirect(LLMJudge):
             self.option_selection_template,
             previous_messages,
         )
-        self.logger.info("The selections were calculated successfully.")
+        logger.info("The selections were calculated successfully.")
 
-        results = self.get_results(
+        results = self.__get_results(
             assessment_prompts,
             assessment_outputs,
             summarization_prompts,
@@ -459,9 +456,8 @@ class LLMJudgeDirect(LLMJudge):
 
 
 class LLMJudgePairwise(LLMJudge):
-    reduction_map = {"mean": ["score"]}
     main_score = "1_winrate"
-    prediction_type = List[str]
+    reduction_map = {"mean": ["score"]}
 
     def prepare(self):
         super().prepare()
@@ -509,7 +505,7 @@ class LLMJudgePairwise(LLMJudge):
             )
         return
 
-    def get_instance_results(
+    def __get_instance_results(
         self,
         instance_predictions: Dict[str, str],
         assessment_prompts,
@@ -521,7 +517,7 @@ class LLMJudgePairwise(LLMJudge):
         selections,
         contests_count,
         combination_indexes,
-        criteria: Criteria,
+        criterion: Criteria,
     ):
         response_names = list(instance_predictions.keys())
         per_response_results = {
@@ -681,21 +677,21 @@ class LLMJudgePairwise(LLMJudge):
             for metric in single_result.keys():
                 all_results[f"{response_name}_{metric}"] = single_result[metric]
 
-        all_results["criteria"] = criteria.to_json()
+        all_results["criteria"] = criterion.to_json()
         return self.clean_results(all_results)
 
-    def parse_prediction_to_dict(self, prediction: Union[Dict[str, str], List[str]]):
-        if isinstance(prediction, list):
-            return {f"{key + 1}": value for key, value in enumerate(prediction)}
-
-        raise Exception(
-            f"Prediction may be a list or a dict. Instead got type {type(prediction)}"
+    def __parse_prediction_to_dict(self, predictions: Union[Dict[str, str], List[str]]):
+            return {f"{key + 1}": value for key, value in enumerate(predictions)}
+        if isinstance(predictions, dict):
+            return predictions
+        raise UnitxtError(
+            f"Prediction may be a list or a dict. Instead got type {type(predictions)}"
         )
 
-    def convert_predictions_to_dicts(
+    def __convert_predictions_to_dicts(
         self, predictions: Union[List[Dict[str, str]], List[str]]
     ):
-        return [self.parse_prediction_to_dict(prediction) for prediction in predictions]
+        return [self.__parse_prediction_to_dict(prediction) for prediction in predictions]
 
     def compute(
         self,
@@ -703,10 +699,10 @@ class LLMJudgePairwise(LLMJudge):
         predictions: List[str],
         task_data: List[Dict[str, str]],
     ) -> dict:
-        self.logger.info(
+        logger.info(
             f'Starting evaluation with evaluator "{self.evaluator_name}" and provider {self.inference_engine.get_pretty_print_name()}'
         )
-        predictions = self.convert_predictions_to_dicts(predictions)
+        predictions = self.__convert_predictions_to_dicts(predictions)
         instances_count = len(predictions)
         self.reduction_map = {"mean": ["score"]}
         self.reduction_map["mean"].extend(
@@ -722,7 +718,7 @@ class LLMJudgePairwise(LLMJudge):
             len(combination_indexes) for combination_indexes in combination_indexes_list
         ]
 
-        self.logger.info(
+        logger.info(
             f"The evaluation will perform {sum(contests_count_list) * [1, 2][self.check_positional_bias]} ({' + '.join([f'{c * [1, 2][self.check_positional_bias]}' for c in contests_count_list])}) pairwise comparisons"
         )
 
@@ -753,7 +749,7 @@ class LLMJudgePairwise(LLMJudge):
             response_pairs_list.append(response_pairs)
             option_pairs_list.append(option_pairs)
 
-        criterias = self.get_criterias(task_data, instances_count)
+        criterias = self.get_criteria(task_data, instances_count)
         contexts = self.get_contexts(task_data)
         if self.check_positional_bias:
             criterias.extend(criterias)
@@ -787,7 +783,7 @@ class LLMJudgePairwise(LLMJudge):
         assessment_prompts, assessment_outputs, _ = self.perform_evaluation_step(
             assessment_instances, self.assessment_task, self.assessment_template
         )
-        self.logger.info("The assessment was generated successfully.")
+        logger.info("The assessment was generated successfully.")
 
         # the slices used to get the assessment for each summary generation instance
         # it will grab the whole assessment for a particular instance or half of it depending on the value of check_positional_bias
@@ -837,7 +833,7 @@ class LLMJudgePairwise(LLMJudge):
                 self.summarization_task,
                 self.summarization_template,
             )
-            self.logger.info("The summary was generated successfully.")
+            logger.info("The summary was generated successfully.")
 
         score_option_instruction_list = [
             "".join(
@@ -885,7 +881,7 @@ class LLMJudgePairwise(LLMJudge):
         )
         # Selections are of the form 'Response n', so we just keep n
         selections = [selection.split(" ")[-1] for selection in selections]
-        self.logger.info("The selections were calculated successfully.")
+        logger.info("The selections were calculated successfully.")
         results = []
         slice_start = 0
         for i, incremental_contests_count in enumerate(incremental_contests_count_list):
@@ -898,7 +894,7 @@ class LLMJudgePairwise(LLMJudge):
                 (incremental_contests_count_list[i - 1] if i > 0 else 0)
                 + incremental_contests_count,
             )
-            instance_results = self.get_instance_results(
+            instance_results = self.__get_instance_results(
                 predictions[i],
                 assessment_prompts[sli],
                 assessment_outputs[sli],
