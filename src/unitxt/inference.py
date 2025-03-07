@@ -1937,6 +1937,9 @@ class WMLChatParamsMixin(Artifact):
     time_limit: Optional[int] = None
     top_p: Optional[float] = None
     n: Optional[int] = None
+    seed: Optional[int] = None
+    logit_bias: Optional[Dict[str, Any]] = None
+    stop: Optional[List[str]] = None
 
 
 CredentialsWML = Dict[
@@ -2486,8 +2489,20 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                             "of messages."
                         )
 
+    @staticmethod
+    def check_instance_contains_image(instance: Dict[str, Any]) -> bool:
+        if "media" not in instance:
+            return False
+        if not isinstance(instance["media"], dict):
+            return False
+        if "images" not in instance["media"]:
+            return False
+        if not instance["media"]["images"]:
+            return False
+        return True
+
     def to_messages(self, instance: Union[Dict, List]) -> List[List[Dict[str, Any]]]:
-        if isinstance(instance["source"], str) and "media" in instance:
+        if isinstance(instance["source"], str) and self.check_instance_contains_image(instance):
             return self._create_messages_from_instance(instance)
 
         messages = super().to_messages(instance)
