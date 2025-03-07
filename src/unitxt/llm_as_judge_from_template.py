@@ -37,6 +37,7 @@ class LLMAsJudgeBase(BulkInstanceMetric, ArtifactFetcherMixin):
         inference_model (InferenceEngine): The module that creates the inference of the judge llm.
         reduction_map (dict): A dictionary specifying the reduction method for the metric.
         batch_size (int): The size of the bulk.
+
     """
 
     main_score: str = "llm_as_judge"

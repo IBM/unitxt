@@ -1527,7 +1527,7 @@ class IntersectCorrespondingFields(InstanceOperator):
 
         if not isinstance(self.allowed_values, list):
             raise ValueError(
-                f"The allowed_field_values is not a type list but '{type(self.allowed_field_values)}'"
+                f"The allowed_values is not a type list but '{type(self.allowed_values)}'"
             )
 
     def process(

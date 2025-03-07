@@ -6,6 +6,9 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "wrap",
             "field": "answer",
             "inside": "list",

@@ -6,10 +6,8 @@ with settings.context(disable_hf_datasets_cache=False):
     inference_model = LMMSEvalInferenceEngine(
         model_type="llama_vision",
         model_args={"pretrained": "meta-llama/Llama-3.2-11B-Vision-Instruct"},
-        # model_type="llava",
-        # model_args={"pretrained": "liuhaotian/llava-v1.5-7b"},
-        max_new_tokens=32,
-        image_token="",
+        max_new_tokens=512,
+        image_token=""
     )
 
     dataset = load_dataset(
@@ -17,7 +15,6 @@ with settings.context(disable_hf_datasets_cache=False):
         format="formats.chat_api",
         split="test",
         max_test_instances=20,
-        # disable_cache=True
     )
 
     predictions = inference_model.infer(dataset)
