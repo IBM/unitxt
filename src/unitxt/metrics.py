@@ -6271,11 +6271,10 @@ class SQLExecutionAccuracy(InstanceMetric):
         if df1.shape != df2.shape:
             return False
 
-        df1_sorted = df1.to_numpy()[:, df1.to_numpy().argsort(axis=1)[0]]
-        df2_sorted = df2.to_numpy()[:, df2.to_numpy().argsort(axis=1)[0]]
+        df1_rows_sorted = [sorted(map(str, row)) for row in df1.to_numpy()]
+        df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
 
-        # Compare row-wise
-        return (df1_sorted == df2_sorted).all()
+        return df1_rows_sorted == df2_rows_sorted
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
