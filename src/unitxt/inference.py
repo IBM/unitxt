@@ -27,8 +27,10 @@ from typing import (
 )
 
 from datasets import Dataset, DatasetDict
+from noise_class import NoisyLlamaForCausalLM
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
+from transformers import GenerationConfig
 
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
@@ -551,6 +553,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             padding=True,
             truncation=True,
         )
+        self.processor.pad_token_id = self.processor.bos_token_id
 
     def _init_model(self):
         from transformers import (
@@ -641,6 +644,27 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     ) -> Union[List[Dict], List[TextGenerationInferenceOutput]]:
         self.verify_not_chat_api(dataset)
         return self._infer_fn(dataset, return_meta_data, True)
+
+
+class NoiseHFInferenceEngineParamsMixin(Artifact):
+    num_layers: Optional[list] = None
+    noise_func: Optional[Any] = None
+
+
+class NoiseHFAutoModelInferenceEngine(
+    HFAutoModelInferenceEngine, NoiseHFInferenceEngineParamsMixin
+):
+    def _init_model(self):
+        gen_config = GenerationConfig.from_pretrained(self.model_name)
+        self.model = NoisyLlamaForCausalLM.from_pretrained(
+            self.model_name,
+            noise_layers=self.num_layers,
+            noise_function=self.noise_func,
+            generation_config=gen_config,
+        )
+
+        if self.device_map is None:
+            self.model.to(self.device)
 
 
 class HFLlavaInferenceEngine(HFInferenceEngineBase):
