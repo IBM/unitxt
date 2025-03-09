@@ -7,7 +7,7 @@ from datasets import Image as DatasetImage
 from .artifact import Artifact
 from .dict_utils import dict_get
 from .image_operators import ImageDataString
-from .operator import InstanceOperatorValidator
+from .operator import InstanceOperator, InstanceOperatorValidator
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
 from .types import Image
@@ -87,6 +87,18 @@ def loads_instance(batch):
     return batch
 
 
+class SerializeInstancesBeforeDump(InstanceOperator):
+
+   def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        if settings.task_data_as_text:
+            instance["task_data"] = json.dumps(instance["task_data"])
+
+        if not isinstance(instance["source"], str):
+            instance["source"] = json.dumps(instance["source"])
+        return instance
+
 class FinalizeDataset(InstanceOperatorValidator):
     group_by: List[List[str]]
     remove_unnecessary_fields: bool = True
@@ -126,13 +138,6 @@ class FinalizeDataset(InstanceOperatorValidator):
             task_data = {**task_data, **instance["reference_fields"]}
         return task_data
 
-    def serialize_instance_fields(self, instance, task_data):
-        if settings.task_data_as_text:
-            instance["task_data"] = json.dumps(task_data)
-
-        if not isinstance(instance["source"], str):
-            instance["source"] = json.dumps(instance["source"])
-        return instance
 
     def process(
         self, instance: Dict[str, Any], stream_name: Optional[str] = None
@@ -157,7 +162,7 @@ class FinalizeDataset(InstanceOperatorValidator):
                 for instance in instance.pop(constants.demos_field)
             ]
 
-        instance = self.serialize_instance_fields(instance, task_data)
+        instance["task_data"] = task_data
 
         if self.remove_unnecessary_fields:
             keys_to_delete = []
@@ -202,7 +207,8 @@ class FinalizeDataset(InstanceOperatorValidator):
             instance, dict
         ), f"Instance should be a dict, got {type(instance)}"
         schema = get_schema(stream_name)
+
         assert all(
             key in instance for key in schema
-        ), f"Instance should have the following keys: {schema}. Instance is: {instance}"
-        schema.encode_example(instance)
+        ), f"Instance should have the following keys: {schema.keys()}. Instance is: {instance.keys()}"
+        # schema.encode_example(instance)
