@@ -122,7 +122,7 @@ class TestLoaders(UnitxtTestCase):
 
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
-        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
+        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET" # pragma: allowlist-secret
         for data_files in [
             ["train.jsonl", "test.jsonl"],
             {"train": "train.jsonl", "test": "test.jsonl"},
@@ -132,7 +132,7 @@ class TestLoaders(UnitxtTestCase):
                 loader = LoadFromIBMCloud(
                     endpoint_url_env="DUMMY_URL_ENV",
                     aws_access_key_id_env="DUMMY_KEY_ENV",
-                    aws_secret_access_key_env="DUMMY_SECRET_ENV",
+                    aws_secret_access_key_env="DUMMY_SECRET_ENV", # pragma: allowlist-secret
                     bucket_name="DUMMY_BUCKET",
                     data_dir="DUMMY_DATA_DIR",
                     data_files=data_files,
