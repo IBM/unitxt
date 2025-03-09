@@ -31,11 +31,11 @@ https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919f
 
 ### 🦄 Currently on Unitxt Catalog
 
-![Abstract Tasks](https://img.shields.io/badge/Abstract_Tasks-62-blue)
-![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-3025-blue)
+![Abstract Tasks](https://img.shields.io/badge/Abstract_Tasks-64-blue)
+![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-3174-blue)
 ![Templates](https://img.shields.io/badge/Templates-342-blue)
-![Benchmarks](https://img.shields.io/badge/Benchmarks-4-blue)
-![Metrics](https://img.shields.io/badge/Metrics-422-blue)
+![Benchmarks](https://img.shields.io/badge/Benchmarks-6-blue)
+![Metrics](https://img.shields.io/badge/Metrics-462-blue)
 
 ### 🦄 Run Unitxt Exploration Dashboard
 
