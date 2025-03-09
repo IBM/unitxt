@@ -16,7 +16,7 @@
         {
             "__type__": "criteria_option",
             "name": "Pass",
-            "description": "There is no numeriselected_providercal temperature reading in the response."
+            "description": "There is no numerical temperature reading in the response."
         }
     ],
     "option_map": {

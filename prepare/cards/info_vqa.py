@@ -3,7 +3,7 @@ from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
-from unitxt.operators import Rename
+from unitxt.operators import Rename, Shuffle
 from unitxt.splitters import RenameSplits, SplitRandomMix
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
@@ -19,6 +19,7 @@ template = MultiReferenceTemplate(
 card = TaskCard(
     loader=LoadHF(path="vidore/infovqa_train"),
     preprocess_steps=[
+        Shuffle(),
         SplitRandomMix(
             {"train": "train[90%]", "validation": "train[5%]", "test": "train[5%]"}
         ),
@@ -53,6 +54,7 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"validation": "test"}),
         ToImage(field="image", to_field="context"),
         Set(fields={"context_type": "image"}),

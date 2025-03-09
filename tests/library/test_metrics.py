@@ -1433,7 +1433,7 @@ class TestMetrics(UnitxtTestCase):
             "SELECT product_name, price FROM products WHERE category = 'Electronics'"
         ]
         references = [
-            "SELECT product_name, price FROM products WHERE category = 'Electronics';"
+            "SELECT product_name AS pname, price AS cost FROM products WHERE category = 'Electronics';"
         ]
         task_data = [
             {

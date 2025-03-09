@@ -75,6 +75,7 @@ settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
+
 def hf_evaluate_load(path: str, *args, **kwargs):
     if settings.hf_offline_metrics_path is not None:
         path = os.path.join(settings.hf_offline_metrics_path, path)
@@ -83,13 +84,18 @@ def hf_evaluate_load(path: str, *args, **kwargs):
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-         download_config=DownloadConfig(
-                max_retries=settings.loaders_max_retries,
-            ),
-            verification_mode="no_checks",
-            trust_remote_code=settings.allow_unverified_code,
-            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-        )
+        download_config=DownloadConfig(
+            max_retries=settings.loaders_max_retries,
+        ),
+        verification_mode="no_checks",
+        trust_remote_code=settings.allow_unverified_code,
+        download_mode=(
+            "force_redownload"
+            if settings.disable_hf_datasets_cache
+            else "reuse_dataset_if_exists"
+        ),
+    )
+
 
 class MetricsList(ListCollection):
     def verify(self):
@@ -2311,13 +2317,11 @@ class HuggingfaceMetric(GlobalMetric):
                 Documentation.HUGGINGFACE_METRICS,
             )
 
-        assert (
-            self.hf_additional_input_fields is None
-            or isoftype(self.hf_additional_input_fields, List[str])
+        assert self.hf_additional_input_fields is None or isoftype(
+            self.hf_additional_input_fields, List[str]
         ), f"Argument hf_additional_input_fields should be either None or List[str]. It is now: {self.hf_additional_input_fields}."
-        assert (
-            self.hf_additional_input_fields_pass_one_value is None
-            or isoftype(self.hf_additional_input_fields_pass_one_value, List[str])
+        assert self.hf_additional_input_fields_pass_one_value is None or isoftype(
+            self.hf_additional_input_fields_pass_one_value, List[str]
         ), f"Argument hf_additional_input_fields_pass_one_value should be either None or List[str]. It is now: {self.hf_additional_input_fields_pass_one_value}."
 
         return super().verify()
@@ -2826,9 +2830,7 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
     def prepare(self):
         super().prepare()
 
-        self._metric = hf_evaluate_load(
-            self.metric, "multilabel"
-        )
+        self._metric = hf_evaluate_load(self.metric, "multilabel")
 
     def add_str_to_id(self, str):
         if str not in self.str_to_id:
@@ -2885,8 +2887,8 @@ class F1MultiLabel(GlobalMetric, PackageRequirementsMixin):
             labels=labels_param,
         )
         if isinstance(result[self.metric], numpy.ndarray):
-            assert (
-                len(result[self.metric]) == len(labels)
+            assert len(result[self.metric]) == len(
+                labels
             ), f"F1 result ({result[self.metric]}) has more entries than labels ({labels})"
             final_result = {self.main_score: nan_mean(result[self.metric])}
             for i, label in enumerate(labels):
@@ -3625,7 +3627,9 @@ class Detector(BulkInstanceMetric):
         if settings.hf_offline_models_path is not None:
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.pipe = pipeline(
-            "text-classification", model=model_path, device=device,
+            "text-classification",
+            model=model_path,
+            device=device,
         )
 
     def compute(
@@ -3662,7 +3666,6 @@ class RegardMetric(GlobalMetric):
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
         self.regard_model = AutoModelForSequenceClassification.from_pretrained(
             model_path,
-
         )
         self.regard_tokenizer = AutoTokenizer.from_pretrained(model_path)
 
@@ -3865,9 +3868,9 @@ class LlamaIndexLLMMetric(InstanceMetric):
     prediction_type = str
     reduction_map: Dict[str, List[str]] = None
     openai_models: List[str] = ["gpt-3.5-turbo"]
-    anthropic_models: List[
-        str
-    ] = []  # this is here for the sake of documentation for future models
+    anthropic_models: List[str] = (
+        []
+    )  # this is here for the sake of documentation for future models
     mock_models: List[str] = ["mock"]
     external_api_models = openai_models + anthropic_models
     data_classification_policy = ["public"]
@@ -4123,9 +4126,7 @@ class Perplexity(BulkInstanceMetric):
             model_path = self.model_name
             if settings.hf_offline_models_path is not None:
                 model_path = os.path.join(settings.hf_offline_models_path, model_path)
-            self.model = (
-                self.model_class().from_pretrained(model_path).to(self.device)
-            )
+            self.model = self.model_class().from_pretrained(model_path).to(self.device)
             self.tokenizer = AutoTokenizer.from_pretrained(model_path)
             if self.tokenizer.pad_token_id is None:
                 self.tokenizer.pad_token_id = self.tokenizer.eos_token_id
@@ -4291,7 +4292,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
     batch_size: int = 2
     model_name: str = "vectara/hallucination_evaluation_model"
     prediction_type = str
-   # single_reference_per_prediction = True
+    # single_reference_per_prediction = True
     max_context_words = 4096
     reduction_map = {"mean": [main_score]}
 
@@ -4308,6 +4309,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
         else:
             device = "cpu"
         from transformers import AutoModelForSequenceClassification
+
         model_path = self.model_name
         if settings.hf_offline_models_path is not None:
             model_path = os.path.join(settings.hf_offline_models_path, model_path)
@@ -5955,6 +5957,7 @@ class GraniteGuardianBase(InstanceMetric):
 
     def prepare(self):
         from transformers import AutoTokenizer
+
         if not isinstance(self.risk_type, RiskType):
             self.risk_type = RiskType[self.risk_type]
         if not hasattr(self, "_tokenizer") or self._tokenizer is None:
@@ -6268,18 +6271,10 @@ class SQLExecutionAccuracy(InstanceMetric):
         if df1.shape != df2.shape:
             return False
 
-        # run over all columns of d11,
-        # and see if there is a columns in df2 that matches it,
-        # if not return False, if all the columns worked return tue
-        for df1_col in df1.columns:
-            col_matched = False
-            for df2_col in df2.columns:
-                if all(df1[df1_col].values == df2[df2_col].values):
-                    col_matched = True
-            if not col_matched:
-                return False
+        df1_rows_sorted = [sorted(map(str, row)) for row in df1.to_numpy()]
+        df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
 
-        return True
+        return df1_rows_sorted == df2_rows_sorted
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
@@ -6381,6 +6376,8 @@ class SQLExecutionAccuracy(InstanceMetric):
                 gold_error,
             )
 
+        if isinstance(gold_res, dict) and "results" in gold_res:
+            gold_res = gold_res["results"]
         gold_df = pd.DataFrame(gold_res)
         non_empty_gold_df = 0 if gold_df.empty else 1
 
@@ -6444,6 +6441,8 @@ class SQLExecutionAccuracy(InstanceMetric):
                 pred_error,
             )
 
+        if isinstance(pred_res, dict) and "results" in pred_res:
+            pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
         execution_result = (
