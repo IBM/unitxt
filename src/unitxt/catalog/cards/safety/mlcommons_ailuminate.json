@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_csv",
         "files": {
-            "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/refs/heads/main/airr_official_1.0_practice_prompt_set_release_public_subset.csv"
+            "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/0fe054f3d34209a0a1acf1b95174c5e8926f5c57/airr_official_1.0_practice_prompt_set_release_public_subset.csv"
         },
         "data_classification_policy": [
             "public"
