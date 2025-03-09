@@ -10,7 +10,7 @@ from unitxt.templates import TemplatesDict
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadCSV(files={ "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/refs/heads/main/airr_official_1.0_practice_prompt_set_release_public_subset.csv"},
+    loader=LoadCSV(files={ "test": "https://raw.githubusercontent.com/mlcommons/ailuminate/0fe054f3d34209a0a1acf1b95174c5e8926f5c57/airr_official_1.0_practice_prompt_set_release_public_subset.csv"},   # pragma: allowlist secret
                   data_classification_policy=["public"]),
     preprocess_steps=[
         Rename(field_to_field={"prompt_text": "input",
