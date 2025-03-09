@@ -46,7 +46,7 @@ from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .schema import loads_instance
+from .schema import SerializeInstancesBeforeDump, loads_instance
 from .serializers import __file__ as _
 from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
@@ -54,6 +54,7 @@ from .split_utils import __file__ as _
 from .splitters import __file__ as _
 from .sql_utils import __file__ as _
 from .standard import __file__ as _
+from .stream import MultiStream
 from .stream import __file__ as _
 from .stream_operators import __file__ as _
 from .string_operators import __file__ as _
@@ -91,7 +92,9 @@ class Dataset(datasets.GeneratorBasedBuilder):
                 logger.info("Loading with huggingface unitxt copy...")
                 dataset = get_dataset_artifact(self.config.name)
 
-            self._generators = dataset()
+            multi_stream: MultiStream = dataset()
+
+            self._generators = SerializeInstancesBeforeDump()(multi_stream)
 
         return self._generators
 
