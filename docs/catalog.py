@@ -1,8 +1,10 @@
 import json
 import os
 import re
+from collections import defaultdict
 from functools import lru_cache
 from pathlib import Path
+from typing import List
 
 from docutils.core import publish_parts
 from pygments import highlight
@@ -43,6 +45,44 @@ def dict_to_syntax_highlighted_html(nested_dict):
     # Apply syntax highlighting
     return highlight(py_str, PythonLexer(), formatter)
 
+def imports_to_syntax_highlighted_html(subtypes: List[str])-> str:
+    if len(subtypes) == 0:
+        return ""
+    module_to_class_names = defaultdict(list)
+    for subtype in subtypes:
+        subtype_class = Artifact._class_register.get(subtype)
+        module_to_class_names[subtype_class.__module__].append(subtype_class.__name__)
+
+    imports_txt = ""
+    for modu in sorted(module_to_class_names.keys()):
+        classes_string = ", ".join(sorted(module_to_class_names[modu]))
+        imports_txt += f"from {modu} import {classes_string}\n"
+
+    formatter = HtmlFormatter(nowrap=True)
+    htm = highlight(imports_txt, PythonLexer(), formatter)
+
+    imports_html = f'\n<p><div><pre><span id="unitxtImports">{htm}</span></pre>\n'
+    imports_html += """<button onclick="toggleText()" id="textButton">
+    Show Imports
+</button>
+
+<script>
+    function toggleText() {
+        let showImports = document.getElementById("unitxtImports");
+        let buttonText = document.getElementById("textButton");
+        if (showImports.style.display === "none"  || showImports.style.display === "") {
+            showImports.style.display = "inline";
+            buttonText.innerHTML = "Close";
+        }
+
+        else {
+            showImports.style.display = "none";
+            buttonText.innerHTML = "Show Imports";
+        }
+    }
+</script>
+</div></p>\n"""
+    return imports_html
 
 def write_title(title, label):
     title = f"📁 {title}"
@@ -177,16 +217,22 @@ def make_content(artifact, label, all_labels):
 
     # Replacement function
     html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
+
+    subtypes = all_subtypes_of_artifact(artifact)
+    subtypes = list(set(subtypes))
+    subtypes.remove(artifact_type)  # this was already documented
+    html_for_imports = imports_to_syntax_highlighted_html(subtypes)
+
     source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace(".", "/")}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
-    html_for_dict = f"""<div class="admonition note">
+    html_for_element = f"""<div class="admonition note">
 <p class="admonition-title">{catalog_id}</p>
 <div class="highlight-json notranslate">
 <div class="highlight"><pre>
 {html_for_dict.strip()}
-</pre>{source_link}</div></div>
+</pre>{source_link}{html_for_imports.strip()}</div></div>
 </div>""".replace("\n", "\n    ")
 
-    result += "    " + html_for_dict + "\n"
+    result += "    " + html_for_element + "\n"
 
     if artifact_class.__doc__:
         explanation_str = f"Explanation about `{type_class_name}`"
@@ -194,9 +240,6 @@ def make_content(artifact, label, all_labels):
         result += "+" * len(explanation_str) + "\n\n"
         result += artifact_class.__doc__ + "\n"
 
-    subtypes = all_subtypes_of_artifact(artifact)
-    subtypes = list(set(subtypes))
-    subtypes.remove(artifact_type)  # this was already documented
     for subtype in subtypes:
         subtype_class = Artifact._class_register.get(subtype)
         subtype_class_name = subtype_class.__name__
