@@ -3,7 +3,7 @@
     "loader": {
         "__type__": "load_hf",
         "path": "alesi12/head_qa_v2",
-        "name": "es"
+        "name": "gl"
     },
     "preprocess_steps": [
         {
