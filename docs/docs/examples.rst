@@ -74,6 +74,15 @@ Classical f1_micro, f1_macro, and per-entity-type f1 metrics are reported.
 
 Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`NER task in catalog <catalog.tasks.ner.all_entity_types>`, :ref:`Inference Engines <inference>`.
 
+Evaluate a multi choice QA dataset
+===================================================
+
+This example demonstrates how to evaluate a multi choice question answering dataset.
+ 
+`Example code  <https://github.com/IBM/unitxt/blob/main/examples/multiple_choice_qa_evaluation.py>`__
+
+Related documentation: :ref:`Add new dataset tutorial <adding_dataset>`, :ref:`Multiple choice task in catalog <catalog.tasks.qa.multiple_choice.open>`, :ref:`Inference Engines <inference>`.
+
 Evaluate API Call 
 +++++++++++++++++++++++++++++++++++++++++
 
