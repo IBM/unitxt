@@ -68,7 +68,7 @@ from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
 
-FINQA_HASH = "42430b8613082bb4b85d49210284135d"
+FINQA_HASH = "42430b8613082bb4b85d49210284135d" # pragma: allowlist-secret
 
 logger = get_logger()
 settings = get_settings()

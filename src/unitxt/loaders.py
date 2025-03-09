@@ -599,11 +599,11 @@ class LoadFromIBMCloud(Loader):
             load_ibm_cloud = LoadFromIBMCloud(
                 endpoint_url_env='IBM_CLOUD_ENDPOINT',
                 aws_access_key_id_env='IBM_AWS_ACCESS_KEY_ID',
-                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY',
+                aws_secret_access_key_env='IBM_AWS_SECRET_ACCESS_KEY', # pragma: allowlist secret
                 bucket_name='my-bucket'
             )
             multi_stream = load_ibm_cloud.process()
-    """ # pragma: allowlist secret
+    """
 
     endpoint_url_env: str
     aws_access_key_id_env: str
