@@ -1302,7 +1302,7 @@ class IbmGenAiInferenceEngine(
     def _get_credentials():
         from genai import Credentials
 
-        api_key_env_var_name = "GENAI_KEY"
+        api_key_env_var_name = "GENAI_KEY" # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
 
         assert api_key is not None, (
@@ -1805,7 +1805,7 @@ class TogetherAiInferenceEngine(
         from together import Together
         from together.types.models import ModelType
 
-        api_key_env_var_name = "TOGETHER_API_KEY"
+        api_key_env_var_name = "TOGETHER_API_KEY" # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
         assert api_key is not None, (
             f"Error while trying to run TogetherAiInferenceEngine."
