@@ -5,6 +5,7 @@ from unitxt.random_utils import get_seed
 
 model_list = ["llama-3-3-70b-instruct"]
 
+
 format = "formats.llama3_instruct"
 template = "templates.safety.llamaguard"
 task = "rating.single_turn"
@@ -32,6 +33,6 @@ for model_id in model_list:
 
     add_to_catalog(
         metric,
-        f"metrics.llm_as_judge.safety.llamaguard",
+        "metrics.llm_as_judge.safety.llamaguard",
         overwrite=True,
     )
