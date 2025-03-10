@@ -351,6 +351,10 @@ class ChatAPIFormat(BaseFormat):
         The resulting `messages` is now a dictionary ready for sending to the OpenAI API.
     """
 
+    repeat_instruction_per_turn: bool = False
+    add_target_prefix : bool = True
+
+
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
         # Regular expression to find <img> tags with src attribute
         img_tag_pattern = re.compile(
@@ -415,9 +419,10 @@ class ChatAPIFormat(BaseFormat):
     ) -> List[Message]:
         messages = []
 
-        if system_prompt or instruction:
+        if system_prompt or (instruction and not self.repeat_instruction_per_turn):
             system_content = self.to_content(
-                system_prompt + ("\n" if system_prompt != "" else "") + instruction,
+                system_prompt + ("\n" if system_prompt != "" else "") +
+                    (instruction if not self.repeat_instruction_per_turn else ""),
                 media,
             )
             messages.append(
@@ -428,9 +433,13 @@ class ChatAPIFormat(BaseFormat):
             )
 
         for demo_instance in demos:
-            user_content = self.to_content(demo_instance["source"], media)
+            text = demo_instance["source"]
+            if (instruction and self.repeat_instruction_per_turn):
+                text = f"{instruction}\n{text}"
+
+            user_content = self.to_content(text, media)
             assistant_content = self.to_content(
-                target_prefix + demo_instance["target"], media
+                (target_prefix if self.add_target_prefix else "") + demo_instance["target"], media
             )
             messages.extend(
                 [
@@ -442,7 +451,11 @@ class ChatAPIFormat(BaseFormat):
                 ]
             )
 
-        last_user_content = self.to_content(source, media)
+        text = source
+        if (instruction and self.repeat_instruction_per_turn):
+            text = f"{instruction}\n{text}"
+
+        last_user_content = self.to_content(text    , media)
 
         messages.extend([{"role": "user", "content": last_user_content}])
 
