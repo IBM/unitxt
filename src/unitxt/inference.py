@@ -1969,6 +1969,9 @@ class WMLInferenceEngineBase(
         deployment_id (str, optional):
             Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
+        concurrency_limit (int):
+            Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value for the generation.
         parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
             Defines inference parameters and their values. Deprecated attribute, please pass respective
             parameters directly to the respective class instead.
@@ -1977,6 +1980,7 @@ class WMLInferenceEngineBase(
     credentials: Optional[CredentialsWML] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
+    concurrency_limit: int = 10
     label: str = "wml"
     _requirements_list = {
         "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
@@ -2230,11 +2234,6 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
 
-    Args:
-        concurrency_limit (int):
-            Number of concurrent requests sent to a model. Default is 10,
-            which is also the maximum value.
-
     Examples:
         .. code-block:: python
 
@@ -2257,8 +2256,6 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
             )
             results = wml_inference.infer(dataset["test"])
     """
-
-    concurrency_limit: int = 10
 
     def verify(self):
         super().verify()
@@ -2511,6 +2508,32 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         # images as SDK allows sending only one image per message.
         return [messages]
 
+    def _handle_async_requests(
+        self,
+        messages: List[List[Dict[str, Any]]],
+        params: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        async def handle_async_requests(start_idx, end_idx):
+            coroutines = [
+                self._model.achat(messages=messages[idx], params=params)
+                for idx in range(start_idx, end_idx)
+            ]
+            batch_results = await asyncio.gather(*coroutines)
+            return list(batch_results)
+
+        loop = asyncio.get_event_loop()
+        results = []
+
+        for batch_idx in range(0, len(messages), self.concurrency_limit):
+            batch_results = loop.run_until_complete(
+                handle_async_requests(
+                    batch_idx, min(batch_idx + self.concurrency_limit, len(messages))
+                )
+            )
+            results.extend(batch_results)
+
+        return results
+
     def _send_requests(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -2526,27 +2549,25 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             output_type = "message"
             params["logprobs"] = False
 
-        final_results = []
+        indexed_messages = [
+            (i, message)
+            for i in range(len(dataset))
+            for message in self.to_messages(dataset[i])
+        ]
 
-        for instance in dataset:
-            messages = self.to_messages(instance)
+        results = self._handle_async_requests(
+            [msg[1] for msg in indexed_messages], params
+        )
 
-            for message in messages:
-                result = self._model.chat(
-                    messages=message,
-                    params=params,
-                )
-
-                final_results.append(
-                    self.get_return_object(
-                        result["choices"][0][output_type]["content"],
-                        result,
-                        instance["source"],
-                        return_meta_data,
-                    )
-                )
-
-        return final_results
+        return [
+            self.get_return_object(
+                result["choices"][0][output_type]["content"],
+                result,
+                dataset[idx[0]]["source"],
+                return_meta_data,
+            )
+            for result, idx in zip(results, indexed_messages)
+        ]
 
     def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
