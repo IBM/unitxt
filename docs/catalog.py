@@ -61,27 +61,22 @@ def imports_to_syntax_highlighted_html(subtypes: List[str])-> str:
     formatter = HtmlFormatter(nowrap=True)
     htm = highlight(imports_txt, PythonLexer(), formatter)
 
-    imports_html = f'\n<p><div><pre><span id="unitxtImports">{htm}</span></pre>\n'
-    imports_html += """<button onclick="toggleText()" id="textButton">
-    Show Imports
-</button>
-
-<script>
+    imports_html = '<a href="#catalog-id"><span onclick="toggleText()" class="viewcode-link"><span class="pre" id="toggle-text">[imports]</span></span></a>\n'
+    imports_html += f'<span id="unitxtImports" style="display:none">{htm}</span>\n'
+    imports_html += """<script>
     function toggleText() {
-        let showImports = document.getElementById("unitxtImports");
-        let buttonText = document.getElementById("textButton");
-        if (showImports.style.display === "none"  || showImports.style.display === "") {
-            showImports.style.display = "inline";
-            buttonText.innerHTML = "Close";
-        }
-
-        else {
-            showImports.style.display = "none";
-            buttonText.innerHTML = "Show Imports";
+        var textToToggle = document.getElementById("toggle-text");
+        var unitxtImports = document.getElementById("unitxtImports")
+        if (unitxtImports.style.display === "none" || unitxtImports.style.display === "") {
+            unitxtImports.style.display = "inline";
+            textToToggle.innerHTML = "[close imports]";
+        } else {
+            unitxtImports.style.display = "none";
+            textToToggle.innerHTML = "[imports]";
         }
     }
-</script>
-</div></p>\n"""
+</script>\n"""
+
     return imports_html
 
 def write_title(title, label):
@@ -213,10 +208,10 @@ def make_content(artifact, label, all_labels):
             # + target,
         )
 
-    pattern = r'(<span class="nt">)&quot;(.*?)&quot;(</span>)'
 
-    # Replacement function
-    html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
+    # Replacement function - remove &quote inside span of class "nt". good for yml
+    # pattern = r'(<span class="nt">)&quot;(.*?)&quot;(</span>)'
+    # html_for_dict = re.sub(pattern, r"\1\2\3", html_for_dict)
 
     subtypes = all_subtypes_of_artifact(artifact)
     subtypes = list(set(subtypes))
@@ -225,12 +220,10 @@ def make_content(artifact, label, all_labels):
 
     source_link = f"""<a class="reference external" href="https://github.com/IBM/unitxt/blob/main/src/unitxt/catalog/{catalog_id.replace(".", "/")}.json"><span class="viewcode-link"><span class="pre">[source]</span></span></a>"""
     html_for_element = f"""<div class="admonition note">
-<p class="admonition-title">{catalog_id}</p>
-<div class="highlight-json notranslate">
+<p id="catalog-id" class="admonition-title">{catalog_id}</p>
 <div class="highlight"><pre>
-{html_for_dict.strip()}
-</pre>{source_link}{html_for_imports.strip()}</div></div>
-</div>""".replace("\n", "\n    ")
+{html_for_imports.strip()}{html_for_dict.strip()}
+</pre>{source_link}</div></div>""".replace("\n", "\n    ")
 
     result += "    " + html_for_element + "\n"
 
