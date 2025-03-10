@@ -17,14 +17,26 @@
         {
             "__type__": "set",
             "fields": {
-                "output": "None",
-                "type_of_input": "question",
-                "type_of_output": "answer",
-                "prediction_type": "str"
+                "output": ""
             }
         }
     ],
-    "task": "tasks.generation",
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "input": "str",
+            "id": "str",
+            "harm_area": "str",
+            "category": "str"
+        },
+        "reference_fields": {
+            "output": "str"
+        },
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.llm_as_judge.safety.llamaguard"
+        ]
+    },
     "templates": [
         "templates.generation.empty"
     ],

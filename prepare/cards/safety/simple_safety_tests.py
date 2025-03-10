@@ -1,6 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
+    Task,
     TaskCard,
 )
 from unitxt.operators import (
@@ -17,14 +18,18 @@ card = TaskCard(
         Rename(field_to_field={"prompt": "input"}),
         Set(
             fields={
-                "output": "None",
-                "type_of_input": "question",
-                "type_of_output": "answer",
-                "prediction_type": "str",
+                "output": "",
             }
         ),
     ],
-    task="tasks.generation",
+    task=Task(
+        input_fields={"input": str, "id": str, "harm_area": str, "category": str},
+        reference_fields={"output": str},
+        prediction_type=str,
+        metrics=[
+            "metrics.llm_as_judge.safety.llamaguard",
+        ],
+    ),
     templates=["templates.generation.empty"],
     __description__="100 test prompts across five harm areas that LLMs, for the vast majority of applications, should refuse to comply with.",
     __tags__={
@@ -33,7 +38,6 @@ card = TaskCard(
     },
 )
 
-test_card(
-    card, format="formats.empty", strict=False, demos_taken_from="test", num_demos=0
-)
+test_card(card, strict=False, demos_taken_from="test", num_demos=0)
+
 add_to_catalog(card, "cards.safety.simple_safety_tests", overwrite=True)
