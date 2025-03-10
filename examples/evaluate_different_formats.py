@@ -2,6 +2,7 @@ import json
 import time
 
 import pandas as pd
+from lh_eval_api import LakeHouseLoader
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
     CrossProviderInferenceEngine,
@@ -9,6 +10,7 @@ from unitxt.inference import (
     WMLInferenceEngineGeneration,
 )
 
+x = LakeHouseLoader # To avoid warnings, of unused imports.
 print("Creating cross_provider_rits ...")
 cross_provider_rits = CrossProviderInferenceEngine(model="granite-3-8b-instruct", max_tokens=32, provider="rits")
 
