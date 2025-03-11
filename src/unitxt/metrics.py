@@ -6030,6 +6030,7 @@ class GraniteGuardianBase(InstanceMetric):
             f"{self.main_score}_prob_of_risk": prob_of_risk,
             f"{self.main_score}_certainty": confidence_score,
             f"{self.main_score}_label": label,
+            f"{self.main_score}_prompt": prompt,
         }
         logger.debug(f"Results are ready:\n{result}")
         return result
