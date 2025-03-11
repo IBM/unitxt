@@ -64,12 +64,11 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
-from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
 
-FINQA_HASH = "42430b8613082bb4b85d49210284135d" # pragma: allowlist-secret
+FINQA_HASH = "42430b8613082bb4b85d49210284135d"  # pragma: allowlist-secret
 
 logger = get_logger()
 settings = get_settings()
@@ -6505,6 +6504,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import get_db_connector
+
         predicted_sql = prediction
         execution_result: float = 0.0
 

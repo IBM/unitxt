@@ -11,7 +11,6 @@ import requests
 from huggingface_hub import snapshot_download
 from requests.exceptions import ConnectionError, ReadTimeout
 
-from .cache_utils import generate_cache_key, get_or_set
 from .logging_utils import get_logger
 from .types import SQLDatabase
 
@@ -319,10 +318,14 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
     def execute_query(self, query: str) -> Any:
         """Executes a query against the remote database, with retries for certain exceptions."""
+        from .cache_utils import generate_cache_key, Cache
+
+        cache = Cache()
+
         cache_key = generate_cache_key(
             "sql_request", self.api_url, self.database_id, query
         )
-        return get_or_set(
+        return cache.get_or_set(
             cache_key,
             lambda: execute_query_remote(
                 api_url=self.api_url,
