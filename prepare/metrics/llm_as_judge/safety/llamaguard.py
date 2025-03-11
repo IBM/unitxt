@@ -4,12 +4,12 @@ from unitxt.llm_as_judge_from_template import LLMAsJudge
 from unitxt.random_utils import get_seed
 
 model = "llama-3-3-70b-instruct"
-format = "formats.llama3_instruct"
+format = "formats.chat_api"
 template = "templates.safety.llamaguard"
 task = "rating.single_turn"
 
 inference_model = CrossProviderInferenceEngine(
-    model=model, max_tokens=252, seed=get_seed()
+    model=model, max_tokens=20, seed=get_seed(), temperature=1e-7
 )
 
 model_label = (
