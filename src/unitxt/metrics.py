@@ -30,7 +30,6 @@ import numpy as np
 import pandas as pd
 import requests
 from datasets import DownloadConfig
-from func_timeout.exceptions import FunctionTimedOut
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -6357,6 +6356,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         import time
 
         from func_timeout import func_timeout
+        from func_timeout.exceptions import FunctionTimedOut
 
         from .sql_utils import sqlglot_optimized_equivalence
 
