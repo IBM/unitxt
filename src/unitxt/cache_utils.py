@@ -35,13 +35,19 @@ def generate_cache_key(*args, **kwargs):
 
 
 class Cache:
-    """
-    A class that provides disk-based caching functionality for a given function.
-    """
+    """A class that provides disk-based caching functionality for a given function."""
 
     def __init__(self):
-        """
-        Initializes the cache. If `CACHE_LOCATION` is set, a disk-based cache is created using `diskcache`.
+        """Initializes the cache.
+
+        If `CACHE_LOCATION` (os.getenv("UNITXT_CACHE_LOCATION") is set, a disk-based
+        cache is created using `diskcache`.
+
+        Args:
+            None
+
+        Returns:
+            None
         """
         if CACHE_LOCATION:
             try:
