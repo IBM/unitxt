@@ -11,8 +11,8 @@ import requests
 from huggingface_hub import snapshot_download
 from requests.exceptions import ConnectionError, ReadTimeout
 
+from .cache_utils import generate_cache_key, get_or_set
 from .logging_utils import get_logger
-from .cache_utils import get_or_set, generate_cache_key
 from .types import SQLDatabase
 
 logger = get_logger()

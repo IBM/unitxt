@@ -1,11 +1,13 @@
 import functools
-import os
-import diskcache
-import asyncio
 import hashlib
 import json
+import os
+
+import diskcache
 
 from .logging_utils import get_logger
+
+logger = get_logger()
 
 # Check if caching is enabled via environment variable
 CACHE_LOCATION = os.getenv("UNITXT_CACHE_LOCATION")
@@ -26,8 +28,7 @@ else:
 
 
 def generate_cache_key(*args, **kwargs):
-    """
-    Generate a stable hashable cache key for various input types.
+    """Generate a stable hashable cache key for various input types.
 
     :param args: Positional arguments of the function.
     :param kwargs: Keyword arguments of the function.

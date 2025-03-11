@@ -11,7 +11,6 @@ from collections import Counter, defaultdict
 from dataclasses import field
 from enum import Enum
 from functools import lru_cache
-from func_timeout.exceptions import FunctionTimedOut
 from typing import (
     Any,
     Dict,
@@ -31,6 +30,7 @@ import numpy as np
 import pandas as pd
 import requests
 from datasets import DownloadConfig
+from func_timeout.exceptions import FunctionTimedOut
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -6289,7 +6289,6 @@ class SQLExecutionAccuracy(InstanceMetric):
             True if the DataFrames have the same content (ignoring column names and row order),
             False otherwise.
         """
-
         return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
 
     @staticmethod
