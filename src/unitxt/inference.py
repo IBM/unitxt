@@ -186,9 +186,13 @@ class InferenceEngine(Artifact):
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
+    def get_instance_cache_key(self, instance):
+        instance_key_fields = ["media", "source", "task_data"]
+        return {key: instance[key] for key in instance if key in instance_key_fields}
+
     def _get_cache_key(self, instance: Dict[str, Any]) -> str:
         """Generate a unique cache key for each input."""
-        record = {"messages": self.to_messages(instance)}
+        record = self.get_instance_cache_key(instance)
         record.update(self.to_dict())
         instance_str = json.dumps(record, sort_keys=True)
         return hashlib.md5(instance_str.encode()).hexdigest()
@@ -228,7 +232,7 @@ class InferenceEngine(Artifact):
                 dataset_batches = [dataset[i:i + self.cache_batch_size]
                                     for i in range(0, len(dataset), self.cache_batch_size)]
                 result = []
-                for batch in dataset_batches:
+                for batch_num, batch in enumerate(dataset_batches):
                     cached_results = []
                     missing_examples = []
                     for i, item in enumerate(batch):
@@ -239,6 +243,7 @@ class InferenceEngine(Artifact):
                         else:
                             missing_examples.append((i, item)) # each element is index in batch and example
                     # infare on missing examples only, without indices
+                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
                     inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
                     # recombined to index and value
                     inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
