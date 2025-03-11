@@ -62,7 +62,7 @@ class LLMJudge(BulkInstanceMetric):
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
     generate_summaries: bool = True
     format = "formats.chat_api"
-    include_prompts_in_result: bool = False
+    include_prompts_in_result: bool = True
     criteria_field: str = None
     criteria: Criteria = None
     logger = get_logger()
