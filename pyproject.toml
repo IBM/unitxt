@@ -116,7 +116,7 @@ ui = [
     "transformers"
 ]
 watsonx = [
-    "ibm-watsonx-ai==1.1.14"
+    "ibm-watsonx-ai==1.2.10"
 ]
 inference-tests = [
   "litellm==v1.52.9",
