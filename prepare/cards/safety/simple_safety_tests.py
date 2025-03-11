@@ -27,7 +27,7 @@ card = TaskCard(
         reference_fields={"output": str},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.safety.llamaguard",
+            "metrics.granite_guardian.assistant_risk.harm[prediction_type=str,user_message_field=input,assistant_message_field=output,score_prefix=graniteguardian_]"
         ],
     ),
     templates=["templates.generation.empty"],
