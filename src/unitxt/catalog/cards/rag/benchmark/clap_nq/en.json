@@ -20,14 +20,6 @@
             }
         },
         {
-            "__type__": "set",
-            "fields": {
-                "reference_contexts": [],
-                "is_answerable_label": true,
-                "metadata_field": ""
-            }
-        },
-        {
             "__type__": "list_field_values",
             "fields": [
                 "doc-id-list"
