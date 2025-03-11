@@ -1971,7 +1971,7 @@ class WMLInferenceEngineBase(
 
     def _initialize_wml_client(self):
         from ibm_watsonx_ai.client import APIClient
-        logger.info(f"credentials: {self.credentials}")
+        #logger.info(f"credentials: {self.credentials}")
         if self.credentials is None or len(self.credentials) == 0:  # TODO: change
             self.credentials = self._read_wml_credentials_from_env()
         self._verify_wml_credentials(self.credentials)
@@ -1993,17 +1993,17 @@ class WMLInferenceEngineBase(
             "Please set the env variable: 'WML_URL'"
         )
         credentials["url"] = url
-        logger.info(f"WML_SPACE_ID: {os.environ.get('WML_SPACE_ID')}")
+        #logger.info(f"WML_SPACE_ID: {os.environ.get('WML_SPACE_ID')}")
         space_id = os.environ.get("WML_SPACE_ID")
         project_id = os.environ.get("WML_PROJECT_ID")
         if space_id and project_id:
             get_logger().warning(
                 "Either 'WML_SPACE_ID' or 'WML_PROJECT_ID' need to be "
                 "specified, however, both were found. 'WMLInferenceEngine' "
-                "will use space by default. If it is not desired, then have "
+                "will use project_id by default. If it is not desired, then have "
                 "only one of those defined in the env."
             )
-            credentials["space_id"] = space_id
+            credentials["project_id"] = project_id
         elif space_id:
             credentials["space_id"] = space_id
         elif project_id:
