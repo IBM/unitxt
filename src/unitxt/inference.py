@@ -2043,10 +2043,10 @@ class WMLInferenceEngineBase(
             get_logger().warning(
                 "Either 'WML_SPACE_ID' or 'WML_PROJECT_ID' need to be "
                 "specified, however, both were found. 'WMLInferenceEngine' "
-                "will use space by default. If it is not desired, then have "
+                "will use project_id by default. If it is not desired, then have "
                 "only one of those defined in the env."
             )
-            credentials["space_id"] = space_id
+            credentials["project_id"] = project_id
         elif space_id:
             credentials["space_id"] = space_id
         elif project_id:
