@@ -12,6 +12,7 @@ from huggingface_hub import snapshot_download
 from requests.exceptions import ConnectionError, ReadTimeout
 
 from .logging_utils import get_logger
+from .cache_utils import get_or_set, generate_cache_key
 from .types import SQLDatabase
 
 logger = get_logger()
@@ -23,7 +24,7 @@ class DatabaseConnector(ABC):
     def __init__(self, db_config: SQLDatabase):
         self.db_config = db_config
         self.databases_folder = os.path.join(
-            os.environ.get("UNITXT_TEXT2SQL_CACHE", "cache/text2sql"), "databases"
+            os.environ.get("UNITXT_CACHE_LOCATION", "cache/text2sql"), "databases"
         )
         os.makedirs(self.databases_folder, exist_ok=True)
 
@@ -318,12 +319,18 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
     def execute_query(self, query: str) -> Any:
         """Executes a query against the remote database, with retries for certain exceptions."""
-        return execute_query_remote(
-            api_url=self.api_url,
-            database_id=self.database_id,
-            api_key=self.api_key,
-            query=query,
-            timeout=self.timeout,
+        cache_key = generate_cache_key(
+            "sql_request", self.api_url, self.database_id, query
+        )
+        return get_or_set(
+            cache_key,
+            lambda: execute_query_remote(
+                api_url=self.api_url,
+                database_id=self.database_id,
+                api_key=self.api_key,
+                query=query,
+                timeout=self.timeout,
+            ),
         )
 
 
