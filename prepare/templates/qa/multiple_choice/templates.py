@@ -412,6 +412,21 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="Answer the following multiple choice question based on the {context_type}. Answer only and exactly with one of the following: {numerals}.\nContext:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_separator="\n",
+        postprocessors=["processors.to_string_stripped", "processors.first_character"],
+        title_fields=["context_type"],
+    ),
+    "templates.qa.multiple_choice.with_context.exact_answer_instruct",
+    overwrite=True,
+)
+
+
+
 
 def remove_duplicates(input_list):
     seen = set()
