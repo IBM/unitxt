@@ -21,7 +21,7 @@ dependencies = [
     "evaluate",
     "absl-py",
     "ipadic",
-    "scipy"
+    "scipy>=1.10.1"
 ]
 
 [project.urls]

@@ -371,6 +371,14 @@ def new_random_generator():
 
 
 class Statistic:
+    """Statistic for which the confidence interval is to be calculated.
+
+    `statistic` must be a callable that accepts ``len(data)`` samples
+    as separate arguments and returns the resulting statistic.
+    If `vectorized` is set ``True``,
+    `statistic` must also accept a keyword argument `axis` and be
+    vectorized to compute the statistic along the provided `axis`.
+    """
 
     def __init__(self, data, score_names, scorer):
         self.data = data
@@ -393,7 +401,6 @@ class Statistic:
         result = np.array([scores[m] for m in self.score_names])
         self._history.append(result)
         return result
-
     def mean(self, idx):
         return nan_mean([result[idx] for result in self._history])
 
