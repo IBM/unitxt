@@ -1040,4 +1040,4 @@ class JsonStrToDict(FieldOperator):
                 f"Unable to convert input text to dictionary in JsonStrToDict. Text: {text}"
             )
             dict_value = {}
-        return  dict_value
+        return  {k: v for k, v in dict_value.items() if v is not None}
