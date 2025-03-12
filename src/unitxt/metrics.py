@@ -6043,7 +6043,7 @@ class GraniteGuardianBase(InstanceMetric):
             generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
         ]
         prob = self.get_probabilities(top_tokens_list)
-        prob_of_risk = prob[1]
+        prob_of_risk = prob[1].item()
 
         res = next(iter(generated_tokens_list))["text"].strip()
 
@@ -6056,7 +6056,7 @@ class GraniteGuardianBase(InstanceMetric):
 
         return label, prob_of_risk
 
-    def get_probabilities(self, top_tokens_list):
+    def get_probabilities(self, top_tokens_list) -> Tuple[np.float32, np.float32]:
         import torch
 
         safe_token_prob = 1e-50
