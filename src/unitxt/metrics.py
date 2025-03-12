@@ -3388,22 +3388,29 @@ class KeyValueExtraction(GlobalMetric):
     ) -> dict:
         references = [element[0] for element in references]
 
+        key_statistics = {}
+        all_reference_keys = set()
+        for reference in references:
+            all_reference_keys.update(list(reference.keys()))
+        for key in all_reference_keys:
+            key_statistics[key]= {"exact_match" : []}
+
         num_prediction_keys=0
         illegal_prediction_keys=0
-
-        key_statistics = {}
         for reference, prediction in zip(references, predictions):
-            for key in reference.keys():
-                if key not in key_statistics:
-                    key_statistics[key]={"exact_match" : []}
-                if (key in prediction and prediction[key]==reference[key]):
+            for key in all_reference_keys:
+                if (key not in reference and key not in prediction):
+                    continue
+                if (key in reference and key in prediction and prediction[key]==reference[key]):
                     key_statistics[key]["exact_match"].append(1.0)
                 else:
                     key_statistics[key]["exact_match"].append(0.0)
+
             for key in prediction.keys():
                 num_prediction_keys += 1
-                if key not in reference:
+                if key not in all_reference_keys:
                     illegal_prediction_keys += 1
+
         result={}
 
         average = 0
