@@ -5,8 +5,7 @@
     "target_field": "answer",
     "choices_separator": "\n",
     "postprocessors": [
-        "processors.to_string_stripped",
-        "processors.first_character"
+        "processors.to_string_stripped"
     ],
     "title_fields": [
         "context_type"
