@@ -2,7 +2,7 @@ from unitxt import add_to_catalog
 from unitxt.metrics import KeyValueExtraction
 from unitxt.test_utils.metrics import test_metric
 
-metric = KeyValueExtraction(__description__ = """ Metric that evaluates key value pairs predictions (provided as dictionary)
+metric = KeyValueExtraction(__description__ = """Metric that evaluates key value pairs predictions (provided as dictionary)
 with reference key value pairs (also provided as dictionary). By default uses an accuracy (exact match) between each for the fields.
 Reports average accuracy for each key , as well as micro and macro averages across all keys.
 
