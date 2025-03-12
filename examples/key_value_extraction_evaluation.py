@@ -56,7 +56,7 @@ dataset = create_dataset(
 )
 
 model = CrossProviderInferenceEngine(
-    model="llama-3-2-11b-vision-instruct", provider="watsonx"
+    model="llama-3-2-90b-vision-instruct", provider="watsonx"
 )
 
 predictions = model(dataset)

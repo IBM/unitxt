@@ -3375,6 +3375,58 @@ class CustomF1(GlobalMetric):
             result["precision_macro"] = self.zero_division
 
 
+class KeyValueExtraction(GlobalMetric):
+    main_score = "exact_match_micro"
+    prediction_type = Dict[str,str]
+    single_reference_per_prediction = True
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [element[0] for element in references]
+
+        num_prediction_keys=0
+        illegal_prediction_keys=0
+
+        key_statistics = {}
+        for reference, prediction in zip(references, predictions):
+            for key in reference.keys():
+                if key not in key_statistics:
+                    key_statistics[key]={"exact_match" : []}
+                if (key in prediction and prediction[key]==reference[key]):
+                    key_statistics[key]["exact_match"].append(1.0)
+                else:
+                    key_statistics[key]["exact_match"].append(0.0)
+            for key in prediction.keys():
+                num_prediction_keys += 1
+                if key not in reference:
+                    illegal_prediction_keys += 1
+        result={}
+
+        average = 0
+        total = 0
+
+        weighted_average = 0
+        for key in key_statistics:
+            mean_for_key = numpy.mean(key_statistics[key]["exact_match"])
+            num = len(key_statistics[key]["exact_match"])
+            total += num
+            average += mean_for_key
+            weighted_average += mean_for_key * num
+            result[f"{key}_exact_match"] = mean_for_key
+
+        result["exact_match_micro"] = weighted_average / total
+        result["exact_match_macro"] = average / len(key_statistics)
+        if (num_prediction_keys !=0):
+            result["legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        else:
+            result["legal_keys_in_predictions"] = 0
+
+        return result
+
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
 
@@ -3382,18 +3434,6 @@ class NER(CustomF1):
 
     def get_element_group(self, element, additional_input):
         return element[1]
-
-    def get_element_representation(self, element, additional_input):
-        return str(element)
-
-
-class KeyValueExtraction(CustomF1):
-    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
-
-    prediction_type = List[Tuple[str, str]]
-
-    def get_element_group(self, element, additional_input):
-        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)

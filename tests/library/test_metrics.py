@@ -48,6 +48,7 @@ from unitxt.metrics import (
     GroupMeanTokenOverlap,
     HuggingfaceMetric,
     KendallTauMetric,
+    KeyValueExtraction,
     LlamaIndexCorrectness,
     MaxAccuracy,
     MeteorFast,
@@ -942,6 +943,29 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_key_value_extraction(self):
+        metric = KeyValueExtraction()
+        # key1 - 2 correct of 2
+        # key2 - 1 correct of 2
+        # key3 - 0 correct of 1
+        # legal keys - 4 out of 5
+        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}], [{"key1": "value3" , "key2" :  "value4"}]]
+        predictions = [ {"key1": "value1" , "key2" :  "wrong-value", "wrong-key" : "values3" },{"key1": "value3",  "key2" : "value4"}]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual((2+1+0)/(2 + 2 + 1), outputs[0]["score"]["global"]["exact_match_micro"])
+        self.assertAlmostEqual((2/2 + 1/2 + 0/2)/3, outputs[0]["score"]["global"]["exact_match_macro"])
+        self.assertAlmostEqual(4/5, outputs[0]["score"]["global"]["legal_keys_in_predictions"])
+
+
+        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}] ]
+        predictions = [ {} ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(0, outputs[0]["score"]["global"]["legal_keys_in_predictions"])
 
     def test_rouge(self):
         metric = Rouge()

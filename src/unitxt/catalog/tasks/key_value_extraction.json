@@ -8,7 +8,7 @@
     "reference_fields": {
         "key_value_pairs_answer": "Dict[str, str]"
     },
-    "prediction_type": "List[Tuple[str, str]]",
+    "prediction_type": "Dict[str, str]",
     "metrics": [
         "metrics.key_value_extraction"
     ],

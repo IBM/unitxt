@@ -1,5 +1,5 @@
 import json
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
@@ -205,7 +205,7 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
 
     becomes
 
-    [('url', 'curl -X GET -H "Content-Type: application/json" https://petstore.swagger.io/v2/pets'), ('tags', 'dogs'), ('limit', '5')]
+    { 'url' : 'curl -X GET -H "Content-Type: application/json" https://petstore.swagger.io/v2/pets', 'tags' : 'dogs', 'limit' : '5'}
 
     """
 
@@ -217,11 +217,11 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
 
         splits = text.split("?")
         split_command = re.split(r"((?=GET|POST|DELETE)GET|POST|DELETE)", splits[0])
-        result = [
-            ("command", split_command[0]),
-            ("operation", split_command[1]),
-            ("url", split_command[2]),
-        ]
+        result = {
+            "command": split_command[0],
+            "operation": split_command[1],
+            "url": split_command[2],
+        }
         if len(splits) == 1:
             return result
         params = splits[1]
@@ -234,7 +234,7 @@ class CurlStrToListOfKeyValuePairs(FieldOperator):
             (key, value) = key_value_splits
             value_splits = value.split(",")
             if len(value_splits) == 1:
-                result.append((f"query_param_{key}", f"{value}"))
+                result[f"query_param_{key}"]= f"{value}"
 
         return result
 
@@ -249,9 +249,8 @@ template = InputOutputTemplate(
 task = Task(
     input_fields={"user_request": str, "api_spec": str},
     reference_fields={"reference_query": str},
-    prediction_type=List[Tuple[str, str]],
+    prediction_type=Dict[str,str],
     metrics=[
-        "metrics.accuracy",
         "metrics.key_value_extraction",
     ],
 )
