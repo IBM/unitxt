@@ -35,9 +35,9 @@ def text_to_image(text: str):
 
 test_set = [
     {
-        "input": text_to_image("John lives in Texas."),
+        "input": text_to_image("John lives in New York."),
         "keys": keys,
-        "key_value_pairs_answer": {"Worker": "John", "LivesIn": "Texas"},
+        "key_value_pairs_answer": {"Worker": "John", "LivesIn": "New York"},
     },
     {
         "input": text_to_image("Phil works at Apple and eats an apple."),
@@ -53,6 +53,7 @@ dataset = create_dataset(
     test_set=test_set,
     split="test",
     format="formats.chat_api",
+    metrics=["metrics.key_value_extraction","metrics.key_value_extraction[metric=token_overlap]"]
 )
 
 model = CrossProviderInferenceEngine(
