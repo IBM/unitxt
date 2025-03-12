@@ -34,6 +34,7 @@ from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
 from .artifact import Artifact
+from .catalog import get_from_catalog
 from .collections import ListCollection
 from .dataclass import (
     AbstractField,
@@ -3376,9 +3377,15 @@ class CustomF1(GlobalMetric):
 
 
 class KeyValueExtraction(GlobalMetric):
-    main_score = "exact_match_micro"
+
     prediction_type = Dict[str,str]
+    metric : str  = "accuracy"
     single_reference_per_prediction = True
+    main_score = ""
+    def prepare(self):
+        super().prepare()
+        self._metric = get_from_catalog(f"metrics.{self.metric}")
+        self.main_score = f"{self.metric}_micro"
 
     def compute(
         self,
@@ -3393,7 +3400,7 @@ class KeyValueExtraction(GlobalMetric):
         for reference in references:
             all_reference_keys.update(list(reference.keys()))
         for key in all_reference_keys:
-            key_statistics[key]= {"exact_match" : []}
+            key_statistics[key]= []
 
         num_prediction_keys=0
         illegal_prediction_keys=0
@@ -3401,10 +3408,16 @@ class KeyValueExtraction(GlobalMetric):
             for key in all_reference_keys:
                 if (key not in reference and key not in prediction):
                     continue
-                if (key in reference and key in prediction and prediction[key]==reference[key]):
-                    key_statistics[key]["exact_match"].append(1.0)
+                if (key in reference and key in prediction):
+                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
+                                                                        "references" : [reference[key]]}
+                                                                                                                                                                                                          ]})
+                    output_multi_stream = self._metric(multi_stream)
+                    output_stream = output_multi_stream["test"]
+                    score = next(iter(output_stream))["score"]["global"]["score"]
+                    key_statistics[key].append(score)
                 else:
-                    key_statistics[key]["exact_match"].append(0.0)
+                    key_statistics[key].append(0.0)
 
             for key in prediction.keys():
                 num_prediction_keys += 1
@@ -3418,19 +3431,19 @@ class KeyValueExtraction(GlobalMetric):
 
         weighted_average = 0
         for key in key_statistics:
-            mean_for_key = numpy.mean(key_statistics[key]["exact_match"])
-            num = len(key_statistics[key]["exact_match"])
+            mean_for_key = numpy.mean(key_statistics[key])
+            num = len(key_statistics[key])
             total += num
             average += mean_for_key
             weighted_average += mean_for_key * num
-            result[f"{key}_exact_match"] = mean_for_key
+            result[f"{self.metric}_{key}"] = mean_for_key
 
-        result["exact_match_micro"] = weighted_average / total
-        result["exact_match_macro"] = average / len(key_statistics)
+        result[f"{self.metric}_micro"] = weighted_average / total
+        result[f"{self.metric}_macro"] = average / len(key_statistics)
         if (num_prediction_keys !=0):
-            result["legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+            result[f"{self.metric}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
         else:
-            result["legal_keys_in_predictions"] = 0
+            result[f"{self.metric}_legal_keys_in_predictions"] = 0
 
         return result
 
