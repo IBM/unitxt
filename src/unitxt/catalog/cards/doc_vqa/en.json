@@ -8,6 +8,9 @@
         ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
         "splitters.small_no_dev",
         {
             "__type__": "explode",

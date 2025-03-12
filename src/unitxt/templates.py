@@ -76,9 +76,9 @@ class Template(InstanceOperator):
             self.postprocessors, List[Union[Operator, str]]
         ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
 
-    def input_fields_to_instruction_and_target_prefix(self, input_fields):
+    def input_fields_to_instruction_and_target_prefix(self, input_fields, instruction):
         instruction = self.apply_formatting(
-            input_fields, "input field", self.instruction, "instruction"
+            input_fields, "input field", instruction, "instruction"
         )
         target_prefix = self.apply_formatting(
             input_fields,
@@ -126,13 +126,13 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs
+            serialized_inputs, instance.get(constants.instruction_field, self.instruction)
         )
 
         result = {
             **instance,
             "source": source,
-            "instruction": instruction,
+            constants.instruction_field: instruction,
             "target_prefix": target_prefix,
             "postprocessors": self.postprocessors,
         }

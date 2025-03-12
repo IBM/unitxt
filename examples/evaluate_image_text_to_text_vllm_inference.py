@@ -1,4 +1,3 @@
-# os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'expandable_segments:True'
 from unitxt import settings
 from unitxt.api import evaluate, load_dataset
 from unitxt.inference import (
@@ -8,11 +7,11 @@ from unitxt.inference import (
 with settings.context(
     disable_hf_datasets_cache=False,
 ):
-    max_tokens = 32
+    max_tokens = 512
     dataset = load_dataset(
         card="cards.chart_qa_lmms_eval",
         format="formats.chat_api",
-        # loader_limit=20,
+        loader_limit=30,
         split="test",
     )
 

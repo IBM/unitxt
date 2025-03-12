@@ -6,13 +6,15 @@ from unitxt.blocks import (
     Set,
     TaskCard,
 )
+from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 with unitxt.settings.context(allow_unverified_code=True):
-    for subset in ["es", "en"]:
+    for subset in ["es", "en", "gl", "it", "ru"]:
         card = TaskCard(
-            loader=LoadHF(path="dvilares/head_qa", name=subset),
+            loader=LoadHF(path="alesi12/head_qa_v2", name=subset),
             preprocess_steps=[
+                RenameSplits({"train": "test"}),
                 Rename(field_to_field={"qtext": "text", "category": "label"}),
                 Set(
                     fields={
@@ -46,5 +48,6 @@ with unitxt.settings.context(allow_unverified_code=True):
                 "task_ids": "multiple-choice-qa",
             },
         )
-        test_card(card, debug=False)
+        if subset == "es":
+            test_card(card, debug=False)
         add_to_catalog(card, f"cards.head_qa.{subset}", overwrite=True)

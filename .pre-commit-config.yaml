@@ -31,7 +31,7 @@ repos:
         language: system
         # Adjust the files pattern to match your needs
         files: ^src/.*\.py$
-        exclude: .*/(metric|dataset|hf_utils)\.py$
+        exclude: .*/(metric|dataset|hf_utils|unitxt/assistant/.*)\.py$
         # Optional: Specify types or exclude files
         types: [python]
 

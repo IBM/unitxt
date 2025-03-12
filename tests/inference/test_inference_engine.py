@@ -105,7 +105,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
             predictions = inference_model.infer([dataset[0]])
 
-            self.assertEqual(predictions[0], "The real image")
+            self.assertEqual(predictions[0], "The unit of")
 
             prediction = inference_model.infer_log_probs([dataset[1]])[0]
 

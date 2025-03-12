@@ -35,7 +35,7 @@ from tqdm.asyncio import tqdm_asyncio
 from .artifact import Artifact
 from .dataclass import InternalField, NonPositionalField
 from .deprecation_utils import deprecation
-from .error_utils import UnitxtError
+from .error_utils import UnitxtError, UnitxtWarning
 from .image_operators import (
     EncodeImageToString,
     ImageDataString,
@@ -1302,7 +1302,7 @@ class IbmGenAiInferenceEngine(
     def _get_credentials():
         from genai import Credentials
 
-        api_key_env_var_name = "GENAI_KEY"
+        api_key_env_var_name = "GENAI_KEY" # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
 
         assert api_key is not None, (
@@ -1805,7 +1805,7 @@ class TogetherAiInferenceEngine(
         from together import Together
         from together.types.models import ModelType
 
-        api_key_env_var_name = "TOGETHER_API_KEY"
+        api_key_env_var_name = "TOGETHER_API_KEY" # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
         assert api_key is not None, (
             f"Error while trying to run TogetherAiInferenceEngine."
@@ -1937,6 +1937,9 @@ class WMLChatParamsMixin(Artifact):
     time_limit: Optional[int] = None
     top_p: Optional[float] = None
     n: Optional[int] = None
+    seed: Optional[int] = None
+    logit_bias: Optional[Dict[str, Any]] = None
+    stop: Optional[List[str]] = None
 
 
 CredentialsWML = Dict[
@@ -2486,8 +2489,20 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
                             "of messages."
                         )
 
+    @staticmethod
+    def check_instance_contains_image(instance: Dict[str, Any]) -> bool:
+        if "media" not in instance:
+            return False
+        if not isinstance(instance["media"], dict):
+            return False
+        if "images" not in instance["media"]:
+            return False
+        if not instance["media"]["images"]:
+            return False
+        return True
+
     def to_messages(self, instance: Union[Dict, List]) -> List[List[Dict[str, Any]]]:
-        if isinstance(instance["source"], str) and "media" in instance:
+        if isinstance(instance["source"], str) and self.check_instance_contains_image(instance):
             return self._create_messages_from_instance(instance)
 
         messages = super().to_messages(instance)
@@ -2985,10 +3000,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             mapping each supported API to a corresponding
             model identifier string. This mapping allows consistent access to models
             across different API backends.
+        provider_specific_args:
+            (Optional[Dict[str, Dict[str,str]]]) Args specific to a provider for example provider_specific_args={"watsonx": {"max_requests_per_second": 4}}
+
     """
 
     label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
+    provider_specific_args: Optional[Dict[str, Dict[str,str]]] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
         "watsonx": {
@@ -3148,12 +3167,18 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                 f"{provider} is not a configured API for CrossProviderInferenceEngine. Supported apis: {','.join(self.provider_model_map.keys())}"
             )
         if self.model not in self.provider_model_map[provider]:
-            raise UnitxtError(
-                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[provider].keys())}"
+            UnitxtWarning(
+                f"{self.model} is not configured for provider {provider}. Supported models: {','.join(self.provider_model_map[provider].keys())}. Using un normalized name will make it impossible to switch to different provider on request."
             )
         cls = self.__class__._provider_to_base_class[provider]
         args = self.to_dict([StandardAPIParamsMixin])
-        args["model"] = self.provider_model_map[provider][self.model]
+        args["model"] = self.provider_model_map[provider].get(self.model, self.model)
+
+        if self.provider_specific_args is not None:
+            provider_args =  self.provider_specific_args.get(provider)
+            if provider_args is not None:
+                args.update(provider_args)
+
         params = list(args.keys())
         if provider in self._provider_param_renaming:
             for param in params:
