@@ -418,7 +418,7 @@ add_to_catalog(
         target_prefix="Answer:\n",
         target_field="answer",
         choices_separator="\n",
-        postprocessors=["processors.to_string_stripped", "processors.first_character"],
+        postprocessors=["processors.to_string_stripped"],
         title_fields=["context_type"],
     ),
     "templates.qa.multiple_choice.with_context.exact_answer_instruct",
