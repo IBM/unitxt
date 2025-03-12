@@ -918,16 +918,18 @@ class HFPipelineBasedInferenceEngine(
         return args
 
     def _create_pipeline(self, model_args: Dict[str, Any]):
-        from transformers import pipeline
+        from transformers import AutoTokenizer, pipeline
 
         path = self.model_name
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
 
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = pipeline(
             model=path,
             task=self.task,
             use_fast=self.use_fast_tokenizer,
+            tokenizer=tokenizer,
             trust_remote_code=settings.allow_unverified_code,
             **model_args,
             **self.to_dict(
