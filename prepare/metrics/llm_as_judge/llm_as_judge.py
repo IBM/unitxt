@@ -86,8 +86,11 @@ for evaluator_metadata in EVALUATORS_METADATA:
                 .replace(".", "_")
                 .replace(" ", "_")
             )
+
+            provider_name = provider.value.lower() if provider != ModelProviderEnum.AZURE_OPENAI else "azure_openai"
+
             add_to_catalog(
                 evaluator,
-                f"metrics.llm_as_judge.{evaluator_type.value}.{provider.value.lower()}.{metric_name}",
+                f"metrics.llm_as_judge.{evaluator_type.value}.{provider_name}.{metric_name}",
                 overwrite=True,
             )
