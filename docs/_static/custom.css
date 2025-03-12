@@ -206,3 +206,8 @@ div.document div.documentwrapper {
 .red {
   color: red;
 }
+
+#unitxtImports {
+  /* Display nothing for the element */
+  display: none;
+}         
