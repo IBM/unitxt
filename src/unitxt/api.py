@@ -1,12 +1,17 @@
 import hashlib
 import inspect
 import json
+import os
+import random
+import time
 from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+import filelock
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets.exceptions import DatasetGenerationError
+from huggingface_hub import constants as hf_constants
 
 from .artifact import fetch_artifact
 from .benchmark import Benchmark
@@ -172,16 +177,21 @@ def _source_to_dataset(
     streaming=False,
     lock_timeout=60,  # Timeout in seconds for acquiring the lock
 ):
-    import json
-    import os
-
-    import filelock
-
     from .dataset import Dataset as UnitxtDataset
 
     # Generate a unique signature for the source
     source_signature = json.dumps(to_dict(source, object_to_str_without_addresses), sort_keys=True)
     config_name = "recipe-" + short_hex_hash(source_signature)
+    hf_cache_home = hf_constants.HF_HOME
+    lock_dir = os.path.join(hf_cache_home, "locks")
+    os.makedirs(lock_dir, exist_ok=True)
+
+    # Create a lock file path based on the dataset configuration
+    lock_file = os.path.join(lock_dir, f"unitxt_{config_name}.lock")
+
+    # Add retry logic
+    max_attempts = 5
+    base_wait = 5  # seconds
 
     stream = source()
 
@@ -197,28 +207,32 @@ def _source_to_dataset(
 
         ds_builder._generators = stream
 
-        # Create a lock file path based on the dataset configuration
-        lock_file = os.path.join(os.path.expanduser("~"), ".cache", "unitxt", f"{config_name}.lock")
-        os.makedirs(os.path.dirname(lock_file), exist_ok=True)
 
-        # Create a file lock
-        lock = filelock.FileLock(lock_file, timeout=lock_timeout)
+        for attempt in range(max_attempts):
+            # Create a file lock with appropriate timeout
+            lock = filelock.FileLock(lock_file, timeout=300)  # 5 minutes
 
-        # Only protect the download_and_prepare operation with the lock
-        try:
-            with lock:
-                ds_builder.download_and_prepare(
-                    verification_mode="no_checks",
-                    download_mode=None if use_cache else "force_redownload",
+            try:
+                with lock:
+                    ds_builder.download_and_prepare(
+                        verification_mode="no_checks",
+                        download_mode=None if use_cache else "force_redownload",
+                    )
+
+                # If we reach here, the lock was successfully acquired and released
+                if streaming:
+                    return ds_builder.as_streaming_dataset(split=split)
+                return ds_builder.as_dataset(
+                    split=split, run_post_process=False, verification_mode="no_checks"
                 )
-        except filelock.Timeout:
-            raise TimeoutError(f"Could not acquire lock for {config_name} within {lock_timeout} seconds. Another process may be preparing the same dataset.")
 
-        if streaming:
-            return ds_builder.as_streaming_dataset(split=split)
-        return ds_builder.as_dataset(
-            split=split, run_post_process=False, verification_mode="no_checks"
-        )
+            except filelock.Timeout:
+                if attempt < max_attempts - 1:  # Not the last attempt
+                    wait_time = base_wait * (2 ** attempt) + random.uniform(0, 1)
+                    time.sleep(wait_time)
+                else:
+                    raise TimeoutError(f"Could not acquire lock for {config_name} after {max_attempts} attempts")
+
     except DatasetGenerationError as e:
         raise e.__cause__
 
