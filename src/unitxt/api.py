@@ -98,6 +98,7 @@ def create_dataset(
     train_set: Optional[List[Dict[Any, Any]]] = None,
     validation_set: Optional[List[Dict[Any, Any]]] = None,
     split: Optional[str] = None,
+    data_classification_policy:  Optional[List[str]] = None,
     **kwargs,
 ) -> Union[DatasetDict, IterableDatasetDict, Dataset, IterableDataset]:
     """Creates dataset from input data based on a specific task.
@@ -108,6 +109,7 @@ def create_dataset(
         train_set : optional train_set
         validation_set: optional validation set
         split: optional one split to choose
+        data_classification_policy: data_classification_policy
         **kwargs: Arguments used to load dataset from provided datasets (see load_dataset())
 
     Returns:
@@ -129,7 +131,11 @@ def create_dataset(
             f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
         )
 
-    card = TaskCard(loader=LoadFromDictionary(data=data), task=task)
+    args = {"data": data}
+    if data_classification_policy is not None:
+        args["default_data_classification_policy"] = data_classification_policy
+
+    card = TaskCard(loader=LoadFromDictionary(**args), task=task)
     return load_dataset(card=card, split=split, **kwargs)
 
 

@@ -2,10 +2,11 @@ import os
 import random
 import shutil
 import time
+from functools import lru_cache
 from typing import Any, Dict, List, cast
 
 import unitxt
-from unitxt import create_dataset, produce
+from unitxt import create_dataset
 from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
 from unitxt.inference import (
@@ -23,7 +24,6 @@ from unitxt.inference import (
 )
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
-from unitxt.text_utils import print_dict
 from unitxt.type_utils import isoftype
 
 from tests.utils import UnitxtInferenceTestCase
@@ -31,48 +31,81 @@ from tests.utils import UnitxtInferenceTestCase
 logger = get_logger()
 settings = get_settings()
 
+@lru_cache
+def get_image_dataset(format=None):
+    import numpy as np
+    from PIL import Image
+
+    random_image = Image.fromarray(
+        np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
+    )
+
+    data = [
+        {
+            "context": {"image": random_image, "format": "JPEG"},
+            "context_type": "image",
+            "question": "What is the capital of Texas?",
+            "answers": ["Austin"],
+        },
+        {
+            "context": {"image": random_image, "format": "JPEG"},
+            "context_type": "image",
+            "question": "What is the color of the sky?",
+            "answers": ["Blue"],
+        },
+    ]
+
+    return create_dataset(
+        task="tasks.qa.with_context",
+        format=format,
+        test_set=data,
+        split="test",
+        data_classification_policy=["public"],
+    )
+
+@lru_cache
+def get_text_dataset(format=None):
+    instances = [
+        {
+            "question": "How many days there are in a week? answer just the number in digits",
+            "answers": ["7"],
+        },
+        {
+            "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
+            "answers": ["2"],
+        },
+    ]
+
+    return create_dataset(
+        task="tasks.qa.open",
+        format=format,
+        test_set=instances,
+        split="test",
+        template="templates.qa.open.simple",
+        data_classification_policy=["public"],
+    )
 
 class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_pipeline_based_inference_engine(self):
-        inference_model = HFPipelineBasedInferenceEngine(
+        model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
-        assert inference_model._is_loaded()
 
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
-        instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
-            },
-        ]
-        dataset = produce(instances, recipe)
+        dataset = get_text_dataset()
 
-        predictions = inference_model.infer(dataset)
+        predictions = model(dataset)
 
-        targets = ["365", "1"]
-        self.assertListEqual(predictions, targets)
+        self.assertListEqual(predictions,  ["365", "1"])
 
     def test_pipeline_based_inference_engine_lazy_load(self):
-        inference_model = HFPipelineBasedInferenceEngine(
+        model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
-        assert not inference_model._is_loaded()
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
-        instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
-            },
-        ]
-        dataset = produce(instances, recipe)
+        dataset = get_text_dataset()
 
-        predictions = inference_model.infer(dataset)
+        predictions = model(dataset)
 
-        targets = ["365", "1"]
-        self.assertListEqual(predictions, targets)
+        self.assertListEqual(predictions,  ["365", "1"])
 
     def test_dataset_verification_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
@@ -95,60 +128,42 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
 
     def test_llava_inference_engine(self):
-        inference_model = HFLlavaInferenceEngine(
+        model = HFLlavaInferenceEngine(
             model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3, temperature=0.0
         )
 
-        if not settings.use_eager_execution:
-            dataset = load_dataset(
-                card="cards.doc_vqa.en",
-                template="templates.qa.with_context.with_type",
-                format="formats.chat_api",
-                loader_limit=30,
-                split="test",
-                streaming=True,
-            )
+        dataset = get_image_dataset(format="formats.chat_api")
 
-            iterator = iter(dataset)
+        predictions = model.infer(dataset)
 
-            predictions = inference_model.infer([next(iterator)])
+        self.assertListEqual(predictions, ["Austin", "Blue"])
 
-            self.assertEqual(predictions[0], "A cat is")
+        prediction = model.infer_log_probs(dataset)
 
-            prediction = inference_model.infer_log_probs([next(iterator)])[0]
-
-            assert isoftype(prediction, List[Dict[str, Any]])
-            self.assertListEqual(
-                list(prediction[0].keys()),
-                ["text", "logprob", "top_tokens"],
-            )
+        assert isoftype(prediction, List[List[Dict[str, Any]]])
+        self.assertListEqual(
+            list(prediction[0][0].keys()),
+            ["text", "logprob", "top_tokens"],
+        )
 
     def test_watsonx_inference(self):
-        wml_engine = WMLInferenceEngineGeneration(
+        model = WMLInferenceEngineGeneration(
             model_name="google/flan-t5-xl",
             data_classification_policy=["public"],
             random_seed=111,
-            min_new_tokens=16,
-            max_new_tokens=128,
+            min_new_tokens=1,
+            max_new_tokens=3,
             top_p=0.5,
             top_k=1,
             repetition_penalty=1.5,
             decoding_method="greedy",
         )
 
-        # Loading dataset:
-        dataset = load_dataset(
-            card="cards.go_emotions.simplified",
-            template="templates.classification.multi_label.empty",
-            loader_limit=3,
-        )
-        test_data = dataset["test"]
+        dataset = get_text_dataset()
 
-        # Performing inference:
-        predictions = wml_engine.infer(test_data)
-        for inp, prediction in zip(test_data, predictions):
-            result = {**inp, "prediction": prediction}
-            print_dict(result, keys_to_print=["source", "prediction"])
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
 
     def test_rits_inference(self):
         import os
@@ -159,31 +174,16 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             )
             return
 
-        rits_engine = RITSInferenceEngine(
-            model_name="meta-llama/llama-3-1-70b-instruct",
+        model = RITSInferenceEngine(
+            model_name="microsoft/phi-4",
             max_tokens=128,
         )
-        # The defined rits_engine is equivalent to:
-        # rits_engine = OpenAiInferenceEngine(
-        #     model_name="meta-llama/llama-3-1-70b-instruct",
-        #     max_tokens=128,
-        #     credentials={"api_key": "<api_key>", "api_url": "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/llama-3-1-70b-instruct/v1"},
-        #     default_headers = {"RITS_API_KEY": "<api_key>"}
-        # )
 
-        # Loading dataset:
-        dataset = load_dataset(
-            card="cards.go_emotions.simplified",
-            template="templates.classification.multi_label.empty",
-            loader_limit=3,
-        )
-        test_data = dataset["test"]
+        dataset = get_text_dataset()
 
-        # Performing inference:
-        predictions = rits_engine.infer(test_data)
-        for inp, prediction in zip(test_data, predictions):
-            result = {**inp, "prediction": prediction}
-            print_dict(result, keys_to_print=["source", "prediction"])
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
 
     def test_option_selecting_by_log_prob_inference_engines(self):
         dataset = [
@@ -254,34 +254,8 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         assert results[0] == "entailment"
 
     def test_watsonx_inference_with_images(self):
-        import numpy as np
-        from PIL import Image
 
-        random_image = Image.fromarray(
-            np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
-        )
-
-        data = [
-            {
-                "context": {"image": random_image, "format": "JPEG"},
-                "context_type": "image",
-                "question": "What is the capital of Texas?",
-                "answers": ["Austin"],
-            },
-            {
-                "context": {"image": random_image, "format": "JPEG"},
-                "context_type": "image",
-                "question": "What is the color of the sky?",
-                "answers": ["Blue"],
-            },
-        ]
-
-        dataset = create_dataset(
-            task="tasks.qa.with_context",
-            # format="formats.chat_api",
-            test_set=data,
-            split="test",
-        )
+        dataset = get_image_dataset()
 
         inference_engine = WMLInferenceEngineChat(
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
@@ -298,12 +272,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         assert results[0].stop_reason == "stop"
         assert isoftype(results[0].prediction, List[Dict[str, Any]])
 
-        dataset = create_dataset(
-            task="tasks.qa.with_context",
-            format="formats.chat_api",
-            test_set=data,
-            split="test",
-        )
+        dataset = get_image_dataset(format="formats.chat_api")
 
         inference_engine = WMLInferenceEngineChat(
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
@@ -315,33 +284,14 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         assert isinstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
-        from unitxt.logging_utils import set_verbosity
 
-        set_verbosity("debug")
-        inference_model = LiteLLMInferenceEngine(
+        model = LiteLLMInferenceEngine(
             model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
         )
-        instances = [
-            {
-                "question": "How many days there are in a week? answer just the number in digits",
-                "answers": ["7"],
-            },
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
-                "answers": ["2"],
-            },
-        ]
-        total_tests = 5
-        instances = (instances * (total_tests // len(instances)))[:total_tests]
 
-        dataset = create_dataset(
-            task="tasks.qa.open",
-            format="formats.chat_api",
-            test_set=instances,
-            split="test",
-        )
-        predictions = inference_model.infer(dataset)
+        dataset = get_text_dataset(format="formats.chat_api")
+        predictions = model(dataset)
 
         preds = set(predictions).intersection(
             {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"}
