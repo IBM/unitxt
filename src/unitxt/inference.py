@@ -3293,13 +3293,17 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
     """
-
+    label = "hf_option_selection"
     model_name: str
     batch_size: int
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model, self.label)
+
 
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
