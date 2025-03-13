@@ -68,8 +68,6 @@ from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
 
-FINQA_HASH = "42430b8613082bb4b85d49210284135d" # pragma: allowlist-secret
-
 logger = get_logger()
 settings = get_settings()
 
@@ -2810,7 +2808,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = FINQA_HASH
+        hash_of_script = "42430b8613082bb4b85d49210284135d" # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
