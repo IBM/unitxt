@@ -3063,28 +3063,34 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     provider_specific_args: Optional[Dict[str, Dict[str,str]]] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
-        "watsonx": {
-            "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
-            "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
-            "llama-3-3-70b-instruct": "watsonx/meta-llama/llama-3-3-70b-instruct",
-            "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
-            "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
-            "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
-            "llama-3-2-11b-vision-instruct": "watsonx/meta-llama/llama-3-2-11b-vision-instruct",
-            "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
-            "mistral-large-instruct": "watsonx/mistralai/mistral-large",
-        },
-        "watsonx-sdk": {
-            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
-            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
+        "watsonx-sdk": { # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
+            "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
+            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+            "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
+            "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
+            "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
+            "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+            "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-1-405b-instruct": "meta-llama/llama-3-405b-instruct",
+            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
+            "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
+            "llama-3-2-3b-instruct": "meta-llama/llama-3-2-3b-instruct",
+            "llama-3-2-90b-vision-instruct": "meta-llama/llama-3-2-90b-vision-instruct",
+            "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-guard-3-11b-vision": "meta-llama/llama-guard-3-11b-vision",
+            "mistral-large-instruct": "mistralai/mistral-large",
+            "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
         },
         "together-ai": {
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
             "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
+            "llama-3-1-8b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            "llama-3-1-70b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
+            "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         "aws": {
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
@@ -3093,6 +3099,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "ollama": {
             "llama-3-8b-instruct": "llama3:8b",
             "llama-3-70b-instruct": "llama3:70b",
+            "llama-3-1-8b-instruct": "llama3.1:8b",
+            "llama-3-1-70b-instruct": "llama3.1:70b",
+            "llama-3-1-405b-instruct": "llama3.1:405b",
+            "llama-3-2-1b-instruct": "llama3.2:1b",
+            "llama-3-2-3b-instruct": "llama3.2:3b",
+            "llama-3-3-70b-instruct": "llama3.3"
         },
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
@@ -3102,12 +3114,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         },
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+            "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
+            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
@@ -3142,6 +3156,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "o1-preview": "azure/o1-preview",
             "gpt-4o-mini": "azure/gpt-4o-mini",
             "gpt-4o": "azure/gpt-4o",
+            "gpt-4o-2024-08-06": "azure/gpt-4o-2024-08-06",
             "gpt-4": "azure/gpt-4",
             "gpt-4-0314": "azure/gpt-4-0314",
             "gpt-4-0613": "azure/gpt-4-0613",
@@ -3186,6 +3201,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
         },
     }
+    provider_model_map["watsonx"] = {k: f"watsonx/{v}" for k,v in provider_model_map["watsonx-sdk"].items()}
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
@@ -3243,7 +3259,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                         del args[param]
                 else:
                     del args[param]
-        self.engine = cls(**args)
+        self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
 
     def _infer(
