@@ -20,7 +20,7 @@ card = TaskCard(
         input_fields={"release_prompt_id": str, "input": str, "label": str, "persona": str, "locale": str, "prompt_hash": str},
         reference_fields={"label": str},
         prediction_type=str,
-        metrics=["metrics.llm_as_judge.safety.llamaguard"],
+        metrics=["metrics.llm_as_judge.safety.llamaguard"]
     ),
     templates=TemplatesDict({"default": InputOutputTemplate(input_format="{input}\n", output_format="")}),
 

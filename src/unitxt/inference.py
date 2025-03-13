@@ -2,6 +2,7 @@ import abc
 import asyncio
 import base64
 import dataclasses
+import hashlib
 import io
 import json
 import logging
@@ -29,6 +30,7 @@ from typing import (
 )
 
 from datasets import Dataset, DatasetDict, Image
+from diskcache import Cache
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -149,6 +151,8 @@ class ListWithMetadata(List[T]):
 
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
+    cache_batch_size: int = 100
+    use_cache: bool = True
 
     @abc.abstractmethod
     def _infer(
@@ -173,6 +177,7 @@ class InferenceEngine(Artifact):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
+            self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
@@ -181,16 +186,20 @@ class InferenceEngine(Artifact):
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
-    def infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        """Verifies instances of a dataset and perform inference on the input dataset.
+    def get_instance_cache_key(self, instance):
+        instance_key_fields = ["media", "source", "task_data"]
+        return {key: instance[key] for key in instance if key in instance_key_fields}
 
-        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
-        predictions.
-        """
+    def _get_cache_key(self, instance: Dict[str, Any]) -> str:
+        """Generate a unique cache key for each input."""
+        record = self.get_instance_cache_key(instance)
+        record.update(self.to_dict())
+        instance_str = json.dumps(record, sort_keys=True)
+        return hashlib.md5(instance_str.encode()).hexdigest()
+
+    def verify_infer_inputs(self,
+                            dataset: Union[List[Dict[str, Any]], Dataset],
+                            return_meta_data: bool):
         if not isoftype(dataset, Union[List[Dict[str, Any]], Dataset]):
             raise Exception(
                 "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
@@ -202,10 +211,54 @@ class InferenceEngine(Artifact):
             )
 
         [self.verify_instance(instance) for instance in dataset]
+
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        """Verifies instances of a dataset and perform inference on the input dataset.
+
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
+        predictions.
+        """
+        self.verify_infer_inputs(dataset, return_meta_data)
         if settings.mock_inference_mode:
             result = self._mock_infer(dataset)
         else:
-            result = self._infer(dataset, return_meta_data)
+            if self.use_cache:
+                if isinstance(dataset, Dataset):
+                    dataset = dataset.to_list()
+                dataset_batches = [dataset[i:i + self.cache_batch_size]
+                                    for i in range(0, len(dataset), self.cache_batch_size)]
+                result = []
+                for batch_num, batch in enumerate(dataset_batches):
+                    cached_results = []
+                    missing_examples = []
+                    for i, item in enumerate(batch):
+                        cache_key = self._get_cache_key(item)
+                        cached_value = self._cache.get(cache_key)
+                        if cached_value is not None:
+                            cached_results.append((i, cached_value)) # each element is index in batch, and value
+                        else:
+                            missing_examples.append((i, item)) # each element is index in batch and example
+                    # infare on missing examples only, without indices
+                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
+                    inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
+                    # recombined to index and value
+                    inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
+                    # Add missing examples to cache
+                    for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
+                        if prediction is None:
+                            continue
+                        cache_key = self._get_cache_key(item)
+                        self._cache[cache_key] = prediction
+
+                    # Combine cached and inferred results in original order
+                    batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
+                    result.extend(batch_predictions)
+            else:
+                result = self._infer(dataset, return_meta_data)
         return ListWithMetadata(
             result,
             metadata={

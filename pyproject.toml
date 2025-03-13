@@ -21,7 +21,8 @@ dependencies = [
     "evaluate",
     "absl-py",
     "ipadic",
-    "scipy"
+    "scipy",
+    "diskcache"
 ]
 
 [project.urls]
