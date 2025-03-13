@@ -96,7 +96,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
     def test_llava_inference_engine(self):
         inference_model = HFLlavaInferenceEngine(
-            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3
+            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3, temperature=0.0
         )
 
         if not settings.use_eager_execution:
@@ -106,13 +106,16 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
                 format="formats.chat_api",
                 loader_limit=30,
                 split="test",
+                streaming=True,
             )
 
-            predictions = inference_model.infer([dataset[0]])
+            iterator = iter(dataset)
 
-            self.assertEqual(predictions[0], "The unit of")
+            predictions = inference_model.infer([next(iterator)])
 
-            prediction = inference_model.infer_log_probs([dataset[1]])[0]
+            self.assertEqual(predictions[0], "A cat is")
+
+            prediction = inference_model.infer_log_probs([next(iterator)])[0]
 
             assert isoftype(prediction, List[Dict[str, Any]])
             self.assertListEqual(

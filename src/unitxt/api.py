@@ -21,7 +21,7 @@ from .loaders import LoadFromDictionary
 from .logging_utils import get_logger
 from .metric_utils import EvaluationResults, _compute, _inference_post_process
 from .operator import SourceOperator
-from .schema import loads_instance
+from .schema import loads_batch
 from .settings_utils import get_constants, get_settings
 from .standard import DatasetRecipe
 from .task import Task
@@ -283,7 +283,7 @@ def produce(
     result = _get_produce_with_cache(dataset_query, **kwargs)(instance_or_instances)
     if not is_list:
         return result[0]
-    return Dataset.from_list(result).with_transform(loads_instance)
+    return Dataset.from_list(result).with_transform(loads_batch)
 
 
 def infer(
