@@ -1,4 +1,0 @@
-{
-    "__type__": "key_value_extraction",
-    "__description__": "Metric that evaluates key value pairs predictions (provided as dictionary)\nwith reference key value pairs (also provided as dictionary). By default uses an accuracy (exact match) between each for the fields.\nReports average accuracy for each key , as well as micro and macro averages across all keys.\n\nBy overriding the metric field, it is possible to use other metrics to compare corresponding key values.\nFor example, KeyValueExtraction(metric=token_overlap) will calculate token overlap between corresponding keys.\n\n"
-}

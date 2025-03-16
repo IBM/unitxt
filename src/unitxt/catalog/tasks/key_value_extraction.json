@@ -10,7 +10,8 @@
     },
     "prediction_type": "Dict[str, str]",
     "metrics": [
-        "metrics.key_value_extraction"
+        "metrics.key_value_extraction.accuracy",
+        "metrics.key_value_extraction.token_overlap"
     ],
     "default_template": "templates.key_value_extraction.extract_in_json_format"
 }
