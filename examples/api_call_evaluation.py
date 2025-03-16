@@ -251,7 +251,7 @@ task = Task(
     reference_fields={"reference_query": str},
     prediction_type=Dict[str,str],
     metrics=[
-        "metrics.key_value_extraction",
+        "metrics.key_value_extraction.accuracy","metrics.key_value_extraction.token_overlap",
     ],
 )
 

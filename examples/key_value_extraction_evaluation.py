@@ -53,7 +53,7 @@ dataset = create_dataset(
     test_set=test_set,
     split="test",
     format="formats.chat_api",
-    metrics=["metrics.key_value_extraction","metrics.key_value_extraction[metric=token_overlap]"]
+    metrics=["metrics.key_value_extraction.accuracy","metrics.key_value_extraction.token_overlap"]
 )
 
 model = CrossProviderInferenceEngine(
