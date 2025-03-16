@@ -274,6 +274,7 @@ class InferenceEngine(Artifact):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [str(instance["source"]) for instance in dataset]
 
+    @abc.abstractmethod
     def get_engine_id(self):
         raise NotImplementedError()
 
@@ -1787,7 +1788,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
 
 
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
-    label: str = "vllm"
+    label: str = "vllm-remote"
 
 
 class RITSInferenceEngine(
@@ -2669,6 +2670,7 @@ def get_text_without_images(instance, image_token="<image>"):
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
+    label = "lmms-eval"
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
@@ -2677,6 +2679,9 @@ class LMMSEvalBaseInferenceEngine(
     _requirements_list = {
         "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_type, self.label)
 
     def prepare_engine(self):
         if not self.lazy_load:
@@ -2853,6 +2858,11 @@ class VLLMParamsMixin(Artifact):
 
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
+    label="vllm"
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model, self.label)
+
     def prepare_engine(self):
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
@@ -2937,6 +2947,9 @@ class LiteLLMInferenceEngine(
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
     _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
         # Initialize the token bucket rate limiter
