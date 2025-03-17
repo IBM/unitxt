@@ -253,7 +253,7 @@ class InferenceEngine(Artifact):
                             if prediction is None:
                                 continue
                             cache_key = self._get_cache_key(item)
-                        self._cache[cache_key] = prediction
+                            self._cache[cache_key] = prediction
                     else:
                         inferred_results=[]
                     # Combine cached and inferred results in original order
