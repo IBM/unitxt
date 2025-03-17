@@ -307,7 +307,7 @@ class LoadHF(LazyLoader):
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             if not disable_memory_caching:
                 self.__class__._loader_cache[dataset_id] = dataset
-        return self.__class__._loader_cache[dataset_id]
+        return dataset
 
     def _maybe_set_classification_policy(self):
         if os.path.exists(self.path):
