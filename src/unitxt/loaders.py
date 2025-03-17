@@ -338,7 +338,7 @@ class LoadHF(LazyLoader):
             )
         except Exception as e:
             if "trust_remote_code" in str(e):
-                raise UnitxtUnverifiedCodeError() from e
+                raise UnitxtUnverifiedCodeError(self.path) from e
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
