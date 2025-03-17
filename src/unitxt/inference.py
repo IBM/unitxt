@@ -1796,6 +1796,10 @@ class RITSInferenceEngine(
     label: str = "rits"
     data_classification_policy = ["public", "proprietary"]
 
+    model_names_dict = {
+        "microsoft/phi-4": "microsoft-phi-4"
+    }
+
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
@@ -1816,8 +1820,10 @@ class RITSInferenceEngine(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
         )
 
-    @staticmethod
-    def _get_model_name_for_endpoint(model_name: str):
+    @classmethod
+    def _get_model_name_for_endpoint(cls, model_name: str):
+        if model_name in cls.model_names_dict:
+            return cls.model_names_dict[model_name]
         return (
             model_name.split("/")[-1]
             .lower()
