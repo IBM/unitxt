@@ -3413,3 +3413,14 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             predictions.append(options_scores.most_common(1)[0][0])
 
         return predictions
+
+
+class CCCInferenceEngine(OpenAiInferenceEngine,
+                         HFGenerationParamsMixin):
+
+    def prepare_engine(self):
+        self.base_url = f"http://localhost:5000/{self.model_name}"+ "/v1"
+        super().prepare_engine()
+
+    #def _prepare_credentials(self) -> CredentialsOpenAi:
+    #    return {"aapii_key": "no-api-key", "api_url": "http://localhost:5000/auth"}
