@@ -2966,15 +2966,12 @@ class LiteLLMInferenceEngine(
             capacity=self.max_requests_per_second,
         )
         self.inference_type = "litellm"
-        import litellm
         from litellm import acompletion
-        from litellm.caching.caching import Cache
 
-        litellm.cache = Cache(type="disk")
 
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
-        self._semaphore = asyncio.Semaphore(self.max_requests_per_second)
+        self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
 
     async def _infer_instance(
         self, index: int, instance: Dict[str, Any]

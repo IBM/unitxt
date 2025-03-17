@@ -285,12 +285,15 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         model = LiteLLMInferenceEngine(
             model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
+            temperature = 0,
+            top_p = 1,
+            seed= 42,
         )
 
         dataset = get_text_dataset(format="formats.chat_api")
         predictions = model(dataset)
 
-        self.assertListEqual(predictions, ["7", '"2'])
+        self.assertListEqual(predictions, ["7", "3"])
 
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
