@@ -243,17 +243,19 @@ class InferenceEngine(Artifact):
                         else:
                             missing_examples.append((i, item)) # each element is index in batch and example
                     # infare on missing examples only, without indices
-                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
-                    inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
-                    # recombined to index and value
-                    inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
-                    # Add missing examples to cache
-                    for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
-                        if prediction is None:
-                            continue
-                        cache_key = self._get_cache_key(item)
+                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})")
+                    if (len(missing_examples) > 0):
+                        inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
+                        # recombined to index and value
+                        inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
+                        # Add missing examples to cache
+                        for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
+                            if prediction is None:
+                                continue
+                            cache_key = self._get_cache_key(item)
                         self._cache[cache_key] = prediction
-
+                    else:
+                        inferred_results=[]
                     # Combine cached and inferred results in original order
                     batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
                     result.extend(batch_predictions)
