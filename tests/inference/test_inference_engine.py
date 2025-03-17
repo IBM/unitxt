@@ -1,5 +1,10 @@
+import os
+import random
+import shutil
+import time
 from typing import Any, Dict, List, cast
 
+import unitxt
 from unitxt import create_dataset, produce
 from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
@@ -413,3 +418,94 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         predictions = engine.infer(dataset)
 
         self.assertTrue("Ottawa" in predictions[0], predictions[0])
+
+    def test_cache(self):
+        unitxt.settings.allow_unverified_code = True
+        if os.path.exists(unitxt.settings.inference_engine_cache_path):
+            shutil.rmtree(unitxt.settings.inference_engine_cache_path)
+
+        dataset = load_dataset(card="cards.openbook_qa",
+                               split="test", loader_limit=50)
+        inference_model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            max_tokens=256,
+            use_cache=False,
+        )
+        start_time = time.time()
+        predictions_without_cache = inference_model.infer(dataset)
+        inference_without_cache_time = time.time() - start_time
+
+        inference_model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            max_tokens=256,
+            use_cache=True,
+            cache_batch_size = 5
+        )
+        start_time = time.time()
+        predictions_with_cache = inference_model.infer(dataset)
+        inference_with_cache_time = time.time() - start_time
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)
+
+        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
+                    f"with cache (cache is empty): {inference_with_cache_time}")
+
+        start_time = time.time()
+        predictions_with_cache = inference_model.infer(dataset)
+        inference_with_cache_time = time.time() - start_time
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)
+
+        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
+                    f"with cache (cache is full): {inference_with_cache_time}")
+
+        self.assertGreater(inference_without_cache_time, 2)
+        self.assertLess(inference_with_cache_time, 0.5)
+
+        # Ensure that even in the case of failures, the cache allows incremental addition of predictions,
+        # enabling the run to complete. To test this, introduce noise that causes the inference engine's
+        # `infer` method to return empty results 20% of the time (empty results are not stored in the cache).
+        # Verify that after enough runs, all predictions are successfully cached and the final results
+        # match those obtained without caching.
+
+        if os.path.exists(unitxt.settings.inference_engine_cache_path):
+            shutil.rmtree(unitxt.settings.inference_engine_cache_path)
+
+        inference_model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
+            max_tokens=256,
+            use_cache=True,
+            cache_batch_size=5
+        )
+
+        def my_wrapper(original_method):
+            random.seed(int(time.time()))
+
+            async def wrapped(*args, **kwargs):
+                if random.random() < 0.8:
+                    return await original_method(*args, **kwargs)
+                return TextGenerationInferenceOutput(
+                    prediction=None,
+                    input_tokens=None,
+                    output_tokens=None,
+                    model_name=None,
+                    inference_type=None,
+                )
+
+            return wrapped
+
+        inference_model._infer_instance = my_wrapper(inference_model._infer_instance)
+        predictions = [None]
+        while predictions.count(None) > 0:
+            start_time = time.time()
+            predictions = inference_model.infer(dataset)
+            inference_time = time.time() - start_time
+            logger.info(f"Inference time: {inference_time}, predictions contains {predictions.count(None)} Nones")
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)

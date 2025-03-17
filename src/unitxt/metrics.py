@@ -68,8 +68,6 @@ from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
 
-FINQA_HASH = "42430b8613082bb4b85d49210284135d" # pragma: allowlist-secret
-
 logger = get_logger()
 settings = get_settings()
 
@@ -127,12 +125,17 @@ def nan_mean(x):
 
 def nan_max(x):
     with warnings.catch_warnings():
-        # final mean should be mean of scores, ignoring NaN, hence nanmax
-        # but if the group function values is NaN for ALL values, nanmean throws a
-        # RuntimeWarning that it is calculating the mean of an empty slice (with no non-Nans)
-        # this is the desired behavior, but we want to avoid the warning here
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
+
+def nan_std(x):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        result = np.nanstd(x)
+        try:
+            return float(result)
+        except:
+            return result
 
 
 class UpdateStream(InstanceOperator):
@@ -365,6 +368,43 @@ def new_random_generator():
     return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
 
+class Statistic:
+    """Statistic for which the confidence interval is to be calculated.
+
+    `statistic` must be a callable that accepts ``len(data)`` samples
+    as separate arguments and returns the resulting statistic.
+    If `vectorized` is set ``True``,
+    `statistic` must also accept a keyword argument `axis` and be
+    vectorized to compute the statistic along the provided `axis`.
+    """
+
+    def __init__(self, data, score_names, scorer):
+        self.data = data
+        self.score_names = score_names
+        self.scorer = scorer
+        self._history = []
+
+    def __call__(self, indices, axis=0):
+        # indices might be a 1D or 2D array, depending on bootstrap internals
+        # For simplicity, ensure we handle them as 1D.
+        indices = np.atleast_1d(indices).astype(int)
+
+        # Gather the subset
+        sample = [self.data[i] for i in indices]
+
+        # Compute metrics on this sample
+        scores = self.scorer(sample)
+
+        # Return them in consistent order
+        result = np.array([scores[m] for m in self.score_names])
+        self._history.append(result)
+        return result
+    def mean(self, idx):
+        return nan_mean([result[idx] for result in self._history])
+
+    def std(self, idx):
+        return nan_std([result[idx] for result in self._history])
+
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
     confidence_level: float = 0.95
@@ -374,42 +414,41 @@ class ConfidenceIntervalMixin(Artifact):
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
 
-    def get_statistic(self, data: List[Any], score_names: List[str]):
-        def statistic_function(indices, axis=0):
-            # indices might be a 1D or 2D array, depending on bootstrap internals
-            # For simplicity, ensure we handle them as 1D.
-            indices = np.atleast_1d(indices).astype(int)
-
-            # Gather the subset
-            sample = [data[i] for i in indices]
-
-            # Compute metrics on this sample
-            scores = self._sample_to_scores(sample)
-
-            # Return them in consistent order
-            return np.array([scores[m] for m in score_names])
-
-        return statistic_function
 
     def bootstrap(self, data: List[Any], score_names: List[str]):
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
-        intervals = bootstrap(
-            (np.arange(len(data)),),
-            statistic=self.get_statistic(data, score_names),
-            n_resamples=self.n_resamples,
-            confidence_level=self.confidence_level,
-            random_state=new_random_generator(),
-            paired=False,
-            vectorized=False,  # set to True if your statistic function is vectorized
-            method="BCa",
-        ).confidence_interval
+
+        statistic = Statistic(data, score_names, self._sample_to_scores)
+        with warnings.catch_warnings():
+            warnings.filterwarnings( # Ignore error the arises when all sample scores are identical
+                "ignore",
+                message="invalid value encountered in divide",
+                category=RuntimeWarning
+            )
+
+            intervals = bootstrap(
+                (np.arange(len(data)),),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=new_random_generator(),
+                paired=False,
+                vectorized=False,
+                method="BCa",
+            ).confidence_interval
+
 
         result = {}
         for i, metric in enumerate(score_names):
-            result[f"{metric}_ci_low"] = float(intervals.low[i])
-            result[f"{metric}_ci_high"] = float(intervals.high[i])
+            high = intervals.high[i]
+            low = intervals.low[i]
+            if np.isnan(high) and np.isnan(low):
+                if statistic.std(i) == 0: # When sample scores are identical "BCa" will fail (due to division by std 0)
+                    high = low = statistic.mean(i) # In this case we will use the mean (as there is no variance)
+            result[f"{metric}_ci_low"] = float(low)
+            result[f"{metric}_ci_high"] = float(high)
 
         return result
 
@@ -2769,7 +2808,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = FINQA_HASH
+        hash_of_script = "42430b8613082bb4b85d49210284135d" # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
@@ -6088,6 +6127,7 @@ class GraniteGuardianBase(InstanceMetric):
             f"{self.main_score}_prob_of_risk": prob_of_risk,
             f"{self.main_score}_certainty": confidence_score,
             f"{self.main_score}_label": label,
+            f"{self.main_score}_prompt": prompt,
         }
         logger.debug(f"Results are ready:\n{result}")
         return result
@@ -6100,7 +6140,7 @@ class GraniteGuardianBase(InstanceMetric):
             generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
         ]
         prob = self.get_probabilities(top_tokens_list)
-        prob_of_risk = prob[1]
+        prob_of_risk = prob[1].item()
 
         res = next(iter(generated_tokens_list))["text"].strip()
 
@@ -6113,7 +6153,7 @@ class GraniteGuardianBase(InstanceMetric):
 
         return label, prob_of_risk
 
-    def get_probabilities(self, top_tokens_list):
+    def get_probabilities(self, top_tokens_list) -> Tuple[np.float32, np.float32]:
         import torch
 
         safe_token_prob = 1e-50
