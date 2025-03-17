@@ -6043,6 +6043,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # *** JB HACK {
+        task_data["prediction"] = prediction
+        # *** JB HACK }
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6056,7 +6059,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        # *** JB HACK {
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": task_data["metadata"]["data_classification_policy"]}])
+        # *** JB HACK }
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
