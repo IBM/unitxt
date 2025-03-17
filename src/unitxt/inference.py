@@ -13,6 +13,7 @@ import time
 import uuid
 from collections import Counter
 from datetime import datetime
+from itertools import islice
 from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
@@ -54,6 +55,11 @@ constants = get_constants()
 settings = get_settings()
 logger = get_logger()
 
+
+def batched(lst, n):
+    it = iter(lst)
+    while batch := list(islice(it, n)):
+        yield batch
 
 class StandardAPIParamsMixin(Artifact):
     model: str
@@ -227,12 +233,8 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                if isinstance(dataset, Dataset):
-                    dataset = dataset.to_list()
-                dataset_batches = [dataset[i:i + self.cache_batch_size]
-                                    for i in range(0, len(dataset), self.cache_batch_size)]
                 result = []
-                for batch_num, batch in enumerate(dataset_batches):
+                for batch_num, batch in enumerate(batched(dataset, self.cache_batch_size)):
                     cached_results = []
                     missing_examples = []
                     for i, item in enumerate(batch):
@@ -243,7 +245,7 @@ class InferenceEngine(Artifact):
                         else:
                             missing_examples.append((i, item)) # each element is index in batch and example
                     # infare on missing examples only, without indices
-                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
+                    logger.info(f"Inferring batch {batch_num} / {len(dataset) // self.cache_batch_size}")
                     inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
                     # recombined to index and value
                     inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
@@ -1797,6 +1799,10 @@ class RITSInferenceEngine(
     label: str = "rits"
     data_classification_policy = ["public", "proprietary"]
 
+    model_names_dict = {
+        "microsoft/phi-4": "microsoft-phi-4"
+    }
+
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
 
@@ -1817,8 +1823,10 @@ class RITSInferenceEngine(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
         )
 
-    @staticmethod
-    def _get_model_name_for_endpoint(model_name: str):
+    @classmethod
+    def _get_model_name_for_endpoint(cls, model_name: str):
+        if model_name in cls.model_names_dict:
+            return cls.model_names_dict[model_name]
         return (
             model_name.split("/")[-1]
             .lower()
@@ -2958,15 +2966,12 @@ class LiteLLMInferenceEngine(
             capacity=self.max_requests_per_second,
         )
         self.inference_type = "litellm"
-        import litellm
         from litellm import acompletion
-        from litellm.caching.caching import Cache
 
-        litellm.cache = Cache(type="disk")
 
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
-        self._semaphore = asyncio.Semaphore(self.max_requests_per_second)
+        self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
 
     async def _infer_instance(
         self, index: int, instance: Dict[str, Any]
@@ -3301,6 +3306,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_option_selecting")
 
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer

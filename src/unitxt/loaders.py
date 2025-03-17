@@ -66,7 +66,7 @@ from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from .dataclass import NonPositionalField
+from .dataclass import Field, NonPositionalField
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .logging_utils import get_logger
@@ -823,6 +823,7 @@ class LoadFromDictionary(Loader):
     """
 
     data: Dict[str, List[Dict[str, Any]]]
+    default_data_classification_policy: List[str] = Field(default_factory=lambda: ["proprietary"])
 
     def verify(self):
         super().verify()
@@ -845,7 +846,7 @@ class LoadFromDictionary(Loader):
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
-            ["proprietary"], "when loading from python dictionary"
+            self.default_data_classification_policy, "when loading from python dictionary"
         )
 
     def load_iterables(self) -> MultiStream:
