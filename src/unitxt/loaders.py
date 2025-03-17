@@ -67,7 +67,7 @@ from huggingface_hub import HfApi
 from tqdm import tqdm
 
 from .dataclass import Field, NonPositionalField
-from .error_utils import UnitxtError, UnitxtWarning
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .logging_utils import get_logger
 from .operator import SourceOperator
@@ -80,19 +80,27 @@ from .utils import LRUCache, recursive_copy
 logger = get_logger()
 settings = get_settings()
 
+class UnitxtUnverifiedCodeError(UnitxtError):
+    def __init__(self, path):
+        super().__init__(f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.", Documentation.SETTINGS)
+
 def hf_load_dataset(path: str, *args, **kwargs):
     if settings.hf_offline_datasets_path is not None:
         path = os.path.join(settings.hf_offline_datasets_path, path)
-    return _hf_load_dataset(
-        path,
-        *args, **kwargs,
-            download_config=DownloadConfig(
-                max_retries=settings.loaders_max_retries,
-            ),
-            verification_mode="no_checks",
-            trust_remote_code=settings.allow_unverified_code,
-            download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-        )
+    try:
+        return _hf_load_dataset(
+            path,
+            *args, **kwargs,
+                download_config=DownloadConfig(
+                    max_retries=settings.loaders_max_retries,
+                ),
+                verification_mode="no_checks",
+                trust_remote_code=settings.allow_unverified_code,
+                download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+            )
+    except ValueError as e:
+        if "trust_remote_code" in str(e):
+            raise UnitxtUnverifiedCodeError(path) from e
 
 class Loader(SourceOperator):
     """A base class for all loaders.
@@ -288,22 +296,17 @@ class LoadHF(LazyLoader):
         if dataset is None:
             if streaming is None:
                 streaming = self.is_streaming()
-            try:
-                dataset = hf_load_dataset(
-                    self.path,
-                    name=self.name,
-                    data_dir=self.data_dir,
-                    data_files=self.data_files,
-                    revision=self.revision,
-                    streaming=streaming,
-                    split=split,
-                    num_proc=self.num_proc,
-                )
-            except ValueError as e:
-                if "trust_remote_code" in str(e):
-                    raise ValueError(
-                        f"{self.__class__.__name__} cannot run remote code from huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE."
-                    ) from e
+
+            dataset = hf_load_dataset(
+                self.path,
+                name=self.name,
+                data_dir=self.data_dir,
+                data_files=self.data_files,
+                revision=self.revision,
+                streaming=streaming,
+                split=split,
+                num_proc=self.num_proc,
+            )
             self.__class__._loader_cache.max_size = settings.loader_cache_size
             if not disable_memory_caching:
                 self.__class__._loader_cache[dataset_id] = dataset
@@ -333,7 +336,9 @@ class LoadHF(LazyLoader):
                     extract_on_the_fly=True,
                 ),
             )
-        except:
+        except Exception as e:
+            if "trust_remote_code" in str(e):
+                raise UnitxtUnverifiedCodeError(self.path) from e
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
