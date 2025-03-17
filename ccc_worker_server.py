@@ -1,6 +1,10 @@
 
+import logging
+
 from flask import Flask, jsonify, request
 from unitxt.inference import HFPipelineBasedInferenceEngine
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 
@@ -24,25 +28,28 @@ server = Server()
 def init_server():
     kwargs = request.get_json()
     server.init_server(**kwargs)
-
-
-@app.route("/auth", methods=["POST"])
-def auth():
-    kwargs = request.get_json()
-    server.init_server(**kwargs)
-    return jsonify({})
+    return jsonify("Accepted")
 
 
 @app.route("/<model>/v1/chat/completions", methods=["POST"])
-def completions(model: str):
-    #body = request.get_json()
-    #print(f"Request body: {body}")
-
+@app.route("/<model_prefix>/<model>/v1/chat/completions", methods=["POST"])
+def completions(model: str, model_prefix: str = "None"):
+    body = request.get_json()
+    # validate that request parameters are equal to the model config. Print warnings if not.
+    for k, v in body.items():
+        if k == "messages":
+            continue
+        k = "model_name" if k == "model" else k
+        attr = getattr(server.inference_engine, k, None)
+        if attr is None:
+            logging.warning(f"Warning: {k} is not an attribute in inference_engine")
+        else:
+            if attr != v:
+                logging.warning(f"Warning: {k} value in boody({v}) is different from value in inference engine ({attr})")
+    texts = [{"source": m["content"]} for m in body["messages"]]
+    predictions = server.inference_engine(texts)
     return jsonify({
-        "choices": [{"message": {
-                    "role": "assistant",
-                    "content": "I am great"
-                },}],
+        "choices": [{"message": {"role": "assistant","content": p}} for p in predictions],
     })
 
 

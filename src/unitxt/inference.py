@@ -30,6 +30,7 @@ from typing import (
     Union,
 )
 
+import requests
 from datasets import Dataset, DatasetDict, Image
 from diskcache import Cache
 from tqdm import tqdm, trange
@@ -3418,9 +3419,19 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 class CCCInferenceEngine(OpenAiInferenceEngine,
                          HFGenerationParamsMixin):
 
-    def prepare_engine(self):
-        self.base_url = f"http://localhost:5000/{self.model_name}"+ "/v1"
-        super().prepare_engine()
+    server_url = "http://localhost:5000"
 
-    #def _prepare_credentials(self) -> CredentialsOpenAi:
-    #    return {"aapii_key": "no-api-key", "api_url": "http://localhost:5000/auth"}
+    def post_server(self, endpoint, data):
+        headers = {"Content-Type": "application/json"}
+        response = requests.post(url=f"{self.server_url}/{endpoint}", json=data, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+    def prepare_engine(self):
+        self.base_url = f"{self.server_url}/{self.model_name}"+ "/v1"
+        super().prepare_engine()
+        self.post_server(endpoint="init_server",
+                         data={**self.to_dict([HFGenerationParamsMixin]), **{"model_name": self.model_name}})
+
+    def _prepare_credentials(self) -> CredentialsOpenAi:
+        return {"api" + "_" + "key": "no-api-key",}
