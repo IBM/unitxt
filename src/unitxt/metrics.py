@@ -6059,9 +6059,10 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        # *** JB HACK {
-        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": task_data["metadata"]["data_classification_policy"]}])
-        # *** JB HACK }
+        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
