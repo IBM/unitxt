@@ -5,7 +5,7 @@ from unitxt.test_utils.metrics import test_metric
 metric = KeyValueExtraction(__description__ = """Metric that evaluates key value pairs predictions (provided as dictionaries)
 with reference key value pairs (also provided as dictionaries). By default uses an accuracy (exact match) between each for the fields.
 Reports average accuracy for each key , as well as micro and macro averages across all keys.
-""")
+""", metric="metrics.accuracy",)
 
 predictions = [
     {"key1": "value1", "key2": "value2", "unknown_key": "unknown_value"}
@@ -31,6 +31,6 @@ with reference key value pairs (also provided as dictionary).
 Calculates token overlap between values of corresponding value in reference and prediction.
 Reports f1 per key, micro f1 averages across all key/value pairs, and macro f1 averages across keys.
 """,
-metric="token_overlap")
+metric="metrics.token_overlap",score_prefix="token_overlap_")
 
-add_to_catalog(metric, "metrics.key_value_extraction.token_overlap", overwrite=True)
+add_to_catalog(metric, "metrics.key_value_extraction.token_overlap",  overwrite=True)

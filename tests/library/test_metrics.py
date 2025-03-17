@@ -945,7 +945,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
 
     def test_key_value_extraction(self):
-        metric = KeyValueExtraction()
+        metric = KeyValueExtraction(metric="metrics.accuracy")
         # key1 - 2 correct of 2
         # key2 - 1 correct of 2
         # key3 - 0 correct of 1
@@ -971,7 +971,7 @@ class TestMetrics(UnitxtTestCase):
         self.assertAlmostEqual(0, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"])
 
     def test_key_value_extraction_token_overlap(self):
-        metric = KeyValueExtraction(metric="token_overlap")
+        metric = KeyValueExtraction(metric="metrics.token_overlap",score_prefix="token_overlap_")
         # key1 - recall 1/2, precision 1 , f1 = 2/3
         # key2 - recall 1, precision 0 , f1 = 1
         # legal keys - 2 out of 3
@@ -980,11 +980,11 @@ class TestMetrics(UnitxtTestCase):
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
         )
-        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_address"])
-        self.assertAlmostEqual(1, outputs[0]["score"]["global"]["token_overlap_zip"])
-        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_legal_keys_in_predictions"])
-        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_micro"])
-        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_macro"])
+        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_address"])
+        self.assertAlmostEqual(1, outputs[0]["score"]["global"]["token_overlap_f1_zip"])
+        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_legal_keys_in_predictions"])
+        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_micro"])
+        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_macro"])
 
 
 
