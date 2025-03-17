@@ -63,6 +63,7 @@ docs = [
     "sacrebleu[ja]",
     "absl-py",
     "rouge_score",
+    "ipadic",
     "scikit-learn",
     "jiwer",
     "editdistance",
