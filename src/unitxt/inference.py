@@ -3295,6 +3295,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
 
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, "hf_option_selecting")
+
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
