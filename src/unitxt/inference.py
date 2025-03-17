@@ -2,6 +2,7 @@ import abc
 import asyncio
 import base64
 import dataclasses
+import hashlib
 import io
 import json
 import logging
@@ -29,6 +30,7 @@ from typing import (
 )
 
 from datasets import Dataset, DatasetDict, Image
+from diskcache import Cache
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -149,6 +151,8 @@ class ListWithMetadata(List[T]):
 
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
+    cache_batch_size: int = 100
+    use_cache: bool = True
 
     @abc.abstractmethod
     def _infer(
@@ -173,6 +177,7 @@ class InferenceEngine(Artifact):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
+            self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
@@ -181,16 +186,20 @@ class InferenceEngine(Artifact):
     ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
         return self.infer(dataset=dataset, return_meta_data=return_meta_data)
 
-    def infer(
-        self,
-        dataset: Union[List[Dict[str, Any]], Dataset],
-        return_meta_data: bool = False,
-    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
-        """Verifies instances of a dataset and perform inference on the input dataset.
+    def get_instance_cache_key(self, instance):
+        instance_key_fields = ["media", "source", "task_data"]
+        return {key: instance[key] for key in instance if key in instance_key_fields}
 
-        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
-        predictions.
-        """
+    def _get_cache_key(self, instance: Dict[str, Any]) -> str:
+        """Generate a unique cache key for each input."""
+        record = self.get_instance_cache_key(instance)
+        record.update(self.to_dict())
+        instance_str = json.dumps(record, sort_keys=True)
+        return hashlib.md5(instance_str.encode()).hexdigest()
+
+    def verify_infer_inputs(self,
+                            dataset: Union[List[Dict[str, Any]], Dataset],
+                            return_meta_data: bool):
         if not isoftype(dataset, Union[List[Dict[str, Any]], Dataset]):
             raise Exception(
                 "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
@@ -202,10 +211,54 @@ class InferenceEngine(Artifact):
             )
 
         [self.verify_instance(instance) for instance in dataset]
+
+    def infer(
+        self,
+        dataset: Union[List[Dict[str, Any]], Dataset],
+        return_meta_data: bool = False,
+    ) -> Union[ListWithMetadata[str], ListWithMetadata[TextGenerationInferenceOutput]]:
+        """Verifies instances of a dataset and perform inference on the input dataset.
+
+        If return_meta_data - returns a list of TextGenerationInferenceOutput, else returns a list of the string
+        predictions.
+        """
+        self.verify_infer_inputs(dataset, return_meta_data)
         if settings.mock_inference_mode:
             result = self._mock_infer(dataset)
         else:
-            result = self._infer(dataset, return_meta_data)
+            if self.use_cache:
+                if isinstance(dataset, Dataset):
+                    dataset = dataset.to_list()
+                dataset_batches = [dataset[i:i + self.cache_batch_size]
+                                    for i in range(0, len(dataset), self.cache_batch_size)]
+                result = []
+                for batch_num, batch in enumerate(dataset_batches):
+                    cached_results = []
+                    missing_examples = []
+                    for i, item in enumerate(batch):
+                        cache_key = self._get_cache_key(item)
+                        cached_value = self._cache.get(cache_key)
+                        if cached_value is not None:
+                            cached_results.append((i, cached_value)) # each element is index in batch, and value
+                        else:
+                            missing_examples.append((i, item)) # each element is index in batch and example
+                    # infare on missing examples only, without indices
+                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
+                    inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
+                    # recombined to index and value
+                    inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
+                    # Add missing examples to cache
+                    for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
+                        if prediction is None:
+                            continue
+                        cache_key = self._get_cache_key(item)
+                        self._cache[cache_key] = prediction
+
+                    # Combine cached and inferred results in original order
+                    batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
+                    result.extend(batch_predictions)
+            else:
+                result = self._infer(dataset, return_meta_data)
         return ListWithMetadata(
             result,
             metadata={
@@ -221,6 +274,7 @@ class InferenceEngine(Artifact):
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
         return [str(instance["source"]) for instance in dataset]
 
+    @abc.abstractmethod
     def get_engine_id(self):
         raise NotImplementedError()
 
@@ -918,16 +972,18 @@ class HFPipelineBasedInferenceEngine(
         return args
 
     def _create_pipeline(self, model_args: Dict[str, Any]):
-        from transformers import pipeline
+        from transformers import AutoTokenizer, pipeline
 
         path = self.model_name
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
 
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name)
         self.model = pipeline(
             model=path,
             task=self.task,
             use_fast=self.use_fast_tokenizer,
+            tokenizer=tokenizer,
             trust_remote_code=settings.allow_unverified_code,
             **model_args,
             **self.to_dict(
@@ -1732,7 +1788,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
 
 
 class VLLMRemoteInferenceEngine(OpenAiInferenceEngine):
-    label: str = "vllm"
+    label: str = "vllm-remote"
 
 
 class RITSInferenceEngine(
@@ -2635,6 +2691,7 @@ def get_text_without_images(instance, image_token="<image>"):
 class LMMSEvalBaseInferenceEngine(
     InferenceEngine, PackageRequirementsMixin, LazyLoadMixin, TorchDeviceMixin
 ):
+    label = "lmms-eval"
     model_type: str
     model_args: Dict[str, str]
     batch_size: int = 1
@@ -2643,6 +2700,9 @@ class LMMSEvalBaseInferenceEngine(
     _requirements_list = {
         "lmms_eval": "Install llms-eval package using 'pip install lmms-eval==0.2.4'",
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_type, self.label)
 
     def prepare_engine(self):
         if not self.lazy_load:
@@ -2819,6 +2879,11 @@ class VLLMParamsMixin(Artifact):
 
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
+    label="vllm"
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model, self.label)
+
     def prepare_engine(self):
         args = self.to_dict([VLLMParamsMixin])
         args.pop("model")
@@ -2903,6 +2968,9 @@ class LiteLLMInferenceEngine(
     max_retries: int = 5  # Set to 0 to prevent internal retries
 
     _requirements_list: list = ["litellm", "tenacity", "tqdm", "diskcache"]
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model, self.label)
 
     def prepare_engine(self):
         # Initialize the token bucket rate limiter
@@ -3031,28 +3099,34 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
     provider_specific_args: Optional[Dict[str, Dict[str,str]]] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
-        "watsonx": {
-            "llama-3-8b-instruct": "watsonx/meta-llama/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "watsonx/meta-llama/llama-3-70b-instruct",
-            "llama-3-1-70b-instruct": "watsonx/meta-llama/llama-3-1-70b-instruct",
-            "llama-3-3-70b-instruct": "watsonx/meta-llama/llama-3-3-70b-instruct",
-            "granite-3-8b-instruct": "watsonx/ibm/granite-3-8b-instruct",
-            "flan-t5-xxl": "watsonx/google/flan-t5-xxl",
-            "llama-3-2-1b-instruct": "watsonx/meta-llama/llama-3-2-1b-instruct",
-            "llama-3-2-11b-vision-instruct": "watsonx/meta-llama/llama-3-2-11b-vision-instruct",
-            "llama-3-2-90b-vision-instruct": "watsonx/meta-llama/llama-3-2-90b-vision-instruct",
-            "mistral-large-instruct": "watsonx/mistralai/mistral-large",
-        },
-        "watsonx-sdk": {
-            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
-            "llama-3-8b-instruct": "meta-llama/llama-3-8b-instruct",
-            "llama-3-70b-instruct": "meta-llama/llama-3-70b-instruct",
+        "watsonx-sdk": { # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
+            "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
+            "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
+            "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
             "granite-3-8b-instruct": "ibm/granite-3-8b-instruct",
+            "granite-34b-code-instruct": "ibm/granite-34b-code-instruct",
+            "granite-guardian-3-8b": "ibm/granite-guardian-3-8b",
+            "granite-vision-3-2-2b": "ibm/granite-vision-3-2-2b",
+            "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
+            "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-1-405b-instruct": "meta-llama/llama-3-405b-instruct",
+            "llama-3-2-11b-vision-instruct": "meta-llama/llama-3-2-11b-vision-instruct",
+            "llama-3-2-1b-instruct": "meta-llama/llama-3-2-1b-instruct",
+            "llama-3-2-3b-instruct": "meta-llama/llama-3-2-3b-instruct",
+            "llama-3-2-90b-vision-instruct": "meta-llama/llama-3-2-90b-vision-instruct",
+            "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
+            "llama-guard-3-11b-vision": "meta-llama/llama-guard-3-11b-vision",
+            "mistral-large-instruct": "mistralai/mistral-large",
+            "mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7b-instruct-v01",
         },
         "together-ai": {
             "llama-3-8b-instruct": "together_ai/meta-llama/Llama-3-8b-chat-hf",
             "llama-3-70b-instruct": "together_ai/meta-llama/Llama-3-70b-chat-hf",
+            "llama-3-1-8b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+            "llama-3-1-70b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
+            "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
+            "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
         },
         "aws": {
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
@@ -3061,6 +3135,12 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         "ollama": {
             "llama-3-8b-instruct": "llama3:8b",
             "llama-3-70b-instruct": "llama3:70b",
+            "llama-3-1-8b-instruct": "llama3.1:8b",
+            "llama-3-1-70b-instruct": "llama3.1:70b",
+            "llama-3-1-405b-instruct": "llama3.1:405b",
+            "llama-3-2-1b-instruct": "llama3.2:1b",
+            "llama-3-2-3b-instruct": "llama3.2:3b",
+            "llama-3-3-70b-instruct": "llama3.3"
         },
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
@@ -3070,12 +3150,14 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         },
         "rits": {
             "granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
+            "granite-3-2-8b-instruct": "ibm-granite/granite-3.2-8b-instruct",
             "llama-3-1-8b-instruct": "meta-llama/llama-3-1-8b-instruct",
             "llama-3-1-70b-instruct": "meta-llama/llama-3-1-70b-instruct",
+            "llama-3-1-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
+            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "llama-3-2-11b-vision-instruct": "meta-llama/Llama-3.2-11B-Vision-Instruct",
             "llama-3-2-90b-vision-instruct": "meta-llama/Llama-3.2-90B-Vision-Instruct",
             "llama-3-3-70b-instruct": "meta-llama/llama-3-3-70b-instruct",
-            "llama-3-1-405b-instruct-fp8": "meta-llama/llama-3-1-405b-instruct-fp8",
             "mistral-large-instruct": "mistralai/mistral-large-instruct-2407",
             "mixtral-8x7b-instruct": "mistralai/mixtral-8x7B-instruct-v0.1",
         },
@@ -3110,6 +3192,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "o1-preview": "azure/o1-preview",
             "gpt-4o-mini": "azure/gpt-4o-mini",
             "gpt-4o": "azure/gpt-4o",
+            "gpt-4o-2024-08-06": "azure/gpt-4o-2024-08-06",
             "gpt-4": "azure/gpt-4",
             "gpt-4-0314": "azure/gpt-4-0314",
             "gpt-4-0613": "azure/gpt-4-0613",
@@ -3154,6 +3237,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
         },
     }
+    provider_model_map["watsonx"] = {k: f"watsonx/{v}" for k,v in provider_model_map["watsonx-sdk"].items()}
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
@@ -3211,7 +3295,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
                         del args[param]
                 else:
                     del args[param]
-        self.engine = cls(**args)
+        self.engine: InferenceEngine = cls(**args)
         self.data_classification_policy = self.engine.data_classification_policy
 
     def _infer(

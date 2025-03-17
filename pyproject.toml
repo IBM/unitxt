@@ -19,9 +19,8 @@ classifiers = [
 dependencies = [
     "datasets>=2.16.0",
     "evaluate",
-    "absl-py",
-    "ipadic",
-    "scipy"
+    "scipy>=1.10.1",
+    "diskcache"
 ]
 
 [project.urls]
