@@ -265,10 +265,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             dataset.select([0]), return_meta_data=True
         )
 
-        assert isoftype(results, List[TextGenerationInferenceOutput])
-        # assert results[0].input_tokens == 6541
-        assert results[0].stop_reason == "stop"
-        assert isoftype(results[0].prediction, List[Dict[str, Any]])
+        self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
+        self.assertEqual(results[0].stop_reason, "stop")
+        self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
 
         dataset = get_image_dataset(format="formats.chat_api")
 
@@ -279,7 +278,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         results = inference_engine.infer(dataset.select([0]))
 
-        assert isinstance(results[0], str)
+        self.assertIsInstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
 
