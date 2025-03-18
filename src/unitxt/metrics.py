@@ -6043,9 +6043,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
-        # *** JB HACK {
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
         task_data["prediction"] = prediction
-        # *** JB HACK }
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
