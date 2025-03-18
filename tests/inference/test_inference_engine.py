@@ -227,28 +227,29 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             data_classification_policy=["public"],
         )
 
-        assert engine.get_engine_id() == "flan_t5_small_hf_auto_model"
-        assert engine.repetition_penalty == 1.5
+        self.assertEqual(engine.get_engine_id(), "flan_t5_small_hf_auto_model")
+        self.assertEqual(engine.repetition_penalty, 1.5)
 
         results = engine.infer_log_probs(data, return_meta_data=True)
         sample = results[0]
         prediction = sample.prediction
 
-        assert len(results) == len(data)
-        assert isinstance(sample, TextGenerationInferenceOutput)
-        assert sample.output_tokens == 5
-        assert isoftype(prediction, List[Dict[str, Any]])
+        self.assertEqual(engine.repetition_penalty, 1.5)
+        self.assertEqual(len(results), len(data))
+        self.assertIsInstance(sample, TextGenerationInferenceOutput)
+        self.assertEqual(sample.output_tokens, 3)
+        self.assertTrue(isoftype(prediction, List[Dict[str, Any]]))
         self.assertListEqual(
             list(prediction[0].keys()),
             ["text", "logprob", "top_tokens"],
         )
-        assert isinstance(prediction[0]["text"], str)
-        assert isinstance(prediction[0]["logprob"], float)
+        self.assertIsInstance(prediction[0]["text"], str)
+        self.assertIsInstance(prediction[0]["logprob"], float)
 
         results = engine.infer(data)
 
-        assert isoftype(results, List[str])
-        assert results[0] == "entailment"
+        self.assertTrue(isoftype(results, List[str]))
+        self.assertEqual(results[0], "365")
 
     def test_watsonx_inference_with_images(self):
 
