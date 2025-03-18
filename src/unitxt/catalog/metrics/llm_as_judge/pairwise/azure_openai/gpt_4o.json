@@ -1,0 +1,14 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "lite_llm_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "credentials": {
+            "api_base": "https://eteopenai.azure-api.net/openai/deployments/gpt-4o-2024-08-06/chat/completions?api-version=2024-08-01-preview"
+        },
+        "model": "azure/gpt-4o-2024-08-06"
+    },
+    "evaluator_name": "GPT4",
+    "generate_summaries": false
+}

@@ -1,3 +1,11 @@
 {
-    "__type__": "f1_macro"
+    "__type__": "f1_fast",
+    "main_score": "f1_macro",
+    "averages": [
+        "macro",
+        "per_class"
+    ],
+    "ci_score_names": [
+        "f1_macro"
+    ]
 }

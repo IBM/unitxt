@@ -1,0 +1,63 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "lmms-lab/DocVQA",
+        "name": "DocVQA",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "test"
+            }
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
+            "references_field": "answers",
+            "__description__": "lmms-evals default template for docvqa."
+        },
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
+    "__tags__": {
+        "license": "apache-2.0",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "The doc-vqa Dataset integrates images from the Infographic_vqa dataset sourced from HuggingFaceM4 The Cauldron dataset, as well as images from the dataset AFTDB (Arxiv Figure Table Database) curated by cmarkea. This dataset consists of pairs of images and corresponding text, with each image linked to an average of five questions and answers available in both English and French. These questions and answers were generated using Gemini 1.5 Pro, thereby rendering the dataset well-suited for multimodal tasks involving image-text pairing and multilingual question answering."
+}

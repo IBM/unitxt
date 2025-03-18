@@ -1,11 +1,11 @@
 from unitxt.blocks import (
     LoadHF,
-    SerializeTableAsIndexedRowMajor,
-    Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import MultiReferenceTemplate, TemplatesList
+from unitxt.operators import Copy, FilterByCondition, Set
+from unitxt.struct_data_operators import GetNumOfTableCells
+from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -15,24 +15,30 @@ card = TaskCard(
     ),
     preprocess_steps=[
         Set({"context_type": "table"}),
-        ## truncate only if needed as it can impact evaluation results.
-        # TruncateTableCells(max_length=15, table="table", text_output="answers"),
-        # TruncateTableRows(field="table", rows_to_keep=50),
-        SerializeTableAsIndexedRowMajor(field_to_field=[["table", "context"]]),
+        GetNumOfTableCells(field="table", to_field="table_cell_size"),
+        FilterByCondition(
+            values={"table_cell_size": 200}, condition="le"
+        ),  # filter out tables with more than 200 cells
+        Copy(field="table", to_field="context"),
+        # TruncateTableRows(field="table", to_field="context"),
     ],
-    task="tasks.qa.with_context.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
-    templates=TemplatesList(
-        [
-            MultiReferenceTemplate(
-                input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",
-                references_field="answers",
-                postprocessors=[
-                    # "processors.to_list_by_comma_space",
-                    "processors.str_to_float_format",
-                ],
-            ),
-        ]
-    ),
+    task="tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
+    templates=[
+        MultiReferenceTemplate(
+            instruction="Answer the question based on the provided table. "
+            "Extract and output only the final answer—the exact phrase or data from the table that directly answers the question. "
+            "Do not include any alterations, explanations, or introductory text."
+            "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. "
+            "The output of the last example is not given, and your job is to figure out what it is.",
+            input_format="\nQuestion: {question}" "\nTable: {context}" "\nAnswer: ",
+            references_field="answers",
+            postprocessors=[
+                "processors.take_first_non_empty_line",
+                "processors.to_list_by_comma_space",
+                "processors.str_to_float_format",
+            ],
+        ),
+    ],
     __description__=(
         "This WikiTableQuestions dataset is a large-scale dataset for the task of question answering on semi-structured tables… See the full description on the dataset page: https://huggingface.co/datasets/wikitablequestions"
     ),
@@ -51,5 +57,5 @@ card = TaskCard(
     },
 )
 
-test_card(card, strict=False)
+test_card(card, strict=False, num_demos=2, demos_pool_size=5)
 add_to_catalog(card, "cards.wikitq", overwrite=True)

@@ -13,11 +13,12 @@ docs-html: docs-files
 	@$(MAKE) -C $(DIR)/docs html
 
 clear-docs:
-	rm $(DIR)/docs/modules.rst
-	rm $(DIR)/docs/unitxt.rst
-	rm $(DIR)/docs/unitxt.*.rst
-	rm $(DIR)/docs/catalog.*.rst
-	rm -r $(DIR)/docs/_build/
+	echo "Clearing docs build files..."
+	rm -f $(DIR)/docs/modules.rst
+	rm -f $(DIR)/docs/unitxt.rst
+	rm -f $(DIR)/docs/unitxt.*.rst
+	rm -f $(DIR)/docs/catalog/*.rst
+	rm -rf $(DIR)/docs/_build/
 
 docs: docs-html
 
@@ -26,7 +27,7 @@ test-docs: docs clear-docs
 format:
 	ruff check . --fix
 	ruff format .
-	codespell --toml pyproject.toml 
+	codespell --toml pyproject.toml
 
 pre-commit:
 	pre-commit install
@@ -43,8 +44,7 @@ build-docs-server:
 	cd $(DIR)/docs/_build/html && python3 -m http.server 8478
 
 docs-server: docs
-	trap 'make clear-docs' EXIT; \
-	make build-docs-server
+	(trap 'make clear-docs; exit' INT TERM EXIT; make build-docs-server)
 
 profile:
 	bash profile/profile.sh

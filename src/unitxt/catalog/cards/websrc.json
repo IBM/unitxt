@@ -1,0 +1,72 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "rootsautomation/websrc",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "train",
+                "dev": "test"
+            }
+        },
+        "splitters.small_no_dev",
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "decode_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "to_image",
+            "field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\nAnswer the question using a single word or phrase.\n{question}",
+            "references_field": "answers",
+            "__description__": "lmms-evals default template for websrc."
+        },
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
+    "__tags__": {
+        "license": "Unknown",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "WebSRC v1.0 is a dataset for reading comprehension on structural web pages. The task is to answer questions about web pages, which requires a system to have a comprehensive understanding of the spatial structure and logical structure. WebSRC consists of 6.4K web pages and 400K question-answer pairs about web pages. This cached copy of the dataset is focused on Q&A using the web screenshots (HTML and other metadata are omitted). Questions in WebSRC were created for each segment. Answers are either text spans from web pages or yes/no."
+}

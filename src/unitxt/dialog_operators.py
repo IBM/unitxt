@@ -5,12 +5,15 @@ text that can be fed to the model.
 
 The format of the dialog is:
 
-dialog = [
-    {"user": "hello", "system": "hi"},
-    {"user": "kkk", "system": ""},
-    {"user": "kkk", "system": ""},
-]
+.. code-block:: text
+
+    dialog = [
+        {"user": "hello", "system": "hi"},
+        {"user": "kkk", "system": ""},
+        {"user": "kkk", "system": ""},
+    ]
 """
+
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat
@@ -25,12 +28,17 @@ class SerializeDialog(InstanceFieldOperator):
     of system responses and can operate on a per-turn basis or aggregate the entire
     dialog.
 
-    Attributes:
-        field (str): The field in the input data that contains the dialog.
-        to_field (Optional[str]): The field in the output data where the serialized dialog will be stored.
-        last_user_turn_to_field (Optional[str]): Field to store the last user turn.
-        last_system_turn_to_field (Optional[str]): Field to store the last system turn.
-        context_field (Optional[str]): Field that contains additional context to be prepended to the dialog.
+    Args:
+        field (str):
+            The field in the input data that contains the dialog.
+        to_field (Optional[str]):
+            The field in the output data where the serialized dialog will be stored.
+        last_user_turn_to_field (Optional[str]):
+            Field to store the last user turn.
+        last_system_turn_to_field (Optional[str]):
+            Field to store the last system turn.
+        context_field (Optional[str]):
+            Field that contains additional context to be prepended to the dialog.
     """
 
     format: SystemFormat = None
@@ -98,12 +106,17 @@ class SerializeOpenAiFormatDialog(SerializeDialog):
     of system responses and can operate on a per-turn basis or aggregate the entire
     dialog.
 
-    Attributes:
-        field (str): The field in the input data that contains the dialog.
-        to_field (Optional[str]): The field in the output data where the serialized dialog will be stored.
-        last_user_turn_to_field (Optional[str]): Field to store the last user turn.
-        last_system_turn_to_field (Optional[str]): Field to store the last system turn.
-        context_field (Optional[str]): Field that contains additional context to be prepended to the dialog.
+    Args:
+        field (str):
+            The field in the input data that contains the dialog.
+        to_field (Optional[str]):
+            The field in the output data where the serialized dialog will be stored.
+        last_user_turn_to_field (Optional[str]):
+            Field to store the last user turn.
+        last_system_turn_to_field (Optional[str]):
+            Field to store the last system turn.
+        context_field (Optional[str]):
+            Field that contains additional context to be prepended to the dialog.
     """
 
     is_last_turn_user_only: bool = True
@@ -157,13 +170,13 @@ class SerializeOpenAiFormatDialog(SerializeDialog):
                     f"Entry {i} has a non-string 'content': {entry['content']}. The 'content' value must be a string."
                 )
 
-            if entry["role"] not in {"user", "assistant"}:
+            if entry["role"].lower() not in {"user", "assistant"}:
                 raise ValueError(
                     f"Entry {i} has an invalid role: {entry['role']}. Allowed roles are 'user' and 'assistant'."
                 )
 
         first_entry = dialog[0]
-        if first_entry["role"] != "user":
+        if first_entry["role"].lower() != "user":
             raise ValueError(
                 f"First entry role is expected to be 'user' It is  {first_entry['role']}."
             )

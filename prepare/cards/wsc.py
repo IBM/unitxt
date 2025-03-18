@@ -3,7 +3,6 @@ from unitxt.blocks import (
     LoadHF,
     MapInstanceValues,
     Set,
-    TemplatesList,
 )
 from unitxt.card import TaskCard
 from unitxt.catalog import add_to_catalog
@@ -26,16 +25,14 @@ card = TaskCard(
         reference_fields=["label"],
         metrics=["metrics.accuracy"],
     ),
-    templates=TemplatesList(
-        [
-            InputOutputTemplate(
-                input_format="""
+    templates=[
+        InputOutputTemplate(
+            input_format="""
                     Given this sentence: {text} classify if "{span2_text}" refers to "{span1_text}".
                 """.strip(),
-                output_format="{label}",
-            ),
-        ]
-    ),
+            output_format="{label}",
+        ),
+    ],
     __tags__={
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",

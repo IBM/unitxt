@@ -6,12 +6,6 @@
         "name": "vi"
     },
     "preprocess_steps": [
-        {
-            "__type__": "rename_splits",
-            "mapper": {
-                "validation_matched": "validation"
-            }
-        },
         "splitters.small_no_test",
         {
             "__type__": "rename",

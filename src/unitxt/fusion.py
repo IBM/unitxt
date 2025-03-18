@@ -25,24 +25,22 @@ class BaseFusion(SourceOperator):
     def fusion_generator(self, split) -> Generator:
         pass
 
-    def prepare(self):
+    def prepare_subsets(self):
         assert isoftype(self.subsets, Dict[str, SourceOperator]) or isoftype(
             self.subsets, List[SourceOperator]
         )
-        self.named_subsets = (
-            {i: self.subsets[i]() for i in range(len(self.subsets))}
-            if isinstance(self.subsets, list)
-            else {name: origin() for name, origin in self.subsets.items()}
-        )
+        self.named_subsets = {}
+        if isinstance(self.subsets, list):
+            for i in range(len(self.subsets)):
+                self.named_subsets[i] = self.subsets[i]
+        else:
+            self.named_subsets = self.subsets
 
     def splits(self) -> List[str]:
-        splits = []
-        for _, origin in self.named_subsets.items():
-            for s in origin.keys():
-                if s not in splits:
-                    if self.include_splits is None or s in self.include_splits:
-                        splits.append(s)
-        return splits
+        self.prepare_subsets()
+        if self.include_splits is not None:
+            return self.include_splits
+        return ["train", "test", "validation"]
 
     def process(
         self,
@@ -74,11 +72,12 @@ class FixedFusion(BaseFusion):
     # flake8: noqa: C901
     def fusion_generator(self, split) -> Generator:
         for origin_name, origin in self.named_subsets.items():
-            if split not in origin:
+            multi_stream = origin()
+            if split not in multi_stream:
                 continue
             emitted_from_this_split = 0
             try:
-                for instance in origin[split]:
+                for instance in multi_stream[split]:
                     if (
                         self.max_instances_per_subset is not None
                         and emitted_from_this_split >= self.max_instances_per_subset
@@ -132,10 +131,12 @@ class WeightedFusion(BaseFusion):
         )
 
     def fusion_generator(self, split) -> Generator:
-        iterators = {
-            named_origin: iter(origin[split])
-            for named_origin, origin in self.named_subsets.items()
-        }
+        iterators = {}
+        for origin_name, origin in self.named_subsets.items():
+            multi_stream = origin()
+            if split not in multi_stream:
+                continue
+            iterators[origin_name] = iter(multi_stream[split])
         total_examples = 0
         random_generator = new_random_generator(sub_seed="weighted_fusion_" + split)
         while (
@@ -158,3 +159,5 @@ class WeightedFusion(BaseFusion):
 
             except StopIteration:
                 iterators.pop(origin_name)
+            except Exception as e:
+                raise RuntimeError(f"Exception in subset: {origin_name}") from e

@@ -10,7 +10,7 @@ card = TaskCard(
         Copy(field="answers/text", to_field="answers"),
         Set({"context_type": "passage"}),
     ],
-    task="tasks.qa.with_context.extractive",
+    task="tasks.qa.extractive",
     templates="templates.qa.with_context.all",
     __tags__={
         "annotations_creators": "crowdsourced",

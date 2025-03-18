@@ -96,7 +96,7 @@ Set up the inference and evaluation pipeline:
     from unitxt.text_utils import print_dict
 
     # Initialize the inference model
-    inference_model = HFLlavaInferenceEngine(
+    model = HFLlavaInferenceEngine(
         model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
     )
 
@@ -106,10 +106,11 @@ Set up the inference and evaluation pipeline:
         template="templates.qa.with_context.title",
         format="formats.models.llava_interleave",
         loader_limit=30,
+        split="test"
     )
 
     # Select a subset for testing
-    test_dataset = dataset["test"].select(range(5))
+    dataset = dataset.select(range(5))
 
 Executing Inference and Evaluation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -119,22 +120,14 @@ Run the model and evaluate the results:
 .. code-block:: python
 
     # Perform inference
-    predictions = inference_model.infer(test_dataset)
+    predictions = model(dataset)
 
     # Evaluate the predictions
-    evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
     # Print the results
-    print_dict(
-        evaluated_dataset[0],
-        keys_to_print=[
-            "source",
-            "media",
-            "references",
-            "processed_prediction",
-            "score"
-        ],
-    )
+    print(results.global_scores.summary)
+    print(results.instances_scores.summary)
 
 Conclusion
 ----------

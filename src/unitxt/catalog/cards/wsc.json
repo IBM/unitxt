@@ -41,16 +41,13 @@
             "metrics.accuracy"
         ]
     },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
-                "output_format": "{label}"
-            }
-        ]
-    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "Given this sentence: {text} classify if \"{span2_text}\" refers to \"{span1_text}\".",
+            "output_format": "{label}"
+        }
+    ],
     "__tags__": {
         "annotations_creators": "expert-generated",
         "arxiv": "1905.00537",

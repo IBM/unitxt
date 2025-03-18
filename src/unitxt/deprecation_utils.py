@@ -18,19 +18,24 @@ def compare_versions(version1, version2):
     """Compare two semantic versioning strings and determine their relationship.
 
     Parameters:
-    - version1 (str): The first version string to compare.
-    - version2 (str): The second version string to compare.
+        version1 (str):
+            The first version string to compare.
+        version2 (str):
+            The second version string to compare.
 
     Returns:
-    - int: -1 if version1 < version2, 1 if version1 > version2, 0 if equal.
+        int: -1 if version1 < version2, 1 if version1 > version2, 0 if equal.
 
     Example:
-    >>> compare_versions("1.2.0", "1.2.3")
-    -1
-    >>> compare_versions("1.3.0", "1.2.8")
-    1
-    >>> compare_versions("1.0.0", "1.0.0")
-    0
+    .. code-block:: text
+
+        >>> compare_versions("1.2.0", "1.2.3")
+        -1
+        >>> compare_versions("1.3.0", "1.2.8")
+        1
+        >>> compare_versions("1.0.0", "1.0.0")
+        0
+
     """
     parts1 = [int(part) for part in version1.split(".")]
     parts2 = [int(part) for part in version2.split(".")]
@@ -106,5 +111,32 @@ def init_warning(msg=""):
     def decorator(initiated_class):
         UnitxtWarning(msg)
         return initiated_class
+
+    return decorator
+
+
+def warn_on_call(warning_type=UserWarning, msg=""):
+    def decorator(obj):
+        if isinstance(obj, type):
+            original_init = obj.__init__
+
+            @functools.wraps(original_init)
+            def new_init(self, *args, **kwargs):
+                warnings.warn(msg, warning_type, stacklevel=2)
+                original_init(self, *args, **kwargs)
+
+            obj.__init__ = new_init
+            return obj
+
+        if callable(obj):
+
+            @functools.wraps(obj)
+            def wrapper(*args, **kwargs):
+                warnings.warn(msg, warning_type, stacklevel=2)
+                return obj(*args, **kwargs)
+
+            return wrapper
+
+        raise TypeError("This decorator can only be applied to classes or functions.")
 
     return decorator

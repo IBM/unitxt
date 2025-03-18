@@ -4,11 +4,11 @@ from unitxt.blocks import (
 from unitxt.catalog import add_to_catalog
 from unitxt.loaders import LoadFromHFSpace
 from unitxt.operators import (
+    Fillna,
     FilterByCondition,
     InterleaveListsToDialogOperator,
     Rename,
 )
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
@@ -20,11 +20,12 @@ card = TaskCard(
             "model_answer": "data/mt_bench/model_answer/*.jsonl",
             "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl",
         },
+        data_classification_policy = ["public"]
     ),
     preprocess_steps=[
         "operators.mt_bench.rating_hf_space_processing_steps",
-        RenameSplits({"train": "test"}),
         FilterByCondition(values={"turn": 2}, condition="eq"),
+        Fillna(field="reference", value=None),
         FilterByCondition(values={"reference": None}, condition="ne"),
         Rename(field_to_field={"score": "rating", "category": "group"}),
         InterleaveListsToDialogOperator(

@@ -22,6 +22,7 @@ global_target = {
     "matthews_correlation_ci_high": 0.5,
     "score_ci_low": 0.0,
     "score_ci_high": 0.5,
+    "num_of_instances": 3,
 }
 
 outputs = test_metric(

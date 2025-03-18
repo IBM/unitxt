@@ -3,6 +3,8 @@ import importlib.util
 import json
 import os
 import re
+import threading
+from collections import OrderedDict
 from functools import lru_cache
 from typing import Any, Dict
 
@@ -16,6 +18,94 @@ class Singleton(type):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+
+class LRUCache:
+    """An LRU (Least Recently Used) cache that stores a limited number of items.
+
+    This cache automatically removes the least recently used item when it
+    exceeds its max size. It behaves similarly to a dictionary, allowing
+    items to be added and accessed using `[]` syntax.
+
+    This implementation is thread-safe, using a lock to ensure that only one
+    thread can modify or access the cache at any time.
+
+    Args:
+        max_size (int):
+            The maximum number of items to store in the cache.
+            Items exceeding this limit are automatically removed based on least
+            recent usage.
+    """
+
+    def __init__(self, max_size=10):
+        self._max_size = max_size
+        self._cache = OrderedDict()
+        self._lock = threading.Lock()  # Lock to ensure thread safety
+
+    @property
+    def max_size(self):
+        with self._lock:
+            return self._max_size
+
+    @max_size.setter
+    def max_size(self, size):
+        with self._lock:
+            self._max_size = size
+            # Adjust the cache if the new size is smaller than the current number of items
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
+
+    def __setitem__(self, key, value):
+        with self._lock:
+            # If the key already exists, remove it first to refresh its order
+            if key in self._cache:
+                self._cache.pop(key)
+
+            # Add the new item to the cache (most recently used)
+            self._cache[key] = value
+
+            # If the cache exceeds the specified size, remove the least recently used item
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
+
+    def __getitem__(self, key):
+        with self._lock:
+            if key in self._cache:
+                # Move the accessed item to the end (mark as most recently used)
+                value = self._cache.pop(key)
+                self._cache[key] = value
+                return value
+            raise KeyError(f"{key} not found in cache")
+
+    def set(self, key, value):
+        """Sets a key-value pair in the cache."""
+        with self._lock:
+            if key in self._cache:
+                self._cache.pop(key)
+            self._cache[key] = value
+            while len(self._cache) > self._max_size:
+                self._cache.popitem(last=False)
+
+    def get(self, key, default=None):
+        """Gets a value from the cache by key, returning `default` if the key is not found."""
+        with self._lock:
+            if key in self._cache:
+                value = self._cache.pop(key)
+                self._cache[key] = value  # Move item to end to mark as recently used
+                return value
+            return default
+
+    def __contains__(self, key):
+        with self._lock:
+            return key in self._cache
+
+    def __len__(self):
+        with self._lock:
+            return len(self._cache)
+
+    def __repr__(self):
+        with self._lock:
+            return f"LRUCache(max_size={self._max_size}, items={list(self._cache.items())})"
 
 
 def flatten_dict(
@@ -148,5 +238,100 @@ def import_module_from_file(file_path):
     return module
 
 
-def deepcopy(obj):
+def deep_copy(obj):
+    """Creates a deep copy of the given object.
+
+    Args:
+        obj: The object to be deep copied.
+
+    Returns:
+        A deep copy of the original object.
+    """
     return copy.deepcopy(obj)
+
+
+def shallow_copy(obj):
+    """Creates a shallow copy of the given object.
+
+    Args:
+        obj: The object to be shallow copied.
+
+    Returns:
+        A shallow copy of the original object.
+    """
+    return copy.copy(obj)
+
+
+def recursive_copy(obj, internal_copy=None):
+    """Recursively copies an object with a selective copy method.
+
+    For `list`, `dict`, and `tuple` types, it recursively copies their contents.
+    For other types, it uses the provided `internal_copy` function if available.
+    Objects without a `copy` method are returned as is.
+
+    Args:
+        obj: The object to be copied.
+        internal_copy (callable, optional): The copy function to use for non-container objects.
+            If `None`, objects without a `copy` method are returned as is.
+
+    Returns:
+        The recursively copied object.
+    """
+    # Handle dictionaries
+    if isinstance(obj, dict):
+        return type(obj)(
+            {key: recursive_copy(value, internal_copy) for key, value in obj.items()}
+        )
+
+    # Handle named tuples
+    if isinstance(obj, tuple) and hasattr(obj, "_fields"):
+        return type(obj)(*(recursive_copy(item, internal_copy) for item in obj))
+
+    # Handle tuples and lists
+    if isinstance(obj, (tuple, list)):
+        return type(obj)(recursive_copy(item, internal_copy) for item in obj)
+
+    if internal_copy is None:
+        return obj
+
+    return internal_copy(obj)
+
+
+def recursive_deep_copy(obj):
+    """Performs a recursive deep copy of the given object.
+
+    This function uses `deep_copy` as the internal copy method for non-container objects.
+
+    Args:
+        obj: The object to be deep copied.
+
+    Returns:
+        A recursively deep-copied version of the original object.
+    """
+    return recursive_copy(obj, deep_copy)
+
+
+def recursive_shallow_copy(obj):
+    """Performs a recursive shallow copy of the given object.
+
+    This function uses `shallow_copy` as the internal copy method for non-container objects.
+
+    Args:
+        obj: The object to be shallow copied.
+
+    Returns:
+        A recursively shallow-copied version of the original object.
+    """
+    return recursive_copy(obj, shallow_copy)
+
+
+class LongString(str):
+    def __new__(cls, value, *, repr_str=None):
+        obj = super().__new__(cls, value)
+        obj._repr_str = repr_str
+        return obj
+
+    def __repr__(self):
+        if self._repr_str is not None:
+            return self._repr_str
+        return super().__repr__()

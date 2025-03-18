@@ -1,0 +1,8 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.classification.multi_class.instruction",
+        "templates.classification.multi_class.instruct_question_selects",
+        "templates.classification.multi_class.instruct_question_select_i_think"
+    ]
+}

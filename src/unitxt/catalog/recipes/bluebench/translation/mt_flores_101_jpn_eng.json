@@ -1,0 +1,12 @@
+{
+    "__type__": "dataset_recipe",
+    "demos_pool_size": 100,
+    "num_demos": 5,
+    "demos_taken_from": "validation",
+    "max_train_instances": 1000,
+    "max_validation_instances": 1000,
+    "max_test_instances": 66,
+    "card": "cards.mt.flores_101.jpn_eng",
+    "template": "templates.translation.directed.bluebench",
+    "format": "formats.chat_api"
+}

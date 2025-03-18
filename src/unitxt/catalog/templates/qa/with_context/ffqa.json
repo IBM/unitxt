@@ -4,5 +4,6 @@
     "input_format": "Document: {context}\nQuestion:{question}",
     "output_format": "{answer}",
     "target_prefix": "Answer:\n",
-    "references_field": "answers"
+    "references_field": "answers",
+    "__description__": "Template from https://huggingface.co/datasets/abacusai/WikiQA-Free_Form_QA"
 }

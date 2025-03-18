@@ -1,0 +1,21 @@
+{
+    "__type__": "task",
+    "__description__": "This is the Question Answering Task with provided context , where the answer must be extracted verbatim from the context.\nThe 'tasks.qa.open' should be used if there is no context.  The 'tasks.qa.with_context' should be used if the answer need not be extracted from the context word by word.\nOne or more ground truth answers can be provided in the 'answers' field.\nBy default, classical Squad metric is used , but list of additional applicable metrics can be found under 'metrics.qa.extractive' in the Unitxt catalog.\n",
+    "input_fields": {
+        "context": "Union[Text, Table, Dialog]",
+        "context_type": "str",
+        "question": "str"
+    },
+    "reference_fields": {
+        "answers": "List[str]"
+    },
+    "prediction_type": "str",
+    "metrics": [
+        "metrics.squad"
+    ],
+    "default_template": "templates.qa.extractive",
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ]
+}

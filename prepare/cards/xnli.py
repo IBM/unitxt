@@ -6,7 +6,6 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 langs = [
@@ -32,7 +31,6 @@ for lang in langs:
     card = TaskCard(
         loader=LoadHF(path="xnli", name=lang),
         preprocess_steps=[
-            RenameSplits({"validation_matched": "validation"}),
             "splitters.small_no_test",
             Rename(field_to_field={"premise": "text_a", "hypothesis": "text_b"}),
             MapInstanceValues(

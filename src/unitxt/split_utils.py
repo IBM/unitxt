@@ -226,7 +226,14 @@ def rename_split(input_streams: Dict[str, Stream], mapping: Dict[str, str]):
         dict: A dictionary containing the generated new streams, where each key is the name
     of the new stream and the value is a generator representing the stream.
     """
-    return {mapping.get(key, key): val for key, val in input_streams.items()}
+    new_streams = {}
+    for key, val in mapping.items():
+        if key not in input_streams:
+            raise ValueError(
+                f"Stream '{key}' is not in input_streams '{input_streams.keys()}'"
+            )
+        new_streams[val] = input_streams.pop(key)
+    return {**input_streams, **new_streams}
 
 
 def random_mix_generator(

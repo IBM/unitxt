@@ -1,0 +1,56 @@
+name: Test Inference Engines
+
+on:
+  pull_request:
+    paths:
+      - 'src/unitxt/inference.py'
+      - 'tests/inference/*.py'
+      - '.github/workflows/inference_tests.yml'
+
+  release:
+    types: [published]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  inference:
+    runs-on: ubuntu-latest
+    env:
+      OS: ubuntu-latest
+      UNITXT_DEFAULT_VERBOSITY: error
+      DATASETS_VERBOSITY: error
+      HF_HUB_VERBOSITY: error
+      HF_DATASETS_DISABLE_PROGRESS_BARS: "True"
+      TQDM_DISABLE: "True"
+      WML_URL: ${{ secrets.WML_URL }}
+      WML_PROJECT_ID: ${{ secrets.WML_PROJECT_ID }}
+      WML_APIKEY: ${{ secrets.WML_APIKEY }}
+      WX_URL: ${{ secrets.WX_URL }}
+      WX_PROJECT_ID: ${{ secrets.WX_PROJECT_ID }}
+      WX_API_KEY: ${{ secrets.WX_API_KEY }}
+      GENAI_KEY: ${{ secrets.GENAI_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      - run: uv pip install --system ".[tests,watsonx,inference-tests]"
+      - name: Hugging Face Login
+        run: |
+          for i in {1..5}; do
+            huggingface-cli login --token ${{ secrets.UNITXT_READ_HUGGINGFACE_HUB_FOR_TESTS }} && break || sleep $((2 ** i));
+          done
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+      - name: Pull Llama 3.2:1b model
+        run: ollama pull llama3.2:1b
+      - name: Start serving the model
+        run: nohup ollama serve --model llama3.2:1b --port 5000 &
+
+      - name: Run Tests
+        run: python -m unittest discover -s tests/inference -p "test_*.py"

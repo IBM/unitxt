@@ -1,0 +1,4 @@
+{
+    "__type__": "cross_provider_inference_engine",
+    "model": "llama-3-8b-instruct"
+}

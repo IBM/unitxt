@@ -9,7 +9,6 @@ from unitxt.inference import (
 from unitxt.loaders import LoadFromDictionary
 from unitxt.operators import Rename, Set
 from unitxt.templates import MultiReferenceTemplate, TemplatesDict
-from unitxt.text_utils import print_dict
 
 # Assume the RAG data is proved in this format
 data = {
@@ -59,29 +58,39 @@ card = TaskCard(
     ),
 )
 
+# select recommended metrics according to your available resources.
+metrics = [
+    "metrics.rag.response_generation.recommended.cpu_only.all",
+    # "metrics.rag.response_generation.recommended.small_llm.all",
+    # "metrics.rag.response_generation.recommended.llmaj_watsonx.all",
+    # "metrics.rag.response_generation.recommended.llmaj_rits.all"
+    # "metrics.rag.response_generation.recommended.llmaj_azure.all"
+]
+
 # Verbalize the dataset using the template
-dataset = load_dataset(card=card, template_card_index="simple")
-test_dataset = dataset["test"]
-
-
-# Infere using flan t5 base using HF API
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
+dataset = load_dataset(
+    card=card,
+    template_card_index="simple",
+    format="formats.chat_api",
+    split="test",
+    max_test_instances=10,
+    metrics=metrics,
 )
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
 
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+# Infer using Llama-3.2-1B base using HF API
+model = HFPipelineBasedInferenceEngine(
+    model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
+)
+# Change to this to infer with external APIs:
+# CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+# The provider can be one of: ["watsonx", "together-ai", "open-ai", "aws", "ollama", "bam"]
+
+predictions = model(dataset)
+results = evaluate(predictions=predictions, data=dataset)
+
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

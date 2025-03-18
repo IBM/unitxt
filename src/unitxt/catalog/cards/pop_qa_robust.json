@@ -1,0 +1,91 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "akariasai/PopQA"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "apply",
+            "function": "json.loads",
+            "to_field": "possible_answers",
+            "_argv": [
+                "possible_answers"
+            ]
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": [
+                [
+                    "prop_id",
+                    "group_id"
+                ]
+            ]
+        },
+        {
+            "__type__": "rename",
+            "field": "obj",
+            "to_field": "variant_id"
+        },
+        {
+            "__type__": "rename",
+            "field": "prop",
+            "to_field": "variant_type"
+        }
+    ],
+    "task": {
+        "__type__": "task",
+        "inputs": [
+            "group_id",
+            "id",
+            "question",
+            "variant_id",
+            "variant_type"
+        ],
+        "outputs": [
+            "possible_answers"
+        ],
+        "metrics": [
+            "metrics.robustness.fixed_group_mean_string_containment"
+        ]
+    },
+    "templates": {
+        "__type__": "templates_list",
+        "items": [
+            {
+                "__type__": "multi_reference_template",
+                "input_format": "Question: {question}\nAnswer:",
+                "references_field": "possible_answers",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                    "processors.to_string_stripped"
+                ]
+            },
+            {
+                "__type__": "multi_reference_template",
+                "input_format": "Question: {question}\nI'm not certain, I think the answer is:",
+                "references_field": "possible_answers",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                    "processors.to_string_stripped"
+                ]
+            },
+            {
+                "__type__": "multi_reference_template",
+                "input_format": "Question: {question}\nI'm absolutely sure the answer is:",
+                "references_field": "possible_answers",
+                "postprocessors": [
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                    "processors.to_string_stripped"
+                ]
+            }
+        ]
+    },
+    "__tags__": {
+        "region": "us"
+    },
+    "__description__": "PopQA is a large-scale open-domain question answering (QA) dataset, consisting of 14k entity-centric QA pairs. Each question is created by converting a knowledge tuple retrieved from Wikidata using a template. Each question come with the original subject_entitiey, object_entity, and relationship_type annotation, as well as Wikipedia monthly page views. Languages The dataset contains samples in English only.… See the full description on the dataset page: https://huggingface.co/datasets/akariasai/PopQA."
+}

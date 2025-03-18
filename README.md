@@ -21,7 +21,7 @@ In the dynamic landscape of generative NLP, traditional text processing pipeline
 ![license](https://img.shields.io/github/license/ibm/unitxt)
 ![python](https://img.shields.io/badge/python-3.8%20|%203.9-blue)
 ![tests](https://img.shields.io/github/actions/workflow/status/ibm/unitxt/library_tests.yml?branch=main&label=tests)
-[![codecov](https://codecov.io/gh/IBM/unitxt/branch/main/graph/badge.svg?token=mlrWq9cwz3)](https://codecov.io/gh/IBM/unitxt)
+[![Coverage Status](https://coveralls.io/repos/github/IBM/unitxt/badge.svg)](https://coveralls.io/github/IBM/unitxt)
 ![Read the Docs](https://img.shields.io/readthedocs/unitxt)
 [![downloads](https://static.pepy.tech/personalized-badge/unitxt?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/unitxt)
 
@@ -31,11 +31,11 @@ https://github.com/IBM/unitxt/assets/23455264/baef9131-39d4-4164-90b2-05da52919f
 
 ### 🦄 Currently on Unitxt Catalog
 
-![NLP Tasks](https://img.shields.io/badge/NLP_tasks-48-blue)
-![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-537-blue)
-![Templates](https://img.shields.io/badge/Templates-265-blue)
-![Formats](https://img.shields.io/badge/Formats-23-blue)
-![Metrics](https://img.shields.io/badge/Metrics-136-blue)
+![Abstract Tasks](https://img.shields.io/badge/Abstract_Tasks-64-blue)
+![Dataset Cards](https://img.shields.io/badge/Dataset_Cards-3174-blue)
+![Templates](https://img.shields.io/badge/Templates-342-blue)
+![Benchmarks](https://img.shields.io/badge/Benchmarks-6-blue)
+![Metrics](https://img.shields.io/badge/Metrics-462-blue)
 
 ### 🦄 Run Unitxt Exploration Dashboard
 
@@ -48,10 +48,67 @@ Then launch the ui by running:
 unitxt-explore
 ```
 
+# 🦄 Example
+
+This is a simple example of running end-to-end evaluation in self contained python code over user data.
+
+See more examples in examples subdirectory.
+
+```python
+# Import required components
+from unitxt import evaluate, create_dataset
+from unitxt.blocks import Task, InputOutputTemplate
+from unitxt.inference import HFAutoModelInferenceEngine
+
+# Question-answer dataset
+data = [
+    {"question": "What is the capital of Texas?", "answer": "Austin"},
+    {"question": "What is the color of the sky?", "answer": "Blue"},
+]
+
+# Define the task and evaluation metric
+task = Task(
+    input_fields={"question": str},
+    reference_fields={"answer": str},
+    prediction_type=str,
+    metrics=["metrics.accuracy"],
+)
+
+# Create a template to format inputs and outputs
+template = InputOutputTemplate(
+    instruction="Answer the following question.",
+    input_format="{question}",
+    output_format="{answer}",
+    postprocessors=["processors.lower_case"],
+)
+
+# Prepare the dataset
+dataset = create_dataset(
+    task=task,
+    template=template,
+    format="formats.chat_api",
+    test_set=data,
+    split="test",
+)
+
+# Set up the model (supports Hugging Face, WatsonX, OpenAI, etc.)
+model = HFAutoModelInferenceEngine(
+    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
+)
+
+# Generate predictions and evaluate
+predictions = model(dataset)
+results = evaluate(predictions=predictions, data=dataset)
+
+# Print results
+print("Global Results:\n", results.global_scores.summary)
+print("Instance Results:\n", results.instance_scores.summary)
+```
+
 # 🦄 Contributors
 
 Please install Unitxt from source by:
-```
+```bash
 git clone git@github.com:IBM/unitxt.git
 cd unitxt
 pip install -e ".[dev]"
@@ -62,7 +119,7 @@ pre-commit install
 
 If you use Unitxt in your research, please cite our paper:
 
-```
+```bib
 @inproceedings{bandel-etal-2024-unitxt,
     title = "Unitxt: Flexible, Shareable and Reusable Data Preparation and Evaluation for Generative {AI}",
     author = "Bandel, Elron  and

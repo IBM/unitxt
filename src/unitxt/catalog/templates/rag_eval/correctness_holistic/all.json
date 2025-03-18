@@ -1,0 +1,10 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.rag_eval.correctness_holistic.metric_template",
+        "templates.rag_eval.correctness_holistic.judge_correctness_simple",
+        "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
+        "templates.rag_eval.correctness_holistic.judge_correctness_explain_first",
+        "templates.rag_eval.correctness_holistic.judge_correctness_explain_first_logprobs"
+    ]
+}

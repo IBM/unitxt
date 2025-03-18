@@ -1,0 +1,128 @@
+{
+    "__type__": "benchmark",
+    "__description__": "BlueBench is an open-source benchmark developed by domain experts to represent required needs of Enterprise users.\n\n.. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/blue_bench_high_res_01.png\n   :alt: Optional alt text\n   :width: 30%\n   :align: center\n\nIt is constructed using state-of-the-art benchmarking methodologies to ensure validity, robustness, and efficiency by utilizing unitxt's abilities for dynamic and flexible text processing.\n\nAs a dynamic and evolving benchmark, BlueBench currently encompasses diverse domains such as legal, finance, customer support, and news. It also evaluates a range of capabilities, including RAG, pro-social behavior, summarization, and chatbot performance, with additional tasks and domains to be integrated over time.",
+    "subsets": {
+        "bias": {
+            "__type__": "benchmark",
+            "subsets": {
+                "safety_bbq_age": "recipes.bluebench.bias.safety_bbq_age",
+                "safety_bbq_disability_status": "recipes.bluebench.bias.safety_bbq_disability_status",
+                "safety_bbq_gender_identity": "recipes.bluebench.bias.safety_bbq_gender_identity",
+                "safety_bbq_nationality": "recipes.bluebench.bias.safety_bbq_nationality",
+                "safety_bbq_physical_appearance": "recipes.bluebench.bias.safety_bbq_physical_appearance",
+                "safety_bbq_race_ethnicity": "recipes.bluebench.bias.safety_bbq_race_ethnicity",
+                "safety_bbq_race_x_gender": "recipes.bluebench.bias.safety_bbq_race_x_gender",
+                "safety_bbq_race_x_ses": "recipes.bluebench.bias.safety_bbq_race_x_ses",
+                "safety_bbq_religion": "recipes.bluebench.bias.safety_bbq_religion",
+                "safety_bbq_ses": "recipes.bluebench.bias.safety_bbq_ses",
+                "safety_bbq_sexual_orientation": "recipes.bluebench.bias.safety_bbq_sexual_orientation"
+            }
+        },
+        "chatbot_abilities": {
+            "__type__": "benchmark",
+            "subsets": {
+                "arena_hard_generation_english_gpt_4_0314_reference": "recipes.bluebench.chatbot_abilities.arena_hard_generation_english_gpt_4_0314_reference"
+            }
+        },
+        "entity_extraction": {
+            "__type__": "benchmark",
+            "subsets": {
+                "universal_ner_en_ewt": "recipes.bluebench.entity_extraction.universal_ner_en_ewt"
+            }
+        },
+        "knowledge": {
+            "__type__": "benchmark",
+            "subsets": {
+                "mmlu_pro_biology": "recipes.bluebench.knowledge.mmlu_pro_biology",
+                "mmlu_pro_business": "recipes.bluebench.knowledge.mmlu_pro_business",
+                "mmlu_pro_chemistry": "recipes.bluebench.knowledge.mmlu_pro_chemistry",
+                "mmlu_pro_computer_science": "recipes.bluebench.knowledge.mmlu_pro_computer_science",
+                "mmlu_pro_economics": "recipes.bluebench.knowledge.mmlu_pro_economics",
+                "mmlu_pro_engineering": "recipes.bluebench.knowledge.mmlu_pro_engineering",
+                "mmlu_pro_health": "recipes.bluebench.knowledge.mmlu_pro_health",
+                "mmlu_pro_history": "recipes.bluebench.knowledge.mmlu_pro_history",
+                "mmlu_pro_law": "recipes.bluebench.knowledge.mmlu_pro_law",
+                "mmlu_pro_math": "recipes.bluebench.knowledge.mmlu_pro_math",
+                "mmlu_pro_other": "recipes.bluebench.knowledge.mmlu_pro_other",
+                "mmlu_pro_philosophy": "recipes.bluebench.knowledge.mmlu_pro_philosophy",
+                "mmlu_pro_physics": "recipes.bluebench.knowledge.mmlu_pro_physics",
+                "mmlu_pro_psychology": "recipes.bluebench.knowledge.mmlu_pro_psychology"
+            }
+        },
+        "legal": {
+            "__type__": "benchmark",
+            "subsets": {
+                "legalbench_abercrombie": "recipes.bluebench.legal.legalbench_abercrombie",
+                "legalbench_corporate_lobbying": "recipes.bluebench.legal.legalbench_corporate_lobbying",
+                "legalbench_function_of_decision_section": "recipes.bluebench.legal.legalbench_function_of_decision_section",
+                "legalbench_international_citizenship_questions": "recipes.bluebench.legal.legalbench_international_citizenship_questions",
+                "legalbench_proa": "recipes.bluebench.legal.legalbench_proa"
+            }
+        },
+        "news_classification": {
+            "__type__": "benchmark",
+            "subsets": {
+                "20_newsgroups_short": "recipes.bluebench.news_classification.20_newsgroups_short"
+            }
+        },
+        "product_help": {
+            "__type__": "benchmark",
+            "subsets": {
+                "cfpb_product_2023": "recipes.bluebench.product_help.cfpb_product_2023",
+                "cfpb_product_watsonx": "recipes.bluebench.product_help.cfpb_product_watsonx"
+            }
+        },
+        "qa_finance": {
+            "__type__": "benchmark",
+            "subsets": {
+                "fin_qa": "recipes.bluebench.qa_finance.fin_qa"
+            }
+        },
+        "rag_general": {
+            "__type__": "benchmark",
+            "subsets": {
+                "rag_response_generation_clapnq": "recipes.bluebench.rag_general.rag_response_generation_clapnq"
+            }
+        },
+        "reasoning": {
+            "__type__": "benchmark",
+            "subsets": {
+                "hellaswag": "recipes.bluebench.reasoning.hellaswag",
+                "openbook_qa": "recipes.bluebench.reasoning.openbook_qa"
+            }
+        },
+        "safety": {
+            "__type__": "benchmark",
+            "subsets": {
+                "attaq_500": "recipes.bluebench.safety.attaq_500"
+            }
+        },
+        "summarization": {
+            "__type__": "benchmark",
+            "subsets": {
+                "billsum_document_filtered_to_6000_chars": "recipes.bluebench.summarization.billsum_document_filtered_to_6000_chars",
+                "tldr_document_filtered_to_6000_chars": "recipes.bluebench.summarization.tldr_document_filtered_to_6000_chars"
+            }
+        },
+        "translation": {
+            "__type__": "benchmark",
+            "subsets": {
+                "mt_flores_101_ara_eng": "recipes.bluebench.translation.mt_flores_101_ara_eng",
+                "mt_flores_101_deu_eng": "recipes.bluebench.translation.mt_flores_101_deu_eng",
+                "mt_flores_101_eng_ara": "recipes.bluebench.translation.mt_flores_101_eng_ara",
+                "mt_flores_101_eng_deu": "recipes.bluebench.translation.mt_flores_101_eng_deu",
+                "mt_flores_101_eng_fra": "recipes.bluebench.translation.mt_flores_101_eng_fra",
+                "mt_flores_101_eng_kor": "recipes.bluebench.translation.mt_flores_101_eng_kor",
+                "mt_flores_101_eng_por": "recipes.bluebench.translation.mt_flores_101_eng_por",
+                "mt_flores_101_eng_ron": "recipes.bluebench.translation.mt_flores_101_eng_ron",
+                "mt_flores_101_eng_spa": "recipes.bluebench.translation.mt_flores_101_eng_spa",
+                "mt_flores_101_fra_eng": "recipes.bluebench.translation.mt_flores_101_fra_eng",
+                "mt_flores_101_jpn_eng": "recipes.bluebench.translation.mt_flores_101_jpn_eng",
+                "mt_flores_101_kor_eng": "recipes.bluebench.translation.mt_flores_101_kor_eng",
+                "mt_flores_101_por_eng": "recipes.bluebench.translation.mt_flores_101_por_eng",
+                "mt_flores_101_ron_eng": "recipes.bluebench.translation.mt_flores_101_ron_eng",
+                "mt_flores_101_spa_eng": "recipes.bluebench.translation.mt_flores_101_spa_eng"
+            }
+        }
+    }
+}

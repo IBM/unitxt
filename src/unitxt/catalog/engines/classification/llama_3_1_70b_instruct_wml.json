@@ -1,0 +1,7 @@
+{
+    "__type__": "wml_inference_engine_generation",
+    "model_name": "meta-llama/llama-3-1-70b-instruct",
+    "max_new_tokens": 5,
+    "random_seed": 42,
+    "decoding_method": "greedy"
+}

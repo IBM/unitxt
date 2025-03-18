@@ -6,7 +6,10 @@
         "files": {
             "train": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/train/question_train_answerable.tsv",
             "test": "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
-        }
+        },
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {
@@ -14,14 +17,6 @@
             "field_to_field": {
                 "question": "question",
                 "id": "question_id"
-            }
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "reference_contexts": [],
-                "is_answerable_label": true,
-                "metadata_field": ""
             }
         },
         {

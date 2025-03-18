@@ -12,7 +12,6 @@ metric = MetricPipeline(
         CastFields(
             fields={"prediction": "float", "references/0": "float"},
             failure_defaults={"prediction": None},
-            use_nested_query=True,
         ),
     ],
     metric=NDCG(),
@@ -50,6 +49,7 @@ global_target = {
     "score_ci_high": 0.66,
     "score_ci_low": 0.15,
     "score_name": "nDCG",
+    "num_of_instances": 11,
 }
 outputs = test_metric(
     metric=metric,

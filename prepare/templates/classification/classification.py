@@ -115,6 +115,22 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    TemplatesList(
+        [
+            # "templates.classification.multi_class.default",
+            "templates.classification.multi_class.instruction",
+            # "templates.classification.multi_class.title",
+            # "templates.classification.multi_class.empty",
+            "templates.classification.multi_class.instruct_question_selects",
+            "templates.classification.multi_class.instruct_question_select_i_think",
+            # "templates.classification.multi_class.instruct_select_question",
+        ]
+    ),
+    "templates.classification.multi_class.bluebench",
+    overwrite=True,
+)
+
 
 # Multi label
 

@@ -1,11 +1,8 @@
-from copy import deepcopy
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    TemplatesDict,
 )
 from unitxt.operators import (
     Copy,
@@ -57,29 +54,25 @@ for split in splits.keys():
             ),
         ],
         task="tasks.rag.response_generation",
-        templates=TemplatesDict(
-            {
-                "please_respond": "templates.rag.response_generation.please_respond",
-                "answer_based_on_context": "templates.rag.response_generation.answer_based_on_context",
-                "answer_based_on_context_inverted": "templates.rag.response_generation.answer_based_on_context_inverted",
-            }
-        ),
+        templates={
+            "please_respond": "templates.rag.response_generation.please_respond",
+            "answer_based_on_context": "templates.rag.response_generation.answer_based_on_context",
+            "answer_based_on_context_inverted": "templates.rag.response_generation.answer_based_on_context_inverted",
+        },
     )
 
-    # testing the card is too slow with the bert-score metric, so dropping it
-    card_for_test = deepcopy(card)
-    card_for_test.task.metrics = [
-        "metrics.rag.response_generation.correctness.token_overlap",
-        "metrics.rag.response_generation.faithfullness.token_overlap",
-    ]
-
     test_card(
-        card_for_test,
+        card,
         strict=True,
         demos_taken_from="test",
+        metrics=[
+            "metrics.rag.response_generation.answer_correctness.token_recall",
+            "metrics.rag.response_generation.faithfulness.token_k_precision",
+            "metrics.rag.response_generation.answer_relevance.token_recall",
+        ],
     )
     add_to_catalog(
         card,
-        f'cards.rag.response_generation.{"train." if split == "train" else ""}clapnq',
+        f"cards.rag.response_generation.{'train.' if split == 'train' else ''}clapnq",
         overwrite=True,
     )

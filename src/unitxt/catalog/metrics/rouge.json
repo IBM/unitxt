@@ -1,3 +1,10 @@
 {
-    "__type__": "rouge"
+    "__type__": "rouge",
+    "__description__": "This is the classical NLP Rouge metric based on the RougeScorer library (https://github.com/google-research/google-research/tree/master/rouge).\nIt computes metrics several metrics (rouge1, rouge2, roughL, and rougeLsum) based lexical (word) overlap between the prediction and the ground truth references.\"\n",
+    "__tags__": {
+        "flags": [
+            "reference-based-metric",
+            "cpu-metric"
+        ]
+    }
 }

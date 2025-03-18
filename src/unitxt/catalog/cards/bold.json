@@ -66,16 +66,13 @@
             "metrics.regard_metric"
         ]
     },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "{first_prompt}\n",
-                "output_format": "{input_label}"
-            }
-        ]
-    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "{first_prompt}\n",
+            "output_format": "{input_label}"
+        }
+    ],
     "__tags__": {
         "arxiv": "2101.11718",
         "language": "en",

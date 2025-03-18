@@ -1,0 +1,10 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.summarization.abstractive.instruct_full",
+        "templates.summarization.abstractive.instruct_one_sentence",
+        "templates.summarization.abstractive.instruct_passive",
+        "templates.summarization.abstractive.instruct_write_succinct",
+        "templates.summarization.abstractive.instruct_tldr"
+    ]
+}

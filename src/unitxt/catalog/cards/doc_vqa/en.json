@@ -2,9 +2,15 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "cmarkea/doc-vqa"
+        "path": "cmarkea/doc-vqa",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
         "splitters.small_no_dev",
         {
             "__type__": "explode",
@@ -27,7 +33,7 @@
             "inside": "list"
         },
         {
-            "__type__": "image_to_text",
+            "__type__": "to_image",
             "field": "image",
             "to_field": "context"
         },
@@ -38,8 +44,24 @@
             }
         }
     ],
-    "task": "tasks.qa.with_context.abstractive",
-    "templates": "templates.qa.with_context.all",
+    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
+    "templates": [
+        {
+            "__type__": "multi_reference_template",
+            "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
+            "references_field": "answers",
+            "__description__": "lmms-evals default template for docvqa."
+        },
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
     "__tags__": {
         "license": "apache-2.0",
         "multilinguality": "monolingual",

@@ -1,0 +1,15 @@
+{
+    "__type__": "dataset_recipe",
+    "demos_pool_size": 0,
+    "num_demos": 0,
+    "demos_taken_from": "train",
+    "max_train_instances": 1000,
+    "max_validation_instances": 1000,
+    "max_test_instances": 1000,
+    "card": "cards.arena_hard.generation.english_gpt_4_0314_reference",
+    "template": "templates.generation.empty",
+    "metrics": [
+        "metrics.llm_as_judge.pairwise_comparative_rating.llama_3_70b_instruct.template_arena_hard"
+    ],
+    "format": "formats.chat_api"
+}

@@ -1,25 +1,27 @@
+from unitxt import settings
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFLlavaInferenceEngine
-from unitxt.text_utils import print_dict
+from unitxt.inference import LMMSEvalInferenceEngine
 
-inference_model = HFLlavaInferenceEngine(
-    model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=32
-)
+with settings.context(disable_hf_datasets_cache=False):
+    inference_model = LMMSEvalInferenceEngine(
+        model_type="llama_vision",
+        model_args={"pretrained": "meta-llama/Llama-3.2-11B-Vision-Instruct"},
+        max_new_tokens=512,
+        image_token=""
+    )
 
-dataset = load_dataset(
-    card="cards.doc_vqa.en",
-    template="templates.qa.with_context.title",
-    format="formats.models.llava_interleave",
-    loader_limit=20,
-    agumentor="augmentors.white_space",
-)
+    dataset = load_dataset(
+        card="cards.chart_qa_lmms_eval",
+        format="formats.chat_api",
+        split="test",
+        max_test_instances=20,
+    )
 
-test_dataset = dataset["test"].select(range(5))
+    predictions = inference_model.infer(dataset)
+    results = evaluate(predictions=predictions, data=dataset)
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+    print("Global Results:")
+    print(results.global_scores.summary)
 
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=["source", "media", "references", "processed_prediction", "score"],
-)
+    print("Instance Results:")
+    print(results.instance_scores.summary)

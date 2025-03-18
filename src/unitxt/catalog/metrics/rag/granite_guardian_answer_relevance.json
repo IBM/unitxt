@@ -1,0 +1,44 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "granite_guardian_answer_relevance",
+    "metric": {
+        "__type__": "granite_guardian_rag_risk",
+        "main_score": "granite_guardian_answer_relevance",
+        "risk_name": "answer_relevance",
+        "user_message_field": "question",
+        "assistant_message_field": "answer"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "join",
+            "field": "contexts",
+            "by": "\n"
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "ground_truths": "task_data/ground_truths",
+                "answer": "task_data/answer",
+                "contexts": "task_data/context",
+                "question": "task_data/question"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "prediction": "task_data/answer"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "prediction": 0.0,
+                "references": [
+                    0.0
+                ]
+            }
+        }
+    ]
+}

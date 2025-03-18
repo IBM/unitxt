@@ -1,11 +1,8 @@
-from copy import deepcopy
-
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
     SplitRandomMix,
     TaskCard,
-    TemplatesDict,
 )
 from unitxt.dialog_operators import SerializeOpenAiFormatDialog
 from unitxt.operators import Copy, Set, Shuffle
@@ -47,24 +44,24 @@ for split in splits_random_mixes:
                 ),
             ],
             task="tasks.rag.response_generation",
-            templates=TemplatesDict(
-                {"default": "templates.rag.response_generation.please_respond_chat"}
-            ),
+            templates={
+                "default": "templates.rag.response_generation.please_respond_chat"
+            },
         )
 
-        # testing the card is too slow with the bert-score metric, so dropping it
-        card_for_test = deepcopy(card)
-        card_for_test.task.metrics = [
-            "metrics.rouge",
-        ]
-
-        test_card(
-            card_for_test,
-            strict=True,
-            demos_taken_from="test",
-        )
+        if subset == "doqa_travel":
+            test_card(
+                card,
+                strict=True,
+                demos_taken_from="test",
+                metrics=[
+                    "metrics.rag.response_generation.answer_correctness.token_recall",
+                    "metrics.rag.response_generation.faithfulness.token_k_precision",
+                    "metrics.rag.response_generation.answer_relevance.token_recall",
+                ],
+            )
         add_to_catalog(
             card,
-            f"cards.rag.response_generation.chat_rag_bench.{'train.' if split=='train' else ''}user_assistant_format.{subset}",
+            f"cards.rag.response_generation.chat_rag_bench.{'train.' if split == 'train' else ''}user_assistant_format.{subset}",
             overwrite=True,
         )

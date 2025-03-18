@@ -40,16 +40,13 @@
             "metrics.accuracy"
         ]
     },
-    "templates": {
-        "__type__": "templates_list",
-        "items": [
-            {
-                "__type__": "input_output_template",
-                "input_format": "Given this question: {question1}, classify if this question: {question2} is {choices}.",
-                "output_format": "{label}"
-            }
-        ]
-    },
+    "templates": [
+        {
+            "__type__": "input_output_template",
+            "input_format": "Given this question: {question1}, classify if this question: {question2} is {choices}.",
+            "output_format": "{label}"
+        }
+    ],
     "__tags__": {
         "annotations_creators": "other",
         "arxiv": "1804.07461",

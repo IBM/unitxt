@@ -72,3 +72,16 @@ add_to_catalog(
     "templates.completion.multiple_choice.all",
     overwrite=True,
 )
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.completion.multiple_choice.simple",
+            "templates.completion.multiple_choice.enumerated",
+            "templates.completion.multiple_choice.standard",
+            # "templates.completion.multiple_choice.title",
+        ]
+    ),
+    "templates.completion.multiple_choice.bluebench",
+    overwrite=True,
+)

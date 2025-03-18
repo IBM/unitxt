@@ -2,16 +2,15 @@ from unitxt.blocks import (
     LoadHF,
     MapHTMLTableToJSON,
     Rename,
-    SerializeTableAsMarkdown,
     Set,
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import TemplatesList
+from unitxt.operators import Copy
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="kasnerz/numericnlg"),  # TODO: load from github repo
+    loader=LoadHF(path="kasnerz/numericnlg"),
     preprocess_steps=[
         Set(
             fields={
@@ -21,16 +20,14 @@ card = TaskCard(
             }
         ),
         MapHTMLTableToJSON(field="table_html_clean", to_field="table_out"),
-        SerializeTableAsMarkdown(field="table_out", to_field="input_a"),
+        Copy(field="table_out", to_field="input_a"),
         Rename(field="description", to_field="output"),
         Rename(field="caption", to_field="input_b"),
     ],
     task="tasks.generation.from_pair",
-    templates=TemplatesList(
-        [
-            "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
-        ]
-    ),
+    templates=[
+        "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
+    ],
     __description__="NumericNLG is a dataset for numerical table-to-text generation using pairs of a table and a "
     "paragraph of a table description with richer inference from scientific papers.",
     __tags__={

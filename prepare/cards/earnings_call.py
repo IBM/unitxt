@@ -20,7 +20,7 @@ card = TaskCard(
         )
     ],
     task="tasks.classification.multi_class",
-    templates=TemplatesList(
+    templates=
         [
             InputOutputTemplate(
                 input_format="{text}\nQuestion: Classify the above paragraph into one of the following sentiments: "
@@ -28,7 +28,7 @@ card = TaskCard(
                 output_format="{label}",
             )
         ]
-    ),
+    ,
 )
 
 test_card(card)

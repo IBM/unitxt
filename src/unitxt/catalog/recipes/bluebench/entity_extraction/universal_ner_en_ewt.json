@@ -1,0 +1,16 @@
+{
+    "__type__": "dataset_recipe",
+    "demos_pool_size": 10000,
+    "num_demos": 5,
+    "demos_taken_from": "train",
+    "max_train_instances": 1000,
+    "max_validation_instances": 1000,
+    "max_test_instances": 1000,
+    "card": "cards.universal_ner.en.ewt",
+    "template": "templates.span_labeling.extraction.title",
+    "metrics": [
+        "metrics.ner[zero_division=1.0]"
+    ],
+    "train_refiner": "operators.balancers.ner.zero_vs_many_entities[segments_boundaries=[0,1,2]]",
+    "format": "formats.chat_api"
+}

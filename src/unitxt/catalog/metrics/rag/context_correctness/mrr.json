@@ -1,6 +1,6 @@
 {
     "__type__": "metric_pipeline",
-    "main_score": "score",
+    "main_score": "mrr",
     "preprocess_steps": [
         {
             "__type__": "copy",
@@ -14,5 +14,6 @@
             "to_field": "references"
         }
     ],
-    "metric": "metrics.mrr"
+    "metric": "metrics.mrr",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.context_correctness.mrr"
 }

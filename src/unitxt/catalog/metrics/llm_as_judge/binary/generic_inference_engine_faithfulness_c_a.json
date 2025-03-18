@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine"
+    },
+    "template": "templates.rag_eval.faithfulness.judge_no_question_simplified",
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "format": null,
+    "main_score": "faithfulness_c_a",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.faithfulness.generic_inference_engine_c_a"
+}

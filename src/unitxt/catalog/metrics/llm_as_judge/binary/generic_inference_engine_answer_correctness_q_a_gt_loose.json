@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine"
+    },
+    "template": "templates.rag_eval.answer_correctness.judge_loose_match_no_context",
+    "task": "tasks.rag_eval.answer_correctness.binary",
+    "format": null,
+    "main_score": "answer_correctness_q_a_gt_loose",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.answer_correctness.generic_inference_engine_q_a_gt_loose"
+}

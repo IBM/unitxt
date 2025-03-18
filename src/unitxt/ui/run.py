@@ -1,8 +1,11 @@
+import re
 import traceback
 from functools import lru_cache
+from typing import Any, Dict
 
 import gradio as gr
 
+from ..dict_utils import dict_get
 from ..logging_utils import get_logger
 from . import settings as config
 from .gradio_utils import (
@@ -85,6 +88,40 @@ def run_unitxt_entry(
     )
 
 
+def img_tag_to_markdown(img_tag, instance):
+    # Extract the 'src' attribute
+    src_match = re.search(r'src=["\']([^"\']+)["\']', img_tag)
+    src = src_match.group(1) if src_match else ""
+
+    image = dict_get(instance, src)
+    import base64
+    from io import BytesIO
+
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
+    return f'<img src="data:image/png;base64,{img_str}">'
+
+
+def fix_images(content: str, instance: Dict[str, Any]):
+    img_tag_pattern = r"<img\b[^>]*?>"
+    matches = list(re.finditer(img_tag_pattern, content))
+    modified_html_parts = []
+    prev_end = 0
+
+    for match in matches:
+        start, end = match.span()
+        img_tag = match.group(0)
+        markdown_image = img_tag_to_markdown(img_tag, instance)
+        modified_html_parts.append(content[prev_end:start])
+        modified_html_parts.append(markdown_image)
+        prev_end = end
+
+    modified_html_parts.append(content[prev_end:])
+
+    return "".join(modified_html_parts)
+
+
 @lru_cache
 def run_unitxt(
     dataset,
@@ -104,7 +141,23 @@ def run_unitxt(
         )
         selected_prompt = prompts_list[index]
         prompt_text = selected_prompt[config.PROMPT_SOURCE_STR]
+        if "<img src=" in prompt_text:
+            prompt_text = fix_images(content=prompt_text, instance=selected_prompt)
+
+        chat_bubble = """<div style="margin: 20px;">
+    <h3 style="margin-bottom: 5px;">{title}</h3>
+    <div style="background-color: rgba(128, 128, 128, 0.5); padding: 10px; border-radius: 10px;">
+        <p style="margin: 0;">{text}</p>
+    </div>
+</div>"""
+
+        prompt_text = chat_bubble.format(
+            title="Source:", text=prompt_text.replace("\n", "<br>")
+        )
         prompt_target = selected_prompt[config.PROMPT_TARGET_STR]
+        prompt_target = chat_bubble.format(
+            title="Target:", text=prompt_target.replace("\n", "<br>")
+        )
         command = build_command(prompt_args, with_prediction=run_model)
     except Exception as e:
         logger.info("An exception occurred:\n%s", traceback.format_exc())
@@ -261,14 +314,17 @@ with demo:
                         next_sample = gr.Button("Next Sample", interactive=False)
                     with gr.Group() as prompt_group:
                         prompts_title = gr.Markdown(" ## &ensp; Prompt:")
-                        selected_prompt = gr.Textbox(
-                            lines=5,
-                            show_copy_button=True,
+                        selected_prompt = gr.HTML(
                             label="Prompt",
-                            autoscroll=False,
+                            elem_classes="scroll-hide",
                         )
 
-                        target = gr.Textbox(lines=1, label="Target", scale=3)
+                        # target = gr.Textbox(lines=1, label="Target", scale=3)
+
+                        target = gr.HTML(
+                            label="Prompt",
+                            elem_classes="scroll-hide",
+                        )
 
                     with gr.Group(visible=False) as infer_group:
                         infer_title = gr.Markdown("## &ensp; Inference:")

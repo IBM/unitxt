@@ -1,0 +1,9 @@
+{
+    "__type__": "cross_provider_inference_engine",
+    "model": "llama-3-1-405b-instruct-fp8",
+    "logprobs": true,
+    "max_tokens": 5,
+    "temperature": 0.0,
+    "top_logprobs": 5,
+    "provider": "rits"
+}

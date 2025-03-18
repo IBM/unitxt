@@ -1,5 +1,0 @@
-datasets>=2.16.0
-evaluate
-absl-py
-ipadic
-scipy

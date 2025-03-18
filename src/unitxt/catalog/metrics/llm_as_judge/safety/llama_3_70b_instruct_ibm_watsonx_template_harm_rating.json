@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "wml_inference_engine_generation",
+        "model_name": "meta-llama/llama-3-70b-instruct",
+        "max_new_tokens": 252,
+        "random_seed": 42
+    },
+    "template": "templates.safety.harm_rating",
+    "task": "rating.single_turn",
+    "format": "formats.llama3_instruct",
+    "main_score": "llama_3_70b_instruct_ibm_watsonx_template_harm_rating"
+}

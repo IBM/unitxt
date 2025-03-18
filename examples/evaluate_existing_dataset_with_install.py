@@ -1,58 +1,31 @@
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import HFPipelineBasedInferenceEngine
-from unitxt.text_utils import print_dict
+from unitxt.inference import CrossProviderInferenceEngine
 
 # Use the Unitxt APIs to load the wnli entailment dataset using the standard template in the catalog for relation task with 2-shot in-context learning.
 # We set loader_limit to 20 to limit reduce inference time.
 dataset = load_dataset(
     card="cards.wnli",
     template="templates.classification.multi_class.relation.default",
+    format="formats.chat_api",
     num_demos=2,
     demos_pool_size=10,
     loader_limit=20,
+    split="test",
 )
 
-test_dataset = dataset["test"]
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to providers such as:
+watsonx, bam, openai, azure, aws and more.
+For more information, visit the :ref:`inference engines guide <inference>`
+"""
+predictions = model(dataset)
 
-# Infer using flan t5 base using HF API, can be replaced with any
-# inference code.
-#
-# change to this to infer with IbmGenAI APIs:
-#
-# from unitxt.inference import IbmGenAiInferenceEngine
-# inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# or this to infer using WML APIs:
-#
-# from unitxt.inference import WMLInferenceEngine
-# inference_model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# or to this to infer using OpenAI APIs:
-#
-# from unitxt.inference import OpenAiInferenceEngine
-# inference_model = OpenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
-#
-# Note that to run with OpenAI APIs you need to change the loader specification, to
-# define that your data can be sent to a public API:
-#
-# loader=LoadFromDictionary(data=data,data_classification_policy=["public"]),
+results = evaluate(predictions=predictions, data=dataset)
 
-model_name = "google/flan-t5-base"
-inference_model = HFPipelineBasedInferenceEngine(
-    model_name=model_name, max_new_tokens=32
-)
-predictions = inference_model.infer(test_dataset)
 
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+print("Instance Results:")
+print(results.instance_scores)
 
-# Print results
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "processed_prediction",
-        "references",
-        "score",
-    ],
-)
+print("Global Results:")
+print(results.global_scores.summary)

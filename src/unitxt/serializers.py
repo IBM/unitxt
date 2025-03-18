@@ -1,11 +1,26 @@
 import csv
 import io
+import json
 from abc import abstractmethod
-from typing import Any, Dict, Union
+from typing import Any, Dict, List, Union
 
+from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
-from .type_utils import isoftype
-from .types import Dialog, Image, Number, Table, Text
+from .settings_utils import get_constants
+from .sql_utils import get_db_connector
+from .type_utils import isoftype, to_type_string
+from .types import (
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Number,
+    SQLDatabase,
+    Table,
+    Video,
+)
+
+constants = get_constants()
 
 
 class Serializer(InstanceFieldOperator):
@@ -22,6 +37,17 @@ class DefaultSerializer(Serializer):
         return str(value)
 
 
+class SingleTypeSerializer(InstanceFieldOperator):
+    serialized_type: object = AbstractField()
+
+    def process_instance_value(self, value: Any, instance: Dict[str, Any]) -> str:
+        if not isoftype(value, self.serialized_type):
+            raise ValueError(
+                f"SingleTypeSerializer for type {self.serialized_type} should get this type. got {to_type_string(value)}"
+            )
+        return self.serialize(value, instance)
+
+
 class DefaultListSerializer(Serializer):
     def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
         if isinstance(value, list):
@@ -29,13 +55,31 @@ class DefaultListSerializer(Serializer):
         return str(value)
 
 
-class DialogSerializer(Serializer):
+class ListSerializer(SingleTypeSerializer):
+    serialized_type = list
+
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        return ", ".join(str(item) for item in value)
+
+
+class DictAsJsonSerializer(SingleTypeSerializer):
+    serialized_type = dict
+
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
+
+
+class DialogSerializer(SingleTypeSerializer):
+    serialized_type = Dialog
+
     def serialize(self, value: Dialog, instance: Dict[str, Any]) -> str:
         # Convert the Dialog into a string representation, typically combining roles and content
         return "\n".join(f"{turn['role']}: {turn['content']}" for turn in value)
 
 
-class NumberSerializer(Serializer):
+class NumberSerializer(SingleTypeSerializer):
+    serialized_type = Number
+
     def serialize(self, value: Number, instance: Dict[str, Any]) -> str:
         # Check if the value is an integer or a float
         if isinstance(value, int):
@@ -47,6 +91,7 @@ class NumberSerializer(Serializer):
 
 
 class NumberQuantizingSerializer(NumberSerializer):
+    serialized_type = Number
     quantum: Union[float, int] = 0.1
 
     def serialize(self, value: Number, instance: Dict[str, Any]) -> str:
@@ -58,7 +103,9 @@ class NumberQuantizingSerializer(NumberSerializer):
         raise ValueError("Unsupported type for NumberSerializer")
 
 
-class TableSerializer(Serializer):
+class TableSerializer(SingleTypeSerializer):
+    serialized_type = Table
+
     def serialize(self, value: Table, instance: Dict[str, Any]) -> str:
         output = io.StringIO()
         writer = csv.writer(output, lineterminator="\n")
@@ -71,42 +118,90 @@ class TableSerializer(Serializer):
         return output.getvalue().strip()
 
 
-class ImageSerializer(Serializer):
+class ImageSerializer(SingleTypeSerializer):
+    serialized_type = Image
+
     def serialize(self, value: Image, instance: Dict[str, Any]) -> str:
         if "media" not in instance:
             instance["media"] = {}
         if "images" not in instance["media"]:
             instance["media"]["images"] = []
         idx = len(instance["media"]["images"])
-        instance["media"]["images"].append(value)
-        return f'<img src="media/images/{idx}">'
+        instance["media"]["images"].append(
+            {"image": value["image"], "format": value["format"]}
+        )
+        value["image"] = f"media/images/{idx}"
+        return f'<{constants.image_tag} src="media/images/{idx}">'
 
 
-class DynamicSerializer(Serializer):
-    image: Serializer = ImageSerializer()
-    number: Serializer = DefaultSerializer()
-    table: Serializer = TableSerializer()
-    dialog: Serializer = DialogSerializer()
-    text: Serializer = DefaultSerializer()
-    list: Serializer = DefaultSerializer()
+class VideoSerializer(ImageSerializer):
+    serialized_type = Video
+
+    def serialize(self, value: Video, instance: Dict[str, Any]) -> str:
+        serialized_images = []
+        for image in value:
+            image = super().serialize(image, instance)
+            serialized_images.append(image)
+        return "".join(serialized_images)
+
+
+class DocumentSerializer(SingleTypeSerializer):
+    serialized_type = Document
+
+    def serialize(self, value: Document, instance: Dict[str, Any]) -> str:
+        return f"# {value['title']}\n\n{value['body']}"
+
+
+class MultiDocumentSerializer(DocumentSerializer):
+    serialized_type = MultiDocument
+
+    def serialize(self, value: MultiDocument, instance: Dict[str, Any]) -> str:
+        documents = []
+        for document in value:
+            documents.append(super().serialize(document, instance))
+        return "\n\n".join(documents)
+
+
+class MultiTypeSerializer(Serializer):
+    serializers: List[SingleTypeSerializer] = Field(
+        default_factory=lambda: [
+            DocumentSerializer(),
+            DialogSerializer(),
+            MultiDocumentSerializer(),
+            ImageSerializer(),
+            VideoSerializer(),
+            TableSerializer(),
+            DialogSerializer(),
+        ]
+    )
+
+    def verify(self):
+        super().verify()
+        self._verify_serializers(self.serializers)
+
+    def _verify_serializers(self, serializers):
+        if not isoftype(serializers, List[SingleTypeSerializer]):
+            raise ValueError(
+                "MultiTypeSerializer requires the list of serializers to be List[SingleTypeSerializer]."
+            )
+
+    def add_serializers(self, serializers: List[SingleTypeSerializer]):
+        self._verify_serializers(serializers)
+        self.serializers = serializers + self.serializers
 
     def serialize(self, value: Any, instance: Dict[str, Any]) -> Any:
-        if isoftype(value, Image):
-            return self.image.serialize(value, instance)
-
-        if isoftype(value, Table):
-            return self.table.serialize(value, instance)
-
-        if isoftype(value, Dialog) and len(value) > 0:
-            return self.dialog.serialize(value, instance)
-
-        if isoftype(value, Text):
-            return self.text.serialize(value, instance)
-
-        if isoftype(value, Number):
-            return self.number.serialize(value, instance)
-
-        if isinstance(value, list):
-            return self.list.serialize(value, instance)
+        for serializer in self.serializers:
+            if isoftype(value, serializer.serialized_type):
+                return serializer.serialize(value, instance)
 
         return str(value)
+
+
+class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
+    """Serializes a database schema into a string representation."""
+
+    serialized_type = SQLDatabase
+
+    def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        connector = get_db_connector(value["db_type"])(value)
+        return connector.get_table_schema()

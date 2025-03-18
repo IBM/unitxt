@@ -1,0 +1,12 @@
+{
+    "__type__": "dataset_recipe",
+    "demos_pool_size": 100,
+    "num_demos": 1,
+    "demos_taken_from": "train",
+    "template_card_index": 0,
+    "max_train_instances": 1000,
+    "max_validation_instances": 1000,
+    "max_test_instances": 1000,
+    "card": "cards.fin_qa",
+    "format": "formats.chat_api"
+}

@@ -2,7 +2,7 @@
     "__type__": "task",
     "input_fields": {
         "topic": "str",
-        "context": "str",
+        "context": "Union[Text, Image, Audio, Table, Dialog, Video]",
         "context_type": "str",
         "question": "str",
         "choices": "List[str]"
@@ -12,6 +12,10 @@
         "choices": "List[str]"
     },
     "prediction_type": "str",
+    "augmentable_inputs": [
+        "context",
+        "question"
+    ],
     "metrics": [
         "metrics.accuracy"
     ]

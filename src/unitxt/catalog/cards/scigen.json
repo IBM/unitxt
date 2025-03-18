@@ -21,16 +21,7 @@
                 "table_column_names",
                 "table_content_values"
             ],
-            "to_field": "table"
-        },
-        {
-            "__type__": "serialize_table_as_indexed_row_major",
-            "field_to_field": [
-                [
-                    "table",
-                    "input_a"
-                ]
-            ]
+            "to_field": "input_a"
         },
         {
             "__type__": "rename",
@@ -48,8 +39,10 @@
             }
         }
     ],
-    "task": "tasks.generation.from_pair[metrics=[metrics.llm_as_judge.rating.llama_3_70b_instruct_ibm_genai_template_table2text_single_turn_with_reference]]",
-    "templates": "templates.generation.from_pair.all",
+    "task": "tasks.generation.from_pair[metrics=[metrics.rouge,metrics.bert_score.bert_base_uncased,metrics.bleu,metrics.meteor,metrics.llm_as_judge.rating.llama_3_1_70b_instruct_cross_provider_template_table2text_single_turn_with_reference]]",
+    "templates": [
+        "templates.generation.from_pair.default[postprocessors=[processors.lower_case]]"
+    ],
     "__description__": "SciGen is a dataset for the task of reasoning-aware data-to-text generation. It consists of tables from scientific articles(mostly containing numerical values) and their corresponding text descriptions.",
     "__tags__": {
         "modality": "table",

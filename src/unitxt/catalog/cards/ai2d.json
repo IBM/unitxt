@@ -1,0 +1,48 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "lmms-lab/ai2d"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "rename",
+            "field": "options",
+            "to_field": "choices"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        },
+        {
+            "__type__": "cast",
+            "field": "answer",
+            "to": "int"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context[metrics=[metrics.exact_match_mm]]",
+    "templates": [
+        {
+            "__type__": "multiple_choice_template",
+            "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+            "choices_separator": "\n",
+            "target_field": "answer",
+            "enumerator": "capitals"
+        },
+        "templates.qa.multiple_choice.with_context.no_intro.helm",
+        "templates.qa.multiple_choice.with_context.no_intro.mmlu",
+        "templates.qa.multiple_choice.with_context.no_intro.lm_eval_harness"
+    ],
+    "__tags__": {},
+    "__description__": "AI2 Diagrams (AI2D) is a dataset of over 5000 grade school science diagrams with over 150000 rich annotations, their ground truth syntactic parses, and more than 15000 corresponding multiple choice questions."
+}

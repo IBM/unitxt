@@ -1,0 +1,12 @@
+{
+    "__type__": "dataset_recipe",
+    "demos_pool_size": 20,
+    "num_demos": 5,
+    "demos_taken_from": "test",
+    "max_train_instances": 1000,
+    "max_validation_instances": 1000,
+    "max_test_instances": 71,
+    "card": "cards.mmlu_pro.physics",
+    "template": "templates.qa.multiple_choice.with_topic.bluebench",
+    "format": "formats.chat_api"
+}

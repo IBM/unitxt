@@ -4,7 +4,6 @@ from unitxt.blocks import (
     InputOutputTemplate,
     LoadHF,
     TaskCard,
-    TemplatesDict,
 )
 from unitxt.catalog import add_to_catalog
 from unitxt.operators import Rename, Set, Shuffle
@@ -132,21 +131,19 @@ for task_name, task_cfg in task_cfgs.items():
             ]
         ),
         task="tasks.classification.multi_class.with_classes_descriptions",
-        templates=TemplatesDict(
-            {
-                "default": InputOutputTemplate(
-                    input_format=task_cfg["input_format"],
-                    output_format="{label}",
-                    instruction=task_cfg["instruction"],
-                    target_prefix=task_cfg.get("target_prefix", ""),
-                    title_fields=task_cfg.get("title_fields", []),
-                    postprocessors=[
-                        "processors.take_first_non_empty_line",
-                        "processors.lower_case_till_punc",
-                    ],
-                ),
-            }
-        ),
+        templates={
+            "default": InputOutputTemplate(
+                input_format=task_cfg["input_format"],
+                output_format="{label}",
+                instruction=task_cfg["instruction"],
+                target_prefix=task_cfg.get("target_prefix", ""),
+                title_fields=task_cfg.get("title_fields", []),
+                postprocessors=[
+                    "processors.take_first_non_empty_line",
+                    "processors.lower_case_till_punc",
+                ],
+            ),
+        },
         __tags__={
             "arxiv": "2308.11462",
             "flags": ["finance", "law", "legal"],

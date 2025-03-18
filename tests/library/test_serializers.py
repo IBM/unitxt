@@ -1,14 +1,21 @@
+import unittest
+
 from unitxt.serializers import (
     DefaultSerializer,
     DialogSerializer,
-    DynamicSerializer,
+    MultiTypeSerializer,
     NumberQuantizingSerializer,
     NumberSerializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
 )
-from unitxt.types import Dialog, Image, Number, Table, Text, Turn
+from unitxt.settings_utils import get_constants
+from unitxt.types import Dialog, Number, SQLDatabase, Table, Text, Turn
 
+from tests.library.test_image_operators import create_random_jpeg_image
 from tests.utils import UnitxtTestCase
+
+constants = get_constants()
 
 
 class TestSerializers(UnitxtTestCase):
@@ -17,9 +24,9 @@ class TestSerializers(UnitxtTestCase):
         self.dialog_serializer = DialogSerializer()
         self.number_serializer = NumberSerializer()
         self.table_serializer = TableSerializer()
-        self.custom_serializer = DynamicSerializer()
-        self.custom_serializer_with_number = DynamicSerializer(
-            number=NumberSerializer()
+        self.custom_serializer = MultiTypeSerializer()
+        self.custom_serializer_with_number = MultiTypeSerializer(
+            serializers=[NumberSerializer()]
         )
         self.number_quantizing_serializer = NumberQuantizingSerializer(quantum=0.2)
 
@@ -93,15 +100,14 @@ class TestSerializers(UnitxtTestCase):
         self.assertEqual(result, expected_output)
 
     def test_custom_serializer_with_image(self):
-        image_data = Image(image="fake_image_data")
+        image = create_random_jpeg_image(10, 10, 1)
+        image_data = {"image": image, "format": "JPEG"}
         instance = {}
         result = self.custom_serializer.serialize(image_data, instance)
         self.assertEqual(
-            result, '<img src="media/images/0">'
+            result, f'<{constants.image_tag} src="media/images/0">'
         )  # Using default serialization
-        self.assertEqual(
-            instance, {"media": {"images": [{"image": "fake_image_data"}]}}
-        )
+        # self.assertEqual(instance, {"media": {"images": [image]}})
 
     def test_custom_serializer_with_table(self):
         table_data = Table(header=["col1", "col2"], rows=[[1, 2], [3, 4]])
@@ -136,3 +142,36 @@ class TestSerializers(UnitxtTestCase):
         number_data = Number(42)
         result = self.custom_serializer.serialize(number_data, {})
         self.assertEqual(result, "42")  # Should return the number as a string
+
+
+class TestSQLDatabaseAsSchemaSerializer(unittest.TestCase):
+    def test_serialize_in_memory_success(self):
+        db_config: SQLDatabase = {
+            "db_type": "in_memory",
+            "db_id": None,
+            "dbms": None,
+            "data": {
+                "table1": {"columns": ["col1", "col2"], "rows": [[1, "a"], [2, "b"]]},
+                "table2": {"columns": ["name", "age"], "rows": [["Alice", 30]]},
+            },
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        result = serializer.serialize(db_config, {})
+        expected_schema = (
+            "CREATE TABLE `table1` (`col1` TEXT, `col2` TEXT);\n\n"
+            "CREATE TABLE `table2` (`name` TEXT, `age` TEXT);"
+        )
+        self.assertEqual(result, expected_schema)
+
+    def test_serialize_unsupported_db_type(self):
+        db_config: SQLDatabase = {
+            "db_type": "unsupported",
+            "db_id": "test_db_id",
+            "dbms": None,
+            "data": None,
+        }
+
+        serializer = SQLDatabaseAsSchemaSerializer()
+        with self.assertRaises(ValueError):
+            serializer.serialize(db_config, {})

@@ -1,7 +1,15 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "json_output_template",
     "input_format": "",
-    "output_format": "{{\"answer\": \"{reference_answers}\", \"contexts\" : [\"{reference_contexts}\"],  \"context_ids\" : [\"{reference_context_ids}\"]}}",
+    "output_fields": {
+        "reference_answers": "answer",
+        "reference_contexts": "contexts",
+        "reference_context_ids": "context_ids"
+    },
+    "wrap_with_list_fields": [
+        "reference_contexts",
+        "reference_context_ids"
+    ],
     "postprocessors": [
         "processors.load_json_predictions"
     ]

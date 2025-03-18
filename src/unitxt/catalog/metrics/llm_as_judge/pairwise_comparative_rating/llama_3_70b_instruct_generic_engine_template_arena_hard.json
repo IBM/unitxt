@@ -1,0 +1,11 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine",
+        "default": "engines.ibm_gen_ai.llama_3_70b_instruct"
+    },
+    "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+    "task": "pairwise_comparative_rating.single_turn",
+    "format": "formats.llama3_instruct",
+    "main_score": "llama_3_70b_instruct_generic_engine_template_arena_hard"
+}

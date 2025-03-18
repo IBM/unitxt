@@ -1,0 +1,11 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "template": "templates.rag_eval.answer_relevance.judge_answer_relevance",
+    "task": "tasks.rag_eval.answer_relevance.binary",
+    "format": null,
+    "main_score": "answer_relevance_q_a",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.answer_relevance.llama_3_1_70b_instruct_wml_q_a"
+}

@@ -3,8 +3,9 @@ import inspect
 import os
 from pathlib import Path
 
-from .artifact import Artifact, Artifactories
+from .artifact import Artifact, Catalogs
 from .catalog import EnvironmentLocalCatalog, GithubCatalog, LocalCatalog
+from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .settings_utils import get_constants, get_settings
 from .utils import Singleton
 
@@ -13,11 +14,11 @@ settings = get_settings()
 
 
 def _register_catalog(catalog: LocalCatalog):
-    Artifactories().register(catalog)
+    Catalogs().register(catalog)
 
 
 def _unregister_catalog(catalog: LocalCatalog):
-    Artifactories().unregister(catalog)
+    Catalogs().unregister(catalog)
 
 
 def is_local_catalog_registered(catalog_path: str):
@@ -49,7 +50,7 @@ def unregister_local_catalog(catalog_path: str):
 
 
 def _catalogs_list():
-    return list(Artifactories())
+    return list(Catalogs())
 
 
 def _register_all_catalogs():
@@ -62,6 +63,25 @@ def _reset_env_local_catalogs():
     for catalog in _catalogs_list():
         if isinstance(catalog, EnvironmentLocalCatalog):
             _unregister_catalog(catalog)
+
+    if settings.catalogs and settings.artifactories:
+        raise UnitxtError(
+            f"Both UNITXT_CATALOGS and UNITXT_ARTIFACTORIES are set.  Use only UNITXT_CATALOG.  UNITXT_ARTIFACTORIES is deprecated.\n"
+            f"UNITXT_CATALOG: {settings.catalogs}\n"
+            f"UNITXT_ARTIFACTORIES: {settings.artifactories}\n",
+            Documentation.CATALOG,
+        )
+
+    if settings.artifactories:
+        UnitxtWarning(
+            "UNITXT_ARTIFACTORIES is set but is deprecated, use UNITXT_CATALOGS instead.",
+            Documentation.CATALOG,
+        )
+
+    if settings.catalogs:
+        for path in settings.catalogs.split(constants.env_local_catalogs_paths_sep):
+            _register_catalog(EnvironmentLocalCatalog(location=path))
+
     if settings.artifactories:
         for path in settings.artifactories.split(
             constants.env_local_catalogs_paths_sep

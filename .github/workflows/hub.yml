@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.release.tag_name }}
 
@@ -20,7 +20,7 @@ jobs:
         python-version: '3.9'
 
     - name: Install Requirements
-      run: pip install -r requirements/base.rqr
+      run: pip install .
 
     - name: Install Requirements
       run: pip install isort

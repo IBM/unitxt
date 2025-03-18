@@ -401,6 +401,32 @@ add_to_catalog(
     overwrite=True,
 )
 
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+    ),
+    "templates.qa.multiple_choice.with_context.lmms_eval",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="Answer the following multiple choice question based on the {context_type}. Answer only and exactly with one of the following: {numerals}.\nContext:\n{context}\nQuestion:\n{question}\nChoices:\n{choices}",
+        target_prefix="Answer:\n",
+        target_field="answer",
+        choices_separator="\n",
+        postprocessors=["processors.to_string_stripped"],
+        title_fields=["context_type"],
+    ),
+    "templates.qa.multiple_choice.with_context.exact_answer_instruct",
+    overwrite=True,
+)
+
+
+
 
 def remove_duplicates(input_list):
     seen = set()
@@ -474,5 +500,40 @@ add_to_catalog(
         )
     ),
     "templates.qa.multiple_choice.with_topic.all",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.with_topic.mmlu",
+            "templates.qa.multiple_choice.with_topic.helm",
+            "templates.qa.multiple_choice.with_topic.lm_eval_harness",
+        ]
+    ),
+    "templates.qa.multiple_choice.with_topic.bluebench",
+    overwrite=True,
+)
+
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.open.helm",
+            "templates.qa.multiple_choice.open.lm_eval_harness",
+            "templates.qa.multiple_choice.open.mmlu",
+        ]
+    ),
+    "templates.qa.multiple_choice.open.bluebench",
+    overwrite=True,
+)
+add_to_catalog(
+    TemplatesList(
+        [
+            "templates.qa.multiple_choice.with_context.lm_eval_harness",
+            "templates.qa.multiple_choice.with_context.no_intro.helm",
+            "templates.qa.multiple_choice.with_context.no_intro.mmlu",
+        ]
+    ),
+    "templates.qa.multiple_choice.with_context.bluebench",
     overwrite=True,
 )

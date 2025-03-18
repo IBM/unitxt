@@ -1,0 +1,10 @@
+{
+    "__type__": "dataset_recipe",
+    "card": "cards.numeric_nlg",
+    "serializer": "serializers.table.concat",
+    "num_demos": 5,
+    "demos_pool_size": -1,
+    "loader_limit": 10000,
+    "template_card_index": 0,
+    "augmentor": null
+}

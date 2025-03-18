@@ -1,0 +1,32 @@
+{
+    "__type__": "task",
+    "input_fields": {
+        "answer": "str",
+        "question": "str",
+        "choices": "List[str]",
+        "ground_truths": "List[str]",
+        "contexts": "List[str]"
+    },
+    "outputs": {
+        "is_correct": "List[str]",
+        "number_val": "Union[float, int]"
+    },
+    "metrics": [
+        "metrics.spearman",
+        "metrics.kendalltau_b"
+    ],
+    "prediction_type": "float",
+    "defaults": {
+        "choices": [
+            "yes",
+            "no"
+        ],
+        "is_correct": [
+            "-"
+        ],
+        "number_val": -1,
+        "contexts": [
+            "-"
+        ]
+    }
+}

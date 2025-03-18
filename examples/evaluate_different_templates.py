@@ -2,13 +2,10 @@ import os
 import tempfile
 
 import pandas as pd
-from unitxt import add_to_catalog, get_logger, register_local_catalog
+from unitxt import add_to_catalog, register_local_catalog
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
+from unitxt.inference import CrossProviderInferenceEngine
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
-
-logger = get_logger()
 
 
 # Register a local catalog
@@ -58,10 +55,14 @@ add_to_catalog(
 )
 
 # Run inference on mnli (entailment task) on the two templates with both 0 and 3 shot in context learning.
-card = "cards.mnli"
-model_name = "google/flan-t5-xxl"
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", max_tokens=32)
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+watsonx, bam, openai, azure, aws and more.
 
+For the arguments these inference engines can receive, please refer to the classes documentation or read
+about the the open ai api arguments the CrossProviderInferenceEngine follows.
+"""
 
 df = pd.DataFrame(columns=["template", "num_demos", "f1_micro", "ci_low", "ci_high"])
 
@@ -71,31 +72,31 @@ for template in [
 ]:
     for num_demos in [0, 3]:
         dataset = load_dataset(
-            card=card,
+            card="cards.mnli",
             template=template,
+            format="formats.chat_api",
             num_demos=num_demos,
             demos_pool_size=100,
             loader_limit=500,
-            max_test_instances=300,
+            max_test_instances=10,
+            split="test",
         )
 
-        test_dataset = dataset["test"]
+        predictions = model(dataset)
 
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
-        logger.info(
+        print(
             f"Sample input and output for template '{template}' and num_demos '{num_demos}':"
         )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=["source", "prediction", "processed_prediction"],
+        print(
+            results.instance_scores.to_df(
+                columns=["source", "prediction", "processed_prediction"]
+            ),
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
-        print_dict(
-            global_scores,
-            keys_to_print=["score_name", "score", "score_ci_low", "score_ci_high"],
-        )
+
+        global_scores = results.global_scores
+
         df.loc[len(df)] = [
             template,
             num_demos,
@@ -105,4 +106,4 @@ for template in [
         ]
 
 df = df.round(decimals=2)
-logger.info(df.to_markdown())
+print(df.to_markdown())
