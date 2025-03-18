@@ -318,9 +318,9 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
     def execute_query(self, query: str) -> Any:
         """Executes a query against the remote database, with retries for certain exceptions."""
-        from .cache_utils import Cache, generate_cache_key
+        from .cache_utils import generate_cache_key, get_cache
 
-        cache = Cache()
+        cache = get_cache()
 
         cache_key = generate_cache_key(
             "sql_request", self.api_url, self.database_id, query

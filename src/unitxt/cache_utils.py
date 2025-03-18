@@ -14,6 +14,17 @@ CACHE_LOCATION = os.getenv("UNITXT_CACHE_LOCATION")
 MAX_CACHE_SIZE = os.getenv("MAX_CACHE_SIZE", 10 * 1024**3)
 
 
+_cache_instance = None
+
+
+def get_cache():
+    """Returns a singleton cache instance, initializing it if necessary."""
+    global _cache_instance
+    if _cache_instance is None:
+        _cache_instance = Cache()
+    return _cache_instance
+
+
 def generate_cache_key(*args, **kwargs):
     """Generate a stable hashable cache key for various input types.
 
