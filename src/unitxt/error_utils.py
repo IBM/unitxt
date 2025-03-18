@@ -18,6 +18,7 @@ class Documentation:
     BENCHMARKS = "docs/benchmark.html"
     DATA_CLASSIFICATION_POLICY = "docs/data_classification_policy.html"
     CATALOG = "docs/saving_and_loading_from_catalog.html"
+    SETTINGS = "docs/settings.html"
 
 
 def additional_info(path: str) -> str:
