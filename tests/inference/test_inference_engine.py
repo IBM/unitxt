@@ -375,21 +375,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
         dataset = load_dataset(card="cards.openbook_qa",
-                               split="test", loader_limit=50)
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=False,
+                               split="test",
+                               #format="formats.chat_api",
+                               loader_limit=20)
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32,temperature=0,top_p=1,use_cache=False, device="cpu"
         )
         start_time = time.time()
         predictions_without_cache = inference_model.infer(dataset)
         inference_without_cache_time = time.time() - start_time
-
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=True,
-            cache_batch_size = 5
+        # Set seed for reproducibility
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5,device="cpu"
         )
         start_time = time.time()
         predictions_with_cache = inference_model.infer(dataset)
@@ -425,30 +423,21 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         if os.path.exists(unitxt.settings.inference_engine_cache_path):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=True,
-            cache_batch_size=5
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5, device="cpu"
         )
 
         def my_wrapper(original_method):
             random.seed(int(time.time()))
 
-            async def wrapped(*args, **kwargs):
-                if random.random() < 0.8:
-                    return await original_method(*args, **kwargs)
-                return TextGenerationInferenceOutput(
-                    prediction=None,
-                    input_tokens=None,
-                    output_tokens=None,
-                    model_name=None,
-                    inference_type=None,
-                )
+            def wrapped(*args, **kwargs):
+                predictions = original_method(*args, **kwargs)
+                return [p if random.random() < 0.6 else None for p in predictions]
 
             return wrapped
 
-        inference_model._infer_instance = my_wrapper(inference_model._infer_instance)
+        inference_model._infer = my_wrapper(inference_model._infer)
         predictions = [None]
         while predictions.count(None) > 0:
             start_time = time.time()
