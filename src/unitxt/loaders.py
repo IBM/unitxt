@@ -845,7 +845,7 @@ class LoadFromDictionary(Loader):
 
     def _maybe_set_classification_policy(self):
         self.set_default_data_classification(
-            ["proprietary"], "when loading from python dictionary"
+            self.data_classification_policy or ["proprietary"], "when loading from python dictionary"
         )
 
     def load_iterables(self) -> MultiStream:
