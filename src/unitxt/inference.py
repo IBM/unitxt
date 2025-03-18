@@ -1779,7 +1779,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
-        return {"api_key": api_key, "api_url": api_url}
+        return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
 
     def create_client(self):
         from openai import AzureOpenAI
@@ -1788,6 +1788,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         return AzureOpenAI(
             api_key=self.credentials["api_key"],
             base_url=self.credentials["api_url"],
+            api_version=self.credentials["api_version"],
             default_headers=self.get_default_headers(),
         )
 
@@ -3302,7 +3303,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
     """
-
+    label = "hf_option_selection"
     model_name: str
     batch_size: int
 
@@ -3311,7 +3312,8 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     }
 
     def get_engine_id(self):
-        return get_model_and_label_id(self.model_name, "hf_option_selecting")
+        return get_model_and_label_id(self.model, self.label)
+
 
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
