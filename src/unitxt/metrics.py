@@ -3414,6 +3414,76 @@ class CustomF1(GlobalMetric):
             result["precision_macro"] = self.zero_division
 
 
+class KeyValueExtraction(GlobalMetric):
+
+    prediction_type = Dict[str,str]
+    metric : Metric
+    single_reference_per_prediction = True
+    main_score = ""
+    def prepare(self):
+        super().prepare()
+        self.main_score = f"{self.metric.main_score}_micro"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [element[0] for element in references]
+
+        key_statistics = {}
+        all_reference_keys = set()
+        for reference in references:
+            all_reference_keys.update(list(reference.keys()))
+        for key in all_reference_keys:
+            key_statistics[key]= []
+
+        num_prediction_keys=0
+        illegal_prediction_keys=0
+        for reference, prediction in zip(references, predictions):
+            for key in all_reference_keys:
+                if (key not in reference and key not in prediction):
+                    continue
+                if (key in reference and key in prediction):
+                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
+                                                                        "references" : [reference[key]]}
+                                                                                                                                                                                                          ]})
+                    output_multi_stream = self.metric(multi_stream)
+                    output_stream = output_multi_stream["test"]
+                    score = next(iter(output_stream))["score"]["global"]["score"]
+                    key_statistics[key].append(score)
+                else:
+                    key_statistics[key].append(0.0)
+
+            for key in prediction.keys():
+                num_prediction_keys += 1
+                if key not in all_reference_keys:
+                    illegal_prediction_keys += 1
+
+        result={}
+
+        average = 0
+        total = 0
+
+        weighted_average = 0
+        for key in key_statistics:
+            mean_for_key = numpy.mean(key_statistics[key])
+            num = len(key_statistics[key])
+            total += num
+            average += mean_for_key
+            weighted_average += mean_for_key * num
+            result[f"{self.metric.main_score}_{key}"] = mean_for_key
+
+        result[f"{self.metric.main_score}_micro"] = weighted_average / total
+        result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
+        if (num_prediction_keys !=0):
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        else:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
+
+        return result
+
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
 
@@ -3421,18 +3491,6 @@ class NER(CustomF1):
 
     def get_element_group(self, element, additional_input):
         return element[1]
-
-    def get_element_representation(self, element, additional_input):
-        return str(element)
-
-
-class KeyValueExtraction(CustomF1):
-    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
-
-    prediction_type = List[Tuple[str, str]]
-
-    def get_element_group(self, element, additional_input):
-        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -6043,6 +6101,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
+        task_data["prediction"] = prediction
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6056,7 +6117,10 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (

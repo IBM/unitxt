@@ -1024,24 +1024,24 @@ class ShuffleColumnsNames(TypeDependentAugmentor):
         return {"header": shuffled_header, "rows": table["rows"]}
 
 
-class JsonStrToListOfKeyValuePairs(FieldOperator):
-    """Convert a Json string of representing key value as dictionary to list of key value pairs."""
+class JsonStrToDict(FieldOperator):
+    """Convert a Json string of representing key value as dictionary.
+
+    Ensure keys and values are strings, and there are no None values.
+
+    """
 
     def process_value(self, text: str) -> List[Tuple[str, str]]:
         try:
             dict_value = json.loads(text)
         except Exception as e:
             UnitxtWarning(
-                f"Unable to convert input text to json format in JsonStrToListOfKeyValuePairs due to {e}. Text: {text}"
+                f"Unable to convert input text to json format in JsonStrToDict due to {e}. Text: {text}"
             )
             dict_value = {}
         if not isoftype(dict_value, Dict[str, Any]):
             UnitxtWarning(
-                f"Unable to convert input text to dictionary in JsonStrToListOfKeyValuePairs. Text: {text}"
+                f"Unable to convert input text to dictionary in JsonStrToDict. Text: {text}"
             )
             dict_value = {}
-        return [
-            (str(key), str(value))
-            for key, value in dict_value.items()
-            if value is not None
-        ]
+        return  {str(k): str(v) for k, v in dict_value.items() if v is not None}
