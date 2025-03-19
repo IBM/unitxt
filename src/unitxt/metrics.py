@@ -63,7 +63,6 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
-from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
@@ -3414,6 +3413,76 @@ class CustomF1(GlobalMetric):
             result["precision_macro"] = self.zero_division
 
 
+class KeyValueExtraction(GlobalMetric):
+
+    prediction_type = Dict[str,str]
+    metric : Metric
+    single_reference_per_prediction = True
+    main_score = ""
+    def prepare(self):
+        super().prepare()
+        self.main_score = f"{self.metric.main_score}_micro"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [element[0] for element in references]
+
+        key_statistics = {}
+        all_reference_keys = set()
+        for reference in references:
+            all_reference_keys.update(list(reference.keys()))
+        for key in all_reference_keys:
+            key_statistics[key]= []
+
+        num_prediction_keys=0
+        illegal_prediction_keys=0
+        for reference, prediction in zip(references, predictions):
+            for key in all_reference_keys:
+                if (key not in reference and key not in prediction):
+                    continue
+                if (key in reference and key in prediction):
+                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
+                                                                        "references" : [reference[key]]}
+                                                                                                                                                                                                          ]})
+                    output_multi_stream = self.metric(multi_stream)
+                    output_stream = output_multi_stream["test"]
+                    score = next(iter(output_stream))["score"]["global"]["score"]
+                    key_statistics[key].append(score)
+                else:
+                    key_statistics[key].append(0.0)
+
+            for key in prediction.keys():
+                num_prediction_keys += 1
+                if key not in all_reference_keys:
+                    illegal_prediction_keys += 1
+
+        result={}
+
+        average = 0
+        total = 0
+
+        weighted_average = 0
+        for key in key_statistics:
+            mean_for_key = numpy.mean(key_statistics[key])
+            num = len(key_statistics[key])
+            total += num
+            average += mean_for_key
+            weighted_average += mean_for_key * num
+            result[f"{self.metric.main_score}_{key}"] = mean_for_key
+
+        result[f"{self.metric.main_score}_micro"] = weighted_average / total
+        result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
+        if (num_prediction_keys !=0):
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        else:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
+
+        return result
+
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
 
@@ -3421,18 +3490,6 @@ class NER(CustomF1):
 
     def get_element_group(self, element, additional_input):
         return element[1]
-
-    def get_element_representation(self, element, additional_input):
-        return str(element)
-
-
-class KeyValueExtraction(CustomF1):
-    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
-
-    prediction_type = List[Tuple[str, str]]
-
-    def get_element_group(self, element, additional_input):
-        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -6043,6 +6100,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
+        task_data["prediction"] = prediction
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6056,7 +6116,10 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
@@ -6294,7 +6357,7 @@ class SQLExecutionAccuracy(InstanceMetric):
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
-    def compare_dfs_ignore_colnames(df1, df2):
+    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
         """Compares two DataFrames based on row content, ignoring column names.
 
         Args:
@@ -6302,7 +6365,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
-            True if the DataFrames have the same content (ignoring column names),
+            True if the DataFrames have the same ordered rows (ignoring column names),
             False otherwise.
         """
         df1.fillna(0, inplace=True)
@@ -6315,6 +6378,20 @@ class SQLExecutionAccuracy(InstanceMetric):
         df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
 
         return df1_rows_sorted == df2_rows_sorted
+
+    @staticmethod
+    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
+        """Compares two DataFrames based on row content, ignoring row order and column names.
+
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+
+        Returns:
+            True if the DataFrames have the same content (ignoring column names and row order),
+            False otherwise.
+        """
+        return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
@@ -6383,6 +6460,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         import time
 
         from func_timeout import func_timeout
+        from func_timeout.exceptions import FunctionTimedOut
 
         from .sql_utils import sqlglot_optimized_equivalence
 
@@ -6398,6 +6476,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing gold SQL: {e}"
+            logger.warning(pred_error)
         except Exception as e:
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
@@ -6429,10 +6510,10 @@ class SQLExecutionAccuracy(InstanceMetric):
             gold_sql_runtime,
             0,
             0,
-            1,
+            0,
             0,
             gold_df.to_json(),
-            gold_df.to_json(),
+            "",
             "",
         )
         if predicted_sql.lower().strip() == gold_sql.lower().strip():
@@ -6457,6 +6538,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             pred_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing predicted SQL: {e}"
+            logger.info(pred_error)
         except Exception as e:
             pred_error = f"Error executing predicted SQL: {e}"
             logger.info(pred_error)
@@ -6485,9 +6569,20 @@ class SQLExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
-        execution_result = (
-            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
-        )
+        if "ORDER BY" in gold_sql.upper():
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
+                else 0
+            )
+        else:
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_unordered_rows(
+                    predicted_df, gold_df
+                )
+                else 0
+            )
 
         subset_non_empty_execution_result = 0
         non_empty_execution_result = 0
@@ -6513,6 +6608,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import get_db_connector
+
         predicted_sql = prediction
         execution_result: float = 0.0
 

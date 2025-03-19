@@ -103,6 +103,9 @@ def autodoc_skip_member(app, what, name, obj, would_skip, options):
     if would_skip:
         return True
 
+    if callable(obj) and obj.__doc__:
+        return False
+
     if isinstance(obj, (Field, _Field, bool, int, str, float)):
         return True
 
