@@ -57,7 +57,7 @@ class LLMJudge(BulkInstanceMetric):
     # option_selection_strategy: OptionSelectionStrategyEnum = (
     #     OptionSelectionStrategyEnum.PARSE_OUTPUT_TEXT
     # )
-    evaluator_name: EvaluatorNameEnum = None
+    evaluator_name: Optional[Union[str,EvaluatorNameEnum]] = None
     check_positional_bias: bool = True
     context_fields: Union[str, List[str], Dict[str, str]] = ["context"]
     generate_summaries: bool = True
@@ -78,8 +78,6 @@ class LLMJudge(BulkInstanceMetric):
 
         if self.evaluator_name is None:
             self.evaluator_name = self.inference_engine.get_engine_id()
-        elif not isinstance(self.evaluator_name, EvaluatorNameEnum):
-            self.evaluator_name = EvaluatorNameEnum[self.evaluator_name]
 
     def before_process_multi_stream(self):
         super().before_process_multi_stream()
