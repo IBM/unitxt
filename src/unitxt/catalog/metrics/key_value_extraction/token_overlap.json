@@ -1,0 +1,6 @@
+{
+    "__type__": "key_value_extraction",
+    "__description__": "Metric that evaluates key value pairs predictions (provided as dictionary)\nwith reference key value pairs (also provided as dictionary).\nCalculates token overlap between values of corresponding value in reference and prediction.\nReports f1 per key, micro f1 averages across all key/value pairs, and macro f1 averages across keys.\n",
+    "metric": "metrics.token_overlap",
+    "score_prefix": "token_overlap_"
+}

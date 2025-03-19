@@ -233,8 +233,9 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
+                number_of_batches = len(dataset) // self.cache_batch_size + 1
                 result = []
-                for batch_num, batch in enumerate(batched(dataset, self.cache_batch_size)):
+                for batch_index, batch in enumerate(batched(dataset, self.cache_batch_size)):
                     cached_results = []
                     missing_examples = []
                     for i, item in enumerate(batch):
@@ -245,7 +246,8 @@ class InferenceEngine(Artifact):
                         else:
                             missing_examples.append((i, item)) # each element is index in batch and example
                     # infare on missing examples only, without indices
-                    logger.info(f"Inferring batch {batch_num} / {len(dataset) // self.cache_batch_size} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})")
+
+                    logger.info(f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})")
                     if (len(missing_examples) > 0):
                         inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
                         # recombined to index and value
@@ -257,9 +259,7 @@ class InferenceEngine(Artifact):
                             cache_key = self._get_cache_key(item)
                             self._cache[cache_key] = prediction
                     else:
-
-                        inferred_results = []
-
+                        inferred_results=[]
                     # Combine cached and inferred results in original order
                     batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
                     result.extend(batch_predictions)
@@ -3313,8 +3313,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     }
 
     def get_engine_id(self):
-        return get_model_and_label_id(self.model, self.label)
-
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
