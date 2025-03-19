@@ -67,7 +67,6 @@ from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
 
-
 logger = get_logger()
 settings = get_settings()
 
