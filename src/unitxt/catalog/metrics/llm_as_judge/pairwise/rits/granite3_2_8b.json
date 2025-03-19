@@ -1,11 +1,11 @@
 {
     "__type__": "llm_judge_pairwise",
     "inference_engine": {
-        "__type__": "rits_inference_engine",
+        "__type__": "cross_provider_inference_engine",
         "max_tokens": 1024,
         "seed": 42,
-        "model_name": "mistralai/mixtral-8x22B-instruct-v0.1"
+        "model": "granite-3-2-8b-instruct"
     },
-    "evaluator_name": "MIXTRAL8_22b",
+    "evaluator_name": "GRANITE3_2_8B",
     "generate_summaries": false
 }
