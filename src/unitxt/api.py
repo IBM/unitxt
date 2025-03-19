@@ -131,11 +131,7 @@ def create_dataset(
             f"No 'template' was passed to the create_dataset() and the given task ('{task.__id__}') has no 'default_template' field."
         )
 
-    args = {"data": data}
-    if data_classification_policy is not None:
-        args["default_data_classification_policy"] = data_classification_policy
-
-    card = TaskCard(loader=LoadFromDictionary(**args), task=task)
+    card = TaskCard(loader=LoadFromDictionary(data=data, data_classification_policy=data_classification_policy), task=task)
     return load_dataset(card=card, split=split, **kwargs)
 
 

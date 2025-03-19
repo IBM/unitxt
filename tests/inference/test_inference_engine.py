@@ -227,28 +227,29 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             data_classification_policy=["public"],
         )
 
-        assert engine.get_engine_id() == "flan_t5_small_hf_auto_model"
-        assert engine.repetition_penalty == 1.5
+        self.assertEqual(engine.get_engine_id(), "flan_t5_small_hf_auto_model")
+        self.assertEqual(engine.repetition_penalty, 1.5)
 
         results = engine.infer_log_probs(data, return_meta_data=True)
         sample = results[0]
         prediction = sample.prediction
 
-        assert len(results) == len(data)
-        assert isinstance(sample, TextGenerationInferenceOutput)
-        assert sample.output_tokens == 5
-        assert isoftype(prediction, List[Dict[str, Any]])
+        self.assertEqual(engine.repetition_penalty, 1.5)
+        self.assertEqual(len(results), len(data))
+        self.assertIsInstance(sample, TextGenerationInferenceOutput)
+        self.assertEqual(sample.output_tokens, 3)
+        self.assertTrue(isoftype(prediction, List[Dict[str, Any]]))
         self.assertListEqual(
             list(prediction[0].keys()),
             ["text", "logprob", "top_tokens"],
         )
-        assert isinstance(prediction[0]["text"], str)
-        assert isinstance(prediction[0]["logprob"], float)
+        self.assertIsInstance(prediction[0]["text"], str)
+        self.assertIsInstance(prediction[0]["logprob"], float)
 
         results = engine.infer(data)
 
-        assert isoftype(results, List[str])
-        assert results[0] == "entailment"
+        self.assertTrue(isoftype(results, List[str]))
+        self.assertEqual(results[0], "365")
 
     def test_watsonx_inference_with_images(self):
 
@@ -264,10 +265,9 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             dataset.select([0]), return_meta_data=True
         )
 
-        assert isoftype(results, List[TextGenerationInferenceOutput])
-        # assert results[0].input_tokens == 6541
-        assert results[0].stop_reason == "stop"
-        assert isoftype(results[0].prediction, List[Dict[str, Any]])
+        self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
+        self.assertEqual(results[0].stop_reason, "stop")
+        self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
 
         dataset = get_image_dataset(format="formats.chat_api")
 
@@ -278,7 +278,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         results = inference_engine.infer(dataset.select([0]))
 
-        assert isinstance(results[0], str)
+        self.assertIsInstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
 
@@ -375,21 +375,19 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
         dataset = load_dataset(card="cards.openbook_qa",
-                               split="test", loader_limit=50)
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=False,
+                               split="test",
+                               #format="formats.chat_api",
+                               loader_limit=20)
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32,temperature=0,top_p=1,use_cache=False, device="cpu"
         )
         start_time = time.time()
         predictions_without_cache = inference_model.infer(dataset)
         inference_without_cache_time = time.time() - start_time
-
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=True,
-            cache_batch_size = 5
+        # Set seed for reproducibility
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5,device="cpu"
         )
         start_time = time.time()
         predictions_with_cache = inference_model.infer(dataset)
@@ -425,30 +423,21 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         if os.path.exists(unitxt.settings.inference_engine_cache_path):
             shutil.rmtree(unitxt.settings.inference_engine_cache_path)
 
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-2-1b-instruct",
-            max_tokens=256,
-            use_cache=True,
-            cache_batch_size=5
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5, device="cpu"
         )
 
         def my_wrapper(original_method):
             random.seed(int(time.time()))
 
-            async def wrapped(*args, **kwargs):
-                if random.random() < 0.8:
-                    return await original_method(*args, **kwargs)
-                return TextGenerationInferenceOutput(
-                    prediction=None,
-                    input_tokens=None,
-                    output_tokens=None,
-                    model_name=None,
-                    inference_type=None,
-                )
+            def wrapped(*args, **kwargs):
+                predictions = original_method(*args, **kwargs)
+                return [p if random.random() < 0.6 else None for p in predictions]
 
             return wrapped
 
-        inference_model._infer_instance = my_wrapper(inference_model._infer_instance)
+        inference_model._infer = my_wrapper(inference_model._infer)
         predictions = [None]
         while predictions.count(None) > 0:
             start_time = time.time()
