@@ -4,6 +4,7 @@
         "__type__": "cross_provider_inference_engine",
         "max_tokens": 1024,
         "seed": 42,
+        "temperature": 0,
         "model": "gpt-4o-2024-08-06"
     },
     "evaluator_name": "GPT4",

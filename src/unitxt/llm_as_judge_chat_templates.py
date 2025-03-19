@@ -29,11 +29,13 @@ Assessment: {assessment}
 Summary:"""
     ),
     "answer": InputOutputTemplate(
-        input_format="""Now consider the evaluation criteria and choose a final answer. Only include the chosen answer in the response.
+        input_format="""Now based on the assessment, choose a criteria option. Only include the chosen option in the response. If the assessment already contains a selected option, choose that option. Don't contradict the assessment's selected option.
+
 ###Evaluation criteria:
 {criteria_description}
-{score_option_instruction}
-The selected answer is: """,
+{display_options_instruction}
+
+The selected criteria option is: """,
         postprocessors=["processors.match_closest_option"],
     ),
 }

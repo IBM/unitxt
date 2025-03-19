@@ -23,7 +23,7 @@ def get_evaluator(
     provider: ModelProviderEnum,
 ) -> Union[LLMJudgeDirect, LLMJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
-    inference_params = {"max_tokens": 1024, "seed": 42}
+    inference_params = {"max_tokens": 1024, "seed": 42, "temperature": 0}
     model_name = EVALUATOR_TO_MODEL_ID[name]
 
     if provider == ModelProviderEnum.AZURE_OPENAI:

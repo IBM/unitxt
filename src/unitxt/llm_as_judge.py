@@ -270,7 +270,7 @@ class LLMJudgeDirect(LLMJudge):
         self.option_selection_task = Task(
             input_fields={
                 "criteria_description": str,
-                "score_option_instruction": str,
+                "display_options_instruction": str,
                 "options": list,
             },
             reference_fields={},
@@ -305,21 +305,17 @@ class LLMJudgeDirect(LLMJudge):
         criteria_description = criteria.description
         criteria_option_names = [o.name for o in criteria.options]
 
-        display_options_instruction = "Choose an answer:\n" + "\n".join(
+        display_options_instruction = "Choose an option:\n" + "\n".join(
             [
                 f'- "{o.name}"{f" if {o.description}" if o.description != "" else ""}'
                 for o in criteria.options
             ]
-        )
-        score_option_instruction = "".join(
-            [f"Score {o.name}: {o.description}\n" for o in criteria.options]
         )
 
         return (
             criteria_description,
             criteria_option_names,
             display_options_instruction,
-            score_option_instruction,
         )
 
     def __set_main_score(self, criterias: List[CriteriaWithOptions]):
@@ -547,7 +543,6 @@ class LLMJudgeDirect(LLMJudge):
             criteria_description_list,
             criteria_option_names_list,
             display_options_instruction_list,
-            score_option_instruction_list,
         ) = zip(*parsed_criterias)
 
         assessment_for_summaries_slice = slice(0, evaluations_count)
@@ -599,13 +594,17 @@ class LLMJudgeDirect(LLMJudge):
         option_selection_instances = [
             {
                 "criteria_description": criteria_description,
-                "score_option_instruction": score_option_instruction,
+                "display_options_instruction": display_options_instruction,
                 "options": criteria_option_names,
                 "data_classification_policy": ["public"],
             }
-            for criteria_description, score_option_instruction, criteria_option_names in zip(
+            for (
+                criteria_description,
+                display_options_instruction,
+                criteria_option_names
+            ) in zip(
                 criteria_description_list,
-                score_option_instruction_list,
+                display_options_instruction_list,
                 criteria_option_names_list,
             )
         ]
