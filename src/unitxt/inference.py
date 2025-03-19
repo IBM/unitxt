@@ -13,6 +13,7 @@ import time
 import uuid
 from collections import Counter
 from datetime import datetime
+from itertools import islice
 from multiprocessing.pool import ThreadPool
 from typing import (
     Any,
@@ -54,6 +55,11 @@ constants = get_constants()
 settings = get_settings()
 logger = get_logger()
 
+
+def batched(lst, n):
+    it = iter(lst)
+    while batch := list(islice(it, n)):
+        yield batch
 
 class StandardAPIParamsMixin(Artifact):
     model: str
@@ -227,12 +233,9 @@ class InferenceEngine(Artifact):
             result = self._mock_infer(dataset)
         else:
             if self.use_cache:
-                if isinstance(dataset, Dataset):
-                    dataset = dataset.to_list()
-                dataset_batches = [dataset[i:i + self.cache_batch_size]
-                                    for i in range(0, len(dataset), self.cache_batch_size)]
+                number_of_batches = len(dataset) // self.cache_batch_size + 1
                 result = []
-                for batch_num, batch in enumerate(dataset_batches):
+                for batch_index, batch in enumerate(batched(dataset, self.cache_batch_size)):
                     cached_results = []
                     missing_examples = []
                     for i, item in enumerate(batch):
@@ -243,17 +246,20 @@ class InferenceEngine(Artifact):
                         else:
                             missing_examples.append((i, item)) # each element is index in batch and example
                     # infare on missing examples only, without indices
-                    logger.info(f"Inferring batch {batch_num} / {len(dataset_batches)}")
-                    inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
-                    # recombined to index and value
-                    inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
-                    # Add missing examples to cache
-                    for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
-                        if prediction is None:
-                            continue
-                        cache_key = self._get_cache_key(item)
-                        self._cache[cache_key] = prediction
 
+                    logger.info(f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})")
+                    if (len(missing_examples) > 0):
+                        inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
+                        # recombined to index and value
+                        inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
+                        # Add missing examples to cache
+                        for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
+                            if prediction is None:
+                                continue
+                            cache_key = self._get_cache_key(item)
+                            self._cache[cache_key] = prediction
+                    else:
+                        inferred_results=[]
                     # Combine cached and inferred results in original order
                     batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
                     result.extend(batch_predictions)
@@ -1774,7 +1780,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
         api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
-        return {"api_key": api_key, "api_url": api_url}
+        return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
 
     def create_client(self):
         from openai import AzureOpenAI
@@ -1783,6 +1789,7 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         return AzureOpenAI(
             api_key=self.credentials["api_key"],
             base_url=self.credentials["api_url"],
+            api_version=self.credentials["api_version"],
             default_headers=self.get_default_headers(),
         )
 
@@ -1796,6 +1803,10 @@ class RITSInferenceEngine(
 ):
     label: str = "rits"
     data_classification_policy = ["public", "proprietary"]
+
+    model_names_dict = {
+        "microsoft/phi-4": "microsoft-phi-4"
+    }
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
@@ -1817,8 +1828,10 @@ class RITSInferenceEngine(
             RITSInferenceEngine._get_model_name_for_endpoint(model_name)
         )
 
-    @staticmethod
-    def _get_model_name_for_endpoint(model_name: str):
+    @classmethod
+    def _get_model_name_for_endpoint(cls, model_name: str):
+        if model_name in cls.model_names_dict:
+            return cls.model_names_dict[model_name]
         return (
             model_name.split("/")[-1]
             .lower()
@@ -2025,6 +2038,9 @@ class WMLInferenceEngineBase(
         deployment_id (str, optional):
             Deployment ID of a tuned model to be used for
             inference. Mutually exclusive with 'model_name'.
+        concurrency_limit (int):
+            Number of concurrent requests sent to a model. Default is 10,
+            which is also the maximum value for the generation.
         parameters (Union[WMLInferenceEngineParams, WMLGenerationParamsMixin, WMLChatParamsMixin], optional):
             Defines inference parameters and their values. Deprecated attribute, please pass respective
             parameters directly to the respective class instead.
@@ -2033,6 +2049,7 @@ class WMLInferenceEngineBase(
     credentials: Optional[CredentialsWML] = None
     model_name: Optional[str] = None
     deployment_id: Optional[str] = None
+    concurrency_limit: int = 10
     label: str = "wml"
     _requirements_list = {
         "ibm_watsonx_ai": "Install ibm-watsonx-ai package using 'pip install --upgrade ibm-watsonx-ai'. "
@@ -2286,11 +2303,6 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
 
     If you want to include images in your input, please use 'WMLInferenceEngineChat' instead.
 
-    Args:
-        concurrency_limit (int):
-            Number of concurrent requests sent to a model. Default is 10,
-            which is also the maximum value.
-
     Examples:
         .. code-block:: python
 
@@ -2313,8 +2325,6 @@ class WMLInferenceEngineGeneration(WMLInferenceEngineBase, WMLGenerationParamsMi
             )
             results = wml_inference.infer(dataset["test"])
     """
-
-    concurrency_limit: int = 10
 
     def verify(self):
         super().verify()
@@ -2567,6 +2577,32 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         # images as SDK allows sending only one image per message.
         return [messages]
 
+    def _handle_async_requests(
+        self,
+        messages: List[List[Dict[str, Any]]],
+        params: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        async def handle_async_requests(start_idx, end_idx):
+            coroutines = [
+                self._model.achat(messages=messages[idx], params=params)
+                for idx in range(start_idx, end_idx)
+            ]
+            batch_results = await asyncio.gather(*coroutines)
+            return list(batch_results)
+
+        loop = asyncio.get_event_loop()
+        results = []
+
+        for batch_idx in range(0, len(messages), self.concurrency_limit):
+            batch_results = loop.run_until_complete(
+                handle_async_requests(
+                    batch_idx, min(batch_idx + self.concurrency_limit, len(messages))
+                )
+            )
+            results.extend(batch_results)
+
+        return results
+
     def _send_requests(
         self,
         dataset: Union[List[Dict[str, Any]], Dataset],
@@ -2582,27 +2618,25 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
             output_type = "message"
             params["logprobs"] = False
 
-        final_results = []
+        indexed_messages = [
+            (i, message)
+            for i in range(len(dataset))
+            for message in self.to_messages(dataset[i])
+        ]
 
-        for instance in dataset:
-            messages = self.to_messages(instance)
+        results = self._handle_async_requests(
+            [msg[1] for msg in indexed_messages], params
+        )
 
-            for message in messages:
-                result = self._model.chat(
-                    messages=message,
-                    params=params,
-                )
-
-                final_results.append(
-                    self.get_return_object(
-                        result["choices"][0][output_type]["content"],
-                        result,
-                        instance["source"],
-                        return_meta_data,
-                    )
-                )
-
-        return final_results
+        return [
+            self.get_return_object(
+                result["choices"][0][output_type]["content"],
+                result,
+                dataset[idx[0]]["source"],
+                return_meta_data,
+            )
+            for result, idx in zip(results, indexed_messages)
+        ]
 
     def get_return_object(self, predict_result, result, input_text, return_meta_data):
         if return_meta_data:
@@ -2958,15 +2992,12 @@ class LiteLLMInferenceEngine(
             capacity=self.max_requests_per_second,
         )
         self.inference_type = "litellm"
-        import litellm
         from litellm import acompletion
-        from litellm.caching.caching import Cache
 
-        litellm.cache = Cache(type="disk")
 
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
-        self._semaphore = asyncio.Semaphore(self.max_requests_per_second)
+        self._semaphore = asyncio.Semaphore(round(self.max_requests_per_second))
 
     async def _infer_instance(
         self, index: int, instance: Dict[str, Any]
@@ -3294,13 +3325,16 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
     """
-
+    label = "hf_option_selection"
     model_name: str
     batch_size: int
 
     _requirements_list = {
         "transformers": "Install huggingface package using 'pip install --upgrade transformers"
     }
+
+    def get_engine_id(self):
+        return get_model_and_label_id(self.model_name, self.label)
 
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer

@@ -7,7 +7,6 @@ from typing import Any, Dict, List, Union
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
 from .settings_utils import get_constants
-from .sql_utils import get_db_connector
 from .type_utils import isoftype, to_type_string
 from .types import (
     Dialog,
@@ -203,5 +202,7 @@ class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
     serialized_type = SQLDatabase
 
     def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        from .sql_utils import get_db_connector
+
         connector = get_db_connector(value["db_type"])(value)
         return connector.get_table_schema()

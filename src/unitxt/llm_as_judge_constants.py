@@ -3,10 +3,6 @@ from enum import Enum
 from typing import Dict, List, Optional
 
 from .artifact import Artifact
-from .inference import (
-    LiteLLMInferenceEngine,
-    RITSInferenceEngine,
-)
 
 
 class OptionSelectionStrategyEnum(str, Enum):
@@ -68,13 +64,13 @@ class EvaluatorTypeEnum(str, Enum):
 
 class EvaluatorNameEnum(str, Enum):
     MIXTRAL8_7b = "Mixtral8-7b"
-    MIXTRAL8_22b = "Mixtral8-22b"
     MIXTRAL_LARGE = "Mixtral Large"
     LLAMA3_8B = "Llama3-8b"
     LLAMA3_1_405B = "Llama3.1-405b"
     LLAMA3_1_8B = "Llama3.1-8b"
     LLAMA3_1_70B = "Llama3.1-70b"
     LLAMA3_2_3B = "Llama3.2-3b"
+    LLAMA3_3_70B = "Llama3.3-70b"
     PROMETHEUS = "Prometheus"
     GPT4 = "GPT-4o"
     O1_PREVIEW = "o1-Preview"
@@ -84,52 +80,32 @@ class EvaluatorNameEnum(str, Enum):
     GRANITE3_8B = "Granite3.0-8b"
     GRANITE3_1_2B = "Granite3.1-2b"
     GRANITE3_1_8B = "Granite3.1-8b"
+    GRANITE3_2_8B = "Granite3.2-8b"
 
 
 class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
     OPENAI = "openai"
     RITS = "rits"
-    AZURE_OPENAI = "azure_openai"
+    AZURE_OPENAI = "azure"
 
 
 EVALUATOR_TO_MODEL_ID = {
-    EvaluatorNameEnum.MIXTRAL8_7b: "mistralai/mixtral-8x7b-instruct-v01",
-    EvaluatorNameEnum.MIXTRAL8_22b: "mistralai/mixtral-8x22B-instruct-v0.1",
-    EvaluatorNameEnum.MIXTRAL_LARGE: "mistralai/mistral-large",
-    EvaluatorNameEnum.LLAMA3_1_405B: "meta-llama/llama-3-405b-instruct",
-    EvaluatorNameEnum.LLAMA3_1_8B: "meta-llama/llama-3-1-8b-instruct",
-    EvaluatorNameEnum.LLAMA3_1_70B: "meta-llama/llama-3-1-70b-instruct",
-    EvaluatorNameEnum.LLAMA3_2_3B: "meta-llama/llama-3-2-3b-instruct",
-    EvaluatorNameEnum.PROMETHEUS: "kaist-ai/prometheus-8x7b-v2",
+    EvaluatorNameEnum.MIXTRAL8_7b: "mixtral-8x7b-instruct-v01",
+    EvaluatorNameEnum.MIXTRAL_LARGE: "mistral-large-instruct",
+    EvaluatorNameEnum.LLAMA3_1_405B: "llama-3-1-405b-instruct",
+    EvaluatorNameEnum.LLAMA3_1_8B: "llama-3-1-70b-instruct",
+    EvaluatorNameEnum.LLAMA3_1_70B: "llama-3-1-70b-instruct",
+    EvaluatorNameEnum.LLAMA3_3_70B: "llama-3-3-70b-instruct",
     EvaluatorNameEnum.GPT4: "gpt-4o-2024-08-06",
-    EvaluatorNameEnum.O1_PREVIEW: "o1-preview-2024-09-12",
-    EvaluatorNameEnum.O1_MINI: "o1-mini-2024-09-12",
-    EvaluatorNameEnum.GRANITE_13B: "ibm/granite-13b-instruct-v2",
-    EvaluatorNameEnum.GRANITE3_2B: "ibm/granite-3-2b-instruct",
-    EvaluatorNameEnum.GRANITE3_8B: "ibm/granite-3-8b-instruct",
-    EvaluatorNameEnum.GRANITE3_1_2B: "ibm/granite-3.1-2b-instruct",
-    EvaluatorNameEnum.GRANITE3_1_8B: "ibm/granite-3.1-8b-instruct",
+    EvaluatorNameEnum.O1_PREVIEW: "o1-preview",
+    EvaluatorNameEnum.O1_MINI: "o1-mini",
+    EvaluatorNameEnum.GRANITE3_2B: "granite-3-2b-instruct",
+    EvaluatorNameEnum.GRANITE3_8B: "granite-3-8b-instruct",
+    EvaluatorNameEnum.GRANITE3_1_2B: "granite-3-1-2b-instruct",
+    EvaluatorNameEnum.GRANITE3_1_8B: "granite-3-1-8b-instruct",
+    EvaluatorNameEnum.GRANITE3_2_8B: "granite-3-2-8b-instruct",
 }
-
-MODEL_RENAMINGS = {
-    ModelProviderEnum.RITS: {
-        "meta-llama/llama-3-1-8b-instruct": "meta-llama/Llama-3.1-8B-Instruct",
-        "mistralai/mixtral-8x7b-instruct-v01": "mistralai/mixtral-8x7B-instruct-v0.1",
-        "ibm/granite-3-8b-instruct": "ibm-granite/granite-3.0-8b-instruct",
-        "ibm/granite-3.1-8b-instruct": "ibm-granite/granite-3.1-8b-instruct",
-        "meta-llama/llama-3-405b-instruct": "meta-llama/llama-3-1-405b-instruct-fp8",
-        "mistralai/mistral-large": "mistralai/mistral-large-instruct-2407",
-    },
-}
-
-INFERENCE_ENGINE_NAME_TO_CLASS = {
-    ModelProviderEnum.WATSONX: LiteLLMInferenceEngine,
-    ModelProviderEnum.OPENAI: LiteLLMInferenceEngine,
-    ModelProviderEnum.RITS: RITSInferenceEngine,
-    ModelProviderEnum.AZURE_OPENAI: LiteLLMInferenceEngine,
-}
-
 
 class EvaluatorMetadata:
     name: EvaluatorNameEnum
@@ -146,10 +122,6 @@ EVALUATORS_METADATA = [
         [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX],
     ),
     EvaluatorMetadata(
-        EvaluatorNameEnum.MIXTRAL8_22b,
-        [ModelProviderEnum.RITS],
-    ),
-    EvaluatorMetadata(
         EvaluatorNameEnum.MIXTRAL_LARGE,
         [ModelProviderEnum.RITS, ModelProviderEnum.WATSONX],
     ),
@@ -160,6 +132,10 @@ EVALUATORS_METADATA = [
     EvaluatorMetadata(
         EvaluatorNameEnum.GRANITE3_1_8B,
         [ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.GRANITE3_2_8B,
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.GPT4,
@@ -183,6 +159,10 @@ EVALUATORS_METADATA = [
     ),
     EvaluatorMetadata(
         EvaluatorNameEnum.LLAMA3_1_405B,
+        [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
+    ),
+    EvaluatorMetadata(
+        EvaluatorNameEnum.LLAMA3_3_70B,
         [ModelProviderEnum.WATSONX, ModelProviderEnum.RITS],
     ),
 ]
