@@ -66,7 +66,7 @@ from datasets import load_dataset as _hf_load_dataset
 from huggingface_hub import HfApi
 from tqdm import tqdm
 
-from .dataclass import Field, NonPositionalField
+from .dataclass import NonPositionalField
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .fusion import FixedFusion
 from .logging_utils import get_logger
@@ -823,7 +823,6 @@ class LoadFromDictionary(Loader):
     """
 
     data: Dict[str, List[Dict[str, Any]]]
-    default_data_classification_policy: List[str] = Field(default_factory=lambda: ["proprietary"])
 
     def verify(self):
         super().verify()
