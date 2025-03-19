@@ -6101,6 +6101,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
+        task_data["prediction"] = prediction
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6114,7 +6117,10 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
