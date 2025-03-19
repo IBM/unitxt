@@ -106,6 +106,7 @@ tests = [
     "Wikipedia-API",
     "sqlglot",
     "sqlparse",
+    "diskcache"
 ]
 ui = [
     "gradio",

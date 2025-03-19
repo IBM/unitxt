@@ -63,7 +63,6 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
-from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
@@ -6358,7 +6357,7 @@ class SQLExecutionAccuracy(InstanceMetric):
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
-    def compare_dfs_ignore_colnames(df1, df2):
+    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
         """Compares two DataFrames based on row content, ignoring column names.
 
         Args:
@@ -6366,7 +6365,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
-            True if the DataFrames have the same content (ignoring column names),
+            True if the DataFrames have the same ordered rows (ignoring column names),
             False otherwise.
         """
         df1.fillna(0, inplace=True)
@@ -6379,6 +6378,20 @@ class SQLExecutionAccuracy(InstanceMetric):
         df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
 
         return df1_rows_sorted == df2_rows_sorted
+
+    @staticmethod
+    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
+        """Compares two DataFrames based on row content, ignoring row order and column names.
+
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+
+        Returns:
+            True if the DataFrames have the same content (ignoring column names and row order),
+            False otherwise.
+        """
+        return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
@@ -6447,6 +6460,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         import time
 
         from func_timeout import func_timeout
+        from func_timeout.exceptions import FunctionTimedOut
 
         from .sql_utils import sqlglot_optimized_equivalence
 
@@ -6462,6 +6476,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing gold SQL: {e}"
+            logger.warning(pred_error)
         except Exception as e:
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
@@ -6493,10 +6510,10 @@ class SQLExecutionAccuracy(InstanceMetric):
             gold_sql_runtime,
             0,
             0,
-            1,
+            0,
             0,
             gold_df.to_json(),
-            gold_df.to_json(),
+            "",
             "",
         )
         if predicted_sql.lower().strip() == gold_sql.lower().strip():
@@ -6521,6 +6538,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             pred_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing predicted SQL: {e}"
+            logger.info(pred_error)
         except Exception as e:
             pred_error = f"Error executing predicted SQL: {e}"
             logger.info(pred_error)
@@ -6549,9 +6569,20 @@ class SQLExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
-        execution_result = (
-            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
-        )
+        if "ORDER BY" in gold_sql.upper():
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
+                else 0
+            )
+        else:
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_unordered_rows(
+                    predicted_df, gold_df
+                )
+                else 0
+            )
 
         subset_non_empty_execution_result = 0
         non_empty_execution_result = 0
@@ -6577,6 +6608,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import get_db_connector
+
         predicted_sql = prediction
         execution_result: float = 0.0
 
