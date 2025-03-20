@@ -3461,7 +3461,7 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
 
     def release_worker(self, url):
         with self.lock:
-            self.workers_state[url] = {"status": "ready"}
+            self.workers_state[url]["status"] = "ready"
 
     def assign_worker(self):
         with self.lock:
@@ -3509,8 +3509,9 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
 
     def _run_batch(self, batch, return_meta_data):
         """Helper function to process a batch inside a thread."""
+        logger.info(f"Trying to get assigned: {self.workers_state}")
         url, client = self.assign_worker()
-        logger.info(f"Thread {url} processing batch")
+        logger.info(f"Thread {url} processing batch: {self.workers_state}")
         messages = [self.to_messages(instance) for instance in batch]
         logger.info(f"a {url}")
         #time.sleep(random.uniform(0, 10))
@@ -3524,7 +3525,9 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
             predictions = [r.message.content for r in response.choices]
             result = [self.get_return_object(p, response, return_meta_data) for p in predictions]
         finally:
+            logger.info(f"Thread {url} release state:")
             self.release_worker(url)
+            logger.info(f"Thread {url} release state done: {self.workers_state}")
         return result
 
     def post_process_results(self, result):

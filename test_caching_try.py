@@ -44,7 +44,7 @@ if __name__ == "__main__":
     dataset = load_dataset_cached(card="cards.openbook_qa",
                            split="test")
 
-    dataset = dataset.select(range(100))
+    #dataset = dataset.select(range(100))
 
     inference_model = CCCInferenceEngine(
         model_name="google/flan-t5-small",
