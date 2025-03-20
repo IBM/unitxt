@@ -1,5 +1,6 @@
 
 import logging
+import sys
 
 from flask import Flask, jsonify, request
 from unitxt.inference import HFPipelineBasedInferenceEngine
@@ -46,7 +47,7 @@ def completions(model: str, model_prefix: str = "None"):
         else:
             if attr != v:
                 logging.warning(f"Warning: {k} value in boody({v}) is different from value in inference engine ({attr})")
-    texts = [{"source": m["content"]} for m in body["messages"]]
+    texts = [{"source": m[0]["content"]} for m in body["messages"]]
     predictions = server.inference_engine(texts)
     return jsonify({
         "choices": [{"message": {"role": "assistant","content": p}} for p in predictions],
@@ -54,4 +55,4 @@ def completions(model: str, model_prefix: str = "None"):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="0.0.0.0", port=sys.argv[1], debug=True)

@@ -7,11 +7,14 @@ import io
 import json
 import logging
 import os
+import random
 import re
 import sys
+import threading
 import time
 import uuid
 from collections import Counter
+from concurrent.futures import Future, ThreadPoolExecutor, wait
 from datetime import datetime
 from itertools import islice
 from multiprocessing.pool import ThreadPool
@@ -255,8 +258,9 @@ class InferenceEngine(Artifact):
                         for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
                             if prediction is None:
                                 continue
-                            cache_key = self._get_cache_key(item)
-                            self._cache[cache_key] = prediction
+                                self.do_something(item)
+                            #cache_key = self._get_cache_key(item)
+                            #self._cache[cache_key] = prediction
                     else:
 
                         inferred_results = []
@@ -266,6 +270,9 @@ class InferenceEngine(Artifact):
                     result.extend(batch_predictions)
             else:
                 result = self._infer(dataset, return_meta_data)
+
+            result = self.post_process_results(result)
+
         return ListWithMetadata(
             result,
             metadata={
@@ -274,6 +281,12 @@ class InferenceEngine(Artifact):
                 "creation_time": datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3],
             },
         )
+
+    def do_something(self, i):
+        pass
+
+    def post_process_results(self, result):
+        return result
 
     def _mock_infer(
         self,
@@ -3384,10 +3397,9 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         dataset: Union[List[Dict[str, Any]], Dataset],
         return_meta_data: bool = False,
     ) -> Union[List[str], List[TextGenerationInferenceOutput]]:
-        if return_meta_data and not hasattr(self.engine, "get_return_object"):
+        if return_meta_data:
             raise NotImplementedError(
-                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data as it "
-                f"does not contain a 'get_return_object' method. Please set return_meta_data=False."
+                f"Inference engine {self.engine.__class__.__name__} does not support return_meta_data."
             )
 
         inputs = []
@@ -3419,19 +3431,102 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 class CCCInferenceEngine(OpenAiInferenceEngine,
                          HFGenerationParamsMixin):
 
-    server_url = "http://localhost:5000"
+    workers_url = ["http://localhost:5000", "http://localhost:5001", "http://localhost:5002", "http://localhost:5003", "http://localhost:5004"]
 
-    def post_server(self, endpoint, data):
+    def post_server(self, server_url, endpoint, data):
         headers = {"Content-Type": "application/json"}
-        response = requests.post(url=f"{self.server_url}/{endpoint}", json=data, headers=headers)
+        response = requests.post(url=f"{server_url}/{endpoint}", json=data, headers=headers)
         response.raise_for_status()
         return response.json()
 
     def prepare_engine(self):
-        self.base_url = f"{self.server_url}/{self.model_name}"+ "/v1"
-        super().prepare_engine()
-        self.post_server(endpoint="init_server",
-                         data={**self.to_dict([HFGenerationParamsMixin]), **{"model_name": self.model_name}})
+        from openai import OpenAI
+        self.lock = threading.Lock()
+        self.workers_state = {}
+        credentials = self._prepare_credentials()
+        for url in self.workers_url:
+            init_result = self.post_server(endpoint="init_server",server_url=url,
+                             data={**self.to_dict([HFGenerationParamsMixin]), **{"model_name": self.model_name}})
+            if init_result == "Accepted":
+                self.add_worker(url, client=OpenAI(
+                    api_key=credentials["api_key"],
+                    base_url= f"{url}/{self.model_name}" + "/v1",
+                    default_headers=self.get_default_headers(),
+                ))
+
+
+    def add_worker(self, url, client):
+        with self.lock:
+            self.workers_state[url] = {"status": "ready", "client": client}
+
+    def release_worker(self, url):
+        with self.lock:
+            self.workers_state[url] = {"status": "ready"}
+
+    def assign_worker(self):
+        with self.lock:
+            while True:
+             #   print("trying to assign worker...")
+                for url, rec in self.workers_state.items():
+                    if rec["status"] == "ready":
+                        rec["status"] ="assigned"
+                        return url, rec["client"]
+                time.sleep(random.uniform(0, 1))
 
     def _prepare_credentials(self) -> CredentialsOpenAi:
         return {"api" + "_" + "key": "no-api-key",}
+
+    def _infer(
+            self,
+            dataset: Union[List[Dict[str, Any]], Dataset],
+            return_meta_data: bool = False,
+    ) -> List[Any]:  # Now returns a Future object
+        """Runs inference in parallel, returning futures for each batch."""
+        # Lazy-initialize executor if not already created
+        if not hasattr(self, "_executor"):
+            self._executor = ThreadPoolExecutor(max_workers=len(self.workers_state))
+
+        # Submit the batch job
+        batch_future = self._executor.submit(self._run_batch, dataset, return_meta_data)
+
+        # Create individual futures that resolve when batch_future is done
+        element_futures = [Future() for _ in dataset]
+
+        def set_results(batch_fut: Future):
+            """Callback to set individual results once batch computation is done."""
+            try:
+                results = batch_fut.result()  # Get the batch results
+                for i, res in enumerate(results):
+                    element_futures[i].set_result(res)  # Set each individual future
+            except Exception as e:
+                for f in element_futures:
+                    f.set_exception(e)  # Propagate any exception
+
+        # Attach the callback to the batch future
+        batch_future.add_done_callback(set_results)
+
+        return element_futures  # Return a list of futures
+
+    def _run_batch(self, batch, return_meta_data):
+        """Helper function to process a batch inside a thread."""
+        url, client = self.assign_worker()
+        logger.info(f"Thread {url} processing batch")
+        messages = [self.to_messages(instance) for instance in batch]
+        logger.info(f"a {url}")
+        #time.sleep(random.uniform(0, 10))
+        try:
+            response = client.chat.completions.create(
+                messages=messages,
+                model=self.model_name,
+                **self._get_completion_kwargs(),
+            )
+            logger.info(f"response: {response}")
+            predictions = [r.message.content for r in response.choices]
+            result = [self.get_return_object(p, response, return_meta_data) for p in predictions]
+        finally:
+            self.release_worker(url)
+        return result
+
+    def post_process_results(self, result):
+        wait(result)
+        return [future.result() for future in result]
