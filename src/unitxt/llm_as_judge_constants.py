@@ -85,7 +85,7 @@ class EvaluatorNameEnum(str, Enum):
 
 class ModelProviderEnum(str, Enum):
     WATSONX = "watsonx"
-    OPENAI = "openai"
+    OPENAI = "open-ai"
     RITS = "rits"
     AZURE_OPENAI = "azure"
 
