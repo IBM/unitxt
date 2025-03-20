@@ -1,5 +1,6 @@
 
 import logging
+import random
 import sys
 
 from flask import Flask, jsonify, request
@@ -15,6 +16,7 @@ class Server:
         self.inference_engine = None
 
     def init_server(self, **kwargs):
+        kwargs["use_cache"] =True
         self.inference_engine = HFPipelineBasedInferenceEngine(**kwargs)
 
     def infer(self, **kwargs):
@@ -35,6 +37,9 @@ def init_server():
 @app.route("/<model>/v1/chat/completions", methods=["POST"])
 @app.route("/<model_prefix>/<model>/v1/chat/completions", methods=["POST"])
 def completions(model: str, model_prefix: str = "None"):
+    if random.random() < 0.5:
+        logging.error("Bad luck! Returning 500 with an error message.")
+        return jsonify({"error": "Bad luck, something went wrong!"}), 500
     body = request.get_json()
     # validate that request parameters are equal to the model config. Print warnings if not.
     for k, v in body.items():
