@@ -1,34 +1,29 @@
-from typing import Any
 
 from unitxt import evaluate, load_dataset
 from unitxt.blocks import Task, TaskCard
-from unitxt.llm_as_judge import CreateYesNoCriteriaFromString
 from unitxt.loaders import LoadFromDictionary
 
 data = {
     "test": [
         {
             "question": "How is the weather?",
-            "judgement": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+            "instructions": "instruction",
         },
         {
             "question": "Tell me a joke about cats",
-            "judgement": "Is the response funny?",
+            "instructions": "instruction",
         },
     ]
 }
 
 card = TaskCard(
     loader=LoadFromDictionary(data=data, data_classification_policy=["public"]),
-    preprocess_steps=[
-        CreateYesNoCriteriaFromString(field="judgement", to_field="criteria"),
-    ],
     task=Task(
-        input_fields={"question": str},
-        reference_fields={"criteria": Any},
+        input_fields={"question": str, "instructions": str},
+        reference_fields={},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[context_fields=question,criteria_field=criteria]"
+            "metrics.rag.response_generation.adherence_with_format.llama_3_3_70b_instruct_judge[context_fields=[question,instructions]]"
         ],
     ),
 )
