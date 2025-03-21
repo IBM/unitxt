@@ -5,6 +5,7 @@
         "max_tokens": 1024,
         "seed": 42,
         "temperature": 0,
+        "provider": "rits",
         "model": "llama-3-3-70b-instruct"
     },
     "evaluator_name": "LLAMA3_3_70B",

@@ -23,7 +23,7 @@ def get_evaluator(
     provider: ModelProviderEnum,
 ) -> Union[LLMJudgeDirect, LLMJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
-    inference_params = {"max_tokens": 1024, "seed": 42, "temperature": 0}
+    inference_params = {"max_tokens": 1024, "seed": 42, "temperature": 0, "provider": provider.value}
     model_name = EVALUATOR_TO_MODEL_ID[name]
 
     if provider == ModelProviderEnum.AZURE_OPENAI:
@@ -86,8 +86,14 @@ for evaluator_metadata in EVALUATORS_METADATA:
                 .replace(".", "_")
                 .replace(" ", "_")
             )
-
-            provider_name = provider.value.lower() if provider != ModelProviderEnum.AZURE_OPENAI else "azure_openai"
+            provider_name = ""
+            # for backward compatibility, ideally we would use cross inference engines provider ids
+            if provider == ModelProviderEnum.AZURE_OPENAI:
+                provider_name = "azure_openai"
+            elif provider == ModelProviderEnum.OPENAI:
+                provider_name = "openai"
+            else:
+                provider_name = provider.value.lower()
 
             add_to_catalog(
                 evaluator,
