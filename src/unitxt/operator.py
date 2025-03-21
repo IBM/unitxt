@@ -144,6 +144,7 @@ class StreamingOperator(Operator, PackageRequirementsMixin):
     As a subclass of `Artifact`, every `StreamingOperator` can be saved in a catalog for further usage or reference.
 
     """
+    breakpoint: bool = FinalField(also_positional=False, default=False)
 
     @abstractmethod
     def __call__(self, streams: Optional[MultiStream] = None) -> MultiStream:
