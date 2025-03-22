@@ -1,15 +1,21 @@
 import hashlib
 import inspect
 import json
+import os
+import random
+import time
 from datetime import datetime
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+import filelock
 from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from datasets.exceptions import DatasetGenerationError
+from huggingface_hub import constants as hf_constants
 
 from .artifact import fetch_artifact
 from .card import TaskCard
+from .dataclass import to_dict
 from .dataset_utils import get_dataset_artifact
 from .error_utils import UnitxtError
 from .inference import (
@@ -134,42 +140,100 @@ def create_dataset(
     card = TaskCard(loader=LoadFromDictionary(data=data, data_classification_policy=data_classification_policy), task=task)
     return load_dataset(card=card, split=split, **kwargs)
 
+def object_to_str_without_addresses(obj):
+    """Generates a string representation of a Python object while removing memory address references.
+
+    This function is useful for creating consistent and comparable string representations of objects
+    that would otherwise include memory addresses (e.g., `<object_name at 0x123abc>`), which can vary
+    between executions. By stripping the memory address, the function ensures that the representation
+    is stable and independent of the object's location in memory.
+
+    Args:
+        obj: Any Python object to be converted to a string representation.
+
+    Returns:
+        str: A string representation of the object with memory addresses removed if present.
+
+    Example:
+        ```python
+        class MyClass:
+            pass
+
+        obj = MyClass()
+        print(str(obj))  # "<__main__.MyClass object at 0x7f8b9d4d6e20>"
+        print(to_str_without_addresses(obj))  # "<__main__.MyClass object>"
+        ```
+    """
+    obj_str = str(obj)
+    if " at 0x" in obj_str:
+        obj_str = obj_str.split(" at 0x")[0] + ">"
+    return obj_str
 
 def _source_to_dataset(
     source: SourceOperator,
     split=None,
     use_cache=False,
     streaming=False,
+    lock_timeout=60,  # Timeout in seconds for acquiring the lock
 ):
     from .dataset import Dataset as UnitxtDataset
+
+    # Generate a unique signature for the source
+    source_signature = json.dumps(to_dict(source, object_to_str_without_addresses), sort_keys=True)
+    config_name = "recipe-" + short_hex_hash(source_signature)
+    hf_cache_home = hf_constants.HF_HOME
+    lock_dir = os.path.join(hf_cache_home, "locks")
+    os.makedirs(lock_dir, exist_ok=True)
+
+    # Create a lock file path based on the dataset configuration
+    lock_file = os.path.join(lock_dir, f"unitxt_{config_name}.lock")
+
+    # Add retry logic
+    max_attempts = 5
+    base_wait = 5  # seconds
 
     stream = source()
 
     try:
         ds_builder = UnitxtDataset(
             dataset_name="unitxt",
-            config_name="recipe-" + short_hex_hash(repr(source)),
+            config_name=config_name,
             version=constants.version,
         )
+
         if split is not None:
             stream = {split: stream[split]}
+
         ds_builder._generators = stream
 
-        ds_builder.download_and_prepare(
-            verification_mode="no_checks",
-            download_mode=None if use_cache else "force_redownload",
-        )
 
-        if streaming:
-            return ds_builder.as_streaming_dataset(split=split)
+        for attempt in range(max_attempts):
+            # Create a file lock with appropriate timeout
+            lock = filelock.FileLock(lock_file, timeout=300)  # 5 minutes
 
-        return ds_builder.as_dataset(
-            split=split, run_post_process=False, verification_mode="no_checks"
-        )
+            try:
+                with lock:
+                    ds_builder.download_and_prepare(
+                        verification_mode="no_checks",
+                        download_mode=None if use_cache else "force_redownload",
+                    )
+
+                # If we reach here, the lock was successfully acquired and released
+                if streaming:
+                    return ds_builder.as_streaming_dataset(split=split)
+                return ds_builder.as_dataset(
+                    split=split, run_post_process=False, verification_mode="no_checks"
+                )
+
+            except filelock.Timeout:
+                if attempt < max_attempts - 1:  # Not the last attempt
+                    wait_time = base_wait * (2 ** attempt) + random.uniform(0, 1)
+                    time.sleep(wait_time)
+                else:
+                    raise TimeoutError(f"Could not acquire lock for {config_name} after {max_attempts} attempts")
 
     except DatasetGenerationError as e:
         raise e.__cause__
-
 
 def load_dataset(
     dataset_query: Optional[str] = None,
