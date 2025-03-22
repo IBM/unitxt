@@ -127,6 +127,7 @@ def nan_max(x):
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
 
+
 def nan_std(x):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", category=RuntimeWarning)
@@ -398,11 +399,13 @@ class Statistic:
         result = np.array([scores[m] for m in self.score_names])
         self._history.append(result)
         return result
+
     def mean(self, idx):
         return nan_mean([result[idx] for result in self._history])
 
     def std(self, idx):
         return nan_std([result[idx] for result in self._history])
+
 
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
@@ -413,18 +416,16 @@ class ConfidenceIntervalMixin(Artifact):
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
 
-
     def bootstrap(self, data: List[Any], score_names: List[str]):
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
-
         statistic = Statistic(data, score_names, self._sample_to_scores)
         with warnings.catch_warnings():
-            warnings.filterwarnings( # Ignore error the arises when all sample scores are identical
+            warnings.filterwarnings(  # Ignore error the arises when all sample scores are identical
                 "ignore",
                 message="invalid value encountered in divide",
-                category=RuntimeWarning
+                category=RuntimeWarning,
             )
 
             intervals = bootstrap(
@@ -438,14 +439,17 @@ class ConfidenceIntervalMixin(Artifact):
                 method="BCa",
             ).confidence_interval
 
-
         result = {}
         for i, metric in enumerate(score_names):
             high = intervals.high[i]
             low = intervals.low[i]
             if np.isnan(high) and np.isnan(low):
-                if statistic.std(i) == 0: # When sample scores are identical "BCa" will fail (due to division by std 0)
-                    high = low = statistic.mean(i) # In this case we will use the mean (as there is no variance)
+                if (
+                    statistic.std(i) == 0
+                ):  # When sample scores are identical "BCa" will fail (due to division by std 0)
+                    high = low = statistic.mean(
+                        i
+                    )  # In this case we will use the mean (as there is no variance)
             result[f"{metric}_ci_low"] = float(low)
             result[f"{metric}_ci_high"] = float(high)
 
@@ -2807,7 +2811,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = "42430b8613082bb4b85d49210284135d" # pragma: allowlist secret
+        hash_of_script = "42430b8613082bb4b85d49210284135d"  # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
@@ -3415,10 +3419,11 @@ class CustomF1(GlobalMetric):
 
 class KeyValueExtraction(GlobalMetric):
 
-    prediction_type = Dict[str,str]
-    metric : Metric
+    prediction_type = Dict[str, str]
+    metric: Metric
     single_reference_per_prediction = True
     main_score = ""
+
     def prepare(self):
         super().prepare()
         self.main_score = f"{self.metric.main_score}_micro"
@@ -3436,18 +3441,25 @@ class KeyValueExtraction(GlobalMetric):
         for reference in references:
             all_reference_keys.update(list(reference.keys()))
         for key in all_reference_keys:
-            key_statistics[key]= []
+            key_statistics[key] = []
 
-        num_prediction_keys=0
-        illegal_prediction_keys=0
+        num_prediction_keys = 0
+        illegal_prediction_keys = 0
         for reference, prediction in zip(references, predictions):
             for key in all_reference_keys:
-                if (key not in reference and key not in prediction):
+                if key not in reference and key not in prediction:
                     continue
-                if (key in reference and key in prediction):
-                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
-                                                                        "references" : [reference[key]]}
-                                                                                                                                                                                                          ]})
+                if key in reference and key in prediction:
+                    multi_stream = MultiStream.from_iterables(
+                        {
+                            "test": [
+                                {
+                                    "prediction": prediction[key],
+                                    "references": [reference[key]],
+                                }
+                            ]
+                        }
+                    )
                     output_multi_stream = self.metric(multi_stream)
                     output_stream = output_multi_stream["test"]
                     score = next(iter(output_stream))["score"]["global"]["score"]
@@ -3460,7 +3472,7 @@ class KeyValueExtraction(GlobalMetric):
                 if key not in all_reference_keys:
                     illegal_prediction_keys += 1
 
-        result={}
+        result = {}
 
         average = 0
         total = 0
@@ -3476,12 +3488,15 @@ class KeyValueExtraction(GlobalMetric):
 
         result[f"{self.metric.main_score}_micro"] = weighted_average / total
         result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
-        if (num_prediction_keys !=0):
-            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        if num_prediction_keys != 0:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = (
+                1 - 1.0 * illegal_prediction_keys / num_prediction_keys
+            )
         else:
             result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
 
         return result
+
 
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
@@ -6116,9 +6131,18 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+        data_classification_policy = task_data.get("metadata", {}).get(
+            "data_classification_policy"
+        )
 
-        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+        result = self.inference_engine.infer_log_probs(
+            [
+                {
+                    "source": prompt,
+                    "data_classification_policy": data_classification_policy,
+                }
+            ]
+        )
 
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
@@ -6371,13 +6395,20 @@ class SQLExecutionAccuracy(InstanceMetric):
         df1.fillna(0, inplace=True)
         df2.fillna(0, inplace=True)
 
+        # Compare row counts first for a quick check
         if df1.shape != df2.shape:
             return False
 
-        df1_rows_sorted = [sorted(map(str, row)) for row in df1.to_numpy()]
-        df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
+        # Convert DataFrames to numpy arrays of strings to handle mixed types
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        return df1_rows_sorted == df2_rows_sorted
+        # Sort each row's elements (column order independence)
+        df1_sorted_rows = np.array([np.sort(row) for row in df1_array])
+        df2_sorted_rows = np.array([np.sort(row) for row in df2_array])
+
+        # Compare the sorted rows in order
+        return np.array_equal(df1_sorted_rows, df2_sorted_rows)
 
     @staticmethod
     def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
@@ -6391,7 +6422,21 @@ class SQLExecutionAccuracy(InstanceMetric):
             True if the DataFrames have the same content (ignoring column names and row order),
             False otherwise.
         """
-        return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
+
+        # Compare shapes early on
+        if df1.shape != df2.shape:
+            return False
+
+        # Convert DataFrames to numpy arrays of strings (to handle mixed data types)
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
+
+        # Sort columns first, then sort rows
+        df1_sorted = np.sort(np.sort(df1_array, axis=1), axis=0)
+        df2_sorted = np.sort(np.sort(df2_array, axis=1), axis=0)
+
+        # Compare the sorted arrays
+        return np.array_equal(df1_sorted, df2_sorted)
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
