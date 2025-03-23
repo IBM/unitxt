@@ -31,7 +31,6 @@ from typing import (
 )
 
 from datasets import Dataset, DatasetDict, Image
-from diskcache import Cache
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -183,7 +182,9 @@ class InferenceEngine(Artifact):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
-            self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
+            if self.use_cache:
+                from diskcache import Cache
+                self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
