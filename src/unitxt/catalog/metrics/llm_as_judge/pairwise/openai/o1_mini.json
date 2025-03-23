@@ -1,10 +1,11 @@
 {
     "__type__": "llm_judge_pairwise",
     "inference_engine": {
-        "__type__": "lite_llm_inference_engine",
+        "__type__": "cross_provider_inference_engine",
         "max_tokens": 1024,
         "seed": 42,
-        "model": "openai/o1-mini-2024-09-12"
+        "temperature": 0,
+        "model": "o1-mini"
     },
     "evaluator_name": "O1_MINI",
     "generate_summaries": false

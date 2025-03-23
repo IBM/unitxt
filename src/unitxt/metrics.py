@@ -63,12 +63,9 @@ from .operator import (
 from .operators import ArtifactFetcherMixin, Copy, Set
 from .random_utils import get_seed
 from .settings_utils import get_settings
-from .sql_utils import get_db_connector
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
 from .utils import deep_copy, recursive_copy
-
-FINQA_HASH = "42430b8613082bb4b85d49210284135d" # pragma: allowlist-secret
 
 logger = get_logger()
 settings = get_settings()
@@ -127,12 +124,17 @@ def nan_mean(x):
 
 def nan_max(x):
     with warnings.catch_warnings():
-        # final mean should be mean of scores, ignoring NaN, hence nanmax
-        # but if the group function values is NaN for ALL values, nanmean throws a
-        # RuntimeWarning that it is calculating the mean of an empty slice (with no non-Nans)
-        # this is the desired behavior, but we want to avoid the warning here
         warnings.simplefilter("ignore", category=RuntimeWarning)
         return np.nanmax(x)
+
+def nan_std(x):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", category=RuntimeWarning)
+        result = np.nanstd(x)
+        try:
+            return float(result)
+        except:
+            return result
 
 
 class UpdateStream(InstanceOperator):
@@ -365,6 +367,43 @@ def new_random_generator():
     return np.random.default_rng(hash(get_seed()) & _max_32bit)
 
 
+class Statistic:
+    """Statistic for which the confidence interval is to be calculated.
+
+    `statistic` must be a callable that accepts ``len(data)`` samples
+    as separate arguments and returns the resulting statistic.
+    If `vectorized` is set ``True``,
+    `statistic` must also accept a keyword argument `axis` and be
+    vectorized to compute the statistic along the provided `axis`.
+    """
+
+    def __init__(self, data, score_names, scorer):
+        self.data = data
+        self.score_names = score_names
+        self.scorer = scorer
+        self._history = []
+
+    def __call__(self, indices, axis=0):
+        # indices might be a 1D or 2D array, depending on bootstrap internals
+        # For simplicity, ensure we handle them as 1D.
+        indices = np.atleast_1d(indices).astype(int)
+
+        # Gather the subset
+        sample = [self.data[i] for i in indices]
+
+        # Compute metrics on this sample
+        scores = self.scorer(sample)
+
+        # Return them in consistent order
+        result = np.array([scores[m] for m in self.score_names])
+        self._history.append(result)
+        return result
+    def mean(self, idx):
+        return nan_mean([result[idx] for result in self._history])
+
+    def std(self, idx):
+        return nan_std([result[idx] for result in self._history])
+
 class ConfidenceIntervalMixin(Artifact):
     n_resamples: int = 1000
     confidence_level: float = 0.95
@@ -374,42 +413,41 @@ class ConfidenceIntervalMixin(Artifact):
     def _sample_to_scores(self, sample: List[Any]) -> Dict[str, Any]:
         pass
 
-    def get_statistic(self, data: List[Any], score_names: List[str]):
-        def statistic_function(indices, axis=0):
-            # indices might be a 1D or 2D array, depending on bootstrap internals
-            # For simplicity, ensure we handle them as 1D.
-            indices = np.atleast_1d(indices).astype(int)
-
-            # Gather the subset
-            sample = [data[i] for i in indices]
-
-            # Compute metrics on this sample
-            scores = self._sample_to_scores(sample)
-
-            # Return them in consistent order
-            return np.array([scores[m] for m in score_names])
-
-        return statistic_function
 
     def bootstrap(self, data: List[Any], score_names: List[str]):
         if self.ci_score_names is not None:
             score_names = self.ci_score_names
 
-        intervals = bootstrap(
-            (np.arange(len(data)),),
-            statistic=self.get_statistic(data, score_names),
-            n_resamples=self.n_resamples,
-            confidence_level=self.confidence_level,
-            random_state=new_random_generator(),
-            paired=False,
-            vectorized=False,  # set to True if your statistic function is vectorized
-            method="BCa",
-        ).confidence_interval
+
+        statistic = Statistic(data, score_names, self._sample_to_scores)
+        with warnings.catch_warnings():
+            warnings.filterwarnings( # Ignore error the arises when all sample scores are identical
+                "ignore",
+                message="invalid value encountered in divide",
+                category=RuntimeWarning
+            )
+
+            intervals = bootstrap(
+                (np.arange(len(data)),),
+                statistic=statistic,
+                n_resamples=self.n_resamples,
+                confidence_level=self.confidence_level,
+                random_state=new_random_generator(),
+                paired=False,
+                vectorized=False,
+                method="BCa",
+            ).confidence_interval
+
 
         result = {}
         for i, metric in enumerate(score_names):
-            result[f"{metric}_ci_low"] = float(intervals.low[i])
-            result[f"{metric}_ci_high"] = float(intervals.high[i])
+            high = intervals.high[i]
+            low = intervals.low[i]
+            if np.isnan(high) and np.isnan(low):
+                if statistic.std(i) == 0: # When sample scores are identical "BCa" will fail (due to division by std 0)
+                    high = low = statistic.mean(i) # In this case we will use the mean (as there is no variance)
+            result[f"{metric}_ci_low"] = float(low)
+            result[f"{metric}_ci_high"] = float(high)
 
         return result
 
@@ -2769,7 +2807,7 @@ class FinQAEval(InstanceMetric):
         remote_url = "https://raw.githubusercontent.com/czyssrs/FinQA/dfc5b72c01ee17c442d28d5201b82a1f4e95d5af/code/evaluate/evaluate.py"
         local_filepath = "/tmp/finqa_eval_script.py"
         module_name = "finqa_eval"
-        hash_of_script = FINQA_HASH
+        hash_of_script = "42430b8613082bb4b85d49210284135d" # pragma: allowlist secret
 
         download_finqa_eval_script_file(remote_url, local_filepath, hash_of_script)
         self.finqa_module = load_finqa_eval_module_from_file(
@@ -3375,6 +3413,76 @@ class CustomF1(GlobalMetric):
             result["precision_macro"] = self.zero_division
 
 
+class KeyValueExtraction(GlobalMetric):
+
+    prediction_type = Dict[str,str]
+    metric : Metric
+    single_reference_per_prediction = True
+    main_score = ""
+    def prepare(self):
+        super().prepare()
+        self.main_score = f"{self.metric.main_score}_micro"
+
+    def compute(
+        self,
+        references: List[List[Any]],
+        predictions: List[Any],
+        task_data: List[Dict],
+    ) -> dict:
+        references = [element[0] for element in references]
+
+        key_statistics = {}
+        all_reference_keys = set()
+        for reference in references:
+            all_reference_keys.update(list(reference.keys()))
+        for key in all_reference_keys:
+            key_statistics[key]= []
+
+        num_prediction_keys=0
+        illegal_prediction_keys=0
+        for reference, prediction in zip(references, predictions):
+            for key in all_reference_keys:
+                if (key not in reference and key not in prediction):
+                    continue
+                if (key in reference and key in prediction):
+                    multi_stream = MultiStream.from_iterables({"test": [{"prediction" : prediction[key],
+                                                                        "references" : [reference[key]]}
+                                                                                                                                                                                                          ]})
+                    output_multi_stream = self.metric(multi_stream)
+                    output_stream = output_multi_stream["test"]
+                    score = next(iter(output_stream))["score"]["global"]["score"]
+                    key_statistics[key].append(score)
+                else:
+                    key_statistics[key].append(0.0)
+
+            for key in prediction.keys():
+                num_prediction_keys += 1
+                if key not in all_reference_keys:
+                    illegal_prediction_keys += 1
+
+        result={}
+
+        average = 0
+        total = 0
+
+        weighted_average = 0
+        for key in key_statistics:
+            mean_for_key = numpy.mean(key_statistics[key])
+            num = len(key_statistics[key])
+            total += num
+            average += mean_for_key
+            weighted_average += mean_for_key * num
+            result[f"{self.metric.main_score}_{key}"] = mean_for_key
+
+        result[f"{self.metric.main_score}_micro"] = weighted_average / total
+        result[f"{self.metric.main_score}_macro"] = average / len(key_statistics)
+        if (num_prediction_keys !=0):
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 1 - 1.0 * illegal_prediction_keys /  num_prediction_keys
+        else:
+            result[f"{self.metric.main_score}_legal_keys_in_predictions"] = 0
+
+        return result
+
 class NER(CustomF1):
     """F1 Metrics that receives as input a list of (Entity,EntityType) pairs."""
 
@@ -3382,18 +3490,6 @@ class NER(CustomF1):
 
     def get_element_group(self, element, additional_input):
         return element[1]
-
-    def get_element_representation(self, element, additional_input):
-        return str(element)
-
-
-class KeyValueExtraction(CustomF1):
-    """F1 Metrics that receives as input a list of (Key,Value) pairs."""
-
-    prediction_type = List[Tuple[str, str]]
-
-    def get_element_group(self, element, additional_input):
-        return element[0]
 
     def get_element_representation(self, element, additional_input):
         return str(element)
@@ -6004,6 +6100,9 @@ class GraniteGuardianBase(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: Any, task_data: Dict) -> dict:
+        # TODO replace with logic inside verify_granite_guardian_config and process_input_fields
+        task_data["prediction"] = prediction
+
         self.verify_granite_guardian_config(task_data)
         self.set_main_score()
 
@@ -6017,7 +6116,10 @@ class GraniteGuardianBase(InstanceMetric):
         )
         messages = self.process_input_fields(task_data)
         prompt = self.get_prompt(messages)
-        result = self.inference_engine.infer_log_probs([{"source": prompt}])
+        data_classification_policy = task_data.get("metadata", {}).get("data_classification_policy")
+
+        result = self.inference_engine.infer_log_probs([{"source": prompt, "data_classification_policy": data_classification_policy}])
+
         generated_tokens_list = result[0]
         label, prob_of_risk = self.parse_output(generated_tokens_list)
         confidence_score = (
@@ -6043,7 +6145,7 @@ class GraniteGuardianBase(InstanceMetric):
             generated_tokens["top_tokens"] for generated_tokens in generated_tokens_list
         ]
         prob = self.get_probabilities(top_tokens_list)
-        prob_of_risk = prob[1]
+        prob_of_risk = prob[1].item()
 
         res = next(iter(generated_tokens_list))["text"].strip()
 
@@ -6056,7 +6158,7 @@ class GraniteGuardianBase(InstanceMetric):
 
         return label, prob_of_risk
 
-    def get_probabilities(self, top_tokens_list):
+    def get_probabilities(self, top_tokens_list) -> Tuple[np.float32, np.float32]:
         import torch
 
         safe_token_prob = 1e-50
@@ -6255,7 +6357,7 @@ class SQLExecutionAccuracy(InstanceMetric):
     _requirements_list = ["sqlglot", "func_timeout"]
 
     @staticmethod
-    def compare_dfs_ignore_colnames(df1, df2):
+    def compare_dfs_ignore_colnames_ordered_rows(df1, df2):
         """Compares two DataFrames based on row content, ignoring column names.
 
         Args:
@@ -6263,7 +6365,7 @@ class SQLExecutionAccuracy(InstanceMetric):
             df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
 
         Returns:
-            True if the DataFrames have the same content (ignoring column names),
+            True if the DataFrames have the same ordered rows (ignoring column names),
             False otherwise.
         """
         df1.fillna(0, inplace=True)
@@ -6276,6 +6378,20 @@ class SQLExecutionAccuracy(InstanceMetric):
         df2_rows_sorted = [sorted(map(str, row)) for row in df2.to_numpy()]
 
         return df1_rows_sorted == df2_rows_sorted
+
+    @staticmethod
+    def compare_dfs_ignore_colnames_unordered_rows(df1, df2):
+        """Compares two DataFrames based on row content, ignoring row order and column names.
+
+        Args:
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+
+        Returns:
+            True if the DataFrames have the same content (ignoring column names and row order),
+            False otherwise.
+        """
+        return set(map(tuple, df1.to_numpy())) == set(map(tuple, df2.to_numpy()))
 
     @staticmethod
     def is_subset_ignore_colnames(df1, df2):
@@ -6344,6 +6460,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         import time
 
         from func_timeout import func_timeout
+        from func_timeout.exceptions import FunctionTimedOut
 
         from .sql_utils import sqlglot_optimized_equivalence
 
@@ -6359,6 +6476,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             gold_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing gold SQL: {e}"
+            logger.warning(pred_error)
         except Exception as e:
             gold_error = f"Error executing gold SQL: {e}"
         if gold_error is not None:
@@ -6390,10 +6510,10 @@ class SQLExecutionAccuracy(InstanceMetric):
             gold_sql_runtime,
             0,
             0,
-            1,
+            0,
             0,
             gold_df.to_json(),
-            gold_df.to_json(),
+            "",
             "",
         )
         if predicted_sql.lower().strip() == gold_sql.lower().strip():
@@ -6418,6 +6538,9 @@ class SQLExecutionAccuracy(InstanceMetric):
             )
             end_time = time.perf_counter()
             pred_sql_runtime = end_time - start_time
+        except FunctionTimedOut as e:
+            pred_error = f"Timeout error executing predicted SQL: {e}"
+            logger.info(pred_error)
         except Exception as e:
             pred_error = f"Error executing predicted SQL: {e}"
             logger.info(pred_error)
@@ -6446,9 +6569,20 @@ class SQLExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
-        execution_result = (
-            1 if self.compare_dfs_ignore_colnames(predicted_df, gold_df) else 0
-        )
+        if "ORDER BY" in gold_sql.upper():
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
+                else 0
+            )
+        else:
+            execution_result = (
+                1
+                if self.compare_dfs_ignore_colnames_unordered_rows(
+                    predicted_df, gold_df
+                )
+                else 0
+            )
 
         subset_non_empty_execution_result = 0
         non_empty_execution_result = 0
@@ -6474,6 +6608,8 @@ class SQLExecutionAccuracy(InstanceMetric):
         )
 
     def compute(self, references: List[Any], prediction: str, task_data: Dict) -> dict:
+        from .sql_utils import get_db_connector
+
         predicted_sql = prediction
         execution_result: float = 0.0
 

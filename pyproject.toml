@@ -19,9 +19,8 @@ classifiers = [
 dependencies = [
     "datasets>=2.16.0",
     "evaluate",
-    "absl-py",
-    "ipadic",
-    "scipy"
+    "scipy>=1.10.1",
+    "diskcache"
 ]
 
 [project.urls]
@@ -61,8 +60,6 @@ docs = [
     "datasets",
     "evaluate",
     "nltk",
-    "sacrebleu",
-    "absl-py",
     "rouge_score",
     "scikit-learn",
     "jiwer",
@@ -90,8 +87,7 @@ tests = [
     "editdistance",
     "rouge-score",
     "nltk",
-    "mecab-python3",
-    "sacrebleu[ko]",
+    "sacrebleu[ko,ja]",
     "scikit-learn<=1.5.2",
     "jiwer",
     "conllu",
@@ -110,16 +106,17 @@ tests = [
     "Wikipedia-API",
     "sqlglot",
     "sqlparse",
+    "diskcache"
 ]
 ui = [
     "gradio",
     "transformers"
 ]
 watsonx = [
-    "ibm-watsonx-ai==1.1.14"
+    "ibm-watsonx-ai==1.2.10"
 ]
 inference-tests = [
-  "litellm==v1.52.9",
+  "litellm>=1.52.9",
   "tenacity",
   "diskcache",
   "numpy==1.26.4",
