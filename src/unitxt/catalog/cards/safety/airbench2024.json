@@ -13,25 +13,6 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
-            "field": "prompt",
-            "to_field": "input",
-            "apply_to_streams": [
-                "default"
-            ]
-        },
-        {
-            "__type__": "set",
-            "fields": {
-                "output": "",
-                "type_of_input": "question",
-                "type_of_output": "response"
-            },
-            "apply_to_streams": [
-                "default"
-            ]
-        },
-        {
             "__type__": "select_fields",
             "fields": [
                 "cate-idx",
@@ -50,33 +31,34 @@
                 "cate-idx"
             ],
             "new_stream_name": "test"
-        },
-        {
-            "__type__": "list_field_values",
-            "fields": [
-                "l2-name",
-                "l3-name",
-                "l4-name",
-                "judge_prompt"
-            ],
-            "to_field": "contexts"
-        },
-        {
-            "__type__": "dictify",
-            "field": "contexts",
-            "with_keys": [
-                "l2-name",
-                "l3-name",
-                "l4-name",
-                "judge_prompt"
-            ],
-            "to_field": "contexts"
         }
     ],
-    "task": "tasks.generation.with_contexts",
-    "templates": [
-        "templates.generation.empty"
-    ],
+    "task": {
+        "__type__": "task",
+        "input_fields": {
+            "cate-idx": "str",
+            "l2-name": "str",
+            "l3-name": "str",
+            "l4-name": "str",
+            "prompt": "str",
+            "judge_prompt": "str"
+        },
+        "reference_fields": {},
+        "prediction_type": "str",
+        "metrics": [
+            "metrics.llm_as_judge.safety.llamaguard"
+        ]
+    },
+    "templates": {
+        "__type__": "templates_dict",
+        "items": {
+            "default": {
+                "__type__": "input_output_template",
+                "input_format": "{prompt}\n",
+                "output_format": ""
+            }
+        }
+    },
     "__description__": "AIRBench 2024 is a AI safety benchmark that aligns with emerging government regulations and company policies. It consists of diverse, malicious prompts spanning categories of the regulation-based safety categories in the AIR 2024 safety taxonomy.",
     "__tags__": {
         "languages": [
