@@ -6422,7 +6422,6 @@ class SQLExecutionAccuracy(InstanceMetric):
             True if the DataFrames have the same content (ignoring column names and row order),
             False otherwise.
         """
-
         # Compare shapes early on
         if df1.shape != df2.shape:
             return False
@@ -6717,6 +6716,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             "sqlglot_optimized_equivalence",
             "sqlparse_equivalence",
             "sql_exact_match",
+            "sql_syntactic_equivalence",
         ]
     }
     main_score = "sqlglot_equivalence"
@@ -6727,6 +6727,7 @@ class SQLNonExecutionAccuracy(InstanceMetric):
         "sqlglot_optimized_equivalence",
         "sqlparse_equivalence",
         "sql_exact_match",
+        "sql_syntactic_equivalence",
     ]
 
     prediction_type = "Any"  # string representation is compared
@@ -6774,6 +6775,17 @@ class SQLNonExecutionAccuracy(InstanceMetric):
             ),
             "sql_exact_match": float(sql_exact_match(predicted_sql, gold_sql)),
         }
+        result["sql_syntactic_equivalence"] = float(
+            any(
+                result[key]
+                for key in [
+                    "sqlglot_equivalence",
+                    "sqlglot_optimized_equivalence",
+                    "sqlparse_equivalence",
+                    "sql_exact_match",
+                ]
+            )
+        )
         logger.debug(f"SQL Non Execution Accuracy Result: {result}")
         result["score"] = result[self.main_score]
         result["score_name"] = self.main_score
