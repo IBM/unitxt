@@ -9,11 +9,7 @@ from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-template = MultiReferenceTemplate(
-    input_format="{context}\n{question}\nAnswer the question using a single word.",
-    references_field="answers",
-    __description__="lmms-evals default template for chartqa.",
-)
+default_template = get_from_catalog("templates.qa.with_context.chart_qa")
 
 card = TaskCard(
     loader=LoadHF(path="HuggingFaceM4/ChartQA"),
@@ -26,7 +22,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context",
-    templates=[template, *templates.items],
+    templates=[default_template, *templates.items],
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",
@@ -53,7 +49,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
-    templates=[template, *templates.items],
+    templates=[default_template, *templates.items],
     __tags__={
         "license": "GPL-3.0",
         "multilinguality": "monolingual",

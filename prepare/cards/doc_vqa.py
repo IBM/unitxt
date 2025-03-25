@@ -8,11 +8,7 @@ from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-template = MultiReferenceTemplate(
-    input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
-    references_field="answers",
-    __description__="lmms-evals default template for docvqa.",
-)
+default_template = get_from_catalog("templates.qa.with_context.doc_vqa")
 
 for language in ["en", "fr"]:
     card = TaskCard(
@@ -28,7 +24,7 @@ for language in ["en", "fr"]:
             Set(fields={"context_type": "image"}),
         ],
         task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-        templates=[template, *templates.items],
+        templates=[default_template, *templates.items],
         __tags__={
             "license": "apache-2.0",
             "multilinguality": "monolingual",
@@ -57,7 +53,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates=[template, *templates.items],
+    templates=[default_template, *templates.items],
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",
