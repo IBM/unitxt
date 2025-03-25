@@ -335,6 +335,7 @@ class LoadHF(LazyLoader):
                     max_retries=settings.loaders_max_retries,
                     extract_on_the_fly=True,
                 ),
+                data_files=self.data_files,
             )
         except Exception as e:
             if "trust_remote_code" in str(e):
