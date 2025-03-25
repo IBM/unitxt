@@ -1,6 +1,5 @@
-from unitxt.artifact import fetch_artifact
 from unitxt.catalog import add_to_catalog
-from unitxt.templates import MultiReferenceTemplate, TemplatesList
+from unitxt.templates import MultiReferenceTemplate
 
 add_to_catalog(
     MultiReferenceTemplate(

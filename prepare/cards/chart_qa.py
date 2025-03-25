@@ -5,7 +5,6 @@ from unitxt.collections_operators import Wrap
 from unitxt.image_operators import ToImage
 from unitxt.operators import Rename, Shuffle
 from unitxt.splitters import RenameSplits
-from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
