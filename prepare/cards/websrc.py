@@ -9,11 +9,7 @@ from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-template = MultiReferenceTemplate(
-    input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
-    references_field="answers",
-    __description__="lmms-evals default template for websrc.",
-)
+default_template = get_from_catalog("templates.qa.with_context.websrc")
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc", streaming=True),
@@ -27,7 +23,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
-    templates=[template, *templates.items],
+    templates=[default_template, *templates.items],
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
