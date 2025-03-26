@@ -7,7 +7,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-default_template = get_from_catalog("templates.qa.with_context.doc_vqa")
 
 for language in ["en", "fr"]:
     card = TaskCard(
@@ -23,7 +22,7 @@ for language in ["en", "fr"]:
             Set(fields={"context_type": "image"}),
         ],
         task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-        templates=[default_template, *templates.items],
+        templates=["templates.qa.with_context.doc_vqa", *templates.items],
         __tags__={
             "license": "apache-2.0",
             "multilinguality": "monolingual",
@@ -52,7 +51,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates=[default_template, *templates.items],
+    templates=["templates.qa.with_context.doc_vqa", *templates.items],
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",

@@ -8,7 +8,6 @@ from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
 templates = get_from_catalog("templates.qa.with_context.all")
-default_template = get_from_catalog("templates.qa.with_context.websrc")
 
 card = TaskCard(
     loader=LoadHF(path="rootsautomation/websrc", streaming=True),
@@ -22,7 +21,7 @@ card = TaskCard(
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
-    templates=[default_template, *templates.items],
+    templates=["templates.qa.with_context.websrc", *templates.items],
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
