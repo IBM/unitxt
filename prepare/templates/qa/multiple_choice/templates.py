@@ -526,6 +526,7 @@ add_to_catalog(
     "templates.qa.multiple_choice.open.bluebench",
     overwrite=True,
 )
+
 add_to_catalog(
     TemplatesList(
         [
@@ -535,5 +536,16 @@ add_to_catalog(
         ]
     ),
     "templates.qa.multiple_choice.with_context.bluebench",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultipleChoiceTemplate(
+        input_format="{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+        choices_separator="\n",
+        target_field="answer",
+        enumerator="capitals",
+    ),
+    "templates.qa.multiple_choice.with_context.ai2d",
     overwrite=True,
 )
