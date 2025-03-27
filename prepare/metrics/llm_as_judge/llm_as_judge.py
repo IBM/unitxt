@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 from unitxt import add_to_catalog, get_logger
 from unitxt.inference import CrossProviderInferenceEngine
@@ -8,6 +8,7 @@ from unitxt.llm_as_judge_constants import (
     EVALUATOR_TO_MODEL_ID,
     EVALUATORS_METADATA,
     PAIRWISE_CRITERIA,
+    EvaluatorMetadata,
     EvaluatorNameEnum,
     EvaluatorTypeEnum,
     ModelProviderEnum,
@@ -21,6 +22,7 @@ def get_evaluator(
     name: EvaluatorNameEnum,
     evaluator_type: EvaluatorTypeEnum,
     provider: ModelProviderEnum,
+    evaluator_params: Optional[dict] = None,
 ) -> Union[LLMJudgeDirect, LLMJudgePairwise]:
     evaluator_metadata = get_evaluator_metadata(name)
     inference_params = {"max_tokens": 1024, "seed": 42, "temperature": 0}
@@ -41,6 +43,9 @@ def get_evaluator(
         "evaluator_name": evaluator_metadata.name.name,
         "generate_summaries": False,
     }
+
+    if evaluator_params is not None:
+        params.update(evaluator_params)
 
     evaluator_klass = (
         LLMJudgeDirect
@@ -67,7 +72,28 @@ for criteria in PAIRWISE_CRITERIA:
         overwrite=True,
     )
 
-logger.debug("Registering evaluators...")
+def get_judge_catalog_name(
+    evaluator_metadata: EvaluatorMetadata,
+    provider: ModelProviderEnum,
+    prefix: str = "",
+):
+    metric_name = (
+        evaluator_metadata.name.value.lower()
+        .replace("-", "_")
+        .replace(".", "_")
+        .replace(" ", "_")
+    )
+    provider_name = ""
+    # for backward compatibility, ideally we would use cross inference engines provider ids
+    if provider == ModelProviderEnum.AZURE_OPENAI:
+        provider_name = "azure_openai"
+    elif provider == ModelProviderEnum.OPENAI:
+        provider_name = "openai"
+    else:
+        provider_name = provider.value.lower()
+    return f"metrics.{prefix}.{provider_name}.{metric_name}"
+
+logger.debug("Registering generic judges (only inference engine is set)...")
 for evaluator_metadata in EVALUATORS_METADATA:
     for provider in evaluator_metadata.providers:
         for evaluator_type in [
@@ -80,17 +106,42 @@ for evaluator_metadata in EVALUATORS_METADATA:
                 provider=provider,
             )
 
-            metric_name = (
-                evaluator_metadata.name.value.lower()
-                .replace("-", "_")
-                .replace(".", "_")
-                .replace(" ", "_")
-            )
-
-            provider_name = provider.value.lower() if provider != ModelProviderEnum.AZURE_OPENAI else "azure_openai"
-
             add_to_catalog(
                 evaluator,
-                f"metrics.llm_as_judge.{evaluator_type.value}.{provider_name}.{metric_name}",
+                get_judge_catalog_name(evaluator_metadata, provider, f"llm_as_judge.{evaluator_type.value}"),
                 overwrite=True,
             )
+
+logger.debug("Registering judges with a specific criterion...")
+
+add_to_catalog(
+    get_evaluator(
+        name=EvaluatorNameEnum.LLAMA3_3_70B,
+        evaluator_type=EvaluatorTypeEnum.DIRECT,
+        provider=ModelProviderEnum.WATSONX,
+        evaluator_params={
+            "criteria": "metrics.llm_as_judge.direct.criteria.adherence_with_format",
+            "context_fields": {
+                "question": "question",
+                "instructions": "metadata/template/instruction",
+            },
+        },
+    ),
+    "metrics.rag.response_generation.adherence_with_format.llama_3_3_70b_instruct_judge",
+    overwrite=True,
+)
+
+
+add_to_catalog(
+    get_evaluator(
+        name=EvaluatorNameEnum.LLAMA3_3_70B,
+        evaluator_type=EvaluatorTypeEnum.DIRECT,
+        provider=ModelProviderEnum.WATSONX,
+        evaluator_params={
+            "criteria": "metrics.llm_as_judge.direct.criteria.answer_completeness",
+            "context_fields": {"question": "question", "reference_answers": "reference_answers"},
+        },
+    ),
+    "metrics.rag.response_generation.answer_completeness.llama_3_3_70b_instruct_judge",
+    overwrite=True,
+)
