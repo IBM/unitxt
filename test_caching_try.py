@@ -2,9 +2,11 @@ import hashlib
 import json
 import logging
 import os
+import subprocess
 import time
 
 import joblib
+import requests
 import unitxt
 from unitxt import load_dataset
 from unitxt.inference import CCCInferenceEngine
@@ -27,22 +29,64 @@ def load_dataset_cached(**kwargs):
     cache_file = get_cache_filename(**kwargs)
 
     if os.path.exists(cache_file):
-        # print("Loading from cache...")
         return joblib.load(cache_file)
 
-    # print("Loading dataset from source...")
-    data = load_dataset(**kwargs)  # Your actual function call
-    # print("Saving to cache...")
+    data = load_dataset(**kwargs)
     joblib.dump(data, cache_file)
-
     return data
 
 
+def run_worker_in_a_port(port):
+    kill_process_on_port(port)
+    process = subprocess.Popen(
+        ["/Users/eladv/miniforge3/envs/unitxt/bin/python", "/Users/eladv/unitxt/ccc_worker_server.py", f"{port}"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True)
+    logger.info(f"Started worker on port {port} with PID {process.pid}")
+    return process
+
+def kill_process_on_port(port):
+    try:
+        output = subprocess.check_output(f"lsof -ti:{port}", shell=True).decode().strip()
+        if output:
+            logger.info(f"Killing process {output} on port {port}...")
+            subprocess.run(f"kill -9 {output}", shell=True)
+    except subprocess.CalledProcessError:
+        pass
+
+
+def is_up(server_url):
+    try:
+        response = requests.get(f"{server_url}/status", timeout=5)
+        return response.text.strip().lower() == "up"
+    except requests.RequestException:
+        return False
+
+def set_up_worker_servers():
+    ports = [5000, 5001, 5002, 5003, 5004]
+    processes = [(port, run_worker_in_a_port(port)) for port in ports]
+    while len(processes) > 0:
+        for port, process in processes:
+            # Check if the process is still running
+            if process.poll() is not None:  # If poll() returns None, the process is still running
+                stdout, stderr = process.communicate()  # Get the output and errors
+                logger.error(f"Process on port {port} has stopped!")
+                logger.error(f"STDOUT:\n{stdout}")
+                logger.error(f"STDERR:\n{stderr}")
+                raise RuntimeError(f"Failed to Start server on port: {port}")
+            if is_up(f"http://localhost:{port}"):
+                processes.remove((port, process))
+        time.sleep(0.3)
+        logger.info(f"The following servers still need to start: {[p[0] for p in processes]}")
+
+
 if __name__ == "__main__":
+    set_up_worker_servers()
     set_verbosity("debug")
     unitxt.settings.allow_unverified_code = True
     dataset = load_dataset_cached(card="cards.openbook_qa",
-                           split="test")
+                                  split="test")
 
     dataset = dataset.select(range(100))
 

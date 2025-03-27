@@ -258,11 +258,9 @@ class InferenceEngine(Artifact):
                         for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
                             if prediction is None:
                                 continue
-                                self.do_something(item)
-                            #cache_key = self._get_cache_key(item)
-                            #self._cache[cache_key] = prediction
+                            cache_key = self._get_cache_key(item)
+                            self.store_in_cache(cache_key, prediction)
                     else:
-
                         inferred_results = []
 
                     # Combine cached and inferred results in original order
@@ -282,8 +280,8 @@ class InferenceEngine(Artifact):
             },
         )
 
-    def do_something(self, i):
-        pass
+    def store_in_cache(self, cache_key, prediction):
+        self._cache[cache_key] = prediction
 
     def post_process_results(self, result):
         return result
@@ -3514,7 +3512,6 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
         logger.info(f"Thread {url} processing batch: {self.workers_state}")
         messages = [self.to_messages(instance) for instance in batch]
         logger.info(f"a {url}")
-        #time.sleep(random.uniform(0, 10))
         try:
             response = client.chat.completions.create(
                 messages=messages,
@@ -3531,5 +3528,19 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
         return result
 
     def post_process_results(self, result):
-        wait(result)
-        return [future.result() for future in result]
+        futures = [r for r in result if isinstance(r, Future)]
+        if futures:
+            wait(futures)
+
+        return [r.result() if isinstance(r, Future) else r for r in result]
+
+    def store_in_cache(self, cache_key, prediction):
+        if isinstance(prediction, Future):
+            def store_after_pack_in_cache(future, cache_key):
+                prediction = future.result()
+                if prediction is not None:
+                    self._cache[cache_key] = prediction
+
+            prediction.add_done_callback(lambda f, key=cache_key: store_after_pack_in_cache(f, key))
+        else:
+            self._cache[cache_key] = prediction

@@ -1,7 +1,9 @@
 
 import logging
+import os
 import random
 import sys
+import time
 
 from flask import Flask, jsonify, request
 from unitxt.inference import HFPipelineBasedInferenceEngine
@@ -37,9 +39,17 @@ def init_server():
 @app.route("/<model>/v1/chat/completions", methods=["POST"])
 @app.route("/<model_prefix>/<model>/v1/chat/completions", methods=["POST"])
 def completions(model: str, model_prefix: str = "None"):
-    if random.random() < 0.5:
+    if random.random() < 0:
         logging.error("Bad luck! Returning 500 with an error message.")
+        app.logger.info("Server shutting down...")
+        shutdown_func = request.environ.get("werkzeug.server.shutdown")
+        if shutdown_func:
+            shutdown_func()
+        # Allow the shutdown process to complete, then force exit the program
+        time.sleep(1)
+        os._exit(0)  # This immediately stops the program
         return jsonify({"error": "Bad luck, something went wrong!"}), 500
+
     body = request.get_json()
     # validate that request parameters are equal to the model config. Print warnings if not.
     for k, v in body.items():
@@ -57,6 +67,11 @@ def completions(model: str, model_prefix: str = "None"):
     return jsonify({
         "choices": [{"message": {"role": "assistant","content": p}} for p in predictions],
     })
+
+
+@app.route("/status", methods=["GET"])
+def status():
+    return "up", 200
 
 
 if __name__ == "__main__":
