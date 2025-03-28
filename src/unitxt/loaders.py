@@ -86,22 +86,51 @@ class UnitxtUnverifiedCodeError(UnitxtError):
         super().__init__(f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.", Documentation.SETTINGS)
 
 def hf_load_dataset(path: str, *args, **kwargs):
-    if settings.hf_offline_datasets_path is not None:
-        path = os.path.join(settings.hf_offline_datasets_path, path)
+
+    if settings.hf_load_from_offline is None and settings.hf_save_to_offline is None:
+        # for backward compatibility
+
+        if settings.hf_offline_datasets_path is not None:
+            path = os.path.join(settings.hf_offline_datasets_path, path)
+        try:
+            return _hf_load_dataset(
+                path,
+                *args, **kwargs,
+                    download_config=DownloadConfig(
+                        max_retries=settings.loaders_max_retries,
+                    ),
+                    verification_mode="no_checks",
+                    trust_remote_code=settings.allow_unverified_code,
+                    download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+                )
+        except ValueError as e:
+            if "trust_remote_code" in str(e):
+                raise UnitxtUnverifiedCodeError(path) from e
+
+
+    download_config=DownloadConfig(
+        max_retries=settings.loaders_max_retries,
+        cache_dir=settings.hf_offline_datasets_path if settings.hf_save_to_offline else None,
+    )
+    local_kwargs = {
+        "download_config": download_config,
+        "cache_dir" : settings.hf_offline_datasets_path if settings.hf_load_from_offline else None,
+        "verification_mode" : "no_checks",
+        "trust_remote_code" :settings.allow_unverified_code,
+        "download_mode" : "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
+    }
     try:
         return _hf_load_dataset(
             path,
-            *args, **kwargs,
-                download_config=DownloadConfig(
-                    max_retries=settings.loaders_max_retries,
-                ),
-                verification_mode="no_checks",
-                trust_remote_code=settings.allow_unverified_code,
-                download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
-            )
-    except ValueError as e:
+            *args, **{**local_kwargs, **kwargs})
+    except Exception as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
+        if isinstance(e, NotImplementedError):
+            return _hf_load_dataset(
+                path,
+                *args, **{**local_kwargs, **kwargs, **{"streaming": not kwargs["streaming"]}})
+
 
 class Loader(SourceOperator):
     """A base class for all loaders.
