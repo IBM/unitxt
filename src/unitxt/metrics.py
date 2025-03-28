@@ -6438,43 +6438,69 @@ class SQLExecutionAccuracy(InstanceMetric):
         return np.array_equal(df1_sorted, df2_sorted)
 
     @staticmethod
-    def is_subset_ignore_colnames(df1, df2):
-        """Checks if df1 is a subset of df2 based on row content, ignoring column names.
+    def compare_dfs_ignore_colnames_subset(df1, df2, ignore_row_order=True):
+        """Checks if the values of either DataFrame are a subset of the values in the other DataFrame.
+
+        Comparison is column order independent, and could optionally be row order independent.
+        We interpret "subset" as follows:
+        - For each row in df1, there must be a matching (or superset) row in df2, i.e. the set of values
+          in the df1 row is a subset of the set of values in that df2 row. Then do the same check in reverse.
+        - If either condition (df1 is subset of df2 OR df2 is subset of df1) is satisfied, return True.
+
+        We treat an empty dataframe as a subset of nothing, while in theory is a subset of any dataframe.
 
         Args:
-            df1: Pandas DataFrame 1 to compare.
-            df2: Pandas DataFrame 2 to compare.
+            df1 (pd.DataFrame): Pandas DataFrame 1 to compare.
+            df2 (pd.DataFrame): Pandas DataFrame 2 to compare.
+            ignore_row_order (bool): If True, row order doesn't matter; if False, row order is respected.
 
         Returns:
-            True if df1 is a subset of df2 based on column values,
-            False otherwise.
+            bool: True if df1 is a subset of df2 or vice versa, based on the specified row-order condition.
         """
-        if df1.empty or df2.empty or df1.shape[1] > df2.shape[1]:
-            return False
+        df1_array = df1.values.astype(str)
+        df2_array = df2.values.astype(str)
 
-        def make_hashable(value):
-            if isinstance(value, dict):
-                return json.dumps(value, sort_keys=True)
-            if isinstance(value, list):
-                return tuple(value)
-            return value
+        df1_sorted_rows = [np.sort(row) for row in df1_array]
+        df2_sorted_rows = [np.sort(row) for row in df2_array]
 
-        df1_cols = [
-            tuple(make_hashable(value) for value in df1.iloc[:, i])
-            for i in range(df1.shape[1])
-        ]
-        df2_cols = [
-            tuple(make_hashable(value) for value in df2.iloc[:, j])
-            for j in range(df2.shape[1])
-        ]
-        df2_cols_count = Counter(df2_cols)
-        for col in df1_cols:
-            if df2_cols_count[col] > 0:
-                df2_cols_count[col] -= 1
-            else:
-                return False
+        def row_is_subset(r_small, r_big):
+            """Check if all elements of r_small are in r_big."""
+            return set(r_small).issubset(set(r_big))
 
-        return True
+        def df_is_subset_of_another(rows_small, rows_big, respect_order):
+            """Check if the rows_small is subset of rows_big under the given order condition."""
+            if not rows_small:
+                return False  # DataFrame needs to be non-empty
+
+            # If row order matters:
+            if respect_order:
+                i, j = 0, 0
+                while i < len(rows_small) and j < len(rows_big):
+                    if row_is_subset(rows_small[i], rows_big[j]):
+                        i += 1
+                    j += 1
+                return i == len(rows_small)
+            # Row order doesn't matter:
+            matched_indices = set()
+            for r_small in rows_small:
+                found_match = False
+                for idx, r_big in enumerate(rows_big):
+                    if idx not in matched_indices and row_is_subset(r_small, r_big):
+                        found_match = True
+                        matched_indices.add(idx)
+                        break
+                if not found_match:
+                    return False
+            return True
+
+        df1_sub_df2 = df_is_subset_of_another(
+            df1_sorted_rows, df2_sorted_rows, not ignore_row_order
+        )
+        df2_sub_df1 = df_is_subset_of_another(
+            df2_sorted_rows, df1_sorted_rows, not ignore_row_order
+        )
+
+        return df1_sub_df2 or df2_sub_df1
 
     def get_sql_execution_results(
         self, predicted_sql: str, gold_sql: str, connector
@@ -6490,7 +6516,7 @@ class SQLExecutionAccuracy(InstanceMetric):
         a 12-tuple of
         1. execution_result: if df responses match
         2. non_empty_execution_result: if dfs are non-empty and match
-        3. subset_non_empty_execution_result: if non-empty dfs and gt df subset of predicted df
+        3. subset_non_empty_execution_result: if non-empty dfs and one is a subset of the other
         4. non_empty_gold_df: if gt df is non-empty
         5. gold_sql_runtime: ground truth query runtime
         6. predicted_sql_runtime: predicted query runtime
@@ -6613,12 +6639,21 @@ class SQLExecutionAccuracy(InstanceMetric):
             pred_res = pred_res["results"]
         predicted_df = pd.DataFrame(pred_res)
 
+        subset_non_empty_execution_result = 0
+        non_empty_execution_result = 0
         if "ORDER BY" in gold_sql.upper():
             execution_result = (
                 1
                 if self.compare_dfs_ignore_colnames_ordered_rows(predicted_df, gold_df)
                 else 0
             )
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=False
+                ):
+                    subset_non_empty_execution_result = 1
         else:
             execution_result = (
                 1
@@ -6627,14 +6662,13 @@ class SQLExecutionAccuracy(InstanceMetric):
                 )
                 else 0
             )
-
-        subset_non_empty_execution_result = 0
-        non_empty_execution_result = 0
-        if non_empty_gold_df:
-            if execution_result == 1:
-                non_empty_execution_result = 1
-            if self.is_subset_ignore_colnames(gold_df, predicted_df):
-                subset_non_empty_execution_result = 1
+            if non_empty_gold_df:
+                if execution_result == 1:
+                    non_empty_execution_result = 1
+                if self.compare_dfs_ignore_colnames_subset(
+                    gold_df, predicted_df, ignore_row_order=True
+                ):
+                    subset_non_empty_execution_result = 1
 
         return (
             execution_result,
