@@ -3426,10 +3426,10 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
         return predictions
 
 
-class CCCInferenceEngine(OpenAiInferenceEngine,
+class MultiServersInferenceEngine(OpenAiInferenceEngine,
                          HFGenerationParamsMixin):
 
-    workers_url = ["http://localhost:5000", "http://localhost:5001", "http://localhost:5002", "http://localhost:5003", "http://localhost:5004"]
+    workers_url: List[str]
 
     def post_server(self, server_url, endpoint, data):
         headers = {"Content-Type": "application/json"}
@@ -3544,3 +3544,48 @@ class CCCInferenceEngine(OpenAiInferenceEngine,
             prediction.add_done_callback(lambda f, key=cache_key: store_after_pack_in_cache(f, key))
         else:
             self._cache[cache_key] = prediction
+
+
+class CCCInferenceEngine(MultiServersInferenceEngine):
+    ccc_host: str
+    ccc_user: str
+    ccc_path: str
+    ccc_python: str
+    server_port: str = "8000"
+    num_of_workers: int = 10
+
+    def start_ccc_server(self):
+        import paramiko
+        server_file = "ccc_inference.py"
+        local_server_path = os.path.dirname(os.path.abspath(__file__))
+
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(self.ccc_host, username=self.ccc_user)
+        ssh.exec_command(f"mkdir -p {self.ccc_path}")
+        sftp = ssh.open_sftp()
+        sftp.put(os.path.join(local_server_path, server_file), os.path.join(self.ccc_path, server_file))
+        sftp.close()
+        ssh.exec_command(
+            f"cd {self.ccc_path} && nohup {self.ccc_python} {server_file} --port {self.server_port} > server.log 2>&1 &")
+        time.sleep(1)
+        try:
+            response = requests.get(f"{self.server_url}/isup", timeout=5)
+            if response.status_code == 200:
+                get_logger().info("Server is up and running!")
+            else:
+                sftp = ssh.open_sftp()
+                try:
+                    sftp.get(os.path.join(self.ccc_path, "server.log"), "server.log")
+                    server_log_content = ""
+                    with open("server.log") as log_file:
+                        server_log_content = log_file.read()
+                except FileNotFoundError:
+                    server_log_content = "Server log file not found."
+
+                sftp.close()
+                ssh.close()
+                raise RuntimeError(
+                    f"Failed to start ccc server. Response: {response}.Server log:\n{server_log_content}")
+        except requests.RequestException as err:
+            raise RuntimeError(f"Failed to start ccc server. Response: {server_log_content}") from err

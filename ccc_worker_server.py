@@ -3,19 +3,52 @@ import logging
 import os
 import random
 import sys
+import threading
 import time
 
+import requests
 from flask import Flask, jsonify, request
 from unitxt.inference import HFPipelineBasedInferenceEngine
 
 logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
-
+PORT = None
 
 class Server:
     def __init__(self):
         self.inference_engine = None
+        self.inactivity_timeout = 600
+        self.monitor_thread = threading.Thread(target=self.monitor_activity, daemon=True)
+        self.last_request_time = time.time()
+        self.shutdown_flag = False
+        self.monitor_thread.start()
+
+    def update_last_request_time(self):
+        self.last_request_time = time.time()
+
+    def monitor_activity(self):
+        while not self.shutdown_flag:
+            time.sleep(5)
+            if time.time() - self.last_request_time > self.inactivity_timeout:
+                app.logger.info(f"No requests for {self.inactivity_timeout} seconds. Shutting down server...")
+                try:
+                    requests.post(f"http://localhost:{PORT}/shutdown", timeout=5)
+                except Exception:
+                    pass
+            else:
+                app.logger.info(
+                    f"{int(self.inactivity_timeout - (time.time() - self.last_request_time))} till shutdown...")
+
+    def shutdown_server(self):
+        self.shutdown_flag = True
+        app.logger.info("Server shutting down...")
+        shutdown_func = request.environ.get("werkzeug.server.shutdown")
+        if shutdown_func:
+            shutdown_func()
+        # Allow the shutdown process to complete, then force exit the program
+        time.sleep(1)
+        os._exit(0)  # This immediately stops the program
 
     def init_server(self, **kwargs):
         kwargs["use_cache"] =True
@@ -27,6 +60,17 @@ class Server:
 
 
 server = Server()
+
+@app.before_request
+def update_activity():
+    server.update_last_request_time()
+
+
+@app.route("/shutdown", methods=["POST"])
+def shutdown():
+    app.logger.info("Received shutdown request")
+    server.shutdown_server()
+    return jsonify({"message": "Shutting down server..."}), 200
 
 
 @app.route("/init_server", methods=["POST"])
@@ -75,4 +119,5 @@ def status():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=sys.argv[1], debug=True)
+    PORT = sys.argv[1]
+    app.run(host="0.0.0.0", port=PORT, debug=True)

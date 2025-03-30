@@ -63,7 +63,7 @@ def is_up(server_url):
     except requests.RequestException:
         return False
 
-def set_up_worker_servers():
+def set_up_worker_servers(servers):
     ports = [5000, 5001, 5002, 5003, 5004]
     processes = [(port, run_worker_in_a_port(port)) for port in ports]
     while len(processes) > 0:
@@ -82,7 +82,9 @@ def set_up_worker_servers():
 
 
 if __name__ == "__main__":
-    set_up_worker_servers()
+    ports = [5000,5001,5002,5003,5004]
+    servers = [f"http://localhost:{port}" for port in ports]
+    set_up_worker_servers(servers)
     set_verbosity("debug")
     unitxt.settings.allow_unverified_code = True
     dataset = load_dataset_cached(card="cards.openbook_qa",
@@ -96,6 +98,7 @@ if __name__ == "__main__":
         max_new_tokens=256,
         use_cache=True,
         cache_batch_size=5,
+        servers=servers
     )
 
     start_time = time.time()
