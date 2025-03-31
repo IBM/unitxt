@@ -1,0 +1,6 @@
+{
+    "__type__": "metrics_list",
+    "items": [
+        "metrics.sentence_bert.bge_large_en_1_5"
+    ]
+}

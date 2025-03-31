@@ -1,19 +1,24 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 from unitxt import add_to_catalog
 from unitxt.blocks import Task
+from unitxt.types import Dialog, RagResponse
 
 add_to_catalog(
     Task(
+        __description__="""This is a task corresponding to an end to end RAG evaluation.  It assumes the user provides a question, and
+        the RAG system returns an answer and a set of retrieved contexts (documents or passages).
+        For details of RAG see: https://www.unitxt.ai/en/latest/docs/rag_support.html.
+""",
         input_fields={
-            "question": str,
+            "question": Union[str, Dialog],
             "question_id": Any,
-            "metadata_field": str,
+            "metadata_tags": Dict[str, str],
         },
         reference_fields={
             "reference_answers": List[str],
             "reference_contexts": List[str],
-            "reference_context_ids": List[str],
+            "reference_context_ids": Union[List[int], List[str]],
             "is_answerable_label": bool,
         },
         metrics=[
@@ -23,12 +28,22 @@ add_to_catalog(
             "metrics.rag.end_to_end.context_correctness",
             "metrics.rag.end_to_end.context_relevance",
         ],
-        prediction_type=Dict[str, Any],
+        prediction_type=RagResponse,
         augmentable_inputs=["question"],
+        defaults={
+            "question_id": "",
+            "metadata_tags": {},
+            "reference_answers": [],
+            "reference_contexts": [],
+            "reference_context_ids": [],
+            "is_answerable_label": True,
+        },
+        default_template="templates.rag.end_to_end.json_predictions",
     ),
     "tasks.rag.end_to_end",
     overwrite=True,
 )
+
 
 add_to_catalog(
     Task(
@@ -36,13 +51,17 @@ add_to_catalog(
             "document_id": str,
             "title": str,
             "passages": List[str],
-            "metadata_field": str,
+            "metadata_tags": Dict[str, str],
         },
         reference_fields={},
         prediction_type=Any,
         metrics=[
             "metrics.rouge"
         ],  # We can not define an empty metric, so we gave here a simple one- although rouge is not related
+        defaults={
+            "title": "",
+            "metadata_tags": {},
+        },
     ),
     "tasks.rag.corpora",
     overwrite=True,

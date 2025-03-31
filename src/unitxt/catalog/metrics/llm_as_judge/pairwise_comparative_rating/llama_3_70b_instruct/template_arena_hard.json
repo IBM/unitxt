@@ -1,0 +1,12 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "cross_provider_inference_engine",
+        "model": "llama-3-70b-instruct",
+        "max_tokens": 30
+    },
+    "template": "templates.response_assessment.pairwise_comparative_rating.arena_hard",
+    "task": "pairwise_comparative_rating.single_turn",
+    "format": "formats.chat_api",
+    "main_score": "llama_3_70b_instruct_template_arena_hard"
+}

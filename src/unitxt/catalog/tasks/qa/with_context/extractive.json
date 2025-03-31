@@ -1,15 +1,5 @@
 {
-    "__type__": "task",
-    "input_fields": {
-        "context": "Union[Text, Table, Dialog]",
-        "context_type": "str",
-        "question": "str"
-    },
-    "reference_fields": {
-        "answers": "List[str]"
-    },
-    "prediction_type": "str",
-    "metrics": [
-        "metrics.squad"
-    ]
+    "__type__": "artifact_link",
+    "to": "tasks.qa.extractive",
+    "__deprecated_msg__": null
 }

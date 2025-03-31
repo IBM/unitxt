@@ -1,0 +1,23 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "hhem_score",
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "task_data/contexts": "references",
+                "answer": "prediction"
+            },
+            "not_exist_do_nothing": true
+        },
+        {
+            "__type__": "copy",
+            "field_to_field": {
+                "contexts": "references"
+            },
+            "not_exist_do_nothing": true
+        }
+    ],
+    "metric": "metrics.vectara_groundedness_hhem_2_1",
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.external_rag.faithfulness.vectara_hhem_2_1"
+}

@@ -1,21 +1,27 @@
+from unitxt import get_from_catalog
 from unitxt.blocks import LoadHF, Set, TaskCard
 from unitxt.catalog import add_to_catalog
 from unitxt.collections_operators import Wrap
-from unitxt.image_operators import DecodeImage
+from unitxt.image_operators import DecodeImage, ToImage
+from unitxt.operators import Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
 
+templates = get_from_catalog("templates.qa.with_context.all")
+
 card = TaskCard(
-    loader=LoadHF(path="rootsautomation/websrc"),
+    loader=LoadHF(path="rootsautomation/websrc", streaming=True),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"train": "train", "dev": "test"}),
         "splitters.small_no_dev",
         Wrap(field="answer", inside="list", to_field="answers"),
         DecodeImage(field="image", to_field="context"),
+        ToImage(field="context"),
         Set(fields={"context_type": "image"}),
     ],
-    task="tasks.qa.with_context.abstractive",
-    templates="templates.qa.with_context.all",
+    task="tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
+    templates=["templates.qa.with_context.websrc", *templates.items],
     __tags__={
         "license": "Unknown",
         "multilinguality": "monolingual",
@@ -31,3 +37,4 @@ card = TaskCard(
 
 test_card(card)
 add_to_catalog(card, "cards.websrc", overwrite=True)
+

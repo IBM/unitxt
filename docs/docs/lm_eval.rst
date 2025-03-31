@@ -1,4 +1,4 @@
-.. _helm:
+.. _lm-eval:
 
 ===========================
 Running Unitxt with LM-Eval

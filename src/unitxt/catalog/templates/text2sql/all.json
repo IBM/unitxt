@@ -1,0 +1,11 @@
+{
+    "__type__": "templates_list",
+    "items": [
+        "templates.text2sql.you_are_given_with_sql_prefix",
+        "templates.text2sql.you_are_given_with_hint_with_sql_prefix",
+        "templates.text2sql.you_are_given",
+        "templates.text2sql.you_are_given_with_hint",
+        "templates.text2sql.you_are_given_with_hint_answer_sql_prefix_no_inst",
+        "templates.text2sql.empty"
+    ]
+}

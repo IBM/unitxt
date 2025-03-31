@@ -307,21 +307,22 @@ def infer_type_string(obj: typing.Any) -> str:
         obj:Any
 
     Returns:
-        a string representation of the type of the object. e.g. 'str', 'List[int]', 'Dict[str, Any]'
+      a string representation of the type of the object. e.g. ``"str"``, ``"List[int]"``, ``"Dict[str, Any]"``
 
-    formal definition of the returned string:
-    Type -> basic | List[Type] | Dict[Type, Type] | Union[Type (, Type)* | Tuple[Type (,Type)*]
-    basic -> bool,str,int,float,Any
-    no spaces at all.
+    | formal definition of the returned string:
+    | Type -> basic | List[Type] | Dict[Type, Type] | Union[Type(, Type)*] | Tuple[Type(, Type)*]
+    | basic -> ``bool`` | ``str`` | ``int`` | ``float`` | ``Any``
+
 
     Examples:
-        infer_type_string({"how_much": 7}) returns "Dict[str,int]"
-        infer_type_string([1, 2]) returns "List[int]"
-        infer_type_string([]) returns "List[Any]")    no contents to list to indicate any type
-        infer_type_string([[], [7]]) returns "List[List[int]]"  type of parent list indicated by the type
-                of the non-empty child list. The empty child list is indeed, by default, also of that type
-                of the non-empty child.
-        infer_type_string([[], 7, True]) returns "List[Union[List[Any],int]]"   because bool is also an int
+        | ``infer_type_string({"how_much": 7})`` returns ``"Dict[str,int]"``
+        | ``infer_type_string([1, 2])`` returns ``"List[int]"``
+        | ``infer_type_string([])`` returns ``"List[Any]")``    no contents to list to indicate any type
+        | ``infer_type_string([[], [7]])`` returns ``"List[List[int]]"``  type of parent list indicated
+          by the type of the non-empty child list. The empty child list is indeed, by default, also of
+          that type of the non-empty child.
+        | ``infer_type_string([[], 7, True])`` returns ``"List[Union[List[Any],int]]"``
+          because ``bool`` is also an ``int``
 
     """
 
@@ -551,6 +552,9 @@ def strtype(typing_type) -> str:
         - The function checks the `__origin__` attribute to determine the base type and formats
           the type arguments accordingly.
     """
+    if isinstance(typing_type, str):
+        return typing_type
+
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
 
@@ -1032,8 +1036,11 @@ def to_float_or_default(v, failure_default=0):
 
 
 def verify_required_schema(
-    required_schema_dict: typing.Dict[str, type],
-    input_dict: typing.Dict[str, typing.Any],
+    required_schema_dict: Dict[str, type],
+    input_dict: Dict[str, Any],
+    class_name: str,
+    id: Optional[str] = "",
+    description: Optional[str] = "",
 ) -> None:
     """Verifies if passed input_dict has all required fields, and they are of proper types according to required_schema_dict.
 
@@ -1048,13 +1055,15 @@ def verify_required_schema(
         try:
             value = input_dict[field_name]
         except KeyError as e:
-            raise KeyError(
-                f"Unexpected field name: '{field_name}'. "
-                f"The available names: {list(input_dict.keys())}."
+            raise Exception(
+                f"The {class_name} ('{id}') expected a field '{field_name}' which the input instance did not contain.\n"
+                f"The input instance fields are  : {list(input_dict.keys())}.\n"
+                f"{class_name} description: {description}"
             ) from e
 
         if not isoftype(value, data_type):
             raise ValueError(
                 f"Passed value '{value}' of field '{field_name}' is not "
-                f"of required type: ({to_type_string(data_type)})."
+                f"of required type: ({to_type_string(data_type)}) in {class_name} ('{id}').\n"
+                f"{class_name} description: {description}"
             )

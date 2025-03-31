@@ -52,7 +52,7 @@ pinned: false
         repo_type="space",
     )
 
-with open("./version.py") as f:
+with open("./src/unitxt/version.py") as f:
     version = f.read().strip().replace("version = ", "").replace('"', "")
 
 api.create_tag(repo_id="unitxt/metric", repo_type="space", tag=version)

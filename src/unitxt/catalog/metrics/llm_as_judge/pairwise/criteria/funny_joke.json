@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "funny_joke",
+    "description": "Is the response funny?"
+}

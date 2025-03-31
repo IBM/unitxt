@@ -1,0 +1,73 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "google/frames-benchmark",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename",
+            "field": "Prompt",
+            "to_field": "question"
+        },
+        {
+            "__type__": "rename",
+            "field": "Answer",
+            "to_field": "answer"
+        },
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "literal_eval",
+            "field": "wiki_links",
+            "to_field": "context"
+        },
+        {
+            "__type__": "wikipedia_fetcher",
+            "field": "context",
+            "process_every_value": true
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "wikipedia articles"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context",
+    "templates": "templates.qa.with_context.all",
+    "__description__": "FRAMES is a comprehensive evaluation dataset designed to test the capabilities of Retrieval-Augmented Generation (RAG) systems across factuality, retrieval accuracy, and reasoning.",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "arxiv": "1904.09728",
+        "flags": [
+            "NLU",
+            "natural language understanding"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "10K<n<100K",
+        "source_datasets": "extended|other",
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
+        ]
+    }
+}

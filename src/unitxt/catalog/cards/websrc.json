@@ -2,9 +2,13 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "rootsautomation/websrc"
+        "path": "rootsautomation/websrc",
+        "streaming": true
     },
     "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
         {
             "__type__": "rename_splits",
             "mapper": {
@@ -25,14 +29,29 @@
             "to_field": "context"
         },
         {
+            "__type__": "to_image",
+            "field": "context"
+        },
+        {
             "__type__": "set",
             "fields": {
                 "context_type": "image"
             }
         }
     ],
-    "task": "tasks.qa.with_context.abstractive",
-    "templates": "templates.qa.with_context.all",
+    "task": "tasks.qa.with_context.with_domain[metrics=[metrics.websrc_squad_f1]]",
+    "templates": [
+        "templates.qa.with_context.websrc",
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
     "__tags__": {
         "license": "Unknown",
         "multilinguality": "monolingual",

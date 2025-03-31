@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from unitxt import add_to_catalog
 from unitxt.blocks import TaskCard
-from unitxt.loaders import LoadCSV
+from unitxt.loaders import LoadCSV, LoadHF
 from unitxt.operators import Copy, ListFieldValues, Set
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
@@ -16,12 +16,6 @@ class ClapNqBenchmark:
     TEST_RAW_FILE_URL: str = "https://raw.githubusercontent.com/primeqa/clapnq/main/retrieval/dev/question_dev_answerable.tsv"
 
 
-@dataclass(frozen=True)
-class ClapNqDocuments:
-    # Raw_data
-    RAW_FILE_URL: str = "https://media.githubusercontent.com/media/primeqa/clapnq/main/retrieval/passages.tsv"
-
-
 card = TaskCard(
     loader=LoadCSV(
         sep="\t",
@@ -29,6 +23,7 @@ card = TaskCard(
             "train": ClapNqBenchmark.TRAIN_RAW_FILE_URL,
             "test": ClapNqBenchmark.TEST_RAW_FILE_URL,
         },
+        data_classification_policy=["public"],
     ),
     preprocess_steps=[
         Copy(
@@ -36,13 +31,6 @@ card = TaskCard(
                 "question": "question",
                 "id": "question_id",
             },
-        ),
-        Set(
-            fields={
-                "reference_contexts": [],
-                "is_answerable_label": True,
-                "metadata_field": "",
-            }
         ),
         ListFieldValues(
             fields=["doc-id-list"],
@@ -54,6 +42,8 @@ card = TaskCard(
         ),
     ],
     task="tasks.rag.end_to_end",
+    __tags__={"license": "Apache License 2.0", "url": "https://huggingface.co/datasets/PrimeQA/clapnq"},
+    __description__="""CLAP NQ is created from the subset of Natural Questions (NQ) that have a long answer but no short answer. NQ consists of ~380k examples. There are ~30k questions that are long answers without short answers excluding tables and lists. To increases the likelihood of longer answers we only explored ones that have more than 5 sentences in the passage. The subset that was annotated consists of ~12k examples. All examples where cohesion of non-consecutive sentences was required for the answer were annotated a second time. The final dataset is made up of all data that went through two rounds of annotation. (We provide the single round annotations as well - it is only training data) An equal amount of unanswerable questions have also been added from the original NQ train/dev sets. Details about the annotation task and unanswerables can be found at https://github.com/primeqa/clapnq/blob/main/annotated_data.""",
     # templates=["templates.empty"],
     templates={"default": "templates.rag.end_to_end.json_predictions"},
 )
@@ -77,7 +67,10 @@ add_to_catalog(card, "cards.rag.benchmark.clap_nq.en", overwrite=True)
 
 # Documents
 card = TaskCard(
-    loader=LoadCSV(sep="\t", files={"train": ClapNqDocuments.RAW_FILE_URL}),
+    loader=LoadHF(
+        path="PrimeQA/clapnq_passages",
+        data_classification_policy=["public"],
+    ),
     preprocess_steps=[
         Copy(
             field_to_field={
@@ -91,11 +84,13 @@ card = TaskCard(
         ),
         Set(
             fields={
-                "metadata_field": "",
+                "metadata_field": {},
             }
         ),
     ],
     task="tasks.rag.corpora",
+    __tags__={"license": "Apache License 2.0", "url":"https://huggingface.co/datasets/PrimeQA/clapnq"},
+    __description__="""CLAP NQ is created from the subset of Natural Questions (NQ) that have a long answer but no short answer. NQ consists of ~380k examples. There are ~30k questions that are long answers without short answers excluding tables and lists. To increases the likelihood of longer answers we only explored ones that have more than 5 sentences in the passage. The subset that was annotated consists of ~12k examples. All examples where cohesion of non-consecutive sentences was required for the answer were annotated a second time. The final dataset is made up of all data that went through two rounds of annotation. (We provide the single round annotations as well - it is only training data) An equal amount of unanswerable questions have also been added from the original NQ train/dev sets. Details about the annotation task and unanswerables can be found at https://github.com/primeqa/clapnq/blob/main/annotated_data.""",
     templates={
         "empty": InputOutputTemplate(
             input_format="",

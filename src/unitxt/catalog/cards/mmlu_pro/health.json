@@ -2,12 +2,18 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "TIGER-Lab/MMLU-Pro"
+        "path": "TIGER-Lab/MMLU-Pro",
+        "filtering_lambda": "lambda x: x['category'] == 'health'"
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_expression",
-            "expression": "category == 'health'"
+            "__type__": "deduplicate",
+            "by": [
+                "question",
+                "options",
+                "answer",
+                "category"
+            ]
         },
         {
             "__type__": "rename_splits",

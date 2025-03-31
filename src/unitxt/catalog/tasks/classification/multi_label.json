@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is multi label text classification task.\nThe set of 'classes' we want to classify to is provided as a list of strings.\n\nThe 'text_type' is an optional field that defines the type of text we classify (e.g. \"document\", \"review\", etc.).\nThis can be used by the template to customize the prompt.\n\nThe 'type_of_class' is a field that the defines the type of classes  (e.g. \"emotions\", \"risks\")\n\nThe 'classes' , 'type_of_classes' and 'text_type' should be the same on all instances.\n\nThe expected output is a list of classes that correspond to the given text (could be an empty list.\nThe default reported metrics are the classical f1_micro, f1_macro and accuracy.\n",
     "input_fields": {
         "text": "str",
         "text_type": "str",
@@ -19,6 +20,8 @@
         "text"
     ],
     "defaults": {
-        "text_type": "text"
-    }
+        "text_type": "text",
+        "type_of_classes": "classes"
+    },
+    "default_template": "templates.classification.multi_label.title"
 }

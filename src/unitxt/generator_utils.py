@@ -1,7 +1,7 @@
 from typing import Any, Dict, List
 
 from .dataclass import Dataclass, OptionalField
-from .utils import recursive_shallow_copy
+from .utils import recursive_copy
 
 
 class ReusableGenerator(Dataclass):
@@ -22,4 +22,4 @@ class ReusableGenerator(Dataclass):
 class CopyingReusableGenerator(ReusableGenerator):
     def __iter__(self):
         for instance in self.activate():
-            yield recursive_shallow_copy(instance)
+            yield recursive_copy(instance)

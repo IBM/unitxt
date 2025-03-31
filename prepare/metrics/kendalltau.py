@@ -25,6 +25,7 @@ global_target = {
     "kendalltau_b_ci_high": np.nan,
     "score_ci_low": np.nan,
     "score_ci_high": np.nan,
+    "num_of_instances": 3,
 }
 
 outputs = test_metric(

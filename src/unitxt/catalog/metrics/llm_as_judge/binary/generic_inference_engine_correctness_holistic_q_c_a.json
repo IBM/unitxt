@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine"
+    },
+    "template": "templates.rag_eval.correctness_holistic.judge_correctness_simple",
+    "task": "tasks.rag_eval.correctness_holistic.binary",
+    "format": null,
+    "main_score": "correctness_holistic_q_c_a",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.correctness_holistic.generic_inference_engine_q_c_a"
+}

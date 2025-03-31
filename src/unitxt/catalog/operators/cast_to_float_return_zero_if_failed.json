@@ -1,0 +1,5 @@
+{
+    "__type__": "cast",
+    "to": "float",
+    "failure_default": 0.0
+}

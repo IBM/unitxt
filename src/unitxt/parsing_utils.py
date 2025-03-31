@@ -45,7 +45,7 @@ from typing import Any, Tuple
 def consume_name_val(instring: str) -> Tuple[Any, str]:
     name_val = ""
     for char in instring:
-        if char in "[],:{}=":
+        if char in "[],{}=":
             break
         name_val += char
     instring = instring[len(name_val) :].strip()

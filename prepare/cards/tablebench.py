@@ -5,7 +5,7 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Apply, FilterByCondition, Set
+from unitxt.operators import Apply, FilterByCondition, RemoveFields, Set
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 from unitxt.types import Table
@@ -25,7 +25,10 @@ card = TaskCard(
             field_to_field={"table/columns": "table/header", "table/data": "table/rows"}
         ),
         Set({"context_type": "Table"}),
+
         Rename(field_to_field={"table": "context", "answer": "answers"}),
+        RemoveFields(fields=["instruction"])
+
     ],
     task=Task(
         input_fields={
@@ -44,8 +47,10 @@ card = TaskCard(
             target_prefix="Final Answer: ",
             output_format="{answers}",
             postprocessors=[
-                "processors.to_string_stripped",
                 "processors.lower_case",
+                "processors.remove_punctuations",
+                "processors.remove_articles",
+                "processors.fix_whitespace",
             ],
         ),
     ],

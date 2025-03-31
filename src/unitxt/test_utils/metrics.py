@@ -74,7 +74,7 @@ def apply_metric(
     ti = []
     for instance in test_iterable:
         ti.append(deepcopy(instance))
-    multi_stream = MultiStream.from_iterables({"test": ti})
+    multi_stream = MultiStream.from_iterables({"test": ti}, copying=True)
 
     output_multi_stream = metric(multi_stream)
     output_stream = output_multi_stream["test"]
@@ -88,6 +88,7 @@ def test_metric(
     instance_targets: List[dict],
     global_target: dict,
     task_data: Optional[List[dict]] = None,
+    score_keys_to_ignore: Optional[List[str]] = None,
 ):
     if settings.test_metric_disable:
         logger.info(
@@ -100,7 +101,9 @@ def test_metric(
     assert isoftype(references, List[Any]), "references must be a list"
 
     if isinstance(metric, GlobalMetric) and metric.n_resamples:
+        metric = deepcopy(metric)
         metric.n_resamples = 3  # Use a low number of resamples in testing for GlobalMetric, to save runtime
+
     outputs = apply_metric(metric, predictions, references, task_data)
 
     check_scores(
@@ -108,6 +111,7 @@ def test_metric(
         instance_targets,
         global_outputs=outputs[0]["score"]["global"],
         instance_outputs=[output["score"]["instance"] for output in outputs],
+        score_keys_to_ignore=score_keys_to_ignore,
     )
 
     logger.info("Metric tested successfully!")
@@ -119,8 +123,17 @@ def check_scores(
     instance_targets: List[dict],
     global_outputs: dict,
     instance_outputs: List[dict],
+    score_keys_to_ignore: Optional[List[str]] = None,
 ):
     errors = []
+    if score_keys_to_ignore:
+        for key in score_keys_to_ignore:
+            global_target.pop(key, None)
+            global_outputs.pop(key, None)
+            for instance_output in instance_outputs:
+                instance_output.pop(key, None)
+            for instance_target in instance_targets:
+                instance_target.pop(key, None)
     global_score = round_floats(global_outputs)
     if not dict_equal(global_score, global_target):
         errors.append(

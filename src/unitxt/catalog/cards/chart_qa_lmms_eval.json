@@ -1,0 +1,54 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "lmms-lab/ChartQA"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "wrap",
+            "field": "answer",
+            "inside": "list",
+            "to_field": "answers"
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.with_type[metrics=[metrics.relaxed_correctness]]",
+    "templates": [
+        "templates.qa.with_context.chart_qa",
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
+    "__tags__": {
+        "license": "GPL-3.0",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "ChartQA: A Benchmark for Question Answering about Charts with Visual and Logical Reasoning."
+}

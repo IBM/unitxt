@@ -1,0 +1,67 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "premai-io/birdbench",
+        "split": "validation",
+        "streaming": true
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle",
+            "page_size": 9223372036854775807
+        },
+        {
+            "__type__": "rename",
+            "field_to_field": {
+                "question_id": "id",
+                "question": "utterance",
+                "SQL": "query",
+                "db_id": "db_id",
+                "evidence": "hint"
+            }
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "dbms": "sqlite",
+                "db_type": "local",
+                "use_oracle_knowledge": true,
+                "num_table_rows_to_add": 0,
+                "data": null
+            }
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "'bird/'+db_id",
+            "to_field": "db_id"
+        },
+        {
+            "__type__": "execute_expression",
+            "expression": "str(id)",
+            "to_field": "id"
+        },
+        {
+            "__type__": "copy",
+            "field": "db_id",
+            "to_field": "db/db_id"
+        },
+        {
+            "__type__": "copy",
+            "field": "db_type",
+            "to_field": "db/db_type"
+        },
+        {
+            "__type__": "copy",
+            "field": "dbms",
+            "to_field": "db/dbms"
+        },
+        {
+            "__type__": "copy",
+            "field": "data",
+            "to_field": "db/data"
+        }
+    ],
+    "task": "tasks.text2sql",
+    "templates": "templates.text2sql.all"
+}

@@ -1,5 +1,6 @@
 {
     "__type__": "task",
+    "__description__": "This is the Question Answering Task composed of question answer pair , without provided context.\n            The 'tasks.qa.with_context' should be used if there is no context.\n            By default, classifical Rouge metric is used , but list of additional applicable metrics can be found under 'metrics.qa' in the Unitxt catalog.\n            ",
     "input_fields": {
         "question": "str"
     },
@@ -9,5 +10,9 @@
     "prediction_type": "str",
     "metrics": [
         "metrics.rouge"
-    ]
+    ],
+    "defaults": {
+        "answers": []
+    },
+    "default_template": "templates.qa.open"
 }

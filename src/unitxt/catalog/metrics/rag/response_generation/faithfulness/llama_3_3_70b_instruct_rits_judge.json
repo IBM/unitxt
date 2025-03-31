@@ -1,0 +1,13 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_3_70b_instruct_rits",
+    "template": "templates.rag_eval.faithfulness.judge_with_question_simplified_verbal",
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "format": null,
+    "main_score": "faithfulness_judge",
+    "prediction_field": "answer",
+    "infer_log_probs": false,
+    "judge_to_generator_fields_mapping": {
+        "ground_truths": "reference_answers"
+    }
+}

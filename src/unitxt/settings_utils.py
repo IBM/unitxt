@@ -1,3 +1,4 @@
+import importlib.metadata
 import importlib.util
 import os
 from contextlib import contextmanager
@@ -135,8 +136,9 @@ if Settings.is_uninitilized():
     settings.num_resamples_for_instance_metrics = (int, 1000)
     settings.num_resamples_for_global_metrics = (int, 100)
     settings.max_log_message_size = (int, 100000)
+    settings.catalogs = None
     settings.artifactories = None
-    settings.default_recipe = "standard_recipe"
+    settings.default_recipe = "dataset_recipe"
     settings.default_verbosity = "info"
     settings.use_eager_execution = False
     settings.remote_metrics = []
@@ -147,7 +149,17 @@ if Settings.is_uninitilized():
     settings.skip_artifacts_prepare_and_verify = (bool, False)
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
-    settings.disable_hf_datasets_cache = (bool, True)
+    settings.disable_hf_datasets_cache = (bool, False)
+    settings.stream_hf_datasets_by_default = (bool, False)
+    settings.loader_cache_size = (int, 25)
+    settings.loaders_max_retries = (int, 10)
+    settings.task_data_as_text = (bool, True)
+    settings.default_provider = "watsonx"
+    settings.default_format = None
+    settings.hf_offline_datasets_path = None
+    settings.hf_offline_metrics_path = None
+    settings.hf_offline_models_path = None
+    settings.inference_engine_cache_path = "./inference_engine_cache/"
 
 if Constants.is_uninitilized():
     constants = Constants()
@@ -156,8 +168,8 @@ if Constants.is_uninitilized():
     constants.local_catalog_path = os.path.join(os.path.dirname(__file__), "catalog")
     unitxt_pkg = importlib.util.find_spec("unitxt")
     if unitxt_pkg and unitxt_pkg.origin:
-        unitxt_dir = os.path.dirname(unitxt_pkg.origin)
-        constants.default_catalog_path = os.path.join(unitxt_dir, "catalog")
+        constants.package_dir = os.path.dirname(unitxt_pkg.origin)
+        constants.default_catalog_path = os.path.join(constants.package_dir, "catalog")
     else:
         constants.default_catalog_path = constants.local_catalog_path
     constants.catalog_dir = constants.local_catalog_path
@@ -179,6 +191,11 @@ if Constants.is_uninitilized():
     constants.website_url = "https://www.unitxt.org"
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
+    constants.image_tag = "unitxt-img"
+    constants.demos_pool_field = "_demos_pool_"
+    constants.demos_field = "demos"
+    constants.instruction_field = "instruction"
+    constants.system_prompt_field = "system_prompt"
 
 
 def get_settings() -> Settings:

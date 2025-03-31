@@ -6,6 +6,9 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "rename_splits",
             "mapper": {
                 "train": "train",
@@ -35,8 +38,19 @@
             }
         }
     ],
-    "task": "tasks.qa.with_context.abstractive",
-    "templates": "templates.qa.with_context.all",
+    "task": "tasks.qa.with_context",
+    "templates": [
+        "templates.qa.with_context.chart_qa",
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
     "__tags__": {
         "license": "GPL-3.0",
         "multilinguality": "monolingual",

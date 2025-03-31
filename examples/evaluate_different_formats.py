@@ -1,14 +1,18 @@
 import pandas as pd
-from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
-from unitxt.inference import IbmGenAiInferenceEngine
-from unitxt.text_utils import print_dict
+from unitxt.inference import CrossProviderInferenceEngine
 
-logger = get_logger()
+model = CrossProviderInferenceEngine(
+    model="llama-3-8b-instruct", max_tokens=32, provider="bam"
+)
+"""
+We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
+watsonx, bam, openai, azure, aws and more.
 
+For the arguments these inference engines can receive, please refer to the classes documentation or read
+about the the open ai api arguments the CrossProviderInferenceEngine follows.
+"""
 
-model_name = "meta-llama/llama-3-8b-instruct"
-inference_model = IbmGenAiInferenceEngine(model_name=model_name, max_new_tokens=32)
 card = "cards.boolq.classification"
 template = "templates.classification.multi_class.relation.default"
 
@@ -32,24 +36,26 @@ for format in [
             demos_pool_size=50,
             loader_limit=300,
             max_test_instances=100,
+            split="test",
         )
 
-        test_dataset = dataset["test"]
+        predictions = model(dataset)
+        results = evaluate(predictions=predictions, data=dataset)
 
-        predictions = inference_model.infer(test_dataset)
-        evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
-
-        logger.info(
+        print(
             f"Sample input and output for format '{format}' and system prompt '{system_prompt}':"
         )
-        print_dict(
-            evaluated_dataset[0],
-            keys_to_print=[
-                "source",
-                "prediction",
-            ],
+
+        print(
+            results.instance_scores.to_df(
+                columns=[
+                    "source",
+                    "prediction",
+                ]
+            )
         )
-        global_scores = evaluated_dataset[0]["score"]["global"]
+
+        global_scores = results.global_scores
         df.loc[len(df)] = [
             format,
             system_prompt,
@@ -59,4 +65,4 @@ for format in [
         ]
 
         df = df.round(decimals=2)
-        logger.info(df.to_markdown())
+        print(df.to_markdown())

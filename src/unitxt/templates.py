@@ -8,7 +8,7 @@ from .collections import DictCollection, ListCollection
 from .dataclass import NonPositionalField
 from .dict_utils import dict_set
 from .error_utils import Documentation, UnitxtError
-from .operator import InstanceOperator
+from .operator import InstanceOperator, Operator
 from .random_utils import new_random_generator
 from .serializers import (
     DialogSerializer,
@@ -17,10 +17,12 @@ from .serializers import (
     MultiTypeSerializer,
     NumberQuantizingSerializer,
     Serializer,
+    SQLDatabaseAsSchemaSerializer,
     TableSerializer,
+    VideoSerializer,
 )
 from .settings_utils import get_constants
-from .type_utils import isoftype
+from .type_utils import isoftype, to_type_string
 
 constants = get_constants()
 
@@ -59,16 +61,24 @@ class Template(InstanceOperator):
         default_factory=lambda: MultiTypeSerializer(
             serializers=[
                 ImageSerializer(),
+                VideoSerializer(),
                 TableSerializer(),
                 DialogSerializer(),
                 ListSerializer(),
+                SQLDatabaseAsSchemaSerializer(),
             ]
         )
     )
 
-    def input_fields_to_instruction_and_target_prefix(self, input_fields):
+    def verify(self):
+        super().verify()
+        assert isoftype(
+            self.postprocessors, List[Union[Operator, str]]
+        ), f"The template post processors field '{self.postprocessors}' is not a list of processors. Instead it is of type '{to_type_string(type(self.postprocessors))}'."
+
+    def input_fields_to_instruction_and_target_prefix(self, input_fields, instruction):
         instruction = self.apply_formatting(
-            input_fields, "input field", self.instruction, "instruction"
+            input_fields, "input field", instruction, "instruction"
         )
         target_prefix = self.apply_formatting(
             input_fields,
@@ -116,13 +126,13 @@ class Template(InstanceOperator):
 
         source = self.input_fields_to_source(serialized_inputs)
         instruction, target_prefix = self.input_fields_to_instruction_and_target_prefix(
-            serialized_inputs
+            serialized_inputs, instance.get(constants.instruction_field, self.instruction)
         )
 
         result = {
             **instance,
             "source": source,
-            "instruction": instruction,
+            constants.instruction_field: instruction,
             "target_prefix": target_prefix,
             "postprocessors": self.postprocessors,
         }
@@ -262,7 +272,34 @@ class OutputFormatTemplate(Template):
         return target, references
 
 
+class JsonOutputFormatTemplate(Template):
+    output_fields: Dict[str, str]
+    wrap_with_list_fields: List[str]
+
+    def reference_fields_to_target_and_references(
+        self, reference_fields: Dict[str, object]
+    ) -> str:
+        data = {}
+        for field, target_field in self.output_fields.items():
+            value = reference_fields[field]
+            if field in self.wrap_with_list_fields:
+                value = [value]
+            data[target_field] = value
+        target = json.dumps(data, ensure_ascii=False)
+        references = [target]
+        return target, references
+
+
 class InputOutputTemplate(InputFormatTemplate, OutputFormatTemplate):
+    """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
+
+    Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
+    """
+
+    pass
+
+
+class JsonOutputTemplate(InputFormatTemplate, JsonOutputFormatTemplate):
     """Generate field 'source' from fields designated as input, and fields 'target' and 'references' from fields designated as output, of the processed instance.
 
     Args specify the formatting strings with which to glue together the input and reference fields of the processed instance into one string ('source' and 'target'), and into a list of strings ('references').
@@ -299,20 +336,27 @@ class PairwiseChoiceTemplate(InputOutputTemplate):
      The answer field value should be of type Literal["choice_a", "choice_b", "tie"]
 
     Args:
-         choice_a_field (str): The field which contains choice_a value
-         choice_b_field (str): The field which contains choice_b value
-         answer_field (str): The field which contains the answer value.
-           Should be of type Literal["choice_1", "choice_2", "tie"]
-         choice_a_label (str): The label of choice A answer as it is verbalized in the template.
-         choice_b_label (str): The label of choice B answer as it is verbalized in the template.
-         choice_tie_label (str): The label of a tie answer as it should be verbalized in the template.
-         shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
+         choice_a_field (str):
+            The field which contains choice_a value
+         choice_b_field (str):
+            The field which contains choice_b value
+         answer_field (str):
+            The field which contains the answer value.
+            Should be of type Literal["choice_1", "choice_2", "tie"]
+         choice_a_label (str):
+            The label of choice A answer as it is verbalized in the template.
+         choice_b_label (str):
+            The label of choice B answer as it is verbalized in the template.
+         choice_tie_label (str):
+            The label of a tie answer as it should be verbalized in the template.
+         shuffle (bool):
+            whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
-     1) The values of choice_a_field and choice_b_field will be swapped.
-     2) If the values of answer_field is choice_a_label, set it to choice_b_label.
-         Else if the values of answer_field is choice_b_label, set it to choice_a_label.
-         Else if the value of answer_field is choice_tie_label, do nothing.
+     1. The values of choice_a_field and choice_b_field will be swapped.
+     2. If the values of answer_field is choice_a_label, set it to choice_b_label.
+        Else if the values of answer_field is choice_b_label, set it to choice_a_label.
+        Else if the value of answer_field is choice_tie_label, do nothing.
 
     """
 
@@ -425,14 +469,17 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
 
     Args:
          choice_a_field (str): The field which contains choice_a value
+
          choice_b_field (str): The field which contains choice_b value
+
          answer_field (str): The field which contains the answer value. The value should be an int.
-          Positive for preferring choice_a, and negative for preferring choice_b
+         Positive for preferring choice_a, and negative for preferring choice_b
+
          shuffle (bool): whether to shuffle the choices or not. This is done to take into account position bias.
 
     shuffle: 50% of the time:
-     1) The values of choice_a_field and choice_b_field will be swapped.
-     2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
+    | 1) The values of choice_a_field and choice_b_field will be swapped.
+    | 2) Replace the values of answer_field with its mapped value according to the reverse_preference_map Dict.
 
     """
 
@@ -477,7 +524,34 @@ class PairwiseComparativeRatingTemplate(InputOutputTemplate):
 
 
 class MultipleChoiceTemplate(InputFormatTemplate):
-    """Formats the input (that specifies the question), the multiple choices to select the answer from, and specifies the field with the correct answer."""
+    """Formats the input that specifies a multiple-choice question, with a list of possible answers to choose from, and identifies the correct answer.
+
+    Args:
+        target_prefix (str): Optional prefix that can be added before the target label in
+            generated prompts or outputs.
+        choices_field (str): The key under which the multiple choices are stored in the
+            input and reference dictionaries.
+        target_field (str): The key under which the correct choice is stored in the
+            reference dictionary (can be integer index or textual label).
+        choices_separator (str): A string used to join formatted
+            choices (e.g. ", ").
+        source_choice_format (str): A Python format string used for displaying each choice
+            in the input fields (e.g. "{choice_numeral}. {choice_text}").
+        target_choice_format (str): A Python format string used for displaying each choice
+            in the target or final output (e.g. "{choice_numeral}").
+        enumerator (str): Determines how choice numerals are enumerated. Possible values
+            include "capitals", "lowercase", "numbers", or "roman".
+        shuffle_choices (bool): If True, shuffle the choices. The shuffling seed can be
+            set with `shuffle_choices_seed`.
+        shuffle_choices_seed (int, optional): If provided, the choices are shuffled with
+            this fixed integer seed for reproducibility.
+        sort_choices_by_length (bool): If True, sorts choices
+            by their length (ascending).
+        sort_choices_alphabetically (bool): If True, sorts choices
+            in alphabetical order.
+        reverse_choices (bool): If True, reverses the order of the choices after any
+            sorting has been applied. Defaults to False to preserve backward compatibility.
+    """
 
     target_prefix: str = ""
     choices_field: str = "choices"
@@ -486,7 +560,13 @@ class MultipleChoiceTemplate(InputFormatTemplate):
     source_choice_format: str = "{choice_numeral}. {choice_text}"
     target_choice_format: str = "{choice_numeral}"
     enumerator: str = "capitals"
+
     shuffle_choices: bool = False
+    shuffle_choices_seed: int = None
+    sort_choices_by_length: bool = False
+    sort_choices_alphabetically: bool = False
+    reverse_choices: bool = False  # False by default for backward-compat
+    place_correct_choice_position: int = None
 
     def prepare(self):
         super().prepare()
@@ -519,6 +599,31 @@ class MultipleChoiceTemplate(InputFormatTemplate):
                 "XIX",
                 "XX",
             ]
+
+    def verify(self):
+        super().verify()
+        if self.shuffle_choices and (
+            self.sort_choices_by_length
+            or self.sort_choices_alphabetically
+            or self.reverse_choices
+            or self.place_correct_choice_position is not None
+        ):
+            raise UnitxtError(
+                "You cannot combine shuffle_choices with sorting or reversing flags."
+            )
+
+        if self.sort_choices_by_length and self.sort_choices_alphabetically:
+            raise UnitxtError(
+                "You cannot combine both sort_choices_by_length and sort_choices_alphabetically simultaneously."
+            )
+        if self.place_correct_choice_position is not None and (
+            self.sort_choices_by_length
+            or self.sort_choices_alphabetically
+            or self.reverse_choices
+        ):
+            raise UnitxtError(
+                "You cannot combine place_correct_choice_position with sorting or reversing flags."
+            )
 
     def inputs_to_choices(self, data: Dict[str, Any], choice_format: str) -> str:
         choices = data[self.choices_field]
@@ -594,18 +699,53 @@ class MultipleChoiceTemplate(InputFormatTemplate):
     def preprocess_input_and_reference_fields(
         self, input_fields: Dict[str, Any], reference_fields: Dict[str, Any]
     ) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+        if (
+            not self.shuffle_choices
+            and not self.sort_choices_by_length
+            and not self.sort_choices_alphabetically
+            and not self.reverse_choices
+            and self.place_correct_choice_position is None
+        ):
+            return input_fields, reference_fields
+
+        choices = input_fields[self.choices_field]
+        target_index = self.outputs_to_target_index(reference_fields)
+        original_label_choice = reference_fields[self.choices_field][target_index]
+
+        if self.sort_choices_by_length:
+            choices.sort(key=len)
+        if self.sort_choices_alphabetically:
+            choices.sort()
+        if self.reverse_choices:
+            choices.reverse()
         if self.shuffle_choices:
-            target_index = self.outputs_to_target_index(reference_fields)
-            original_label_choice = reference_fields[self.choices_field][target_index]
-            choices = input_fields[self.choices_field]
-            random_seed = {**input_fields}
-
-            random_generator = new_random_generator(random_seed)
+            random_generator = new_random_generator(
+                self.shuffle_choices_seed
+                if self.shuffle_choices_seed is not None
+                else {**input_fields}
+            )
             random_generator.shuffle(choices)
-            input_fields[self.choices_field] = choices
+        if self.place_correct_choice_position is not None:
+            fix_pos = self.place_correct_choice_position
 
-            reference_fields[self.choices_field] = choices
-            reference_fields[self.target_field] = choices.index(original_label_choice)
+            # Supporting negative indexes similar to Python lists
+            # If fix_pos is negative, convert it to a valid positive index by adding len(choices).
+            # For example, -1 becomes the last index, -2 becomes the one before last, etc.
+            if fix_pos < 0:
+                fix_pos += len(choices)
+            self.place_correct_choice_position = fix_pos
+            # Remove the original label choice from the list
+            if not 0 <= self.place_correct_choice_position < len(choices):
+                raise ValueError(
+                    f"fix_correct_choice_position={self.place_correct_choice_position} out of range (0..{len(choices) - 1})."
+                )
+            choices.remove(original_label_choice)
+            choices.insert(self.place_correct_choice_position, original_label_choice)
+
+        # Update both input_fields and reference_fields once at the end
+        input_fields[self.choices_field] = choices
+        reference_fields[self.choices_field] = choices
+        reference_fields[self.target_field] = choices.index(original_label_choice)
 
         return input_fields, reference_fields
 
@@ -619,21 +759,22 @@ class MultipleChoiceTemplate(InputFormatTemplate):
 class YesNoTemplate(InputFormatTemplate):
     """A template for generating binary Yes/No questions asking whether an input text is of a specific class.
 
-    input_format:
-        Defines the format of the question.
-    class_field:
-        Defines the field that contains the name of the class that this template
-        asks of.
-    label_field:
-        Defines the field which contains the true label of the input text. If a gold label is equal to the
-        value in class_name, then the correct output is self.yes_answer (by default, "Yes").
-        Otherwise the correct output is self.no_answer (by default, "No").
-    yes_answer:
-        The output value for when the gold label equals self.class_name.
-        Defaults to "Yes".
-    no_answer:
-        The output value for when the gold label differs from self.class_name.
-        Defaults to "No".
+    Args:
+        input_format:
+            Defines the format of the question.
+        class_field:
+            Defines the field that contains the name of the class that this template
+            asks of.
+        label_field:
+            Defines the field which contains the true label of the input text. If a gold label is equal to the
+            value in class_name, then the correct output is self.yes_answer (by default, "Yes").
+            Otherwise the correct output is self.no_answer (by default, "No").
+        yes_answer:
+            The output value for when the gold label equals self.class_name.
+            Defaults to "Yes".
+        no_answer:
+            The output value for when the gold label differs from self.class_name.
+            Defaults to "No".
     """
 
     input_format: str = None
@@ -668,6 +809,18 @@ class YesNoTemplate(InputFormatTemplate):
         if queried_class_name in gold_class_names:
             return self.yes_answer, [self.yes_answer]
         return self.no_answer, [self.no_answer]
+
+
+class NullTemplate(Template):
+    """Templates that returns empty prompt and no references."""
+
+    postprocessors = []
+
+    def input_fields_to_source(self, input_fields: Dict[str, object]) -> str:
+        return ""
+
+    def reference_fields_to_target_and_references(self, reference_fields):
+        return "", []
 
 
 class KeyValTemplate(Template):
@@ -773,10 +926,7 @@ class MultiReferenceTemplate(InputOutputTemplate):
                 Documentation.ADDING_TEMPLATE,
             )
         if len(references) == 0:
-            raise UnitxtError(
-                "No references found. MultiReferenceTemplate requires at least one reference.",
-                Documentation.ADDING_TEMPLATE,
-            )
+            return "", []
 
         if self.random_reference:
             random_generator = new_random_generator(reference_fields)

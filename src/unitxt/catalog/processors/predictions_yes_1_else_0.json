@@ -1,6 +1,7 @@
 {
     "__type__": "post_process",
     "process_references": false,
+    "process_prediction": true,
     "operator": {
         "__type__": "yes_to_one_else_zero"
     }

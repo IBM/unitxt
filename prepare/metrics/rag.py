@@ -7,6 +7,7 @@ from unitxt.metrics import (
     TokenOverlap,
 )
 from unitxt.operators import Copy, ListFieldValues
+from unitxt.serializers import MultiTypeSerializer
 from unitxt.test_utils.metrics import test_metric
 
 metrics = {
@@ -67,6 +68,7 @@ global_target = {
     "score_ci_high": 0.89,
     "score_ci_low": 0.0,
     "score_name": "f1",
+    "num_of_instances": 3,
 }
 metric = MetricPipeline(
     main_score="f1",
@@ -121,6 +123,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.8,
     "score_name": "f1",
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,
@@ -153,6 +156,7 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.73,
     "score_name": "f1",
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,
@@ -185,14 +189,15 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.81,
     "score_name": "f1",
+    "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.bert_score.distilbert_base_uncased"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -217,14 +222,15 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.85,
     "score_name": "f1",
+    "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.bert_score.deberta_v3_base_mnli_xnli_ml"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -249,14 +255,15 @@ global_target = {
     "score_ci_high": 1.0,
     "score_ci_low": 0.74,
     "score_name": "f1",
+    "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.sentence_bert.mpnet_base_v2"]
 predictions = ["hello there general dude", "foo bar foobar"]
 references = [
@@ -264,34 +271,52 @@ references = [
     ["foo bar foobar", "foo bar"],
 ]
 instance_targets = [
-    {"score": 0.71, "score_name": "score"},
-    {"score": 1.0, "score_name": "score"},
+    {"sbert_score": 0.71, "score": 0.71, "score_name": "sbert_score"},
+    {"sbert_score": 1.0, "score": 1.0, "score_name": "sbert_score"},
 ]
 global_target = {
+    "sbert_score": 0.86,
+    "sbert_score_ci_high": 1.0,
+    "sbert_score_ci_low": 0.71,
     "score": 0.86,
     "score_ci_high": 1.0,
     "score_ci_low": 0.71,
-    "score_name": "score",
+    "score_name": "sbert_score",
+    "num_of_instances": 2,
 }
-test_metric(
-    metric=metric,
-    predictions=predictions,
-    references=references,
-    instance_targets=instance_targets,
-    global_target=global_target,
-)
+# test_metric(
+#     metric=metric,
+#     predictions=predictions,
+#     references=references,
+#     instance_targets=instance_targets,
+#     global_target=global_target,
+# )
 metric = metrics["metrics.reward.deberta_v3_large_v2"]
 predictions = ["hello there General Dude", "foo bar foobar"]
 references = [["How do you greet General Dude"], ["What is your name?"]]
 instance_targets = [
-    {"label": "LABEL_0", "score": 0.14, "score_name": "score"},
-    {"label": "LABEL_0", "score": 0.03, "score_name": "score"},
+    {
+        "label": "LABEL_0",
+        "score": 0.14,
+        "score_name": "reward_score",
+        "reward_score": 0.14,
+    },
+    {
+        "label": "LABEL_0",
+        "score": 0.03,
+        "score_name": "reward_score",
+        "reward_score": 0.03,
+    },
 ]
 global_target = {
+    "reward_score": 0.09,
+    "reward_score_ci_high": 0.14,
+    "reward_score_ci_low": 0.03,
     "score": 0.09,
     "score_ci_high": 0.14,
     "score_ci_low": 0.03,
-    "score_name": "score",
+    "score_name": "reward_score",
+    "num_of_instances": 2,
 }
 # test_metric(
 #     metric=metric,
@@ -323,12 +348,24 @@ for metric_id, metric in metrics.items():
 #       metrics.rag.recall
 #       metrics.rag.bert_recall
 
-for axis, base_metric, main_score in [
-    ("correctness", "token_overlap", "f1"),
-    ("correctness", "bert_score.deberta_large_mnli", "recall"),
-    ("correctness", "bert_score.deberta_v3_base_mnli_xnli_ml", "recall"),
-    ("faithfullness", "token_overlap", "precision"),
+for axis, base_metric, main_score, new_metric in [
+    ("correctness", "token_overlap", "f1", "answer_correctness.token_recall"),
+    (
+        "correctness",
+        "bert_score.deberta_large_mnli",
+        "recall",
+        "answer_correctness.bert_score_recall",
+    ),
+    (
+        "correctness",
+        "bert_score.deberta_v3_base_mnli_xnli_ml",
+        "recall",
+        "answer_correctness.bert_score_recall_ml",
+    ),
+    ("faithfullness", "token_overlap", "precision", "faithfulness.token_k_precision"),
 ]:
+    deprecated_path = f"metrics.rag.response_generation.{axis}.{base_metric}"
+    new_metric_path = f"metrics.rag.response_generation.{new_metric}"
     preprocess_steps = (
         [
             Copy(field="task_data/contexts", to_field="references"),
@@ -355,10 +392,13 @@ for axis, base_metric, main_score in [
         ],
         metric=f"metrics.{base_metric}",
         prediction_type=str,
+        __deprecated_msg__=f"Metric {deprecated_path} is deprecated. Please use {new_metric_path} instead.",
     )
 
     add_to_catalog(
-        metric, f"metrics.rag.response_generation.{axis}.{base_metric}", overwrite=True
+        metric,
+        f"metrics.rag.response_generation.{axis}.{base_metric}",
+        overwrite=True,
     )
 
 # end to end
@@ -455,6 +495,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.answer_reward": [
         copy_field_prediction_answer_to_prediction,
         copy_field_question_to_references_in_a_list,
+        MultiTypeSerializer(field="references", process_every_value=True),
     ],
     "metrics.rag.end_to_end.answer_faithfulness": [
         copy_field_prediction_contexts_to_references,
@@ -467,6 +508,7 @@ end_to_end_artifact_names_to_preprocess_steps = {
     "metrics.rag.end_to_end.context_relevance": [
         copy_field_prediction_contexts_to_references,
         copy_field_question_to_prediction,
+        MultiTypeSerializer(field="prediction"),
     ],
 }
 

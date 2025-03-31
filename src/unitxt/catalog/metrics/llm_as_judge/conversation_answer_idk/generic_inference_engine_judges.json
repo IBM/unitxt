@@ -1,0 +1,10 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "generic_inference_engine"
+    },
+    "template": "templates.response_assessment.judges.idk.v1",
+    "task": "rating.single_turn",
+    "main_score": "metrics.llm_as_judge.rating.generic_template_v1",
+    "prediction_type": "str"
+}

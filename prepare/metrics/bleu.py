@@ -52,6 +52,7 @@ global_target = {
     "bleu_ci_high": 0.91,
     "score_ci_low": 0.9,
     "score_ci_high": 0.91,
+    "num_of_instances": 4,
 }
 
 outputs = test_metric(

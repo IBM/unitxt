@@ -1,7 +1,7 @@
 from unitxt import add_to_catalog
 from unitxt.operator import SequentialOperator
 from unitxt.struct_data_operators import LoadJson
-from unitxt.templates import InputOutputTemplate
+from unitxt.templates import JsonOutputTemplate
 
 add_to_catalog(
     SequentialOperator(
@@ -18,9 +18,14 @@ add_to_catalog(
 
 add_to_catalog(
     # For rag end-to-end tasks
-    InputOutputTemplate(
+    JsonOutputTemplate(
         input_format="",
-        output_format='{{"answer": "{reference_answers}", "contexts" : ["{reference_contexts}"],  "context_ids" : ["{reference_context_ids}"]}}',
+        output_fields={
+            "reference_answers": "answer",
+            "reference_contexts": "contexts",
+            "reference_context_ids": "context_ids",
+        },
+        wrap_with_list_fields=["reference_contexts", "reference_context_ids"],
         postprocessors=["processors.load_json_predictions"],
     ),
     "templates.rag.end_to_end.json_predictions",

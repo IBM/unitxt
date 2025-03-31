@@ -1,6 +1,3 @@
 {
-    "__type__": "images_augmentor",
-    "operator": {
-        "__type__": "gray_scale"
-    }
+    "__type__": "gray_scale"
 }

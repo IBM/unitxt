@@ -2,8 +2,11 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "glue",
-        "name": "wnli"
+        "path": "nyu-mll/glue",
+        "name": "wnli",
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         {

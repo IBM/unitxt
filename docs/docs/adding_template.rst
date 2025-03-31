@@ -9,11 +9,11 @@ Templates ✨
 =====================================
 
 In this section you learn how to add a Template. Templates are the way for unitxt to take your task data and verbalize the task instructions to the model.
-The templates made by the community can be found in the catalog :ref:`templates section <catalog.templates>`
-and the documentation for the base classes used for templates can be found here: :ref:`Templates Documentation<templates>`
+The templates made by the community can be found in the catalog :ref:`templates section <dir_catalog.templates>`
+and the documentation for the base classes used for templates can be found here: :class:`Templates Documentation <unitxt.templates>`
 
 Unitxt Prompt Structure
-----------------------------
+-----------------------
 
 .. _prompt_layout:
 .. image:: ../../assets/prompt_layout.png
@@ -78,13 +78,14 @@ becomes the string reference "happy,angry", and it is expected that the model wi
 Post Processors
 ---------------
 
-The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <metric>`.
-The post processors applied both to the model prediction and to the references. 
+The template also defines the post processing steps applied to the output predictions of the model before they are passed to the :ref:`Metrics <adding_metric>`.
+Typically, the post processors applied both to the model prediction and to the references. 
 For example, we could use the ``processors.lower_case`` processor to lowercase both the model predictions and references,
-so the metric computation will ignore case. When needed, It is possible to add post processors that applied only to the output of the model and not the references or vice versa. 
+so the metric computation will ignore case. 
 
 .. code-block:: python
 
+    from unitxt.templates import InputOutputTemplate
     template = InputOutputTemplate(
         instruction="In the following task, you translate a {text_type}.",
         input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
@@ -99,7 +100,31 @@ The reason the post processors are set in the template, is because different tem
 For example, one template may prompt the model to answer ``Yes`` or ``No`` while another 
 template may prompt the model to answer ``True`` or ``False``. Both can use different post processors to convert them to standard model prediction of `0` or `1`.
 
-You can see all the available predefined post processors in the catalog (:ref:`Processor <processors>`.)
+Post processors implemented as operators.  Usually they are implemented as fields operators that are applied to the ``prediction``
+and ``references``` fields.   When needed, It is possible to add post processors that are applied only to the prediction of the model and not the references or vice versa. 
+Here we see how we can lowercase only the model prediction.
+
+.. code-block:: python
+
+    from unitxt.processors import PostProcess
+    from unitxt.operators import FieldOperator
+
+    class Lower(FieldOperator):
+        def process_value(self, text: Any) -> Any:
+            return text.lower()
+
+    from unitxt.templates import InputOutputTemplate
+    template = InputOutputTemplate(
+        instruction="In the following task, you translate a {text_type}.",
+        input_format="Translate this {text_type} from {source_language} to {target_language}: {text}.",
+        target_prefix="Translation: ",
+        output_format='{translation}',
+        postprocessors= [ 
+            PostProcess(Lower(),process_references=False)    
+        ]
+    )
+
+You can see all the available predefined post processors in the catalog (:ref:`Processor <dir_catalog.processors>`.)
 
 Templates for Special Cases
 ----------------------------
@@ -117,7 +142,7 @@ There are different templates for different types of data. For example, for data
 
 The template uses the list of values in the dataset field defined by the ``references_field`` attribute to define all the references.
 
-You can see all the available predefined templates here: :ref:`Templates Documentation<templates>`.
+You can see all the available predefined templates here: :ref:`Templates Documentation <dir_catalog.templates>`.
 
 Making Your Custom Template
 ----------------------------

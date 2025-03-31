@@ -1,3 +1,4 @@
+import os
 import re
 from typing import (
     Any,
@@ -7,7 +8,9 @@ from typing import (
 )
 
 from .operators import FieldOperator, InstanceOperator
+from .settings_utils import get_settings
 
+settings = get_settings()
 
 class Split(FieldOperator):
     by: str
@@ -30,8 +33,10 @@ class TokensSplit(FieldOperator):
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
-
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+        path = self.model
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
+        self.tokenizer = AutoTokenizer.from_pretrained(path)
 
     def process_value(self, value: str) -> List[str]:
         return self.tokenizer.tokenize(value)
@@ -48,8 +53,10 @@ class TokensSlice(FieldOperator):
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
-
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+        path = self.model
+        if settings.hf_offline_models_path is not None:
+            path = os.path.join(settings.hf_offline_models_path, path)
+        self.tokenizer = AutoTokenizer.from_pretrained(path)
 
     def process_value(self, value: str) -> str:
         encoded = self.tokenizer.encode(value)
@@ -96,3 +103,17 @@ class MapReplace(FieldOperator):
         for key, val in self.mapping.items():
             value = value.replace(key, val)
         return value
+
+
+class RegexReplace(FieldOperator):
+    pattern: str  # A regex pattern
+    replacement: str  # The replacement string or template
+
+    def prepare(self):
+        super().prepare()
+        self.pattern = re.compile(self.pattern)
+
+    def process_value(self, value: Any) -> Any:
+        if isinstance(value, str):
+            return re.sub(self.pattern, self.replacement, value)
+        return value  # If not a string, return the value as is

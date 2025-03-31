@@ -1,0 +1,11 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "template": "templates.rag_eval.context_relevance.judge_context_relevance_ares_logprobs",
+    "task": "tasks.rag_eval.context_relevance.binary",
+    "format": null,
+    "main_score": "context_relevance_q_c_ares_logprobs",
+    "prediction_field": "contexts",
+    "infer_log_probs": true,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.context_relevance.llama_3_1_70b_instruct_wml_q_c_ares_logprobs"
+}

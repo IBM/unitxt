@@ -31,5 +31,16 @@ for file in sorted(os.listdir(bluebench_dir)):
         ] = f"recipes.bluebench.{scenario_name}.{subscenario_name}"
     bluebench_scenarios[scenario_name] = Benchmark(bluebench_scenarios[scenario_name])
 
-benchmark = Benchmark(bluebench_scenarios)
+benchmark = Benchmark(
+    bluebench_scenarios,
+    __description__=(
+        "BlueBench is an open-source benchmark developed by domain experts to represent required needs of Enterprise users.\n\n"
+        ".. image:: https://raw.githubusercontent.com/IBM/unitxt/main/assets/catalog/blue_bench_high_res_01.png\n"
+        "   :alt: Optional alt text\n"
+        "   :width: 30%\n"
+        "   :align: center\n\n"
+        "It is constructed using state-of-the-art benchmarking methodologies to ensure validity, robustness, and efficiency by utilizing unitxt's abilities for dynamic and flexible text processing.\n\n"
+        "As a dynamic and evolving benchmark, BlueBench currently encompasses diverse domains such as legal, finance, customer support, and news. It also evaluates a range of capabilities, including RAG, pro-social behavior, summarization, and chatbot performance, with additional tasks and domains to be integrated over time."
+    ),
+)
 add_to_catalog(benchmark, "benchmarks.bluebench", overwrite=True)

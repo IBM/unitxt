@@ -2,18 +2,19 @@ from typing import List, Union
 
 from unitxt.blocks import Task
 from unitxt.catalog import add_to_catalog
-from unitxt.types import Audio, Dialog, Image, Table, Text
+from unitxt.types import Audio, Dialog, Image, Table, Text, Video
 
 add_to_catalog(
     Task(
         input_fields={
-            "context": Union[Text, Image, Audio, Table, Dialog],
+            "context": Union[Text, Image, Audio, Table, Dialog, Video],
             "context_type": str,
             "question": str,
             "choices": List[str],
         },
         reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
+        augmentable_inputs=["context", "question"],
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context",
@@ -26,6 +27,7 @@ add_to_catalog(
         input_fields={"topic": str, "question": str, "choices": List[str]},
         reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
+        augmentable_inputs=["topic", "question"],
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_topic",
@@ -37,6 +39,7 @@ add_to_catalog(
         input_fields={"question": str, "choices": List[str]},
         reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
+        augmentable_inputs=["question"],
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.open",
@@ -47,13 +50,14 @@ add_to_catalog(
     Task(
         input_fields={
             "topic": str,
-            "context": Union[Text, Image, Audio, Table, Dialog],
+            "context": Union[Text, Image, Audio, Table, Dialog, Video],
             "context_type": str,
             "question": str,
             "choices": List[str],
         },
         reference_fields={"answer": Union[int, str], "choices": List[str]},
         prediction_type=str,
+        augmentable_inputs=["context", "question"],
         metrics=["metrics.accuracy"],
     ),
     "tasks.qa.multiple_choice.with_context.with_topic",

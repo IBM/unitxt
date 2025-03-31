@@ -1,0 +1,31 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_csv",
+        "files": {
+            "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/govt.jsonl.zip"
+        },
+        "compression": "zip",
+        "file_type": "json",
+        "lines": true,
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "wrap",
+            "field": "text",
+            "inside": "list",
+            "to_field": "passages"
+        }
+    ],
+    "task": "tasks.rag.corpora",
+    "templates": {
+        "empty": {
+            "__type__": "input_output_template",
+            "input_format": "",
+            "output_format": ""
+        }
+    }
+}

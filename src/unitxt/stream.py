@@ -9,10 +9,11 @@ from datasets import Dataset, DatasetDict, IterableDataset, IterableDatasetDict
 from .dataclass import Dataclass, OptionalField
 from .generator_utils import CopyingReusableGenerator, ReusableGenerator
 from .logging_utils import get_logger
-from .settings_utils import get_settings
+from .settings_utils import get_constants, get_settings
 from .utils import recursive_copy
 
 settings = get_settings()
+constants = get_constants()
 logger = get_logger()
 
 
@@ -32,6 +33,22 @@ class Stream(Dataclass):
     @abstractmethod
     def set_copying(self, copying: bool):
         pass
+
+    def to_dataset(self, disable_cache=False, cache_dir=None, features=None):
+        with tempfile.TemporaryDirectory() as dir_to_be_deleted:
+            cache_dir = dir_to_be_deleted if disable_cache else cache_dir
+            return Dataset.from_generator(
+                self.__iter__,
+                keep_in_memory=disable_cache,
+                cache_dir=cache_dir,
+                features=features,
+            )
+
+    def to_iterable_dataset(
+        self,
+        features=None,
+    ):
+        return IterableDataset.from_generator(self.__iter__, features=features)
 
 
 class ListStream(Stream):
@@ -61,10 +78,13 @@ class GeneratorStream(Stream):
 
     This class provides methods for generating, caching, and manipulating streaming data.
 
-    Attributes:
-        generator (function): A generator function for streaming data. :no-index:
-        gen_kwargs (dict, optional): A dictionary of keyword arguments for the generator function. :no-index:
-        caching (bool): Whether the data is cached or not. :no-index:
+    Args:
+        generator (function):
+            A generator function for streaming data.
+        gen_kwargs (dict, optional):
+            A dictionary of keyword arguments for the generator function.
+        caching (bool):
+            Whether the data is cached or not.
     """
 
     generator: Callable
@@ -229,24 +249,22 @@ class MultiStream(dict):
             cache_dir = dir_to_be_deleted if disable_cache else cache_dir
             return DatasetDict(
                 {
-                    key: Dataset.from_generator(
-                        self.get_generator,
-                        keep_in_memory=disable_cache,
+                    key: value.to_dataset(
+                        disable_cache=disable_cache,
                         cache_dir=cache_dir,
-                        gen_kwargs={"key": key},
                         features=features,
                     )
-                    for key in self.keys()
+                    for key, value in self.items()
                 }
             )
 
-    def to_iterable_dataset(self) -> IterableDatasetDict:
+    def to_iterable_dataset(self, features=None) -> IterableDatasetDict:
         return IterableDatasetDict(
             {
-                key: IterableDataset.from_generator(
-                    self.get_generator, gen_kwargs={"key": key}
+                key: value.to_iterable_dataset(
+                    features=features,
                 )
-                for key in self.keys()
+                for key, value in self.items()
             }
         )
 

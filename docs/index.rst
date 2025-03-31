@@ -1,7 +1,3 @@
-.. Unitxt documentation master file, created by
-   sphinx-quickstart on Mon Jul 10 03:44:36 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 .. raw:: html
 
    <html>
@@ -168,21 +164,12 @@ Welcome!
 
    docs/introduction
    docs/demo
+   docs/installation
    docs/loading_datasets
    docs/evaluating_datasets
-   docs/installation
    docs/tutorials
    docs/examples
-   docs/data_classification_policy
-   docs/rag_support
-   docs/multimodality
-   docs/operators
-   docs/saving_and_loading_from_catalog
-   docs/production
-   docs/debugging
-   docs/helm
-   docs/lm_eval
-   docs/glossary
+   blog/index
    documentation
    catalog/catalog.__dir__
 

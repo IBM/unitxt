@@ -3,7 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "GEM/xlsum",
-        "name": "chinese_traditional"
+        "name": "chinese_traditional",
+        "splits": [
+            "test",
+            "train",
+            "validation"
+        ]
     },
     "preprocess_steps": [
         {

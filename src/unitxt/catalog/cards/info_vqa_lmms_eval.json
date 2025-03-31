@@ -1,0 +1,58 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "lmms-lab/DocVQA",
+        "name": "InfographicVQA",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "shuffle"
+        },
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "validation": "test"
+            }
+        },
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "image"
+            }
+        }
+    ],
+    "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
+    "templates": [
+        "templates.qa.with_context.info_vqa",
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
+    "__tags__": {
+        "license": "apache-2.0",
+        "multilinguality": "monolingual",
+        "modalities": [
+            "image",
+            "text"
+        ],
+        "size_categories": "10K<n<100K",
+        "task_categories": "question-answering",
+        "task_ids": "extractive-qa"
+    },
+    "__description__": "InfographicVQA is a dataset that comprises a diverse collection of infographics along with natural language questions and answers annotations. The collected questions require methods to jointly reason over the document layout, textual content, graphical elements, and data visualizations. We curate the dataset with emphasis on questions that require elementary reasoning and basic arithmetic skills."
+}

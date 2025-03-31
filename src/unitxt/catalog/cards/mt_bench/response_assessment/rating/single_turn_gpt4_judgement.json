@@ -8,7 +8,10 @@
             "questions": "data/mt_bench/question.jsonl",
             "model_answer": "data/mt_bench/model_answer/*.jsonl",
             "judgment": "data/mt_bench/model_judgment/gpt-4_single.jsonl"
-        }
+        },
+        "data_classification_policy": [
+            "public"
+        ]
     },
     "preprocess_steps": [
         "operators.mt_bench.rating_hf_space_processing_steps",
@@ -18,6 +21,11 @@
                 "turn": 1
             },
             "condition": "eq"
+        },
+        {
+            "__type__": "fillna",
+            "field": "reference",
+            "value": null
         },
         {
             "__type__": "filter_by_condition",

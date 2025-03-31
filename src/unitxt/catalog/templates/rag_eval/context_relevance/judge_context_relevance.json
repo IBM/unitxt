@@ -1,0 +1,14 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nEvidence: {contexts}\n",
+    "output_format": "{is_context_relevant}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.predictions_yes_1_else_0",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question and the corresponding evidence. Please determine whether the evidence contain the answer to the question. Answer with only yes/no.\n\n"
+}

@@ -1,0 +1,48 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "enelpol/rag-mini-bioasq",
+        "name": "text-corpus",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "test": "train"
+            }
+        },
+        {
+            "__type__": "cast",
+            "field": "id",
+            "to": "str"
+        },
+        {
+            "__type__": "copy",
+            "field": "id",
+            "to_field": "document_id"
+        },
+        {
+            "__type__": "wrap",
+            "field": "passage",
+            "inside": "list",
+            "to_field": "passages"
+        }
+    ],
+    "task": "tasks.rag.corpora",
+    "templates": {
+        "empty": {
+            "__type__": "input_output_template",
+            "input_format": "",
+            "output_format": ""
+        }
+    },
+    "__tags__": {
+        "license": "cc-by-2.5",
+        "url": "https://huggingface.co/datasets/enelpol/rag-mini-bioasq"
+    },
+    "__description__": "This dataset is a subset of a training dataset by the BioASQ Challenge, which is available here.\n\nIt is derived from rag-datasets/rag-mini-bioasq.\n\nModifications include:\n\nfilling in missing passages (some of them contained \"nan\" instead of actual text),\nchanging relevant_passage_ids' type from string to sequence of ints,\ndeduplicating the passages (removed 40 duplicates) and fixing the relevant_passage_ids in QAP triplets to point to the corrected, deduplicated passages' ids,\nsplitting QAP triplets into train and test splits.\n"
+}

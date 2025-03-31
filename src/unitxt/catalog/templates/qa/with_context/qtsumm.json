@@ -1,0 +1,12 @@
+{
+    "__type__": "multi_reference_template",
+    "instruction": "Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query.\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
+    "input_format": "{context_type}:\n{context}\nQuery:\n{question}",
+    "output_format": "{answers}",
+    "target_prefix": "Answer:\n",
+    "references_field": "answers",
+    "title_fields": [
+        "context_type"
+    ],
+    "__description__": "Template from https://arxiv.org/pdf/2305.14303 for query-focused summarization over tables"
+}

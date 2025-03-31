@@ -9,6 +9,7 @@ dataset = load_dataset(
     "unitxt/data",
     "card=cards.wnli,template=templates.classification.multi_class.relation.default,num_demos=2,demos_pool_size=100,loader_limit=200",
     trust_remote_code=True,
+    split="test",
 )
 
 # Print the resulting dataset.
@@ -16,18 +17,16 @@ dataset = load_dataset(
 # that expected answer.
 
 print("Sample dataset instance:")
-print(json.dumps(dataset["train"][0], indent=4))
+print(json.dumps(dataset[0], indent=4))
 
 # Generate predictions which are always entailment. Can be replaced with any inference method.
-predictions = ["entailment" for t in dataset["test"]]
+predictions = ["entailment" for _ in dataset]
 
 # Use the huggingface evaluate API to evaluate using the built in metrics for the task
 # (f1_micro, f1_macro, accuracy, including confidence intervals)
 
 metric = evaluate.load("unitxt/metric")
-evaluated_dataset = metric.compute(predictions=predictions, references=dataset["test"])
+results = metric.compute(predictions=predictions, references=dataset)
 
-# print the aggregated scores dictionary.
-print("\nScores:")
-scores = evaluated_dataset[0]["score"]["global"]
-print(json.dumps(scores, indent=4))
+print("Global Results:")
+print(results.global_scores.summary)

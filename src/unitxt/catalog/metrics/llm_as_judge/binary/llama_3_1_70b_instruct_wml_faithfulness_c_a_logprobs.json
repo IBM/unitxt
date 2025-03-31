@@ -1,0 +1,11 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "template": "templates.rag_eval.faithfulness.judge_no_question_simplified_logprobs",
+    "task": "tasks.rag_eval.faithfulness.binary",
+    "format": null,
+    "main_score": "faithfulness_c_a_logprobs",
+    "prediction_field": "answer",
+    "infer_log_probs": true,
+    "__deprecated_msg__": "This metric should be replaced with metrics.rag.faithfulness.llama_3_1_70b_instruct_wml_c_a_logprobs"
+}

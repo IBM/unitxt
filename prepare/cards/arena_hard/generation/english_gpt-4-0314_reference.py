@@ -21,6 +21,7 @@ card = TaskCard(
             "questions": "data/arena-hard-v0.1/question.jsonl",
             "model_answer": "data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl",
         },
+        data_classification_policy = ["public"],
     ),
     preprocess_steps=[
         # region Question file
@@ -83,7 +84,7 @@ card = TaskCard(
         ),
     ],
     task="tasks.generation",
-    templates=["templates.empty"],
+    templates=["templates.generation.empty"],
 )
 
 test_card(card, demos_taken_from="test", strict=False, loader_limit=100)

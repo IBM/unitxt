@@ -1,12 +1,25 @@
 import csv
 import io
+import json
 from abc import abstractmethod
 from typing import Any, Dict, List, Union
 
 from .dataclass import AbstractField, Field
 from .operators import InstanceFieldOperator
+from .settings_utils import get_constants
 from .type_utils import isoftype, to_type_string
-from .types import Dialog, Image, Number, Table
+from .types import (
+    Dialog,
+    Document,
+    Image,
+    MultiDocument,
+    Number,
+    SQLDatabase,
+    Table,
+    Video,
+)
+
+constants = get_constants()
 
 
 class Serializer(InstanceFieldOperator):
@@ -46,6 +59,13 @@ class ListSerializer(SingleTypeSerializer):
 
     def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
         return ", ".join(str(item) for item in value)
+
+
+class DictAsJsonSerializer(SingleTypeSerializer):
+    serialized_type = dict
+
+    def serialize(self, value: Any, instance: Dict[str, Any]) -> str:
+        return json.dumps(value)
 
 
 class DialogSerializer(SingleTypeSerializer):
@@ -106,15 +126,49 @@ class ImageSerializer(SingleTypeSerializer):
         if "images" not in instance["media"]:
             instance["media"]["images"] = []
         idx = len(instance["media"]["images"])
-        instance["media"]["images"].append(value["image"])
-        value["image"] = f'<img src="media/images/{idx}">'
-        return value["image"]
+        instance["media"]["images"].append(
+            {"image": value["image"], "format": value["format"]}
+        )
+        value["image"] = f"media/images/{idx}"
+        return f'<{constants.image_tag} src="media/images/{idx}">'
+
+
+class VideoSerializer(ImageSerializer):
+    serialized_type = Video
+
+    def serialize(self, value: Video, instance: Dict[str, Any]) -> str:
+        serialized_images = []
+        for image in value:
+            image = super().serialize(image, instance)
+            serialized_images.append(image)
+        return "".join(serialized_images)
+
+
+class DocumentSerializer(SingleTypeSerializer):
+    serialized_type = Document
+
+    def serialize(self, value: Document, instance: Dict[str, Any]) -> str:
+        return f"# {value['title']}\n\n{value['body']}"
+
+
+class MultiDocumentSerializer(DocumentSerializer):
+    serialized_type = MultiDocument
+
+    def serialize(self, value: MultiDocument, instance: Dict[str, Any]) -> str:
+        documents = []
+        for document in value:
+            documents.append(super().serialize(document, instance))
+        return "\n\n".join(documents)
 
 
 class MultiTypeSerializer(Serializer):
     serializers: List[SingleTypeSerializer] = Field(
         default_factory=lambda: [
+            DocumentSerializer(),
+            DialogSerializer(),
+            MultiDocumentSerializer(),
             ImageSerializer(),
+            VideoSerializer(),
             TableSerializer(),
             DialogSerializer(),
         ]
@@ -140,3 +194,15 @@ class MultiTypeSerializer(Serializer):
                 return serializer.serialize(value, instance)
 
         return str(value)
+
+
+class SQLDatabaseAsSchemaSerializer(SingleTypeSerializer):
+    """Serializes a database schema into a string representation."""
+
+    serialized_type = SQLDatabase
+
+    def serialize(self, value: SQLDatabase, instance: Dict[str, Any]) -> str:
+        from .sql_utils import get_db_connector
+
+        connector = get_db_connector(value["db_type"])(value)
+        return connector.get_table_schema()

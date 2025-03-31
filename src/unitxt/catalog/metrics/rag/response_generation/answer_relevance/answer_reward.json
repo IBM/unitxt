@@ -1,0 +1,19 @@
+{
+    "__type__": "metric_pipeline",
+    "main_score": "reward_score",
+    "preprocess_steps": [
+        {
+            "__type__": "wrap",
+            "field": "task_data/question",
+            "inside": "list",
+            "to_field": "references"
+        },
+        {
+            "__type__": "multi_type_serializer",
+            "field": "references",
+            "process_every_value": true
+        }
+    ],
+    "metric": "metrics.reward.deberta_v3_large_v2",
+    "score_prefix": "answer_relevance_"
+}

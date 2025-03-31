@@ -29,7 +29,7 @@ def apply_operator(
 def check_operator_exception(
     operator: StreamingOperator,
     inputs: List[dict],
-    exception_text,
+    exception_texts,
     tester=None,
 ):
     assert isoftype(operator, StreamingOperator), "operator must be an Operator"
@@ -39,15 +39,17 @@ def check_operator_exception(
     try:
         apply_operator(operator, inputs)
     except Exception as e:
-        if tester is not None:
-            tester.assertEqual(str(e), exception_text)
-        elif str(e) != exception_text:
-            raise AssertionError(
-                f"Expected exception text : {exception_text}. Got : {e}"
-            ) from e
+        for exception_text in exception_texts:
+            if tester is not None:
+                tester.assertEqual(str(e), exception_text)
+            elif str(e) != exception_text:
+                raise AssertionError(
+                    f"Expected exception text : {exception_text}. Got : {e}"
+                ) from e
+            e = e.__cause__
         return
 
-    raise AssertionError(f"Did not receive expected exception {exception_text}")
+    raise AssertionError(f"Did not receive expected exception: {exception_texts[0]}")
 
 
 def check_operator(

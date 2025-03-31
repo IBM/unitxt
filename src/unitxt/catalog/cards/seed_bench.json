@@ -1,0 +1,62 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "lmms-lab/SEED-Bench"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "to_image",
+            "field": "image",
+            "to_field": "context",
+            "process_every_value": true
+        },
+        {
+            "__type__": "to_rgb",
+            "field": "context",
+            "process_every_value": true
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "choice_a",
+                "choice_b",
+                "choice_c",
+                "choice_d"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "set",
+            "fields": {
+                "context_type": "video"
+            }
+        },
+        {
+            "__type__": "map_values",
+            "mapping": {
+                "A": 0,
+                "B": 1,
+                "C": 2,
+                "D": 3
+            },
+            "field": "answer"
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": [
+        {
+            "__type__": "multiple_choice_template",
+            "input_format": "{context}\n{question}\n{choices}\nAnswer with the option's letter from the given choices directly.",
+            "choices_separator": "\n",
+            "target_field": "answer",
+            "enumerator": "capitals",
+            "__description__": "lmms-evals default template for seed bench."
+        },
+        "templates.qa.multiple_choice.with_context.no_intro.helm",
+        "templates.qa.multiple_choice.with_context.no_intro.mmlu",
+        "templates.qa.multiple_choice.with_context.no_intro.lm_eval_harness"
+    ],
+    "__tags__": {},
+    "__description__": "SEED-Bench-1 consists of 19K multiple-choice questions with accurate human annotations, covering 12 evaluation dimensions including both the spatial and temporal understanding."
+}

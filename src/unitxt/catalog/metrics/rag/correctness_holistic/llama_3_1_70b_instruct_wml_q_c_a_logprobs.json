@@ -1,0 +1,10 @@
+{
+    "__type__": "task_based_ll_mas_judge",
+    "inference_model": "engines.classification.llama_3_1_70b_instruct_wml",
+    "template": "templates.rag_eval.correctness_holistic.judge_correctness_simple_logprobs",
+    "task": "tasks.rag_eval.correctness_holistic.binary",
+    "format": null,
+    "main_score": "correctness_holistic_q_c_a_logprobs",
+    "prediction_field": "answer",
+    "infer_log_probs": true
+}

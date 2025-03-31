@@ -2,6 +2,10 @@ nav {
     background-color: #cfd0ff !important;
 }
 
+div#top_nav div#notification_banner {
+  background-color: #9facff !important;
+}
+
 div.document div.documentwrapper {
     max-width: 50rem;
 }
@@ -193,3 +197,17 @@ div.document div.documentwrapper {
       transform: rotate(360deg);
     }
   }
+
+.viewcode-link {
+    float: right;
+    margin-left: 10px;
+}
+
+.red {
+  color: red;
+}
+
+#unitxtImports {
+  /* Display nothing for the element */
+  display: none;
+}         

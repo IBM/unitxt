@@ -1,5 +1,6 @@
 from typing import Any, Dict, List
 
+from unitxt.catalog import get_from_catalog
 from unitxt.error_utils import UnitxtError
 from unitxt.task import Task
 
@@ -25,6 +26,16 @@ class TestTasks(UnitxtTestCase):
             "(<class 'str'>) are different.",
             str(e.exception),
         )
+
+    def test_single_metric_string_loading(self):
+        task = get_from_catalog("tasks.qa.with_context[metrics=metrics.rouge]")
+        self.assertListEqual(task.metrics, ["metrics.rouge"])
+
+    def test_multiple_metrics_string_loading(self):
+        task = get_from_catalog(
+            "tasks.qa.with_context[metrics=[metrics.rouge, metrics.bleu]]"
+        )
+        self.assertListEqual(task.metrics, ["metrics.rouge", "metrics.bleu"])
 
     def test_task_metrics_type_checking_with_inputs_outputs(self):
         operator = Task(

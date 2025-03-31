@@ -1,0 +1,14 @@
+{
+    "__type__": "input_output_template_with_custom_target",
+    "input_format": "Question: {question}\n\nGround-truth answer: {ground_truths}\n\nPrediction: {answer}\n",
+    "output_format": "{is_correct}",
+    "postprocessors": [
+        "processors.take_first_word",
+        "processors.lower_case",
+        "processors.predictions_yes_1_else_0",
+        "processors.cast_to_float_return_zero_if_failed"
+    ],
+    "reference": "{number_val}",
+    "target_prefix": "Answer: ",
+    "instruction": "You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the \"Ground-truth answer\" and the \"Prediction\" to determine whether the prediction correctly answers the question. All information in the ground-truth answer must be present in the prediction. Answer with only yes/no.\n"
+}

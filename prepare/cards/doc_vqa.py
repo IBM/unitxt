@@ -1,15 +1,18 @@
 from unitxt.blocks import LoadHF, Set, TaskCard
-from unitxt.catalog import add_to_catalog
+from unitxt.catalog import add_to_catalog, get_from_catalog
 from unitxt.collections_operators import Explode, Wrap
 from unitxt.image_operators import ToImage
-from unitxt.operators import Copy
+from unitxt.operators import Copy, Shuffle
 from unitxt.splitters import RenameSplits
 from unitxt.test_utils.card import test_card
+
+templates = get_from_catalog("templates.qa.with_context.all")
 
 for language in ["en", "fr"]:
     card = TaskCard(
         loader=LoadHF(path="cmarkea/doc-vqa", data_classification_policy=["public"]),
         preprocess_steps=[
+            Shuffle(),
             "splitters.small_no_dev",
             Explode(field=f"qa/{language}", to_field="pair"),
             Copy(field="pair/question", to_field="question"),
@@ -19,7 +22,7 @@ for language in ["en", "fr"]:
             Set(fields={"context_type": "image"}),
         ],
         task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-        templates="templates.qa.with_context.all",
+        templates=["templates.qa.with_context.doc_vqa", *templates.items],
         __tags__={
             "license": "apache-2.0",
             "multilinguality": "monolingual",
@@ -42,12 +45,13 @@ card = TaskCard(
         path="lmms-lab/DocVQA", name="DocVQA", data_classification_policy=["public"]
     ),
     preprocess_steps=[
+        Shuffle(),
         RenameSplits(mapper={"validation": "test"}),
         ToImage(field="image", to_field="context"),
         Set(fields={"context_type": "image"}),
     ],
     task="tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    templates="templates.qa.with_context.all",
+    templates=["templates.qa.with_context.doc_vqa", *templates.items],
     __tags__={
         "license": "apache-2.0",
         "multilinguality": "monolingual",

@@ -2,15 +2,18 @@ import ast
 import copy
 import json
 import re
+import string
 from difflib import get_close_matches
 from typing import Any, Dict
 
 import numpy as np
 
 from .deprecation_utils import deprecation
+from .error_utils import Documentation, UnitxtError
 from .operator import MultiStreamOperator
 from .operators import FieldOperator, InstanceFieldOperator
 from .settings_utils import get_constants
+from .type_utils import isoftype
 
 constants = get_constants()
 
@@ -22,6 +25,11 @@ class PostProcess(MultiStreamOperator):
 
     def prepare(self):
         super().prepare()
+        if not isoftype(self.operator, InstanceFieldOperator):
+            raise UnitxtError(
+                f"PostProcess requires operator field to be of type InstanceFieldOperator. Got object of type <{type(self.operator).__name__}>.",
+                Documentation.POST_PROCESSORS,
+            )
         self.prediction_operator = copy.copy(self.operator)
         self.prediction_operator.field = "prediction"
         self.references_operator = copy.copy(self.operator)
@@ -124,6 +132,14 @@ class TakeFirstNonEmptyLine(FieldOperator):
         return parts[0].strip()
 
 
+class TakeLastNonEmptyLine(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        parts = str(text).strip().split("\n")
+        if len(parts) == 0:
+            return ""
+        return parts[-1].strip()
+
+
 class ConvertToBoolean(FieldOperator):
     def process_value(self, text: Any) -> Any:
         clean_instance = str(text).strip().lower()
@@ -147,6 +163,11 @@ class LowerCaseTillPunc(FieldOperator):
 class Lower(FieldOperator):
     def process_value(self, text: Any) -> Any:
         return text.lower()
+
+
+class Upper(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return str(text).upper()
 
 
 @deprecation("2.0.0", alternative=Lower)
@@ -373,3 +394,85 @@ class InferDictsToBinaryLogprobs(FieldOperator):
         if self.take_logprobs_from_end:
             return range(-1, -(n_tokens + 1), -1)
         return range(n_tokens)
+
+
+class RemoveArticles(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return re.sub(r"\b(a|an|the)\b", " ", text)
+
+
+class RemovePunctuations(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        puncs_to_exclude = set(string.punctuation)
+        return "".join(c for c in text if c not in puncs_to_exclude)
+
+
+class FixWhiteSpace(FieldOperator):
+    def process_value(self, text: Any) -> Any:
+        return " ".join(text.split())
+
+
+class AddPrefix(FieldOperator):
+    prefix: str
+
+    def process_value(self, text: str) -> str:
+        text = text.strip()
+        if text.startswith(self.prefix):
+            return text
+        return self.prefix + text.strip()
+
+
+class GetSQL(FieldOperator):
+    def process_value(self, text: str) -> str:
+        """Extracts the first SQL query from a given text.
+
+        Args:
+        text: The input string containing the SQL query.
+
+        Returns:
+        The first SQL query found in the text, or None if no query is found.
+        """
+        match = re.search(
+            r"(?:```)?.*?(SELECT.*?(?:FROM|WITH|;|$).*?)(?:```|;|$)",
+            text,
+            re.IGNORECASE | re.DOTALL,
+        )
+
+        if match:
+            out = (
+                text[match.start() : match.end()]
+                .replace("```", "")
+                .replace(";", "")
+                .strip()
+            )
+        else:
+            out = "No query found in generation"
+
+        return out
+
+
+class ScaleNumberToZeroOneReturnZeroIfFails(FieldOperator):
+    max_val = 10
+    min_val = 0
+
+    def process_value(self, text: Any) -> Any:
+        try:
+            text = float(text)
+            return (text - self.min_val) / self.max_val
+        except Exception:
+            return 0
+
+
+class ExtractVerbalJudgment(FieldOperator):
+    classes = ["not", "somewhat", "mostly", "completely"]
+
+    def process_value(self, text: Any) -> Any:
+        max_val = len(self.classes) - 1
+        for i, c in enumerate(self.classes):
+            if text.strip().lower().startswith(c):
+                return i / (max_val)
+        return 0
+
+
+class ExtractVerbalJudgementBadGood(ExtractVerbalJudgment):
+    classes = ["very bad", "bad", "mediocre", "good", "very good"]

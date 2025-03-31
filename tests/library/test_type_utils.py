@@ -336,26 +336,41 @@ class TestAssertTyping(UnitxtTestCase):
             "field_2": 1,
             "field_3": (["a", "b"], None),
         }
-        verify_required_schema(schema, obj)
+        verify_required_schema(
+            schema, obj, class_name="Task", id="my_task", description="This is my task."
+        )
 
         obj_2 = obj.copy()
         obj_2.update({"field_1": {"a": "b"}})
-        with self.assertRaises(ValueError) as e:
-            verify_required_schema(schema, obj_2)
+        with self.assertRaises(Exception) as e:
+            verify_required_schema(
+                schema,
+                obj_2,
+                class_name="Task",
+                id="my_task",
+                description="This is my task.",
+            )
         self.assertEqual(
             str(e.exception),
-            "Passed value '{'a': 'b'}' of field 'field_1' is not "
-            "of required type: (Dict[str, float]).",
+            """Passed value '{'a': 'b'}' of field 'field_1' is not of required type: (Dict[str, float]) in Task ('my_task').
+Task description: This is my task.""",
         )
 
         obj_3 = obj.copy()
         obj_3.pop("field_2")
-        with self.assertRaises(KeyError) as e:
-            verify_required_schema(schema, obj_3)
+        with self.assertRaises(Exception) as e:
+            verify_required_schema(
+                schema,
+                obj_3,
+                class_name="Task",
+                id="my_task",
+                description="This is my task.",
+            )
         self.assertEqual(
             str(e.exception).strip('"'),
-            "Unexpected field name: 'field_2'. The available "
-            "names: ['field_1', 'field_3'].",
+            """The Task ('my_task') expected a field 'field_2' which the input instance did not contain.
+The input instance fields are  : ['field_1', 'field_3'].
+Task description: This is my task.""",
         )
 
     def test_format_type_string(self):

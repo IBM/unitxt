@@ -1,11 +1,16 @@
 from unitxt.struct_data_operators import (
     ConvertTableColNamesToSequential,
     DumpJson,
+    DuplicateTableColumns,
+    DuplicateTableRows,
+    InsertEmptyTableRows,
+    JsonStrToDict,
     ListToKeyValPairs,
     LoadJson,
     MapHTMLTableToJSON,
     SerializeKeyValPairs,
     SerializeTableAsDFLoader,
+    SerializeTableAsHTML,
     SerializeTableAsIndexedRowMajor,
     SerializeTableAsJson,
     SerializeTableAsMarkdown,
@@ -14,6 +19,7 @@ from unitxt.struct_data_operators import (
     SerializeTriples,
     ShuffleTableColumns,
     ShuffleTableRows,
+    TransposeTable,
     TruncateTableCells,
     TruncateTableRows,
 )
@@ -135,7 +141,7 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        serialized_str = 'pd.DataFrame({\n{"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]}},\nindex=[0, 1, 2])'
+        serialized_str = 'pd.DataFrame({\n"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]},\nindex=[0, 1, 2])'
 
         targets = [
             {
@@ -180,6 +186,35 @@ class TestStructDataOperators(UnitxtTestCase):
 
         check_operator(
             operator=SerializeTableAsJson(field_to_field={"table": "serialized_table"}),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_serializetable_html(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                }
+            }
+        ]
+
+        serialized_str = "<table>\n  <thead>\n    <tr><th>name</th><th>age</th></tr>\n  </thead>\n  <tbody>\n    <tr><td>Alex</td><td>26</td></tr>\n    <tr><td>Raj</td><td>34</td></tr>\n    <tr><td>Donald</td><td>39</td></tr>\n  </tbody>\n</table>"
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age"],
+                    "rows": [["Alex", 26], ["Raj", 34], ["Donald", 39]],
+                },
+                "serialized_table": serialized_str,
+            }
+        ]
+
+        check_operator(
+            operator=SerializeTableAsHTML(field_to_field={"table": "serialized_table"}),
             inputs=inputs,
             targets=targets,
             tester=self,
@@ -543,5 +578,167 @@ class TestStructDataOperators(UnitxtTestCase):
             operator=MapHTMLTableToJSON(field_to_field=[["data", "table_out"]]),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+    def test_transpose_table(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": [" ", "0", "1", "2"],
+                    "rows": [
+                        ["name", "Alice", "Raj", "Donald"],
+                        ["age", 26, 34, 39],
+                        ["sex", "F", "M", "M"],
+                    ],
+                }
+            }
+        ]
+
+        check_operator(
+            operator=TransposeTable(field="table"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_duplicate_table_rows(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [
+                        ["Alice", 26, "F"],
+                        ["Alice", 26, "F"],  # First row duplicated
+                        ["Raj", 34, "M"],  # Second row remains the same
+                        ["Donald", 39, "M"],
+                        ["Donald", 39, "M"],  # Third row duplicated
+                    ],
+                }
+            }
+        ]
+
+        check_operator(
+            operator=DuplicateTableRows(field="table", row_indices=[0, 2], times=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_duplicate_table_columns(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "name", "age", "age", "sex"],
+                    "rows": [
+                        ["Alice", "Alice", 26, 26, "F"],
+                        ["Raj", "Raj", 34, 34, "M"],
+                        ["Donald", "Donald", 39, 39, "M"],
+                    ],
+                }
+            }
+        ]
+
+        check_operator(
+            operator=DuplicateTableColumns(
+                field="table", column_indices=[0, 1], times=2
+            ),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_insert_empty_table_rows(self):
+        inputs = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [["Alice", 26, "F"], ["Raj", 34, "M"], ["Donald", 39, "M"]],
+                }
+            }
+        ]
+
+        targets = [
+            {
+                "table": {
+                    "header": ["name", "age", "sex"],
+                    "rows": [
+                        ["", "", ""],  # Empty row inserted
+                        ["Alice", 26, "F"],
+                        ["", "", ""],  # Empty row inserted
+                        ["Raj", 34, "M"],
+                        ["Donald", 39, "M"],
+                    ],
+                }
+            }
+        ]
+
+        import random
+
+        random.seed(123)
+
+        check_operator(
+            operator=InsertEmptyTableRows(field="table", times=2),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+    def test_json_str_to_dict(self):
+        inputs = [
+            {
+                "prediction": """
+{ "a": null , "b" : 3,  "c" : "word" }
+"""
+            }
+        ]
+
+        targets = [{"prediction": {"b": "3", "c" : "word"}}]
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=[{"prediction": "bad input"}],
+            targets=[{"prediction": {}}],
+            tester=self,
+        )
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=[{"prediction": "3"}],
+            targets=[{"prediction": {}}],
             tester=self,
         )

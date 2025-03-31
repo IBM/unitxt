@@ -28,7 +28,9 @@ global_target = {
     "wer_ci_high": 0.38,
     "score_ci_low": 0.38,
     "score_ci_high": 0.38,
-}  # Should by 0.375, but package rounds the scores
+    # Should by 0.375, but package rounds the scores
+    "num_of_instances": 2,
+}
 
 outputs = test_metric(
     metric=metric,
