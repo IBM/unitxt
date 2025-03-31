@@ -90,7 +90,7 @@ class LocalSQLiteConnector(DatabaseConnector):
                     repo_type="dataset",
                     local_dir=self.databases_folder,
                     force_download=False,
-                    allow_patterns="*validation*",
+                    # allow_patterns="*validation*",
                 )
                 open(os.path.join(self.databases_folder, "download_done"), "w").close()
         else:
@@ -449,9 +449,9 @@ class RemoteDatabaseConnector(DatabaseConnector):
     def __init__(self, db_config: SQLDatabase):
         super().__init__(db_config)
 
-        assert db_config[
-            "db_id"
-        ], "db_id must be in db_config for RemoteDatabaseConnector"
+        assert db_config["db_id"], (
+            "db_id must be in db_config for RemoteDatabaseConnector"
+        )
         self.api_url, self.database_id = (
             db_config["db_id"].split(",")[0],
             db_config["db_id"].split("db_id=")[-1].split(",")[0],

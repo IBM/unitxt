@@ -7,7 +7,11 @@ from unitxt.operators import ExecuteExpression, Shuffle
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="premai-io/birdbench", split="validation", streaming=True),
+    loader=LoadHF(
+        path="premai-io/birdbench",
+        splits=["validation", "train"],
+        streaming=True,
+    ),
     preprocess_steps=[
         Shuffle(page_size=sys.maxsize),
         Rename(
