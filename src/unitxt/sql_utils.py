@@ -501,7 +501,7 @@ class RemoteDatabaseConnector(DatabaseConnector):
 
         schema_text = ""
         for table in schema["tables"]:
-            schema_text += f"Table: {table['table_name']} has columns: {[col['column_name'] for col in table['columns']]}\n"
+            schema_text += f"Table: {table['name'] if 'name' in table else table['table_name']} has columns: {[col['name'] if 'name' in col else col['column_name'] for col in table['columns']]}\n"
 
         return schema_text
 
