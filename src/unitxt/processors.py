@@ -298,7 +298,7 @@ class ExtractHarmRatingJudgement(FieldOperator):
         try:
             return float(match.group(1))*0.25 - 0.25
         except:
-            return None
+            return np.NaN
 
 class ExtractMtBenchLabelJudgment(FieldOperator):
     def process_value(self, text: Any) -> Any:
