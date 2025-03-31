@@ -163,3 +163,4 @@ docs/_static/data.js
 cache
 
 inference_engine_cache/
+ics/data/**/*
