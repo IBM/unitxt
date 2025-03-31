@@ -45,6 +45,6 @@ card = TaskCard(
     },
 )
 
-test_card(card,strict=False)
+test_card(card,strict=False,loader_limit=10000)
 
 add_to_catalog(card, "cards.safety.airbench2024", overwrite=True)

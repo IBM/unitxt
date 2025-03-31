@@ -1,12 +1,21 @@
 {
     "__type__": "task_card",
     "loader": {
-        "__type__": "load_hf",
-        "path": "stanford-crfm/air-bench-2024",
-        "data_files": {
-            "default": "category*.csv",
-            "judge_prompts": "judge_prompt_final.csv"
-        },
+        "__type__": "multiple_source_loader",
+        "sources": [
+            {
+                "__type__": "load_hf",
+                "path": "stanford-crfm/air-bench-2024",
+                "name": "default"
+            },
+            {
+                "__type__": "load_hf",
+                "path": "stanford-crfm/air-bench-2024",
+                "data_files": {
+                    "judge_prompts": "judge_prompt_final.csv"
+                }
+            }
+        ],
         "data_classification_policy": [
             "public"
         ]
@@ -24,7 +33,7 @@
         },
         {
             "__type__": "join_streams",
-            "left_stream": "default",
+            "left_stream": "test",
             "right_stream": "judge_prompts",
             "how": "inner",
             "on": [
