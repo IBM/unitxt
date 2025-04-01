@@ -192,6 +192,7 @@ if Constants.is_uninitilized():
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
     constants.image_tag = "unitxt-img"
+    constants.audio_tag = "unitxt-audio"
     constants.demos_pool_field = "_demos_pool_"
     constants.demos_field = "demos"
     constants.instruction_field = "instruction"
