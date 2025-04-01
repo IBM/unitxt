@@ -104,7 +104,7 @@ The default reported metrics are the classical f1_micro (equivalent to accuracy 
 
 """,
         input_fields={
-            "text": str,
+            "text": Union[str, Image, Audio],
             "text_type": str,
             "classes": List[str],
             "type_of_class": str,
