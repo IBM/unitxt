@@ -150,6 +150,7 @@ all = [
 unitxt-explore = "unitxt.ui:launch"
 unitxt-assistant = "unitxt.assistant:launch"
 unitxt-metrics-service = "unitxt.service.metrics.main:start_metrics_http_service"
+unitxt-eval = "unitxt.evaluate_cli:main"
 
 [tool.ruff]
 exclude = [
