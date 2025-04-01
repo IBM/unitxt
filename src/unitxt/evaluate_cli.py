@@ -153,7 +153,7 @@ def setup_parser() -> argparse.ArgumentParser:
         "Examples:\n"
         "- For --model hf (default): 'pretrained=meta-llama/Llama-3.1-8B-Instruct,torch_dtype=bfloat16,device=cuda'\n"
         "  (Note: 'pretrained' key is REQUIRED. Other args like 'torch_dtype', 'device', generation params are passed too)\n"
-        "- For --model generic_remote: 'model_name=openai/gpt-4o,max_tokens=256,temperature=0.7'\n"
+        "- For --model generic_remote: 'model_name=llama-3-3-70b-instruct,max_tokens=256,temperature=0.7'\n"
         "  (Note: 'model_name' key is REQUIRED)\n"
         '- JSON format: \'{"pretrained": "my_model", "torch_dtype": "float32"}\' or \'{"model_name": "openai/gpt-4o"}\'',
     )
