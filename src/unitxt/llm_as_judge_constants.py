@@ -938,6 +938,74 @@ class DirectCriteriaCatalogEnum(Enum):
         },
     )
 
+    ADHERENCE_WITH_FORMAT = CriteriaWithOptions(
+        "adherence_with_format",
+        "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing).",
+        [
+            CriteriaOption(
+                "Excellent",
+                "The response perfectly aligns with the requested structure, style, or format, with no deviations.",
+            ),
+            CriteriaOption(
+                "Good",
+                "The response aligns well with the requested structure, style, or format, with minor deviations that do not affect clarity or usability.",
+            ),
+            CriteriaOption(
+                "mediocre",
+                "The response generally follows the requested structure, style, or format, but noticeable inconsistencies or omissions are present.",
+            ),
+            CriteriaOption(
+                "Bad",
+                "The response only partially aligns with the requested structure, style, or format, with significant inconsistencies or a lack of adherence.",
+            ),
+            CriteriaOption(
+                "Very Bad",
+                "The response fails to align with the requested structure, style, or format.",
+            ),
+        ],
+        {
+            "Excellent": 1.0,
+            "Good": 0.75,
+            "mediocre": 0.5,
+            "Bad": 0.25,
+            "Very Bad": 0,
+        },
+    )
+
+    ANSWER_COMPLETENESS = CriteriaWithOptions(
+        "answer_completeness",
+        "The response is complete: all the aspects of the reference answer are addressed in the response. The response might use different phrasing or wording from the reference answer.",
+        [
+            CriteriaOption(
+                "Excellent",
+                "The response addresses all aspects of the reference answer.",
+            ),
+            CriteriaOption(
+                "Good",
+                "The response addresses most aspects of the reference answer, with minor omissions.",
+            ),
+            CriteriaOption(
+                "mediocre",
+                "The response covers the essential aspects of the reference answer but has notable omissions.",
+            ),
+            CriteriaOption(
+                "Bad",
+                "The response covers only a few aspects of the reference answer, with significant omissions.",
+            ),
+            CriteriaOption(
+                "Very Bad",
+                "The response fails to address the reference answer meaningfully, with most aspects omitted.",
+            ),
+        ],
+        {
+            "Excellent": 1.0,
+            "Good": 0.75,
+            "mediocre": 0.5,
+            "Bad": 0.25,
+            "Very Bad": 0,
+        },
+    )
+
 
 DIRECT_CRITERIA = [c.value for c in DirectCriteriaCatalogEnum]
 
