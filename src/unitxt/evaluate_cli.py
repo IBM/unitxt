@@ -6,7 +6,6 @@ import logging
 import os
 import re
 import sys
-from contextlib import ContextManager  # Added for type hinting
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset  # Added for type hinting
@@ -239,7 +238,7 @@ def prepare_output_paths(output_dir: str, prefix: str) -> Tuple[str, str]:
     return results_file_path, samples_file_path
 
 
-def configure_unitxt_settings(args: argparse.Namespace) -> ContextManager:
+def configure_unitxt_settings(args: argparse.Namespace):
     """Configures unitxt settings and returns a context manager.
 
     Args:
@@ -332,12 +331,14 @@ def initialize_inference_engine(
     # --- Local Hugging Face Model (using HFAutoModelInferenceEngine) ---
     if args.model.lower() == "hf":
         # Check for transformers and torch only when hf model is selected
-        if not _package_is_available("transformers") or not _package_is_available(
-            "torch"
+        if (
+            not _package_is_available("transformers")
+            or not _package_is_available("torch")
+            or not _package_is_available("accelerate")
         ):
             logger.error(
-                "Packages 'transformers' and 'torch' are required for '--model hf'."
-                " Please install them (`pip install transformers torch`)."
+                "Packages 'transformers' 'accelerate' and 'torch' are required for '--model hf'."
+                " Please install them (`pip install transformers torch accelerate`)."
             )
             sys.exit(1)
 
