@@ -112,6 +112,11 @@ ui = [
     "gradio",
     "transformers"
 ]
+text2sql = [
+    "sqlglot",
+    "func_timeout==4.3.5",
+    "sqlparse"
+]
 watsonx = [
     "ibm-watsonx-ai==1.2.10"
 ]
