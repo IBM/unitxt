@@ -11,6 +11,7 @@ from typing import (
     Union,
 )
 
+from .audio_operators import audio_to_base64
 from .dataclass import OptionalField
 from .dict_utils import dict_get
 from .error_utils import UnitxtError
@@ -280,11 +281,17 @@ class ImageUrlContent(TypedDict):
     type: Literal["image_url"]
     image_url: Dict[Literal["url"], str]
 
-
 class ImageFileContent(TypedDict):
     type: Literal["image_file"]
     image_file: Dict[Literal["file_id"], str]
 
+class DataFormat(TypedDict):
+    data: str
+    format: Literal["wav"]
+
+class AudioInputContent(TypedDict):
+    type: Literal["input_audio"]
+    input_audio: DataFormat
 
 Content = Union[TextContent, ImageUrlContent, ImageFileContent]
 
@@ -352,53 +359,60 @@ class ChatAPIFormat(BaseFormat):
     """
 
     def to_content(self, text: str, media: Dict[str, Any]) -> Union[str, List[Content]]:
-        # Regular expression to find <img> tags with src attribute
-        img_tag_pattern = re.compile(
-            r"<" + f"{constants.image_tag}" + r'\s+[^>]*src=["\']([^"\']+)["\'][^>]*>',
+        image_tag = constants.image_tag
+        audio_tag = constants.audio_tag
+
+        # Unified regex for both tags
+        tag_pattern = re.compile(
+            rf"<(?P<tag>{re.escape(image_tag)}|{re.escape(audio_tag)})\s+[^>]*src=[\"'](?P<src>[^\"']+)[\"'][^>]*>",
             re.IGNORECASE,
         )
 
-        # Find all matches of <img> tags and their positions
-        matches = list(img_tag_pattern.finditer(text))
+        matches = list(tag_pattern.finditer(text))
 
-        # If no images are found, return the text as a plain string
         if not matches:
             return text
 
         contents: List[dict] = []
         last_pos = 0
 
-        # Process each match
         for match in matches:
             start, end = match.span()
-            img_url = match.group(1)
+            tag = match.group("tag").lower()
+            src = match.group("src")
 
-            # Add preceding text, if any
+            # Add preceding text
             if last_pos < start:
                 contents.append({"type": "text", "text": text[last_pos:start]})
 
-            # Add image content with a default detail level
-            if img_url.startswith("media/"):
-                image = dict_get(media, img_url[6:])
-                data_url = image_to_data_url(image)
-                contents.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": data_url, "detail": "low"},
-                    }
-                )
-            else:
-                contents.append(
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": img_url, "detail": "low"},
-                    }
-                )
+            is_local = src.startswith("media/")
+            media_key = src[6:] if is_local else None
 
-            # Update the last processed position
+            if tag == image_tag:
+                if is_local:
+                    image = dict_get(media, media_key)
+                    data_url = image_to_data_url(image)
+                else:
+                    data_url = src
+                contents.append({
+                    "type": "image_url",
+                    "image_url": {"url": data_url, "detail": "low"},
+                })
+
+            elif tag == audio_tag:
+                if is_local:
+                    audio = dict_get(media, media_key)
+                    data_url = audio_to_base64(audio)
+                else:
+                    data_url = src
+                contents.append({
+                    "type": "input_audio",
+                    "input_audio": {"data": data_url, "format": "wav"},
+                })
+
             last_pos = end
 
-        # Add any remaining text after the last image
+        # Add any trailing text
         if last_pos < len(text):
             contents.append({"type": "text", "text": text[last_pos:]})
 
@@ -466,6 +480,7 @@ class ChatAPIFormat(BaseFormat):
             media,
         )
         media["images"] = []
+        media["audios"] = []
         return chat
 
 
