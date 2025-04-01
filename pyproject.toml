@@ -143,7 +143,8 @@ all = [
     "unitxt[tests]",
     "unitxt[ui]",
     "unitxt[watsonx]",
-    "unitxt[assistant]"
+    "unitxt[assistant]",
+    "unitxt[sql]"
 ]
 
 [project.scripts]
