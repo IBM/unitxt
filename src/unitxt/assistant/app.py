@@ -93,9 +93,9 @@ class Assistant:
 
         return results
 
-    def generate_response(self, messages, max_tokens=500):
+    def generate_response(self, messages, max_tokens=5000):
         user_query = messages[-1]["content"]
-        search_results = self.search(user_query, max_tokens=5000)
+        search_results = self.search(user_query, max_tokens=max_tokens)
 
         context = "\n\n".join(
             [f"Path: {v['path']}\nText: {v['text']}" for v in search_results.values()]
@@ -146,7 +146,7 @@ class App:
                 "Model", ["watsonx/meta-llama/llama-3-3-70b-instruct"]
             )
             self.max_tokens = st.number_input(
-                "Max Tokens", min_value=1, max_value=10000, value=500, step=50
+                "Context Tokens", min_value=5000, max_value=100000, value=10000, step=5000
             )
             st.markdown("---")
             with st.popover("What do you think?"):
