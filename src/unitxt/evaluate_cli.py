@@ -104,7 +104,7 @@ def setup_parser() -> argparse.ArgumentParser:
 
     # --- Task/Dataset Arguments ---
     parser.add_argument(
-        "--tasks",
+        "--task",
         "-t",
         type=str,
         required=True,
@@ -304,9 +304,9 @@ def load_data(args: argparse.Namespace) -> HFDataset:
         ValueError: If there's a value-related error during loading (e.g., parsing).
     """
     logger.info(
-        f"Loading task/dataset using identifier: '{args.tasks}' with split '{args.split}'"
+        f"Loading task/dataset using identifier: '{args.task}' with split '{args.split}'"
     )
-    dataset_args_str = args.tasks
+    dataset_args_str = args.task
     if args.limit is not None:
         assert "loader_limit=" not in dataset_args_str, (
             "limit was inputted both as an arg and as a task parameter"
