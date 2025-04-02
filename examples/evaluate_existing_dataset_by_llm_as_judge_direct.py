@@ -14,7 +14,7 @@ settings = get_settings()
 # We set loader_limit to 20 to reduce download time.
 criteria = ["answer_relevance", "coherence", "conciseness"]
 metrics = [
-    "metrics.llm_as_judge.direct.rits.llama3_1_70b"
+    "metrics.llm_as_judge.direct.rits.llama3_3_70b"
     "[context_fields=[context,question],"
     f"criteria=metrics.llm_as_judge.direct.criteria.{criterion}]"
     for criterion in criteria

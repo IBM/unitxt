@@ -31,7 +31,6 @@ from typing import (
 )
 
 from datasets import Dataset, DatasetDict, Image
-from diskcache import Cache
 from tqdm import tqdm, trange
 from tqdm.asyncio import tqdm_asyncio
 
@@ -183,7 +182,9 @@ class InferenceEngine(Artifact):
         if not settings.mock_inference_mode:
             super().prepare()  # no need to prepare a mock
             self.prepare_engine()
-            self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
+            if self.use_cache:
+                from diskcache import Cache
+                self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
 
     def __call__(
         self,
@@ -938,14 +939,26 @@ class HFPipelineBasedInferenceEngine(
         if settings.hf_offline_models_path is not None:
             path = os.path.join(settings.hf_offline_models_path, path)
 
-        self.task = (
-            "text2text-generation"
-            if AutoConfig.from_pretrained(
-                path,
-                trust_remote_code=True,
-            ).is_encoder_decoder
-            else "text-generation"
-        )
+        try:
+            # Try loading as a full model (HF model or local full model)
+            config = AutoConfig.from_pretrained(path, trust_remote_code=True)
+
+        except Exception:
+            try:
+                from peft import PeftConfig
+                # If full model loading fails, try loading as a PEFT adapter
+                peft_config = PeftConfig.from_pretrained(path)
+
+                if not peft_config.base_model_name_or_path:
+                    raise ValueError(f"Base model name not found in PEFT config for {path}")
+
+                # Load the base model's config
+                config = AutoConfig.from_pretrained(peft_config.base_model_name_or_path, trust_remote_code=True)
+            except Exception as err2:
+                raise ValueError(f"Could not determine model type for: {path}") from err2
+
+
+        self.task =  "text2text-generation" if config.is_encoder_decoder else "text-generation"
 
     def _get_model_args(self) -> Dict[str, Any]:
         import torch

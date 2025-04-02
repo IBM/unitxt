@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
     criteria = "metrics.llm_as_judge.direct.criteria.answer_completeness"
     metrics = [
-        f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criteria}, context_fields=[answers]]"
+        f"metrics.llm_as_judge.direct.rits.llama3_3_70b[criteria={criteria}, context_fields=[answers]]"
     ]
 
     dataset = create_dataset(

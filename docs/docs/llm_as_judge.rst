@@ -46,7 +46,7 @@ An LLM as a Judge metric consists of several essential components:
 1. The judge model, such as *Llama-3-8B-Instruct* or *gpt-3.5-turbo*, which evaluates the performance of other models.
 2. The platform responsible for executing the judge model, such as Huggingface, OpenAI API and IBM's deployment platforms such as WatsonX and RITS.
    A lot of these model and catalog combinations are already predefined in our catalog. The models are prefixed by metrics.llm_as_judge.direct followed by the platform and the model name.
-   For instance, *metrics.llm_as_judge.direct.rits.llama3_1_70b* refers to *llama3 70B* model that uses RITS deployment service.
+   For instance, *metrics.llm_as_judge.direct.rits.llama3_3_70b* refers to *llama3 70B* model that uses RITS deployment service.
 
 3. The criteria to evaluate the model's response. There are predefined criteria in the catalog and the user can also define a custom criteria.
    Each criteria specifies fine-grained options that help steer the model to evaluate the response more precisely.
@@ -86,7 +86,7 @@ We pass the criteria to the judge model's metric as criteria and the question as
 
     criteria = "metrics.llm_as_judge.direct.criteria.answer_relevance"
     metrics = [
-    f"metrics.llm_as_judge.direct.rits.llama3_1_70b[criteria={criteria}, context_fields=[question]]"
+    f"metrics.llm_as_judge.direct.rits.llama3_3_70b[criteria={criteria}, context_fields=[question]]"
     ]
 
 Once the metric is created, a dataset is created for the appropriate task.
@@ -155,13 +155,13 @@ Below is an example where the user mandates that the model respond with the temp
 End to end Direct example
 ----------------------------
 Unitxt can also obtain model's responses for a given dataset and then run LLM-as-a-judge evaluations on the model's responses.
-Here, we will get *llama-3.2 1B* instruct's responses and then evaluate them for answer relevance, coherence and conciseness using *llama3_1_70b* judge model
+Here, we will get *llama-3.2 1B* instruct's responses and then evaluate them for answer relevance, coherence and conciseness using *llama3_3_70b* judge model
 
 .. code-block:: python
 
     criteria = ["answer_relevance", "coherence", "conciseness"]
     metrics = [
-    "metrics.llm_as_judge.direct.rits.llama3_1_70b"
+    "metrics.llm_as_judge.direct.rits.llama3_3_70b"
     "[context_fields=[context,question],"
     f"criteria=metrics.llm_as_judge.direct.criteria.{criterion},"
     f"score_prefix={criterion}_]"
@@ -298,7 +298,7 @@ Below is an example where we compare the responses of three models for two quest
             reference_fields={"criteria": Any},
             prediction_type=List[str],
             metrics=[
-                "metrics.llm_as_judge.pairwise.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
+                "metrics.llm_as_judge.pairwise.watsonx.llama3_3_70b[context_fields=question,criteria_field=criteria]"
             ],
             default_template=NullTemplate(),
         ),

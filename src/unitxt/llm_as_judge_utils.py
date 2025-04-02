@@ -2,10 +2,8 @@ from typing import Dict
 
 from .llm_as_judge_constants import (
     EVALUATORS_METADATA,
-    MODEL_RENAMINGS,
     EvaluatorMetadata,
     EvaluatorNameEnum,
-    ModelProviderEnum,
 )
 
 
@@ -31,13 +29,6 @@ def get_evaluator_metadata(
         # raise ValueError(f'A {evaluator_type} evaluator with id {name} matched several models.')
         raise ValueError(f"An evaluator with id {name} matched several models.")
     return evaluator_search[0]
-
-
-def rename_model_if_required(model_name: str, provider: ModelProviderEnum) -> str:
-    if provider in MODEL_RENAMINGS and model_name in MODEL_RENAMINGS[provider]:
-        return MODEL_RENAMINGS[provider][model_name]
-    return model_name
-
 
 def rank_indexes(numbers):
     # Generate the initial list of indices

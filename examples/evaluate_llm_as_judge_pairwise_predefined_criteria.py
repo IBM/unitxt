@@ -29,7 +29,7 @@ card = TaskCard(
         reference_fields={"criteria": Any},
         prediction_type=List[str],
         metrics=[
-            "metrics.llm_as_judge.pairwise.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
+            "metrics.llm_as_judge.pairwise.watsonx.llama3_3_70b[context_fields=question,criteria_field=criteria]"
         ],
         default_template=NullTemplate(),
     ),
