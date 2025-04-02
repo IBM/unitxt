@@ -1,6 +1,5 @@
-# unitxt_evaluate_cli.py
+# evaluate_cli.py
 import argparse
-import importlib.util  # Added for checking optional dependencies
 import json
 import logging
 import os
@@ -30,11 +29,6 @@ from .text_utils import print_dict
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
 logger = get_logger()
-
-
-def _package_is_available(package_name: str) -> bool:
-    """Checks if a package is available without importing it."""
-    return importlib.util.find_spec(package_name) is not None
 
 
 def _parse_key_value_string(value: str) -> Optional[Dict[str, Any]]:
@@ -139,10 +133,10 @@ def setup_parser() -> argparse.ArgumentParser:
         "-m",
         type=str,
         default="hf",
-        choices=["hf", "generic_remote"],
+        choices=["hf", "cross_provider"],
         help="Specifies the model type/engine.\n"
         "- 'hf': Local Hugging Face model via HFAutoModel (default). Requires 'pretrained=...' in --model_args.\n"
-        "- 'generic_remote': Remote model via CrossProviderInferenceEngine. Requires 'model_name=...' in --model_args.",
+        "- 'cross_provider': Remote model via CrossProviderInferenceEngine. Requires 'model_name=...' in --model_args.",
     )
     parser.add_argument(
         "--model_args",
@@ -330,18 +324,6 @@ def initialize_inference_engine(
     inference_model = None
     # --- Local Hugging Face Model (using HFAutoModelInferenceEngine) ---
     if args.model.lower() == "hf":
-        # Check for transformers and torch only when hf model is selected
-        if (
-            not _package_is_available("transformers")
-            or not _package_is_available("torch")
-            or not _package_is_available("accelerate")
-        ):
-            logger.error(
-                "Packages 'transformers' 'accelerate' and 'torch' are required for '--model hf'."
-                " Please install them (`pip install transformers torch accelerate`)."
-            )
-            sys.exit(1)
-
         if "pretrained" not in model_args_dict:
             logger.error(
                 "Missing 'pretrained=<model_id_or_path>' in --model_args for '--model hf'."
@@ -362,21 +344,7 @@ def initialize_inference_engine(
         )
 
     # --- Remote Model (CrossProviderInferenceEngine) ---
-    elif args.model.lower() == "generic_remote":
-        # Check for litellm and tenacity only when generic_remote model is selected
-        if not _package_is_available("litellm"):
-            logger.error(
-                "Package 'litellm' is required for '--model generic_remote'."
-                " Please install it (`pip install litellm`)."
-            )
-            sys.exit(1)
-        if not _package_is_available("tenacity"):
-            logger.error(
-                "Package 'tenacity' is required for '--model generic_remote'."
-                " Please install it (`pip install tenacity`)."
-            )
-            sys.exit(1)
-
+    elif args.model.lower() == "cross_provider":
         if "model_name" not in model_args_dict:
             logger.error(
                 "Missing 'model_name=<provider/model_id>' in --model_args for '--model generic_remote'."

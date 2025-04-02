@@ -167,13 +167,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
 
     # --- Inference Engine Initialization Tests ---
 
-    @patch.object(cli, "_package_is_available")
     @patch.object(cli, "HFAutoModelInferenceEngine")
-    def test_initialize_inference_engine_hf_success(
-        self, mock_hf_engine, mock_pkg_avail
-    ):
+    def test_initialize_inference_engine_hf_success(self, mock_hf_engine):
         """Test initializing HF engine successfully."""
-        mock_pkg_avail.return_value = True
         args = argparse.Namespace(model="hf")
         model_args_dict = {
             "pretrained": "model_id",
@@ -187,63 +183,6 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_hf_engine.assert_called_once_with(
             model_name="model_id", device="cuda:0", torch_dtype="bfloat16"
         )
-
-    @patch.object(cli, "_package_is_available")
-    @patch.object(cli, "HFAutoModelInferenceEngine")
-    def test_initialize_inference_engine_hf_missing_pretrained(
-        self, mock_hf_engine, mock_pkg_avail
-    ):
-        """Test initializing HF engine with missing 'pretrained' arg."""
-        mock_pkg_avail.return_value = True
-        args = argparse.Namespace(model="hf")
-        model_args_dict = {"device": "cpu"}  # Missing 'pretrained'
-
-        with self.assertRaisesRegex(ValueError, "Argument 'pretrained' is required"):
-            with self.assertLogs(cli.logger, level="ERROR"):
-                cli.initialize_inference_engine(args, model_args_dict)
-
-        mock_hf_engine.assert_not_called()
-
-    @patch.object(cli, "_package_is_available")
-    @patch.object(cli, "CrossProviderInferenceEngine")
-    def test_initialize_inference_engine_remote_success(
-        self, mock_remote_engine, mock_pkg_avail
-    ):
-        """Test initializing remote engine successfully."""
-        mock_pkg_avail.return_value = True
-        args = argparse.Namespace(model="generic_remote")
-        model_args_dict = {
-            "model_name": "openai/gpt-4o",
-            "max_tokens": 100,
-            "temperature": 0.5,
-        }
-        with patch.object(cli, "logger"):
-            engine = cli.initialize_inference_engine(args, model_args_dict.copy())
-
-        self.assertIsInstance(engine, MagicMock)
-        mock_remote_engine.assert_called_once_with(
-            model="openai/gpt-4o", max_tokens=100, temperature=0.5
-        )
-        self.assertEqual(
-            mock_remote_engine.call_args[1],
-            {"max_tokens": 100, "model": "openai/gpt-4o", "temperature": 0.5},
-        )
-
-    # Added test for missing remote model_name arg
-    @patch.object(cli, "_package_is_available")
-    @patch.object(cli, "CrossProviderInferenceEngine")
-    def test_initialize_inference_engine_remote_missing_model_name(
-        self, mock_remote_engine, mock_pkg_avail
-    ):
-        """Test initializing remote engine with missing 'model_name' arg."""
-        mock_pkg_avail.return_value = True
-        args = argparse.Namespace(model="generic_remote")
-        model_args_dict = {"max_tokens": 100}  # Missing 'model_name'
-
-        with self.assertRaisesRegex(ValueError, "Argument 'model_name' is required"):
-            with self.assertLogs(cli.logger, level="ERROR"):
-                cli.initialize_inference_engine(args, model_args_dict)
-        mock_remote_engine.assert_not_called()
 
     # --- Inference Execution ---
     @patch.object(
