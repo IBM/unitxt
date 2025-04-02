@@ -6,7 +6,6 @@ import json
 import logging
 import os
 import platform  # Added
-import re
 import subprocess  # Added
 import sys
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -120,6 +119,12 @@ def setup_parser() -> argparse.ArgumentParser:
         help="Dataset split to use (e.g., 'train', 'validation', 'test'). Default: 'test'.",
     )
     parser.add_argument(
+        "--num_fewshots",
+        type=int,
+        default=None,
+        help="number of fewshots to use",
+    )
+    parser.add_argument(
         "--limit",
         "-L",
         type=int,
@@ -181,6 +186,20 @@ def setup_parser() -> argparse.ArgumentParser:
         default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Controls logging verbosity level. Default: INFO.",
+    )
+
+    parser.add_argument(
+        "--apply_chat_template",
+        type=str,
+        nargs="?",
+        const=True,
+        default=False,
+        help=(
+            "If True, apply chat template to the prompt. "
+            "Providing `--apply_chat_template` without an argument will apply the default chat template to the prompt. "
+            "To apply a specific template from the available list of templates, provide the template name as an argument. "
+            "E.g. `--apply_chat_template template_name`"
+        ),
     )
 
     # --- Unitxt Settings ---
@@ -279,35 +298,32 @@ def load_data(args: argparse.Namespace) -> HFDataset:
     )
     dataset_args_str = args.tasks
     if args.limit is not None:
+        assert "loader_limit=" not in dataset_args_str, (
+            "limit was inputted both as an arg and as a task parameter"
+        )
         # Check if limit or loader_limit is already present
-        if "limit=" not in dataset_args_str and "loader_limit=" not in dataset_args_str:
-            dataset_args_str += f",loader_limit={args.limit}"  # Use loader_limit for unitxt compatibility
-            logger.info(
-                f"Applying limit from --limit argument: loader_limit={args.limit}"
-            )
-        else:
-            # If a limit exists, replace it with the command line one, preferring loader_limit
-            original_limit_match = re.search(r"(loader_)?limit=(\d+)", dataset_args_str)
-            # Check if match was found before accessing group
-            original_limit_str = (
-                original_limit_match.group(0)
-                if original_limit_match
-                else "'limit=...' not found"
-            )
+        dataset_args_str += (
+            f",loader_limit={args.limit}"  # Use loader_limit for unitxt compatibility
+        )
+        logger.info(f"Applying limit from --limit argument: loader_limit={args.limit}")
 
-            logger.warning(
-                f"Limit specified in both --tasks string ('{original_limit_str}' found) "
-                f"and --limit arg ({args.limit}). Overriding with --limit={args.limit}."
-            )
-            # Prioritize replacing loader_limit if present, otherwise replace limit
-            if "loader_limit=" in dataset_args_str:
-                dataset_args_str = re.sub(
-                    r"loader_limit=\d+", f"loader_limit={args.limit}", dataset_args_str
-                )
-            else:
-                dataset_args_str = re.sub(
-                    r"limit=\d+", f"loader_limit={args.limit}", dataset_args_str
-                )
+    if args.num_fewshots:
+        assert "num_demos=" not in dataset_args_str, (
+            "num_demos was inputted both as an arg and as a task parameter"
+        )
+        dataset_args_str += f",num_demos={args.num_fewshots}"  # Use loader_limit for unitxt compatibility
+        logger.info(
+            f"Applying limit from --limit argument: num_demos={args.num_fewshots}"
+        )
+
+    if args.apply_chat_template:
+        assert "format=" not in dataset_args_str, (
+            "format was inputted as a task parameter, but chat_api was requested"
+        )
+        dataset_args_str += ",format=formats.chat_api"
+        logger.info(
+            "Applying chat template from --apply_chat_template argument: format=formats.chat_api"
+        )
 
     test_dataset = load_dataset(dataset_args_str, split=args.split)
     logger.info(
