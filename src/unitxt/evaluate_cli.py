@@ -158,6 +158,16 @@ def setup_parser() -> argparse.ArgumentParser:
         '- JSON format: \'{"pretrained": "my_model", "torch_dtype": "float32"}\' or \'{"model_name": "openai/gpt-4o"}\'',
     )
 
+    parser.add_argument(
+        "--gen_kwargs",
+        type=try_parse_json,
+        default=None,
+        help=(
+            "Comma delimited string for model generation on greedy_until tasks,"
+            """ e.g. temperature=0,top_p=0.1."""
+        ),
+    )
+
     # --- Output and Logging Arguments ---
     parser.add_argument(
         "--output_dir",
@@ -350,6 +360,26 @@ def prepare_model_args(args: argparse.Namespace) -> Dict[str, Any]:
 
     logger.info(f"Using model_args: {model_args_dict}")
     return model_args_dict
+
+
+def prepare_gen_kwargs(args: argparse.Namespace) -> Dict[str, Any]:
+    """Prepares the model arguments dictionary.
+
+    Args:
+        args (argparse.Namespace): Parsed command-line arguments.
+
+    Returns:
+        Dict[str, Any]: The processed model arguments dictionary.
+    """
+    # Ensure model_args is a dictionary, handling potential string return from try_parse_json
+    gen_kwargs_dict = args.gen_kwargs if isinstance(args.gen_kwargs, dict) else {}
+    if not isinstance(args.gen_kwargs, dict) and args.gen_kwargs is not None:
+        logger.warning(
+            f"Could not parse --gen_kwargs '{args.gen_kwargs}' as JSON or key-value pairs. Treating as empty."
+        )
+
+    logger.info(f"Using model_args: {gen_kwargs_dict}")
+    return gen_kwargs_dict
 
 
 def initialize_inference_engine(
@@ -855,6 +885,8 @@ def main():
             model_args_dict = prepare_model_args(
                 args
             )  # Prepare args before engine init
+            gen_kwargs_dict = prepare_gen_kwargs(args)
+            model_args_dict.update(gen_kwargs_dict)
             inference_model = initialize_inference_engine(args, model_args_dict)
             predictions = run_inference(inference_model, test_dataset)
             evaluated_dataset = run_evaluation(predictions, test_dataset)

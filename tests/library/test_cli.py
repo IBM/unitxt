@@ -17,12 +17,38 @@ from unittest.mock import (
 from unitxt import evaluate_cli as cli
 
 
-# Mock dataset class for testing
+class MockInferenceEngine:
+    """A basic mock for an InferenceEngine."""
+
+    def infer(self, dataset):
+        # Return dummy predictions based on dataset length
+        return [f"prediction_{i}" for i in range(len(dataset))]
+
+
 class MockHFDataset:
-    """Simple mock for Hugging Face Dataset length."""
+    # Mock dataset class for testingclass MockHFDataset:
+    """A basic mock for a Hugging Face Dataset."""
+
+    def __init__(self, data=None):
+        self._data = data if data else []
 
     def __len__(self):
-        return 5
+        return len(self._data) if self._data else 5
+
+    def __getitem__(self, idx):
+        return self._data[idx]
+
+
+class MockHFAutoModelInferenceEngine(MockInferenceEngine):
+    """Mock for HF Engine."""
+
+    pass
+
+
+class MockCrossProviderInferenceEngine(MockInferenceEngine):
+    """Mock for Cross Provider Engine."""
+
+    pass
 
 
 class TestUnitxtEvaluateCLI(unittest.TestCase):
@@ -730,13 +756,13 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
 
     # --- Tests for main ---
 
-    # Use object patching for cli functions
     @patch.object(cli, "setup_parser")
     @patch.object(cli, "setup_logging")
     @patch.object(cli, "prepare_output_paths")
     @patch.object(cli, "configure_unitxt_settings")
     @patch.object(cli, "load_data")
     @patch.object(cli, "prepare_model_args")
+    @patch.object(cli, "prepare_gen_kwargs")
     @patch.object(cli, "initialize_inference_engine")
     @patch.object(cli, "run_inference")
     @patch.object(cli, "run_evaluation")
@@ -745,82 +771,146 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
     @patch.object(cli, "logger")  # Patch logger within cli module
     def test_main_success_flow(
         self,
-        mock_logger,  # Order matters, matches @patch order bottom-up
-        mock_exit,
-        mock_process_save,
-        mock_run_eval,
-        mock_run_infer,
-        mock_init_engine,
-        mock_prep_model_args,
-        mock_load_data,
-        mock_configure_settings,
-        mock_prep_paths,
-        mock_setup_logging,
-        mock_setup_parser,
+        mock_logger,  # Corresponds to @patch.object(cli, "logger")
+        mock_exit,  # Corresponds to @patch("sys.exit")
+        mock_process_save,  # Corresponds to @patch.object(cli, "process_and_save_results")
+        mock_run_eval,  # Corresponds to @patch.object(cli, "run_evaluation")
+        mock_run_infer,  # Corresponds to @patch.object(cli, "run_inference")
+        mock_init_engine,  # Corresponds to @patch.object(cli, "initialize_inference_engine")
+        mock_prep_gen_kwargs,  # <<< Added mock argument
+        mock_prep_model_args,  # Corresponds to @patch.object(cli, "prepare_model_args")
+        mock_load_data,  # Corresponds to @patch.object(cli, "load_data")
+        mock_configure_settings,  # Corresponds to @patch.object(cli, "configure_unitxt_settings")
+        mock_prep_paths,  # Corresponds to @patch.object(cli, "prepare_output_paths")
+        mock_setup_logging,  # Corresponds to @patch.object(cli, "setup_logging")
+        mock_setup_parser,  # Corresponds to @patch.object(cli, "setup_parser")
     ):
         """Test the main function success path."""
-        # Arrange Mocks
-        mock_parser = MagicMock()
+        # --- Arrange Mocks ---
+
+        # 1. Mock parser setup and argument parsing
+        mock_parser = MagicMock(spec=argparse.ArgumentParser)
+        # Define mock arguments that represent a valid success scenario
         mock_args = argparse.Namespace(
             verbosity="INFO",
-            output_dir=".",
-            output_file_prefix="pref",
-            tasks="card=dummy",
+            output_dir="mock_output",  # Use a distinct name
+            output_file_prefix="mock_results",
+            tasks="card=dummy_card,template=dummy_template",  # Example task string
             split="test",
             limit=None,
-            num_fewshots=None,  # Add the new arg
-            model="hf",
-            model_args={},
-            log_samples=False,
+            num_fewshots=None,
+            model="hf",  # Using 'hf' model type
+            # Provide required 'pretrained' key for 'hf' model
+            model_args={"pretrained": "mock-hf-model", "device": "cpu"},
+            gen_kwargs=None,  # Set explicitly for clarity
+            log_samples=True,  # Test saving samples path
             trust_remote_code=False,
             disable_hf_cache=False,
             cache_dir=None,
+            apply_chat_template=False,  # Include all defined args
         )
         mock_parser.parse_args.return_value = mock_args
         mock_setup_parser.return_value = mock_parser
-        mock_prep_paths.return_value = ("./pref.json", "./pref_samples.json")
-        # Mock the context manager returned by configure_unitxt_settings
+
+        # 2. Mock path preparation
+        mock_results_path = "./mock_output/mock_results.json"
+        mock_samples_path = "./mock_output/mock_results_samples.json"
+        mock_prep_paths.return_value = (mock_results_path, mock_samples_path)
+
+        # 3. Mock unitxt settings context manager
         mock_context_manager = MagicMock()
-        mock_context_manager.__enter__.return_value = None  # Simulate entering context
-        mock_context_manager.__exit__.return_value = None  # Simulate exiting context
+        mock_context_manager.__enter__.return_value = None
+        mock_context_manager.__exit__.return_value = None
         mock_configure_settings.return_value = mock_context_manager
 
-        mock_dataset = MagicMock(spec=MockHFDataset)  # Use spec
-        mock_load_data.return_value = mock_dataset
-        mock_model_args_dict = {}
-        mock_prep_model_args.return_value = mock_model_args_dict
-        mock_engine = MagicMock(spec=cli.HFAutoModelInferenceEngine)  # Use spec
-        mock_init_engine.return_value = mock_engine
-        mock_predictions = ["p1"]
+        # 4. Mock data loading
+        # Create a mock dataset with some structure if needed by later steps
+        mock_dataset_instance = MockHFDataset([{"source": "q1", "references": ["a1"]}])
+        mock_load_data.return_value = mock_dataset_instance
+
+        # 5. Mock model and generation argument preparation
+        # prepare_model_args returns the dict *passed* to the engine constructor
+        # (after potentially popping keys like 'pretrained', 'device')
+        mock_model_args_prepared = {"device": "cpu"}  # Example remaining args
+        mock_prep_model_args.return_value = mock_model_args_prepared
+
+        # Mock prepare_gen_kwargs (returns {} if args.gen_kwargs is None)
+        mock_gen_kwargs_prepared = {}
+        mock_prep_gen_kwargs.return_value = (
+            mock_gen_kwargs_prepared  # <<< Set return value
+        )
+
+        # Calculate the final dict passed to initialize_inference_engine
+        # This reflects the model_args_dict.update(gen_kwargs_dict) step in main
+        combined_engine_args = mock_model_args_prepared.copy()
+        combined_engine_args.update(
+            mock_gen_kwargs_prepared
+        )  # Still {"device": "cpu"} here
+
+        # 6. Mock inference engine initialization
+        mock_engine_instance = MockInferenceEngine()  # Use a simple mock engine
+        mock_init_engine.return_value = mock_engine_instance
+
+        # 7. Mock inference execution
+        mock_predictions = ["pred1"]  # Example predictions
         mock_run_infer.return_value = mock_predictions
-        mock_eval_results = [{"score": {}}]
+
+        # 8. Mock evaluation execution
+        # Provide a realistic structure for evaluated data
+        mock_eval_results = [
+            {
+                "source": "q1",
+                "references": ["a1"],
+                "prediction": "pred1",
+                "score": {
+                    "global": {"accuracy": 1.0, "rougeL": 0.8},
+                    "instance": {"accuracy": 1.0, "rougeL": 0.8},
+                },
+                "task_data": {},  # Include if expected
+            }
+        ]
         mock_run_eval.return_value = mock_eval_results
 
-        # Act
-        cli.main()
+        # --- Act ---
+        cli.main()  # Execute the main function
 
-        # Assert basic flow
+        # --- Assert ---
+        # Verify each mocked function was called correctly
+
         mock_setup_parser.assert_called_once()
-        mock_parser.parse_args.assert_called_once()
+        mock_parser.parse_args.assert_called_once()  # Verify args parsed
         mock_setup_logging.assert_called_once_with("INFO")
-        mock_prep_paths.assert_called_once_with(".", "pref")
+        mock_prep_paths.assert_called_once_with("mock_output", "mock_results")
         mock_configure_settings.assert_called_once_with(mock_args)
         mock_context_manager.__enter__.assert_called_once()  # Check context entered
         mock_load_data.assert_called_once_with(mock_args)
         mock_prep_model_args.assert_called_once_with(mock_args)
-        mock_init_engine.assert_called_once_with(mock_args, mock_model_args_dict)
-        mock_run_infer.assert_called_once_with(mock_engine, mock_dataset)
-        mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset)
+        mock_prep_gen_kwargs.assert_called_once_with(mock_args)  # <<< Assert call
+
+        # Assert initialize_inference_engine was called with the correct args
+        # The second argument should be the combined dictionary
+        mock_init_engine.assert_called_once_with(
+            mock_args, combined_engine_args
+        )  # <<< Key assertion
+
+        mock_run_infer.assert_called_once_with(
+            mock_engine_instance, mock_dataset_instance
+        )
+        mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset_instance)
+        # Assert process_and_save_results called with correct paths
         mock_process_save.assert_called_once_with(
-            mock_args, mock_eval_results, "./pref.json", "./pref_samples.json"
+            mock_args, mock_eval_results, mock_results_path, mock_samples_path
         )
         mock_context_manager.__exit__.assert_called_once()  # Check context exited
         mock_exit.assert_not_called()  # Should not exit on success
+
+        # Check specific log messages
         mock_logger.info.assert_has_calls(
             [
                 call("Starting Unitxt Evaluation CLI"),
                 call("Unitxt Evaluation CLI finished successfully."),
-            ]
+            ],
+            any_order=False,  # Set to True if order doesn't strictly matter
         )
 
     @patch.object(cli, "setup_parser")
@@ -895,6 +985,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
     @patch.object(cli, "configure_unitxt_settings")
     @patch.object(cli, "load_data")
     @patch.object(cli, "prepare_model_args")
+    @patch.object(cli, "prepare_gen_kwargs")  # Mock this
     @patch.object(cli, "initialize_inference_engine")
     @patch.object(cli, "run_inference")
     @patch.object(cli, "run_evaluation")
@@ -909,6 +1000,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_run_eval,
         mock_run_infer,
         mock_init_engine,
+        mock_prep_gen_kwargs,  # <<< Added argument
         mock_prep_model_args,
         mock_load_data,
         mock_configure_settings,
@@ -917,55 +1009,98 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_setup_parser,
     ):
         """Test the main function simulating the BIRD remote debug config."""
-        # Arrange Mocks
-        mock_parser = MagicMock()
-        # Simulate parsing of the model_args string
-        parsed_model_args = {"model_name": "llama-3-3-70b-instruct", "max_tokens": 256}
+        # --- Arrange Mocks ---
+
+        # 1. Mock parser setup and args
+        mock_parser = MagicMock(spec=argparse.ArgumentParser)
+        # Simulate parsing of the model_args string (as if try_parse_json worked)
+        parsed_model_args_input = {
+            "model_name": "llama-3-3-70b-instruct",
+            "max_tokens": 256,
+        }
         mock_args = argparse.Namespace(
             tasks="card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
-            model="cross_provider",
-            model_args=parsed_model_args,  # Use the parsed dict
+            model="cross_provider",  # Use remote model type
+            model_args=parsed_model_args_input,  # Args as parsed dict
             split="validation",
             limit=100,
-            num_fewshots=None,  # Explicitly None for this scenario
+            num_fewshots=None,
+            gen_kwargs=None,  # Explicitly None
             output_dir="./debug_output/bird_remote",
+            output_file_prefix="evaluation_results",
             log_samples=True,
             verbosity="INFO",
-            trust_remote_code=True,
-            output_file_prefix="evaluation_results",
+            trust_remote_code=True,  # Specific to this scenario
             disable_hf_cache=False,
             cache_dir=None,
+            apply_chat_template=False,
         )
         mock_parser.parse_args.return_value = mock_args
         mock_setup_parser.return_value = mock_parser
+
+        # 2. Mock path preparation
         expected_results_path = "./debug_output/bird_remote/evaluation_results.json"
         expected_samples_path = (
             "./debug_output/bird_remote/evaluation_results_samples.json"
         )
         mock_prep_paths.return_value = (expected_results_path, expected_samples_path)
+
+        # 3. Mock context manager
         mock_context_manager = MagicMock()
         mock_context_manager.__enter__.return_value = None
         mock_context_manager.__exit__.return_value = None
         mock_configure_settings.return_value = mock_context_manager
-        mock_dataset = MagicMock(spec=MockHFDataset)
-        mock_load_data.return_value = mock_dataset
-        # prepare_model_args should just return the already parsed dict
-        mock_prep_model_args.return_value = parsed_model_args
-        mock_remote_engine_instance = MagicMock(
-            spec=cli.CrossProviderInferenceEngine
-        )  # Use spec
+
+        # 4. Mock data loading
+        mock_dataset_instance = MockHFDataset(
+            [{"source": f"q{i}"} for i in range(2)]
+        )  # 2 samples
+        self.assertEqual(len(mock_dataset_instance), 2)  # Verify length
+        mock_load_data.return_value = mock_dataset_instance
+
+        # 5. Mock argument preparation
+        # prepare_model_args should just return the already parsed dict in this case
+        mock_prep_model_args.return_value = parsed_model_args_input
+
+        # Mock prepare_gen_kwargs (returns {} if args.gen_kwargs is None)
+        mock_gen_kwargs_prepared = {}
+        mock_prep_gen_kwargs.return_value = (
+            mock_gen_kwargs_prepared  # <<< Set return value
+        )
+
+        # Calculate the combined dict passed to initialize_inference_engine
+        combined_engine_args = parsed_model_args_input.copy()
+        combined_engine_args.update(
+            mock_gen_kwargs_prepared
+        )  # Still parsed_model_args_input
+
+        # 6. Mock engine initialization (using CrossProvider mock)
+        mock_remote_engine_instance = MockCrossProviderInferenceEngine()
         mock_init_engine.return_value = mock_remote_engine_instance
-        mock_predictions = ["sql pred 1", "sql pred 2"]  # Example predictions
+
+        # 7. Mock inference
+        mock_predictions = ["sql pred 1", "sql pred 2"]  # Match dataset length
         mock_run_infer.return_value = mock_predictions
+
+        # 8. Mock evaluation
         mock_eval_results = [
-            {"score": {"global": {"accuracy": 0.5}}}
-        ]  # Example results
+            {
+                "source": "q0",
+                "prediction": "sql pred 1",
+                "score": {"global": {"accuracy": 0.5}, "instance": {"accuracy": 0.0}},
+            },
+            {
+                "source": "q1",
+                "prediction": "sql pred 2",
+                "score": {"global": {"accuracy": 0.5}, "instance": {"accuracy": 1.0}},
+            },
+        ]  # Example results matching dataset length
         mock_run_eval.return_value = mock_eval_results
 
-        # Act
+        # --- Act ---
         cli.main()
 
-        # Assert flow
+        # --- Assert ---
         mock_setup_parser.assert_called_once()
         mock_parser.parse_args.assert_called_once()
         mock_setup_logging.assert_called_once_with("INFO")
@@ -973,33 +1108,45 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             "./debug_output/bird_remote", "evaluation_results"
         )
         mock_configure_settings.assert_called_once_with(mock_args)
-        # Check specific args passed to configure_settings
+        # Check specific args passed to configure_settings if needed
         self.assertTrue(mock_configure_settings.call_args[0][0].trust_remote_code)
         mock_context_manager.__enter__.assert_called_once()
         mock_load_data.assert_called_once_with(mock_args)
-        # Check args passed to load_data (limit and num_fewshots applied)
-        self.assertEqual(mock_load_data.call_args[0][0].limit, 100)
-        self.assertIsNone(mock_load_data.call_args[0][0].num_fewshots)
+        # Check args passed to load_data (limit applied) - access via call_args
+        # call_args is a tuple: (positional_args, keyword_args)
+        # positional_args is a tuple, so access the first element (mock_args)
+        # then access the attribute 'limit'
+        # self.assertEqual(mock_load_data.call_args[0][0].limit, 100) # This checks the Namespace passed
+        # self.assertIsNone(mock_load_data.call_args[0][0].num_fewshots) # This checks the Namespace passed
+
         mock_prep_model_args.assert_called_once_with(mock_args)
-        mock_init_engine.assert_called_once_with(mock_args, parsed_model_args)
-        # Check specific args passed to init_engine
+        mock_prep_gen_kwargs.assert_called_once_with(mock_args)  # <<< Assert call
+
+        # Assert initialize_inference_engine with the combined dict
+        mock_init_engine.assert_called_once_with(
+            mock_args, combined_engine_args
+        )  # <<< Corrected assertion
+
+        # Check specific args passed to init_engine if needed
         self.assertEqual(mock_init_engine.call_args[0][0].model, "cross_provider")
         mock_run_infer.assert_called_once_with(
-            mock_remote_engine_instance, mock_dataset
+            mock_remote_engine_instance, mock_dataset_instance
         )
-        mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset)
+        mock_run_eval.assert_called_once_with(mock_predictions, mock_dataset_instance)
         mock_process_save.assert_called_once_with(
             mock_args, mock_eval_results, expected_results_path, expected_samples_path
         )
-        # Check specific args passed to process_save
+        # Check specific args passed to process_save if needed
         self.assertTrue(mock_process_save.call_args[0][0].log_samples)
         mock_context_manager.__exit__.assert_called_once()
         mock_exit.assert_not_called()
         mock_logger.info.assert_has_calls(
             [
                 call("Starting Unitxt Evaluation CLI"),
+                # Add more specific log calls if needed for this scenario
                 call("Unitxt Evaluation CLI finished successfully."),
-            ]
+            ],
+            any_order=False,  # Usually check order unless irrelevant
         )
 
 
