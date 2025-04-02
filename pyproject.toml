@@ -132,6 +132,17 @@ assistant = [
     "watchdog",
     "litellm"
 ]
+remote_inference = [
+    "litellm>=1.52.9",
+    "tenacity",
+    "diskcache"
+]
+local_inference = [
+    "transformers",
+    "torch"
+]
+
+
 
 # Combine all extras by referencing other groups
 all = [
@@ -144,7 +155,7 @@ all = [
     "unitxt[ui]",
     "unitxt[watsonx]",
     "unitxt[assistant]",
-    "unitxt[sql]"
+    "unitxt[text2sql]"
 ]
 
 [project.scripts]
