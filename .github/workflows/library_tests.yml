@@ -31,10 +31,10 @@ jobs:
       with:
         python-version: '3.9'
 
+    - run: echo "blis==0" > constraints.txt
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-    - run: pip install spacy thinc --no-deps
-    - run: uv pip install --system -e ".[tests]"
+    - run: uv pip install --system -c constraints.txt -e ".[tests]"
     - run: pip install coverage[toml]
 
     - name: Run Tests

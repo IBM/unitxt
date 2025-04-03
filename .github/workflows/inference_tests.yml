@@ -39,10 +39,10 @@ jobs:
         with:
           python-version: '3.10'
 
+      - run: echo "blis==0" > constraints.txt
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-      - run: pip install spacy thinc --no-deps
-      - run: uv pip install --system ".[tests,watsonx,inference-tests]"
+      - run: uv pip install --system -c constraints.txt ".[tests,watsonx,inference-tests]"
       - name: Hugging Face Login
         run: |
           for i in {1..5}; do
