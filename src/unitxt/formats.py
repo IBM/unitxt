@@ -18,6 +18,7 @@ from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 
@@ -33,6 +34,7 @@ class GraniteDocumentsFormat(Format):
 
     _requirements_list = ["transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
@@ -487,6 +489,7 @@ class HFSystemFormat(ChatAPIFormat):
     model_name: str
     _requirements_list = ["transformers", "Jinja2"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer
