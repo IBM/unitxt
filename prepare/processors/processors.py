@@ -7,6 +7,7 @@ from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     ExtractArenaHardNumericalJudgment,
+    ExtractHarmRatingJudgement,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
     ExtractVerbalJudgementBadGood,
@@ -202,6 +203,12 @@ add_processor_and_operator_to_catalog(
 add_processor_and_operator_to_catalog(
     artifact_name="extract_mt_bench_rating_judgment",
     operator=ExtractMtBenchRatingJudgment(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_harm_rating_judgment",
+    operator=ExtractHarmRatingJudgement(),
     overwrite=True,
 )
 
