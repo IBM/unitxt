@@ -99,6 +99,7 @@ def hf_load_dataset(path: str, *args, **kwargs):
     except ValueError as e:
         if "trust_remote_code" in str(e):
             raise UnitxtUnverifiedCodeError(path) from e
+        raise e # Re raise
 
 class Loader(SourceOperator):
     """A base class for all loaders.
