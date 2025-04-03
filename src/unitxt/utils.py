@@ -21,7 +21,7 @@ from .text_utils import is_made_of_sub_strings
 settings = get_settings()
 
 def retry_connection_with_exponential_backoff(max_retries=None,
-                                  retry_exceptions=(ConnectionError, TimeoutError, HTTPError),
+                                  retry_exceptions=(ConnectionError, TimeoutError, HTTPError, FileNotFoundError),
                                   backoff_factor=1):
     """Decorator that implements retry with exponential backoff for network operations.
 
