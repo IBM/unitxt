@@ -34,7 +34,7 @@ jobs:
         # cache: 'pip' # caching pip dependencies
     - run: curl -LsSf https://astral.sh/uv/install.sh | sh
     - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-    - run: pip install pytrec-eval blis
+    - run: pip install spacy --no-deps
     - run: uv pip install --system ".[tests]"
     - run: uv pip install --system coverage[toml]
 
