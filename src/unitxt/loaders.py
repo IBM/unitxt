@@ -323,6 +323,7 @@ class LoadHF(LazyLoader):
                 None,  # No warning when loading from public hub
             )
 
+    @retry_connection_with_exponential_backoff(max_retries=3, backoff_factor=2)
     def get_splits(self):
         if self.splits is not None:
             return self.splits
@@ -352,7 +353,7 @@ class LoadHF(LazyLoader):
                 dataset = self.load_dataset(split=None, streaming=False)
 
             if dataset is None:
-                return ["train", "validation", "test"]
+                raise FileNotFoundError(f"Dataset path={self.path}, name={self.name} was not found.") from None
 
             return list(dataset.keys())
 
