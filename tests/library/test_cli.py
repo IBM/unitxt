@@ -259,7 +259,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         self.assertEqual(dataset, mock_dataset, "Should return the loaded dataset.")
         # Check that num_demos is appended correctly
         mock_load_dataset.assert_called_once_with(
-            "card=c,template=t,num_demos=3,format=formats.chat_api",
+            "card=c,template=t,num_demos=3,demos_taken_from=train,demos_pool_size=-1,demos_removed_from_data=True,format=formats.chat_api",
             split="test",
         )
 
@@ -283,7 +283,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         self.assertEqual(dataset, mock_dataset, "Should return the loaded dataset.")
         # Check that both loader_limit and num_demos are appended correctly
         mock_load_dataset.assert_called_once_with(
-            "card=c,template=t,loader_limit=10,num_demos=5,format=formats.chat_api",
+            "card=c,template=t,loader_limit=10,num_demos=5,demos_taken_from=train,demos_pool_size=-1,demos_removed_from_data=True,format=formats.chat_api",
             split="train",
         )
 
