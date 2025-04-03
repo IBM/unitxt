@@ -170,7 +170,7 @@ def setup_parser() -> argparse.ArgumentParser:
 
     # --- Output and Logging Arguments ---
     parser.add_argument(
-        "--output_dir",
+        "--output_path",
         "-o",
         type=str,
         default=".",
@@ -248,20 +248,20 @@ def setup_logging(verbosity: str) -> None:
     logger.setLevel(verbosity)
 
 
-def prepare_output_paths(output_dir: str, prefix: str) -> Tuple[str, str]:
+def prepare_output_paths(output_path: str, prefix: str) -> Tuple[str, str]:
     """Creates output directory and defines file paths.
 
     Args:
-        output_dir (str): The directory where output files will be saved.
+        output_path (str): The directory where output files will be saved.
         prefix (str): The prefix for the output file names.
 
     Returns:
         Tuple[str, str]: A tuple containing the path for the results summary file
                          and the path for the detailed samples file.
     """
-    os.makedirs(output_dir, exist_ok=True)
-    results_file_path = os.path.join(output_dir, f"{prefix}.json")
-    samples_file_path = os.path.join(output_dir, f"{prefix}_samples.json")
+    os.makedirs(output_path, exist_ok=True)
+    results_file_path = os.path.join(output_path, f"{prefix}.json")
+    samples_file_path = os.path.join(output_path, f"{prefix}_samples.json")
     return results_file_path, samples_file_path
 
 
@@ -876,7 +876,7 @@ def main():
 
     try:
         results_path, samples_path = prepare_output_paths(
-            args.output_dir, args.output_file_prefix
+            args.output_path, args.output_file_prefix
         )
 
         # Apply unitxt settings within a context manager

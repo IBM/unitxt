@@ -126,8 +126,8 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         actions = {action.dest: action for action in parser._actions}
 
         # Check existence and properties of key arguments
-        self.assertIn("tasks", actions)
-        self.assertTrue(actions["tasks"].required, "--tasks should be required.")
+        self.assertIn("task", actions)
+        self.assertTrue(actions["task"].required, "--task should be required.")
         self.assertIn("model", actions)
         self.assertEqual(
             actions["model"].default, "hf", "--model default should be 'hf'."
@@ -138,9 +138,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             cli.try_parse_json,
             "--model_args should use try_parse_json.",
         )
-        self.assertIn("output_dir", actions)
+        self.assertIn("output_path", actions)
         self.assertEqual(
-            actions["output_dir"].default, ".", "--output_dir default should be '.'."
+            actions["output_path"].default, ".", "--output_path default should be '.'."
         )
         self.assertIn("log_samples", actions)
         self.assertFalse(
@@ -224,7 +224,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_load_dataset.return_value = mock_dataset
 
         args = argparse.Namespace(
-            tasks="card=c,template=t",
+            task="card=c,template=t",
             split="validation",
             limit=5,
             num_fewshots=None,  # Explicitly None
@@ -247,7 +247,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_load_dataset.return_value = mock_dataset
 
         args = argparse.Namespace(
-            tasks="card=c,template=t",
+            task="card=c,template=t",
             split="test",
             limit=None,  # No limit
             num_fewshots=3,  # Set num_fewshots
@@ -271,7 +271,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_load_dataset.return_value = mock_dataset
 
         args = argparse.Namespace(
-            tasks="card=c,template=t",
+            task="card=c,template=t",
             split="train",
             limit=10,  # Set limit
             num_fewshots=5,  # Set num_fewshots,
@@ -653,10 +653,10 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             spec=argparse.Namespace, log_samples=False
         )  # log_samples is False
         # Set specific attributes needed for saving config
-        args.tasks = "card=x"
+        args.task = "card=x"
         args.model = "hf"
         args.model_args = {"pretrained": "model"}
-        args.output_dir = "/out"
+        args.output_path = "/out"
         # ... add other relevant args if they are saved
 
         global_scores = {"accuracy": 0.8}
@@ -684,7 +684,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         self.assertEqual(saved_data["global_scores"], global_scores)
         self.assertIn("parsed_arguments", saved_data["environment_info"])
         self.assertEqual(
-            saved_data["environment_info"]["parsed_arguments"]["tasks"], "card=x"
+            saved_data["environment_info"]["parsed_arguments"]["task"], "card=x"
         )
         self.assertEqual(saved_data["environment_info"]["unitxt_version"], "0.1.0")
         self.assertEqual(saved_data["environment_info"]["unitxt_commit_hash"], "bla")
@@ -793,9 +793,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         # Define mock arguments that represent a valid success scenario
         mock_args = argparse.Namespace(
             verbosity="INFO",
-            output_dir="mock_output",  # Use a distinct name
+            output_path="mock_output",  # Use a distinct name
             output_file_prefix="mock_results",
-            tasks="card=dummy_card,template=dummy_template",  # Example task string
+            task="card=dummy_card,template=dummy_template",  # Example task string
             split="test",
             limit=None,
             num_fewshots=None,
@@ -939,9 +939,9 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
         mock_parser = MagicMock()
         mock_args = argparse.Namespace(
             verbosity="INFO",
-            output_dir=".",
+            output_path=".",
             output_file_prefix="pref",
-            tasks="card=dummy",
+            task="card=dummy",
             split="test",
             limit=None,
             num_fewshots=None,
@@ -1019,14 +1019,14 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             "max_tokens": 256,
         }
         mock_args = argparse.Namespace(
-            tasks="card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
+            task="card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix",
             model="cross_provider",  # Use remote model type
             model_args=parsed_model_args_input,  # Args as parsed dict
             split="validation",
             limit=100,
             num_fewshots=None,
             gen_kwargs=None,  # Explicitly None
-            output_dir="./debug_output/bird_remote",
+            output_path="./debug_output/bird_remote",
             output_file_prefix="evaluation_results",
             log_samples=True,
             verbosity="INFO",
