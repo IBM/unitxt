@@ -21,6 +21,7 @@ class UnitxtTestCase(unittest.TestCase):
         unitxt.settings.max_log_message_size = 10000
         unitxt.settings.mock_inference_mode = True
         unitxt.settings.loader_cache_size = 10
+        unitxt.settings.max_connection_retries = 10
         sys.tracebacklimit = None
         register_local_catalog_for_tests()
         cls.maxDiff = None
@@ -40,6 +41,7 @@ class CatalogPreparationTestCase(unittest.TestCase):
         unitxt.settings.loader_cache_size = 10
         unitxt.settings.disable_hf_datasets_cache = True
         unitxt.settings.stream_hf_datasets_by_default = True
+        unitxt.settings.max_connection_retries = 10
         if settings.default_verbosity in ["error", "critical"]:
             if not sys.warnoptions:
                 warnings.simplefilter("ignore")
@@ -56,6 +58,7 @@ class UnitxtInferenceTestCase(unittest.TestCase):
         unitxt.settings.global_loader_limit = 300
         unitxt.settings.max_log_message_size = 10000
         unitxt.settings.default_verbosity = "debug"
+        unitxt.settings.max_connection_retries = 10
         sys.tracebacklimit = None
         register_local_catalog_for_tests()
         cls.maxDiff = None
@@ -76,6 +79,7 @@ class UnitxtExamplesTestCase(unittest.TestCase):
         unitxt.settings.mock_inference_mode = True
         unitxt.settings.disable_hf_datasets_cache = True
         unitxt.settings.stream_hf_datasets_by_default = True
+        unitxt.settings.max_connection_retries = 10
         sys.tracebacklimit = None
         register_local_catalog_for_tests()
         cls.maxDiff = None
