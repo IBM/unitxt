@@ -308,7 +308,7 @@ class LoadHF(LazyLoader):
             )
 
             if dataset is None:
-                raise ValueError("there was a serious problem") from None
+                raise NotImplementedError() from None
 
             if not disable_memory_caching:
                 self.__class__._loader_cache.max_size = settings.loader_cache_size
@@ -342,11 +342,18 @@ class LoadHF(LazyLoader):
                 ),
             )
         except Exception as e:
+
             if "trust_remote_code" in str(e):
                 raise UnitxtUnverifiedCodeError(self.path) from e
+
+            if "Couldn't find cache" in str(e):
+                raise FileNotFoundError(f"Dataset cache path={self.path}, name={self.name} was not found.") from e
+
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
+
+
             try:
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True
