@@ -74,7 +74,7 @@ def retry_connection_with_exponential_backoff(max_retries=None,
                         # Not a retry exception or caused by a retry exception, so re-raise
                         raise
 
-                    if attempt == retries - 1:  # Last attempt
+                    if attempt >= retries - 1:  # Last attempt
                         raise  # Re-raise the last exception
 
                     # Calculate exponential backoff with jitter
@@ -83,7 +83,7 @@ def retry_connection_with_exponential_backoff(max_retries=None,
                                   f"Retrying in {wait_time:.2f}s. Error: {e!s}")
                     time.sleep(wait_time)
 
-            return None  # This should never be reached
+            raise ValueError("there was a problem") from None
         return wrapper
     return decorator
 

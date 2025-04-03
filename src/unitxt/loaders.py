@@ -306,6 +306,9 @@ class LoadHF(LazyLoader):
                 num_proc=self.num_proc,
             )
 
+            if dataset is None:
+                raise ValueError("there was a serious problem") from None
+
             if not disable_memory_caching:
                 self.__class__._loader_cache.max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
