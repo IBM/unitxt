@@ -75,7 +75,7 @@ from .operators import Set
 from .settings_utils import get_settings
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
-from .utils import LRUCache, recursive_copy
+from .utils import LRUCache, recursive_copy, retry_connection_with_exponential_backoff
 
 logger = get_logger()
 settings = get_settings()
@@ -84,6 +84,7 @@ class UnitxtUnverifiedCodeError(UnitxtError):
     def __init__(self, path):
         super().__init__(f"Loader cannot load and run remote code from {path} in huggingface without setting unitxt.settings.allow_unverified_code=True or by setting environment variable: UNITXT_ALLOW_UNVERIFIED_CODE.", Documentation.SETTINGS)
 
+@retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_load_dataset(path: str, *args, **kwargs):
     if settings.hf_offline_datasets_path is not None:
         path = os.path.join(settings.hf_offline_datasets_path, path)
