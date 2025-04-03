@@ -21,11 +21,12 @@ from .text_utils import is_made_of_sub_strings
 settings = get_settings()
 
 def retry_connection_with_exponential_backoff(max_retries=None,
-                                  retry_exceptions=(ConnectionError, TimeoutError, HTTPError, FileNotFoundError),
+                                  retry_exceptions=(ConnectionError, TimeoutError, HTTPError),
                                   backoff_factor=1):
     """Decorator that implements retry with exponential backoff for network operations.
 
-    Also handles errors that were triggered by the specified retry exceptions.
+    Also handles errors that were triggered by the specified retry exceptions,
+    whether they're direct causes or part of the exception context.
 
     Args:
         max_retries: Maximum number of retry attempts (falls back to settings if None)
@@ -39,7 +40,7 @@ def retry_connection_with_exponential_backoff(max_retries=None,
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Get max_retries from settings if not provided
-            retries = max_retries if max_retries is not None else settings.max_connection_retries
+            retries = max_retries if max_retries is not None else settings.max_retries_for_web_resource
 
             for attempt in range(retries):
                 try:
@@ -49,13 +50,25 @@ def retry_connection_with_exponential_backoff(max_retries=None,
                     should_retry = False
                     current_exc = e
 
-                    # Check the exception and its causes
-                    while current_exc is not None:
+                    # Check the exception chain for both __cause__ (explicit) and __context__ (implicit)
+                    visited_exceptions = set()  # To prevent infinite loops in rare cyclic exception references
+
+                    while current_exc is not None and id(current_exc) not in visited_exceptions:
+                        visited_exceptions.add(id(current_exc))
+
                         if isinstance(current_exc, retry_exceptions):
                             should_retry = True
                             break
-                        # Get the cause of the current exception
-                        current_exc = current_exc.__cause__
+
+                        # First check __cause__ (from "raise X from Y")
+                        if current_exc.__cause__ is not None:
+                            current_exc = current_exc.__cause__
+                        # Then check __context__ (from "try: ... except: raise X")
+                        elif current_exc.__context__ is not None:
+                            current_exc = current_exc.__context__
+                        else:
+                            # No more causes in the chain
+                            break
 
                     if not should_retry:
                         # Not a retry exception or caused by a retry exception, so re-raise
