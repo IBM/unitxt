@@ -29,7 +29,6 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -65,14 +64,14 @@ from .random_utils import get_seed
 from .settings_utils import get_settings
 from .stream import MultiStream, Stream
 from .type_utils import Type, isoftype, parse_type_string, to_type_string
-from .utils import deep_copy, recursive_copy
+from .utils import deep_copy, recursive_copy, retry_connection_with_exponential_backoff
 
 logger = get_logger()
 settings = get_settings()
 
 warnings.filterwarnings("ignore", category=DegenerateDataWarning)
 
-
+@retry_connection_with_exponential_backoff(backoff_factor=2)
 def hf_evaluate_load(path: str, *args, **kwargs):
     if settings.hf_offline_metrics_path is not None:
         path = os.path.join(settings.hf_offline_metrics_path, path)
@@ -81,9 +80,6 @@ def hf_evaluate_load(path: str, *args, **kwargs):
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-        download_config=DownloadConfig(
-            max_retries=settings.loaders_max_retries,
-        ),
         verification_mode="no_checks",
         trust_remote_code=settings.allow_unverified_code,
         download_mode=(
@@ -3713,6 +3709,7 @@ class Detector(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -3753,6 +3750,7 @@ class RegardMetric(GlobalMetric):
 
     _requirements_list: List[str] = ["transformers", "torch", "tqdm"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
@@ -3942,6 +3940,7 @@ class SafetyMetric(MapReduceMetric[str, Tuple[float, str]], TorchDeviceMixin):
 
         return result
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import pipeline
@@ -4121,6 +4120,7 @@ class Perplexity(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def compute(
         self,
         references: List[List[Any]],
@@ -4394,6 +4394,7 @@ class FaithfulnessHHEM(BulkInstanceMetric):
 
     _requirements_list: List[str] = ["transformers", "torch"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         import torch
@@ -6051,6 +6052,7 @@ class GraniteGuardianBase(InstanceMetric):
 
     _requirements_list: List[str] = ["torch", "transformers"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         from transformers import AutoTokenizer
 
