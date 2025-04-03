@@ -168,6 +168,16 @@ def setup_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    parser.add_argument(
+        "--tokenizer_kwargs",
+        type=try_parse_json,
+        default=None,
+        help=(
+            "Comma delimited string for tokenizer kwargs"
+            "e.g. thinking=True (https://github.com/huggingface/transformers/blob/9a1c1fe7edaefdb25ab37116a979832df298d6ea/src/transformers/tokenization_utils_base.py#L1542)"
+        ),
+    )
+
     # --- Output and Logging Arguments ---
     parser.add_argument(
         "--output_path",
@@ -865,6 +875,9 @@ def main():
     logger.debug(
         f"Parsed model_args type: {type(args.model_args)}, value: {args.model_args}"
     )
+
+    if args.tokenizer_kwargs:
+        raise NotImplementedError("Defining tokenizer kwargs is not yet implemented")
 
     try:
         results_path, samples_path = prepare_output_paths(

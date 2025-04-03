@@ -803,6 +803,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             # Provide required 'pretrained' key for 'hf' model
             model_args={"pretrained": "mock-hf-model", "device": "cpu"},
             gen_kwargs=None,  # Set explicitly for clarity
+            tokenizer_kwargs=None,
             log_samples=True,  # Test saving samples path
             trust_remote_code=False,
             disable_hf_cache=False,
@@ -941,6 +942,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             verbosity="INFO",
             output_path=".",
             output_file_prefix="pref",
+            tokenizer_kwargs=None,
             task="card=dummy",
             split="test",
             limit=None,
@@ -1026,6 +1028,7 @@ class TestUnitxtEvaluateCLI(unittest.TestCase):
             limit=100,
             num_fewshots=None,
             gen_kwargs=None,  # Explicitly None
+            tokenizer_kwargs=None,
             output_path="./debug_output/bird_remote",
             output_file_prefix="evaluation_results",
             log_samples=True,

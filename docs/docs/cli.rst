@@ -21,13 +21,13 @@ Core Functionality
 Usage
 -----
 
-The script is typically run using an entry point like `unitxt-eval` (assuming it's set up in `pyproject.toml` or similar).
+The script is typically run using an entry point like `unitxt-evaluate` (assuming it's set up in `pyproject.toml` or similar).
 
 **Basic Syntax:**
 
 .. code-block:: bash
 
-   unitxt-eval --tasks <task_string> [options]
+   unitxt-evaluate --tasks <task_string> [options]
 
 **Examples:**
 
@@ -35,7 +35,7 @@ The script is typically run using an entry point like `unitxt-eval` (assuming it
 
     .. code-block:: bash
 
-       unitxt-eval \
+       unitxt-evaluate \
            --tasks "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix" \
            --split validation \
            --model cross_provider \
@@ -48,7 +48,7 @@ The script is typically run using an entry point like `unitxt-eval` (assuming it
 
     .. code-block:: bash
 
-       unitxt-eval \
+       unitxt-evaluate \
            --tasks "card=cards.text2sql.bird,template=templates.text2sql.you_are_given_with_hint_with_sql_prefix" \
            --split validation \
            --model hf \
