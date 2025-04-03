@@ -43,6 +43,8 @@ jobs:
       - run: curl -LsSf https://astral.sh/uv/install.sh | sh
       - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
       - run: uv pip install --system -c constraints.txt ".[tests,watsonx,inference-tests]"
+      - run: pip install --no-deps spacy
+      
       - name: Hugging Face Login
         run: |
           for i in {1..5}; do
