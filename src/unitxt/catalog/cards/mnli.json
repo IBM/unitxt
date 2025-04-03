@@ -2,7 +2,7 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "glue",
+        "path": "nyu-mll/glue",
         "name": "mnli",
         "splits": [
             "train",

@@ -5,7 +5,7 @@ from unitxt.operators import MapInstanceValues, Rename, Set
 from unitxt.test_utils.card import test_card
 
 card = TaskCard(
-    loader=LoadHF(path="glue", name="mrpc", streaming=False, splits=["train", "validation", "test"]),
+    loader=LoadHF(path="nyu-mll/glue", name="mrpc", streaming=False, splits=["train", "validation", "test"]),
     preprocess_steps=[
         MapInstanceValues(
             mappers={"label": {"0": "not equivalent", "1": "equivalent"}}
