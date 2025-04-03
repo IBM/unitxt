@@ -139,7 +139,8 @@ remote_inference = [
 ]
 local_inference = [
     "transformers",
-    "torch"
+    "torch",
+    "accelerate"
 ]
 
 
