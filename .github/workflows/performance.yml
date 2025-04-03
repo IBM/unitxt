@@ -32,6 +32,8 @@ jobs:
     - name: Install Requirements
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
+        uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
+        pip install pytrec-eval blis
         uv pip install --system ".[tests,watsonx,inference-tests]"
         uv pip install --system litellm
         uv pip install --system diskcache
