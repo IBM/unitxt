@@ -3,7 +3,14 @@
     "loader": {
         "__type__": "load_hf",
         "path": "glue",
-        "name": "mnli"
+        "name": "mnli",
+        "splits": [
+            "train",
+            "validation_matched",
+            "validation_mismatched",
+            "test_matched",
+            "test_mismatched"
+        ]
     },
     "preprocess_steps": [
         {

@@ -3,7 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "glue",
-        "name": "stsb"
+        "name": "stsb",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

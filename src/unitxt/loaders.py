@@ -100,6 +100,23 @@ def hf_load_dataset(path: str, *args, **kwargs):
             raise UnitxtUnverifiedCodeError(path) from e
         raise e # Re raise
 
+
+@retry_connection_with_exponential_backoff(backoff_factor=2)
+def hf_get_dataset_splits(path: str, name: str):
+    try:
+        return get_dataset_split_names(
+            path=path,
+            config_name=name,
+            trust_remote_code=settings.allow_unverified_code,
+        )
+    except Exception as e:
+        if "trust_remote_code" in str(e):
+            raise UnitxtUnverifiedCodeError(path) from e
+
+        if "Couldn't find cache" in str(e):
+            raise FileNotFoundError(f"Dataset cache path={path}, name={name} was not found.") from e
+        raise e # Re raise
+
 class Loader(SourceOperator):
     """A base class for all loaders.
 
@@ -331,24 +348,14 @@ class LoadHF(LazyLoader):
         if self.splits is not None:
             return self.splits
         try:
-            return get_dataset_split_names(
+            return hf_get_dataset_splits(
                 path=self.path,
-                config_name=self.name,
-                trust_remote_code=settings.allow_unverified_code,
+                name=self.name,
             )
-        except Exception as e:
-
-            if "trust_remote_code" in str(e):
-                raise UnitxtUnverifiedCodeError(self.path) from e
-
-            if "Couldn't find cache" in str(e):
-                raise FileNotFoundError(f"Dataset cache path={self.path}, name={self.name} was not found.") from e
-
+        except Exception:
             UnitxtWarning(
                 f'LoadHF(path="{self.path}", name="{self.name}") could not retrieve split names without loading the dataset. Consider defining "splits" in the LoadHF definition to improve loading time.'
             )
-
-
             try:
                 dataset = self.load_dataset(
                     split=None, disable_memory_caching=True, streaming=True

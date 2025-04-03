@@ -3,7 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "glue",
-        "name": "qnli"
+        "name": "qnli",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         "splitters.large_no_test",

@@ -4,7 +4,12 @@
         "__type__": "load_hf",
         "path": "glue",
         "name": "mrpc",
-        "streaming": false
+        "streaming": false,
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         {

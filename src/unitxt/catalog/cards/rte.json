@@ -3,7 +3,12 @@
     "loader": {
         "__type__": "load_hf",
         "path": "glue",
-        "name": "rte"
+        "name": "rte",
+        "splits": [
+            "train",
+            "validation",
+            "test"
+        ]
     },
     "preprocess_steps": [
         "splitters.small_no_test",
