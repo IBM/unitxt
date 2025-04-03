@@ -160,6 +160,7 @@ if Settings.is_uninitilized():
     settings.hf_offline_metrics_path = None
     settings.hf_offline_models_path = None
     settings.inference_engine_cache_path = "./inference_engine_cache/"
+    settings.max_connection_retries = 3
 
 if Constants.is_uninitilized():
     constants = Constants()

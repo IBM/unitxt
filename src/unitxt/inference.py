@@ -49,6 +49,7 @@ from .operator import PackageRequirementsMixin
 from .operators import ArtifactFetcherMixin
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 settings = get_settings()
@@ -876,6 +877,7 @@ class HFPeftInferenceEngine(HFAutoModelInferenceEngine):
             self.peft_config.base_model_name_or_path
         )
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def _init_model(self):
         from peft import AutoPeftModelForCausalLM, AutoPeftModelForSeq2SeqLM
         from transformers import AutoConfig
@@ -990,6 +992,7 @@ class HFPipelineBasedInferenceEngine(
 
         return args
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def _create_pipeline(self, model_args: Dict[str, Any]):
         from transformers import AutoTokenizer, pipeline
 
@@ -3349,6 +3352,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
     def get_engine_id(self):
         return get_model_and_label_id(self.model_name, self.label)
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare_engine(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
