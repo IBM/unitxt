@@ -41,7 +41,7 @@ jobs:
      - run: echo "blis==0" > constraints.txt
      - run: curl -LsSf https://astral.sh/uv/install.sh | sh
      - run: uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-     - run: uv pip install --system --no-deps spacy
+     - run: uv pip install --system --no-deps spacy==2.0.17
      - run: uv pip install --system -c constraints.txt ".[tests,watsonx,inference_tests]"
 
      - name:  Hugging Face Login

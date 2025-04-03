@@ -33,7 +33,7 @@ jobs:
       run: |
         curl -LsSf https://astral.sh/uv/install.sh | sh
         uv pip install --upgrade --system torch --index-url https://download.pytorch.org/whl/cpu
-        pip install spacy thinc --no-deps
+        pip install spacy==2.0.17 thinc --no-deps
         uv pip install --system ".[tests,watsonx,inference-tests]"
         uv pip install --system litellm
         uv pip install --system diskcache
