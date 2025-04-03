@@ -29,7 +29,6 @@ import numpy
 import numpy as np
 import pandas as pd
 import requests
-from datasets import DownloadConfig
 from scipy.stats import bootstrap
 from scipy.stats._warnings_errors import DegenerateDataWarning
 
@@ -81,9 +80,6 @@ def hf_evaluate_load(path: str, *args, **kwargs):
         *args,
         **kwargs,
         experiment_id=str(uuid.uuid4()),
-        download_config=DownloadConfig(
-            max_retries=settings.loaders_max_retries,
-        ),
         verification_mode="no_checks",
         trust_remote_code=settings.allow_unverified_code,
         download_mode=(

@@ -92,9 +92,6 @@ def hf_load_dataset(path: str, *args, **kwargs):
         return _hf_load_dataset(
             path,
             *args, **kwargs,
-                download_config=DownloadConfig(
-                    max_retries=settings.loaders_max_retries,
-                ),
                 verification_mode="no_checks",
                 trust_remote_code=settings.allow_unverified_code,
                 download_mode= "force_redownload" if settings.disable_hf_datasets_cache else "reuse_dataset_if_exists"
