@@ -40,7 +40,7 @@ def retry_connection_with_exponential_backoff(max_retries=None,
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             # Get max_retries from settings if not provided
-            retries = max_retries if max_retries is not None else settings.max_retries_for_web_resource
+            retries = max_retries if max_retries is not None else settings.max_connection_retries
 
             for attempt in range(retries):
                 try:
