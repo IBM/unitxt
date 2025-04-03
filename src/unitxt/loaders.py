@@ -57,7 +57,6 @@ import pandas as pd
 import requests
 from datasets import (
     DatasetDict,
-    DownloadConfig,
     IterableDataset,
     IterableDatasetDict,
     get_dataset_split_names,
@@ -336,10 +335,6 @@ class LoadHF(LazyLoader):
                 path=self.path,
                 config_name=self.name,
                 trust_remote_code=settings.allow_unverified_code,
-                download_config=DownloadConfig(
-                    max_retries=settings.loaders_max_retries,
-                    extract_on_the_fly=True,
-                ),
             )
         except Exception as e:
 
