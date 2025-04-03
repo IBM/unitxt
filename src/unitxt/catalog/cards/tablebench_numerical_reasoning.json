@@ -2,7 +2,8 @@
     "__type__": "task_card",
     "loader": {
         "__type__": "load_hf",
-        "path": "Multilingual-Multimodal-NLP/TableBench",
+        "path": "Multilingual-Multimodal-NLP/TableBench-Instructions",
+        "revision": "90593ad8af90f027f6f478b8c4c1981d9f073a83",
         "data_classification_policy": [
             "public"
         ]
