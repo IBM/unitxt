@@ -305,9 +305,11 @@ class LoadHF(LazyLoader):
                 split=split,
                 num_proc=self.num_proc,
             )
-            self.__class__._loader_cache.max_size = settings.loader_cache_size
+
             if not disable_memory_caching:
+                self.__class__._loader_cache.max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
+
         return dataset
 
     def _maybe_set_classification_policy(self):
@@ -348,6 +350,10 @@ class LoadHF(LazyLoader):
                 NotImplementedError
             ):  # streaming is not supported for zipped files so we load without streaming
                 dataset = self.load_dataset(split=None, streaming=False)
+
+            if dataset is None:
+                return ["train", "validation", "test"]
+
             return list(dataset.keys())
 
     def split_generator(self, split: str) -> Generator:
