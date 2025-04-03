@@ -313,7 +313,7 @@ def load_data(args: argparse.Namespace) -> HFDataset:
         assert "num_demos=" not in dataset_args_str, (
             "num_demos was inputted both as an arg and as a task parameter"
         )
-        dataset_args_str += f",num_demos={args.num_fewshots}"  # Use loader_limit for unitxt compatibility
+        dataset_args_str += f",num_demos={args.num_fewshots},demos_taken_from=train,demos_pool_size=-1,demos_removed_from_data=True"  # Use loader_limit for unitxt compatibility
         logger.info(
             f"Applying limit from --limit argument: num_demos={args.num_fewshots}"
         )
