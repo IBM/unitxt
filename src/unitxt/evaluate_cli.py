@@ -1,6 +1,5 @@
 # evaluate_cli.py
 import argparse
-import datetime  # Added
 import importlib.metadata  # Added
 import json
 import logging
@@ -8,6 +7,7 @@ import os
 import platform  # Added
 import subprocess  # Added
 import sys
+from datetime import datetime  # Added
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from datasets import Dataset as HFDataset  # Added for type hinting
@@ -709,6 +709,15 @@ def _get_unitxt_version() -> str:
         return "N/A"
 
 
+def prepend_timestamp_to_path(original_path, timestamp):
+    """Takes a path string and a timestamp string, prepends the timestamp to the filename part of the path, and returns the new path string."""
+    directory, filename = os.path.split(original_path)
+    # Use an f-string to create the new filename with the timestamp prepended
+    new_filename = f"{timestamp}_{filename}"
+    # Join the directory and the new filename back together
+    return os.path.join(directory, new_filename)
+
+
 def _save_results_to_disk(
     args: argparse.Namespace,
     global_scores: Dict[str, Any],
@@ -747,7 +756,7 @@ def _save_results_to_disk(
     unitxt_pkg_version = _get_unitxt_version()
 
     environment_info = {
-        "timestamp_utc": datetime.datetime.utcnow().isoformat() + "Z",
+        "timestamp_utc": datetime.utcnow().isoformat() + "Z",
         "command_line_invocation": sys.argv,
         "parsed_arguments": config_to_save,  # Include parsed args here as well
         "unitxt_version": unitxt_pkg_version,  # Use version from importlib.metadata
@@ -756,12 +765,6 @@ def _save_results_to_disk(
         "system": platform.system(),
         "system_version": platform.version(),
         "installed_packages": _get_installed_packages(),
-        # Add relevant env vars if needed, e.g.:
-        # "environment_variables": {
-        #     "HF_HOME": os.environ.get("HF_HOME"),
-        #     "HF_DATASETS_CACHE": os.environ.get("HF_DATASETS_CACHE"),
-        #     "CUDA_VISIBLE_DEVICES": os.environ.get("CUDA_VISIBLE_DEVICES"),
-        # }
     }
 
     # --- Prepare Final Results Structure ---
@@ -769,6 +772,13 @@ def _save_results_to_disk(
         "environment_info": environment_info,
         "global_scores": global_scores,
     }
+
+    # prepend to the results_path name the time in a wat like this: 2025-04-04T11:37:32
+
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+
+    results_path = prepend_timestamp_to_path(results_path, timestamp)
+    samples_path = prepend_timestamp_to_path(samples_path, timestamp)
 
     # --- Save Summary ---
     logger.info(f"Saving global results summary to: {results_path}")
