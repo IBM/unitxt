@@ -9,7 +9,7 @@ card = TaskCard(
         reference_fields={},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.safety.llama_3_70b_instruct_ibm_watsonx_template_harm_rating"
+            "metrics.llm_as_judge.safety.llama_3_1_70b_instruct_ibm_watsonx_template_harm_rating"
         ],
     ),
     templates=TemplatesDict(
