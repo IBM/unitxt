@@ -583,7 +583,9 @@ def _extract_scores_and_samples(
                 "index": i,
                 "source": instance.get("source"),
                 "prediction": instance.get("prediction"),
+                "processed_prediction": instance.get("prediction"),
                 "references": instance.get("references"),
+                "processed_references": instance.get("references"),
                 "metrics": instance_metrics,
                 "task_data": instance.get("task_data"),  # Include task_data if present
             }
