@@ -4,7 +4,7 @@ from unitxt.llm_as_judge_from_template import LLMAsJudge
 from unitxt.random_utils import get_seed
 
 model_list = [
-    "meta-llama/llama-3-70b-instruct",
+    "meta-llama/llama-3-1-70b-instruct",
 ]
 format = "formats.llama3_instruct"
 template = "templates.safety.harm_rating"
