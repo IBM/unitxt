@@ -1,3 +1,6 @@
 {
-    "__type__": "remove_articles"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "RemoveArticles"
+    }
 }

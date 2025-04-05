@@ -1,5 +1,8 @@
 {
-    "__type__": "output_quantizing_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "OutputQuantizingTemplate"
+    },
     "instruction": "Given a text, on a scale of {min_value} to {max_value}, what is the {attribute_name} of this text?",
     "input_format": "Text:\n{text}",
     "output_format": "{attribute_value}",

@@ -1,3 +1,6 @@
 {
-    "__type__": "scale_number_to_zero_one_return_zero_if_fails"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "ScaleNumberToZeroOneReturnZeroIfFails"
+    }
 }

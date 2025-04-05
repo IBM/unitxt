@@ -1,12 +1,21 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "sciq"
     },
     "preprocess_steps": [
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "distractor1",
                 "distractor2",
@@ -16,23 +25,35 @@
             "to_field": "choices"
         },
         {
-            "__type__": "shuffle_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ShuffleFieldValues"
+            },
             "field": "choices"
         },
         {
-            "__type__": "index_of",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "IndexOf"
+            },
             "search_in": "choices",
             "index_of": "correct_answer",
             "to_field": "answer"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "support": "context"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "paragraph"
             }

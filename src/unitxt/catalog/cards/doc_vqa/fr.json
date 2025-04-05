@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "cmarkea/doc-vqa",
         "data_classification_policy": [
             "public"
@@ -9,36 +15,57 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle"
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            }
         },
         "splitters.small_no_dev",
         {
-            "__type__": "explode",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Explode"
+            },
             "field": "qa/fr",
             "to_field": "pair"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "pair/question",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "pair/answer",
             "to_field": "answers"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "answers",
             "inside": "list"
         },
         {
-            "__type__": "to_image",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "ToImage"
+            },
             "field": "image",
             "to_field": "context"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "image"
             }

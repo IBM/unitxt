@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "ibm-research/REAL-MM-RAG_FinSlides",
         "name": "default",
         "split": "test",
@@ -11,46 +17,70 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "query": null
             },
             "condition": "ne"
         },
         {
-            "__type__": "hash_image",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "HashImage"
+            },
             "field": "image",
             "to_field": "reference_context_ids"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "query",
             "to_field": "question"
         },
         {
-            "__type__": "add_incremental_id",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "AddIncrementalId"
+            },
             "to_field": "question_id"
         },
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "question_id",
             "to": "str"
         },
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "test": "test[30%]",
                 "train": "test[70%]"
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "answer",
             "inside": "list",
             "to_field": "reference_answers"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "reference_context_ids",
             "inside": "list",
             "to_field": "reference_context_ids"

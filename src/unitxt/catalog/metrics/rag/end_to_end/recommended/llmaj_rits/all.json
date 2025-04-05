@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.rag.end_to_end.answer_correctness.llama_3_3_70b_instruct_rits_judge",
         "metrics.rag.end_to_end.faithfulness.llama_3_3_70b_instruct_rits_judge",
