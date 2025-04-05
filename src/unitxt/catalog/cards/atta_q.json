@@ -1,5 +1,8 @@
 {
-    "__type__": "artifact_link",
+    "__type__": {
+        "module": "unitxt.artifact",
+        "name": "ArtifactLink"
+    },
     "to": "cards.attaq",
     "__deprecated_msg__": null
 }

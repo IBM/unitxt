@@ -1,17 +1,26 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "CriteriaWithOptions"
+    },
     "name": "irrelevant_information",
     "description": "Does the user response contain irrelevant information?",
     "prediction_field": "user response",
     "context_fields": [],
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "Yes",
             "description": "The user response contains irrelevant information."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_constants",
+                "name": "CriteriaOption"
+            },
             "name": "No",
             "description": "The user response doesn't contain irrelevant information."
         }

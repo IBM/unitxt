@@ -1,3 +1,6 @@
 {
-    "__type__": "chat_api_format"
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "ChatAPIFormat"
+    }
 }

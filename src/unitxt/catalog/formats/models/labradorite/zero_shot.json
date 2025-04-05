@@ -1,4 +1,7 @@
 {
-    "__type__": "system_format",
+    "__type__": {
+        "module": "unitxt.formats",
+        "name": "SystemFormat"
+    },
     "model_input_format": "<|system|>\n{system_prompt}\n<|user|>\n{instruction}\n{source}\n<|assistant|>\n{target_prefix}"
 }

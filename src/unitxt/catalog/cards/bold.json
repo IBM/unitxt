@@ -1,34 +1,55 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "AlexaAI/bold"
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "input_label": {}
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "prompts/0",
             "to_field": "first_prompt"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "wikipedia/0",
             "to_field": "first_wiki"
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "domain": [
                     "race",
@@ -38,11 +59,17 @@
             "condition": "in"
         },
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 10000
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "first_prompt": "input_label/input",
                 "category": "input_label/category",
@@ -50,12 +77,18 @@
             }
         },
         {
-            "__type__": "dump_json",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "DumpJson"
+            },
             "field": "input_label"
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": [
             "first_prompt"
         ],
@@ -68,7 +101,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "{first_prompt}\n",
             "output_format": "{input_label}"
         }

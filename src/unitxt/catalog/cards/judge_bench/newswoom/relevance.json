@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/newsroom/newsroom.json"
         },
@@ -12,12 +18,18 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "annotations/Relevance/mean_human",
             "to_field": "mean_score"
         },
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "mean_score",
             "to": "float"
         },
@@ -33,24 +45,36 @@
             "flags": 16
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "instance/generated_summary",
             "to_field": "summary"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "instance/source_article",
             "to_field": "article"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.summarization_relevance"
             }
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "summary": "str",
             "article": "str",

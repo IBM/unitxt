@@ -1,3 +1,6 @@
 {
-    "__type__": "stance_to_pro_con"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "StanceToProCon"
+    }
 }

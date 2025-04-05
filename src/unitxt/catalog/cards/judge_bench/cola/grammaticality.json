@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/cola/cola.json"
         },
@@ -12,22 +18,34 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "instance",
             "to_field": "response"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "annotations/grammaticality/majority_human",
             "to_field": "label"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "label",
             "to_field": "label_value"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label_value": {
                     "Yes": 1.0,
@@ -36,14 +54,20 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.grammar_and_punctuation"
             }
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "response": "str",
             "label": "str",

@@ -1,4 +1,7 @@
 {
-    "__type__": "textual_system_prompt",
+    "__type__": {
+        "module": "unitxt.system_prompts",
+        "name": "TextualSystemPrompt"
+    },
     "text": "Be concise. At every point give the shortest acceptable answer."
 }

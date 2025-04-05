@@ -1,3 +1,6 @@
 {
-    "__type__": "null_augmentor"
+    "__type__": {
+        "module": "unitxt.augmentors",
+        "name": "NullAugmentor"
+    }
 }

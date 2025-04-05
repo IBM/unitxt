@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "nyu-mll/glue",
         "name": "mnli",
         "splits": [
@@ -14,21 +20,30 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "validation_matched": "validation"
             }
         },
         "splitters.small_no_test",
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "premise": "text_a",
                 "hypothesis": "text_b"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "entailment",
@@ -38,7 +53,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "type_of_relation": "entailment",
                 "text_a_type": "premise",

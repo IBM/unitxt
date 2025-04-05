@@ -6,6 +6,7 @@ from unitxt.artifact import (
     Artifact,
     ArtifactLink,
     fetch_artifact,
+    from_dict,
     get_artifacts_data_classification,
     reset_artifacts_json_cache,
 )
@@ -51,7 +52,7 @@ class TestArtifact(UnitxtTestCase):
 
     def test_artifact_loading_with_artifact_dict_reference(self):
         t = ArtifactReferencing(
-            reference={"__type__": "artifact_to_reference", "a": "0"}
+            reference={"__type__": ArtifactToReference.get_artifact_type(), "a": "0"}
         )
 
         self.assertEqual(str(t.reference), str(ArtifactToReference(a="0")))
@@ -572,13 +573,13 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_is_not_saving_if_artifact_has_changed(self):
         with self.assertRaises(UnitxtError) as e:
             args = {
-                "__type__": "dataset_recipe",
+                "__type__": {"module": "unitxt.standard", "name": "DatasetRecipe"},
                 "card": "cards.sst2",
                 "template_card_index": 0,
                 "demos_pool_size": 100,
                 "num_demos": 0,
             }
-            a = Artifact.from_dict(args)
+            a = from_dict(args)
             a.num_demos = 1
             a.save("not_suppose_to_save.json")
 
@@ -645,4 +646,11 @@ class TestArtifact(UnitxtTestCase):
                 "processors.to_list_by_comma_from_references",
             ],
         )
-        add_to_catalog(recipe, "temp_recipe_name", overwrite=True)
+        with temp_catalog() as catalog_path:
+            # temporary - to not pollute unitxt catalog
+            add_to_catalog(
+                recipe,
+                "temp_recipe_name",
+                catalog_path=catalog_path,
+                overwrite=True,
+            )

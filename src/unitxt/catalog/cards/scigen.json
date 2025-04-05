@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "kasnerz/scigen",
         "data_classification_policy": [
             "public"
@@ -9,14 +15,20 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "table_content_values": "[]"
             },
             "condition": "ne"
         },
         {
-            "__type__": "construct_table_from_rows_cols",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "ConstructTableFromRowsCols"
+            },
             "fields": [
                 "table_column_names",
                 "table_content_values"
@@ -24,14 +36,20 @@
             "to_field": "input_a"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table_caption": "input_b",
                 "text": "output"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "type_of_input_a": "table",
                 "type_of_input_b": "caption",

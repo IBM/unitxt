@@ -1,8 +1,14 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "process_references": false,
     "operator": {
-        "__type__": "load_json",
+        "__type__": {
+            "module": "unitxt.struct_data_operators",
+            "name": "LoadJson"
+        },
         "allow_failure": true,
         "failure_value": []
     }

@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "google/frames-benchmark",
         "data_classification_policy": [
             "public"
@@ -9,33 +15,51 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "Prompt",
             "to_field": "question"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "Answer",
             "to_field": "answer"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "answer",
             "inside": "list",
             "to_field": "answers"
         },
         {
-            "__type__": "literal_eval",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "LiteralEval"
+            },
             "field": "wiki_links",
             "to_field": "context"
         },
         {
-            "__type__": "wikipedia_fetcher",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "WikipediaFetcher"
+            },
             "field": "context",
             "process_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "wikipedia articles"
             }

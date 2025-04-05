@@ -1,3 +1,6 @@
 {
-    "__type__": "f1_weighted"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "F1Weighted"
+    }
 }

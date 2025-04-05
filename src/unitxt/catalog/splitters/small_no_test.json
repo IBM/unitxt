@@ -1,5 +1,8 @@
 {
-    "__type__": "split_random_mix",
+    "__type__": {
+        "module": "unitxt.splitters",
+        "name": "SplitRandomMix"
+    },
     "mix": {
         "train": "train[95%]",
         "validation": "train[5%]",

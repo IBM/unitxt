@@ -1,3 +1,6 @@
 {
-    "__type__": "fix_white_space"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "FixWhiteSpace"
+    }
 }

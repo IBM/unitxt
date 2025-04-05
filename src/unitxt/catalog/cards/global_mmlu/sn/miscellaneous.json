@@ -1,14 +1,33 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "CohereForAI/Global-MMLU",
         "name": "sn",
         "filtering_lambda": "lambda x: x['subject'] == 'miscellaneous'"
     },
     "preprocess_steps": [
         {
-            "__type__": "deduplicate",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
+            "values": {
+                "subject": "miscellaneous"
+            },
+            "condition": "eq"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Deduplicate"
+            },
             "by": [
                 "question",
                 "subject",
@@ -16,13 +35,19 @@
             ]
         },
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "dev": "train"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "answer": {
                     "A": 0,
@@ -33,7 +58,10 @@
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "option_a",
                 "option_b",
@@ -43,7 +71,10 @@
             "to_field": "choices"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "topic": "miscellaneous"
             }

@@ -1,3 +1,6 @@
 {
-    "__type__": "f1_binary"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "F1Binary"
+    }
 }

@@ -1,17 +1,32 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": {
+        "module": "unitxt.operator",
+        "name": "SequentialOperator"
+    },
     "steps": [
         {
-            "__type__": "post_process",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "PostProcess"
+            },
             "operator": {
-                "__type__": "regex_split",
+                "__type__": {
+                    "module": "unitxt.string_operators",
+                    "name": "RegexSplit"
+                },
                 "by": "(?:^|\n)- "
             }
         },
         {
-            "__type__": "post_process",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "PostProcess"
+            },
             "operator": {
-                "__type__": "remove_values",
+                "__type__": {
+                    "module": "unitxt.operators",
+                    "name": "RemoveValues"
+                },
                 "unallowed_values": [
                     "",
                     " "

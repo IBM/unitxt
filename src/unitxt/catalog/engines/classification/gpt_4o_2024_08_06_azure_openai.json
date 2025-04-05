@@ -1,5 +1,8 @@
 {
-    "__type__": "azure_open_ai_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "AzureOpenAIInferenceEngine"
+    },
     "model_name": "gpt-4o-2024-08-06",
     "logprobs": true,
     "max_tokens": 5,

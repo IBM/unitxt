@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "Criteria"
+    },
     "name": "email_inclusivity",
     "description": "The email is inclusive. It uses inclusive language and does not target any particular culture or group.",
     "prediction_field": "email",

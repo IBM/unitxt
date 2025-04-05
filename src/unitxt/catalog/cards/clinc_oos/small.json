@@ -1,23 +1,38 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "clinc_oos",
         "name": "small"
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "intent": "label"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "restaurant reviews",
@@ -175,7 +190,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "classes": [
                     "restaurant reviews",

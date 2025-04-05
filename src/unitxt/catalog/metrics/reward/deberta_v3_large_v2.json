@@ -1,4 +1,7 @@
 {
-    "__type__": "reward",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "Reward"
+    },
     "model_name": "OpenAssistant/reward-model-deberta-v3-large-v2"
 }

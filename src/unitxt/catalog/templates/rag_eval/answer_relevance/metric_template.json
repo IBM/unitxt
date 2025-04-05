@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template_with_custom_target",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplateWithCustomTarget"
+    },
     "input_format": "Question: {question}\nPrediction: {answer}",
     "output_format": "{is_relevant}",
     "postprocessors": [

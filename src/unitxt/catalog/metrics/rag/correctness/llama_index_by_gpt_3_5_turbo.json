@@ -1,5 +1,8 @@
 {
-    "__type__": "llama_index_correctness",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "LlamaIndexCorrectness"
+    },
     "model_name": "gpt-3.5-turbo",
     "data_classification_policy": [
         "public"

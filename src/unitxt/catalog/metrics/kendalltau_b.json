@@ -1,3 +1,6 @@
 {
-    "__type__": "kendall_tau_metric"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "KendallTauMetric"
+    }
 }

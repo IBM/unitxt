@@ -1,3 +1,6 @@
 {
-    "__type__": "shuffle_table_columns"
+    "__type__": {
+        "module": "unitxt.struct_data_operators",
+        "name": "ShuffleTableColumns"
+    }
 }

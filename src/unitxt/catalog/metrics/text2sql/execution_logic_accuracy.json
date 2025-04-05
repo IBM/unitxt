@@ -1,3 +1,6 @@
 {
-    "__type__": "sql_execution_accuracy"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "SQLExecutionAccuracy"
+    }
 }

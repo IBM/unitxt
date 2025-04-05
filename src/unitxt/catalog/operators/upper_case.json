@@ -1,3 +1,6 @@
 {
-    "__type__": "upper"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "Upper"
+    }
 }

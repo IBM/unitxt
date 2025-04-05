@@ -1,7 +1,13 @@
 {
-    "__type__": "task_based_ll_mas_judge",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_from_template",
+        "name": "TaskBasedLLMasJudge"
+    },
     "inference_model": {
-        "__type__": "generic_inference_engine"
+        "__type__": {
+            "module": "unitxt.inference",
+            "name": "GenericInferenceEngine"
+        }
     },
     "template": "templates.rag_eval.context_relevance.judge_context_relevance_ares_numeric",
     "task": "tasks.rag_eval.context_relevance.binary",

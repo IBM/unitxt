@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "Multilingual-Multimodal-NLP/TableBench",
         "revision": "90593ad8",
         "data_classification_policy": [
@@ -18,34 +24,49 @@
             "field": "table"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table/columns": "table/header",
                 "table/data": "table/rows"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "Table"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table": "context",
                 "answer": "answers"
             }
         },
         {
-            "__type__": "remove_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "RemoveFields"
+            },
             "fields": [
                 "instruction"
             ]
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "context": "Table",
             "context_type": "str",
@@ -62,7 +83,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
             "target_prefix": "Final Answer: ",
             "output_format": "{answers}",

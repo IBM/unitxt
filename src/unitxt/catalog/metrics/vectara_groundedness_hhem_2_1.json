@@ -1,3 +1,6 @@
 {
-    "__type__": "faithfulness_hhem"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "FaithfulnessHHEM"
+    }
 }

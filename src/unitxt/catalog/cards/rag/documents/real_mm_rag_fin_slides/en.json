@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "ibm-research/REAL-MM-RAG_FinSlides",
         "name": "default",
         "split": "test",
@@ -11,28 +17,43 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "test": "train"
             }
         },
         {
-            "__type__": "hash_image",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "HashImage"
+            },
             "field": "image",
             "to_field": "document_id"
         },
         {
-            "__type__": "deduplicate",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Deduplicate"
+            },
             "by": [
                 "document_id"
             ]
         },
         {
-            "__type__": "to_image",
+            "__type__": {
+                "module": "unitxt.image_operators",
+                "name": "ToImage"
+            },
             "field": "image"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "image",
             "inside": "list",
             "to_field": "passages"
@@ -41,7 +62,10 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "",
             "output_format": ""
         }

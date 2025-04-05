@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "input_format": "Given this {text_a_type}: {text_a}, classify if this {text_b_type}: {text_b} is {classes}.",
     "output_format": "{label}",
     "postprocessors": [

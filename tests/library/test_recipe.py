@@ -842,7 +842,10 @@ class TestRecipes(UnitxtTestCase):
         from unitxt import load_dataset
 
         d = load_dataset(
-            "__type__=dataset_recipe,card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
+            dataset_file,
+            "__type__={module=unitxt.standard,name=DatasetRecipe},card=cards.wnli,template=templates.classification.multi_class.relation.default,system_prompt=system_prompts.models.llama,demos_pool_size=5,num_demos=1",
+            streaming=True,
+            trust_remote_code=True,
         )
 
         iterator = iter(d["train"])

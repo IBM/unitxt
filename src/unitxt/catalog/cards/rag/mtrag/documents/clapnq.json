@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/document_level/clapnq.jsonl.zip"
         },
@@ -13,13 +19,19 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "cast",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
             "field": "_id",
             "to": "str",
             "to_field": "document_id"
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "text",
             "inside": "list",
             "to_field": "passages"
@@ -28,7 +40,10 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "",
             "output_format": ""
         }

@@ -1,25 +1,40 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "rungalileo/ragbench",
         "name": "tatqa"
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "documents"
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "documents",
             "inside": "list",
             "process_every_value": true
         },
         {
-            "__type__": "dictify",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Dictify"
+            },
             "field": "documents",
             "to_field": "context",
             "with_keys": [
@@ -28,13 +43,19 @@
             "process_every_value": true
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context/*/title": "Document"
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "response",
             "inside": "list",
             "to_field": "answers"

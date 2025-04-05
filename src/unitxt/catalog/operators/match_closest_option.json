@@ -1,3 +1,6 @@
 {
-    "__type__": "match_closest_option"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "MatchClosestOption"
+    }
 }

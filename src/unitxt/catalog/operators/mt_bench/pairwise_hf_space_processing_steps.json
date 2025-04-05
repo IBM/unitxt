@@ -1,8 +1,14 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": {
+        "module": "unitxt.operator",
+        "name": "SequentialOperator"
+    },
     "steps": [
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "turns": "model_input"
             },
@@ -11,7 +17,10 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "g1_user_prompt": "judge_input_model_1_ordered_first",
                 "g2_user_prompt": "judge_input_model_2_ordered_first",
@@ -25,7 +34,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "judge/0",
             "to_field": "judge_model_id",
             "apply_to_streams": [
@@ -33,7 +45,10 @@
             ]
         },
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "str.lower",
             "to_field": "model_1",
             "apply_to_streams": [
@@ -44,7 +59,10 @@
             ]
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "model_1": {
                     "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
@@ -57,7 +75,10 @@
             ]
         },
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "str.lower",
             "to_field": "model_2",
             "apply_to_streams": [
@@ -68,7 +89,10 @@
             ]
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "model_2": {
                     "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
@@ -81,7 +105,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "judge_model_id/0",
             "to_field": "judge_model_id",
             "apply_to_streams": [
@@ -89,7 +116,10 @@
             ]
         },
         {
-            "__type__": "filter_by_condition_based_on_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByConditionBasedOnFields"
+            },
             "values": {
                 "winner_model_1_ordered_first": "winner_model_2_ordered_first"
             },
@@ -99,7 +129,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "winner_model_1_ordered_first": "winner"
             },
@@ -108,7 +141,10 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "choices": "model_output"
             },
@@ -117,7 +153,10 @@
             ]
         },
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "str.lower",
             "to_field": "model_id",
             "apply_to_streams": [
@@ -128,7 +167,10 @@
             ]
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "model_id": {
                     "vicuna-13b-hao-0515": "vicuna-13b-v1.3",
@@ -141,7 +183,10 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "model_output/0/turns",
             "to_field": "model_output",
             "apply_to_streams": [
@@ -149,7 +194,10 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "JoinStreams"
+            },
             "left_stream": "questions",
             "right_stream": "judgment",
             "how": "inner",
@@ -159,7 +207,10 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "model_id": "model_1",
                 "model_output": "model_1_output"
@@ -169,7 +220,10 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "JoinStreams"
+            },
             "left_stream": "merged_stream",
             "right_stream": "model_answer",
             "how": "inner",
@@ -180,7 +234,10 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "model_1": "model_2",
                 "model_1_output": "model_2_output"
@@ -190,7 +247,10 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "JoinStreams"
+            },
             "left_stream": "merged_stream",
             "right_stream": "model_answer",
             "how": "inner",
@@ -201,7 +261,10 @@
             "new_stream_name": "merged_stream"
         },
         {
-            "__type__": "delete_splits",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "DeleteSplits"
+            },
             "splits": [
                 "questions",
                 "model_answer",
@@ -209,13 +272,19 @@
             ]
         },
         {
-            "__type__": "rename_splits",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "RenameSplits"
+            },
             "mapper": {
                 "merged_stream": "test"
             }
         },
         {
-            "__type__": "select_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "SelectFields"
+            },
             "fields": [
                 "question_id",
                 "category",

@@ -1,3 +1,6 @@
 {
-    "__type__": "rerank_recall"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "RerankRecall"
+    }
 }

@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "nguha/legalbench",
         "revision": "refs/convert/parquet",
         "splits": [
@@ -15,18 +21,27 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "text": "text",
                 "answer": "label"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "text_type": "products",
                 "classes": [
@@ -44,7 +59,10 @@
     "task": "tasks.classification.multi_class.with_classes_descriptions",
     "templates": {
         "default": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "Q: {text} What is the {type_of_class}?",
             "output_format": "{label}",
             "instruction": "{classes_descriptions}\n\nLabel the {type_of_class} for the following {text_type}:\n",

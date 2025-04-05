@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-cosmos-overall.json"
         },
@@ -12,13 +18,35 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "group_dict_with_regex",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
+            "field": "annotations/Coherency/mean_human",
+            "to_field": "mean_score"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Cast"
+            },
+            "field": "mean_score",
+            "to": "float"
+        },
+        {
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "GroupDictWithRegex"
+            },
             "field": "instance",
             "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<model_reasoning>.*?)\\s+Judge the generated response:",
             "flags": 16
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "instance/premise": "premise",
                 "instance/hypothesis": "hypothesis",
@@ -46,7 +74,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "premise": "str",
             "hypothesis": "str",

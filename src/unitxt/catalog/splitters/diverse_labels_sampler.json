@@ -1,3 +1,6 @@
 {
-    "__type__": "diverse_labels_sampler"
+    "__type__": {
+        "module": "unitxt.splitters",
+        "name": "DiverseLabelsSampler"
+    }
 }

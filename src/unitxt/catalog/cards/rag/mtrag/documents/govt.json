@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://github.com/IBM/mt-rag-benchmark/raw/refs/heads/main/corpora/document_level/govt.jsonl.zip"
         },
@@ -27,7 +33,10 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "",
             "output_format": ""
         }

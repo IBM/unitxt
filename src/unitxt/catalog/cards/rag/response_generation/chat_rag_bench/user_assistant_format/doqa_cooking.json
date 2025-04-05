@@ -1,23 +1,38 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "nvidia/ChatRAG-Bench",
         "name": "doqa_cooking",
         "split": "test"
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "test": "test"
             }
         },
         {
-            "__type__": "shuffle"
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "ctxs/*/text": "contexts",
                 "messages": "dialog",
@@ -25,13 +40,19 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "contexts_ids": []
             }
         },
         {
-            "__type__": "serialize_open_ai_format_dialog",
+            "__type__": {
+                "module": "unitxt.dialog_operators",
+                "name": "SerializeOpenAiFormatDialog"
+            },
             "field": "dialog",
             "to_field": "question",
             "format": "formats.user_assistant",

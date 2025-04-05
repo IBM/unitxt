@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_from_hf_space",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadFromHFSpace"
+        },
         "space_name": "lmsys/arena-hard-browser",
         "revision": "03b91ca",
         "data_files": {
@@ -16,7 +22,10 @@
     "preprocess_steps": [
         "operators.arena_hard_hf_space_processing_steps",
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "score_model_1_ordered_first": {
                     "A=B": 0,
@@ -35,12 +44,18 @@
             }
         },
         {
-            "__type__": "execute_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ExecuteExpression"
+            },
             "to_field": "answer_a_preference",
             "expression": "int(round((score_model_1_ordered_first+score_model_2_ordered_first)/2))"
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "model_input": "question",
                 "model_1_output": "answer_a",

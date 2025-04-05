@@ -1,3 +1,6 @@
 {
-    "__type__": "remove_punctuations"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "RemovePunctuations"
+    }
 }

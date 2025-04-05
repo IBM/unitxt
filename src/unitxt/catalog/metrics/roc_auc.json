@@ -1,3 +1,6 @@
 {
-    "__type__": "roc_auc"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "RocAuc"
+    }
 }

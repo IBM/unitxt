@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiReferenceTemplate"
+    },
     "input_format": "{context}\n{question}\nAnswer the question using a single word or phrase.",
     "references_field": "answers"
 }

@@ -1,8 +1,14 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "extract_harm_rating_judgement"
+        "__type__": {
+            "module": "unitxt.processors",
+            "name": "ExtractHarmRatingJudgement"
+        }
     }
 }

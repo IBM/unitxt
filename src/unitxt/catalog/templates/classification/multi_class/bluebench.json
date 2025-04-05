@@ -1,5 +1,8 @@
 {
-    "__type__": "templates_list",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "TemplatesList"
+    },
     "items": [
         "templates.classification.multi_class.instruction",
         "templates.classification.multi_class.instruct_question_selects",

@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.rag.external_rag.answer_correctness.bert_score_recall_ml",
         "metrics.rag.external_rag.faithfulness.vectara_hhem_2_1",

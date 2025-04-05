@@ -1,12 +1,21 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "billsum"
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "train[87.5%]",
                 "validation": "train[12.5%]",
@@ -14,25 +23,37 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "text": "document"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "document_type": "document"
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "summary",
             "inside": "list",
             "to_field": "summaries"
         },
         {
-            "__type__": "filter_by_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByExpression"
+            },
             "expression": "len(document) <= 10000"
         }
     ],

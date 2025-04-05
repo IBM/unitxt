@@ -1,28 +1,36 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
-        "path": "hotpotqa/hotpot_qa",
-        "revision": "refs/convert/parquet",
-        "splits": [
-            "train",
-            "test",
-            "validation"
-        ],
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
+        "path": "vincentkoc/hotpot_qa_archive",
+        "revision": "c060661",
+        "name": "distractor",
         "data_classification_policy": [
             "public"
         ]
     },
     "preprocess_steps": [
         {
-            "__type__": "join",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Join"
+            },
             "field": "context/sentences",
             "by": " ",
             "to_field": "context_sentences",
             "process_every_value": true
         },
         {
-            "__type__": "zip_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ZipFieldValues"
+            },
             "fields": [
                 "context/title",
                 "context_sentences"
@@ -30,34 +38,52 @@
             "to_field": "documents"
         },
         {
-            "__type__": "explode",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Explode"
+            },
             "field": "documents",
             "to_field": "document"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "document/0",
             "to_field": "document_id"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "document/0",
             "to_field": "title"
         },
         {
-            "__type__": "replace",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Replace"
+            },
             "field": "document/1",
             "old": " ",
             "new": " "
         },
         {
-            "__type__": "wrap",
+            "__type__": {
+                "module": "unitxt.collections_operators",
+                "name": "Wrap"
+            },
             "field": "document/1",
             "inside": "list",
             "to_field": "passages"
         },
         {
-            "__type__": "deduplicate",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Deduplicate"
+            },
             "by": [
                 "document_id"
             ]
@@ -66,7 +92,10 @@
     "task": "tasks.rag.corpora",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "",
             "output_format": ""
         }

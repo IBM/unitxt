@@ -1,3 +1,6 @@
 {
-    "__type__": "take_first_word"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "TakeFirstWord"
+    }
 }

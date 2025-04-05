@@ -1,3 +1,6 @@
 {
-    "__type__": "literal_eval"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "LiteralEval"
+    }
 }
