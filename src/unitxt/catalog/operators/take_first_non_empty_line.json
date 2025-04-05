@@ -1,3 +1,6 @@
 {
-    "__type__": "take_first_non_empty_line"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "TakeFirstNonEmptyLine"
+    }
 }

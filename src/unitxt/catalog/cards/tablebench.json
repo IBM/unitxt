@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "Multilingual-Multimodal-NLP/TableBench",
         "revision": "90593ad8af90f027f6f478b8c4c1981d9f073a83",
         "data_classification_policy": [
@@ -13,14 +19,20 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "FilterByCondition"
+            },
             "values": {
                 "instruction_type": "DP"
             },
             "condition": "eq"
         },
         {
-            "__type__": "apply",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Apply"
+            },
             "function": "json.loads",
             "to_field": "table",
             "_argv": [
@@ -28,34 +40,49 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table/columns": "table/header",
                 "table/data": "table/rows"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "Table"
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "table": "context",
                 "answer": "answers"
             }
         },
         {
-            "__type__": "remove_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "RemoveFields"
+            },
             "fields": [
                 "instruction"
             ]
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "context": "Table",
             "context_type": "str",
@@ -72,7 +99,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "input_format": "You are a table analyst. Your task is to answer questions based on the table content. {answer_formatter} \n{context_type}: {context} \nQuestion: {question}",
             "target_prefix": "Final Answer: ",
             "output_format": "{answers}",

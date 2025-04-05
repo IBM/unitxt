@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "instruction": "You are given a text. In what language is this text written?",
     "input_format": "Text: {text}",
     "output_format": "{label}",

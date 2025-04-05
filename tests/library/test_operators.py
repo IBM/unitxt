@@ -287,13 +287,14 @@ class TestOperators(UnitxtTestCase):
             },
         ]
 
-        check_operator(
-            operator=ExpandJustForCoverage2(
-                field_to_field=[["b", "B"]], process_every_value=True
+        self.assertListEqual(
+            targets,
+            apply_operator(
+                operator=ExpandJustForCoverage2(
+                    field_to_field=[["b", "B"]], process_every_value=True
+                ),
+                inputs=inputs,
             ),
-            inputs=inputs,
-            targets=targets,
-            tester=self,
         )
 
     def test_flatten_instances(self):

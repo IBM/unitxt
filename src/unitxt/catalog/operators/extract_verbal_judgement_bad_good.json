@@ -1,3 +1,6 @@
 {
-    "__type__": "extract_verbal_judgement_bad_good"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "ExtractVerbalJudgementBadGood"
+    }
 }

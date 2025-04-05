@@ -1,3 +1,6 @@
 {
-    "__type__": "oldify"
+    "__type__": {
+        "module": "unitxt.image_operators",
+        "name": "Oldify"
+    }
 }

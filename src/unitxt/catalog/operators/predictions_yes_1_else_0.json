@@ -1,3 +1,6 @@
 {
-    "__type__": "yes_to_one_else_zero"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "YesToOneElseZero"
+    }
 }
