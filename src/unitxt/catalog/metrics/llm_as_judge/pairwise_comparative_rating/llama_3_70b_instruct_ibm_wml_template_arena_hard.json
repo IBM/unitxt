@@ -1,7 +1,13 @@
 {
-    "__type__": "llm_as_judge",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_from_template",
+        "name": "LLMAsJudge"
+    },
     "inference_model": {
-        "__type__": "wml_inference_engine",
+        "__type__": {
+            "module": "unitxt.inference",
+            "name": "WMLInferenceEngine"
+        },
         "model_name": "meta-llama/llama-3-70b-instruct",
         "max_new_tokens": 2048,
         "random_seed": 42

@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplate"
+    },
     "input_format": "Time for a translation adventure! Take this text from {source_language} to {target_language} and add a dash of playfulness. Let's make it sparkle!\n Text: {text}",
     "output_format": "{translation}"
 }

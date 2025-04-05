@@ -1,7 +1,18 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "turl_column_type_annotation_loader"
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
+        "path": "ibm/turl_table_col_type",
+        "data_classification_policy": [
+            "public"
+        ],
+        "streaming": true
     },
     "preprocess_steps": [
         {
@@ -268,7 +279,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "page_title": "str",
             "section_title": "str",
@@ -297,7 +311,10 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "instruction": "This is a column type annotation task. The goal of this task is to choose the correct types for one selected column of the given input table from the given candidate types. The Wikipedia page, section and table caption (if any) provide important information for choosing the correct column types.\n                    Candidate Types: {vocab}\n                    \nOutput only the correct column types from the candidate list for the mentioned columns. Do not include any explanations, extra information, or introductory text—only the final answer.\n                    \nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
             "input_format": "\nColumn name: {colname}\nPage Title: {page_title} \nSection Title: {section_title} \nTable caption: {table_caption} \nTable: \n{table} \nSelected Column: {colname} ",
             "output_format": "{annotations}",

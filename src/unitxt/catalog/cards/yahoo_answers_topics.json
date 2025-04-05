@@ -1,16 +1,28 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "yahoo_answers_topics"
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Shuffle"
+            },
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "split_random_mix",
+            "__type__": {
+                "module": "unitxt.splitters",
+                "name": "SplitRandomMix"
+            },
             "mix": {
                 "train": "train[87.5%]",
                 "validation": "train[12.5%]",
@@ -18,13 +30,19 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "topic": "label"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "Society & Culture",
@@ -41,7 +59,10 @@
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "question_title",
                 "question_content",
@@ -50,13 +71,19 @@
             "to_field": "text"
         },
         {
-            "__type__": "join_str",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "JoinStr"
+            },
             "separator": " ",
             "field": "text",
             "to_field": "text"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "classes": [
                     "Society & Culture",

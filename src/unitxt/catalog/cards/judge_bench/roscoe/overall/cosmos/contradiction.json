@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "test": "https://raw.githubusercontent.com/dmg-illc/JUDGE-BENCH/refs/heads/master/data/roscoe/roscoe-cosmos-overall.json"
         },
@@ -12,23 +18,18 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "group_dict_with_regex",
-            "field": "instance",
-            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<model_reasoning>.*?)\\s+Judge the generated response:",
-            "flags": 16
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
+            "field": "annotations/Contradiction/majority_human",
+            "to_field": "label"
         },
         {
-            "__type__": "rename",
-            "field_to_field": {
-                "instance/premise": "premise",
-                "instance/hypothesis": "hypothesis",
-                "instance/model_reasoning": "generated response",
-                "instance/correct_answer": "correct answer",
-                "annotations/Contradiction/majority_human": "label"
-            }
-        },
-        {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "no": "No",
@@ -37,12 +38,39 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "label",
             "to_field": "label_value"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "GroupDictWithRegex"
+            },
+            "field": "instance",
+            "pattern": ".*?Situation \\(Premise\\):\\s+(?P<premise>.*?)\\s+Claim \\(Hypothesis\\):\\s+(?P<hypothesis>.*?)\\s+Is the Claim supported by the Situation\\?\\s+Correct Relationship \\(Yes or No\\):\\s(?P<correct_answer>.*?)\\s+GENERATED RESPONSE:\\s+(?P<generated_response>.*?)\\s+Judge the generated response:",
+            "flags": 16
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
+            "field_to_field": {
+                "instance/premise": "premise",
+                "instance/hypothesis": "hypothesis",
+                "instance/generated_response": "generated response",
+                "instance/correct_answer": "correct answer"
+            }
+        },
+        {
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label_value": {
                     "Yes": 0.0,
@@ -51,7 +79,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "criteria": "metrics.llm_as_judge.direct.criteria.step_by_step_reasoning_contradiction",
                 "question": "Is the Hypothesis supported by the Premise?"
@@ -59,7 +90,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "premise": "str",
             "hypothesis": "str",

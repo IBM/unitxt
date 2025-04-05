@@ -1,3 +1,6 @@
 {
-    "__type__": "lower"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "Lower"
+    }
 }

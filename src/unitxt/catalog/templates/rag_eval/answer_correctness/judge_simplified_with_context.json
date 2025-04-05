@@ -1,5 +1,8 @@
 {
-    "__type__": "input_output_template_with_custom_target",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "InputOutputTemplateWithCustomTarget"
+    },
     "input_format": "Question: {question}\n\nEvidence: {contexts}\n\nGround Truth: {ground_truths}\nPrediction: {answer}\n",
     "output_format": "{is_correct}",
     "postprocessors": [

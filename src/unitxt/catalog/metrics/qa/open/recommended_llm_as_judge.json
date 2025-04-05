@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.llm_as_judge.rating.llama_3_70b_instruct.generic_single_turn"
     ]

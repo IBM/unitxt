@@ -1,4 +1,7 @@
 {
-    "__type__": "string_containment_ratio",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "StringContainmentRatio"
+    },
     "field": "entities"
 }

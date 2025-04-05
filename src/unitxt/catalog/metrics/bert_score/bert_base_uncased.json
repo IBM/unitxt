@@ -1,4 +1,7 @@
 {
-    "__type__": "bert_score",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "BertScore"
+    },
     "model_name": "bert-base-uncased"
 }
