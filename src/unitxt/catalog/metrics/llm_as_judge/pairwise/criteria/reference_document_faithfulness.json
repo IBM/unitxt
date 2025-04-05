@@ -1,5 +1,8 @@
 {
-    "__type__": "criteria",
+    "__type__": {
+        "module": "unitxt.llm_as_judge_constants",
+        "name": "Criteria"
+    },
     "name": "reference_document_faithfulness",
     "description": "The response is faithful according to the reference document.",
     "prediction_field": "response",

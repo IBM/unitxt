@@ -1,5 +1,8 @@
 {
-    "__type__": "ibm_gen_ai_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "IbmGenAiInferenceEngine"
+    },
     "model_name": "meta-llama/llama-3-8b-instruct",
     "max_new_tokens": 2048,
     "random_seed": 42

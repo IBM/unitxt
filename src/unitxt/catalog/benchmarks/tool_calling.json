@@ -1,8 +1,14 @@
 {
-    "__type__": "benchmark",
+    "__type__": {
+        "module": "unitxt.benchmark",
+        "name": "Benchmark"
+    },
     "subsets": {
         "bfcl.simple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.simple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -11,7 +17,10 @@
             ]
         },
         "bfcl.multiple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.multiple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -20,7 +29,10 @@
             ]
         },
         "bfcl.live_multiple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.live_multiple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -29,7 +41,10 @@
             ]
         },
         "bfcl.live_simple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.live_simple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -38,7 +53,10 @@
             ]
         },
         "bfcl.java": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.java_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -47,7 +65,10 @@
             ]
         },
         "bfcl.javascript": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.javascript_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -56,7 +77,10 @@
             ]
         },
         "bfcl.parallel": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.parallel_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -65,7 +89,10 @@
             ]
         },
         "bfcl.parallel_multiple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.parallel_multiple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -74,7 +101,10 @@
             ]
         },
         "bfcl.live_parallel": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.live_parallel_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -83,7 +113,10 @@
             ]
         },
         "bfcl.live_parallel_multiple": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.bfcl.multi_turn.live_parallel_multiple_v3",
             "format": "formats.chat_api",
             "metrics": [
@@ -92,7 +125,10 @@
             ]
         },
         "xlam": {
-            "__type__": "dataset_recipe",
+            "__type__": {
+                "module": "unitxt.standard",
+                "name": "DatasetRecipe"
+            },
             "card": "cards.xlam_function_calling_60k",
             "format": "formats.chat_api",
             "metrics": [
