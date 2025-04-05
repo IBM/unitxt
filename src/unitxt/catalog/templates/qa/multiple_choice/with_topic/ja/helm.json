@@ -1,5 +1,8 @@
 {
-    "__type__": "multiple_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultipleChoiceTemplate"
+    },
     "input_format": "次は {topic}に関する選択式の問題です。\n\n質問: {question}.\n選択肢: {choices}.\n答え:",
     "target_field": "answer",
     "choices_separator": "\n",

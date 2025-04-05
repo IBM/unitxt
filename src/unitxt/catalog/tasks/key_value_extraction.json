@@ -1,5 +1,8 @@
 {
-    "__type__": "task",
+    "__type__": {
+        "module": "unitxt.task",
+        "name": "Task"
+    },
     "__description__": "This is a key value extraction task, where a specific list of possible 'keys' need to be extracted from the input.  The ground truth is provided key-value pairs in the form of the dictionary.  The results are evaluating using F1 score metric, that expects the predictions to be converted into a list of (key,value) pairs. ",
     "input_fields": {
         "input": "Any",

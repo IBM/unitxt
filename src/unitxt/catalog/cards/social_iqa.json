@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "allenai/social_i_qa",
         "data_classification_policy": [
             "public"
@@ -10,7 +16,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "deduplicate",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Deduplicate"
+            },
             "by": [
                 "context",
                 "question",
@@ -21,7 +30,10 @@
         },
         "splitters.small_no_test",
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "answerA",
                 "answerB",
@@ -30,7 +42,10 @@
             "to_field": "choices"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "1": 0,
@@ -40,12 +55,18 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field": "label",
             "to_field": "answer"
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "context_type": "situation"
             }

@@ -1,14 +1,23 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "f1",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "task_data/context",
             "to_field": "references"
         },
         {
-            "__type__": "list_field_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ListFieldValues"
+            },
             "fields": [
                 "references"
             ],
@@ -16,11 +25,17 @@
         }
     ],
     "metric": {
-        "__type__": "token_overlap"
+        "__type__": {
+            "module": "unitxt.metrics",
+            "name": "TokenOverlap"
+        }
     },
     "postprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": [
                 [
                     "score/global/f1",

@@ -1,5 +1,8 @@
 {
-    "__type__": "templates_list",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "TemplatesList"
+    },
     "items": [
         "templates.rag_eval.answer_correctness.metric_template",
         "templates.rag_eval.answer_correctness.judge_instruct_qa_format",

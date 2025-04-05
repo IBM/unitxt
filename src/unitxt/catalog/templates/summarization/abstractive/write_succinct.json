@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiReferenceTemplate"
+    },
     "input_format": "Write a succinct summary of the following {document_type}: {document}.",
     "references_field": "summaries"
 }

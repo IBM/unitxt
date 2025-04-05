@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadJsonFile"
+        },
         "files": {
             "questions": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/BFCL_v3_multiple.json",
             "answers": "https://raw.githubusercontent.com/ShishirPatil/gorilla/70b6a4a2144597b1f99d1f4d3185d35d7ee532a4/berkeley-function-call-leaderboard/data/possible_answer/BFCL_v3_multiple.json"
@@ -13,7 +19,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "join_streams",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "JoinStreams"
+            },
             "left_stream": "questions",
             "right_stream": "answers",
             "how": "inner",
@@ -21,18 +30,27 @@
             "new_stream_name": "test"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "question/*/0",
             "to_field": "dialog"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "function",
             "to_field": "tools"
         },
         "operators.fix_json_schema",
         {
-            "__type__": "execute_expression",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "ExecuteExpression"
+            },
             "expression": "[{\"name\": k, \"arguments\": dict(zip(v.keys(), vals))} for d in ground_truth for k, v in d.items() for vals in itertools.product(*v.values())]",
             "to_field": "reference_calls",
             "imports_list": [
