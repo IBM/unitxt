@@ -1,5 +1,5 @@
 {
-    "__type__": "f1_fast",
+    "__type__": "unitxt.metrics.F1Fast",
     "main_score": "f1_macro",
     "averages": [
         "macro",

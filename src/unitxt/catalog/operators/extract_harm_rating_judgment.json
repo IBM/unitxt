@@ -1,3 +1,3 @@
 {
-    "__type__": "extract_harm_rating_judgement"
+    "__type__": "unitxt.processors.ExtractHarmRatingJudgement"
 }

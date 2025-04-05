@@ -1,5 +1,5 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "unitxt.templates.InputOutputTemplate",
     "input_format": "Translate from {source_language} to {target_language}: {text}",
     "output_format": "{translation}"
 }

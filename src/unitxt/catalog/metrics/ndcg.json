@@ -1,10 +1,10 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "nDCG",
     "single_reference_per_prediction": true,
     "preprocess_steps": [
         {
-            "__type__": "cast_fields",
+            "__type__": "unitxt.operators.CastFields",
             "fields": {
                 "prediction": "float",
                 "references/0": "float"
@@ -15,6 +15,6 @@
         }
     ],
     "metric": {
-        "__type__": "ndcg"
+        "__type__": "unitxt.metrics.NDCG"
     }
 }

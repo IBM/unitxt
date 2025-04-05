@@ -1,14 +1,14 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "IBM/ProvoQ",
         "data_classification_policy": [
             "public"
         ]
     },
     "task": {
-        "__type__": "task",
+        "__type__": "unitxt.task.Task",
         "input_fields": {
             "question": "str",
             "stigma": "str",
@@ -21,10 +21,10 @@
         ]
     },
     "templates": {
-        "__type__": "templates_dict",
+        "__type__": "unitxt.templates.TemplatesDict",
         "items": {
             "default": {
-                "__type__": "input_output_template",
+                "__type__": "unitxt.templates.InputOutputTemplate",
                 "input_format": "{question}",
                 "output_format": ""
             }

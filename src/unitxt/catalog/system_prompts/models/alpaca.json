@@ -1,4 +1,4 @@
 {
-    "__type__": "textual_system_prompt",
+    "__type__": "unitxt.system_prompts.TextualSystemPrompt",
     "text": "Below is an instruction that describes a task. Write a response that appropriately completes the request.\n\n"
 }

@@ -1,5 +1,5 @@
 {
-    "__type__": "metrics_list",
+    "__type__": "unitxt.metrics.MetricsList",
     "items": [
         "metrics.rag.end_to_end.answer_correctness.token_recall",
         "metrics.rag.end_to_end.faithfulness.token_k_precision",

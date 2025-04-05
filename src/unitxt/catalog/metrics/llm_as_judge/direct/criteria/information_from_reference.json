@@ -1,15 +1,15 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": "unitxt.llm_as_judge_constants.CriteriaWithOptions",
     "name": "information_from_reference",
     "description": "Does the user response contain information from the reference document?",
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Yes",
             "description": "The user response contains information from the reference document."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "No",
             "description": "The user response doesn't contain information from the reference document."
         }

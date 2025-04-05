@@ -1,20 +1,20 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": "unitxt.llm_as_judge_constants.CriteriaWithOptions",
     "name": "temperature_in_celsius_and_fahrenheit",
     "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Yes",
             "description": "The temperature reading is provided in both Fahrenheit and Celsius."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "No",
             "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Pass",
             "description": "There is no numerical temperature reading in the response."
         }

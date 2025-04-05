@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "EdinburghNLP/xsum"
     },
     "task": "tasks.summarization.abstractive",
     "preprocess_steps": [
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "summary",
             "inside": "list",
             "to_field": "summaries"
