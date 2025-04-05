@@ -1,13 +1,25 @@
 {
-    "__type__": "random_forest_metrics_ensemble",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "RandomForestMetricsEnsemble"
+    },
     "metrics": [
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "ibm/granite-13b-instruct-v2",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },
@@ -17,12 +29,21 @@
             "prediction_type": "str"
         },
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "meta-llama/llama-3-70b-instruct",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },
@@ -32,12 +53,21 @@
             "prediction_type": "str"
         },
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "mistralai/mixtral-8x7b-instruct-v01",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },
@@ -47,12 +77,21 @@
             "prediction_type": "str"
         },
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "meta-llama/llama-3-70b-instruct",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },
@@ -62,12 +101,21 @@
             "prediction_type": "str"
         },
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "mistralai/mixtral-8x7b-instruct-v01",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },
@@ -77,12 +125,21 @@
             "prediction_type": "str"
         },
         {
-            "__type__": "llm_as_judge",
+            "__type__": {
+                "module": "unitxt.llm_as_judge_from_template",
+                "name": "LLMAsJudge"
+            },
             "inference_model": {
-                "__type__": "ibm_gen_ai_inference_engine",
+                "__type__": {
+                    "module": "unitxt.inference",
+                    "name": "IbmGenAiInferenceEngine"
+                },
                 "model_name": "ibm/granite-13b-chat-v2",
                 "parameters": {
-                    "__type__": "ibm_gen_ai_inference_engine_params",
+                    "__type__": {
+                        "module": "unitxt.inference",
+                        "name": "IbmGenAiInferenceEngineParams"
+                    },
                     "max_new_tokens": 256
                 }
             },

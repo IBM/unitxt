@@ -1,3 +1,6 @@
 {
-    "__type__": "lower_case_till_punc"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "LowerCaseTillPunc"
+    }
 }

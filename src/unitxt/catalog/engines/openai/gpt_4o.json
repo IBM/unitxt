@@ -1,5 +1,8 @@
 {
-    "__type__": "open_ai_inference_engine",
+    "__type__": {
+        "module": "unitxt.inference",
+        "name": "OpenAiInferenceEngine"
+    },
     "model_name": "gpt-4o",
     "max_tokens": 2048,
     "seed": 42

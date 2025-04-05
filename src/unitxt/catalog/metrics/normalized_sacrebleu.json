@@ -1,21 +1,33 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "sacrebleu",
     "prediction_type": "str",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field": "task_data/target_language",
             "to_field": "task_data/tokenize",
             "not_exist_ok": true,
             "get_default": "en"
         },
         {
-            "__type__": "lower",
+            "__type__": {
+                "module": "unitxt.processors",
+                "name": "Lower"
+            },
             "field": "task_data/tokenize"
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "task_data/tokenize": {
                     "german": null,
@@ -43,6 +55,9 @@
         }
     ],
     "metric": {
-        "__type__": "normalized_sacrebleu"
+        "__type__": {
+            "module": "unitxt.metrics",
+            "name": "NormalizedSacrebleu"
+        }
     }
 }

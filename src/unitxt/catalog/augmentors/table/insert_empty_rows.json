@@ -1,3 +1,6 @@
 {
-    "__type__": "insert_empty_table_rows"
+    "__type__": {
+        "module": "unitxt.struct_data_operators",
+        "name": "InsertEmptyTableRows"
+    }
 }

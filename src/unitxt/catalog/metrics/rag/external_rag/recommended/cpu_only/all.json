@@ -1,5 +1,8 @@
 {
-    "__type__": "metrics_list",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricsList"
+    },
     "items": [
         "metrics.rag.external_rag.answer_correctness.token_recall",
         "metrics.rag.external_rag.faithfulness.token_k_precision",
