@@ -1,7 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
         "path": "wiki_bio",
         "revision": "refs/convert/parquet",
         "splits": [
@@ -20,7 +26,10 @@
             "to_field": "kvpairs"
         },
         {
-            "__type__": "serialize_key_val_pairs",
+            "__type__": {
+                "module": "unitxt.struct_data_operators",
+                "name": "SerializeKeyValPairs"
+            },
             "field_to_field": [
                 [
                     "kvpairs",
@@ -29,13 +38,19 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
             "field_to_field": {
                 "target_text": "output"
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "type_of_input": "Key-Value pairs"
             }

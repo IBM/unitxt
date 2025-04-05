@@ -1,8 +1,14 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "MetricPipeline"
+    },
     "main_score": "granite_guardian_groundedness",
     "metric": {
-        "__type__": "granite_guardian_rag_risk",
+        "__type__": {
+            "module": "unitxt.metrics",
+            "name": "GraniteGuardianRagRisk"
+        },
         "main_score": "granite_guardian_groundedness",
         "risk_name": "groundedness",
         "user_message_field": "question",
@@ -10,12 +16,18 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "join",
+            "__type__": {
+                "module": "unitxt.string_operators",
+                "name": "Join"
+            },
             "field": "contexts",
             "by": "\n"
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "ground_truths": "task_data/ground_truths",
                 "answer": "task_data/answer",
@@ -25,14 +37,20 @@
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "copy",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Copy"
+            },
             "field_to_field": {
                 "prediction": "task_data/answer"
             },
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "prediction": 0.0,
                 "references": [

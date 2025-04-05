@@ -1,3 +1,6 @@
 {
-    "__type__": "wer"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "Wer"
+    }
 }

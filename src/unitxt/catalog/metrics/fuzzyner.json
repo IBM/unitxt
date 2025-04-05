@@ -1,3 +1,6 @@
 {
-    "__type__": "fuzzy_ner"
+    "__type__": {
+        "module": "unitxt.metrics",
+        "name": "FuzzyNer"
+    }
 }

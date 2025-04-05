@@ -251,11 +251,17 @@ class TestTextUtils(UnitxtTestCase):
 
     def test_print_dict_as_python(self):
         instance = {
-            "__type__": "task_card",
-            "loader": {"__type__": "load_hf", "path": "fancyzhx/ag_news"},
+            "__type__": {"module": "unitxt.card", "name": "TaskCard"},
+            "loader": {
+                "__type__": {"module": "unitxt.loaders", "name": "LoadHF"},
+                "path": "fancyzhx/ag_news",
+            },
             "preprocess_steps": [
                 {
-                    "__type__": "split_random_mix",
+                    "__type__": {
+                        "module": "unitxt.splitters",
+                        "name": "SplitRandomMix",
+                    },
                     "mix": {
                         "train": "train[87.5%]",
                         "validation": "train[12.5%]",
@@ -263,7 +269,10 @@ class TestTextUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "__type__": "map_instance_values",
+                    "__type__": {
+                        "module": "unitxt.operators",
+                        "name": "MapInstanceValues",
+                    },
                     "mappers": {
                         "label": {
                             "0": "World",
@@ -274,7 +283,7 @@ class TestTextUtils(UnitxtTestCase):
                     },
                 },
                 {
-                    "__type__": "set",
+                    "__type__": {"module": "unitxt.operators", "name": "Set"},
                     "fields": {
                         "classes": ["World", "Sports", "Business", "Sci/Tech"],
                         "text_type": "sentence",
@@ -286,19 +295,19 @@ class TestTextUtils(UnitxtTestCase):
         }
 
         self.assertEqual(
-            """__type__task_card(
-    loader=__type__load_hf(
+            """__type__unitxt.card.TaskCard(
+    loader=__type__unitxt.loaders.LoadHF(
         path="fancyzhx/ag_news",
     ),
     preprocess_steps=[
-        __type__split_random_mix(
+        __type__unitxt.splitters.SplitRandomMix(
             mix={
                 "train": "train[87.5%]",
                 "validation": "train[12.5%]",
                 "test": "test",
             },
         ),
-        __type__map_instance_values(
+        __type__unitxt.operators.MapInstanceValues(
             mappers={
                 "label": {
                     "0": "World",
@@ -308,7 +317,7 @@ class TestTextUtils(UnitxtTestCase):
                 },
             },
         ),
-        __type__set(
+        __type__unitxt.operators.Set(
             fields={
                 "classes": [
                     "World",

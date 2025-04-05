@@ -1,6 +1,12 @@
 {
-    "__type__": "post_process",
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "PostProcess"
+    },
     "operator": {
-        "__type__": "to_string_stripped"
+        "__type__": {
+            "module": "unitxt.processors",
+            "name": "ToStringStripped"
+        }
     }
 }

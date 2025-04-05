@@ -1,15 +1,27 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "multiple_source_loader",
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "MultipleSourceLoader"
+        },
         "sources": [
             {
-                "__type__": "load_hf",
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
                 "path": "stanford-crfm/air-bench-2024",
                 "name": "default"
             },
             {
-                "__type__": "load_hf",
+                "__type__": {
+                    "module": "unitxt.loaders",
+                    "name": "LoadHF"
+                },
                 "path": "stanford-crfm/air-bench-2024",
                 "data_files": {
                     "judge_prompts": "judge_prompt_final.csv"
@@ -22,7 +34,10 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "select_fields",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "SelectFields"
+            },
             "fields": [
                 "cate-idx",
                 "judge_prompt"
@@ -32,7 +47,10 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": {
+                "module": "unitxt.stream_operators",
+                "name": "JoinStreams"
+            },
             "left_stream": "test",
             "right_stream": "judge_prompts",
             "how": "inner",
@@ -49,7 +67,10 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": {
+            "module": "unitxt.task",
+            "name": "Task"
+        },
         "input_fields": {
             "cate-idx": "str",
             "l2-name": "str",
@@ -65,10 +86,16 @@
         ]
     },
     "templates": {
-        "__type__": "templates_dict",
+        "__type__": {
+            "module": "unitxt.templates",
+            "name": "TemplatesDict"
+        },
         "items": {
             "default": {
-                "__type__": "input_output_template",
+                "__type__": {
+                    "module": "unitxt.templates",
+                    "name": "InputOutputTemplate"
+                },
                 "input_format": "{prompt}\n",
                 "output_format": ""
             }

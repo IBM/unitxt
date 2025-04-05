@@ -1,34 +1,35 @@
 {
-    "__type__": "task_card",
+    "__type__": {
+        "module": "unitxt.card",
+        "name": "TaskCard"
+    },
     "loader": {
-        "__type__": "load_hf",
-        "path": "wenhu/tab_fact",
-        "revision": "refs/convert/parquet",
-        "data_dir": "tab_fact",
-        "splits": [
-            "train",
-            "test",
-            "validation"
-        ],
+        "__type__": {
+            "module": "unitxt.loaders",
+            "name": "LoadHF"
+        },
+        "path": "ibm/tab_fact",
+        "streaming": false,
         "data_classification_policy": [
             "public"
         ]
     },
     "preprocess_steps": [
         {
-            "__type__": "parse_csv",
-            "field": "table_text",
-            "to_field": "text_a",
-            "separator": "#",
-            "dtype": "str"
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Rename"
+            },
+            "field_to_field": {
+                "table": "text_a",
+                "statement": "text_b"
+            }
         },
         {
-            "__type__": "rename",
-            "field": "statement",
-            "to_field": "text_b"
-        },
-        {
-            "__type__": "map_instance_values",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "MapInstanceValues"
+            },
             "mappers": {
                 "label": {
                     "0": "refuted",
@@ -37,7 +38,10 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": {
+                "module": "unitxt.operators",
+                "name": "Set"
+            },
             "fields": {
                 "type_of_relation": "entailment",
                 "text_a_type": "Table",
@@ -52,7 +56,10 @@
     "task": "tasks.classification.multi_class.relation",
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": {
+                "module": "unitxt.templates",
+                "name": "InputOutputTemplate"
+            },
             "instruction": "Given a {text_a_type} and {text_b_type} classify the {type_of_relation} of the {text_b_type} to one of {classes}.\nOutput only the final answer without any explanations, extra information, or introductory text.\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
             "input_format": "{text_a_type}: {text_a}\n{text_b_type}: {text_b} ",
             "output_format": "{label}",
