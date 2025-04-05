@@ -1,6 +1,6 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "to_list_by_comma"
+        "__type__": "unitxt.processors.ToListByComma"
     }
 }

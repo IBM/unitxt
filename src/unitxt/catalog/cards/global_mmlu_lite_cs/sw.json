@@ -1,21 +1,21 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "CohereForAI/Global-MMLU-Lite",
         "name": "sw",
         "filtering_lambda": "lambda x: x['cultural_sensitivity_label'] == 'CS'"
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "test": "test[100%]",
                 "train": "test[10%]"
             }
         },
         {
-            "__type__": "deduplicate",
+            "__type__": "unitxt.operators.Deduplicate",
             "by": [
                 "question",
                 "subject",
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "answer": {
                     "A": 0,
@@ -34,7 +34,7 @@
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "option_a",
                 "option_b",
@@ -44,13 +44,13 @@
             "to_field": "choices"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "subject": "topic"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "topic": {
                     "abstract_algebra": "abstract algebra",

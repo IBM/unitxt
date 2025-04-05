@@ -1,4 +1,4 @@
 {
-    "__type__": "llama_index_faithfulness",
+    "__type__": "unitxt.metrics.LlamaIndexFaithfulness",
     "model_name": "mock"
 }

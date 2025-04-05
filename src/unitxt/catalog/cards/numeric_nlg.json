@@ -1,12 +1,12 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "kasnerz/numericnlg"
     },
     "preprocess_steps": [
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "type_of_input_a": "table",
                 "type_of_input_b": "caption",
@@ -14,22 +14,22 @@
             }
         },
         {
-            "__type__": "map_html_table_to_json",
+            "__type__": "unitxt.struct_data_operators.MapHTMLTableToJSON",
             "field": "table_html_clean",
             "to_field": "table_out"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "table_out",
             "to_field": "input_a"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "description",
             "to_field": "output"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "caption",
             "to_field": "input_b"
         }

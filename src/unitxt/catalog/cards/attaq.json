@@ -1,23 +1,23 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "ibm/AttaQ"
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "train": "test"
             }
         },
         {
-            "__type__": "shuffle",
+            "__type__": "unitxt.operators.Shuffle",
             "page_size": 2800
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": "unitxt.task.Task",
         "input_fields": [
             "input"
         ],
@@ -30,12 +30,12 @@
     },
     "templates": [
         {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "{input}\n",
             "output_format": ""
         },
         {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "{input}",
             "output_format": ""
         }

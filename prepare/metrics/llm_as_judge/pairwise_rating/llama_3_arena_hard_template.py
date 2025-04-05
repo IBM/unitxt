@@ -3,7 +3,7 @@ from unitxt.inference import (
     CrossProviderInferenceEngine,
     GenericInferenceEngine,
     IbmGenAiInferenceEngine,
-    WMLInferenceEngine,
+    WMLInferenceEngineGeneration,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 
@@ -15,7 +15,7 @@ templates = [
 ]
 
 inference_engines = [
-    ("ibm_wml", WMLInferenceEngine),
+    ("ibm_wml", WMLInferenceEngineGeneration),
     ("ibm_genai", IbmGenAiInferenceEngine),
     ("generic_engine", GenericInferenceEngine),
 ]

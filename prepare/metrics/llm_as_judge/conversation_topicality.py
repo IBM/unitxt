@@ -3,7 +3,7 @@ import json
 from unitxt import add_to_catalog
 from unitxt.inference import (
     IbmGenAiInferenceEngine,
-    IbmGenAiInferenceEngineParams,
+    IbmGenAiInferenceEngineParamsMixin,
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.metrics import (
@@ -11,7 +11,7 @@ from unitxt.metrics import (
 )
 
 platform = "ibm_gen_ai"
-gen_params = IbmGenAiInferenceEngineParams(max_new_tokens=256)
+gen_params = IbmGenAiInferenceEngineParamsMixin(max_new_tokens=256)
 
 config_filepath = "prepare/metrics/llm_as_judge/ensemble_topicality_v1.json"
 

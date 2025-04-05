@@ -1,5 +1,5 @@
 {
-    "__type__": "templates_list",
+    "__type__": "unitxt.templates.TemplatesList",
     "items": [
         "templates.text2sql.you_are_given_with_sql_prefix",
         "templates.text2sql.you_are_given_with_hint_with_sql_prefix",

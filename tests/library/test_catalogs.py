@@ -15,7 +15,15 @@ from unitxt.register import (
 from tests.utils import UnitxtTestCase
 
 
+class ClassToSave(Artifact):
+    t: int = 0
+    class SubClassToSave(Artifact):
+        fl: float = 1.5
+
+
 class TestCatalogs(UnitxtTestCase):
+
+
     def test_catalog_registration(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
             register_local_catalog(tmp_dir)
@@ -71,12 +79,20 @@ class TestCatalogs(UnitxtTestCase):
     def test_add_to_catalog(self):
         with tempfile.TemporaryDirectory() as tmp_dir:
 
-            class ClassToSave(Artifact):
-                t: int = 0
-
             add_to_catalog(ClassToSave(t=1), "test.save", catalog_path=tmp_dir)
 
             with open(os.path.join(tmp_dir, "test", "save.json")) as f:
                 content = json.load(f)
 
-            self.assertDictEqual(content, {"__type__": "class_to_save", "t": 1})
+            self.assertTrue(content["__type__"].endswith("test_catalogs.ClassToSave"))
+            self.assertEqual(2, len(content))
+            self.assertEqual(1, content["t"])
+
+            add_to_catalog(ClassToSave.SubClassToSave(fl=2.5), "test.save_sub", catalog_path=tmp_dir)
+
+            with open(os.path.join(tmp_dir, "test", "save_sub.json")) as f:
+                content = json.load(f)
+
+            self.assertTrue(content["__type__"].endswith("test_catalogs/ClassToSave.SubClassToSave"))
+            self.assertEqual(2, len(content))
+            self.assertEqual(2.5, content["fl"])
