@@ -1,7 +1,7 @@
 from json.decoder import JSONDecodeError
 from typing import Any, Dict, Optional
 
-from .artifact import Artifact, UnitxtArtifactNotFoundError, fetch_artifact
+from .artifact import UnitxtArtifactNotFoundError, fetch_artifact, from_dict
 from .logging_utils import get_logger
 from .parsing_utils import parse_key_equals_value_string_to_dict
 from .register import _reset_env_local_catalogs, register_all_artifacts
@@ -39,5 +39,5 @@ def get_dataset_artifact(dataset, overwrite_kwargs: Optional[Dict[str, Any]] = N
             args["__type__"] = settings.default_recipe
         if overwrite_kwargs is not None:
             args.update(overwrite_kwargs)
-        recipe = Artifact.from_dict(args)
+        recipe = from_dict(args)
     return recipe

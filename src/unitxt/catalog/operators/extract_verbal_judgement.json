@@ -1,3 +1,6 @@
 {
-    "__type__": "extract_verbal_judgment"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "ExtractVerbalJudgment"
+    }
 }

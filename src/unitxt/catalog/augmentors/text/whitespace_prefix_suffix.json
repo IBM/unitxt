@@ -1,5 +1,8 @@
 {
-    "__type__": "augment_prefix_suffix",
+    "__type__": {
+        "module": "unitxt.augmentors",
+        "name": "AugmentPrefixSuffix"
+    },
     "prefixes": {
         " ": 20,
         "\\t": 10,
