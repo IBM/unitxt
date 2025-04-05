@@ -1,8 +1,8 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "process_references": false,
     "process_prediction": true,
     "operator": {
-        "__type__": "extract_arena_hard_numerical_judgment"
+        "__type__": "unitxt.processors.ExtractArenaHardNumericalJudgment"
     }
 }

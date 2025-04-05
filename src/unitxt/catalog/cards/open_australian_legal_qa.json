@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "umarbutler/open-australian-legal-qa",
         "name": "default"
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "train": "train[0.5]",
                 "validation": "train[0.2]",
@@ -15,26 +15,26 @@
             }
         },
         {
-            "__type__": "shuffle"
+            "__type__": "unitxt.operators.Shuffle"
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "legal document"
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "source/text",
             "to_field": "context/body"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "source/citation",
             "to_field": "context/title"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answer",
             "inside": "list",
             "to_field": "answers"

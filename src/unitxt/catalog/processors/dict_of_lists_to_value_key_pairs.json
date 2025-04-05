@@ -1,7 +1,7 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "dict_of_lists_to_pairs",
+        "__type__": "unitxt.processors.DictOfListsToPairs",
         "position_key_before_value": false,
         "process_every_value": false
     }

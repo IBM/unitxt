@@ -1,5 +1,5 @@
 {
-    "__type__": "regard_metric",
+    "__type__": "unitxt.metrics.RegardMetric",
     "n_resamples": null,
     "prediction_type": "Any"
 }

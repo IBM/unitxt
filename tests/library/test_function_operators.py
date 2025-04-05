@@ -1,7 +1,7 @@
 import json
 
 from unitxt.operator import SequentialOperator
-from unitxt.operators import Apply, CopyFields
+from unitxt.operators import Apply, Copy
 from unitxt.test_utils.operators import check_operator
 
 from tests.utils import UnitxtTestCase
@@ -27,7 +27,7 @@ class TestFunctionOperators(UnitxtTestCase):
         operator = SequentialOperator(
             steps=[
                 Apply(function=dict, to_field="t"),
-                CopyFields(field_to_field={"a": "t/a", "b": "t/b"}),
+                Copy(field_to_field={"a": "t/a", "b": "t/b"}),
                 Apply("t", function=json.dumps, to_field="t"),
             ]
         )
@@ -50,7 +50,7 @@ class TestFunctionOperators(UnitxtTestCase):
 
         self.assertDictEqual(
             {
-                "__type__": "apply",
+                "__type__": "unitxt.operators.Apply",
                 "function": "str.upper",
                 "to_field": "b",
                 "_argv": ("a",),

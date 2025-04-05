@@ -115,7 +115,6 @@ def autodoc_skip_member(app, what, name, obj, would_skip, options):
         class_name = obj.__qualname__.split(".")[0]
         if (
             class_name
-            and Artifact.is_registered_class_name(class_name)
             and class_name != name
         ):
             return True

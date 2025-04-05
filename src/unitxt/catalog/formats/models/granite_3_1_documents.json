@@ -1,4 +1,4 @@
 {
-    "__type__": "granite_documents_format",
+    "__type__": "unitxt.formats.GraniteDocumentsFormat",
     "model": "ibm-granite/granite-3.1-8b-instruct"
 }
