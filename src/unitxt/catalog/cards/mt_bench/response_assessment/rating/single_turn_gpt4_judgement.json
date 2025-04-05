@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_from_hf_space",
+        "__type__": "unitxt.loaders.LoadFromHFSpace",
         "space_name": "lmsys/mt-bench",
         "revision": "a4b674c",
         "data_files": {
@@ -16,26 +16,26 @@
     "preprocess_steps": [
         "operators.mt_bench.rating_hf_space_processing_steps",
         {
-            "__type__": "filter_by_condition",
+            "__type__": "unitxt.operators.FilterByCondition",
             "values": {
                 "turn": 1
             },
             "condition": "eq"
         },
         {
-            "__type__": "fillna",
+            "__type__": "unitxt.operators.Fillna",
             "field": "reference",
             "value": null
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": "unitxt.operators.FilterByCondition",
             "values": {
                 "reference": null
             },
             "condition": "eq"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "model_input": "question",
                 "score": "rating",
@@ -44,12 +44,12 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "question/0",
             "to_field": "question"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "answer/0",
             "to_field": "answer"
         }

@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "input_format": "Sum up the text with a quick overview, pulling out the main ideas and important details.\nText: {document}",
     "references_field": "summaries"
 }

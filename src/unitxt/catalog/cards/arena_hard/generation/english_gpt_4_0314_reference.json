@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_from_hf_space",
+        "__type__": "unitxt.loaders.LoadFromHFSpace",
         "space_name": "lmsys/arena-hard-browser",
         "revision": "03b91ca",
         "data_files": {
@@ -14,7 +14,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "cluster": "group"
             },
@@ -23,7 +23,7 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "turns/0/content": "model_input"
             },
@@ -32,7 +32,7 @@
             ]
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "reference_model": "gpt-4-0314"
             },
@@ -41,7 +41,7 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "choices/0/turns/0/content": "reference_model_output",
                 "choices/0/turns/0/token_len": "reference_model_output_token_len"
@@ -51,7 +51,7 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "model_id": "reference_model"
             },
@@ -60,7 +60,7 @@
             ]
         },
         {
-            "__type__": "apply",
+            "__type__": "unitxt.operators.Apply",
             "function": "str.lower",
             "to_field": "reference_model",
             "apply_to_streams": [
@@ -71,7 +71,7 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": "unitxt.stream_operators.JoinStreams",
             "left_stream": "questions",
             "right_stream": "model_answer",
             "how": "inner",
@@ -82,14 +82,14 @@
             "new_stream_name": "test"
         },
         {
-            "__type__": "delete_splits",
+            "__type__": "unitxt.stream_operators.DeleteSplits",
             "splits": [
                 "questions",
                 "model_answer"
             ]
         },
         {
-            "__type__": "select_fields",
+            "__type__": "unitxt.operators.SelectFields",
             "fields": [
                 "question_id",
                 "category",
@@ -99,7 +99,7 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "model_input": "input",
                 "category": "group",
@@ -107,7 +107,7 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "type_of_input": "prompt",
                 "type_of_output": "answer"

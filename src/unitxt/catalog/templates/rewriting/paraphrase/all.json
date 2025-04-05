@@ -1,5 +1,5 @@
 {
-    "__type__": "templates_list",
+    "__type__": "unitxt.templates.TemplatesList",
     "items": [
         "templates.rewriting.paraphrase.default"
     ]

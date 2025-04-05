@@ -1,5 +1,5 @@
 {
-    "__type__": "json_output_template",
+    "__type__": "unitxt.templates.JsonOutputTemplate",
     "input_format": "",
     "output_fields": {
         "reference_answers": "answer",

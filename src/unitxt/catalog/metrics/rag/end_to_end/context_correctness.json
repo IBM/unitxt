@@ -1,9 +1,9 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "score",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": [
                 [
                     "prediction/context_ids",
@@ -12,7 +12,7 @@
             ]
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "task_data/reference_context_ids"
             ],

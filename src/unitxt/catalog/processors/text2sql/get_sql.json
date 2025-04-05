@@ -1,13 +1,13 @@
 {
-    "__type__": "sequential_operator",
+    "__type__": "unitxt.operator.SequentialOperator",
     "steps": [
         {
-            "__type__": "add_prefix",
+            "__type__": "unitxt.processors.AddPrefix",
             "field": "prediction",
             "prefix": "SELECT "
         },
         {
-            "__type__": "get_sql",
+            "__type__": "unitxt.processors.GetSQL",
             "field": "prediction"
         }
     ]

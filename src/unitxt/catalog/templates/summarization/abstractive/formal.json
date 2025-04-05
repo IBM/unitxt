@@ -1,5 +1,5 @@
 {
-    "__type__": "multi_reference_template",
+    "__type__": "unitxt.templates.MultiReferenceTemplate",
     "input_format": "Produce a succinct summary for the following text, extracting the fundamental concepts and crucial information.\n Text: {document}",
     "references_field": "summaries"
 }
