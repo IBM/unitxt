@@ -1,4 +1,4 @@
-import difflib
+import importlib
 import inspect
 import json
 import os
@@ -22,7 +22,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case, print_dict_as_yaml
+from .text_utils import print_dict_as_yaml
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -34,6 +34,97 @@ from .utils import (
 logger = get_logger()
 settings = get_settings()
 constants = get_constants()
+
+
+def import_module_from_file(file_path):
+    # Get the module name (file name without extension)
+    module_name = os.path.splitext(os.path.basename(file_path))[0]
+    # Create a module specification
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    # Create a new module based on the specification
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def get_module_class(artifact_type: str):
+    if "/" in artifact_type:
+        return artifact_type.split("/")
+    return artifact_type.rsplit(".", 1)
+
+
+def get_class_from_artifact_type(type: str):
+    module_path, class_name = get_module_class(type)
+    module = importlib.import_module(module_path)
+
+    if "." not in class_name:
+        if hasattr(module, class_name) and inspect.isclass(getattr(module, class_name)):
+            return getattr(module, class_name)
+        if class_name in Artifact._class_register:
+            return Artifact._class_register[class_name]
+        module_file = module.__file__ if hasattr(module, "__file__") else None
+        if module_file:
+            module = import_module_from_file(module_file)
+
+        assert class_name in Artifact._class_register
+        return Artifact._class_register[class_name]
+
+    class_name_components = class_name.split(".")
+    klass = getattr(module, class_name_components[0])
+    for i in range(1, len(class_name_components)):
+        klass = getattr(klass, class_name_components[i])
+    return klass
+
+
+def get_class_or_function_from_artifact_type(type: str):
+    module_path, class_name = get_module_class(type)
+    module = importlib.import_module(module_path)
+
+    if "." not in class_name:
+        return getattr(module, class_name)
+
+    class_name_components = class_name.split(".")
+    klass = getattr(module, class_name_components[0])
+    for i in range(1, len(class_name_components)):
+        klass = getattr(klass, class_name_components[i])
+    return klass
+
+
+def is_artifact_dict(obj):
+    return isinstance(obj, dict) and "__type__" in obj
+
+
+def verify_artifact_dict(d):
+    if not isinstance(d, dict):
+        raise ValueError(
+            f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
+        )
+    if "__type__" not in d:
+        raise MissingArtifactTypeError(d)
+
+
+def from_dict(d, overwrite_args=None):
+    if overwrite_args is not None:
+        d = {**d, **overwrite_args}
+    verify_artifact_dict(d)
+    return _recursive_load(d)
+
+
+def _recursive_load(obj):
+    if isinstance(obj, dict):
+        obj = {key: _recursive_load(value) for key, value in obj.items()}
+        if is_artifact_dict(obj):
+            try:
+                artifact_type = obj.pop("__type__")
+                artifact_class = get_class_from_artifact_type(artifact_type)
+                obj = artifact_class.process_data_after_load(obj)
+                return artifact_class(**obj)
+            except (ImportError, AttributeError) as e:
+                raise UnrecognizedArtifactTypeError(artifact_type) from e
+    elif isinstance(obj, list):
+        return [_recursive_load(value) for value in obj]
+
+    return obj
 
 
 def is_name_legal_for_catalog(name):
@@ -133,21 +224,10 @@ def maybe_recover_artifacts_structure(obj):
     return obj
 
 
-def get_closest_artifact_type(type):
-    artifact_type_options = list(Artifact._class_register.keys())
-    matches = difflib.get_close_matches(type, artifact_type_options)
-    if matches:
-        return matches[0]  # Return the closest match
-    return None
-
-
 class UnrecognizedArtifactTypeError(ValueError):
     def __init__(self, type) -> None:
-        maybe_class = "".join(word.capitalize() for word in type.split("_"))
-        message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
-        closest_artifact_type = get_closest_artifact_type(type)
-        if closest_artifact_type is not None:
-            message += f"\n\nDid you mean '{closest_artifact_type}'?"
+        maybe_class = type.split(".")[-1]
+        message = f"'{type}' is not a recognized artifact 'type'. Make sure a class (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         super().__init__(message)
 
 
@@ -185,53 +265,63 @@ class Artifact(Dataclass):
     )
 
     @classmethod
-    def is_artifact_dict(cls, obj):
-        return isinstance(obj, dict) and "__type__" in obj
-
-    @classmethod
     def is_possible_identifier(cls, obj):
-        return isinstance(obj, str) or cls.is_artifact_dict(obj)
+        return isinstance(obj, str) or is_artifact_dict(obj)
 
-    @classmethod
-    def verify_artifact_dict(cls, d):
-        if not isinstance(d, dict):
-            raise ValueError(
-                f"Artifact dict <{d}> must be of type 'dict', got '{type(d)}'."
-            )
-        if "__type__" not in d:
-            raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["__type__"]):
-            raise UnrecognizedArtifactTypeError(d["__type__"])
+    @staticmethod
+    def fix_module_name_if_not_in_path(module):
+        module_name = getattr(module, "__name__", None)
+        if not module_name:
+            if getattr(module, "__file__", None):
+                return module.__file__.split(os.sep)[-1].split(".")[0]
+            return "dummy_module_name"
+        if not getattr(module, "__file__", None):
+            return module_name
+        name_components = module.__name__.split(".")
+        if all(name_component in module.__file__ for name_component in name_components):
+            return module_name
+        file_components = module.__file__.split(os.sep)
+        if file_components[0] == "":
+            file_components = file_components[1:]
+        file_components[-1] = file_components[-1].split(".")[0]  # omit the .py
+        if not getattr(module, "__package__", None) or len(module.__package__) == 0:
+            return file_components[-1]
+        package_components = module.__package__.split(".")
+        assert all(p_c in file_components for p_c in package_components)
+        for i in range(len(file_components) - len(package_components) + 1):
+            if all(
+                package_components[j] == file_components[i + j]
+                for j in range(len(package_components))
+            ):
+                if i == len(file_components) - len(package_components):
+                    return module.__package__
+                return (
+                    module.__package__
+                    + "."
+                    + (".".join(file_components[i + len(package_components) :]))
+                )
+        return "dummy_module_name"
 
     @classmethod
     def get_artifact_type(cls):
-        return camel_to_snake_case(cls.__name__)
+        module = inspect.getmodule(cls)
+        # standardize module name
+        module_name = getattr(module, "__name__", None)
+        module_package = getattr(module, "__package__", None)
+        module_name = Artifact.fix_module_name_if_not_in_path(module)
+        if module_package:
+            if not module_name.startswith(module_package):
+                module_name = module_package + "." + module_name
+        if hasattr(cls, "__qualname__") and "." in cls.__qualname__:
+            return module_name + "/" + cls.__qualname__
+        return module_name + "." + cls.__name__
 
     @classmethod
     def register_class(cls, artifact_class):
-        assert issubclass(
-            artifact_class, Artifact
-        ), f"Artifact class must be a subclass of Artifact, got '{artifact_class}'"
-        assert is_camel_case(
-            artifact_class.__name__
-        ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
-
-        snake_case_key = camel_to_snake_case(artifact_class.__name__)
-
-        if cls.is_registered_type(snake_case_key):
-            assert (
-                str(cls._class_register[snake_case_key]) == str(artifact_class)
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
-
-            return snake_case_key
-
-        cls._class_register[snake_case_key] = artifact_class
-
-        return snake_case_key
+        Artifact._class_register[artifact_class.__name__] = artifact_class
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        cls.register_class(cls)
 
     @classmethod
     def is_artifact_file(cls, path):
@@ -239,58 +329,19 @@ class Artifact(Dataclass):
             return False
         with open(path) as f:
             d = json.load(f)
-        return cls.is_artifact_dict(d)
-
-    @classmethod
-    def is_registered_type(cls, type: str):
-        return type in cls._class_register
-
-    @classmethod
-    def is_registered_class_name(cls, class_name: str):
-        snake_case_key = camel_to_snake_case(class_name)
-        return cls.is_registered_type(snake_case_key)
-
-    @classmethod
-    def is_registered_class(cls, clz: object):
-        return clz in set(cls._class_register.values())
-
-    @classmethod
-    def _recursive_load(cls, obj):
-        if isinstance(obj, dict):
-            new_d = {}
-            for key, value in obj.items():
-                new_d[key] = cls._recursive_load(value)
-            obj = new_d
-        elif isinstance(obj, list):
-            obj = [cls._recursive_load(value) for value in obj]
-        else:
-            pass
-        if cls.is_artifact_dict(obj):
-            cls.verify_artifact_dict(obj)
-            artifact_class = cls._class_register[obj.pop("__type__")]
-            obj = artifact_class.process_data_after_load(obj)
-            return artifact_class(**obj)
-
-        return obj
-
-    @classmethod
-    def from_dict(cls, d, overwrite_args=None):
-        if overwrite_args is not None:
-            d = {**d, **overwrite_args}
-        cls.verify_artifact_dict(d)
-        return cls._recursive_load(d)
+        return is_artifact_dict(d)
 
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "__type__" in d and d["__type__"] == "artifact_link":
-            cls.from_dict(d)  # for verifications and warnings
+        if "__type__" in d and d["__type__"].endswith("ArtifactLink"):
+            from_dict(d)  # for verifications and warnings
             catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
             return catalog.get_with_overwrite(
                 artifact_rep, overwrite_args=overwrite_args
             )
 
-        new_artifact = cls.from_dict(d, overwrite_args=overwrite_args)
+        new_artifact = from_dict(d, overwrite_args=overwrite_args)
         new_artifact.__id__ = artifact_identifier
         return new_artifact
 
@@ -329,7 +380,7 @@ class Artifact(Dataclass):
 
     @final
     def __post_init__(self):
-        self.__type__ = self.register_class(self.__class__)
+        self.__type__ = self.__class__.get_artifact_type()
 
         for field in fields(self):
             if issubtype(
@@ -347,14 +398,18 @@ class Artifact(Dataclass):
 
     def _to_raw_dict(self):
         return {
-            "__type__": self.__type__,
+            "__type__": self.__class__.get_artifact_type(),
             **self.process_data_before_dump(self._init_dict),
         }
 
     def __deepcopy__(self, memo):
         if id(self) in memo:
             return memo[id(self)]
-        new_obj = Artifact.from_dict(self.to_dict())
+        try:
+            new_obj = from_dict(self.to_dict())
+        except:
+            # needed only for artifacts defined inline for testing etc. E.g. 'NERWithoutClassReporting'
+            new_obj = self
         memo[id(self)] = new_obj
         return new_obj
 
@@ -379,7 +434,7 @@ class Artifact(Dataclass):
         return self.to_json()
 
     def save(self, path):
-        original_args = Artifact.from_dict(self.to_dict()).get_repr_dict()
+        original_args = from_dict(self.to_dict()).get_repr_dict()
         current_args = self.get_repr_dict()
         diffs = dict_diff_string(original_args, current_args)
         if diffs:
@@ -573,7 +628,7 @@ def fetch_artifact(
     if isinstance(artifact_rep, str):
         artifact_rep = json.loads(artifact_rep)
     # Load from dictionary (fails if not valid dictionary)
-    return Artifact.from_dict(artifact_rep), None
+    return from_dict(artifact_rep), None
 
 
 def get_catalog_name_and_args(

@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "basicv8vc/SimpleQA",
         "data_classification_policy": [
             "public"
@@ -9,12 +9,12 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "problem",
             "to_field": "question"
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "answer",
             "inside": "list",
             "to_field": "answers"

@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_json_file",
+        "__type__": "unitxt.loaders.LoadJsonFile",
         "files": {
             "questions": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/question.jsonl",
             "model_answer": "https://raw.githubusercontent.com/lmarena/arena-hard-auto/57451f35d2be7fef9f05d5567f36e4c959bb6630/data/arena-hard-v0.1/model_answer/gpt-4-0314.jsonl"
@@ -13,7 +13,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "cluster": "group"
             },
@@ -22,7 +22,7 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "prompt": "model_input"
             },
@@ -31,7 +31,7 @@
             ]
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "reference_model": "gpt-4-0314"
             },
@@ -40,7 +40,7 @@
             ]
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "messages/1/content/answer": "reference_model_output"
             },
@@ -49,7 +49,7 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "model": "reference_model"
             },
@@ -58,7 +58,7 @@
             ]
         },
         {
-            "__type__": "apply",
+            "__type__": "unitxt.operators.Apply",
             "function": "str.lower",
             "to_field": "reference_model",
             "apply_to_streams": [
@@ -69,7 +69,7 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": "unitxt.stream_operators.JoinStreams",
             "left_stream": "questions",
             "right_stream": "model_answer",
             "how": "inner",
@@ -80,14 +80,14 @@
             "new_stream_name": "test"
         },
         {
-            "__type__": "delete_splits",
+            "__type__": "unitxt.stream_operators.DeleteSplits",
             "splits": [
                 "questions",
                 "model_answer"
             ]
         },
         {
-            "__type__": "select_fields",
+            "__type__": "unitxt.operators.SelectFields",
             "fields": [
                 "uid",
                 "category",
@@ -97,7 +97,7 @@
             ]
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "uid": "question_id",
                 "model_input": "input",
@@ -106,7 +106,7 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "type_of_input": "prompt",
                 "type_of_output": "answer"

@@ -1,5 +1,5 @@
 {
-    "__type__": "metrics_list",
+    "__type__": "unitxt.metrics.MetricsList",
     "items": [
         "metrics.rouge"
     ]

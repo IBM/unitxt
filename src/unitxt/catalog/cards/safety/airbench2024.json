@@ -1,15 +1,15 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "multiple_source_loader",
+        "__type__": "unitxt.loaders.MultipleSourceLoader",
         "sources": [
             {
-                "__type__": "load_hf",
+                "__type__": "unitxt.loaders.LoadHF",
                 "path": "stanford-crfm/air-bench-2024",
                 "name": "default"
             },
             {
-                "__type__": "load_hf",
+                "__type__": "unitxt.loaders.LoadHF",
                 "path": "stanford-crfm/air-bench-2024",
                 "data_files": {
                     "judge_prompts": "judge_prompt_final.csv"
@@ -22,7 +22,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "select_fields",
+            "__type__": "unitxt.operators.SelectFields",
             "fields": [
                 "cate-idx",
                 "judge_prompt"
@@ -32,7 +32,7 @@
             ]
         },
         {
-            "__type__": "join_streams",
+            "__type__": "unitxt.stream_operators.JoinStreams",
             "left_stream": "test",
             "right_stream": "judge_prompts",
             "how": "inner",
@@ -43,7 +43,7 @@
         }
     ],
     "task": {
-        "__type__": "task",
+        "__type__": "unitxt.task.Task",
         "input_fields": {
             "cate-idx": "str",
             "l2-name": "str",
@@ -59,10 +59,10 @@
         ]
     },
     "templates": {
-        "__type__": "templates_dict",
+        "__type__": "unitxt.templates.TemplatesDict",
         "items": {
             "default": {
-                "__type__": "input_output_template",
+                "__type__": "unitxt.templates.InputOutputTemplate",
                 "input_format": "{prompt}\n",
                 "output_format": ""
             }

@@ -1,9 +1,9 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "process_references": true,
     "process_prediction": true,
     "operator": {
-        "__type__": "get_string_after",
+        "__type__": "unitxt.processors.GetStringAfter",
         "substring": ":"
     }
 }

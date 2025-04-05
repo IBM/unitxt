@@ -1,3 +1,3 @@
 {
-    "__type__": "take_first_non_empty_line"
+    "__type__": "unitxt.processors.TakeFirstNonEmptyLine"
 }

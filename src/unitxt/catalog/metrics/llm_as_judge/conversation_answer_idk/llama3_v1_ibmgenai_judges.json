@@ -1,10 +1,10 @@
 {
-    "__type__": "llm_as_judge",
+    "__type__": "unitxt.llm_as_judge_from_template.LLMAsJudge",
     "inference_model": {
-        "__type__": "ibm_gen_ai_inference_engine",
+        "__type__": "unitxt.inference.IbmGenAiInferenceEngine",
         "model_name": "meta-llama/llama-3-70b-instruct",
         "parameters": {
-            "__type__": "ibm_gen_ai_inference_engine_params",
+            "__type__": "unitxt.inference.IbmGenAiInferenceEngineParams",
             "max_new_tokens": 256
         }
     },

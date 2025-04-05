@@ -1,5 +1,5 @@
 {
-    "__type__": "input_output_template",
+    "__type__": "unitxt.templates.InputOutputTemplate",
     "instruction": "Rewrite the given {text_type} differently.",
     "input_format": "{text_type}: {input_text}",
     "target_prefix": "Paraphrase: ",

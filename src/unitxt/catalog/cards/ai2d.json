@@ -1,31 +1,31 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "lmms-lab/ai2d"
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle"
+            "__type__": "unitxt.operators.Shuffle"
         },
         {
-            "__type__": "to_image",
+            "__type__": "unitxt.image_operators.ToImage",
             "field": "image",
             "to_field": "context"
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field": "options",
             "to_field": "choices"
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "context_type": "image"
             }
         },
         {
-            "__type__": "cast",
+            "__type__": "unitxt.operators.Cast",
             "field": "answer",
             "to": "int"
         }

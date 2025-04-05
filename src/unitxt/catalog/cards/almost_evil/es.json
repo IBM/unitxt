@@ -1,36 +1,36 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "0x22almostEvil/multilingual-wikihow-qa-16k"
     },
     "preprocess_steps": [
         {
-            "__type__": "load_json",
+            "__type__": "unitxt.struct_data_operators.LoadJson",
             "field": "METADATA",
             "to_field": "metadata"
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "metadata/language",
             "to_field": "extracted_language"
         },
         {
-            "__type__": "filter_by_condition",
+            "__type__": "unitxt.operators.FilterByCondition",
             "values": {
                 "extracted_language": "es"
             },
             "condition": "eq"
         },
         {
-            "__type__": "remove_fields",
+            "__type__": "unitxt.operators.RemoveFields",
             "fields": [
                 "extracted_language",
                 "metadata"
             ]
         },
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "train": "train[90%]",
                 "validation": "train[5%]",
@@ -38,13 +38,13 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "INSTRUCTION": "question"
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "RESPONSE"
             ],
