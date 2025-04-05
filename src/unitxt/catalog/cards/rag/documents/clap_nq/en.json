@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "PrimeQA/clapnq_passages",
         "data_classification_policy": [
             "public"
@@ -9,21 +9,21 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "id": "document_id",
                 "title": "title"
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "text"
             ],
             "to_field": "passages"
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "metadata_field": {}
             }
@@ -37,7 +37,7 @@
     "__description__": "CLAP NQ is created from the subset of Natural Questions (NQ) that have a long answer but no short answer. NQ consists of ~380k examples. There are ~30k questions that are long answers without short answers excluding tables and lists. To increases the likelihood of longer answers we only explored ones that have more than 5 sentences in the passage. The subset that was annotated consists of ~12k examples. All examples where cohesion of non-consecutive sentences was required for the answer were annotated a second time. The final dataset is made up of all data that went through two rounds of annotation. (We provide the single round annotations as well - it is only training data) An equal amount of unanswerable questions have also been added from the original NQ train/dev sets. Details about the annotation task and unanswerables can be found at https://github.com/primeqa/clapnq/blob/main/annotated_data.",
     "templates": {
         "empty": {
-            "__type__": "input_output_template",
+            "__type__": "unitxt.templates.InputOutputTemplate",
             "input_format": "",
             "output_format": ""
         }

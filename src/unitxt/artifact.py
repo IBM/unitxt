@@ -6,6 +6,7 @@ import pkgutil
 import re
 import warnings
 from abc import abstractmethod
+from importlib import import_module
 from typing import Any, Dict, List, Optional, Tuple, Union, final
 
 from .dataclass import (
@@ -22,7 +23,7 @@ from .parsing_utils import (
     separate_inside_and_outside_square_brackets,
 )
 from .settings_utils import get_constants, get_settings
-from .text_utils import camel_to_snake_case, is_camel_case
+from .text_utils import is_camel_case
 from .type_utils import isoftype, issubtype
 from .utils import (
     artifacts_json_cache,
@@ -143,7 +144,7 @@ def get_closest_artifact_type(type):
 
 class UnrecognizedArtifactTypeError(ValueError):
     def __init__(self, type) -> None:
-        maybe_class = "".join(word.capitalize() for word in type.split("_"))
+        maybe_class = type.split(".")[-1]
         message = f"'{type}' is not a recognized artifact 'type'. Make sure a the class defined this type (Probably called '{maybe_class}' or similar) is defined and/or imported anywhere in the code executed."
         closest_artifact_type = get_closest_artifact_type(type)
         if closest_artifact_type is not None:
@@ -200,12 +201,12 @@ class Artifact(Dataclass):
             )
         if "__type__" not in d:
             raise MissingArtifactTypeError(d)
-        if not cls.is_registered_type(d["__type__"]):
-            raise UnrecognizedArtifactTypeError(d["__type__"])
+        # if not cls.is_registered_type(d["__type__"]):
+        #     raise UnrecognizedArtifactTypeError(d["__type__"])
 
     @classmethod
     def get_artifact_type(cls):
-        return camel_to_snake_case(cls.__name__)
+        return cls.__module__+"."+cls.__name__
 
     @classmethod
     def register_class(cls, artifact_class):
@@ -216,18 +217,16 @@ class Artifact(Dataclass):
             artifact_class.__name__
         ), f"Artifact class name must be legal camel case, got '{artifact_class.__name__}'"
 
-        snake_case_key = camel_to_snake_case(artifact_class.__name__)
-
-        if cls.is_registered_type(snake_case_key):
+        if cls.is_registered_type(cls.get_artifact_type()):
             assert (
-                str(cls._class_register[snake_case_key]) == str(artifact_class)
-            ), f"Artifact class name must be unique, '{snake_case_key}' already exists for {cls._class_register[snake_case_key]}. Cannot be overridden by {artifact_class}."
+                str(cls._class_register[cls.get_artifact_type()]) == cls.get_artifact_type()
+            ), f"Artifact class name must be unique, '{cls.get_artifact_type()}' is already registered as {cls._class_register[cls.get_artifact_type()]}. Cannot be overridden by {artifact_class}."
 
-            return snake_case_key
+            return cls.get_artifact_type()
 
-        cls._class_register[snake_case_key] = artifact_class
+        cls._class_register[cls.get_artifact_type()] = cls.get_artifact_type()   # for now, still maintain the registry from qualified to qualified
 
-        return snake_case_key
+        return cls.get_artifact_type()
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -247,8 +246,10 @@ class Artifact(Dataclass):
 
     @classmethod
     def is_registered_class_name(cls, class_name: str):
-        snake_case_key = camel_to_snake_case(class_name)
-        return cls.is_registered_type(snake_case_key)
+        for k in cls._class_register:
+            if k.split(".")[-1] == class_name:
+                return True
+        return False
 
     @classmethod
     def is_registered_class(cls, clz: object):
@@ -267,9 +268,14 @@ class Artifact(Dataclass):
             pass
         if cls.is_artifact_dict(obj):
             cls.verify_artifact_dict(obj)
-            artifact_class = cls._class_register[obj.pop("__type__")]
-            obj = artifact_class.process_data_after_load(obj)
-            return artifact_class(**obj)
+            try:
+                module_path, class_name = obj.pop("__type__").rsplit(".", 1)
+                module = import_module(module_path)
+                artifact_class = getattr(module, class_name)
+                obj = artifact_class.process_data_after_load(obj)
+                return artifact_class(**obj)
+            except (ImportError, AttributeError) as e:
+                raise ImportError(obj) from e
 
         return obj
 
@@ -283,7 +289,7 @@ class Artifact(Dataclass):
     @classmethod
     def load(cls, path, artifact_identifier=None, overwrite_args=None):
         d = artifacts_json_cache(path)
-        if "__type__" in d and d["__type__"] == "artifact_link":
+        if "__type__" in d and d["__type__"].endswith("ArtifactLink"):
             cls.from_dict(d)  # for verifications and warnings
             catalog, artifact_rep, _ = get_catalog_name_and_args(name=d["to"])
             return catalog.get_with_overwrite(
@@ -347,7 +353,7 @@ class Artifact(Dataclass):
 
     def _to_raw_dict(self):
         return {
-            "__type__": self.__type__,
+            "__type__": type(self).__module__+"."+type(self).__name__,
             **self.process_data_before_dump(self._init_dict),
         }
 

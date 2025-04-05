@@ -1,5 +1,5 @@
 {
-    "__type__": "task",
+    "__type__": "unitxt.task.Task",
     "input_fields": {
         "text": "str",
         "text_type": "str",

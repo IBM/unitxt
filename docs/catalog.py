@@ -3,6 +3,7 @@ import os
 import re
 from collections import defaultdict
 from functools import lru_cache
+from importlib import import_module
 from pathlib import Path
 from typing import List
 
@@ -148,17 +149,23 @@ def get_all_type_elements(nested_dict):
 
 @lru_cache(maxsize=None)
 def artifact_type_to_link(artifact_type):
-    artifact_class = Artifact._class_register.get(artifact_type)
-    type_class_name = artifact_class.__name__
-    artifact_class_id = f"{artifact_class.__module__}.{type_class_name}"
-    return f'<a class="reference internal" href="../{artifact_class.__module__}.html#{artifact_class_id}" title="{artifact_class_id}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{type_class_name}</span></code></a>'
+    artifact_module = artifact_type.rsplit(".", 1)[0]
+    artifact_class_name = artifact_type.rsplit(".", 1)[-1]
+    # artifact_type is qualified class name
+    # artifact_class = Artifact._class_register.get(artifact_type)
+    # type_class_name = artifact_class.__name__
+    artifact_class_id = artifact_type  #f"{artifact_class.__module__}.{type_class_name}"
+    return f'<a class="reference internal" href="../{artifact_module}.html#{artifact_class_id}" title="{artifact_class_id}"><code class="xref py py-class docutils literal notranslate"><span class="pre">{artifact_class_name}</span></code></a>'
 
 
 # flake8: noqa: C901
 def make_content(artifact, label, all_labels):
-    artifact_type = artifact["__type__"]
-    artifact_class = Artifact._class_register.get(artifact_type)
-    type_class_name = artifact_class.__name__
+    artifact_type = artifact["__type__"]    #qualified class name
+    artifact_module = artifact_type.rsplit(".", 1)[0]
+    type_class_name = artifact_type.rsplit(".", 1)[-1]
+    module = import_module(artifact_module)
+    artifact_class = getattr(module, type_class_name)
+
     catalog_id = label.replace("catalog.", "")
 
     result = ""

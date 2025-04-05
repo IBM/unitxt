@@ -1,20 +1,20 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "CohereForAI/Global-MMLU",
         "name": "si"
     },
     "preprocess_steps": [
         {
-            "__type__": "filter_by_condition",
+            "__type__": "unitxt.operators.FilterByCondition",
             "values": {
                 "subject": "high_school_psychology"
             },
             "condition": "eq"
         },
         {
-            "__type__": "deduplicate",
+            "__type__": "unitxt.operators.Deduplicate",
             "by": [
                 "question",
                 "subject",
@@ -22,13 +22,13 @@
             ]
         },
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "dev": "train"
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "answer": {
                     "A": 0,
@@ -39,7 +39,7 @@
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "option_a",
                 "option_b",
@@ -49,7 +49,7 @@
             "to_field": "choices"
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "topic": "high school psychology"
             }

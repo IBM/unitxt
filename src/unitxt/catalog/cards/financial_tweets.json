@@ -1,16 +1,16 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "zeroshot/twitter-financial-news-topic"
     },
     "preprocess_steps": [
         {
-            "__type__": "shuffle",
+            "__type__": "unitxt.operators.Shuffle",
             "page_size": 9223372036854775807
         },
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "train": "train[85%]",
                 "validation": "train[15%]",
@@ -18,7 +18,7 @@
             }
         },
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "label": {
                     "0": "analyst update",
@@ -45,7 +45,7 @@
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "classes": [
                     "analyst update",
