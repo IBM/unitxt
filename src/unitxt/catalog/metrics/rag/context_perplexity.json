@@ -1,9 +1,9 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "score",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "task_data/contexts": "references",
                 "question": "prediction"
@@ -11,7 +11,7 @@
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "contexts": "references"
             },
@@ -21,7 +21,7 @@
     "metric": "metrics.perplexity_q.flan_t5_small",
     "postprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field": "score/instance/reference_scores",
             "to_field": "score/instance/score"
         }

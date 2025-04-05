@@ -1,15 +1,15 @@
 {
-    "__type__": "criteria_with_options",
+    "__type__": "unitxt.llm_as_judge_constants.CriteriaWithOptions",
     "name": "reference_document_faithfulness",
     "description": "Is the response faithful according to reference document?",
     "options": [
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "Yes",
             "description": "The response is faithful according to reference document."
         },
         {
-            "__type__": "criteria_option",
+            "__type__": "unitxt.llm_as_judge_constants.CriteriaOption",
             "name": "No",
             "description": "The response is not faithful according to reference document."
         }

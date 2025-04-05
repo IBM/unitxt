@@ -1,4 +1,4 @@
 {
-    "__type__": "websrc_squad_f1",
+    "__type__": "unitxt.metrics.WebsrcSquadF1",
     "n_resamples": null
 }

@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "MMMU/MMMU",
         "name": "Marketing",
         "data_classification_policy": [
@@ -10,14 +10,14 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "rename_splits",
+            "__type__": "unitxt.splitters.RenameSplits",
             "mapper": {
                 "dev": "train",
                 "validation": "test"
             }
         },
         {
-            "__type__": "list_field_values",
+            "__type__": "unitxt.operators.ListFieldValues",
             "fields": [
                 "image_1",
                 "image_2",
@@ -30,14 +30,14 @@
             "to_field": "media/images"
         },
         {
-            "__type__": "filter",
+            "__type__": "unitxt.collections_operators.Filter",
             "field": "media/images",
             "values": [
                 null
             ]
         },
         {
-            "__type__": "map_replace",
+            "__type__": "unitxt.string_operators.MapReplace",
             "field_to_field": {
                 "question": "question",
                 "options": "choices"
@@ -53,16 +53,16 @@
             }
         },
         {
-            "__type__": "literal_eval",
+            "__type__": "unitxt.processors.LiteralEval",
             "field": "choices"
         },
         {
-            "__type__": "lower",
+            "__type__": "unitxt.processors.Lower",
             "field": "subfield",
             "to_field": "topic"
         },
         {
-            "__type__": "map_values",
+            "__type__": "unitxt.operators.MapValues",
             "field": "answer",
             "mapping": {
                 "A": 0,

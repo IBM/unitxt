@@ -1,5 +1,5 @@
 {
-    "__type__": "metrics_list",
+    "__type__": "unitxt.metrics.MetricsList",
     "items": [
         "metrics.rag.response_generation.answer_correctness.gpt_4o_azure_judge",
         "metrics.rag.response_generation.faithfulness.gpt_4o_azure_judge",
