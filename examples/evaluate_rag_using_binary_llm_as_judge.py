@@ -1,7 +1,7 @@
 from unitxt import get_logger
 from unitxt.api import evaluate, load_dataset
 from unitxt.blocks import TaskCard
-from unitxt.inference import WMLInferenceEngine
+from unitxt.inference import WMLInferenceEngineGeneration
 from unitxt.loaders import LoadFromDictionary
 from unitxt.templates import TemplatesDict
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     # Infer using flan t5 xl using wml
     model_name = "google/flan-t5-xl"
-    model = WMLInferenceEngine(model_name=model_name, max_new_tokens=32)
+    model = WMLInferenceEngineGeneration(model_name=model_name, max_new_tokens=32)
     predictions = model(test_dataset)
 
     # Evaluate the generated predictions using the selected metrics

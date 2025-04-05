@@ -1,5 +1,5 @@
 {
-    "__type__": "task",
+    "__type__": "unitxt.task.Task",
     "__description__": "Task to test tool calling capabilities.",
     "input_fields": {
         "query": "str",

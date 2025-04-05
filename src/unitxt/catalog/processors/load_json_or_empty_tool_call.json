@@ -1,7 +1,7 @@
 {
-    "__type__": "post_process",
+    "__type__": "unitxt.processors.PostProcess",
     "operator": {
-        "__type__": "load_json",
+        "__type__": "unitxt.struct_data_operators.LoadJson",
         "allow_failure": true,
         "failure_value": {
             "name": "null",

@@ -1,13 +1,13 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_hf",
+        "__type__": "unitxt.loaders.LoadHF",
         "path": "webis/tldr-17",
         "streaming": true
     },
     "preprocess_steps": [
         {
-            "__type__": "split_random_mix",
+            "__type__": "unitxt.splitters.SplitRandomMix",
             "mix": {
                 "train": "train[70%]",
                 "validation": "train[15%]",
@@ -15,25 +15,25 @@
             }
         },
         {
-            "__type__": "rename",
+            "__type__": "unitxt.operators.Rename",
             "field_to_field": {
                 "content": "document"
             }
         },
         {
-            "__type__": "set",
+            "__type__": "unitxt.operators.Set",
             "fields": {
                 "document_type": "document"
             }
         },
         {
-            "__type__": "wrap",
+            "__type__": "unitxt.collections_operators.Wrap",
             "field": "summary",
             "inside": "list",
             "to_field": "summaries"
         },
         {
-            "__type__": "filter_by_expression",
+            "__type__": "unitxt.operators.FilterByExpression",
             "expression": "len(document) <= 6000"
         }
     ],

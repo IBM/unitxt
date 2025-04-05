@@ -1,9 +1,9 @@
 {
-    "__type__": "metric_pipeline",
+    "__type__": "unitxt.metrics.MetricPipeline",
     "main_score": "recall",
     "preprocess_steps": [
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "task_data/reference_answers": "references",
                 "answer": "prediction"
@@ -11,7 +11,7 @@
             "not_exist_do_nothing": true
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "ground_truths": "references"
             },

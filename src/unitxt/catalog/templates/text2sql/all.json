@@ -1,5 +1,5 @@
 {
-    "__type__": "templates_list",
+    "__type__": "unitxt.templates.TemplatesList",
     "items": [
         "templates.text2sql.you_are_given_no_system",
         "templates.text2sql.you_are_given_no_system_with_hint",

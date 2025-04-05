@@ -1,7 +1,7 @@
 {
-    "__type__": "task_card",
+    "__type__": "unitxt.card.TaskCard",
     "loader": {
-        "__type__": "load_csv",
+        "__type__": "unitxt.loaders.LoadCSV",
         "files": {
             "test": "https://raw.githubusercontent.com/IBM/mt-rag-benchmark/refs/heads/main/human/generation_tasks/reference+RAG.jsonl"
         },
@@ -13,7 +13,7 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "map_instance_values",
+            "__type__": "unitxt.operators.MapInstanceValues",
             "mappers": {
                 "Answerability": {
                     "['UNANSWERABLE']": false,
@@ -23,7 +23,7 @@
             }
         },
         {
-            "__type__": "copy",
+            "__type__": "unitxt.operators.Copy",
             "field_to_field": {
                 "targets/*/text": "reference_answers",
                 "Answerability": "is_answerable_label",
@@ -35,7 +35,7 @@
             }
         },
         {
-            "__type__": "zip_field_values",
+            "__type__": "unitxt.operators.ZipFieldValues",
             "fields": [
                 "roles",
                 "contents"
@@ -43,7 +43,7 @@
             "to_field": "conversation"
         },
         {
-            "__type__": "dictify",
+            "__type__": "unitxt.collections_operators.Dictify",
             "field": "conversation",
             "with_keys": [
                 "role",
