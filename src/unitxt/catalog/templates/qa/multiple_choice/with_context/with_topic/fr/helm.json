@@ -1,5 +1,8 @@
 {
-    "__type__": "multiple_choice_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultipleChoiceTemplate"
+    },
     "input_format": "Ce qui suit sont des questions à choix multiples (avec réponses) concernant {topic}.\n\nContexte: {context}\nQuestion: {question}.\nRéponses \n{choices}.\nRéponse:",
     "target_field": "answer",
     "choices_separator": "\n",

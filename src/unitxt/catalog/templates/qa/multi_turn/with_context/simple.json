@@ -1,5 +1,8 @@
 {
-    "__type__": "multi_turn_template",
+    "__type__": {
+        "module": "unitxt.templates",
+        "name": "MultiTurnTemplate"
+    },
     "instruction": "Read the context and answer the last question in the conversation. Answer with the minimal span from the context answering the question.\n Context:{context}",
     "references_field": "answers",
     "turns_field": "conversation/dialog",

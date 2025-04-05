@@ -1,5 +1,8 @@
 {
-    "__type__": "artifact_link",
+    "__type__": {
+        "module": "unitxt.artifact",
+        "name": "ArtifactLink"
+    },
     "to": "tasks.span_labeling.extraction",
     "__deprecated_msg__": null
 }

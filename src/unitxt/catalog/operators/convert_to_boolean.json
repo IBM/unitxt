@@ -1,3 +1,6 @@
 {
-    "__type__": "convert_to_boolean"
+    "__type__": {
+        "module": "unitxt.processors",
+        "name": "ConvertToBoolean"
+    }
 }
