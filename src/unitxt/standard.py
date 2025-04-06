@@ -503,7 +503,7 @@ class DatasetRecipe(SourceSequentialOperator):
             loader = self.card.loader
             if self.loader_limit:
                 loader.loader_limit = self.loader_limit
-                logger.info(f"Loader line limit was set to  {self.loader_limit}")
+                # logger.info(f"Loader line limit was set to  {self.loader_limit}")
             self.loading.steps.append(loader)
 
             # This is required in case loader_limit is not enforced by the loader
