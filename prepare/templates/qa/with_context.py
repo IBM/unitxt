@@ -92,7 +92,8 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query.",
+        instruction="Using the information from the {context_type} given below, summarize a paragraph-long response to the following user query."
+        + "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. The output of the last example is not given, and your job is to figure out what it is.",
         input_format="{context_type}:\n{context}\nQuery:\n{question}",
         output_format="{answers}",
         target_prefix="Answer:\n",
@@ -106,8 +107,7 @@ add_to_catalog(
 
 add_to_catalog(
     MultiReferenceTemplate(
-        input_format="{context}\n{question}",
-        target_prefix="Answer the question using a single word or phrase.",
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
         references_field="answers",
     ),
     "templates.qa.with_context.lmms_eval",
@@ -125,8 +125,49 @@ add_to_catalog(
             "templates.qa.with_context.question_first",
             "templates.qa.with_context.ffqa",
             "templates.qa.with_context.title",
+            "templates.qa.with_context.lmms_eval",
         ]
     ),
     "templates.qa.with_context.all",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word.",
+        references_field="answers",
+        __description__="lmms-evals default template for chartqa.",
+    ),
+    "templates.qa.with_context.chart_qa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.doc_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\n{question}\nAnswer the question using a single word or phrase.",
+        references_field="answers",
+        __description__="lmms-evals default template for docvqa.",
+    ),
+    "templates.qa.with_context.info_vqa",
+    overwrite=True,
+)
+
+add_to_catalog(
+    MultiReferenceTemplate(
+        input_format="{context}\nAnswer the question using a single word or phrase.\n{question}",
+        references_field="answers",
+        __description__="lmms-evals default template for websrc.",
+    ),
+    "templates.qa.with_context.websrc",
     overwrite=True,
 )

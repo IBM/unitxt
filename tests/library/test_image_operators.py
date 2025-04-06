@@ -33,35 +33,39 @@ def create_random_jpeg_image(width, height, seed=None):
 class TestImageOperators(unittest.TestCase):
     def test_extract_images_no_images(self):
         text = "This is a text without images"
-        instance = {}
-        result = extract_images(text, instance)
+        instance = {"source": text}
+        result = extract_images(instance)
         self.assertEqual(result, [])
 
     def test_extract_images_single_image(self):
         text = f'This is a text with <{constants.image_tag} src="image1.jpg"> image'
-        instance = {"image1.jpg": "image1_data"}
-        result = extract_images(text, instance)
+        instance = {"image1.jpg": "image1_data", "source": text}
+        result = extract_images(instance)
         self.assertEqual(result, ["image1_data"])
 
     def test_extract_images_multiple_images(self):
         text = f'Text with <{constants.image_tag} src="image1.jpg"> and <{constants.image_tag} src="image2.png">'
-        instance = {"image1.jpg": "image1_data", "image2.png": "image2_data"}
-        result = extract_images(text, instance)
+        instance = {
+            "image1.jpg": "image1_data",
+            "image2.png": "image2_data",
+            "source": text,
+        }
+        result = extract_images(instance)
         self.assertEqual(result, ["image1_data", "image2_data"])
 
     def test_extract_images_missing_image(self):
         text = f'Text with <{constants.image_tag} src="image1.jpg"> and <{constants.image_tag} src="missing.png">'
-        instance = {"image1.jpg": "image1_data"}
+        instance = {"image1.jpg": "image1_data", "source": text}
         with self.assertRaises(ValueError):
-            extract_images(text, instance)
+            extract_images(instance)
 
     @patch("unitxt.dict_utils.dict_get")
     def test_extract_images_dict_get_raises_value_error(self, mock_dict_get):
         text = f'Text with <{constants.image_tag} src="missing.png">'
-        instance = {}
+        instance = {"source": text}
         mock_dict_get.side_effect = ValueError("Key not found")
         with self.assertRaises(ValueError):
-            extract_images(text, instance)
+            extract_images(instance)
 
 
 class TestImageToText(unittest.TestCase):

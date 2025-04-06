@@ -21,7 +21,7 @@ import threading
 
 from unitxt import register_local_catalog
 from unitxt.dataset_utils import fetch
-from unitxt.standard import StandardRecipe
+from unitxt.standard import DatasetRecipe
 
 DEMOS_POOL_SIZE = 100
 TEST_SIZE = 100
@@ -134,7 +134,7 @@ def generate_examples_for_configuration(
         "demos_pool_size": DEMOS_POOL_SIZE,
         "loader_limit": 2 * TEST_SIZE + DEMOS_POOL_SIZE,
     }
-    recipe = StandardRecipe(**inputs)
+    recipe = DatasetRecipe(**inputs)
     stream = recipe()
     return list(itertools.islice(stream["test"], TEST_SIZE))
 

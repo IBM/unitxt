@@ -1,0 +1,21 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "examples_and_details",
+    "description": "Does the response provide relevant examples or details?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The response provides relevant examples or details to support its content."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The response does not provide relevant examples or details."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.0
+    }
+}

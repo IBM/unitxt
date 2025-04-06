@@ -1,0 +1,56 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "model": "llama-3-3-70b-instruct",
+        "max_tokens": 1024,
+        "temperature": 0,
+        "provider": "watsonx"
+    },
+    "criteria": {
+        "__type__": "criteria_with_options",
+        "name": "adherence_with_format",
+        "description": "The response aligns with the requested structure, style, or format (e.g., bullet points, headings, specific phrasing).",
+        "options": [
+            {
+                "__type__": "criteria_option",
+                "name": "Excellent",
+                "description": "The response perfectly aligns with the requested structure, style, or format, with no deviations."
+            },
+            {
+                "__type__": "criteria_option",
+                "name": "Good",
+                "description": "The response aligns well with the requested structure, style, or format, with minor deviations that do not affect clarity or usability."
+            },
+            {
+                "__type__": "criteria_option",
+                "name": "mediocre",
+                "description": "The response generally follows the requested structure, style, or format, but noticeable inconsistencies or omissions are present."
+            },
+            {
+                "__type__": "criteria_option",
+                "name": "Bad",
+                "description": "The response only partially aligns with the requested structure, style, or format, with significant inconsistencies or a lack of adherence."
+            },
+            {
+                "__type__": "criteria_option",
+                "name": "Very Bad",
+                "description": "The response fails to align with the requested structure, style, or format."
+            }
+        ],
+        "option_map": {
+            "Excellent": 1.0,
+            "Good": 0.75,
+            "mediocre": 0.5,
+            "Bad": 0.25,
+            "Very Bad": 0
+        }
+    },
+    "context_fields": {
+        "question": "question",
+        "instructions": "metadata/template/instruction"
+    },
+    "criteria_field": "criteria",
+    "generate_summaries": false,
+    "check_positional_bias": false
+}

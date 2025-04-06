@@ -160,3 +160,17 @@ Here is an example of using random templates and a varying number of demonstrati
 .. code-block:: python
 
   dataset = load_dataset(card="cards.wnli",template=["templates.classification.multi_class.relation.default","templates.key_val"],num_demos=[0,1,3],demos_pool_size=100)
+
+
+Metadata
+--------
+The `load_dataset` function result contains a metadata object. If the object is a Dataset or IterableDataset  the metadata
+saved under the path info.description. If the result is a dict of datasets, each dataset contains the metadata at the same path.
+The metada is a dictionary which contains information about the execution, including:
+
+* All parameters passed to the `load_dataset` function
+* Execution time
+* Other relevant metadata
+
+This metadata can be accessed and used for further analysis or debugging.
+

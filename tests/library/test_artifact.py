@@ -13,15 +13,16 @@ from unitxt.card import TaskCard
 from unitxt.catalog import add_link_to_catalog, add_to_catalog, get_from_catalog
 from unitxt.dataclass import UnexpectedArgumentError
 from unitxt.error_utils import UnitxtError
-from unitxt.loaders import LoadFromDictionary
+from unitxt.loaders import LoadFromDictionary, LoadHF
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import Accuracy, F1Binary
 from unitxt.operator import SequentialOperator
 from unitxt.operators import Copy, Rename, Set
 from unitxt.processors import StringEquals
 from unitxt.settings_utils import get_settings
-from unitxt.task import Task
-from unitxt.templates import YesNoTemplate
+from unitxt.standard import StandardRecipe
+from unitxt.task import FormTask, Task
+from unitxt.templates import InputOutputTemplate, YesNoTemplate
 from unitxt.test_utils.catalog import temp_catalog
 
 from tests.utils import UnitxtTestCase
@@ -348,7 +349,7 @@ class TestArtifact(UnitxtTestCase):
 
             with self.assertWarns(DeprecationWarning):
                 rename_fields = ArtifactLink(
-                    artifact_linked_to="rename.for.test.artifact.link",
+                    to="rename.for.test.artifact.link",
                     __deprecated_msg__="Artifact is deprecated. "
                     "'rename.for.test.artifact.link' is now instantiated instead. "
                     "\nIn the future, please use 'rename.for.test.artifact.link'.",
@@ -429,12 +430,12 @@ class TestArtifact(UnitxtTestCase):
             actual_metrics_of_task_as_is = []
             for metric_id in task_as_is.metrics:
                 actual_metrics_of_task_as_is.extend(
-                    Task.get_metrics_artifacts(metric_id)
+                    Task.get_metrics_artifact_without_load(metric_id)
                 )
             actual_metrics_of_task_indirect = []
             for metric_id in task_indirect.metrics:
                 actual_metrics_of_task_indirect.extend(
-                    Task.get_metrics_artifacts(metric_id)
+                    Task.get_metrics_artifact_without_load(metric_id)
                 )
 
             actual_metrics_to_dict_of_task_as_is = [
@@ -535,7 +536,7 @@ class TestArtifact(UnitxtTestCase):
                 )
 
             link_to_copy_operator = ArtifactLink(
-                artifact_linked_to="copy.operator",
+                to="copy.operator",
             )
             add_to_catalog(
                 link_to_copy_operator,
@@ -572,7 +573,7 @@ class TestArtifact(UnitxtTestCase):
     def test_artifact_is_not_saving_if_artifact_has_changed(self):
         with self.assertRaises(UnitxtError) as e:
             args = {
-                "__type__": "standard_recipe",
+                "__type__": "dataset_recipe",
                 "card": "cards.sst2",
                 "template_card_index": 0,
                 "demos_pool_size": 100,
@@ -586,3 +587,63 @@ class TestArtifact(UnitxtTestCase):
             str(e.exception),
             "Cannot save catalog artifacts that have changed since initialization. Detected differences in the following fields:\n - num_demos (changed): 0 -> 1",
         )
+
+    def test_artifact_is_fetched_first_hand(self):
+        card1, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card1.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2, _ = fetch_artifact("cards.banking77")
+        self.assertListEqual(
+            card2.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+
+    def test_artifact_is_gotten_from_catalog_first_hand(self):
+        card1 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card1.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+        card1.task.metrics = ["metrics.accuracy"]
+        self.assertListEqual(card1.task.metrics, ["metrics.accuracy"])
+        card2 = get_from_catalog("cards.banking77")
+        self.assertListEqual(
+            card2.task.metrics,
+            ["metrics.f1_micro", "metrics.accuracy", "metrics.f1_macro"],
+        )
+
+    def test_typed_recipe_to_catalog(self):
+        loader = LoadHF(path="resources/some_path", split="test")
+        inputs = {"question": "str", "metadata": "List[Dict[str, Any]]"}
+        outputs = {"answer": "str"}
+        task = FormTask(
+            inputs=inputs,
+            outputs=outputs,
+            metrics=["metrics.jaccard_index"],
+        )
+        templates = [
+            InputOutputTemplate(
+                input_format="{question}",
+                output_format="{answer}",
+            )
+        ]
+        preprocessors = ["operators.literal_eval[field=metadata]"]
+        card = TaskCard(
+            loader=loader,
+            task=task,
+            templates=templates,
+            preprocess_steps=preprocessors,
+        )
+        recipe = StandardRecipe(
+            card=card,
+            template_card_index=0,
+            postprocessors=[
+                "operators.regex_parser[field=prediction, regex=\\d+]",
+                "processors.to_list_by_comma_from_references",
+            ],
+        )
+        add_to_catalog(recipe, "temp_recipe_name", overwrite=True)

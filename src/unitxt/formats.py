@@ -13,16 +13,68 @@ from typing import (
 
 from .dataclass import OptionalField
 from .dict_utils import dict_get
+from .error_utils import UnitxtError
 from .image_operators import image_to_data_url
 from .operator import InstanceOperator
 from .settings_utils import get_constants
 from .type_utils import isoftype
+from .utils import retry_connection_with_exponential_backoff
 
 constants = get_constants()
 
 
 class Format(InstanceOperator):
     pass
+
+
+class GraniteDocumentsFormat(Format):
+    model: str = "ibm-granite/granite-3.1-8b-instruct"
+    citations: bool = True
+    length: str = "long"
+
+    _requirements_list = ["transformers"]
+
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
+    def prepare(self):
+        super().prepare()
+        from transformers import AutoTokenizer
+
+        self.tokenizer = AutoTokenizer.from_pretrained(self.model)
+
+    def process(
+        self, instance: Dict[str, Any], stream_name: Optional[str] = None
+    ) -> Dict[str, Any]:
+        inputs = instance["input_fields"]
+        if "question" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'question'"
+            )
+        if "context" not in inputs and "contexts" not in inputs:
+            raise UnitxtError(
+                "GraniteRAGFormat works only for tasks with field: 'context' or 'contexts"
+            )
+
+        if "context" in inputs:
+            texts = [inputs["context"]]
+        if "contexts" in inputs:
+            texts = inputs["contexts"]
+
+        documents = []
+        for text in texts:
+            documents.append({"title": "", "text": text})
+
+        question = inputs["question"]
+
+        instance["source"] = self.tokenizer.apply_chat_template(
+            [
+                {"role": "user", "content": question},
+            ],
+            documents=documents,
+            controls={"citations": self.citations, "length": self.length},
+            add_generation_prompt=True,
+            tokenize=False,
+        )
+        return instance
 
 
 def apply_capital_new_line_notation(text: str) -> str:
@@ -66,7 +118,7 @@ def apply_capital_new_line_notation(text: str) -> str:
 
 
 class BaseFormat(Format):
-    demos_field: str = "demos"
+    demos_field: str = constants.demos_field
 
     @staticmethod
     def _pop_field(instance, field_name, do_pop: bool = True) -> str:
@@ -83,14 +135,14 @@ class BaseFormat(Format):
     def _prepare_instance_fields(self, instance) -> Tuple[str]:
         instance_fields = {}
 
-        for field in "source", "instruction", "system_prompt", "target_prefix":
+        for field in "source", constants.instruction_field, constants.system_prompt_field, "target_prefix":
             instance_fields[field] = self._pop_field(instance, field)
 
         instance_fields["media"] = self._pop_field(instance, "media", do_pop=False)
         if not instance_fields["media"]:
             instance_fields["media"] = {"images": [], "audios": []}
 
-        instance_fields["demos"] = []
+        instance_fields[constants.demos_field] = []
         if self.demos_field is not None and self.demos_field in instance:
             demos = instance[self.demos_field]
             assert (
@@ -100,7 +152,7 @@ class BaseFormat(Format):
                 demo = {}
                 for field in ["source", "target", "target_prefix"]:
                     demo[field] = self._pop_field(demo_instance, field, do_pop=False)
-                instance_fields["demos"].append(demo)
+                instance_fields[constants.demos_field].append(demo)
 
         return instance_fields
 
@@ -169,7 +221,7 @@ class SystemFormat(BaseFormat):
         .. code-block::
 
             system_format = SystemFormat(
-                demos_field="demos",
+                demos_field=constants.demos_field,
                 demo_format="Input: {source}\nOutput: {target}\n\n",
                 model_input_format="Instruction: {instruction}\n\n{demos}Input: {source}\nOutput: ",
             )
@@ -437,6 +489,7 @@ class HFSystemFormat(ChatAPIFormat):
     model_name: str
     _requirements_list = ["transformers", "Jinja2"]
 
+    @retry_connection_with_exponential_backoff(backoff_factor=2)
     def prepare(self):
         super().prepare()
         from transformers import AutoTokenizer

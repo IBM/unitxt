@@ -7,8 +7,11 @@ from unitxt.processors import (
     Capitalize,
     ConvertToBoolean,
     ExtractArenaHardNumericalJudgment,
+    ExtractHarmRatingJudgement,
     ExtractMtBenchLabelJudgment,
     ExtractMtBenchRatingJudgment,
+    ExtractVerbalJudgementBadGood,
+    ExtractVerbalJudgment,
     ExtractWithRegex,
     FirstCharacter,
     FixWhiteSpace,
@@ -22,13 +25,16 @@ from unitxt.processors import (
     RegexParser,
     RemoveArticles,
     RemovePunctuations,
+    ScaleNumberToZeroOneReturnZeroIfFails,
     StanceToProCon,
     StringEquals,
     StrToFloatFormat,
     Substring,
     TakeFirstNonEmptyLine,
     TakeFirstWord,
+    TakeLastNonEmptyLine,
     ToYesOrNone,
+    Upper,
     YesNoToInt,
     YesToOneElseZero,
 )
@@ -73,6 +79,12 @@ add_processor_and_operator_to_catalog(
 )
 
 add_processor_and_operator_to_catalog(
+    artifact_name="take_last_non_empty_line",
+    operator=TakeLastNonEmptyLine(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
     artifact_name="literal_eval",
     operator=LiteralEval(),
     process_references=False,
@@ -91,6 +103,10 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="lower_case", operator=Lower(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="upper_case", operator=Upper(), overwrite=True
 )
 
 add_processor_and_operator_to_catalog(
@@ -191,6 +207,12 @@ add_processor_and_operator_to_catalog(
 )
 
 add_processor_and_operator_to_catalog(
+    artifact_name="extract_harm_rating_judgment",
+    operator=ExtractHarmRatingJudgement(),
+    overwrite=True,
+)
+
+add_processor_and_operator_to_catalog(
     artifact_name="extract_mt_bench_label_judgment",
     operator=ExtractMtBenchLabelJudgment(),
     overwrite=True,
@@ -258,4 +280,25 @@ add_processor_and_operator_to_catalog(
 
 add_processor_and_operator_to_catalog(
     artifact_name="fix_whitespace", operator=FixWhiteSpace(), overwrite=True
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="scale_0_10_to_0_1",
+    operator=ScaleNumberToZeroOneReturnZeroIfFails(),
+    overwrite=True,
+    process_references=False,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_verbal_judgement",
+    operator=ExtractVerbalJudgment(),
+    overwrite=True,
+    process_references=False,
+)
+
+add_processor_and_operator_to_catalog(
+    artifact_name="extract_verbal_judgement_bad_good",
+    operator=ExtractVerbalJudgementBadGood(),
+    overwrite=True,
+    process_references=False,
 )

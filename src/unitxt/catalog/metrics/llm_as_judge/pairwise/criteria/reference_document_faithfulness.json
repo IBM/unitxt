@@ -1,0 +1,5 @@
+{
+    "__type__": "criteria",
+    "name": "reference_document_faithfulness",
+    "description": "The response is faithful according to the reference document."
+}

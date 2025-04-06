@@ -1,14 +1,14 @@
 import warnings
-from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+from .artifact import fetch_artifact
 from .deprecation_utils import deprecation
 from .error_utils import Documentation, UnitxtError, UnitxtWarning
 from .logging_utils import get_logger
 from .metrics import MetricsList
 from .operator import InstanceOperator
 from .operators import ArtifactFetcherMixin
-from .settings_utils import get_constants
+from .settings_utils import get_constants, get_settings
 from .templates import Template
 from .type_utils import (
     Type,
@@ -25,6 +25,7 @@ from .type_utils import (
 
 constants = get_constants()
 logger = get_logger()
+settings = get_settings()
 
 
 @deprecation(
@@ -40,25 +41,22 @@ def parse_string_types_instead_of_actual_objects(obj):
 class Task(InstanceOperator, ArtifactFetcherMixin):
     """Task packs the different instance fields into dictionaries by their roles in the task.
 
-    Attributes:
+    Args:
         input_fields (Union[Dict[str, str], List[str]]):
-        Dictionary with string names of instance input fields and types of respective values.
-        In case a list is passed, each type will be assumed to be Any.
-
+            Dictionary with string names of instance input fields and types of respective values.
+            In case a list is passed, each type will be assumed to be Any.
         reference_fields (Union[Dict[str, str], List[str]]):
-        Dictionary with string names of instance output fields and types of respective values.
-        In case a list is passed, each type will be assumed to be Any.
-
-        metrics (List[str]): List of names of metrics to be used in the task.
-
+            Dictionary with string names of instance output fields and types of respective values.
+            In case a list is passed, each type will be assumed to be Any.
+        metrics (List[str]):
+            List of names of metrics to be used in the task.
         prediction_type (Optional[str]):
-        Need to be consistent with all used metrics. Defaults to None, which means that it will
-        be set to Any.
-
+            Need to be consistent with all used metrics. Defaults to None, which means that it will
+            be set to Any.
         defaults (Optional[Dict[str, Any]]):
-        An optional dictionary with default values for chosen input/output keys. Needs to be
-        consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
-        Will not overwrite values if already provided in a given instance.
+            An optional dictionary with default values for chosen input/output keys. Needs to be
+            consistent with names and types provided in 'input_fields' and/or 'output_fields' arguments.
+            Will not overwrite values if already provided in a given instance.
 
     The output instance contains three fields:
         1. "input_fields" whose value is a sub-dictionary of the input instance, consisting of all the fields listed in Arg 'input_fields'.
@@ -78,6 +76,8 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
 
     def prepare_args(self):
         super().prepare_args()
+        if isinstance(self.metrics, str):
+            self.metrics = [self.metrics]
 
         if self.input_fields is not None and self.inputs is not None:
             raise UnitxtError(
@@ -119,16 +119,24 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                 self.prediction_type
             )
 
-    def verify(self):
+        if hasattr(self, "inputs") and self.inputs is not None:
+            self.inputs = self.input_fields
+
+        if hasattr(self, "outputs") and self.outputs is not None:
+            self.outputs = self.reference_fields
+
+    def task_deprecations(self):
         if hasattr(self, "inputs") and self.inputs is not None:
             depr_message = (
                 "The 'inputs' field is deprecated. Please use 'input_fields' instead."
             )
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
-
         if hasattr(self, "outputs") and self.outputs is not None:
             depr_message = "The 'outputs' field is deprecated. Please use 'reference_fields' instead."
             warnings.warn(depr_message, DeprecationWarning, stacklevel=2)
+
+    def verify(self):
+        self.task_deprecations()
 
         if self.input_fields is None:
             raise UnitxtError(
@@ -155,7 +163,11 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
                     f"will raise an exception.",
                     Documentation.ADDING_TASK,
                 )
-                data = {key: Any for key in data}
+                if isinstance(data, dict):
+                    data = parse_type_dict(to_type_dict(data))
+                else:
+                    data = {key: Any for key in data}
+
                 if io_type == "input_fields":
                     self.input_fields = data
                 else:
@@ -202,9 +214,9 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
         return data
 
     @classmethod
-    @lru_cache(maxsize=None)
-    def get_metrics_artifacts(cls, metric_id: str):
-        metric = cls.get_artifact(metric_id)
+    def get_metrics_artifact_without_load(cls, metric_id: str):
+        with settings.context(skip_artifacts_prepare_and_verify=True):
+            metric, _ = fetch_artifact(metric_id)
         if isinstance(metric, MetricsList):
             return metric.items
         return [metric]
@@ -212,7 +224,7 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
     def check_metrics_type(self) -> None:
         prediction_type = self.prediction_type
         for metric_id in self.metrics:
-            metric_artifacts_list = Task.get_metrics_artifacts(metric_id)
+            metric_artifacts_list = Task.get_metrics_artifact_without_load(metric_id)
             for metric_artifact in metric_artifacts_list:
                 metric_prediction_type = metric_artifact.prediction_type
                 if (
@@ -288,7 +300,17 @@ class Task(InstanceOperator, ArtifactFetcherMixin):
             "metrics": self.metrics,
             "data_classification_policy": data_classification_policy,
             "media": instance.get("media", {}),
+            "recipe_metadata": instance.get("recipe_metadata", {}),
         }
+        if constants.demos_field in instance:
+            # for the case of recipe.skip_demoed_instances
+            result[constants.demos_field] = instance[constants.demos_field]
+
+        if constants.instruction_field in instance:
+            result[constants.instruction_field] = instance[constants.instruction_field]
+
+        if constants.system_prompt_field in instance:
+            result[constants.system_prompt_field] = instance[constants.system_prompt_field]
 
         if stream_name == constants.inference_stream:
             return result

@@ -138,7 +138,7 @@ if Settings.is_uninitilized():
     settings.max_log_message_size = (int, 100000)
     settings.catalogs = None
     settings.artifactories = None
-    settings.default_recipe = "standard_recipe"
+    settings.default_recipe = "dataset_recipe"
     settings.default_verbosity = "info"
     settings.use_eager_execution = False
     settings.remote_metrics = []
@@ -149,11 +149,18 @@ if Settings.is_uninitilized():
     settings.skip_artifacts_prepare_and_verify = (bool, False)
     settings.data_classification_policy = None
     settings.mock_inference_mode = (bool, False)
-    settings.disable_hf_datasets_cache = (bool, True)
-    settings.loader_cache_size = (int, 1)
+    settings.disable_hf_datasets_cache = (bool, False)
+    settings.stream_hf_datasets_by_default = (bool, False)
+    settings.loader_cache_size = (int, 25)
+    settings.loaders_max_retries = (int, 10)
     settings.task_data_as_text = (bool, True)
     settings.default_provider = "watsonx"
     settings.default_format = None
+    settings.hf_offline_datasets_path = None
+    settings.hf_offline_metrics_path = None
+    settings.hf_offline_models_path = None
+    settings.inference_engine_cache_path = "./inference_engine_cache/"
+    settings.max_connection_retries = 3
 
 if Constants.is_uninitilized():
     constants = Constants()
@@ -186,6 +193,10 @@ if Constants.is_uninitilized():
     constants.inference_stream = "__INFERENCE_STREAM__"
     constants.instance_stream = "__INSTANCE_STREAM__"
     constants.image_tag = "unitxt-img"
+    constants.demos_pool_field = "_demos_pool_"
+    constants.demos_field = "demos"
+    constants.instruction_field = "instruction"
+    constants.system_prompt_field = "system_prompt"
 
 
 def get_settings() -> Settings:

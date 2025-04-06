@@ -3,41 +3,40 @@ from unitxt.benchmark import Benchmark
 from unitxt.inference import (
     CrossProviderInferenceEngine,
 )
-from unitxt.standard import StandardRecipe
-from unitxt.text_utils import print_dict
+from unitxt.standard import DatasetRecipe
 
 benchmark = Benchmark(
     format="formats.user_agent",
     max_samples_per_subset=5,
-    loader_limit=300,
+    loader_limit=30,
     subsets={
-        "cola": StandardRecipe(
+        "cola": DatasetRecipe(
             card="cards.cola",
             template="templates.classification.multi_class.instruction",
         ),
-        "mnli": StandardRecipe(
+        "mnli": DatasetRecipe(
             card="cards.mnli",
             template="templates.classification.multi_class.relation.default",
         ),
-        "mrpc": StandardRecipe(
+        "mrpc": DatasetRecipe(
             card="cards.mrpc",
             template="templates.classification.multi_class.relation.default",
         ),
-        "qnli": StandardRecipe(
+        "qnli": DatasetRecipe(
             card="cards.qnli",
             template="templates.classification.multi_class.relation.default",
         ),
-        "rte": StandardRecipe(
+        "rte": DatasetRecipe(
             card="cards.rte",
             template="templates.classification.multi_class.relation.default",
         ),
-        "sst2": StandardRecipe(
+        "sst2": DatasetRecipe(
             card="cards.sst2", template="templates.classification.multi_class.title"
         ),
-        "stsb": StandardRecipe(
+        "stsb": DatasetRecipe(
             card="cards.stsb", template="templates.regression.two_texts.title"
         ),
-        "wnli": StandardRecipe(
+        "wnli": DatasetRecipe(
             card="cards.wnli",
             template="templates.classification.multi_class.relation.default",
         ),
@@ -47,10 +46,8 @@ benchmark = Benchmark(
 test_dataset = list(benchmark()["test"])
 
 
-# Infere using llama-3-2-1b base using Watsonx API
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-2-1b-instruct", provider="watsonx"
-)
+# Infer using llama-3-2-1b base using Watsonx API
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -59,17 +56,11 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = inference_model.infer(test_dataset)
-evaluated_dataset = evaluate(predictions=predictions, data=test_dataset)
+predictions = model(test_dataset)
+results = evaluate(predictions=predictions, data=test_dataset)
 
-print_dict(
-    evaluated_dataset[0],
-    keys_to_print=[
-        "source",
-        "prediction",
-        "subset",
-    ],
-)
-print_dict(
-    evaluated_dataset[0]["score"]["subsets"],
-)
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Subsets Results:")
+print(results.subsets_scores.summary)

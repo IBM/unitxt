@@ -10,6 +10,9 @@
     },
     "preprocess_steps": [
         {
+            "__type__": "shuffle"
+        },
+        {
             "__type__": "rename_splits",
             "mapper": {
                 "validation": "test"
@@ -28,7 +31,18 @@
         }
     ],
     "task": "tasks.qa.with_context.abstractive[metrics=[metrics.anls]]",
-    "templates": "templates.qa.with_context.all",
+    "templates": [
+        "templates.qa.with_context.doc_vqa",
+        "templates.qa.with_context",
+        "templates.qa.extractive",
+        "templates.qa.with_context.simple",
+        "templates.qa.with_context.simple2",
+        "templates.qa.with_context.with_type",
+        "templates.qa.with_context.question_first",
+        "templates.qa.with_context.ffqa",
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
+    ],
     "__tags__": {
         "license": "apache-2.0",
         "multilinguality": "monolingual",

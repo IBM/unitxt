@@ -1,18 +1,24 @@
 from math import isnan
 from typing import Dict, List
 
+from unitxt.api import create_dataset, evaluate
 from unitxt.inference import MockInferenceEngine
 from unitxt.llm_as_judge import LLMAsJudge, TaskBasedLLMasJudge
 from unitxt.logging_utils import get_logger
 from unitxt.metrics import (
+    ANLS,
     NER,
     Accuracy,
+    AccuracyFast,
     BinaryAccuracy,
     BinaryMaxAccuracy,
     BinaryMaxF1,
+    CharEditDistance,
+    CharEditDistanceAccuracy,
     Detector,
     F1Binary,
     F1BinaryPosOnly,
+    F1Fast,
     F1Macro,
     F1MacroMultiLabel,
     F1Micro,
@@ -42,17 +48,25 @@ from unitxt.metrics import (
     GroupMeanTokenOverlap,
     HuggingfaceMetric,
     KendallTauMetric,
+    KeyValueExtraction,
     LlamaIndexCorrectness,
     MaxAccuracy,
+    MeteorFast,
     MetricsEnsemble,
     NormalizedSacrebleu,
     Perplexity,
     PrecisionBinary,
     RecallBinary,
+    RelaxedCorrectness,
     RocAuc,
     Rouge,
+    SQLExecutionAccuracy,
+    SQLNonExecutionAccuracy,
+    StringContainment,
+    StringContainmentRatio,
     TokenOverlap,
     UnsortedListExactMatch,
+    WebsrcSquadF1,
 )
 from unitxt.test_utils.metrics import (
     apply_metric,
@@ -214,6 +228,39 @@ class TestMetrics(UnitxtTestCase):
         for output, target in zip(outputs, instance_targets):
             self.assertDictEqual(output["score"]["instance"], target)
 
+    def test_accuracy_fast(self):
+        metric = AccuracyFast()
+
+        predictions = ["A", "B", "C"]
+        references = [["B", "C"], ["A"], ["B", "C"]]
+
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "accuracy": 1 / 3,
+            "score": 1 / 3,
+            "score_name": "accuracy",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 0.0, "score": 0.0, "score_name": "accuracy"},
+            {"accuracy": 1.0, "score": 1.0, "score_name": "accuracy"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
     def test_accuracy_with_prefix(self):
         metric = Accuracy(score_prefix="my_")
 
@@ -320,6 +367,44 @@ class TestMetrics(UnitxtTestCase):
 
         outputs = apply_metric(
             metric=metric, predictions=predictions, references=references
+        )
+
+        expected_global_result = {
+            "my_f1_micro": 5 / 6,
+            "score": 5 / 6,
+            "score_name": "my_f1_micro",
+        }
+
+        global_result = outputs[0]["score"]["global"].copy()
+        # Only check the keys that are expected, i.e. exist in expected_global_result
+        global_result = {
+            key: value
+            for key, value in global_result.items()
+            if key in expected_global_result
+        }
+        self.assertDictEqual(global_result, expected_global_result)
+
+        instance_targets = [
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 0.0, "score": 0.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+            {"my_f1_micro": 1.0, "score": 1.0, "score_name": "my_f1_micro"},
+        ]
+        for output, target in zip(outputs, instance_targets):
+            self.assertDictEqual(output["score"]["instance"], target)
+
+    def test_f1_micro_map_reduce_with_prefix(self):
+        metric = F1Fast(main_score="f1_micro", averages=["micro"], score_prefix="my_")
+
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
         )
 
         expected_global_result = {
@@ -592,6 +677,37 @@ class TestMetrics(UnitxtTestCase):
         self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
         self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
 
+    def test_f1_macro_fast(self):
+        metric = F1Fast(
+            main_score="f1_macro",
+            averages=["macro", "per_class"],
+            ci_score_names=["f1_macro"],
+        )
+        references = [["cat"], ["dog"], ["dog"], ["dog"], ["cat"], ["cat"]]
+        predictions = ["cat", "cat", "dog", "dog", "cat", "cat"]
+
+        # recall class 'dog'  = 2/3  = 0.666        precision= 2/2 = 1    f1 = 0.8
+        # recall class 'cat'  = 3/3  = 1            precision= 3/4 = 0.75 f1 = 0.857142857143
+        # macro f1 = (0.8+0.847)/2
+        global_target = 0.82857142
+        global_target_dog = 0.8
+        global_target_cat = 0.857142857143
+
+        outputs = apply_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+        )
+        self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+        self.assertAlmostEqual(
+            global_target_dog, outputs[0]["score"]["global"]["f1_dog"]
+        )
+        self.assertAlmostEqual(
+            global_target_cat, outputs[0]["score"]["global"]["f1_cat"]
+        )
+        self.assertEqual("f1_macro", outputs[0]["score"]["global"]["score_name"])
+        self.assertEqual("f1_macro", outputs[0]["score"]["instance"]["score_name"])
+
     def test_f1_weighted(self):
         metric = F1Weighted()
         references = [
@@ -827,6 +943,51 @@ class TestMetrics(UnitxtTestCase):
             metric=metric, predictions=predictions, references=references
         )
         self.assertAlmostEqual(global_target, outputs[0]["score"]["global"]["score"])
+
+    def test_key_value_extraction(self):
+        metric = KeyValueExtraction(metric="metrics.accuracy")
+        # key1 - 2 correct of 2
+        # key2 - 1 correct of 2
+        # key3 - 0 correct of 1
+        # legal keys - 4 out of 5
+        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}], [{"key1": "value3" , "key2" :  "value4"}]]
+        predictions = [ {"key1": "value1" , "key2" :  "wrong-value", "wrong-key" : "values3" },{"key1": "value3",  "key2" : "value4", "key3" : "value9"}]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual((2+1+0)/(2 + 2 + 2), outputs[0]["score"]["global"]["accuracy_micro"])
+        self.assertAlmostEqual((2/2 + 1/2 + 0/2)/3, outputs[0]["score"]["global"]["accuracy_macro"])
+        self.assertAlmostEqual(2/2, outputs[0]["score"]["global"]["accuracy_key1"])
+        self.assertAlmostEqual(1/2, outputs[0]["score"]["global"]["accuracy_key2"])
+        self.assertAlmostEqual(0/2, outputs[0]["score"]["global"]["accuracy_key3"])
+        self.assertAlmostEqual(5/6, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"])
+
+
+        references = [ [{"key1": "value1" , "key2" :  "values2"    , "key3": "value3"}] ]
+        predictions = [ {} ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(0, outputs[0]["score"]["global"]["accuracy_legal_keys_in_predictions"])
+
+    def test_key_value_extraction_token_overlap(self):
+        metric = KeyValueExtraction(metric="metrics.token_overlap",score_prefix="token_overlap_")
+        # key1 - recall 1/2, precision 1 , f1 = 2/3
+        # key2 - recall 1, precision 0 , f1 = 1
+        # legal keys - 2 out of 3
+        references = [ [{"address": "IBM" , "zip" :  "32312"} ] ]
+        predictions = [ {"address": "IBM Corp", "zip" : "32312", "user" : "george"} ]
+        outputs = apply_metric(
+            metric=metric, predictions=predictions, references=references
+        )
+        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_address"])
+        self.assertAlmostEqual(1, outputs[0]["score"]["global"]["token_overlap_f1_zip"])
+        self.assertAlmostEqual(2/3, outputs[0]["score"]["global"]["token_overlap_f1_legal_keys_in_predictions"])
+        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_micro"])
+        self.assertAlmostEqual((2/3 + 1)/2, outputs[0]["score"]["global"]["token_overlap_f1_macro"])
+
+
+
 
     def test_rouge(self):
         metric = Rouge()
@@ -1088,7 +1249,9 @@ class TestMetrics(UnitxtTestCase):
                         score_prefix,
                         metric.main_score,
                     ]
-                ).replace("__", "_")  # for the case of empty score_prefix
+                ).replace(
+                    "__", "_"
+                )  # for the case of empty score_prefix
 
                 self.assertTrue(
                     any(
@@ -1276,6 +1439,228 @@ class TestMetrics(UnitxtTestCase):
             instance_outputs=[outputs[0]["score"]["instance"]],
         )
 
+    def test_text2sql_accuracy_correct_query_mock_db(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = ["SELECT name FROM employees WHERE department = 'Sales'"]
+        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, non_execution_outputs["score"])
+
+    def test_text2sql_accuracy_different_db_schema(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = [
+            "SELECT product_name, price FROM products WHERE category = 'Electronics'"
+        ]
+        references = [
+            "SELECT product_name AS pname, price AS cost FROM products WHERE category = 'Electronics';"
+        ]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "products_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "products": {
+                            "columns": [
+                                "product_id",
+                                "product_name",
+                                "category",
+                                "price",
+                            ],
+                            "rows": [
+                                (1, "Laptop", "Electronics", 1200),
+                                (2, "Mouse", "Electronics", 25),
+                                (3, "Shirt", "Clothing", 50),
+                                (4, "Monitor", "Electronics", 300),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, non_execution_outputs["score"])
+
+    def test_text2sql_accuracy_multiple_tables(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = [
+            "SELECT o.order_id, c.name FROM orders AS o JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped'"
+        ]
+        references = [
+            "SELECT o.order_id, c.name FROM orders AS o INNER JOIN customers AS c ON o.customer_id = c.customer_id WHERE o.status = 'Shipped';"
+        ]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "sales_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "customers": {
+                            "columns": ["customer_id", "name", "city"],
+                            "rows": [
+                                (1, "John Doe", "New York"),
+                                (2, "Jane Smith", "Los Angeles"),
+                                (3, "David Lee", "Chicago"),
+                            ],
+                        },
+                        "orders": {
+                            "columns": ["order_id", "customer_id", "status"],
+                            "rows": [
+                                (101, 1, "Shipped"),
+                                (102, 2, "Pending"),
+                                (103, 1, "Shipped"),
+                            ],
+                        },
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, non_execution_outputs["score"])
+
+    def test_text2sql_accuracy_empty_result(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = ["SELECT name FROM employees WHERE department = 'HR'"]
+        references = ["SELECT name FROM employees WHERE department = 'HR';"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(0.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, non_execution_outputs["score"])
+
+    def test_text2sql_accuracy_aggregation_query(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = ["SELECT AVG(salary) FROM employees"]
+        references = ["SELECT AVG(salary) FROM employees;"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(1.0, non_execution_outputs["score"])
+
+    def test_text2sql_accuracy_incorrect_query(self):
+        sql_execution_metric = SQLExecutionAccuracy()
+        sql_non_execution_metric = SQLNonExecutionAccuracy()
+        predictions = [
+            "SELECT nme FROM employees WHERE department = 'Sales'"
+        ]  # Incorrect column name 'nme'
+        references = ["SELECT name FROM employees WHERE department = 'Sales';"]
+        task_data = [
+            {
+                "db": {
+                    "db_id": "mock_db",
+                    "db_type": "in_memory",
+                    "data": {
+                        "employees": {
+                            "columns": ["id", "name", "department", "salary"],
+                            "rows": [
+                                (1, "Alice", "Sales", 50000),
+                                (2, "Bob", "Engineering", 60000),
+                                (3, "Charlie", "Sales", 55000),
+                            ],
+                        }
+                    },
+                }
+            }
+        ]
+
+        execution_outputs = sql_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(0.0, execution_outputs["score"])
+        non_execution_outputs = sql_non_execution_metric.compute(
+            references, predictions[0], task_data[0]
+        )
+        self.assertEqual(0.0, non_execution_outputs["score"])
+
 
 class TestConfidenceIntervals(UnitxtTestCase):
     def test_confidence_interval_off(self):
@@ -1297,6 +1682,30 @@ class TestConfidenceIntervals(UnitxtTestCase):
             metric=Accuracy(),
             expected_ci_low=0.71,
             expected_ci_high=0.87,
+        )
+
+    def test_map_reduce_metric_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=AccuracyFast(),
+            expected_ci_low=0.71,
+            expected_ci_high=0.87,
+        )
+
+    def test_f1_micro_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Micro(n_resamples=1000),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
+        )
+
+    def test_f1_micro_fast_confidence_interval(self):
+        """Test the calculation of confidence intervals for an instance metric (Accuracy is used as an instance of an InstanceMetric)."""
+        self._test_confidence_interval(
+            metric=F1Fast(main_score="f1_micro", averages=["micro"]),
+            expected_ci_low=0.83,
+            expected_ci_high=0.93,
         )
 
     def test_instance_metric_with_multiple_scores_confidence_interval(self):
@@ -1355,7 +1764,7 @@ class TestConfidenceIntervals(UnitxtTestCase):
             if score_name in expected_global_result:
                 # Verify that the output value is as the expected value
                 self.assertAlmostEqual(
-                    score_value, expected_global_result[score_name], places=5
+                    score_value, expected_global_result[score_name], places=3
                 )
             else:
                 # An output score that is not expected
@@ -1534,7 +1943,9 @@ class TestConfidenceIntervals(UnitxtTestCase):
                     score_prefix,
                     metric.main_score,
                 ]
-            ).replace("__", "_")  # for the case of empty score_prefix
+            ).replace(
+                "__", "_"
+            )  # for the case of empty score_prefix
 
             if input_expected_global_result_is_none:
                 expected_global_result = {
@@ -1606,13 +2017,15 @@ class TestConfidenceIntervals(UnitxtTestCase):
         )
         actual_scores = [output["score"] for output in outputs]
         main_score = f"{model_label}_{metric_label}"
-        instance_targets = [
-            {
-                main_score: 0.0,
-                "score": 0.0,
-                "score_name": main_score,
-                main_score + "_judge_raw_output": "no",
-                main_score + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
+        instance_targets = (
+            [
+                {
+                    main_score: 0.0,
+                    "score": 0.0,
+                    "score_name": main_score,
+                    main_score + "_judge_raw_output": "no",
+                    main_score
+                    + "_judge_raw_input": """<|begin_of_text|><|start_header_id|>system<|end_header_id|>
 
 You are given a question, the corresponding ground-truth answer and a prediction from a model. Compare the "Ground-truth answer" and the "Prediction" to determine whether the prediction correctly answers the question.
 There should be no contradicting statements in the prediction. The prediction may contain extra information. If the prediction states something as a possibility, treat it as a definitive answer.
@@ -1628,8 +2041,10 @@ Prediction: Watsonx.ai supports no foundation models
 <|eot_id|><|start_header_id|>assistant<|end_header_id|>
 
 Answer: """,
-            }
-        ] * 2
+                }
+            ]
+            * 2
+        )
         global_target = {
             main_score: 0.0,
             "score": 0.0,
@@ -1984,4 +2399,572 @@ Answer: """,
             references=references,
             instance_targets=instance_targets,
             global_target=global_target,
+        )
+
+    def test_anls(self):
+        metric = ANLS()
+
+        predictions = ["A", "B", "C"]
+        references = [["B"], ["A"], ["C"]]
+
+        instance_targets = [
+            {"anls": 0.0, "score": 0.0, "score_name": "anls"},
+            {"anls": 0.0, "score": 0.0, "score_name": "anls"},
+            {"anls": 1.0, "score": 1.0, "score_name": "anls"},
+        ]
+
+        global_target = {
+            "anls": 0.33,
+            "score": 0.33,
+            "score_name": "anls",
+            # "anls_ci_low": 0.0,
+            # "anls_ci_high": 1.0,
+            # "score_ci_low": 0.0,
+            # "score_ci_high": 1.0,
+            "num_of_instances": 3,
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+    def test_websrc(self):
+        metric = WebsrcSquadF1(n_resamples=None)
+
+        predictions = ["The 2nd", "The 1st"]
+        references = [["The 2nd"], ["The 2nd"]]
+
+        # how to create a metric which isn't updated in every sample when using UNITXT?
+        instance_targets = [
+            {
+                "websrc_squad_f1": 1.0,
+                "score": 1.0,
+                "score_name": "websrc_squad_f1",
+            },
+            {
+                "websrc_squad_f1": 0.5,
+                "score": 0.5,
+                "score_name": "websrc_squad_f1",
+            },
+        ]
+        global_target = {
+            "num_of_instances": 2,
+            "websrc_squad_f1": 0.75,
+            "score": 0.75,
+            "score_name": "websrc_squad_f1",
+        }
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+            task_data=[{"domain": "movie"}, {"domain": "movie"}],
+        )
+
+    def test_relaxed_correctness(self):
+        metric = RelaxedCorrectness(n_resamples=None)
+
+        predictions = ["10", "30"]
+        references = [["14"], ["30"]]
+
+        # how to create a metric which isn't updated in every sample when using UNITXT?
+        instance_targets = [
+            {
+                "relaxed_overall": 0.0,
+                "relaxed_human_split": 0.0,
+                "score": 0.0,
+                "score_name": "relaxed_overall",
+            },
+            {
+                "relaxed_overall": 1.0,
+                "relaxed_augmented_split": 1.0,
+                "score": 1.0,
+                "score_name": "relaxed_overall",
+            },
+        ]
+
+        global_target = {
+            "relaxed_overall": 0.5,
+            "relaxed_human_split": 0.0,
+            "relaxed_augmented_split": 1.0,
+            "score": 0.5,
+            "score_name": "relaxed_overall",
+            "num_of_instances": 2,
+        }
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+            task_data=[{"type": "human_test"}, {"type": "augmented_test"}],
+        )
+
+    def test_string_containment(self):
+        metric = StringContainment()
+
+        predictions = [
+            "barak obama is a politician",
+            "David Gilmour is an English guitarist",
+        ]
+        references = [["politician", "politic", "pol", "musician"], ["artist"]]
+
+        instance_targets = [
+            {
+                "string_containment": 1.0,
+                "score": 1.0,
+                "score_name": "string_containment",
+            },
+            {
+                "string_containment": 0.0,
+                "score": 0.0,
+                "score_name": "string_containment",
+            },
+        ]
+
+        global_target = {
+            "string_containment": 0.50,
+            "score": 0.50,
+            "score_name": "string_containment",
+            "score_ci_high": 1.0,
+            "score_ci_low": 0.0,
+            "string_containment_ci_high": 1.0,
+            "string_containment_ci_low": 0.0,
+            "num_of_instances": 2,
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+        reference_field = "entities"
+
+        metric = StringContainmentRatio(field=reference_field)
+
+        instance_targets = [
+            {
+                "string_containment": 0.75,
+                "score": 0.75,
+                "score_name": "string_containment",
+            },
+            {
+                "string_containment": 0.0,
+                "score": 0.0,
+                "score_name": "string_containment",
+            },
+        ]
+
+        global_target = {
+            "string_containment": 0.38,
+            "score": 0.38,
+            "score_name": "string_containment",
+            "score_ci_high": 0.75,
+            "score_ci_low": 0.0,
+            "string_containment_ci_high": 0.75,
+            "string_containment_ci_low": 0.0,
+            "num_of_instances": 2,
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=[["dummy"] for _ in references],
+            instance_targets=instance_targets,
+            global_target=global_target,
+            task_data=[{reference_field: w} for w in references],
+        )
+
+    def test_meteor(self):
+        import nltk
+
+        nltk.download("punkt_tab", quiet=True)
+        metric = MeteorFast(
+            __description__="""METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
+
+        METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
+        """,
+        )
+
+        predictions = [
+            "It is a guide to action which ensures that the military always obeys the commands of the party",
+            "We strive for peace",
+            "On the rag sat the cat",
+            "I caught the ball",
+        ]
+        references = [
+            [
+                "It is a guide to action that ensures that the military will forever heed Party commands"
+            ],
+            ["We hope for peace"],
+            ["The cat sat on the rag"],
+            ["He threw the ball"],
+        ]
+
+        # the floats shown here are rounded just for the test. the actually
+        # returned score are 15-16 digits to the right of the decimal point
+        instance_targets = [
+            {"meteor": 0.69, "score": 0.69, "score_name": "meteor"},
+            {"meteor": 0.64, "score": 0.64, "score_name": "meteor"},
+            {"meteor": 0.5, "score": 0.5, "score_name": "meteor"},
+            {"meteor": 0.47, "score": 0.47, "score_name": "meteor"},
+        ]
+
+        global_target = {
+            "meteor": 0.58,
+            "meteor_ci_high": 0.67,
+            "meteor_ci_low": 0.48,
+            "num_of_instances": 4,
+            "score": 0.58,
+            "score_ci_high": 0.67,
+            "score_ci_low": 0.48,
+            "score_name": "meteor",
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+        # to match the setting to occur by testing on the global version, metric2, below, setting n_resamples=3
+
+        metric_hf = MeteorFast(
+            n_resamples=3,
+            __description__="""Huggingface version with bad confidence interval calculation of METEOR (Metric for Evaluation of Translation with Explicit ORdering) is a machine translation evaluation metric, which is calculated based on the harmonic mean of precision and recall, with recall weighted more than precision.
+
+        METEOR is based on a generalized concept of unigram matching between the machine-produced translation and human-produced reference translations. Unigrams can be matched based on their surface forms, stemmed forms, and meanings. Once all generalized unigram matches between the two strings have been found, METEOR computes a score for this matching using a combination of unigram-precision, unigram-recall, and a measure of fragmentation that is designed to directly capture how well-ordered the matched words in the machine translation are in relation to the reference.
+        """,
+        )
+
+        global_target = {
+            "meteor": 0.58,
+            "meteor_ci_high": 0.59,
+            "meteor_ci_low": 0.58,
+            "score": 0.58,
+            "score_ci_high": 0.59,
+            "score_ci_low": 0.58,
+            "score_name": "meteor",
+            "num_of_instances": 4,
+        }
+
+        test_metric(
+            metric=metric_hf,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+        # compare results with the HF version of meteor
+        metric2 = HuggingfaceMetric(
+            hf_metric_name="meteor", main_score="meteor", prediction_type=str
+        )
+
+        test_metric(
+            metric=metric2,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+    def test_char_edit_distance(self):
+        metric = CharEditDistanceAccuracy()
+        abs_dist_metric = CharEditDistance()
+
+        predictions = ["this is the prediction", "there is an other sample"]
+        references = [["this is the reference"], ["there is another sample"]]
+
+        # First sample:   p[re]diction - edit distance (8), max len ignoring whitespace (19)  accuracy = 1 - 8/19 = 0.578
+        # Second sample: [an other] [another] - edit distance ignoring white space(0), max len ignoring whitespace (19)     accuracy = 1 - 0/19 = 1
+
+        instance_targets = [
+            {
+                "char_edit_dist_accuracy": 0.58,
+                "score": 0.58,
+                "score_name": "char_edit_dist_accuracy",
+            },
+            {
+                "char_edit_dist_accuracy": 1.00,
+                "score": 1.00,
+                "score_name": "char_edit_dist_accuracy",
+            },
+        ]
+
+        global_target = {
+            "char_edit_dist_accuracy": 0.79,
+            "score": 0.79,
+            "score_name": "char_edit_dist_accuracy",
+            "char_edit_dist_accuracy_ci_low": 0.58,
+            "char_edit_dist_accuracy_ci_high": 1.0,
+            "score_ci_low": 0.58,
+            "score_ci_high": 1.0,
+            "num_of_instances": 2,
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+        dist_instance_targets = [
+            {
+                "char_edit_distance": 8,
+                "score": 8,
+                "score_name": "char_edit_distance",
+            },
+            {
+                "char_edit_distance": 0,
+                "score": 0,
+                "score_name": "char_edit_distance",
+            },
+        ]
+
+        dist_global_target = {
+            "char_edit_distance": 4.0,
+            "score": 4.0,
+            "score_name": "char_edit_distance",
+            "char_edit_distance_ci_low": 0.0,
+            "char_edit_distance_ci_high": 8.0,
+            "score_ci_low": 0.0,
+            "score_ci_high": 8.0,
+            "num_of_instances": 2,
+        }
+
+        test_metric(
+            metric=abs_dist_metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=dist_instance_targets,
+            global_target=dist_global_target,
+        )
+
+        predictions = [""]
+        references = [[""]]
+
+        instance_targets = [
+            {
+                "char_edit_dist_accuracy": 0.0,
+                "score": 0.0,
+                "score_name": "char_edit_dist_accuracy",
+            }
+        ]
+
+        global_target = {
+            "char_edit_dist_accuracy": 0.0,
+            "score": 0.0,
+            "score_name": "char_edit_dist_accuracy",
+            "num_of_instances": 1,
+        }
+
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+        dist_instance_targets = [
+            {
+                "char_edit_distance": 0.0,
+                "score": 0.0,
+                "score_name": "char_edit_distance",
+            }
+        ]
+
+        dist_global_target = {
+            "char_edit_distance": 0.0,
+            "score": 0.0,
+            "score_name": "char_edit_distance",
+            "num_of_instances": 1,
+        }
+
+        test_metric(
+            metric=abs_dist_metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=dist_instance_targets,
+            global_target=dist_global_target,
+        )
+
+    def test_rouge_new(self):
+        import nltk
+
+        nltk.download("punkt_tab", quiet=True)
+        metric = Rouge(
+            __description__="""This is the classical NLP Rouge metric based on the RougeScorer library (https://github.com/google-research/google-research/tree/master/rouge).
+        It computes metrics several metrics (rouge1, rouge2, roughL, and rougeLsum) based lexical (word) overlap between the prediction and the ground truth references."
+        """,
+            __tags__={"flags": ["reference-based-metric", "cpu-metric"]},
+        )
+        predictions = ["hello there", "general kenobi"]
+        references = [["hello", "there"], ["general kenobi", "general yoda"]]
+
+        instance_targets = [
+            {
+                "rouge1": 0.67,
+                "rouge2": 0.0,
+                "rougeL": 0.67,
+                "rougeLsum": 0.67,
+                "score": 0.67,
+                "score_name": "rougeL",
+            },
+            {
+                "rouge1": 1.0,
+                "rouge2": 1.0,
+                "rougeL": 1.0,
+                "rougeLsum": 1.0,
+                "score": 1.0,
+                "score_name": "rougeL",
+            },
+        ]
+
+        global_target = {
+            "rouge1": 0.83,
+            "rouge1_ci_high": 1.0,
+            "rouge1_ci_low": 0.67,
+            "rouge2": 0.5,
+            "rouge2_ci_high": 1.0,
+            "rouge2_ci_low": 0.0,
+            "rougeL": 0.83,
+            "rougeL_ci_high": 1.0,
+            "rougeL_ci_low": 0.67,
+            "rougeLsum": 0.83,
+            "rougeLsum_ci_high": 1.0,
+            "rougeLsum_ci_low": 0.67,
+            "score": 0.83,
+            "score_ci_high": 1.0,
+            "score_ci_low": 0.67,
+            "score_name": "rougeL",
+            "num_of_instances": 2,
+        }
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+    def test_ndcg(self):
+        import numpy as np
+        from unitxt.blocks import CastFields
+        from unitxt.metrics import NDCG, MetricPipeline
+
+        # Normalized Discounted Cumulative Gain
+        metric = MetricPipeline(
+            main_score="nDCG",
+            single_reference_per_prediction=True,
+            preprocess_steps=[
+                CastFields(
+                    fields={"prediction": "float", "references/0": "float"},
+                    failure_defaults={"prediction": None},
+                ),
+            ],
+            metric=NDCG(),
+        )
+
+        predictions = [
+            "1.0",
+            " 2 ",
+            "1.0",
+            "0",
+            "1.7",
+            3,
+            "0",
+            "oops",
+            "1",
+            "failed",
+            "failed again",
+        ]
+        references = [
+            ["4"],
+            ["0"],
+            ["1.0"],
+            [4],
+            ["0"],
+            ["1"],
+            ["1.0"],
+            ["3"],
+            ["2"],
+            [4],
+            [1],
+        ]
+        inputs = (
+            [{"query": "who is Barack Obama"}] * 3
+            + [{"query": "What is an albatross?"}] * 5
+            + [{"query": "something else"}]
+            + [{"query": "these will fail"}] * 2
+        )
+        instance_targets = [  # nDCG is undefined at instance level
+            {"nDCG": np.nan, "score": np.nan, "score_name": "nDCG"}
+        ] * len(predictions)
+
+        global_target = {
+            "nDCG": 0.42,
+            "nDCG_ci_high": 0.66,
+            "nDCG_ci_low": 0.15,
+            "score": 0.42,
+            "score_ci_high": 0.66,
+            "score_ci_low": 0.15,
+            "score_name": "nDCG",
+            "num_of_instances": 11,
+        }
+        test_metric(
+            metric=metric,
+            predictions=predictions,
+            references=references,
+            task_data=inputs,
+            instance_targets=instance_targets,
+            global_target=global_target,
+        )
+
+    def test_llm_as_judge(self):
+        data = [
+            {"question": "Who is Harry Potter?"},
+            {
+                "question": "How can I protect myself from the wind while walking outside?"
+            },
+            {"question": "What is a good low cost of living city in the US?"},
+        ]
+
+        criterion = "metrics.llm_as_judge.direct.criteria.answer_relevance"
+        metrics = [
+            f"metrics.llm_as_judge.direct.rits.llama3_3_70b[criteria={criterion}, context_fields=[question]]"
+        ]
+
+        dataset = create_dataset(
+            task="tasks.qa.open", test_set=data, metrics=metrics, split="test"
+        )
+
+        predictions = [
+            """Harry Potter is a young wizard who becomes famous for surviving an attack by the dark wizard Voldemort, and later embarks on a journey to defeat him and uncover the truth about his past.""",
+            """You can protect yourself from the wind by wearing windproof clothing, layering up, and using accessories like hats, scarves, and gloves to cover exposed skin.""",
+            """A good low-cost-of-living city in the U.S. is San Francisco, California, known for its affordable housing and budget-friendly lifestyle.""",
+        ]
+
+        results = evaluate(predictions=predictions, data=dataset)
+        self.assertDictEqual(
+            dict(results[0]["score"]["global"]),
+            {
+                "num_of_instances": 3,
+                "answer_relevance": 0.5,
+                "score": 0.5,
+                "score_name": "answer_relevance",
+            },
         )

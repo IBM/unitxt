@@ -1,5 +1,5 @@
 import os
-from typing import Optional, Union
+from typing import Dict, Optional, Union
 
 import datasets
 
@@ -28,6 +28,11 @@ from .image_operators import __file__ as _
 from .inference import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _
+from .llm_as_judge_chat_templates import __file__ as _
+from .llm_as_judge_constants import __file__ as _
+from .llm_as_judge_from_template import __file__ as _
+from .llm_as_judge_operators import __file__ as _
+from .llm_as_judge_utils import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import get_logger
 from .metric import __file__ as _
@@ -41,12 +46,13 @@ from .processors import __file__ as _
 from .random_utils import __file__ as _
 from .recipe import __file__ as _
 from .register import __file__ as _
-from .schema import loads_instance
+from .schema import loads_batch, loads_instance
 from .serializers import __file__ as _
 from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
+from .sql_utils import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
 from .stream_operators import __file__ as _
@@ -109,6 +115,13 @@ class Dataset(datasets.GeneratorBasedBuilder):
             dl_manager, "no_checks", **prepare_splits_kwargs
         )
 
+    def as_streaming_dataset(self, split: Optional[str] = None, base_path: Optional[str] = None) -> Union[Dict[str, datasets.IterableDataset], datasets.IterableDataset]:
+        return (
+            super()
+            .as_streaming_dataset(split, base_path=base_path)
+            .map(loads_instance)
+        )
+
     def as_dataset(
         self,
         split: Optional[datasets.Split] = None,
@@ -151,5 +164,5 @@ class Dataset(datasets.GeneratorBasedBuilder):
         return (
             super()
             .as_dataset(split, run_post_process, verification_mode, in_memory)
-            .with_transform(loads_instance)
+            .with_transform(loads_batch)
         )

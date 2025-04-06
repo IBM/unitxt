@@ -19,7 +19,7 @@ logger = get_logger()
 class TestArtifactRecovery(UnitxtTestCase):
     def test_correct_artifact_recovery(self):
         args = {
-            "__type__": "standard_recipe",
+            "__type__": "dataset_recipe",
             "card": "cards.sst2",
             "template": {
                 "__type__": "input_output_template",
@@ -68,7 +68,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_correct_artifact_recovery_with_overwrite(self):
         args = {
-            "__type__": "standard_recipe",
+            "__type__": "dataset_recipe",
             "card": "cards.sst2",
             "template_card_index": 0,
             "demos_pool_size": 100,
@@ -89,7 +89,7 @@ class TestArtifactRecovery(UnitxtTestCase):
 
     def test_bad_artifact_recovery_bad_type(self):
         args = {
-            "__type__": "standard_recipe",
+            "__type__": "dataset_recipe",
             "card": "cards.sst2",
             "template_card_index": 1000,
             "demos_pool_size": 100,

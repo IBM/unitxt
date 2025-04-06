@@ -4,6 +4,7 @@ from unitxt.struct_data_operators import (
     DuplicateTableColumns,
     DuplicateTableRows,
     InsertEmptyTableRows,
+    JsonStrToDict,
     ListToKeyValPairs,
     LoadJson,
     MapHTMLTableToJSON,
@@ -140,7 +141,7 @@ class TestStructDataOperators(UnitxtTestCase):
             }
         ]
 
-        serialized_str = 'pd.DataFrame({\n{"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]}},\nindex=[0, 1, 2])'
+        serialized_str = 'pd.DataFrame({\n"name": ["Alex", "Raj", "Donald"], "age": [26, 34, 39]},\nindex=[0, 1, 2])'
 
         targets = [
             {
@@ -707,5 +708,37 @@ class TestStructDataOperators(UnitxtTestCase):
             operator=InsertEmptyTableRows(field="table", times=2),
             inputs=inputs,
             targets=targets,
+            tester=self,
+        )
+
+    def test_json_str_to_dict(self):
+        inputs = [
+            {
+                "prediction": """
+{ "a": null , "b" : 3,  "c" : "word" }
+"""
+            }
+        ]
+
+        targets = [{"prediction": {"b": "3", "c" : "word"}}]
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=inputs,
+            targets=targets,
+            tester=self,
+        )
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=[{"prediction": "bad input"}],
+            targets=[{"prediction": {}}],
+            tester=self,
+        )
+
+        check_operator(
+            operator=JsonStrToDict(field="prediction"),
+            inputs=[{"prediction": "3"}],
+            targets=[{"prediction": {}}],
             tester=self,
         )

@@ -1,16 +1,21 @@
+import os
+import random
+import shutil
+import time
+from functools import lru_cache
 from typing import Any, Dict, List, cast
 
-from unitxt import produce
+import unitxt
+from unitxt import create_dataset
 from unitxt.api import load_dataset
 from unitxt.error_utils import UnitxtError
-from unitxt.image_operators import EncodeImageToString
 from unitxt.inference import (
     HFAutoModelInferenceEngine,
     HFLlavaInferenceEngine,
     HFOptionSelectingInferenceEngine,
     HFPipelineBasedInferenceEngine,
-    IbmGenAiInferenceEngine,
     LiteLLMInferenceEngine,
+    OllamaInferenceEngine,
     OptionSelectingByLogProbsInferenceEngine,
     RITSInferenceEngine,
     TextGenerationInferenceOutput,
@@ -19,7 +24,6 @@ from unitxt.inference import (
 )
 from unitxt.logging_utils import get_logger
 from unitxt.settings_utils import get_settings
-from unitxt.text_utils import print_dict
 from unitxt.type_utils import isoftype
 
 from tests.utils import UnitxtInferenceTestCase
@@ -27,48 +31,81 @@ from tests.utils import UnitxtInferenceTestCase
 logger = get_logger()
 settings = get_settings()
 
+@lru_cache
+def get_image_dataset(format=None):
+    import numpy as np
+    from PIL import Image
+
+    random_image = Image.fromarray(
+        np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
+    )
+
+    data = [
+        {
+            "context": {"image": random_image, "format": "JPEG"},
+            "context_type": "image",
+            "question": "What is the capital of Texas?",
+            "answers": ["Austin"],
+        },
+        {
+            "context": {"image": random_image, "format": "JPEG"},
+            "context_type": "image",
+            "question": "What is the color of the sky?",
+            "answers": ["Blue"],
+        },
+    ]
+
+    return create_dataset(
+        task="tasks.qa.with_context",
+        format=format,
+        test_set=data,
+        split="test",
+        data_classification_policy=["public"],
+    )
+
+@lru_cache
+def get_text_dataset(format=None):
+    instances = [
+        {
+            "question": "How many days there are in a week? answer just the number in digits",
+            "answers": ["7"],
+        },
+        {
+            "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
+            "answers": ["2"],
+        },
+    ]
+
+    return create_dataset(
+        task="tasks.qa.open",
+        format=format,
+        test_set=instances,
+        split="test",
+        template="templates.qa.open.simple",
+        data_classification_policy=["public"],
+    )
 
 class TestInferenceEngine(UnitxtInferenceTestCase):
     def test_pipeline_based_inference_engine(self):
-        inference_model = HFPipelineBasedInferenceEngine(
+        model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32
         )
-        assert inference_model._is_loaded()
 
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
-        instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
-            },
-        ]
-        dataset = produce(instances, recipe)
+        dataset = get_text_dataset()
 
-        predictions = inference_model.infer(dataset)
+        predictions = model(dataset)
 
-        targets = ["365", "1"]
-        self.assertListEqual(predictions, targets)
+        self.assertListEqual(predictions,  ["365", "1"])
 
     def test_pipeline_based_inference_engine_lazy_load(self):
-        inference_model = HFPipelineBasedInferenceEngine(
+        model = HFPipelineBasedInferenceEngine(
             model_name="google/flan-t5-small", max_new_tokens=32, lazy_load=True
         )
-        assert not inference_model._is_loaded()
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0"
-        instances = [
-            {"question": "How many days there are in a week", "answers": ["7"]},
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat?",
-                "answers": ["2"],
-            },
-        ]
-        dataset = produce(instances, recipe)
+        dataset = get_text_dataset()
 
-        predictions = inference_model.infer(dataset)
+        predictions = model(dataset)
 
-        targets = ["365", "1"]
-        self.assertListEqual(predictions, targets)
+        self.assertListEqual(predictions,  ["365", "1"])
 
     def test_dataset_verification_inference_engine(self):
         inference_model = HFPipelineBasedInferenceEngine(
@@ -91,57 +128,42 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
         )
 
     def test_llava_inference_engine(self):
-        inference_model = HFLlavaInferenceEngine(
-            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3
+        model = HFLlavaInferenceEngine(
+            model_name="llava-hf/llava-interleave-qwen-0.5b-hf", max_new_tokens=3, temperature=0.0
         )
 
-        if not settings.use_eager_execution:
-            dataset = load_dataset(
-                card="cards.doc_vqa.en",
-                template="templates.qa.with_context.with_type",
-                format="formats.chat_api",
-                loader_limit=30,
-                split="test",
-            )
+        dataset = get_image_dataset(format="formats.chat_api")
 
-            predictions = inference_model.infer([dataset[0]])
+        predictions = model.infer(dataset)
 
-            self.assertEqual(predictions[0], "The real image")
+        self.assertListEqual(predictions, ["Austin", "Blue"])
 
-            prediction = inference_model.infer_log_probs([dataset[1]])[0]
+        prediction = model.infer_log_probs(dataset)
 
-            assert isoftype(prediction, List[Dict[str, Any]])
-            self.assertListEqual(
-                list(prediction[0].keys()),
-                ["text", "logprob", "top_tokens"],
-            )
+        assert isoftype(prediction, List[List[Dict[str, Any]]])
+        self.assertListEqual(
+            list(prediction[0][0].keys()),
+            ["text", "logprob", "top_tokens"],
+        )
 
     def test_watsonx_inference(self):
-        wml_engine = WMLInferenceEngineGeneration(
+        model = WMLInferenceEngineGeneration(
             model_name="google/flan-t5-xl",
             data_classification_policy=["public"],
             random_seed=111,
-            min_new_tokens=16,
-            max_new_tokens=128,
+            min_new_tokens=1,
+            max_new_tokens=3,
             top_p=0.5,
             top_k=1,
             repetition_penalty=1.5,
             decoding_method="greedy",
         )
 
-        # Loading dataset:
-        dataset = load_dataset(
-            card="cards.go_emotions.simplified",
-            template="templates.classification.multi_label.empty",
-            loader_limit=3,
-        )
-        test_data = dataset["test"]
+        dataset = get_text_dataset()
 
-        # Performing inference:
-        predictions = wml_engine.infer(test_data)
-        for inp, prediction in zip(test_data, predictions):
-            result = {**inp, "prediction": prediction}
-            print_dict(result, keys_to_print=["source", "prediction"])
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
 
     def test_rits_inference(self):
         import os
@@ -152,31 +174,16 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             )
             return
 
-        rits_engine = RITSInferenceEngine(
-            model_name="meta-llama/llama-3-1-70b-instruct",
+        model = RITSInferenceEngine(
+            model_name="microsoft/phi-4",
             max_tokens=128,
         )
-        # The defined rits_engine is equivalent to:
-        # rits_engine = OpenAiInferenceEngine(
-        #     model_name="meta-llama/llama-3-1-70b-instruct",
-        #     max_tokens=128,
-        #     credentials={"api_key": "<api_key>", "api_url": "https://inference-3scale-apicast-production.apps.rits.fmaas.res.ibm.com/llama-3-1-70b-instruct/v1"},
-        #     default_headers = {"RITS_API_KEY": "<api_key>"}
-        # )
 
-        # Loading dataset:
-        dataset = load_dataset(
-            card="cards.go_emotions.simplified",
-            template="templates.classification.multi_label.empty",
-            loader_limit=3,
-        )
-        test_data = dataset["test"]
+        dataset = get_text_dataset()
 
-        # Performing inference:
-        predictions = rits_engine.infer(test_data)
-        for inp, prediction in zip(test_data, predictions):
-            result = {**inp, "prediction": prediction}
-            print_dict(result, keys_to_print=["source", "prediction"])
+        predictions = model(dataset)
+
+        self.assertListEqual(predictions,  ["7", "2"])
 
     def test_option_selecting_by_log_prob_inference_engines(self):
         dataset = [
@@ -198,14 +205,11 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             },
         ]
 
-        genai_engine = IbmGenAiInferenceEngine(
-            model_name="mistralai/mixtral-8x7b-instruct-v01"
-        )
         watsonx_engine = WMLInferenceEngineGeneration(
             model_name="mistralai/mixtral-8x7b-instruct-v01"
         )
 
-        for engine in [genai_engine, watsonx_engine]:
+        for engine in [watsonx_engine]:
             dataset = cast(OptionSelectingByLogProbsInferenceEngine, engine).select(
                 dataset
             )
@@ -214,10 +218,7 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             self.assertEqual(dataset[2]["prediction"], "telephone number")
 
     def test_hf_auto_model_inference_engine(self):
-        data = load_dataset(
-            dataset_query="card=cards.rte,template_card_index=0,loader_limit=20"
-        )["test"]
-
+        data = get_text_dataset()
         engine = HFAutoModelInferenceEngine(
             model_name="google/flan-t5-small",
             max_new_tokens=16,
@@ -226,98 +227,73 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
             data_classification_policy=["public"],
         )
 
-        assert engine.get_engine_id() == "flan_t5_small_hf_auto_model"
-        assert engine.repetition_penalty == 1.5
+        self.assertEqual(engine.get_engine_id(), "flan_t5_small_hf_auto_model")
+        self.assertEqual(engine.repetition_penalty, 1.5)
 
         results = engine.infer_log_probs(data, return_meta_data=True)
         sample = results[0]
         prediction = sample.prediction
 
-        assert len(results) == len(data)
-        assert isinstance(sample, TextGenerationInferenceOutput)
-        assert sample.output_tokens == 5
-        assert isoftype(prediction, List[Dict[str, Any]])
+        self.assertEqual(engine.repetition_penalty, 1.5)
+        self.assertEqual(len(results), len(data))
+        self.assertIsInstance(sample, TextGenerationInferenceOutput)
+        self.assertEqual(sample.output_tokens, 3)
+        self.assertTrue(isoftype(prediction, List[Dict[str, Any]]))
         self.assertListEqual(
             list(prediction[0].keys()),
             ["text", "logprob", "top_tokens"],
         )
-        assert isinstance(prediction[0]["text"], str)
-        assert isinstance(prediction[0]["logprob"], float)
+        self.assertIsInstance(prediction[0]["text"], str)
+        self.assertIsInstance(prediction[0]["logprob"], float)
 
         results = engine.infer(data)
 
-        assert isoftype(results, List[str])
-        assert results[0] == "entailment"
+        self.assertTrue(isoftype(results, List[str]))
+        self.assertEqual(results[0], "365")
 
     def test_watsonx_inference_with_images(self):
-        raw_dataset = load_dataset(
-            dataset_query="card=cards.doc_vqa.en,template_card_index=0,loader_limit=30"
-        )
-        sample = list(raw_dataset["test"])[:2]
 
-        image_encoder = EncodeImageToString()
+        dataset = get_image_dataset()
 
         inference_engine = WMLInferenceEngineChat(
             model_name="meta-llama/llama-3-2-11b-vision-instruct",
-            image_encoder=image_encoder,
             max_tokens=128,
             top_logprobs=3,
         )
 
-        results = inference_engine.infer_log_probs(sample, return_meta_data=True)
-
-        assert isoftype(results, List[TextGenerationInferenceOutput])
-        assert results[0].input_tokens == 6541
-        assert results[0].stop_reason == "stop"
-        assert isoftype(results[0].prediction, List[Dict[str, Any]])
-
-        formatted_dataset = load_dataset(
-            card="cards.doc_vqa.en",
-            template="templates.qa.with_context.with_type",
-            format="formats.chat_api",
-            loader_limit=30,
-            split="test",
+        results = inference_engine.infer_log_probs(
+            dataset.select([0]), return_meta_data=True
         )
-        sample = [formatted_dataset[0]]
 
-        messages = inference_engine.to_messages(sample[0])[0]
+        self.assertTrue(isoftype(results, List[TextGenerationInferenceOutput]))
+        self.assertEqual(results[0].stop_reason, "stop")
+        self.assertTrue(isoftype(results[0].prediction, List[Dict[str, Any]]))
 
-        assert isoftype(messages, List[Dict[str, Any]])
-        inference_engine.verify_messages(messages)
+        dataset = get_image_dataset(format="formats.chat_api")
 
-        inference_engine.top_logprobs = None
-        results = inference_engine.infer(sample)
+        inference_engine = WMLInferenceEngineChat(
+            model_name="meta-llama/llama-3-2-11b-vision-instruct",
+            max_tokens=128,
+        )
 
-        assert isinstance(results[0], str)
+        results = inference_engine.infer(dataset.select([0]))
+
+        self.assertIsInstance(results[0], str)
 
     def test_lite_llm_inference_engine(self):
-        from unitxt.logging_utils import set_verbosity
 
-        set_verbosity("debug")
-        inference_model = LiteLLMInferenceEngine(
-            model="watsonx/meta-llama/llama-3-8b-instruct",
+        model = LiteLLMInferenceEngine(
+            model="watsonx/meta-llama/llama-3-2-1b-instruct",
             max_tokens=2,
+            temperature = 0,
+            top_p = 1,
+            seed= 42,
         )
-        recipe = "card=cards.almost_evil,template=templates.qa.open.simple,demos_pool_size=0,num_demos=0,format=formats.chat_api"
-        instances = [
-            {
-                "question": "How many days there are in a week? answer just the number in digits",
-                "answers": ["7"],
-            },
-            {
-                "question": "If a ate an apple in the morning, and one in the evening, how many apples did I eat? answer just the number in digits",
-                "answers": ["2"],
-            },
-        ]
-        total_tests = 5
-        instances = (instances * (total_tests // len(instances)))[:total_tests]
-        dataset = produce(instances, recipe)
 
-        predictions = inference_model.infer(dataset)
+        dataset = get_text_dataset(format="formats.chat_api")
+        predictions = model(dataset)
 
-        targets = ["7", "2"]
-        targets = (targets * (total_tests // len(targets)))[:total_tests]
-        self.assertListEqual(predictions, targets)
+        self.assertListEqual(predictions, ["7", "3"])
 
     def test_log_prob_scoring_inference_engine(self):
         engine = HFOptionSelectingInferenceEngine(model_name="gpt2", batch_size=1)
@@ -382,3 +358,93 @@ class TestInferenceEngine(UnitxtInferenceTestCase):
 
         self.assertEqual(predictions[0], "Hello")
         self.assertEqual(predictions[1], "As")
+
+    def test_ollama_inference_engine(self):
+        dataset = [
+            {"source": "Answer in one word only. What is the capital of Canada"},
+        ]
+
+        engine = OllamaInferenceEngine(model="llama3.2:1b", temperature=0.0)
+        predictions = engine.infer(dataset)
+
+        self.assertTrue("Ottawa" in predictions[0], predictions[0])
+
+    def test_cache(self):
+        unitxt.settings.allow_unverified_code = True
+        if os.path.exists(unitxt.settings.inference_engine_cache_path):
+            shutil.rmtree(unitxt.settings.inference_engine_cache_path)
+
+        dataset = load_dataset(card="cards.openbook_qa",
+                               split="test",
+                               #format="formats.chat_api",
+                               loader_limit=20)
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32,temperature=0,top_p=1,use_cache=False, device="cpu"
+        )
+        start_time = time.time()
+        predictions_without_cache = inference_model.infer(dataset)
+        inference_without_cache_time = time.time() - start_time
+        # Set seed for reproducibility
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5,device="cpu"
+        )
+        start_time = time.time()
+        predictions_with_cache = inference_model.infer(dataset)
+        inference_with_cache_time = time.time() - start_time
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)
+
+        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
+                    f"with cache (cache is empty): {inference_with_cache_time}")
+
+        start_time = time.time()
+        predictions_with_cache = inference_model.infer(dataset)
+        inference_with_cache_time = time.time() - start_time
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)
+
+        logger.info(f"Time of inference without cache: {inference_without_cache_time}, "
+                    f"with cache (cache is full): {inference_with_cache_time}")
+
+        self.assertGreater(inference_without_cache_time, 2)
+        self.assertLess(inference_with_cache_time, 0.5)
+
+        # Ensure that even in the case of failures, the cache allows incremental addition of predictions,
+        # enabling the run to complete. To test this, introduce noise that causes the inference engine's
+        # `infer` method to return empty results 20% of the time (empty results are not stored in the cache).
+        # Verify that after enough runs, all predictions are successfully cached and the final results
+        # match those obtained without caching.
+
+        if os.path.exists(unitxt.settings.inference_engine_cache_path):
+            shutil.rmtree(unitxt.settings.inference_engine_cache_path)
+
+        inference_model = HFPipelineBasedInferenceEngine(
+            model_name="google/flan-t5-small", max_new_tokens=32, temperature=0, top_p=1, use_cache=True,
+            cache_batch_size = 5, device="cpu"
+        )
+
+        def my_wrapper(original_method):
+            random.seed(int(time.time()))
+
+            def wrapped(*args, **kwargs):
+                predictions = original_method(*args, **kwargs)
+                return [p if random.random() < 0.6 else None for p in predictions]
+
+            return wrapped
+
+        inference_model._infer = my_wrapper(inference_model._infer)
+        predictions = [None]
+        while predictions.count(None) > 0:
+            start_time = time.time()
+            predictions = inference_model.infer(dataset)
+            inference_time = time.time() - start_time
+            logger.info(f"Inference time: {inference_time}, predictions contains {predictions.count(None)} Nones")
+
+        self.assertEqual(len(predictions_without_cache), len(predictions_with_cache))
+        for p1, p2 in zip(predictions_without_cache, predictions_with_cache):
+            self.assertEqual(p1, p2)

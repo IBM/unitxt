@@ -5,7 +5,7 @@ from typing import Any, Dict, Generator, List, Optional, Union
 from pkg_resources import DistributionNotFound, VersionConflict, require
 
 from .artifact import Artifact
-from .dataclass import InternalField, NonPositionalField
+from .dataclass import FinalField, InternalField, NonPositionalField
 from .settings_utils import get_constants
 from .stream import DynamicStream, EmptyStreamError, MultiStream, Stream
 
@@ -20,6 +20,7 @@ class PackageRequirementsMixin(Artifact):
     """Base class used to automatically check for the existence of required Python dependencies for an artifact (e.g., Operator or Metric).
 
     The _requirements_list is either a list of required packages or a dictionary mapping required packages to installation instructions.
+    The _requirements_list should be used at class level definition, and the requirements at instance creation.
 
     - **List format**: Just specify the package names, optionally with version annotations (e.g., ["torch>=1.2.4", "numpy<1.19"]).
     - **Dict format**: Specify package names as keys and installation instructions as values
@@ -32,9 +33,13 @@ class PackageRequirementsMixin(Artifact):
     _requirements_list: Union[List[str], Dict[str, str]] = InternalField(
         default_factory=list
     )
+    requirements: Union[List[str], Dict[str, str]] = FinalField(
+        also_positional=False, default_factory=list
+    )
 
     def prepare(self):
-        self.check_missing_requirements()
+        self.check_missing_requirements(self._requirements_list)
+        self.check_missing_requirements(self.requirements)
         super().prepare()
 
     def check_missing_requirements(self, requirements=None):
@@ -152,6 +157,7 @@ class StreamingOperator(Operator, PackageRequirementsMixin):
         """
 
 
+
 class SideEffectOperator(StreamingOperator):
     """Base class for operators that does not affect the stream."""
 
@@ -222,11 +228,11 @@ class SourceOperator(MultiStreamOperator):
 
     A source operator is responsible for generating the data stream from some source, such as a database or a file.
     This is the starting point of a stream processing pipeline.
-    The `SourceOperator` class is a type of `SourceOperator`, which is a special type of `StreamingOperator`
+    The ``SourceOperator`` class is a type of ``MultiStreamOperator``, which is a special type of ``StreamingOperator``
     that generates an output stream but does not take any input streams.
 
-    When called, a `SourceOperator` invokes its `process` method, which should be implemented by all subclasses
-    to generate the required `MultiStream`.
+    When called, a ``SourceOperator`` invokes its ``process`` method, which should be implemented by all subclasses
+    to generate the required ``MultiStream``.
 
     """
 
@@ -244,12 +250,20 @@ class SourceOperator(MultiStreamOperator):
         pass
 
 
+    def get_splits(self):
+        return list(self.process().keys())
+
 class StreamInitializerOperator(SourceOperator):
     """A class representing a stream initializer operator in the streaming system.
 
-    A stream initializer operator is a special type of `SourceOperator` that is capable of taking parameters during the stream generation process. This can be useful in situations where the stream generation process needs to be customized or configured based on certain parameters.
+    A stream initializer operator is a special type of ``SourceOperator`` that is capable
+    of taking parameters during the stream generation process.
+    This can be useful in situations where the stream generation process needs to be
+    customized or configured based on certain parameters.
 
-    When called, a `StreamInitializerOperator` invokes its `process` method, passing any supplied arguments and keyword arguments. The `process` method should be implemented by all subclasses to generate the required `MultiStream` based on the given arguments and keyword arguments.
+    When called, a ``StreamInitializerOperator`` invokes its ``process`` method, passing any supplied
+    arguments and keyword arguments. The ``process`` method should be implemented by all subclasses
+    to generate the required ``MultiStream`` based on the given arguments and keyword arguments.
 
     """
 
@@ -278,11 +292,12 @@ def instance_result(result_stream):
 class StreamOperator(MultiStreamOperator):
     """A class representing a single-stream operator in the streaming system.
 
-    A single-stream operator is a type of `MultiStreamOperator` that operates on individual
-    `Stream` objects within a `MultiStream`. It iterates through each `Stream` in the `MultiStream`
-    and applies the `process` method.
-    The `process` method should be implemented by subclasses to define the specific operations
-    to be performed on each `Stream`.
+    A single-stream operator is a type of ``MultiStreamOperator`` that operates on individual
+    ``Stream`` objects within a ``MultiStream``. It iterates through each ``Stream`` in the ``MultiStream``
+    and applies the ``process`` method.
+
+    The ``process`` method should be implemented by subclasses to define the specific operations
+    to be performed on each ``Stream``.
 
     """
 
@@ -353,13 +368,15 @@ class SingleStreamOperator(StreamOperator):
 class PagedStreamOperator(StreamOperator):
     """A class representing a paged-stream operator in the streaming system.
 
-    A paged-stream operator is a type of `StreamOperator` that operates on a page of instances
-    in a `Stream` at a time, where a page is a subset of instances.
-    The `process` method should be implemented by subclasses to define the specific operations
+    A paged-stream operator is a type of ``StreamOperator`` that operates on a page of instances
+    in a ``Stream`` at a time, where a page is a subset of instances.
+    The ``process`` method should be implemented by subclasses to define the specific operations
     to be performed on each page.
 
     Args:
-        page_size (int): The size of each page in the stream. Defaults to 1000.
+        page_size (int):
+            The size of each page in the stream. Defaults to 1000.
+
     """
 
     page_size: int = 1000
@@ -393,7 +410,12 @@ class PagedStreamOperator(StreamOperator):
 class SingleStreamReducer(StreamingOperator):
     """A class representing a single-stream reducer in the streaming system.
 
-    A single-stream reducer is a type of `StreamingOperator` that operates on individual `Stream` objects within a `MultiStream` and reduces each `Stream` to a single output value. The `process` method should be implemented by subclasses to define the specific reduction operation to be performed on each `Stream`.
+    A single-stream reducer is a type of ``StreamingOperator`` that operates on individual
+    ``Stream`` objects within a ``MultiStream`` and reduces each ``Stream`` to a single output value.
+
+    The ``process`` method should be implemented by subclasses to define the specific reduction operation
+    to be performed on each ``Stream``.
+
     """
 
     def __call__(self, multi_stream: Optional[MultiStream] = None) -> Dict[str, Any]:
@@ -412,7 +434,10 @@ class SingleStreamReducer(StreamingOperator):
 class InstanceOperator(StreamOperator):
     """A class representing a stream instance operator in the streaming system.
 
-    A stream instance operator is a type of `StreamOperator` that operates on individual instances within a `Stream`. It iterates through each instance in the `Stream` and applies the `process` method. The `process` method should be implemented by subclasses to define the specific operations to be performed on each instance.
+    A stream instance operator is a type of ``StreamOperator`` that operates on individual instances
+    within a ``Stream``. It iterates through each instance in the ``Stream`` and applies the ``process`` method.
+    The ``process`` method should be implemented by subclasses to define the specific operations
+    to be performed on each instance.
     """
 
     def _process_stream(
@@ -449,7 +474,8 @@ class InstanceOperator(StreamOperator):
 class InstanceOperatorValidator(InstanceOperator):
     """A class representing a stream instance operator validator in the streaming system.
 
-    A stream instance operator validator is a type of `InstanceOperator` that includes a validation step. It operates on individual instances within a `Stream` and validates the result of processing each instance.
+    A stream instance operator validator is a type of ``InstanceOperator`` that includes a validation step.
+    It operates on individual instances within a ``Stream`` and validates the result of processing each instance.
     """
 
     @abstractmethod

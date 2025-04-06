@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_direct",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "open-ai",
+        "model": "o1-preview"
+    },
+    "evaluator_name": "O1_PREVIEW",
+    "generate_summaries": false
+}

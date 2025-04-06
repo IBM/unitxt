@@ -7,7 +7,6 @@ from unitxt.inference import (
 )
 from unitxt.llm_as_judge import LLMAsJudge
 from unitxt.templates import InputOutputTemplate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -48,7 +47,7 @@ judge_correctness_template = InputOutputTemplate(
     'Please use the exact format of the verdict as "[[rate]]". '
     "You can explain your answer after the verdict"
     ".\n\n",
-    input_format="[User's input]\n{question}\n" "[Assistant's Answer]\n{answer}\n",
+    input_format="[User's input]\n{question}\n[Assistant's Answer]\n{answer}\n",
     output_format="[[{rating}]]",
     postprocessors=[
         r"processors.extract_mt_bench_rating_judgment",
@@ -90,24 +89,17 @@ dataset = create_dataset(
     max_test_instances=10,
 )
 
-# Infer using Llama-3.2-1B base using HF API
-engine = HFPipelineBasedInferenceEngine(
-    model_name="Qwen/Qwen1.5-0.5B-Chat", max_new_tokens=32
+# Infer using SmolLM2 using HF API
+model = HFPipelineBasedInferenceEngine(
+    model_name="HuggingFaceTB/SmolLM2-1.7B-Instruct", max_new_tokens=32
 )
-predictions = engine.infer(dataset)
+predictions = model(dataset)
 
 # Evaluate the predictions using the defined metric.
-evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "source",
-            "prediction",
-            "processed_prediction",
-            "references",
-            "score",
-        ],
-    )
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

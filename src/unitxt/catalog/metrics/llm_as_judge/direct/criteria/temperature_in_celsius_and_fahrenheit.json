@@ -1,0 +1,27 @@
+{
+    "__type__": "criteria_with_options",
+    "name": "temperature_in_celsius_and_fahrenheit",
+    "description": "In the response, if there is a numerical temperature present, is it denominated in both Fahrenheit and Celsius?",
+    "options": [
+        {
+            "__type__": "criteria_option",
+            "name": "Yes",
+            "description": "The temperature reading is provided in both Fahrenheit and Celsius."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "No",
+            "description": "The temperature reading is provided either in Fahrenheit or Celsius, but not both."
+        },
+        {
+            "__type__": "criteria_option",
+            "name": "Pass",
+            "description": "There is no numerical temperature reading in the response."
+        }
+    ],
+    "option_map": {
+        "Yes": 1.0,
+        "No": 0.5,
+        "Pass": 0.0
+    }
+}

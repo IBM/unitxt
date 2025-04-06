@@ -29,7 +29,7 @@ To get started, prepare your engine:
 
 .. code-block:: python
 
-    engine = HFPipelineBasedInferenceEngine(
+    model = HFPipelineBasedInferenceEngine(
         model_name="meta-llama/Llama-3.2-1B", max_new_tokens=32
     )
 
@@ -59,7 +59,7 @@ Now run inference on the dataset:
 
 .. code-block:: python
 
-    predictions = engine.infer(dataset)
+    predictions = model(dataset)
 
 Finally, evaluate the predictions and obtain final scores:
 
@@ -75,7 +75,7 @@ You can create a :class:`CrossProviderInferenceEngine` as follows:
 
 .. code-block:: python
 
-    engine = CrossProviderInferenceEngine(
+    model = CrossProviderInferenceEngine(
         model="llama-3-2-1b-instruct", provider="watsonx"
     )
 
@@ -87,7 +87,7 @@ Running inference follows the same pattern as before:
 
 .. code-block:: python
 
-    predictions = engine.infer(dataset)
+    predictions = model(dataset)
 
 Creating a Cross-API Engine
 ---------------------------
@@ -95,7 +95,7 @@ Alternatively, you can create an engine without specifying a provider:
 
 .. code-block:: python
 
-    engine = CrossProviderInferenceEngine(
+    model = CrossProviderInferenceEngine(
         model="llama-3-2-1b-instruct"
     )
 

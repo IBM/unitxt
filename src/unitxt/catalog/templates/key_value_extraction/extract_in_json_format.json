@@ -1,0 +1,28 @@
+{
+    "__type__": "input_output_template",
+    "instruction": "Extract the key value pairs from the input. Return a valid json object with the following keys: {keys}. Return only the json representation, no additional text or explanations.",
+    "input_format": "{input}",
+    "output_format": "{key_value_pairs_answer}",
+    "postprocessors": [
+        {
+            "__type__": "post_process",
+            "operator": {
+                "__type__": "json_str_to_dict"
+            }
+        }
+    ],
+    "serializer": {
+        "__type__": "multi_type_serializer",
+        "serializers": [
+            {
+                "__type__": "image_serializer"
+            },
+            {
+                "__type__": "dict_as_json_serializer"
+            },
+            {
+                "__type__": "list_serializer"
+            }
+        ]
+    }
+}

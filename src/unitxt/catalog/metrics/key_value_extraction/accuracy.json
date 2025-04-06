@@ -1,0 +1,5 @@
+{
+    "__type__": "key_value_extraction",
+    "__description__": "Metric that evaluates key value pairs predictions (provided as dictionaries)\nwith reference key value pairs (also provided as dictionaries). By default uses an accuracy (exact match) between each for the fields.\nReports average accuracy for each key , as well as micro and macro averages across all keys.\n",
+    "metric": "metrics.accuracy"
+}

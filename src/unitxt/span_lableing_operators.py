@@ -6,18 +6,17 @@ from .operator import InstanceOperator
 class IobExtractor(InstanceOperator):
     """A class designed to extract entities from sequences of text using the Inside-Outside-Beginning (IOB) tagging convention. It identifies entities based on IOB tags and categorizes them into predefined labels such as Person, Organization, and Location.
 
-    Attributes:
-        labels (List[str]): A list of entity type labels, e.g., ["Person", "Organization", "Location"].
-
-        begin_labels (List[str]): A list of labels indicating the beginning of an entity, e.g., ["B-PER", "B-ORG", "B-LOC"].
-
-        inside_labels (List[str]): A list of labels indicating the continuation of an entity, e.g., ["I-PER", "I-ORG", "I-LOC"].
-
-        outside_label (str): The label indicating tokens outside of any entity, typically "O".
+    Args:
+        labels (List[str]):
+            A list of entity type labels, e.g., ["Person", "Organization", "Location"].
+        begin_labels (List[str]):
+            A list of labels indicating the beginning of an entity, e.g., ["B-PER", "B-ORG", "B-LOC"].
+        inside_labels (List[str]):
+            A list of labels indicating the continuation of an entity, e.g., ["I-PER", "I-ORG", "I-LOC"].
+        outside_label (str):
+            The label indicating tokens outside of any entity, typically "O".
 
     The extraction process identifies spans of text corresponding to entities and labels them according to their entity type. Each span is annotated with a start and end character offset, the entity text, and the corresponding label.
-
-
 
     Example of instantiation and usage:
 

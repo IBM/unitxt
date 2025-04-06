@@ -1,0 +1,81 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "THUDM/LongBench-v2",
+        "data_classification_policy": [
+            "public"
+        ]
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "rename_splits",
+            "mapper": {
+                "train": "test"
+            }
+        },
+        {
+            "__type__": "list_field_values",
+            "fields": [
+                "choice_A",
+                "choice_B",
+                "choice_C",
+                "choice_D"
+            ],
+            "to_field": "choices"
+        },
+        {
+            "__type__": "copy",
+            "field": "domain",
+            "to_field": "context_type"
+        },
+        {
+            "__type__": "map_instance_values",
+            "mappers": {
+                "answer": {
+                    "A": 0,
+                    "B": 1,
+                    "C": 2,
+                    "D": 3
+                },
+                "context_type": {
+                    "Long In-context Learning": "examples",
+                    "Single-Document QA": "document",
+                    "Long Structured Data Understanding": "data",
+                    "Multi-Document QA": "documents",
+                    "Code Repository Understanding": "code",
+                    "Long-dialogue History Understanding": "dialog"
+                }
+            }
+        }
+    ],
+    "task": "tasks.qa.multiple_choice.with_context",
+    "templates": "templates.qa.multiple_choice.with_context.all",
+    "__description__": "LongBench v2 is designed to assess the ability of LLMs to handle long-context problems requiring deep understanding and reasoning across real-world multitasks. LongBench v2 has the following features: (1) Length: Context length ranging from 8k to 2M words, with the majority under 128k. (2) Difficulty: Challenging enough that even human experts, using search tools within the document, cannot answer correctly in a short time. (3) Coverage: Cover various realistic scenarios. (4) Reliability: All in a multiple-choice question format for reliable evaluation.\n\nTo elaborate, LongBench v2 consists of 503 challenging multiple-choice questions, with contexts ranging from 8k to 2M words, across six major task categories: single-document QA, multi-document QA, long in-context learning, long-dialogue history understanding, code repo understanding, and long structured data understanding. To ensure the breadth and the practicality, we collect data from nearly 100 highly educated individuals with diverse professional backgrounds. We employ both automated and manual review processes to maintain high quality and difficulty, resulting in human experts achieving only 53.7% accuracy under a 15-minute time constraint. Our evaluation reveals that the best-performing model, when directly answers the questions, achieves only 50.1% accuracy. In contrast, the o1-preview model, which includes longer reasoning, achieves 57.7%, surpassing the human baseline by 4%. These results highlight the importance of enhanced reasoning ability and scaling inference-time compute to tackle the long-context challenges in LongBench v2.",
+    "__tags__": {
+        "annotations_creators": "expert-generated",
+        "arxiv": "2412.15204",
+        "flags": [
+            "NLU",
+            "natural language understanding"
+        ],
+        "language": "en",
+        "language_creators": "other",
+        "license": "other",
+        "multilinguality": "monolingual",
+        "region": "us",
+        "size_categories": "n<1K",
+        "source_datasets": "extended|other",
+        "task_categories": [
+            "text-classification",
+            "token-classification",
+            "question-answering"
+        ],
+        "task_ids": [
+            "natural-language-inference",
+            "word-sense-disambiguation",
+            "coreference-resolution",
+            "extractive-qa"
+        ]
+    }
+}

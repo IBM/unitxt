@@ -5,7 +5,7 @@ from .logging_utils import get_logger
 from .parsing_utils import parse_key_equals_value_string_to_dict
 from .register import _reset_env_local_catalogs, register_all_artifacts
 from .settings_utils import get_settings
-from .standard import BaseRecipe
+from .standard import DatasetRecipe
 
 logger = get_logger()
 settings = get_settings()
@@ -24,7 +24,7 @@ def parse(query: str):
 
 
 def get_dataset_artifact(dataset):
-    if isinstance(dataset, BaseRecipe):
+    if isinstance(dataset, DatasetRecipe):
         return dataset
     assert isinstance(
         dataset, str

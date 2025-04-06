@@ -552,6 +552,9 @@ def strtype(typing_type) -> str:
         - The function checks the `__origin__` attribute to determine the base type and formats
           the type arguments accordingly.
     """
+    if isinstance(typing_type, str):
+        return typing_type
+
     if not is_type(typing_type):
         raise UnsupportedTypeError(typing_type)
 

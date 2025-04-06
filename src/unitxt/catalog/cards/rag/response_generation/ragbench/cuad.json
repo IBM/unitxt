@@ -1,0 +1,30 @@
+{
+    "__type__": "task_card",
+    "loader": {
+        "__type__": "load_hf",
+        "path": "rungalileo/ragbench",
+        "name": "cuad"
+    },
+    "preprocess_steps": [
+        {
+            "__type__": "copy",
+            "field": "documents",
+            "to_field": "contexts"
+        },
+        {
+            "__type__": "copy",
+            "field": "documents",
+            "to_field": "contexts_ids"
+        },
+        {
+            "__type__": "wrap",
+            "field": "response",
+            "inside": "list",
+            "to_field": "reference_answers"
+        }
+    ],
+    "task": "tasks.rag.response_generation",
+    "templates": {
+        "default": "templates.rag.response_generation.please_respond_chat"
+    }
+}

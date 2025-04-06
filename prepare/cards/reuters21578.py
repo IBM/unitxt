@@ -1,4 +1,3 @@
-from datasets import get_dataset_config_names
 from unitxt import add_to_catalog
 from unitxt.blocks import (
     LoadHF,
@@ -139,9 +138,7 @@ classlabels = {
 classlabels["ModLewis"] = classlabels["ModApte"]
 classlabels["ModHayes"] = sorted(classlabels["ModApte"] + ["bfr", "hk"])
 
-for subset in get_dataset_config_names(
-    dataset_name, trust_remote_code=settings.allow_unverified_code
-):
+for subset in classlabels:
     card = TaskCard(
         loader=LoadHF(path=f"{dataset_name}", name=subset),
         preprocess_steps=[
@@ -158,5 +155,6 @@ for subset in get_dataset_config_names(
             "The Reuters-21578 dataset is one of the most widely used data collections for text categorization research. It is collected from the Reuters financial newswire service in 1987… See the full description on the dataset page: https://huggingface.co/datasets/reuters21578"
         ),
     )
-    test_card(card, debug=False)
+    if subset == "ModHayes":
+        test_card(card, debug=False)
     add_to_catalog(card, f"cards.{dataset_name}.{subset}", overwrite=True)

@@ -1,7 +1,7 @@
 import re
 from typing import Any, List, Tuple
 
-from .text_utils import construct_dict_str
+from .text_utils import to_pretty_string
 
 indx = re.compile(r"^(\d+)$")
 
@@ -454,14 +454,14 @@ def dict_get(
                 return values
         except Exception as e:
             raise ValueError(
-                f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
+                f'query "{query}" did not match any item in dict:\n{to_pretty_string(dic)}'
             ) from e
 
         if not_exist_ok:
             return default
 
         raise ValueError(
-            f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
+            f'query "{query}" did not match any item in dict:\n{to_pretty_string(dic)}'
         )
 
     # len(components) == 1
@@ -472,7 +472,7 @@ def dict_get(
         return default
 
     raise ValueError(
-        f'query "{query}" did not match any item in dict:\n{construct_dict_str(dic)}'
+        f'query "{query}" did not match any item in dict:\n{to_pretty_string(dic)}'
     )
 
 

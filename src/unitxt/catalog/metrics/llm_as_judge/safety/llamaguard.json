@@ -1,0 +1,14 @@
+{
+    "__type__": "llm_as_judge",
+    "inference_model": {
+        "__type__": "cross_provider_inference_engine",
+        "model": "llama-3-3-70b-instruct",
+        "max_tokens": 20,
+        "seed": 42,
+        "temperature": 1e-07
+    },
+    "template": "templates.safety.llamaguard",
+    "task": "rating.single_turn",
+    "format": "formats.chat_api",
+    "main_score": "llama_3_3_70b_instruct_cross_provider_template_llamaguard"
+}

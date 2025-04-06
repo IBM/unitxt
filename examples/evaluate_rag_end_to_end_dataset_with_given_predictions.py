@@ -1,6 +1,5 @@
 from unitxt import get_logger
 from unitxt.api import create_dataset, evaluate
-from unitxt.text_utils import print_dict
 
 logger = get_logger()
 
@@ -46,19 +45,29 @@ predictions = [
     },
 ]
 
+# select recommended metrics according to your available resources.
+metrics = [
+    "metrics.rag.end_to_end.recommended.cpu_only.all",
+    # "metrics.rag.end_to_end.recommended.small_llm.all",
+    # "metrics.rag.end_to_end.recommended.llmaj_watsonx.all",
+    # "metrics.rag.end_to_end.recommended.llmaj_rits.all"
+    # "metrics.rag.end_to_end.recommended.llmaj_azure.all"
+]
+
 dataset = create_dataset(
     task="tasks.rag.end_to_end",
     test_set=dataset,
     split="test",
     postprocessors=[],
+    metrics=metrics,
 )
 
-evaluated_dataset = evaluate(predictions, dataset)
-# Print results
-for instance in evaluated_dataset:
-    print_dict(
-        instance,
-        keys_to_print=[
-            "score",
-        ],
-    )
+results = evaluate(predictions, dataset)
+
+# Print Results:
+
+print("Global Results:")
+print(results.global_scores.summary)
+
+print("Instance Results:")
+print(results.instance_scores.summary)

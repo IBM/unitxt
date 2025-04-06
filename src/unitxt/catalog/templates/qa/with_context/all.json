@@ -8,6 +8,7 @@
         "templates.qa.with_context.with_type",
         "templates.qa.with_context.question_first",
         "templates.qa.with_context.ffqa",
-        "templates.qa.with_context.title"
+        "templates.qa.with_context.title",
+        "templates.qa.with_context.lmms_eval"
     ]
 }

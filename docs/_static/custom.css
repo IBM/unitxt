@@ -2,6 +2,10 @@ nav {
     background-color: #cfd0ff !important;
 }
 
+div#top_nav div#notification_banner {
+  background-color: #9facff !important;
+}
+
 div.document div.documentwrapper {
     max-width: 50rem;
 }
@@ -202,3 +206,8 @@ div.document div.documentwrapper {
 .red {
   color: red;
 }
+
+#unitxtImports {
+  /* Display nothing for the element */
+  display: none;
+}         

@@ -4,6 +4,7 @@ import tempfile
 from unittest.mock import patch
 
 import pandas as pd
+from unitxt.error_utils import UnitxtError
 from unitxt.loaders import (
     LoadCSV,
     LoadFromDictionary,
@@ -13,10 +14,12 @@ from unitxt.loaders import (
     MultipleSourceLoader,
 )
 from unitxt.logging_utils import get_logger
+from unitxt.settings_utils import get_settings
 
 from tests.utils import UnitxtTestCase
 
 logger = get_logger()
+settings = get_settings()
 
 
 CONTENT = [{"a": 1, "b": 2}, {"a": 3, "b": 4}]
@@ -77,6 +80,15 @@ class TestLoaders(UnitxtTestCase):
                 ):
                     self.assertEqual(saved_instance[1].to_dict(), loaded_instance)
 
+    def test_failed_load_csv(self):
+        if settings.use_eager_execution:
+            with self.assertRaises(UnitxtError):
+                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+        else:
+            with self.assertRaises(FileNotFoundError):
+                list(LoadCSV(files={"test": "not_exist.csv"})()["test"])
+
+
     def test_load_csv_with_pandas_args(self):
         # Using a context for the temporary directory
         with tempfile.TemporaryDirectory() as tmp_dir:
@@ -110,7 +122,7 @@ class TestLoaders(UnitxtTestCase):
 
         os.environ["DUMMY_URL_ENV"] = "DUMMY_URL"
         os.environ["DUMMY_KEY_ENV"] = "DUMMY_KEY"
-        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET"
+        os.environ["DUMMY_SECRET_ENV"] = "DUMMY_SECRET" # pragma: allowlist-secret
         for data_files in [
             ["train.jsonl", "test.jsonl"],
             {"train": "train.jsonl", "test": "test.jsonl"},
@@ -120,7 +132,7 @@ class TestLoaders(UnitxtTestCase):
                 loader = LoadFromIBMCloud(
                     endpoint_url_env="DUMMY_URL_ENV",
                     aws_access_key_id_env="DUMMY_KEY_ENV",
-                    aws_secret_access_key_env="DUMMY_SECRET_ENV",
+                    aws_secret_access_key_env="DUMMY_SECRET_ENV", # pragma: allowlist-secret
                     bucket_name="DUMMY_BUCKET",
                     data_dir="DUMMY_DATA_DIR",
                     data_files=data_files,
@@ -142,51 +154,43 @@ class TestLoaders(UnitxtTestCase):
 
     def test_load_from_HF_compressed(self):
         loader = LoadHF(path="GEM/xlsum", name="igbo")  # the smallest file
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            ms.to_dataset()["train"][0]["url"],
+            instance["url"],
             "https://www.bbc.com/igbo/afirika-43986554",
         )
-        assert set(dataset.keys()) == {
+        assert set(ms.keys()) == {
             "train",
             "validation",
             "test",
-        }, f"Unexpected fold {dataset.keys()}"
+        }, f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_compressed_split(self):
-        loader = LoadHF(
-            path="GEM/xlsum", name="igbo", split="train"
-        )  # the smallest file
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        loader = LoadHF(path="GEM/xlsum", name="igbo", split="train")  # the smallest file
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            ms.to_dataset()["train"][0]["url"],
+            instance["url"],
             "https://www.bbc.com/igbo/afirika-43986554",
         )
-        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+        assert list(ms.keys()) == ["train"], f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF(self):
-        loader = LoadHF(path="sst2", loader_limit=10)
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        loader = LoadHF(path="sst2", loader_limit=10, split="train")
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            dataset["train"][0]["sentence"],
+            instance["sentence"],
             "hide new secretions from the parental units ",
         )
         self.assertEqual(
-            dataset["train"][0]["data_classification_policy"],
+            instance["data_classification_policy"],
             ["public"],
         )
-        self.assertEqual(
-            dataset["test"][0]["data_classification_policy"],
-            ["public"],
-        )
-        assert set(dataset.keys()) == {
+        assert set(ms.keys()) == {
             "train",
-            "validation",
-            "test",
-        }, f"Unexpected fold {dataset.keys()}"
+        }, f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_multiple_innvocation(self):
         loader = LoadHF(
@@ -194,19 +198,19 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             # filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "arb")
+        self.assertEqual(instance["language"], "arb")
 
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "arb")
+        self.assertEqual(instance["language"], "arb")
 
     def test_load_from_HF_multiple_innvocation_with_filter(self):
         loader = LoadHF(
@@ -214,29 +218,29 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["test"]))
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
     def test_load_from_HF_split(self):
         loader = LoadHF(path="sst2", split="train")
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = next(iter(ms["train"]))
         self.assertEqual(
-            dataset["train"][0]["sentence"],
+            instance["sentence"],
             "hide new secretions from the parental units ",
         )
-        assert list(dataset.keys()) == ["train"], f"Unexpected fold {dataset.keys()}"
+        assert list(ms.keys()) == ["train"], f"Unexpected fold {ms.keys()}"
 
     def test_load_from_HF_filter(self):
         loader = LoadHF(
@@ -244,12 +248,12 @@ class TestLoaders(UnitxtTestCase):
             name="aya_human_annotated",
             filtering_lambda='lambda instance: instance["language"]=="eng"',
         )
-        ms = loader.process()
-        dataset = ms.to_dataset()
+        ms = loader()
+        instance = list(ms["test"])[0]
         self.assertEqual(
-            list(dataset.keys()), ["test"]
+            list(ms.keys()), ["test"]
         )  # that HF dataset only has the 'test' split
-        self.assertEqual(dataset["test"][0]["language"], "eng")
+        self.assertEqual(instance["language"], "eng")
 
     def test_multiple_source_loader(self):
         # Using a context for the temporary directory
@@ -299,9 +303,11 @@ class TestLoaders(UnitxtTestCase):
                 sources=[
                     LoadCSV(files={"test": files["train"]}),
                     LoadCSV(files={"test": files["test"]}),
+                    LoadCSV(files={"demos_pool": files["train"]}),
                 ]
             )
             ms = loader()
+            self.assertSetEqual(set(ms.keys()), {"demos_pool", "test"})
             assert len(dfs["test"]) + len(dfs["train"]) == len(list(ms["test"]))
 
     def test_load_from_dictionary(self):
@@ -351,32 +357,41 @@ class TestLoaders(UnitxtTestCase):
         )
 
     def test_load_from_hf_space(self):
-        params = {
-            "space_name": "lmsys/mt-bench",
-            "data_files": {
+
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
                 "train": [
                     "data/mt_bench/model_answer/koala-13b.jsonl",
                     "data/mt_bench/model_answer/llama-13b.jsonl",
                 ],
                 "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
             },
-            "data_classification_policy": ["pii"],
-        }
+            data_classification_policy=["pii"],
+        )
+        instance = next(iter(loader()["test"]))
+        instance.pop("choices")
 
-        expected_sample = {
+        target = {
             "question_id": 81,
             "model_id": "wizardlm-13b",
             "answer_id": "DKHvKJgtzsvHN2ZJ8a3o5C",
             "tstamp": 1686788249.913451,
             "data_classification_policy": ["pii"],
         }
-        loader = LoadFromHFSpace(**params)
-        ms = loader.process().to_dataset()
-        actual_sample = ms["test"][0]
-        actual_sample.pop("choices")
-        self.assertEqual(expected_sample, actual_sample)
+        self.assertEqual(target, instance)
 
-        params["loader_limit"] = 10
-        loader = LoadFromHFSpace(**params)
+    def test_load_from_hf_space_with_loader_limit(self):
+        loader = LoadFromHFSpace(
+            space_name="lmsys/mt-bench",
+            data_files={
+                "train": [
+                    "data/mt_bench/model_answer/koala-13b.jsonl",
+                ],
+                "test": "data/mt_bench/model_answer/wizardlm-13b.jsonl",
+            },
+            data_classification_policy=["pii"],
+            loader_limit=10,
+        )
         ms = loader.process().to_dataset()
         assert ms.shape["train"] == (10, 6) and ms.shape["test"] == (10, 6)

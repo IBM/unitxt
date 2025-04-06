@@ -1,11 +1,11 @@
 from abc import abstractmethod
-from typing import Dict, Union
+from typing import Dict, List, Optional, Union
 
 from .dataclass import NonPositionalField
 from .formats import Format
-from .fusion import FixedFusion, WeightedFusion
+from .fusion import FixedFusion
 from .operator import SourceOperator
-from .standard import StandardRecipe
+from .standard import DatasetRecipe
 from .stream import MultiStream
 from .system_prompts import SystemPrompt
 
@@ -15,6 +15,10 @@ class BaseBenchmark(SourceOperator):
     num_demos: int = NonPositionalField(default=None)
     system_prompt: SystemPrompt = NonPositionalField(default=None)
     loader_limit: int = NonPositionalField(default=None)
+    splits: List[str] = NonPositionalField(
+        default_factory=lambda: ["train", "validation", "test"]
+    )
+    subset: Optional[str] = NonPositionalField(default=None)
 
     @abstractmethod
     def reset(self):
@@ -22,7 +26,7 @@ class BaseBenchmark(SourceOperator):
 
 
 class Benchmark(BaseBenchmark):
-    subsets: Dict[str, Union[StandardRecipe, BaseBenchmark]]
+    subsets: Dict[str, Union[DatasetRecipe, BaseBenchmark]]
 
     max_total_samples: int = None
     max_samples_per_subset: int = None
@@ -65,14 +69,17 @@ class Benchmark(BaseBenchmark):
     def process(
         self,
     ) -> MultiStream:
+        if self.subset is not None:
+            subsets = {self.subset: self.subsets[self.subset]}
+        else:
+            subsets = self.subsets
         if self.max_total_samples is None:
             operator = FixedFusion(
-                subsets=self.subsets,
+                subsets=subsets,
                 max_instances_per_subset=self.max_samples_per_subset,
+                include_splits=self.splits,
             )
         else:
-            operator = WeightedFusion(
-                subsets=self.subsets, max_total_samples=self.max_total_samples
-            )
+            raise NotImplementedError()
 
         return operator()

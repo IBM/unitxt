@@ -23,5 +23,6 @@
         }
     ],
     "metric": "metrics.token_overlap",
-    "prediction_type": "str"
+    "prediction_type": "str",
+    "__deprecated_msg__": "Metric metrics.rag.response_generation.faithfullness.token_overlap is deprecated. Please use metrics.rag.response_generation.faithfulness.token_k_precision instead."
 }

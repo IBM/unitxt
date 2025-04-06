@@ -27,6 +27,11 @@ from .image_operators import __file__ as _
 from .inference import __file__ as _
 from .instructions import __file__ as _
 from .llm_as_judge import __file__ as _
+from .llm_as_judge_chat_templates import __file__ as _
+from .llm_as_judge_constants import __file__ as _
+from .llm_as_judge_from_template import __file__ as _
+from .llm_as_judge_operators import __file__ as _
+from .llm_as_judge_utils import __file__ as _
 from .loaders import __file__ as _
 from .logging_utils import __file__ as _
 from .metric_utils import UNITXT_METRIC_SCHEMA, _compute
@@ -45,6 +50,7 @@ from .settings_utils import get_constants
 from .span_lableing_operators import __file__ as _
 from .split_utils import __file__ as _
 from .splitters import __file__ as _
+from .sql_utils import __file__ as _
 from .standard import __file__ as _
 from .stream import __file__ as _
 from .stream_operators import __file__ as _

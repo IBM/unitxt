@@ -1,7 +1,14 @@
 import json
 
 import numpy as np
-from unitxt.api import evaluate, infer, load_dataset, post_process, produce
+from unitxt.api import (
+    create_dataset,
+    evaluate,
+    infer,
+    load_dataset,
+    post_process,
+    produce,
+)
 from unitxt.card import TaskCard
 from unitxt.loaders import LoadHF
 from unitxt.task import Task
@@ -22,7 +29,7 @@ class TestAPI(UnitxtTestCase):
     def test_load_dataset(self):
         dataset = load_dataset(
             "card=cards.stsb,template=templates.regression.two_texts.simple,max_train_instances=5,max_validation_instances=5,max_test_instances=5",
-            disable_cache=False,
+            use_cache=True,
         )
         target = {
             "metrics": ["metrics.spearman"],
@@ -34,7 +41,7 @@ class TestAPI(UnitxtTestCase):
             "target": "5.0",
             "references": ["5.0"],
             "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
-            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "num_demos": 0}}',
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.regression.two_texts.simple", "demos_pool_size": 0, "num_demos": 0}}',
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": [],
@@ -65,7 +72,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.take_first_non_empty_line",
                 "processors.cast_to_float_return_zero_if_failed",
             ],
-            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "metadata": {"data_classification_policy": ["public"], "num_demos": 0, "template": "templates.regression.two_texts.simple"}, "attribute_value": 3.799999952316284, "demos": []}',
+            "task_data": '{"text1": "A man is spreading shreded cheese on a pizza.", "text2": "A man is spreading shredded cheese on an uncooked pizza.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "metadata": {"data_classification_policy": ["public"], "demos_pool_size": 2, "num_demos": 0, "template": "templates.regression.two_texts.simple"}, "attribute_value": 3.799999952316284, "demos": []}',
             "data_classification_policy": ["public"],
         }
         self.assertEqual(len(dataset["train"]), 5)
@@ -86,7 +93,7 @@ class TestAPI(UnitxtTestCase):
             "target": "5.0",
             "references": ["5.0"],
             "source": "text1: A plane is taking off., text2: An air plane is taking off., attribute_name: similarity, min_value: 1.0, max_value: 5.0\n",
-            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "num_demos": 0}}',
+            "task_data": '{"text1": "A plane is taking off.", "text2": "An air plane is taking off.", "attribute_name": "similarity", "min_value": 1.0, "max_value": 5.0, "attribute_value": 5.0, "metadata": {"data_classification_policy": ["public"], "template": "templates.key_val", "demos_pool_size": 0, "num_demos": 0}}',
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": [],
@@ -117,7 +124,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Classify the grammatical acceptability of the following text to one of these options: unacceptable, acceptable.\ntext: The sailors rode the breeze clear of the rocks.\nThe grammatical acceptability is ",
-            "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "num_demos": 0}}',
+            "task_data": '{"text": "The sailors rode the breeze clear of the rocks.", "text_type": "text", "classes": ["unacceptable", "acceptable"], "type_of_class": "grammatical acceptability", "label": "acceptable", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.instruction", "demos_pool_size": 0, "num_demos": 0}}',
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": ["cola"],
@@ -132,7 +139,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: The drain is clogged with hair. It has to be cleaned.\nhypothesis: The hair has to be cleaned.\nThe entailment class is ",
-            "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "num_demos": 0}}',
+            "task_data": '{"text_a": "The drain is clogged with hair. It has to be cleaned.", "text_a_type": "premise", "text_b": "The hair has to be cleaned.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "label": "entailment", "metadata": {"data_classification_policy": ["public"], "template": "templates.classification.multi_class.relation.default", "demos_pool_size": 0, "num_demos": 0}}',
             "groups": [],
             "media": {"audios": [], "images": []},
             "subset": ["wnli"],
@@ -201,6 +208,7 @@ class TestAPI(UnitxtTestCase):
                 "metadata": {
                     "data_classification_policy": ["public"],
                     "template": "templates.regression.two_texts.simple",
+                    "demos_pool_size": 0,
                     "num_demos": 0,
                 },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
@@ -255,6 +263,7 @@ class TestAPI(UnitxtTestCase):
                 "metadata": {
                     "data_classification_policy": ["public"],
                     "template": "templates.regression.two_texts.simple",
+                    "demos_pool_size": 0,
                     "num_demos": 0,
                 },
                 "source": "Given this sentence: 'A plane is taking off.', on a scale of 1.0 to 5.0, what is the similarity to this text 'An air plane is taking off.'?\n",
@@ -335,7 +344,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is entailment\n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "demos_pool_size": 5, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
             "groups": [],
             "subset": [],
             "media": {"images": [], "audios": []},
@@ -364,7 +373,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 0, "template": "templates.classification.multi_class.relation.default"}}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 0, "demos_pool_size": 0, "template": "templates.classification.multi_class.relation.default"}}',
             "groups": [],
             "subset": [],
             "media": {"images": [], "audios": []},
@@ -395,7 +404,7 @@ class TestAPI(UnitxtTestCase):
                 "processors.lower_case_till_punc",
             ],
             "source": "Given a premise and hypothesis classify the entailment of the hypothesis to one of entailment, not entailment.\npremise: When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.\nhypothesis: mother was careful not to disturb her, undressing and climbing back into her berth.\nThe entailment class is entailment\n\npremise: Steve follows Fred's example in everything. He influences him hugely.\nhypothesis: Steve influences him hugely.\nThe entailment class is entailment\n\npremise: It works perfectly\nhypothesis: It works!\nThe entailment class is ",
-            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
+            "task_data": '{"text_a": "It works perfectly", "text_a_type": "premise", "text_b": "It works!", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": [], "num_demos": 2, "demos_pool_size": 5, "template": "templates.classification.multi_class.relation.default"}, "demos": [{"text_a": "When Tatyana reached the cabin, her mother was sleeping. She was careful not to disturb her, undressing and climbing back into her berth.", "text_a_type": "premise", "text_b": "mother was careful not to disturb her, undressing and climbing back into her berth.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}, {"text_a": "Steve follows Fred\'s example in everything. He influences him hugely.", "text_a_type": "premise", "text_b": "Steve influences him hugely.", "text_b_type": "hypothesis", "classes": ["entailment", "not entailment"], "type_of_relation": "entailment", "metadata": {"data_classification_policy": ["public"]}, "label": "entailment"}]}',
             "groups": [],
             "subset": [],
             "media": {"images": [], "audios": []},
@@ -467,3 +476,32 @@ class TestAPI(UnitxtTestCase):
             "Question: If a ate an apple in the morning, and one in the evening, how many apples did I eat?\nAnswer:",
         ]
         self.assertListEqual(predictions, targets)
+
+    def test_create_dataset_with_non_seralizble_object(self):
+        import numpy as np
+        from PIL import Image
+
+        random_image = Image.fromarray(
+            np.random.randint(0, 256, (256, 256, 3), dtype=np.uint8)
+        )
+
+        dataset = [
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the capital of Texas?",
+                "answers": ["Austin"],
+            },
+            {
+                "context": {"image": random_image, "format": "JPEG"},
+                "context_type": "image",
+                "question": "What is the color of the sky?",
+                "answers": ["Blue"],
+            },
+        ]
+
+        dataset = create_dataset(
+            task="tasks.qa.with_context",
+            format="formats.chat_api",
+            test_set=dataset,
+        )

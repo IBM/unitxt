@@ -48,7 +48,7 @@ for sub_task in sub_tasks:
         loader=LoadHF(
             path="universalner/universal_ner",
             name=sub_task,
-            requirements_list=["conllu"],
+            requirements=["conllu"],
         ),
         preprocess_steps=[
             # The dataset is sorted by classes
@@ -76,7 +76,7 @@ for sub_task in sub_tasks:
             ),
             Set(
                 fields={
-                    "classes": ["Person", "Organization", "Location"],
+                    "entity_types": ["Person", "Organization", "Location"],
                 }
             ),
         ],

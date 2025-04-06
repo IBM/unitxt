@@ -1,6 +1,5 @@
 from unitxt import evaluate, load_dataset
 from unitxt.inference import CrossProviderInferenceEngine
-from unitxt.text_utils import print_dict
 
 """
 We are evaluating only on a small subset (by using `max_test_instances=4`), in order for the example to finish quickly.
@@ -14,9 +13,7 @@ dataset = load_dataset(
     split="test",
 ).select(range(5))
 
-inference_model = CrossProviderInferenceEngine(
-    model="llama-3-2-1b-instruct", provider="watsonx"
-)
+model = CrossProviderInferenceEngine(model="llama-3-2-1b-instruct", provider="watsonx")
 """
 We are using a CrossProviderInferenceEngine inference engine that supply api access to provider such as:
 watsonx, bam, openai, azure, aws and more.
@@ -25,7 +22,8 @@ For the arguments these inference engines can receive, please refer to the class
 about the the open ai api arguments the CrossProviderInferenceEngine follows.
 """
 
-predictions = inference_model.infer(dataset)
-scores = evaluate(predictions=predictions, data=dataset)
+predictions = model(dataset)
+results = evaluate(predictions=predictions, data=dataset)
 
-print_dict(scores[0]["score"]["global"])
+# Print Results:
+print(results.global_scores.summary)

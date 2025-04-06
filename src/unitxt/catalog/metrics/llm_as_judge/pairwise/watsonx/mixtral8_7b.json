@@ -1,0 +1,13 @@
+{
+    "__type__": "llm_judge_pairwise",
+    "inference_engine": {
+        "__type__": "cross_provider_inference_engine",
+        "max_tokens": 1024,
+        "seed": 42,
+        "temperature": 0,
+        "provider": "watsonx",
+        "model": "mixtral-8x7b-instruct-v01"
+    },
+    "evaluator_name": "MIXTRAL8_7b",
+    "generate_summaries": false
+}

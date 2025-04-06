@@ -1,10 +1,12 @@
+import json
 from typing import Any, Dict, List, Optional
 
 from datasets import Audio, Features, Sequence, Value
 from datasets import Image as DatasetImage
 
-from .artifact import json_dumps_with_artifacts, json_loads_with_artifacts
+from .artifact import Artifact, json_dumps_with_artifacts, json_loads_with_artifacts
 from .dict_utils import dict_get
+from .image_operators import ImageDataString
 from .operator import InstanceOperatorValidator
 from .settings_utils import get_constants, get_settings
 from .type_utils import isoftype
@@ -54,7 +56,18 @@ def get_schema(stream_name):
     return UNITXT_DATASET_SCHEMA
 
 
-def loads_instance(batch):
+def load_chat_source(chat_str):
+    chat = json.loads(chat_str)
+    for turn in chat:
+        if isinstance(turn["content"], list):
+            for content in turn["content"]:
+                if content["type"] == "image_url":
+                    content["image_url"]["url"] = ImageDataString(
+                        content["image_url"]["url"]
+                    )
+    return chat
+
+def loads_batch(batch):
     if (
         "source" in batch
         and isinstance(batch["source"][0], str)
@@ -71,6 +84,24 @@ def loads_instance(batch):
     ):
         batch["task_data"] = [json_loads_with_artifacts(d) for d in batch["task_data"]]
     return batch
+
+def loads_instance(instance):
+    if (
+        "source" in instance
+        and isinstance(instance["source"], str)
+        and (
+            instance["source"].startswith('[{"role":')
+            or instance["source"].startswith('[{"content":')
+        )
+    ):
+        instance["source"] = load_chat_source(instance["source"])
+    if (
+        not settings.task_data_as_text
+        and "task_data" in instance
+        and isinstance(instance["task_data"], str)
+    ):
+        instance["task_data"] = json.loads(instance["task_data"])
+    return instance
 
 
 class FinalizeDataset(InstanceOperatorValidator):
@@ -129,12 +160,17 @@ class FinalizeDataset(InstanceOperatorValidator):
         )
 
         task_data["metadata"]["num_demos"] = instance["recipe_metadata"]["num_demos"]
+        task_data["metadata"]["demos_pool_size"] = instance["recipe_metadata"][
+            "demos_pool_size"
+        ]
         task_data["metadata"]["template"] = instance["recipe_metadata"]["template"]
 
-        if "demos" in instance:
-            task_data["demos"] = [
+        if "criteria" in task_data and isinstance(task_data["criteria"], Artifact):
+            task_data["criteria"] = self.artifact_to_jsonable(task_data["criteria"])
+        if constants.demos_field in instance:
+            task_data[constants.demos_field] = [
                 self._get_instance_task_data(instance)
-                for instance in instance.pop("demos")
+                for instance in instance.pop(constants.demos_field)
             ]
 
         instance = self.serialize_instance_fields(instance, task_data)

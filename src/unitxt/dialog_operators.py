@@ -13,6 +13,7 @@ The format of the dialog is:
         {"user": "kkk", "system": ""},
     ]
 """
+
 from typing import Any, Dict, List, Optional
 
 from .formats import SystemFormat
@@ -27,12 +28,17 @@ class SerializeDialog(InstanceFieldOperator):
     of system responses and can operate on a per-turn basis or aggregate the entire
     dialog.
 
-    Attributes:
-        field (str): The field in the input data that contains the dialog.
-        to_field (Optional[str]): The field in the output data where the serialized dialog will be stored.
-        last_user_turn_to_field (Optional[str]): Field to store the last user turn.
-        last_system_turn_to_field (Optional[str]): Field to store the last system turn.
-        context_field (Optional[str]): Field that contains additional context to be prepended to the dialog.
+    Args:
+        field (str):
+            The field in the input data that contains the dialog.
+        to_field (Optional[str]):
+            The field in the output data where the serialized dialog will be stored.
+        last_user_turn_to_field (Optional[str]):
+            Field to store the last user turn.
+        last_system_turn_to_field (Optional[str]):
+            Field to store the last system turn.
+        context_field (Optional[str]):
+            Field that contains additional context to be prepended to the dialog.
     """
 
     format: SystemFormat = None
@@ -100,12 +106,17 @@ class SerializeOpenAiFormatDialog(SerializeDialog):
     of system responses and can operate on a per-turn basis or aggregate the entire
     dialog.
 
-    Attributes:
-        field (str): The field in the input data that contains the dialog.
-        to_field (Optional[str]): The field in the output data where the serialized dialog will be stored.
-        last_user_turn_to_field (Optional[str]): Field to store the last user turn.
-        last_system_turn_to_field (Optional[str]): Field to store the last system turn.
-        context_field (Optional[str]): Field that contains additional context to be prepended to the dialog.
+    Args:
+        field (str):
+            The field in the input data that contains the dialog.
+        to_field (Optional[str]):
+            The field in the output data where the serialized dialog will be stored.
+        last_user_turn_to_field (Optional[str]):
+            Field to store the last user turn.
+        last_system_turn_to_field (Optional[str]):
+            Field to store the last system turn.
+        context_field (Optional[str]):
+            Field that contains additional context to be prepended to the dialog.
     """
 
     is_last_turn_user_only: bool = True

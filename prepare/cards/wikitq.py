@@ -3,7 +3,8 @@ from unitxt.blocks import (
     TaskCard,
 )
 from unitxt.catalog import add_to_catalog
-from unitxt.operators import Copy, Set
+from unitxt.operators import Copy, FilterByCondition, Set
+from unitxt.struct_data_operators import GetNumOfTableCells
 from unitxt.templates import MultiReferenceTemplate
 from unitxt.test_utils.card import test_card
 
@@ -14,15 +15,26 @@ card = TaskCard(
     ),
     preprocess_steps=[
         Set({"context_type": "table"}),
+        GetNumOfTableCells(field="table", to_field="table_cell_size"),
+        FilterByCondition(
+            values={"table_cell_size": 200}, condition="le"
+        ),  # filter out tables with more than 200 cells
         Copy(field="table", to_field="context"),
+        # TruncateTableRows(field="table", to_field="context"),
     ],
     task="tasks.qa.extractive[metrics=[metrics.f1_strings, metrics.unsorted_list_exact_match]]",
     templates=[
         MultiReferenceTemplate(
-            input_format="Based on this {context_type}: {context}\nAnswer the question: {question}",
+            instruction="Answer the question based on the provided table. "
+            "Extract and output only the final answer—the exact phrase or data from the table that directly answers the question. "
+            "Do not include any alterations, explanations, or introductory text."
+            "\nHere are some input-output examples. Read the examples carefully to figure out the mapping. "
+            "The output of the last example is not given, and your job is to figure out what it is.",
+            input_format="\nQuestion: {question}" "\nTable: {context}" "\nAnswer: ",
             references_field="answers",
             postprocessors=[
-                # "processors.to_list_by_comma_space",
+                "processors.take_first_non_empty_line",
+                "processors.to_list_by_comma_space",
                 "processors.str_to_float_format",
             ],
         ),
@@ -45,5 +57,5 @@ card = TaskCard(
     },
 )
 
-test_card(card, strict=False)
+test_card(card, strict=False, num_demos=2, demos_pool_size=5)
 add_to_catalog(card, "cards.wikitq", overwrite=True)
