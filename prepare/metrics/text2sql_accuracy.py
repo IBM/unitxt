@@ -189,6 +189,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -199,6 +200,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 1.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 1.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -209,6 +211,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -219,6 +222,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -229,6 +233,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 1.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 1.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -239,6 +244,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
     {
@@ -249,6 +255,7 @@ instance_targets = [
         "sqlglot_optimized_equivalence": 0.0,
         "sqlglot_validity": 1.0,
         "sqlparse_equivalence": 0.0,
+        "sql_syntactic_equivalence": 0.0,
         "sqlparse_validity": 1.0,
     },
 ]
@@ -263,6 +270,9 @@ global_target = {
     "sql_exact_match": 0.29,
     "sql_exact_match_ci_high": 0.71,
     "sql_exact_match_ci_low": 0.0,
+    "sql_syntactic_equivalence": 0.29,
+    "sql_syntactic_equivalence_ci_high": 0.71,
+    "sql_syntactic_equivalence_ci_low": 0.0,
     "sqlglot_equivalence": 0.29,
     "sqlglot_equivalence_ci_high": 0.71,
     "sqlglot_equivalence_ci_low": 0.0,
