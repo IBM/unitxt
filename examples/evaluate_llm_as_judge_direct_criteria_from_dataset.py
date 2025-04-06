@@ -28,7 +28,7 @@ card = TaskCard(
         reference_fields={"criteria": Any},
         prediction_type=str,
         metrics=[
-            "metrics.llm_as_judge.direct.watsonx.llama3_1_70b[context_fields=question,criteria_field=criteria]"
+            "metrics.llm_as_judge.direct.watsonx.llama3_3_70b[context_fields=question,criteria_field=criteria]"
         ],
     ),
 )
