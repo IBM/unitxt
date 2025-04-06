@@ -302,6 +302,9 @@ class LoadHF(LazyLoader):
             return settings.stream_hf_datasets_by_default
         return self.streaming
 
+    def is_in_cache(self, split):
+        dataset_id = str(self) + "_" + str(split)
+        return dataset_id in self.__class__._loader_cache
     # returns Dict when split names are not known in advance, and just the the single split dataset - if known
     def load_dataset(
         self, split: str, streaming=None, disable_memory_caching=False
@@ -329,6 +332,7 @@ class LoadHF(LazyLoader):
             if not disable_memory_caching:
                 self.__class__._loader_cache.max_size = settings.loader_cache_size
                 self.__class__._loader_cache[dataset_id] = dataset
+        self._already_logged_limited_loading = True
 
         return dataset
 
@@ -372,7 +376,8 @@ class LoadHF(LazyLoader):
 
     def split_generator(self, split: str) -> Generator:
         if self.get_limit() is not None:
-            self.log_limited_loading()
+            if not self.is_in_cache(split):
+                self.log_limited_loading()
         try:
             dataset = self.load_dataset(split=split)
         except (

@@ -2,11 +2,13 @@ from abc import abstractmethod
 from typing import Dict, Generator, List, Optional, Union
 
 from .dataclass import NonPositionalField
+from .logging_utils import get_logger
 from .operator import SourceOperator
 from .random_utils import new_random_generator
 from .stream import DynamicStream, MultiStream
 from .type_utils import isoftype
 
+logger = get_logger()
 
 class BaseFusion(SourceOperator):
     """BaseFusion operator that combines multiple multistreams into one.
@@ -76,6 +78,7 @@ class FixedFusion(BaseFusion):
             if split not in multi_stream:
                 continue
             emitted_from_this_split = 0
+            logger.info(f"Processing {split} from {origin_name}...")
             try:
                 for instance in multi_stream[split]:
                     if (
