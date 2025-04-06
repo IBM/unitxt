@@ -56,6 +56,7 @@ def get_task_data_dict(task_data):
         if isinstance(task_data, str)
         else task_data
     )
+
 logger = get_logger(__name__)
 
 class LLMJudge(BulkInstanceMetric):
