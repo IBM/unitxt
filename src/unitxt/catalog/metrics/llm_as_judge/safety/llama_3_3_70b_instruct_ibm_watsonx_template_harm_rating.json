@@ -2,20 +2,12 @@
     "__type__": "llm_as_judge",
     "inference_model": {
         "__type__": "wml_inference_engine_generation",
-<<<<<<<< HEAD:src/unitxt/catalog/metrics/llm_as_judge/safety/llama_3_3_70b_instruct_ibm_watsonx_template_harm_rating.json
         "model_name": "meta-llama/llama-3-3-70b-instruct",
-========
-        "model_name": "meta-llama/llama-3-1-70b-instruct",
->>>>>>>> origin/main:src/unitxt/catalog/metrics/llm_as_judge/safety/llama_3_1_70b_instruct_ibm_watsonx_template_harm_rating.json
         "max_new_tokens": 252,
         "random_seed": 42
     },
     "template": "templates.safety.harm_rating",
     "task": "rating.single_turn",
     "format": "formats.llama3_instruct",
-<<<<<<<< HEAD:src/unitxt/catalog/metrics/llm_as_judge/safety/llama_3_3_70b_instruct_ibm_watsonx_template_harm_rating.json
     "main_score": "llama_3_3_70b_instruct_ibm_watsonx_template_harm_rating"
-========
-    "main_score": "llama_3_1_70b_instruct_ibm_watsonx_template_harm_rating"
->>>>>>>> origin/main:src/unitxt/catalog/metrics/llm_as_judge/safety/llama_3_1_70b_instruct_ibm_watsonx_template_harm_rating.json
 }
