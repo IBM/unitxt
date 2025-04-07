@@ -4,6 +4,7 @@
         "templates.text2sql.you_are_given_no_system",
         "templates.text2sql.you_are_given_with_sql_prefix",
         "templates.text2sql.you_are_given_with_hint_with_sql_prefix",
+        "templates.text2sql.you_are_given_with_hint_with_out_sql_prefix",
         "templates.text2sql.you_are_given",
         "templates.text2sql.you_are_given_with_hint",
         "templates.text2sql.you_are_given_with_hint_answer_sql_prefix_no_inst",
