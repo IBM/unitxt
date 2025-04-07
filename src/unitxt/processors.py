@@ -493,8 +493,9 @@ class GetSQL(FieldOperator):
                 # If no semicolon, use the candidate as is (after stripping)
                 sql_query = sql_query_candidate.strip()
 
-            # Final strip just in case
-            sql_query = sql_query.strip()
+            # clean the ```sql\n from the start and the \n``` in case it is there
+            sql_query = sql_query.replace("```sql", "").replace("```", "").strip()
+
         else:
             sql_query = None  # Ensure sql_query is None if no candidate was found
 
