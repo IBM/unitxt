@@ -1,16 +1,17 @@
 # evaluate_cli.py
 import argparse
-import importlib.metadata  # Added
+import importlib.metadata
 import json
 import logging
 import os
-import platform  # Added
-import subprocess  # Added
+import platform
+import subprocess
 import sys
-from datetime import datetime  # Added
+from datetime import datetime
+from functools import partial
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from datasets import Dataset as HFDataset  # Added for type hinting
+from datasets import Dataset as HFDataset
 
 from . import evaluate, get_logger, load_dataset
 from .artifact import UnitxtArtifactNotFoundError
@@ -19,10 +20,8 @@ from .artifact import UnitxtArtifactNotFoundError
 from .inference import (
     CrossProviderInferenceEngine,
     HFAutoModelInferenceEngine,
-    InferenceEngine,  # Added for type hinting
+    InferenceEngine,
 )
-
-# Corrected import for settings
 from .settings_utils import settings
 from .text_utils import print_dict
 
@@ -104,14 +103,16 @@ def setup_parser() -> argparse.ArgumentParser:
 
     # --- Task/Dataset Arguments ---
     parser.add_argument(
-        "--task",
+        "--tasks",  # Changed to plural to better reflect it holds a list
         "-t",
-        type=str,
+        dest="tasks",  # Explicitly set the attribute name to 'tasks'
+        type=partial(str.split, sep=";"),  # Use the custom function for type conversion
         required=True,
-        help="Unitxt task/dataset identifier string.\n"
-        "Format: 'card=<card_ref>,template=<template_ref>,...'\n"
-        "Example: 'card=cards.mmlu,template=templates.mmlu.all_5_shot'",
+        help="Semicolon-separated list of Unitxt task/dataset identifier strings.\n"
+        "Each task format: 'card=<card_ref>,template=<template_ref>,...'\n"
+        "Example: 'card=cards.mmlu,t=t.mmlu.all;card=cards.hellaswag,t=t.hellaswag.no'",
     )
+
     parser.add_argument(
         "--split",
         type=str,
@@ -169,7 +170,7 @@ def setup_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "--tokenizer_kwargs",
+        "--chat_template_kwargs",
         type=try_parse_json,
         default=None,
         help=(
@@ -306,38 +307,52 @@ def load_data(args: argparse.Namespace) -> HFDataset:
         ValueError: If there's a value-related error during loading (e.g., parsing).
     """
     logger.info(
-        f"Loading task/dataset using identifier: '{args.task}' with split '{args.split}'"
+        f"Loading task/dataset using identifier: '{args.tasks}' with split '{args.split}'"
     )
-    dataset_args_str = args.task
+
+    if len(args.tasks) > 1:
+        raise NotImplementedError("Only single task input is currently supported")
+    args.tasks = args.tasks[0]
+
+    dataset_args = _parse_key_value_string(args.tasks)
+
     if args.limit is not None:
-        assert "loader_limit=" not in dataset_args_str, (
+        assert f"max_{args.split}_instances" not in dataset_args, (
             "limit was inputted both as an arg and as a task parameter"
         )
         # Check if limit or loader_limit is already present
-        dataset_args_str += (
-            f",loader_limit={args.limit}"  # Use loader_limit for unitxt compatibility
+        dataset_args[f"max_{args.split}_instances"] = args.limit
+        # Use loader_limit for unitxt compatibility
+        logger.info(
+            f"Applying limit from --limit argument: max_{args.split}_instances={args.limit}"
         )
-        logger.info(f"Applying limit from --limit argument: loader_limit={args.limit}")
 
     if args.num_fewshots:
-        assert "num_demos=" not in dataset_args_str, (
+        assert "num_demos" not in dataset_args, (
             "num_demos was inputted both as an arg and as a task parameter"
         )
-        dataset_args_str += f",num_demos={args.num_fewshots},demos_taken_from=train,demos_pool_size=-1,demos_removed_from_data=True"  # Use loader_limit for unitxt compatibility
+        dataset_args["num_demos"] = args.num_fewshots
+        dataset_args.update(
+            {
+                "demos_taken_from": "train",
+                "demos_pool_size": -1,
+                "demos_removed_from_data": True,
+            }
+        )  # Use loader_limit for unitxt compatibility
         logger.info(
             f"Applying limit from --limit argument: num_demos={args.num_fewshots}"
         )
 
     if args.apply_chat_template:
-        assert "format=" not in dataset_args_str, (
+        assert "format" not in dataset_args, (
             "format was inputted as a task parameter, but chat_api was requested"
         )
-        dataset_args_str += ",format=formats.chat_api"
+        dataset_args["format"] = "formats.chat_api"
         logger.info(
             "Applying chat template from --apply_chat_template argument: format=formats.chat_api"
         )
 
-    test_dataset = load_dataset(dataset_args_str, split=args.split)
+    test_dataset = load_dataset(**dataset_args, split=args.split)
     logger.info(
         f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
     )
@@ -888,7 +903,7 @@ def main():
         f"Parsed model_args type: {type(args.model_args)}, value: {args.model_args}"
     )
 
-    if args.tokenizer_kwargs:
+    if args.chat_template_kwargs:
         raise NotImplementedError("Defining tokenizer kwargs is not yet implemented")
 
     try:
