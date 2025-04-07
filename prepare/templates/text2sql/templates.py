@@ -6,7 +6,7 @@ template_details = [
     (
         "templates.text2sql.you_are_given_no_system",
         "You are given the following SQL schema\n\n```sql\n{db}\n```\n\n{utterance}\n",
-        "",  # system should be the one comes with the model
+        "",  # system should be the one that comes with the model
         "",
     ),
     (
