@@ -442,7 +442,7 @@ def initialize_inference_engine(
         model_args_dict.update(
             {
                 # "device_map": "auto",
-                "torch.dtype": torch.bfloat16,
+                "torch_dtype": torch.bfloat16,
                 # "device": "cuda"
             }
         )
