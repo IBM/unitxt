@@ -434,9 +434,12 @@ def initialize_inference_engine(
 
         # Explicitly handle device argument if present
         device_arg = model_args_dict.pop("device", None)
+
         logger.info(
             f"HFAutoModelInferenceEngine args: {model_args_dict}, device={device_arg}"
         )
+
+        model_args_dict.update({"device_map": "auto"})
 
         inference_model = HFAutoModelInferenceEngine(
             model_name=local_model_name, device=device_arg, **model_args_dict
