@@ -439,8 +439,8 @@ def initialize_inference_engine(
 
         model_args_dict.update(
             {
-                # "device_map": "auto",
-                "device": "cuda"
+                "device_map": "auto",
+                # "device": "cuda"
             }
         )
 
