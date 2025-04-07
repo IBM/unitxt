@@ -322,7 +322,7 @@ def load_data(args: argparse.Namespace) -> HFDataset:
         )
         # Check if limit or loader_limit is already present
         # dataset_args[f"max_{args.split}_instances"] = args.limit
-        dataset_args["loader_limit"] = args.limit
+        dataset_args[f"max_{args.split}_instances"] = args.limit
         # Use loader_limit for unitxt compatibility
         logger.info(
             f"Applying limit from --limit argument: max_{args.split}_instances={args.limit}"
