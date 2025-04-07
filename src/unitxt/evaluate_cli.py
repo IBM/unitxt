@@ -437,7 +437,12 @@ def initialize_inference_engine(
 
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
-        model_args_dict.update({"device_map": "auto", "device": "cuda"})
+        model_args_dict.update(
+            {
+                # "device_map": "auto",
+                "device": "cuda"
+            }
+        )
 
         inference_model = HFAutoModelInferenceEngine(
             model_name=local_model_name, **model_args_dict
