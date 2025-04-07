@@ -437,9 +437,12 @@ def initialize_inference_engine(
 
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
+        import torch
+
         model_args_dict.update(
             {
-                "device_map": "auto",
+                # "device_map": "auto",
+                "torch.dtype": torch.bfloat16,
                 # "device": "cuda"
             }
         )
