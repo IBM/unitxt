@@ -61,6 +61,7 @@ def batched(lst, n):
     while batch := list(islice(it, n)):
         yield batch
 
+
 class StandardAPIParamsMixin(Artifact):
     model: str
     frequency_penalty: Optional[float] = None
@@ -157,6 +158,7 @@ class ListWithMetadata(List[T]):
 
 class InferenceEngine(Artifact):
     """Abstract base class for inference."""
+
     cache_batch_size: int = 100
     use_cache: bool = True
 
@@ -185,7 +187,10 @@ class InferenceEngine(Artifact):
             self.prepare_engine()
             if self.use_cache:
                 from diskcache import Cache
-                self._cache = Cache(get_settings().inference_engine_cache_path + self.__class__.__name__)
+
+                self._cache = Cache(
+                    get_settings().inference_engine_cache_path + self.__class__.__name__
+                )
 
     def __call__(
         self,
@@ -205,9 +210,9 @@ class InferenceEngine(Artifact):
         instance_str = json.dumps(record, sort_keys=True)
         return hashlib.md5(instance_str.encode()).hexdigest()
 
-    def verify_infer_inputs(self,
-                            dataset: Union[List[Dict[str, Any]], Dataset],
-                            return_meta_data: bool):
+    def verify_infer_inputs(
+        self, dataset: Union[List[Dict[str, Any]], Dataset], return_meta_data: bool
+    ):
         if not isoftype(dataset, Union[List[Dict[str, Any]], Dataset]):
             raise Exception(
                 "Dataset passed to infer() is not list of dictionaries or Huggingface Dataset"
@@ -237,33 +242,49 @@ class InferenceEngine(Artifact):
             if self.use_cache:
                 number_of_batches = len(dataset) // self.cache_batch_size + 1
                 result = []
-                for batch_index, batch in enumerate(batched(dataset, self.cache_batch_size)):
+                for batch_index, batch in enumerate(
+                    batched(dataset, self.cache_batch_size)
+                ):
                     cached_results = []
                     missing_examples = []
                     for i, item in enumerate(batch):
                         cache_key = self._get_cache_key(item)
                         cached_value = self._cache.get(cache_key)
                         if cached_value is not None:
-                            cached_results.append((i, cached_value)) # each element is index in batch, and value
+                            cached_results.append(
+                                (i, cached_value)
+                            )  # each element is index in batch, and value
                         else:
-                            missing_examples.append((i, item)) # each element is index in batch and example
+                            missing_examples.append(
+                                (i, item)
+                            )  # each element is index in batch and example
                     # infare on missing examples only, without indices
 
-                    logger.info(f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})")
-                    if (len(missing_examples) > 0):
-                        inferred_results = self._infer([e[1] for e in missing_examples], return_meta_data)
+                    logger.info(
+                        f"Inferring batch {batch_index + 1} / {number_of_batches} with {len(missing_examples)} instances (found {len(cached_results)} instances in {self._cache.directory})"
+                    )
+                    if len(missing_examples) > 0:
+                        inferred_results = self._infer(
+                            [e[1] for e in missing_examples], return_meta_data
+                        )
                         # recombined to index and value
-                        inferred_results = list(zip([e[0] for e in missing_examples], inferred_results))
+                        inferred_results = list(
+                            zip([e[0] for e in missing_examples], inferred_results)
+                        )
                         # Add missing examples to cache
-                        for (_, item), (_, prediction) in zip(missing_examples, inferred_results):
+                        for (_, item), (_, prediction) in zip(
+                            missing_examples, inferred_results
+                        ):
                             if prediction is None:
                                 continue
                             cache_key = self._get_cache_key(item)
                             self._cache[cache_key] = prediction
                     else:
-                        inferred_results=[]
+                        inferred_results = []
                     # Combine cached and inferred results in original order
-                    batch_predictions = [p[1] for p in sorted(cached_results + inferred_results)]
+                    batch_predictions = [
+                        p[1] for p in sorted(cached_results + inferred_results)
+                    ]
                     result.extend(batch_predictions)
             else:
                 result = self._infer(dataset, return_meta_data)
@@ -948,19 +969,27 @@ class HFPipelineBasedInferenceEngine(
         except Exception:
             try:
                 from peft import PeftConfig
+
                 # If full model loading fails, try loading as a PEFT adapter
                 peft_config = PeftConfig.from_pretrained(path)
 
                 if not peft_config.base_model_name_or_path:
-                    raise ValueError(f"Base model name not found in PEFT config for {path}")
+                    raise ValueError(
+                        f"Base model name not found in PEFT config for {path}"
+                    )
 
                 # Load the base model's config
-                config = AutoConfig.from_pretrained(peft_config.base_model_name_or_path, trust_remote_code=True)
+                config = AutoConfig.from_pretrained(
+                    peft_config.base_model_name_or_path, trust_remote_code=True
+                )
             except Exception as err2:
-                raise ValueError(f"Could not determine model type for: {path}") from err2
+                raise ValueError(
+                    f"Could not determine model type for: {path}"
+                ) from err2
 
-
-        self.task =  "text2text-generation" if config.is_encoder_decoder else "text-generation"
+        self.task = (
+            "text2text-generation" if config.is_encoder_decoder else "text-generation"
+        )
 
     def _get_model_args(self) -> Dict[str, Any]:
         import torch
@@ -1305,9 +1334,9 @@ class OptionSelectingByLogProbsInferenceEngine:
             for option in instance["task_data"]["options"]
         ]
 
-        dataset_with_options_logprobs: List[
-            List[Dict[str, Union[float, str]]]
-        ] = self.get_options_log_probs(dataset_with_options)
+        dataset_with_options_logprobs: List[List[Dict[str, Union[float, str]]]] = (
+            self.get_options_log_probs(dataset_with_options)
+        )
 
         dataset_iterator = iter(dataset_with_options_logprobs)
 
@@ -1380,7 +1409,7 @@ class IbmGenAiInferenceEngine(
     def _get_credentials():
         from genai import Credentials
 
-        api_key_env_var_name = "GENAI_KEY" # pragma: allowlist secret
+        api_key_env_var_name = "GENAI_KEY"  # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
 
         assert api_key is not None, (
@@ -1466,9 +1495,9 @@ class IbmGenAiInferenceEngine(
         predict_results = []
         for prediction in predictions:
             result: TextGenerationResult = prediction.results[0]
-            assert isinstance(
-                result.generated_tokens, list
-            ), "result.generated_tokens should be a list"
+            assert isinstance(result.generated_tokens, list), (
+                "result.generated_tokens should be a list"
+            )
 
             predict_result = []
             for base_token in result.generated_tokens:
@@ -1713,6 +1742,7 @@ class OpenAiInferenceEngine(
     @run_with_imap
     def _get_chat_completion(self, instance, return_meta_data):
         import openai
+
         messages = self.to_messages(instance)
         try:
             response = self.client.chat.completions.create(
@@ -1724,13 +1754,17 @@ class OpenAiInferenceEngine(
             return self.get_return_object(prediction, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
-            logging.error(f"Error predicting instance {messages}:{e}. Returning empty prediction")
-            return TextGenerationInferenceOutput(prediction = "-", input_tokens=0, output_tokens=0)
-
+            logging.error(
+                f"Error predicting instance {messages}:{e}. Returning empty prediction"
+            )
+            return TextGenerationInferenceOutput(
+                prediction="-", input_tokens=0, output_tokens=0
+            )
 
     @run_with_imap
     def _get_logprobs(self, instance, return_meta_data):
         import openai
+
         messages = self.to_messages(instance)
         try:
             response = self.client.chat.completions.create(
@@ -1751,13 +1785,13 @@ class OpenAiInferenceEngine(
             return self.get_return_object(pred_output, response, return_meta_data)
         # catch in case of content_filtering failure
         except openai.BadRequestError as e:
-            logging.error(f"Error predicting instance {messages}:{e}. Returning empty prediction")
-            prediction = [{"top_tokens": [
-                        {"text": "-", "logprob": 0}
-                    ]
-            }]
-            return TextGenerationInferenceOutput(prediction=prediction, input_tokens=0, output_tokens=0)
-
+            logging.error(
+                f"Error predicting instance {messages}:{e}. Returning empty prediction"
+            )
+            prediction = [{"top_tokens": [{"text": "-", "logprob": 0}]}]
+            return TextGenerationInferenceOutput(
+                prediction=prediction, input_tokens=0, output_tokens=0
+            )
 
     def get_return_object(self, predict_result, response, return_meta_data):
         if return_meta_data:
@@ -1791,9 +1825,9 @@ class AzureOpenAIInferenceEngine(OpenAiInferenceEngine):
         api_version = self.credentials.get(
             "api_version", os.environ.get("OPENAI_API_VERSION", None)
         )
-        assert (
-            api_version and azure_openapi_host
-        ), "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        assert api_version and azure_openapi_host, (
+            "Error while trying to run AzureOpenAIInferenceEngine: Missing environment variable param AZURE_OPENAI_HOST or OPENAI_API_VERSION"
+        )
         api_url = f"{azure_openapi_host}/openai/deployments/{self.model_name}/chat/completions?api-version={api_version}"
 
         return {"api_key": api_key, "api_url": api_url, "api_version": api_version}
@@ -1820,9 +1854,7 @@ class RITSInferenceEngine(
     label: str = "rits"
     data_classification_policy = ["public", "proprietary"]
 
-    model_names_dict = {
-        "microsoft/phi-4": "microsoft-phi-4"
-    }
+    model_names_dict = {"microsoft/phi-4": "microsoft-phi-4"}
 
     def get_default_headers(self):
         return {"RITS_API_KEY": self.credentials["api_key"]}
@@ -1890,7 +1922,7 @@ class TogetherAiInferenceEngine(
         from together import Together
         from together.types.models import ModelType
 
-        api_key_env_var_name = "TOGETHER_API_KEY" # pragma: allowlist secret
+        api_key_env_var_name = "TOGETHER_API_KEY"  # pragma: allowlist secret
         api_key = os.environ.get(api_key_env_var_name)
         assert api_key is not None, (
             f"Error while trying to run TogetherAiInferenceEngine."
@@ -1905,9 +1937,9 @@ class TogetherAiInferenceEngine(
             together_model.id: together_model.type for together_model in together_models
         }
         model_type = together_model_id_to_type.get(self.model_name)
-        assert (
-            model_type is not None
-        ), f"Could not find model {self.model_name} in Together AI model list"
+        assert model_type is not None, (
+            f"Could not find model {self.model_name} in Together AI model list"
+        )
         assert model_type in [ModelType.CHAT, ModelType.LANGUAGE, ModelType.CODE], (
             f"Together AI model type {model_type} is not supported; "
             "supported types are 'chat', 'language' and 'code'."
@@ -2086,11 +2118,11 @@ class WMLInferenceEngineBase(
     def verify(self):
         super().verify()
 
-        assert (
-            self.model_name
-            or self.deployment_id
-            and not (self.model_name and self.deployment_id)
-        ), "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+        assert self.model_name or (
+            self.deployment_id and not (self.model_name and self.deployment_id)
+        ), (
+            "Either 'model_name' or 'deployment_id' must be specified, but not both at the same time."
+        )
 
     # def process_data_before_dump(self, data):
     #     if "credentials" in data:
@@ -2109,11 +2141,11 @@ class WMLInferenceEngineBase(
         self._verify_wml_credentials(self.credentials)
         return APIClient(
             credentials=Credentials(
-                api_key=self.credentials["api_key"],
-                url=self.credentials["url"]
+                api_key=self.credentials["api_key"], url=self.credentials["url"]
             ),
             project_id=self.credentials.get("project_id", None),
-            space_id=self.credentials.get("space_id", None))
+            space_id=self.credentials.get("space_id", None),
+        )
 
     @staticmethod
     def _read_wml_credentials_from_env() -> CredentialsWML:
@@ -2181,9 +2213,9 @@ class WMLInferenceEngineBase(
             "['url', 'api_key', 'username', 'password']."
         )
 
-        assert credentials.get(
-            "url"
-        ), "'url' is a mandatory key for WML credentials dict."
+        assert credentials.get("url"), (
+            "'url' is a mandatory key for WML credentials dict."
+        )
         assert "space_id" in credentials or "project_id" in credentials, (
             "Either 'space_id' or 'project_id' must be provided "
             "as keys for WML credentials dict."
@@ -2584,7 +2616,9 @@ class WMLInferenceEngineChat(WMLInferenceEngineBase, WMLChatParamsMixin):
         return True
 
     def to_messages(self, instance: Union[Dict, List]) -> List[List[Dict[str, Any]]]:
-        if isinstance(instance["source"], str) and self.check_instance_contains_image(instance):
+        if isinstance(instance["source"], str) and self.check_instance_contains_image(
+            instance
+        ):
             return self._create_messages_from_instance(instance)
 
         messages = super().to_messages(instance)
@@ -2908,7 +2942,7 @@ class VLLMParamsMixin(Artifact):
 
 
 class VLLMInferenceEngine(InferenceEngine, PackageRequirementsMixin, VLLMParamsMixin):
-    label="vllm"
+    label = "vllm"
 
     def get_engine_id(self):
         return get_model_and_label_id(self.model, self.label)
@@ -3009,7 +3043,6 @@ class LiteLLMInferenceEngine(
         )
         self.inference_type = "litellm"
         from litellm import acompletion
-
 
         self._completion = acompletion
         # Initialize a semaphore to limit concurrency
@@ -3122,10 +3155,10 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
 
     label: str = "cross_provider"
     provider: Optional[_supported_apis] = None
-    provider_specific_args: Optional[Dict[str, Dict[str,str]]] = None
+    provider_specific_args: Optional[Dict[str, Dict[str, str]]] = None
 
     provider_model_map: Dict[_supported_apis, Dict[str, str]] = {
-        "watsonx-sdk": { # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
+        "watsonx-sdk": {  # checked from ibm_watsonx_ai.APIClient().foundation_models.ChatModels
             "granite-20b-code-instruct": "ibm/granite-20b-code-instruct",
             "granite-3-2-8b-instruct": "ibm/granite-3-2-8b-instruct",
             "granite-3-2b-instruct": "ibm/granite-3-2b-instruct",
@@ -3152,7 +3185,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-70b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
             "llama-3-1-405b-instruct": "together_ai/meta-llama/Meta-Llama-3.1-405B-Instruct-Turbo",
             "llama-3-2-1b-instruct": "together_ai/togethercomputer/llama-3-2-1b-instruct",
-            "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo"
+            "llama-3-3-70b-instruct": "together_ai/meta-llama/Llama-3.3-70B-Instruct-Turbo",
         },
         "aws": {
             "llama-3-8b-instruct": "bedrock/meta.llama3-8b-instruct-v1:0",
@@ -3166,7 +3199,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "llama-3-1-405b-instruct": "llama3.1:405b",
             "llama-3-2-1b-instruct": "llama3.2:1b",
             "llama-3-2-3b-instruct": "llama3.2:3b",
-            "llama-3-3-70b-instruct": "llama3.3"
+            "llama-3-3-70b-instruct": "llama3.3",
         },
         "bam": {
             "granite-3-8b-instruct": "ibm/granite-8b-instruct-preview-4k",
@@ -3263,7 +3296,9 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
             "mixtral-8x7b-instruct-v0.1": "replicate/mistralai/mixtral-8x7b-instruct-v0.1",
         },
     }
-    provider_model_map["watsonx"] = {k: f"watsonx/{v}" for k,v in provider_model_map["watsonx-sdk"].items()}
+    provider_model_map["watsonx"] = {
+        k: f"watsonx/{v}" for k, v in provider_model_map["watsonx-sdk"].items()
+    }
 
     _provider_to_base_class = {
         "watsonx": LiteLLMInferenceEngine,
@@ -3306,7 +3341,7 @@ class CrossProviderInferenceEngine(InferenceEngine, StandardAPIParamsMixin):
         args["model"] = self.provider_model_map[provider].get(self.model, self.model)
 
         if self.provider_specific_args is not None:
-            provider_args =  self.provider_specific_args.get(provider)
+            provider_args = self.provider_specific_args.get(provider)
             if provider_args is not None:
                 args.update(provider_args)
 
@@ -3341,6 +3376,7 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
 
     This class uses models from the HuggingFace Transformers library to calculate log probabilities for text inputs.
     """
+
     label = "hf_option_selection"
     model_name: str
     batch_size: int
@@ -3367,10 +3403,8 @@ class HFOptionSelectingInferenceEngine(InferenceEngine, TorchDeviceMixin):
             path,
         )
         self.model = AutoModelForCausalLM.from_pretrained(
-                path,
-            ).to(
-            self.device
-        )
+            path,
+        ).to(self.device)
         # Set pad_token if it doesn't exist
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
