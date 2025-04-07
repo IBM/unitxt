@@ -28,6 +28,11 @@ card = TaskCard(
             to_field="reference_context_ids",
         ),
         Wrap(
+            field="ground_truths_contexts",
+            inside="list",
+            to_field="reference_contexts",
+        ),
+        Wrap(
             field="correct_answer",
             inside="list",
             to_field="reference_answers",

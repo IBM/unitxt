@@ -24,6 +24,12 @@
         },
         {
             "__type__": "wrap",
+            "field": "ground_truths_contexts",
+            "inside": "list",
+            "to_field": "reference_contexts"
+        },
+        {
+            "__type__": "wrap",
             "field": "correct_answer",
             "inside": "list",
             "to_field": "reference_answers"
