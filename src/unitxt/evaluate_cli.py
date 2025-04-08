@@ -432,18 +432,7 @@ def initialize_inference_engine(
             f"Initializing HFAutoModelInferenceEngine for model: {local_model_name}"
         )
 
-        # Explicitly handle device argument if present
-        # device_arg = model_args_dict.pop("device", None)
-
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
-
-        model_args_dict.update(
-            {
-                # "device_map": "auto",
-                "dtype": "torch.float16",
-                # "device": "cuda"
-            }
-        )
 
         inference_model = HFAutoModelInferenceEngine(
             model_name=local_model_name, **model_args_dict
