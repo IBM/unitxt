@@ -10,29 +10,26 @@
     },
     "preprocess_steps": [
         {
-            "__type__": "copy",
-            "field_to_field": {
-                "question": "question",
-                "question_id": "question_id"
+            "__type__": "split_random_mix",
+            "mix": {
+                "test": "train[30%]",
+                "train": "train[70%]"
             }
         },
         {
-            "__type__": "wrap",
-            "field": "correct_answer_document_ids",
-            "inside": "list",
-            "to_field": "reference_context_ids"
+            "__type__": "copy",
+            "field_to_field": {
+                "question": "question",
+                "question_id": "question_id",
+                "ground_truths": "reference_answers",
+                "ground_truths_context_ids": "reference_context_ids"
+            }
         },
         {
             "__type__": "wrap",
             "field": "ground_truths_contexts",
             "inside": "list",
             "to_field": "reference_contexts"
-        },
-        {
-            "__type__": "wrap",
-            "field": "correct_answer",
-            "inside": "list",
-            "to_field": "reference_answers"
         }
     ],
     "task": "tasks.rag.end_to_end",

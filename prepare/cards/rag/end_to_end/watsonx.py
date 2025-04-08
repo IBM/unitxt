@@ -5,7 +5,7 @@ from unitxt.blocks import TaskCard
 from unitxt.collections_operators import Wrap
 from unitxt.loaders import LoadHF
 from unitxt.operators import Copy
-from unitxt.splitters import RenameSplits
+from unitxt.splitters import RenameSplits, SplitRandomMix
 from unitxt.templates import InputOutputTemplate
 from unitxt.test_utils.card import test_card
 
@@ -16,26 +16,23 @@ card = TaskCard(
         data_classification_policy=["public"],
     ),
     preprocess_steps=[
+        SplitRandomMix(
+            {
+                "test": "train[30%]",
+                "train": "train[70%]",
+            }),
         Copy(
             field_to_field={
                 "question": "question",
                 "question_id": "question_id",
+                "ground_truths" : "reference_answers",
+                "ground_truths_context_ids" : "reference_context_ids"
             },
-        ),
-        Wrap(
-            field="correct_answer_document_ids",
-            inside="list",
-            to_field="reference_context_ids",
         ),
         Wrap(
             field="ground_truths_contexts",
             inside="list",
             to_field="reference_contexts",
-        ),
-        Wrap(
-            field="correct_answer",
-            inside="list",
-            to_field="reference_answers",
         ),
     ],
     task="tasks.rag.end_to_end",
