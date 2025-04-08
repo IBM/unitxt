@@ -293,7 +293,11 @@ def configure_unitxt_settings(args: argparse.Namespace):
         unitxt_settings_dict["hf_cache_dir"] = args.cache_dir
         # Also set environment variable as some HF parts might read it directly
         os.environ["HF_DATASETS_CACHE"] = args.cache_dir
+        os.environ["HF_HOME"] = args.cache_dir
         logger.info(f"Set HF_DATASETS_CACHE to: {args.cache_dir}")
+
+    if args.disable_hf_cache:
+        os.environ["UNITXT_DISABLE_HF_DATASETS_CACHE"] = True
 
     logger.info(f"Applying unitxt settings: {unitxt_settings_dict}")
     return settings.context(**unitxt_settings_dict)
