@@ -740,7 +740,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         # Iterate through the dataset in batches
         from tqdm import tqdm
 
-        # sort data by the length of "source" for efficient batching
+        # sort data by the length of "source" for efficient batching only if it chat template
         if isinstance(dataset[0]["source"], list):
             # take the first item where the role is user
             system_role_exists = dataset[0]["source"][0]["role"] == "system"
@@ -755,7 +755,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         for i in tqdm(
             range(0, len(dataset), self.batch_size),
             desc=f"Running inference in batches of {self.batch_size}",
-            total=len(dataset),
         ):
             # Get the current batch
             batch_data = dataset[i : i + self.batch_size]
