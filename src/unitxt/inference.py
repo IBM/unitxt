@@ -651,8 +651,8 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.processor = AutoTokenizer.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             use_fast=self.use_fast_tokenizer,
-            # padding=True,
-            # truncation=True,
+            padding=True,
+            truncation=True,
         )
 
     def _get_model_args(self) -> Dict[str, Any]:
@@ -712,7 +712,7 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             )
 
         if self.processor.pad_token is None:
-            self.processor.pad_token_id = self.model.config.eos_token_id
+            self.processor.pad_token_id = self.model.config.eos_token_id[0]
 
         return self.processor(
             data,
