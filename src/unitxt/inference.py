@@ -434,6 +434,8 @@ class HFInferenceEngineBase(
     low_cpu_mem_usage: bool = True
     torch_dtype: str = "torch.float16"
 
+    batch_size: int = 1
+
     model: Any = InternalField(default=None, name="Inference object")
     processor: Any = InternalField(default=None, name="Input processor (tokenizer)")
 
@@ -698,8 +700,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.model = model_class.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             trust_remote_code=True,
-            # device_map=self.device_map,
-            # torch_dtype=self._get_torch_dtype(),
             **model_args,
         )
         if self.device_map is None:
@@ -723,40 +723,79 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         return_meta_data: bool,
         return_logprobs: bool,
     ) -> Union[List[str], List[Dict], List[TextGenerationInferenceOutput]]:
-        tokenized_inputs = self.prepare_inputs(
-            [instance["source"] for instance in dataset]
-        )
-        input_length = (
-            1
-            if self.model.config.is_encoder_decoder
-            else tokenized_inputs.input_ids.shape[1]
-        )
+        """Performs inference on the dataset in batches.
 
-        predictions = self.make_predictions(tokenized_inputs)
-        sequences = predictions.sequences
+        Args:
+            dataset: A list of dictionaries or a Dataset object containing the input data.
+                     Each item should have a "source" key.
+            return_meta_data: Whether to include metadata in the output.
+            return_logprobs: Whether to return log probabilities along with the output.
 
-        string_tokens = [
-            self.decode_tokens(sequence, input_length) for sequence in sequences
-        ]
+        Returns:
+            A list of outputs, which can be strings, dictionaries (if metadata is returned),
+            or TextGenerationInferenceOutput objects (if logprobs are returned).
+        """
+        all_final_outputs = []  # List to store results from all batches
 
-        final_outputs = (
-            self.get_logprobs(predictions, string_tokens)
-            if return_logprobs
-            else [self.create_string_from_tokens(strings) for strings in string_tokens]
-        )
+        # Iterate through the dataset in batches
+        for i in range(0, len(dataset), self.batch_size):
+            # Get the current batch
+            batch_data = dataset[i : i + self.batch_size]
+            batch_sources = [instance["source"] for instance in batch_data]
 
-        return [
-            self.get_return_object(
-                output=final_outputs[i],
-                output_tokens=len(string_tokens[i]),
-                inp=dataset[i]["source"],
-                inp_tokens=len(tokenized_inputs.encodings[i].tokens)
-                if tokenized_inputs.encodings is not None
-                else None,
-                return_meta_data=return_meta_data,
+            # --- Process the current batch ---
+            # 1. Tokenize inputs for the batch
+            tokenized_inputs = self.prepare_inputs(batch_sources)
+
+            # 2. Determine input length (handle encoder-decoder models)
+            input_length = (
+                1
+                if self.model.config.is_encoder_decoder
+                else tokenized_inputs.input_ids.shape[1]
             )
-            for i in range(len(sequences))
-        ]
+
+            # 3. Make predictions for the batch
+            predictions = self.make_predictions(tokenized_inputs)
+            sequences = predictions.sequences  # Sequences for the current batch
+
+            # 4. Decode tokens for the batch
+            string_tokens_batch = [
+                self.decode_tokens(sequence, input_length) for sequence in sequences
+            ]
+
+            # 5. Calculate logprobs or create strings for the batch
+            final_outputs_batch = (
+                self.get_logprobs(predictions, string_tokens_batch)
+                if return_logprobs
+                else [
+                    self.create_string_from_tokens(strings)
+                    for strings in string_tokens_batch
+                ]
+            )
+
+            # 6. Create return objects for the batch
+            batch_results = [
+                self.get_return_object(
+                    output=final_outputs_batch[
+                        j
+                    ],  # Output for the j-th item in the batch
+                    output_tokens=len(string_tokens_batch[j]),
+                    inp=batch_data[j]["source"],  # Original input for the j-th item
+                    inp_tokens=len(tokenized_inputs.encodings[j].tokens)
+                    if tokenized_inputs.encodings is not None
+                    else None,
+                    return_meta_data=return_meta_data,
+                )
+                for j in range(
+                    len(sequences)
+                )  # Iterate through items in the current batch
+            ]
+
+            # Add results from this batch to the overall list
+            all_final_outputs.extend(batch_results)
+            # --- End of batch processing ---
+
+        return all_final_outputs
 
     def _infer(
         self,
