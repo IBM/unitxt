@@ -134,6 +134,14 @@ def setup_parser() -> argparse.ArgumentParser:
         help="Limit the number of examples per task/dataset.",
     )
 
+    parser.add_argument(
+        "--batch_size",
+        "-b",
+        type=str,
+        default=1,
+        help="Default 1",
+    )
+
     # --- Model Arguments (Explicit Types) ---
     parser.add_argument(
         "--model",
@@ -432,6 +440,7 @@ def initialize_inference_engine(
             f"Initializing HFAutoModelInferenceEngine for model: {local_model_name}"
         )
 
+        model_args_dict.update({"batch_size": args.batch_size})
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
         inference_model = HFAutoModelInferenceEngine(
