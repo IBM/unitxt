@@ -671,12 +671,12 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
         # cause an error because the data is always on the gpu
-        if torch.cuda.device_count() > 1:
-            assert self.device == torch.device(0)
-            args["device_map"] = "auto"
-        else:
-            if not self.load_in_8bit:
-                args["device"] = self.device
+        # if torch.cuda.device_count() > 1:
+        # assert self.device == torch.device(0)
+        args["device_map"] = "auto"
+        # else:
+        #     if not self.load_in_8bit:
+        #         args["device"] = self.device
 
         return args
 
