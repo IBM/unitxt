@@ -678,9 +678,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             if not self.load_in_8bit:
                 args["device"] = self.device
 
-        if self.task == "text-generation":
-            args["return_full_text"] = False
-
         return args
 
     def _init_model(self):
