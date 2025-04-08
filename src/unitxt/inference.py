@@ -656,7 +656,6 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         )
 
     def _get_model_args(self) -> Dict[str, Any]:
-        import torch
         from transformers import BitsAndBytesConfig
 
         args = {}
@@ -664,11 +663,11 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         if self.load_in_8bit:
             quantization_config = BitsAndBytesConfig(load_in_8bit=self.load_in_8bit)
             args["quantization_config"] = quantization_config
-        elif self.use_fp16:
-            if self.device == torch.device("mps"):
-                args["torch_dtype"] = torch.float16
-            else:
-                args["torch_dtype"] = torch.bfloat16
+        # elif self.use_fp16:
+        #     if self.device == torch.device("mps"):
+        #         args["torch_dtype"] = torch.float16
+        #     else:
+        #         args["torch_dtype"] = torch.bfloat16
 
         # We do this, because in some cases, using device:auto will offload some weights to the cpu
         # (even though the model might *just* fit to a single gpu), even if there is a gpu available, and this will
