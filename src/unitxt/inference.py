@@ -696,11 +696,14 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             else AutoModelForCausalLM
         )
 
+        model_args = self._get_model_args()
+
         self.model = model_class.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             trust_remote_code=True,
-            device_map=self.device_map,
-            torch_dtype=self._get_torch_dtype(),
+            # device_map=self.device_map,
+            # torch_dtype=self._get_torch_dtype(),
+            **model_args,
         )
         if self.device_map is None:
             self.model.to(self.device)
