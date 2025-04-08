@@ -738,7 +738,13 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         all_final_outputs = []  # List to store results from all batches
 
         # Iterate through the dataset in batches
-        for i in range(0, len(dataset), self.batch_size):
+        from tqdm import tqdm
+
+        for i in tqdm(
+            range(0, len(dataset), self.batch_size),
+            desc=f"Running inference in batches of {self.batch_size}",
+            total=len(dataset),
+        ):
             # Get the current batch
             batch_data = dataset[i : i + self.batch_size]
             batch_sources = [instance["source"] for instance in batch_data]
