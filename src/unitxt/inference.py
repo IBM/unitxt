@@ -651,8 +651,8 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
         self.processor = AutoTokenizer.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             use_fast=self.use_fast_tokenizer,
-            padding=True,
-            truncation=True,
+            # padding=True,
+            # truncation=True,
         )
 
     def _get_model_args(self) -> Dict[str, Any]:
@@ -710,6 +710,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
             data = self.processor.apply_chat_template(
                 data, tokenize=False, add_generation_prompt=True
             )
+
+        if self.processor.pad_token is None:
+            self.processor.pad_token_id = self.model.config.eos_token_id
+
         return self.processor(
             data,
             padding=True,
