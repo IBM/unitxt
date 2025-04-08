@@ -297,7 +297,7 @@ def configure_unitxt_settings(args: argparse.Namespace):
         logger.info(f"Set HF_DATASETS_CACHE to: {args.cache_dir}")
 
     if args.disable_hf_cache:
-        os.environ["UNITXT_DISABLE_HF_DATASETS_CACHE"] = True
+        os.environ["UNITXT_DISABLE_HF_DATASETS_CACHE"] = "True"
 
     logger.info(f"Applying unitxt settings: {unitxt_settings_dict}")
     return settings.context(**unitxt_settings_dict)
