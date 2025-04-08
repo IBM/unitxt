@@ -645,14 +645,16 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
     device_map: Any = None
 
+    padding = True
+    truncation = True
+    padding_side = "left"  # for decoder only models
+
     def _init_processor(self):
         from transformers import AutoTokenizer
 
         self.processor = AutoTokenizer.from_pretrained(
             pretrained_model_name_or_path=self.model_name,
             use_fast=self.use_fast_tokenizer,
-            padding=True,
-            truncation=True,
         )
 
     def _get_model_args(self) -> Dict[str, Any]:
@@ -716,9 +718,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
         return self.processor(
             data,
-            padding=True,
-            truncation=True,
             return_tensors="pt",
+            padding=self.padding,
+            truncation=self.truncation,
+            padding_side=self.padding_side,
         ).to(self.device or self.device_map)
 
     def _infer_fn(
