@@ -368,54 +368,37 @@ def load_data(args: argparse.Namespace) -> HFDataset:
     return test_dataset
 
 
-def prepare_model_args(args: argparse.Namespace) -> Dict[str, Any]:
+def prepare_kwargs(kwargs: dict) -> Dict[str, Any]:
     """Prepares the model arguments dictionary.
 
     Args:
-        args (argparse.Namespace): Parsed command-line arguments.
+        kwargs (dict): Parsed command-line arguments.
 
     Returns:
         Dict[str, Any]: The processed model arguments dictionary.
     """
     # Ensure model_args is a dictionary, handling potential string return from try_parse_json
-    model_args_dict = args.model_args if isinstance(args.model_args, dict) else {}
-    if not isinstance(args.model_args, dict) and args.model_args is not None:
+    kwargs_dict = kwargs if isinstance(kwargs, dict) else {}
+    if not isinstance(kwargs, dict) and kwargs is not None:
         logger.warning(
-            f"Could not parse --model_args '{args.model_args}' as JSON or key-value pairs. Treating as empty."
+            f"Could not parse kwargs '{kwargs}' as JSON or key-value pairs. Treating as empty."
         )
 
-    logger.info(f"Using model_args: {model_args_dict}")
-    return model_args_dict
-
-
-def prepare_gen_kwargs(args: argparse.Namespace) -> Dict[str, Any]:
-    """Prepares the model arguments dictionary.
-
-    Args:
-        args (argparse.Namespace): Parsed command-line arguments.
-
-    Returns:
-        Dict[str, Any]: The processed model arguments dictionary.
-    """
-    # Ensure model_args is a dictionary, handling potential string return from try_parse_json
-    gen_kwargs_dict = args.gen_kwargs if isinstance(args.gen_kwargs, dict) else {}
-    if not isinstance(args.gen_kwargs, dict) and args.gen_kwargs is not None:
-        logger.warning(
-            f"Could not parse --gen_kwargs '{args.gen_kwargs}' as JSON or key-value pairs. Treating as empty."
-        )
-
-    logger.info(f"Using model_args: {gen_kwargs_dict}")
-    return gen_kwargs_dict
+    logger.info(f"Using kwags: {kwargs_dict}")
+    return kwargs_dict
 
 
 def initialize_inference_engine(
-    args: argparse.Namespace, model_args_dict: Dict[str, Any]
+    args: argparse.Namespace,
+    model_args_dict: Dict[str, Any],
+    chat_kwargs_dict: Dict[str, Any],
 ) -> InferenceEngine:
     """Initializes the appropriate inference engine based on arguments.
 
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
         model_args_dict (Dict[str, Any]): Processed model arguments.
+        chat_kwargs_dict (Dict[str, Any]): Processed chat arguments.
 
     Returns:
         InferenceEngine: The initialized inference engine instance.
@@ -444,7 +427,9 @@ def initialize_inference_engine(
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
         inference_model = HFAutoModelInferenceEngine(
-            model_name=local_model_name, **model_args_dict
+            model_name=local_model_name,
+            **model_args_dict,
+            chat_kwargs_dict=chat_kwargs_dict,
         )
 
     # --- Remote Model (CrossProviderInferenceEngine) ---
@@ -892,9 +877,6 @@ def main():
         f"Parsed model_args type: {type(args.model_args)}, value: {args.model_args}"
     )
 
-    if args.chat_template_kwargs:
-        raise NotImplementedError("Defining tokenizer kwargs is not yet implemented")
-
     try:
         results_path, samples_path = prepare_output_paths(
             args.output_path, args.output_file_prefix
@@ -903,12 +885,14 @@ def main():
         # Apply unitxt settings within a context manager
         with configure_unitxt_settings(args):
             test_dataset = load_data(args)
-            model_args_dict = prepare_model_args(
-                args
-            )  # Prepare args before engine init
-            gen_kwargs_dict = prepare_gen_kwargs(args)
+            model_args_dict = prepare_kwargs(args.model_args)
+            gen_kwargs_dict = prepare_kwargs(args.gen_kwargs)
+            chat_kwargs_dict = prepare_kwargs(args.chat_template_kwargs)
+
             model_args_dict.update(gen_kwargs_dict)
-            inference_model = initialize_inference_engine(args, model_args_dict)
+            inference_model = initialize_inference_engine(
+                args, model_args_dict, chat_kwargs_dict
+            )
             predictions = run_inference(inference_model, test_dataset)
             evaluated_dataset = run_evaluation(predictions, test_dataset)
             process_and_save_results(

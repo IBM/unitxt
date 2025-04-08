@@ -645,9 +645,11 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
 
     device_map: Any = None
 
-    padding = True
-    truncation = True
-    padding_side = "left"  # for decoder only models
+    padding: bool = True
+    truncation: bool = True
+    padding_side: str = "left"  # for decoder only models
+
+    chat_kwargs_dict: dict = {}
 
     def _init_processor(self):
         from transformers import AutoTokenizer
@@ -710,7 +712,10 @@ class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     def prepare_inputs(self, data: Iterable) -> Mapping:
         if isinstance(data[0], list):
             data = self.processor.apply_chat_template(
-                data, tokenize=False, add_generation_prompt=True
+                data,
+                tokenize=False,
+                add_generation_prompt=True,
+                **self.chat_kwargs_dict,
             )
 
         if self.processor.pad_token is None:
