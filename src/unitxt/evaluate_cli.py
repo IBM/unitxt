@@ -19,7 +19,7 @@ from .artifact import UnitxtArtifactNotFoundError
 # Use HFAutoModelInferenceEngine for local models
 from .inference import (
     CrossProviderInferenceEngine,
-    HFPipelineBasedInferenceEngine,
+    HFAutoModelInferenceEngine,
     InferenceEngine,
 )
 from .settings_utils import settings
@@ -437,15 +437,15 @@ def initialize_inference_engine(
 
         logger.info(f"HFAutoModelInferenceEngine args: {model_args_dict}")
 
-        # model_args_dict.update(
-        #     {
-        #         # "device_map": "auto",
-        #         "dtype": "torch.float16",
-        #         # "device": "cuda"
-        #     }
-        # )
+        model_args_dict.update(
+            {
+                # "device_map": "auto",
+                "dtype": "torch.float16",
+                # "device": "cuda"
+            }
+        )
 
-        inference_model = HFPipelineBasedInferenceEngine(
+        inference_model = HFAutoModelInferenceEngine(
             model_name=local_model_name, **model_args_dict
         )
 
