@@ -863,23 +863,6 @@ def process_and_save_results(
         else:
             logger.info("No global scores extracted or found.")
 
-        logger.info("\n--- Example Instance (Index 0) ---")
-        if all_samples_data:
-            # Use print_dict for formatted output of the first sample
-            print_dict(
-                all_samples_data[0],
-                # Limit keys printed to console for brevity
-                keys_to_print=["source", "prediction", "references", "metrics"],
-            )
-        elif (
-            evaluated_dataset
-        ):  # Check if evaluated_dataset was non-empty but sample extraction failed
-            logger.warning(
-                "Evaluated dataset was not empty, but failed to extract sample data."
-            )
-        else:
-            logger.info("No instances found in the evaluated dataset.")
-
         # --- Save Results ---
         # Pass all necessary data to the saving function
         _save_results_to_disk(
