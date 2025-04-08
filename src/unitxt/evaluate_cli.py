@@ -137,9 +137,9 @@ def setup_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--batch_size",
         "-b",
-        type=str,
+        type=int,
         default=1,
-        help="Default 1",
+        help="Batch size for use in inference when selected model is hf. Default 1",
     )
 
     # --- Model Arguments (Explicit Types) ---
