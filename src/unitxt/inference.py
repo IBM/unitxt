@@ -638,6 +638,11 @@ class HFInferenceEngineBase(
 class HFAutoModelInferenceEngine(HFInferenceEngineBase):
     label: str = "hf_auto_model"
 
+    use_fp16: bool = True
+    load_in_8bit: bool = False
+
+    device_map: Any = None
+
     def _init_processor(self):
         from transformers import AutoTokenizer
 
