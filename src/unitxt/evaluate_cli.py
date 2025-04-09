@@ -22,8 +22,8 @@ from .inference import (
     HFAutoModelInferenceEngine,
     InferenceEngine,
 )
+from .metric_utils import EvaluationResults
 from .settings_utils import settings
-from .text_utils import print_dict
 
 # Define logger early so it can be used in initial error handling
 # Basic config for initial messages, will be reconfigured in main()
@@ -106,7 +106,7 @@ def setup_parser() -> argparse.ArgumentParser:
         "--tasks",  # Changed to plural to better reflect it holds a list
         "-t",
         dest="tasks",  # Explicitly set the attribute name to 'tasks'
-        type=partial(str.split, sep=";"),  # Use the custom function for type conversion
+        type=partial(str.split, sep="|"),  # Use the custom function for type conversion
         required=True,
         help="Semicolon-separated list of Unitxt task/dataset identifier strings.\n"
         "Each task format: 'card=<card_ref>,template=<template_ref>,...'\n"
@@ -519,7 +519,7 @@ def run_inference(engine: InferenceEngine, dataset: HFDataset) -> List[Any]:
         raise  # Re-raise after logging
 
 
-def run_evaluation(predictions: List[Any], dataset: HFDataset) -> List[Dict[str, Any]]:
+def run_evaluation(predictions: List[Any], dataset: HFDataset) -> EvaluationResults:
     """Runs evaluation on the predictions.
 
     Args:
@@ -539,107 +539,24 @@ def run_evaluation(predictions: List[Any], dataset: HFDataset) -> List[Dict[str,
         return []  # Return empty list if no predictions to evaluate
 
     try:
-        evaluated_dataset = evaluate(predictions=predictions, data=dataset)
+        evaluation_results = evaluate(predictions=predictions, data=dataset)
         logger.info("Evaluation completed.")
-        if not evaluated_dataset:
+        if not evaluation_results:
             logger.error("Evaluation returned no results (empty list/None).")
             # Raise an error as this indicates a problem in the evaluation process
             raise RuntimeError("Evaluation returned no results.")
-        if not isinstance(evaluated_dataset, list):
+        if not isinstance(evaluation_results, list):
             logger.error(
-                f"Evaluation returned unexpected type: {type(evaluated_dataset)}. Expected list."
+                f"Evaluation returned unexpected type: {type(evaluation_results)}. Expected list."
             )
             raise RuntimeError(
-                f"Evaluation returned unexpected type: {type(evaluated_dataset)}"
+                f"Evaluation returned unexpected type: {type(evaluation_results)}"
             )
 
-        return evaluated_dataset
+        return evaluation_results
     except Exception:
         logger.exception("An error occurred during evaluation")  # Use logger.exception
         raise  # Re-raise after logging
-
-
-def _extract_scores_and_samples(
-    evaluated_dataset: List[Dict[str, Any]],
-) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
-    """Extracts global scores and sample data from the evaluated dataset.
-
-    Args:
-        evaluated_dataset (List[Dict[str, Any]]): The list of evaluated instances.
-
-    Returns:
-        Tuple[Dict[str, Any], List[Dict[str, Any]]]: A tuple containing the global scores
-                                                     and the list of processed sample data.
-    """
-    global_scores = {}
-    all_samples_data = []
-
-    # Check if the dataset is a non-empty list
-    if isinstance(evaluated_dataset, list) and evaluated_dataset:
-        # Try to access scores safely
-        first_instance_score = evaluated_dataset[0].get("score", {})
-        if isinstance(first_instance_score, dict) and "global" in first_instance_score:
-            global_scores = first_instance_score.get("global", {})
-            if global_scores:
-                logger.info("Global scores found in the first evaluated instance.")
-            else:
-                logger.warning(
-                    "Found 'score.global' key in first instance, but it was empty."
-                )
-        else:
-            logger.warning(
-                "Could not automatically locate global scores in evaluated_dataset[0]['score']['global']. "
-                "Check evaluation output structure."
-            )
-
-        # Process each instance for sample data
-        for i, instance in enumerate(evaluated_dataset):
-            instance_score = instance.get("score", {})
-            instance_metrics = (
-                instance_score.get("instance", {})
-                if isinstance(instance_score, dict)
-                else {}
-            )
-
-            instance_result = {
-                "index": i,
-                "source": instance.get("source"),
-                "prediction": instance.get("prediction"),
-                "processed_prediction": instance.get("processed_prediction"),
-                "references": instance.get("references"),
-                "processed_references": instance.get("preocessed_references"),
-                "metrics": instance_metrics,
-                "task_data": instance.get("task_data"),  # Include task_data if present
-            }
-            # Remove keys with None values for cleaner output
-            instance_result = {
-                k: v for k, v in instance_result.items() if v is not None
-            }
-            all_samples_data.append(instance_result)
-
-    elif isinstance(evaluated_dataset, dict):
-        # Handle the case where evaluate might return a dict (less common now)
-        logger.warning(
-            "Evaluation returned a dictionary instead of a list. Structure might differ. "
-            "Attempting to find 'global_scores' key."
-        )
-        global_scores = evaluated_dataset.get("global_scores", {})
-        # Samples might be under a different key or not present in this format
-        all_samples_data = evaluated_dataset.get("samples", [])
-        logger.warning(
-            f"Extracted {len(all_samples_data)} samples from the dictionary."
-        )
-
-    elif not evaluated_dataset:  # Handle empty list case explicitly
-        logger.warning("Evaluated dataset is empty. No scores or samples to extract.")
-
-    else:
-        # This case should ideally not be reached due to checks in run_evaluation
-        logger.error(
-            f"Received unexpected type for evaluated_dataset: {type(evaluated_dataset)}"
-        )
-
-    return global_scores, all_samples_data
 
 
 def _get_unitxt_commit_hash() -> Optional[str]:
@@ -794,7 +711,7 @@ def _save_results_to_disk(
     # --- Prepare Final Results Structure ---
     results_summary = {
         "environment_info": environment_info,
-        "global_scores": global_scores,
+        "results": global_scores,
     }
 
     # prepend to the results_path name the time in a wat like this: 2025-04-04T11:37:32
@@ -834,12 +751,11 @@ def _save_results_to_disk(
             logger.error(f"Failed to write samples file {samples_path}: {e}")
         except TypeError as e:
             logger.error(f"Failed to serialize samples to JSON: {e}. Check data types.")
-            # logger.debug(f"Problematic samples structure: {samples_output}")
 
 
 def process_and_save_results(
     args: argparse.Namespace,
-    evaluated_dataset: List[Dict[str, Any]],
+    evaluation_results: EvaluationResults,
     results_path: str,
     samples_path: str,
 ) -> None:
@@ -847,7 +763,7 @@ def process_and_save_results(
 
     Args:
         args (argparse.Namespace): Parsed command-line arguments.
-        evaluated_dataset (List[Dict[str, Any]]): The list of evaluated instances.
+        evaluation_results (EvaluationResults): The list of evaluated instances.
         results_path (str): Path to save the summary results JSON file.
         samples_path (str): Path to save the detailed samples JSON file.
 
@@ -855,19 +771,23 @@ def process_and_save_results(
         Exception: If an error occurs during result processing or saving (re-raised).
     """
     try:
-        global_scores, all_samples_data = _extract_scores_and_samples(evaluated_dataset)
+        # global_scores, all_samples_data = _extract_scores_and_samples(evaluated_dataset)
 
-        logger.info("\n--- Global Scores ---")
-        if global_scores:
-            # Use print_dict for formatted output to console
-            print_dict(global_scores)
-        else:
-            logger.info("No global scores extracted or found.")
+        subsets_scores = evaluation_results.subsets_scores
+        instances_results = evaluation_results.instance_scores
+
+        subset_instances = {}
+        for instance in instances_results:
+            if instance["subset"][0] not in subset_instances:
+                subset_instances[instance["subset"][0]] = []
+            subset_instances[instance["subset"][0]].append(instance)
+
+        logger.info(f"\n{subsets_scores.summary}")
 
         # --- Save Results ---
         # Pass all necessary data to the saving function
         _save_results_to_disk(
-            args, global_scores, all_samples_data, results_path, samples_path
+            args, subsets_scores, subset_instances, results_path, samples_path
         )
 
     except Exception:
@@ -910,9 +830,9 @@ def main():
                 args, model_args_dict, chat_kwargs_dict
             )
             predictions = run_inference(inference_model, test_dataset)
-            evaluated_dataset = run_evaluation(predictions, test_dataset)
+            evaluation_results = run_evaluation(predictions, test_dataset)
             process_and_save_results(
-                args, evaluated_dataset, results_path, samples_path
+                args, evaluation_results, results_path, samples_path
             )
 
     # --- More Specific Error Handling ---
