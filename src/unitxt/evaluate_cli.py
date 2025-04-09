@@ -322,11 +322,27 @@ def load_data(args: argparse.Namespace) -> HFDataset:
         f"Loading task/dataset using identifier: '{args.tasks}' with split '{args.split}'"
     )
 
-    if len(args.tasks) > 1:
-        raise NotImplementedError("Only single task input is currently supported")
-    args.tasks = args.tasks[0]
+    benchmark_subsets = {}
+    for task_str in args.tasks:
+        dataset_args = task_str_to_dataset_args(task_str, args)
 
-    dataset_args = _parse_key_value_string(args.tasks)
+        from .standard import DatasetRecipe
+
+        benchmark_subsets[task_str] = DatasetRecipe(**dataset_args)
+
+    from .benchmark import Benchmark
+
+    benchmark = Benchmark(subsets=benchmark_subsets)
+
+    test_dataset = load_dataset(benchmark, split=args.split)
+    logger.info(
+        f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
+    )
+    return test_dataset
+
+
+def task_str_to_dataset_args(task_str, args):
+    dataset_args = _parse_key_value_string(task_str)
 
     if args.limit is not None:
         assert f"max_{args.split}_instances" not in dataset_args, (
@@ -365,11 +381,7 @@ def load_data(args: argparse.Namespace) -> HFDataset:
             "Applying chat template from --apply_chat_template argument: format=formats.chat_api"
         )
 
-    test_dataset = load_dataset(**dataset_args, split=args.split)
-    logger.info(
-        f"Dataset loaded successfully. Number of instances: {len(test_dataset)}"
-    )
-    return test_dataset
+    return dataset_args
 
 
 def prepare_kwargs(kwargs: dict) -> Dict[str, Any]:
